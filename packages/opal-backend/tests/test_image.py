@@ -226,6 +226,24 @@ class TestGenerateImagesHandler:
         assert "not found" in result["error"]
 
     @pytest.mark.asyncio
+    async def test_multiple_missing_images_all_errors(self):
+        """Multiple missing paths → error contains all paths (batch)."""
+        fs = AgentFileSystem()
+        defn = _define_generate_images(file_system=fs)
+
+        result = await defn.handler(
+            {
+                "prompt": "Edit these",
+                "model": "flash",
+                "images": ["/mnt/a.png", "/mnt/b.png"],
+            },
+            _noop_status,
+        )
+        assert "error" in result
+        assert "a.png" in result["error"]
+        assert "b.png" in result["error"]
+
+    @pytest.mark.asyncio
     @patch("opal_backend.functions.image.execute_step")
     async def test_execute_step_error(self, mock_execute):
         """executeStep error → returned as error."""

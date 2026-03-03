@@ -416,3 +416,44 @@ class TestRestoreFrom:
         })
         assert isinstance(fs.read_text("/mnt/old.txt"), dict)  # error
         assert fs.read_text("/mnt/new.txt") == "new content"
+
+
+# =============================================================================
+# Batch get
+# =============================================================================
+
+
+class TestGetMany:
+    """Tests for get_many — port of TS getMany."""
+
+    def test_all_found(self):
+        fs = AgentFileSystem()
+        fs.write("a.txt", "aaa")
+        fs.write("b.txt", "bbb")
+        result = fs.get_many(["/mnt/a.txt", "/mnt/b.txt"])
+        assert isinstance(result, list)
+        assert len(result) == 2
+
+    def test_all_missing_collects_errors(self):
+        fs = AgentFileSystem()
+        result = fs.get_many(["/mnt/x.txt", "/mnt/y.txt"])
+        assert isinstance(result, dict)
+        assert "$error" in result
+        assert "x.txt" in result["$error"]
+        assert "y.txt" in result["$error"]
+
+    def test_empty_paths_returns_empty_list(self):
+        fs = AgentFileSystem()
+        result = fs.get_many([])
+        assert isinstance(result, list)
+        assert len(result) == 0
+
+    def test_mixed_found_and_missing_returns_error(self):
+        """Like TS: if any path fails, return all errors (not partial data)."""
+        fs = AgentFileSystem()
+        fs.write("a.txt", "aaa")
+        result = fs.get_many(["/mnt/a.txt", "/mnt/missing.txt"])
+        assert isinstance(result, dict)
+        assert "$error" in result
+        assert "missing.txt" in result["$error"]
+
