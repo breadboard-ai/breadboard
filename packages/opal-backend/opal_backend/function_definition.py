@@ -23,6 +23,8 @@ FunctionDeclaration = dict[str, Any]
 
 # A callback that allows function handlers to update their status.
 # When status is None, it means "clear my status".
+# TODO: Port full statusUpdater options from TS (expectedDurationInSec,
+# isThought). Currently only the text is forwarded.
 StatusUpdateCallback = Callable[[str | None], None]
 
 # Handler: receives parsed args + status callback, returns dict response.
