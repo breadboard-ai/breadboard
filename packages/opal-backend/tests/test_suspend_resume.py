@@ -7,6 +7,8 @@ import asyncio
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from opal_backend.suspend import SuspendError, SuspendResult
 from opal_backend.events import WaitForInputEvent
 from opal_backend.interaction_store import InteractionState
@@ -41,7 +43,7 @@ class TestSuspendError(unittest.TestCase):
         self.assertIn("waitForChoice", str(error))
 
 
-class TestInteractionStore(unittest.TestCase):
+class TestInteractionStore:
     """Tests for InteractionStore."""
 
     def _make_state(self) -> InteractionState:
@@ -56,38 +58,43 @@ class TestInteractionStore(unittest.TestCase):
             task_tree_manager=ttm,
         )
 
-    def test_save_and_load(self):
+    @pytest.mark.asyncio
+    async def test_save_and_load(self):
         store = InMemoryInteractionStore()
         state = self._make_state()
-        store.save("int-1", state)
-        loaded = store.load("int-1")
-        self.assertIs(loaded, state)
+        await store.save("int-1", state)
+        loaded = await store.load("int-1")
+        assert loaded is state
 
-    def test_load_removes_entry(self):
+    @pytest.mark.asyncio
+    async def test_load_removes_entry(self):
         store = InMemoryInteractionStore()
         state = self._make_state()
-        store.save("int-1", state)
-        store.load("int-1")
-        self.assertIsNone(store.load("int-1"))
+        await store.save("int-1", state)
+        await store.load("int-1")
+        assert await store.load("int-1") is None
 
-    def test_load_unknown_returns_none(self):
+    @pytest.mark.asyncio
+    async def test_load_unknown_returns_none(self):
         store = InMemoryInteractionStore()
-        self.assertIsNone(store.load("unknown"))
+        assert await store.load("unknown") is None
 
-    def test_has(self):
+    @pytest.mark.asyncio
+    async def test_has(self):
         store = InMemoryInteractionStore()
         state = self._make_state()
-        self.assertFalse(store.has("int-1"))
-        store.save("int-1", state)
-        self.assertTrue(store.has("int-1"))
+        assert not await store.has("int-1")
+        await store.save("int-1", state)
+        assert await store.has("int-1")
 
-    def test_clear(self):
+    @pytest.mark.asyncio
+    async def test_clear(self):
         store = InMemoryInteractionStore()
-        store.save("a", self._make_state())
-        store.save("b", self._make_state())
-        store.clear()
-        self.assertFalse(store.has("a"))
-        self.assertFalse(store.has("b"))
+        await store.save("a", self._make_state())
+        await store.save("b", self._make_state())
+        await store.clear()
+        assert not await store.has("a")
+        assert not await store.has("b")
 
 
 class TestFunctionCallerSuspend(unittest.TestCase):

@@ -304,3 +304,68 @@ class TestResume:
             e for e in resume_events if event_type(e) == "complete"
         )
         assert complete["complete"]["result"]["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_flags_and_graph_survive_suspend_resume(self):
+        """Flags and graph are saved on suspend and restored on resume."""
+        suspend_chunks = [
+            make_function_call_chunk(
+                "chat_request_user_input",
+                {"user_message": "What?"},
+            ),
+        ]
+
+        async def suspend_stream(*args, **kwargs):
+            for chunk in suspend_chunks:
+                yield chunk
+
+        store = InMemoryInteractionStore()
+        test_flags = {"googleOne": True, "customFlag": "hello"}
+        test_graph = {"url": "drive:/abc123", "title": "My Opal"}
+
+        with patch(
+            "opal_backend.loop.stream_generate_content",
+            side_effect=suspend_stream,
+        ):
+            await collect_events(run(
+                objective=make_objective(),
+                backend=make_mock_backend(),
+                store=store,
+                flags=test_flags,
+                graph=test_graph,
+            ))
+
+        # Verify flags and graph were saved into the interaction state.
+        assert len(store._store) == 1
+        saved_state = next(iter(store._store.values()))
+        assert saved_state.flags == test_flags
+        assert saved_state.graph == test_graph
+
+        interaction_id = next(iter(store._store.keys()))
+
+        # Resume — note: no flags or graph passed.
+        resume_chunks = [
+            make_function_call_chunk(
+                "system_objective_fulfilled",
+                {"objective_outcome": "Done", "href": "/"},
+            ),
+        ]
+
+        async def resume_stream(*args, **kwargs):
+            for chunk in resume_chunks:
+                yield chunk
+
+        with patch(
+            "opal_backend.loop.stream_generate_content",
+            side_effect=resume_stream,
+        ):
+            resume_events = await collect_events(resume(
+                interaction_id=interaction_id,
+                response={"text": "Ok"},
+                backend=make_mock_backend(),
+                store=store,
+            ))
+
+        types = [event_type(e) for e in resume_events]
+        assert "complete" in types
+
