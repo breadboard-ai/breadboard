@@ -61,7 +61,7 @@ class TestChatRequestUserInput(unittest.TestCase):
             event = ctx.exception.event
             self.assertEqual(event.type, "waitForInput")
             self.assertTrue(len(event.request_id) > 0)
-            self.assertEqual(event.input_type, "any")
+            self.assertEqual(event.input_type, "asterisk")
             self.assertEqual(
                 event.prompt["parts"][0]["text"],
                 "What is your name?",
@@ -78,7 +78,7 @@ class TestChatRequestUserInput(unittest.TestCase):
                     {"user_message": "Upload a file", "input_type": "file-upload"},
                     lambda s, **kw: None,
                 )
-            self.assertEqual(ctx.exception.event.input_type, "file-upload")
+            self.assertEqual(ctx.exception.event.input_type, "upload")
 
         asyncio.run(run())
 
@@ -91,7 +91,7 @@ class TestChatRequestUserInput(unittest.TestCase):
                     {"user_message": "test", "input_type": "invalid"},
                     lambda s, **kw: None,
                 )
-            self.assertEqual(ctx.exception.event.input_type, "any")
+            self.assertEqual(ctx.exception.event.input_type, "asterisk")
 
         asyncio.run(run())
 
