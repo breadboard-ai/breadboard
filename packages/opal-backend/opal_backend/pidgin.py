@@ -241,7 +241,7 @@ _FILE_PARSE_REGEX = re.compile(r'<file\s+src\s*=\s*"([^"]*)"\s*/>')
 _LINK_PARSE_REGEX = re.compile(r'<a\s+href\s*=\s*"([^"]*)"\s*>\s*([^<]*)\s*</a>')
 
 
-def from_pidgin_string(
+async def from_pidgin_string(
     content: str, file_system: AgentFileSystem
 ) -> dict[str, Any] | list[dict[str, Any]]:
     """Resolve pidgin markup in a string to data parts.
@@ -268,7 +268,7 @@ def from_pidgin_string(
         file_match = _FILE_PARSE_REGEX.match(segment)
         if file_match:
             path = file_match.group(1)
-            result = file_system.get(path)
+            result = await file_system.get(path)
             if isinstance(result, dict) and "$error" in result:
                 errors.append(result["$error"])
                 continue

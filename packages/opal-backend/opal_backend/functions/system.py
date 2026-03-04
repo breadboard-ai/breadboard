@@ -226,7 +226,7 @@ def _define_objective_fulfilled(
         intermediate: list[dict[str, Any]] | None = None
 
         if file_system and outcome_text:
-            resolved = from_pidgin_string(outcome_text, file_system)
+            resolved = await from_pidgin_string(outcome_text, file_system)
             if isinstance(resolved, dict) and "$error" in resolved:
                 return {"error": resolved["$error"]}
             # from_pidgin_string returns dict (LLMContent) on success.
@@ -236,7 +236,7 @@ def _define_objective_fulfilled(
             # Port of the intermediate file collection in loop-setup.ts.
             intermediate: list[FileData] = []
             for path in list(file_system.files.keys()):
-                file_parts = file_system.get(path)
+                file_parts = await file_system.get(path)
                 if isinstance(file_parts, dict) and "$error" in file_parts:
                     continue
                 # file_parts is a list of data parts; take the first one
@@ -396,7 +396,7 @@ def _define_list_files(
             status_cb(status_update)
         elif status_cb:
             status_cb("Getting a list of files")
-        return {"list": file_system.list_files()}
+        return {"list": await file_system.list_files()}
 
     return FunctionDefinition(
         name=LIST_FILES_FUNCTION,
@@ -431,7 +431,7 @@ def _define_write_file(
         content = args.get("content", "")
 
         # Resolve <file> tags in the content via pidgin translator
-        translated = from_pidgin_string(content, file_system)
+        translated = await from_pidgin_string(content, file_system)
         if isinstance(translated, dict) and "$error" in translated:
             return {"error": translated["$error"]}
 
@@ -503,7 +503,7 @@ def _define_read_text_from_file(
 
     async def handler(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
         file_path = args.get("file_path", "")
-        text = file_system.read_text(file_path)
+        text = await file_system.read_text(file_path)
         if isinstance(text, dict) and "$error" in text:
             return {"error": text["$error"]}
         return {"text": text}

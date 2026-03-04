@@ -83,7 +83,7 @@ def _code_exec_error(output: str = "NameError: x") -> dict:
 class TestGenerateAndExecuteCode:
     @pytest.mark.asyncio
     @patch("opal_backend.functions.generate.stream_generate_content")
-    @patch("opal_backend.functions.generate.from_pidgin_string")
+    @patch("opal_backend.functions.generate.from_pidgin_string", new_callable=AsyncMock)
     async def test_basic_code_generation(self, mock_pidgin, mock_stream):
         """Handler returns result text from code execution."""
         mock_pidgin.return_value = {
@@ -106,7 +106,7 @@ class TestGenerateAndExecuteCode:
 
     @pytest.mark.asyncio
     @patch("opal_backend.functions.generate.stream_generate_content")
-    @patch("opal_backend.functions.generate.from_pidgin_string")
+    @patch("opal_backend.functions.generate.from_pidgin_string", new_callable=AsyncMock)
     async def test_uses_code_execution_tool(self, mock_pidgin, mock_stream):
         """Body includes codeExecution tool."""
         mock_pidgin.return_value = {
@@ -130,7 +130,7 @@ class TestGenerateAndExecuteCode:
 
     @pytest.mark.asyncio
     @patch("opal_backend.functions.generate.stream_generate_content")
-    @patch("opal_backend.functions.generate.from_pidgin_string")
+    @patch("opal_backend.functions.generate.from_pidgin_string", new_callable=AsyncMock)
     async def test_search_grounding(self, mock_pidgin, mock_stream):
         """search_grounding adds googleSearch tool."""
         mock_pidgin.return_value = {
@@ -158,7 +158,7 @@ class TestGenerateAndExecuteCode:
 
     @pytest.mark.asyncio
     @patch("opal_backend.functions.generate.stream_generate_content")
-    @patch("opal_backend.functions.generate.from_pidgin_string")
+    @patch("opal_backend.functions.generate.from_pidgin_string", new_callable=AsyncMock)
     async def test_model_is_flash(self, mock_pidgin, mock_stream):
         """Uses FLASH_MODEL_NAME."""
         mock_pidgin.return_value = {
@@ -179,7 +179,7 @@ class TestGenerateAndExecuteCode:
 
     @pytest.mark.asyncio
     @patch("opal_backend.functions.generate.stream_generate_content")
-    @patch("opal_backend.functions.generate.from_pidgin_string")
+    @patch("opal_backend.functions.generate.from_pidgin_string", new_callable=AsyncMock)
     async def test_thought_parts_sent_to_status(self, mock_pidgin, mock_stream):
         """Thought parts are passed to status callback, not result."""
         mock_pidgin.return_value = {
@@ -203,7 +203,7 @@ class TestGenerateAndExecuteCode:
 
     @pytest.mark.asyncio
     @patch("opal_backend.functions.generate.stream_generate_content")
-    @patch("opal_backend.functions.generate.from_pidgin_string")
+    @patch("opal_backend.functions.generate.from_pidgin_string", new_callable=AsyncMock)
     async def test_inline_data_saved_to_fs(self, mock_pidgin, mock_stream):
         """inlineData parts are saved to FS and appear as <file> tags."""
         mock_pidgin.return_value = {
@@ -225,7 +225,7 @@ class TestGenerateAndExecuteCode:
 
     @pytest.mark.asyncio
     @patch("opal_backend.functions.generate.stream_generate_content")
-    @patch("opal_backend.functions.generate.from_pidgin_string")
+    @patch("opal_backend.functions.generate.from_pidgin_string", new_callable=AsyncMock)
     async def test_inline_data_error(self, mock_pidgin, mock_stream):
         """add_part error on inlineData → error returned."""
         mock_pidgin.return_value = {
@@ -247,7 +247,7 @@ class TestGenerateAndExecuteCode:
 
     @pytest.mark.asyncio
     @patch("opal_backend.functions.generate.stream_generate_content")
-    @patch("opal_backend.functions.generate.from_pidgin_string")
+    @patch("opal_backend.functions.generate.from_pidgin_string", new_callable=AsyncMock)
     async def test_code_execution_error(self, mock_pidgin, mock_stream):
         """Last code execution failure → error returned."""
         mock_pidgin.return_value = {
@@ -268,7 +268,7 @@ class TestGenerateAndExecuteCode:
 
     @pytest.mark.asyncio
     @patch("opal_backend.functions.generate.stream_generate_content")
-    @patch("opal_backend.functions.generate.from_pidgin_string")
+    @patch("opal_backend.functions.generate.from_pidgin_string", new_callable=AsyncMock)
     async def test_code_error_then_success(self, mock_pidgin, mock_stream):
         """Error followed by success → no error returned."""
         mock_pidgin.return_value = {
@@ -290,7 +290,7 @@ class TestGenerateAndExecuteCode:
 
     @pytest.mark.asyncio
     @patch("opal_backend.functions.generate.stream_generate_content")
-    @patch("opal_backend.functions.generate.from_pidgin_string")
+    @patch("opal_backend.functions.generate.from_pidgin_string", new_callable=AsyncMock)
     async def test_empty_stream(self, mock_pidgin, mock_stream):
         """Empty stream → error."""
         mock_pidgin.return_value = {
@@ -313,7 +313,7 @@ class TestGenerateAndExecuteCode:
 
     @pytest.mark.asyncio
     @patch("opal_backend.functions.generate.stream_generate_content")
-    @patch("opal_backend.functions.generate.from_pidgin_string")
+    @patch("opal_backend.functions.generate.from_pidgin_string", new_callable=AsyncMock)
     async def test_streaming_error(self, mock_pidgin, mock_stream):
         """Stream raises → error returned."""
         mock_pidgin.return_value = {
@@ -340,7 +340,8 @@ class TestGenerateAndExecuteCode:
         fs = AgentFileSystem()
 
         with patch(
-            "opal_backend.functions.generate.from_pidgin_string"
+            "opal_backend.functions.generate.from_pidgin_string",
+            new_callable=AsyncMock,
         ) as mock_pidgin:
             mock_pidgin.return_value = {"$error": "File not found"}
             defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
@@ -350,7 +351,7 @@ class TestGenerateAndExecuteCode:
 
     @pytest.mark.asyncio
     @patch("opal_backend.functions.generate.stream_generate_content")
-    @patch("opal_backend.functions.generate.from_pidgin_string")
+    @patch("opal_backend.functions.generate.from_pidgin_string", new_callable=AsyncMock)
     async def test_status_callback_lifecycle(self, mock_pidgin, mock_stream):
         """Status callback: initial status → cleared at end."""
         mock_pidgin.return_value = {
@@ -371,7 +372,7 @@ class TestGenerateAndExecuteCode:
 
     @pytest.mark.asyncio
     @patch("opal_backend.functions.generate.stream_generate_content")
-    @patch("opal_backend.functions.generate.from_pidgin_string")
+    @patch("opal_backend.functions.generate.from_pidgin_string", new_callable=AsyncMock)
     async def test_status_with_search_grounding(self, mock_pidgin, mock_stream):
         """search_grounding → status starts with 'Researching'."""
         mock_pidgin.return_value = {

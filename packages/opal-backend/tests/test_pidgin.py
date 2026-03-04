@@ -25,17 +25,19 @@ from opal_backend.pidgin import (
 class TestFromPidginString:
     """Tests for from_pidgin_string."""
 
-    def test_plain_text_passthrough(self):
+    @pytest.mark.asyncio
+    async def test_plain_text_passthrough(self):
         fs = AgentFileSystem()
-        result = from_pidgin_string("hello world", fs)
+        result = await from_pidgin_string("hello world", fs)
         assert "parts" in result
         assert result["parts"] == [{"text": "hello world"}]
         assert result["role"] == "user"
 
-    def test_resolves_file_tag(self):
+    @pytest.mark.asyncio
+    async def test_resolves_file_tag(self):
         fs = AgentFileSystem()
         fs.write("report.md", "# My Report")
-        result = from_pidgin_string(
+        result = await from_pidgin_string(
             'See the report: <file src="/mnt/report.md" />', fs
         )
         assert "parts" in result
@@ -43,11 +45,12 @@ class TestFromPidginString:
         texts = [p["text"] for p in result["parts"] if "text" in p]
         assert any("My Report" in t for t in texts)
 
-    def test_resolves_multiple_file_tags(self):
+    @pytest.mark.asyncio
+    async def test_resolves_multiple_file_tags(self):
         fs = AgentFileSystem()
         fs.write("a.txt", "content A")
         fs.write("b.txt", "content B")
-        result = from_pidgin_string(
+        result = await from_pidgin_string(
             'File A: <file src="/mnt/a.txt" /> and File B: <file src="/mnt/b.txt" />',
             fs,
         )
@@ -58,9 +61,10 @@ class TestFromPidginString:
         assert "content A" in full_text
         assert "content B" in full_text
 
-    def test_extracts_link_text(self):
+    @pytest.mark.asyncio
+    async def test_extracts_link_text(self):
         fs = AgentFileSystem()
-        result = from_pidgin_string(
+        result = await from_pidgin_string(
             'Go to <a href="/agents/writer">the writer</a> for help', fs
         )
         assert "parts" in result
@@ -69,24 +73,27 @@ class TestFromPidginString:
         )
         assert "the writer" in full_text
 
-    def test_missing_file_returns_error(self):
+    @pytest.mark.asyncio
+    async def test_missing_file_returns_error(self):
         fs = AgentFileSystem()
-        result = from_pidgin_string(
+        result = await from_pidgin_string(
             'See: <file src="/mnt/missing.txt" />', fs
         )
         assert "$error" in result
         assert "unable to proceed" in result["$error"].lower()
 
-    def test_empty_string(self):
+    @pytest.mark.asyncio
+    async def test_empty_string(self):
         fs = AgentFileSystem()
-        result = from_pidgin_string("", fs)
+        result = await from_pidgin_string("", fs)
         assert "parts" in result
         # Empty string produces empty parts or single empty text
         assert len(result["parts"]) <= 1
 
-    def test_merges_consecutive_text_parts(self):
+    @pytest.mark.asyncio
+    async def test_merges_consecutive_text_parts(self):
         fs = AgentFileSystem()
-        result = from_pidgin_string(
+        result = await from_pidgin_string(
             'before <a href="/x">link</a> after', fs
         )
         assert "parts" in result
@@ -95,13 +102,14 @@ class TestFromPidginString:
         # All consecutive text parts should be merged
         assert len(text_parts) == 1
 
-    def test_non_text_parts_not_merged(self):
+    @pytest.mark.asyncio
+    async def test_non_text_parts_not_merged(self):
         """File data parts break text merging."""
         fs = AgentFileSystem()
         fs.add_part({
             "inlineData": {"data": "base64img", "mimeType": "image/png"}
         })
-        result = from_pidgin_string(
+        result = await from_pidgin_string(
             'before <file src="/mnt/image1.png" /> after', fs
         )
         assert "parts" in result
@@ -151,7 +159,8 @@ class TestToPidgin:
         assert "Some context" in result.text
         assert "</asset>" in result.text
 
-    def test_asset_segment_with_data_part(self):
+    @pytest.mark.asyncio
+    async def test_asset_segment_with_data_part(self):
         fs = AgentFileSystem()
         result = to_pidgin(
             [
@@ -172,7 +181,7 @@ class TestToPidgin:
         assert '<file src="/mnt/' in result.text
         assert "</asset>" in result.text
         # Data should be registered in FS
-        assert fs.list_files()  # non-empty string means files exist
+        assert await fs.list_files()  # non-empty string means files exist
 
     def test_input_segment(self):
         fs = AgentFileSystem()
@@ -348,7 +357,8 @@ class TestToPidgin:
         assert result.text == ""
         assert result.use_memory is False
 
-    def test_round_trip_text(self):
+    @pytest.mark.asyncio
+    async def test_round_trip_text(self):
         """to_pidgin → from_pidgin_string should preserve file content."""
         fs = AgentFileSystem()
         # to_pidgin: register an image
@@ -369,7 +379,7 @@ class TestToPidgin:
         )
         assert isinstance(to_result, ToPidginResult)
         # from_pidgin: resolve the file ref back
-        from_result = from_pidgin_string(to_result.text, fs)
+        from_result = await from_pidgin_string(to_result.text, fs)
         assert "parts" in from_result
         # Should contain the original inlineData part
         data_parts = [p for p in from_result["parts"] if "inlineData" in p]
@@ -380,14 +390,16 @@ class TestToPidgin:
 class TestContentToPidginString:
     """Tests for content_to_pidgin_string (public API)."""
 
-    def test_inlines_short_text_without_file_handle(self):
+    @pytest.mark.asyncio
+    async def test_inlines_short_text_without_file_handle(self):
         fs = AgentFileSystem()
         content = {"parts": [{"text": "Hello, world!"}]}
         result = content_to_pidgin_string(content, fs)
         assert result == "Hello, world!"
-        assert fs.list_files() == ""
+        assert await fs.list_files() == ""
 
-    def test_wraps_long_text_in_content_tags(self):
+    @pytest.mark.asyncio
+    async def test_wraps_long_text_in_content_tags(self):
         fs = AgentFileSystem()
         long_text = "x" * (MAX_INLINE_CHARACTER_LENGTH + 1)
         content = {"parts": [{"text": long_text}]}
@@ -395,17 +407,19 @@ class TestContentToPidginString:
         assert "<content src=" in result
         assert long_text in result
         assert "</content>" in result
-        assert fs.list_files() != ""
+        assert await fs.list_files() != ""
 
-    def test_does_not_wrap_long_text_when_text_as_files_false(self):
+    @pytest.mark.asyncio
+    async def test_does_not_wrap_long_text_when_text_as_files_false(self):
         fs = AgentFileSystem()
         long_text = "x" * (MAX_INLINE_CHARACTER_LENGTH + 1)
         content = {"parts": [{"text": long_text}]}
         result = content_to_pidgin_string(content, fs, text_as_files=False)
         assert result == long_text
-        assert fs.list_files() == ""
+        assert await fs.list_files() == ""
 
-    def test_converts_stored_data_to_file_tags(self):
+    @pytest.mark.asyncio
+    async def test_converts_stored_data_to_file_tags(self):
         fs = AgentFileSystem()
         content = {
             "parts": [
@@ -415,9 +429,10 @@ class TestContentToPidginString:
         result = content_to_pidgin_string(content, fs)
         assert '<file src="' in result
         assert '" />' in result
-        assert fs.list_files() != ""
+        assert await fs.list_files() != ""
 
-    def test_passes_notebooklm_stored_data_as_url_text(self):
+    @pytest.mark.asyncio
+    async def test_passes_notebooklm_stored_data_as_url_text(self):
         fs = AgentFileSystem()
         handle = "https://notebooklm.google.com/notebook/abc123"
         content = {
@@ -433,7 +448,7 @@ class TestContentToPidginString:
         result = content_to_pidgin_string(content, fs)
         assert result == handle
         assert "<file" not in result
-        assert fs.list_files() == ""
+        assert await fs.list_files() == ""
 
     def test_handles_mixed_content(self):
         fs = AgentFileSystem()

@@ -98,7 +98,7 @@ def _define_generate_images(
         status_cb(status_update or "Generating Image(s)")
 
         # 1. Resolve input image paths from agent FS (batch, like TS getMany)
-        image_parts = file_system.get_many(input_images)
+        image_parts = await file_system.get_many(input_images)
         if isinstance(image_parts, dict) and "$error" in image_parts:
             return {"error": image_parts["$error"]}
 
