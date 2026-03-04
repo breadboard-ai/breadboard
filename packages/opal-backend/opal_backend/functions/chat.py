@@ -22,7 +22,7 @@ Two functions:
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import Any, Callable
 
 from ..function_definition import FunctionDefinition, FunctionGroup
 from ..events import WaitForInputEvent, WaitForChoiceEvent, ChoiceItem
@@ -40,7 +40,15 @@ VALID_INPUT_TYPES = ["any", "text", "file-upload"]
 VALID_SELECTION_MODES = ["single", "multiple"]
 VALID_LAYOUTS = ["list", "row", "grid"]
 
-INSTRUCTION = """
+CHAT_LOG_PATH = "/mnt/system/chat_log.json"
+SKIPPED_SENTINEL = "__skipped__"
+NONE_OF_THE_ABOVE_ID = "__none_of_the_above__"
+
+# Type alias for the optional chat log entry callback.
+# Signature: (role: "agent" | "user", content: str) -> None
+ChatEntryCallback = Callable[[str, str], None] | None
+
+INSTRUCTION = f"""
 
 ## Interacting with the User
 
@@ -52,6 +60,8 @@ Use the "chat_request_user_input" function for freeform text input or file uploa
 
 Prefer structured choices over freeform input when the answer space is bounded.
 
+The chat log is maintained automatically at the file "{CHAT_LOG_PATH}".
+
 If the user input requires multiple entries, split the conversation into \
 multiple turns. For example, if you have three questions to ask, ask them \
 over three full conversation turns rather than in one call.
@@ -61,6 +71,8 @@ over three full conversation turns rather than in one call.
 
 def _define_request_user_input(
     task_tree_manager: TaskTreeManager,
+    file_system: AgentFileSystem,
+    on_chat_entry: ChatEntryCallback = None,
 ) -> FunctionDefinition:
     """Port of ``chat_request_user_input`` from chat.ts.
 
@@ -82,15 +94,21 @@ def _define_request_user_input(
 
         request_id = str(uuid.uuid4())
 
+        # Resolve pidgin file references in the prompt before sending
+        # to the client. Mirrors TS AgentUI.chat() L151:
+        #   const message = await this.translator.fromPidginString(pidginString);
+        prompt_content = await from_pidgin_string(user_message, file_system)
+
         event = WaitForInputEvent(
             request_id=request_id,
-            prompt={
-                "parts": [{"text": user_message}],
-                "role": "model",
-            },
+            prompt=prompt_content,
             input_type=input_type,
             skip_label=skip_label,
         )
+
+        # Persist the model message to the __chat_log__ sheet if available.
+        if on_chat_entry:
+            on_chat_entry("agent", user_message)
 
         function_call_part = {
             "functionCall": {
@@ -170,6 +188,7 @@ def _define_request_user_input(
 def _define_present_choices(
     task_tree_manager: TaskTreeManager,
     file_system: AgentFileSystem,
+    on_chat_entry: ChatEntryCallback = None,
 ) -> FunctionDefinition:
     """Port of ``chat_present_choices`` from chat.ts.
 
@@ -217,6 +236,10 @@ def _define_present_choices(
             layout=layout,
             none_of_the_above_label=none_of_the_above_label,
         )
+
+        # Persist the model message to the __chat_log__ sheet if available.
+        if on_chat_entry:
+            on_chat_entry("agent", user_message)
 
         function_call_part = {
             "functionCall": {
@@ -329,19 +352,26 @@ def get_chat_function_group(
     *,
     task_tree_manager: TaskTreeManager,
     file_system: AgentFileSystem,
+    on_chat_entry: ChatEntryCallback = None,
 ) -> FunctionGroup:
     """Build a FunctionGroup with all chat functions.
 
     Args:
         task_tree_manager: For tracking task progress.
         file_system: For resolving pidgin file references in choices.
+        on_chat_entry: Optional callback for persisting chat entries to
+            the ``__chat_log__`` sheet. Signature: ``(role, content)``.
 
     Returns:
         FunctionGroup with chat_request_user_input and
         chat_present_choices functions.
     """
-    request_input = _define_request_user_input(task_tree_manager)
-    present_choices = _define_present_choices(task_tree_manager, file_system)
+    request_input = _define_request_user_input(
+        task_tree_manager, file_system, on_chat_entry
+    )
+    present_choices = _define_present_choices(
+        task_tree_manager, file_system, on_chat_entry
+    )
 
     return FunctionGroup(
         instruction=INSTRUCTION,

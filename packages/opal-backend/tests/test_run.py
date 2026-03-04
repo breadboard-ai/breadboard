@@ -19,7 +19,7 @@ import pytest
 from opal_backend.events import AgentEvent
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
 from opal_backend.loop import AgentResult, LoopController
-from opal_backend.run import run, resume
+from opal_backend.run import run, resume, _build_function_groups, _process_chat_response
 
 
 # =============================================================================
@@ -76,6 +76,11 @@ def make_objective() -> dict:
 
 
 
+def make_graph() -> dict:
+    """Create a minimal graph identity."""
+    return {"url": "drive:/test123", "title": "Test Opal"}
+
+
 def make_mock_backend() -> MagicMock:
     """Create a mock BackendClient."""
     return MagicMock()
@@ -125,6 +130,7 @@ class TestRun:
                 objective=make_objective(),
                 backend=make_mock_backend(),
                 store=InMemoryInteractionStore(),
+                graph=make_graph(),
             ))
 
         types = [event_type(e) for e in events]
@@ -150,6 +156,7 @@ class TestRun:
                 objective=make_objective(),
                 backend=make_mock_backend(),
                 store=InMemoryInteractionStore(),
+                graph=make_graph(),
             ))
 
         types = [event_type(e) for e in events]
@@ -179,6 +186,7 @@ class TestRun:
                 objective=make_objective(),
                 backend=make_mock_backend(),
                 store=store,
+                graph=make_graph(),
             ))
 
         types = [event_type(e) for e in events]
@@ -210,6 +218,7 @@ class TestRun:
                 objective=make_objective(),
                 backend=make_mock_backend(),
                 store=InMemoryInteractionStore(),
+                graph=make_graph(),
             ))
 
         types = [event_type(e) for e in events]
@@ -266,6 +275,7 @@ class TestResume:
                 objective=make_objective(),
                 backend=make_mock_backend(),
                 store=store,
+                graph=make_graph(),
             ))
 
         # Find the suspend event to get interaction_id.
@@ -335,11 +345,14 @@ class TestResume:
                 graph=test_graph,
             ))
 
-        # Verify flags and graph were saved into the interaction state.
+        # Verify flags, graph, and session_id were saved into the state.
         assert len(store._store) == 1
         saved_state = next(iter(store._store.values()))
         assert saved_state.flags == test_flags
         assert saved_state.graph == test_graph
+        # session_id should be a non-empty UUID.
+        assert len(saved_state.session_id) > 0
+        assert saved_state.session_id.count("-") == 4
 
         interaction_id = next(iter(store._store.keys()))
 
@@ -368,4 +381,107 @@ class TestResume:
 
         types = [event_type(e) for e in resume_events]
         assert "complete" in types
+
+
+# =============================================================================
+# _build_function_groups tests
+# =============================================================================
+
+
+class TestBuildFunctionGroups:
+    """Tests for the _build_function_groups helper."""
+
+    def test_memory_group_included_when_sheet_manager_provided(self):
+        """Memory functions must appear when a sheet_manager is given.
+
+        Regression: a premature ``return`` caused the ``if sheet_manager:``
+        block to be dead code, so memory functions were never included.
+        """
+        controller = LoopController()
+        from opal_backend.agent_file_system import AgentFileSystem
+        from opal_backend.task_tree_manager import TaskTreeManager
+
+        fs = AgentFileSystem()
+        ttm = TaskTreeManager(fs)
+        backend = make_mock_backend()
+        sheet_manager = AsyncMock()
+
+        groups = _build_function_groups(
+            controller=controller,
+            file_system=fs,
+            task_tree_manager=ttm,
+            backend=backend,
+            flags={},
+            sheet_manager=sheet_manager,
+        )
+
+        all_names = set()
+        for group in groups:
+            for name, _ in group.definitions:
+                all_names.add(name)
+
+        assert "memory_create_sheet" in all_names
+        assert "memory_read_sheet" in all_names
+        assert "memory_update_sheet" in all_names
+        assert "memory_delete_sheet" in all_names
+        assert "memory_get_metadata" in all_names
+
+    def test_memory_group_excluded_without_sheet_manager(self):
+        """Without a sheet_manager, no memory functions should appear."""
+        controller = LoopController()
+        from opal_backend.agent_file_system import AgentFileSystem
+        from opal_backend.task_tree_manager import TaskTreeManager
+
+        fs = AgentFileSystem()
+        ttm = TaskTreeManager(fs)
+        backend = make_mock_backend()
+
+        groups = _build_function_groups(
+            controller=controller,
+            file_system=fs,
+            task_tree_manager=ttm,
+            backend=backend,
+            flags={},
+        )
+
+        all_names = set()
+        for group in groups:
+            for name, _ in group.definitions:
+                all_names.add(name)
+
+        assert "memory_create_sheet" not in all_names
+
+
+class TestProcessChatResponse:
+    """Tests for _process_chat_response."""
+
+    def test_skip_sentinel_transformed(self):
+        """__skipped__ sentinel in LLMContent is transformed to {skipped: true}."""
+        response = {
+            "input": {"role": "user", "parts": [{"text": "__skipped__"}]}
+        }
+        result = _process_chat_response(
+            "chat_request_user_input", response
+        )
+        assert result == {"skipped": True}
+
+    def test_extracts_text_from_llm_content(self):
+        """Client sends {input: LLMContent} — text is extracted."""
+        response = {
+            "input": {"role": "user", "parts": [{"text": "hello"}]}
+        }
+        result = _process_chat_response("chat_request_user_input", response)
+        assert result == {"user_input": "hello"}
+
+    def test_non_chat_function_passthrough(self):
+        """Non-chat functions pass through unchanged."""
+        response = {"text": "generated"}
+        result = _process_chat_response("generate_text", response)
+        assert result is response
+
+    def test_missing_input_passes_through(self):
+        """If 'input' key is missing, response passes through unchanged."""
+        response = {"other": "data"}
+        result = _process_chat_response("chat_request_user_input", response)
+        assert result is response
 

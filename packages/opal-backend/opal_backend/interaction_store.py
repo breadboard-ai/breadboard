@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
+import uuid
 
 from .agent_file_system import AgentFileSystem
 from .task_tree_manager import TaskTreeManager
@@ -63,6 +64,12 @@ class InteractionState:
     # Stored as the raw arguments to the function group constructors so
     # groups can be rebuilt with the same file_system/task_tree references.
     function_group_args: dict[str, Any] = field(default_factory=dict)
+
+    # Stable session identifier — generated once at the start of the
+    # conversation and preserved across all suspend/resume cycles.
+    # Used by ChatLogManager to correlate chat log entries within a
+    # single conversation, and available for future session-scoped uses.
+    session_id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
 
 @runtime_checkable

@@ -273,6 +273,7 @@ suite("AgentService — Remote Mode", () => {
       kind: "test",
       segments: [{ type: "text", text: "hello" }],
       flags: { useNotebookLM: false, googleOne: false },
+      graph: { url: "drive:/test123", title: "Test Opal" },
     });
     assert.ok(handle.runId);
     assert.strictEqual(handle.kind, "test");

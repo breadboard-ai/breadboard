@@ -202,9 +202,8 @@ class DevAgentBackend:
                     "Missing 'segments' or 'objective' in request body"
                 )
 
-        # Extract graph identity from flags (when provided by the client).
-        graph_info = flags.get("graph")
-
+        # Extract graph identity (sibling of flags in the wire protocol).
+        graph_info = body.get("graph")
         backend = HttpBackendClient(
             upstream_base=UPSTREAM_BASE,
             httpx_client=httpx.AsyncClient(timeout=120.0),

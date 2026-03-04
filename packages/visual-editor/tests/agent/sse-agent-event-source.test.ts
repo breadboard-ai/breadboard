@@ -417,12 +417,26 @@ suite("SSEAgentEventSource", () => {
     });
   });
 
-  test("stops on error event", async () => {
-    const events: AgentEvent[] = [{ error: { message: "boom" } }];
+  test("error event is dispatched to consumer and stops stream", async () => {
+    const events: AgentEvent[] = [
+      { thought: { text: "working" } },
+      { error: { message: "Gemini API error 503: model overloaded" } },
+      // Anything after error should be ignored.
+      { thought: { text: "after error" } },
+    ];
     installFetch(events);
 
     const consumer = new AgentEventConsumer();
-    consumer.on("error", () => {});
+    const received: string[] = [];
+    let capturedError: string | undefined;
+
+    consumer.on("thought", (payload) => {
+      received.push(`thought:${payload.text}`);
+    });
+    consumer.on("error", (payload) => {
+      capturedError = payload.message;
+      received.push("error");
+    });
 
     const source = new SSEAgentEventSource(
       "http://test",
@@ -432,8 +446,15 @@ suite("SSEAgentEventSource", () => {
     );
     await source.connect();
 
-    // Should complete without throwing
-    assert.ok(true);
+    // Error handler should have been called with the message.
+    assert.strictEqual(
+      capturedError,
+      "Gemini API error 503: model overloaded",
+      "error message should be dispatched to consumer"
+    );
+
+    // Events up to and including error; nothing after.
+    assert.deepStrictEqual(received, ["thought:working", "error"]);
   });
 
   test("throws on non-ok response", async () => {
@@ -489,6 +510,7 @@ suite("AgentService remote mode", () => {
       kind: "test",
       segments: [{ type: "text", text: "hello" }],
       flags: { useNotebookLM: false, googleOne: false },
+      graph: { url: "drive:/test123", title: "Test Opal" },
     });
 
     // SSEAgentRun should not have sink on the interface

@@ -140,6 +140,7 @@ async function invokeAgent(
       kind: "content",
       segments: resolution.segments,
       flags: resolution.flags,
+      graph: resolution.graph,
     });
   } else {
     handle = moduleArgs.agentService.startRun({
@@ -315,6 +316,7 @@ async function invokeRemoteAgent(
   // The `complete` event carries the final AgentResult with outcomes.
   // This mirrors `loop.run()` returning `controller.result` in local mode.
   let remoteResult: { success: boolean; outcomes?: LLMContent } | undefined;
+  let remoteError: string | undefined;
 
   handle.events
     .on("start", (event) => {
@@ -325,6 +327,9 @@ async function invokeRemoteAgent(
     })
     .on("complete", (event) => {
       remoteResult = event.result;
+    })
+    .on("error", (event) => {
+      remoteError = event.message;
     })
     .on("thought", (event) => {
       progress.thought(event.text);
@@ -412,6 +417,10 @@ async function invokeRemoteAgent(
 
   await handle.connect();
   moduleArgs.agentService.endRun(handle.runId);
+
+  if (remoteError) {
+    return err(remoteError);
+  }
 
   return toAgentOutputs(remoteResult?.outcomes);
 }

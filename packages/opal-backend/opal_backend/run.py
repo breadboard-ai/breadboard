@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import uuid
 from typing import Any, AsyncIterator, TypedDict
 
 from .agent_events import AgentEventSink, build_hooks_from_sink
@@ -42,8 +43,9 @@ from .events import (
     ErrorEvent,
     FileData,
 )
+from .chat_log_manager import ChatLogManager
 from .functions.audio import get_audio_function_group
-from .functions.chat import get_chat_function_group
+from .functions.chat import get_chat_function_group, CHAT_LOG_PATH, SKIPPED_SENTINEL
 from .functions.generate import get_generate_function_group
 from .functions.image import get_image_function_group
 from .functions.memory import get_memory_function_group
@@ -81,8 +83,8 @@ async def run(
     objective: dict[str, Any],
     backend: BackendClient,
     store: InteractionStore,
+    graph: GraphInfo,
     flags: dict[str, Any] | None = None,
-    graph: GraphInfo | None = None,
     drive: DriveOperationsClient | None = None,
     use_memory: bool = False,
 ) -> AsyncIterator[AgentEvent]:
@@ -96,7 +98,7 @@ async def run(
         backend: Backend client for all API calls.
         store: Interaction store for suspend/resume state.
         flags: Optional feature flags (e.g. ``{"googleOne": True}``).
-        graph: Optional graph identity (url, title).
+        graph: Graph identity (url, title).
         drive: Optional Drive/Sheets operations client for memory.
         use_memory: Whether memory functions should be enabled.
 
@@ -104,6 +106,8 @@ async def run(
         Typed ``AgentEvent`` instances.
     """
     resolved_flags = flags or {}
+    if use_memory:
+        resolved_flags["useMemory"] = True
 
     file_system = AgentFileSystem()
     task_tree_manager = TaskTreeManager(file_system)
@@ -112,14 +116,23 @@ async def run(
     # Set up memory (SheetManager) if requested and drive is available.
     sheet_manager: SheetManager | None = None
     if use_memory and drive:
-        graph_url = (graph or {}).get("url", "")
-        graph_title = (graph or {}).get("title", "")
+        graph_url = graph.get("url", "")
+        graph_title = graph.get("title", "")
         sheet_manager = SheetManager(
             drive=drive,
             graph_url=graph_url,
             graph_title=graph_title,
         )
         file_system.set_sheet_manager(sheet_manager)
+
+    # Set up the chat log manager for sheet persistence and system file.
+    session_id = str(uuid.uuid4())
+    chat_mgr = ChatLogManager(sheet_manager, session_id=session_id)
+    await chat_mgr.seed()
+    run_contents: list[dict] = [objective]
+    file_system.add_system_file(
+        CHAT_LOG_PATH, lambda: chat_mgr.get_chat_log(run_contents),
+    )
 
     function_groups = _build_function_groups(
         controller=controller,
@@ -128,6 +141,7 @@ async def run(
         backend=backend,
         flags=resolved_flags,
         sheet_manager=sheet_manager,
+        on_chat_entry=chat_mgr.on_chat_entry,
     )
 
     run_args = AgentRunArgs(
@@ -144,6 +158,7 @@ async def run(
         store=store,
         flags=resolved_flags,
         graph=graph,
+        session_id=session_id,
     ):
         yield event
 
@@ -184,6 +199,18 @@ async def resume(
     # Restore flags and graph from saved state.
     resolved_flags = state.flags
 
+    # Rebuild SheetManager if memory was active and drive is available.
+    sheet_manager: SheetManager | None = None
+    if resolved_flags.get("useMemory") and drive:
+        graph_url = (state.graph or {}).get("url", "")
+        graph_title = (state.graph or {}).get("title", "")
+        sheet_manager = SheetManager(
+            drive=drive,
+            graph_url=graph_url,
+            graph_title=graph_title,
+        )
+        state.file_system.set_sheet_manager(sheet_manager)
+
     # Inject the client's response as a function result.
     fc = state.function_call_part.get("functionCall", {})
     func_name = fc.get("name", "unknown")
@@ -192,13 +219,21 @@ async def resume(
         "parts": [{
             "functionResponse": {
                 "name": func_name,
-                "response": response,
+                "response": _process_chat_response(func_name, response),
             }
         }],
         "role": "user",
     }
 
     contents = state.contents + [function_response_turn]
+
+    # Set up the chat log manager for sheet persistence and system file.
+    chat_mgr = ChatLogManager(sheet_manager, session_id=state.session_id)
+    await chat_mgr.seed()
+    chat_mgr.persist_user_response(func_name, fc.get("args", {}), response)
+    state.file_system.add_system_file(
+        CHAT_LOG_PATH, lambda: chat_mgr.get_chat_log(contents),
+    )
 
     controller = LoopController()
     function_groups = _build_function_groups(
@@ -207,6 +242,8 @@ async def resume(
         task_tree_manager=state.task_tree_manager,
         backend=backend,
         flags=resolved_flags,
+        sheet_manager=sheet_manager,
+        on_chat_entry=chat_mgr.on_chat_entry,
     )
 
     run_args = AgentRunArgs(
@@ -224,6 +261,7 @@ async def resume(
         store=store,
         flags=resolved_flags,
         graph=state.graph,
+        session_id=state.session_id,
     ):
         yield event
 
@@ -233,6 +271,33 @@ async def resume(
 # ---------------------------------------------------------------------------
 
 
+def _process_chat_response(
+    func_name: str, response: dict[str, Any]
+) -> dict[str, Any]:
+    """Process a chat function response before injecting into contents.
+
+    The client sends ``{"input": LLMContent}`` where LLMContent is
+    ``{"role": "user", "parts": [{"text": "..."}]}``.
+
+    This mirrors the TS handler logic (chat.ts L121-131):
+    1. Extract text from the first text part of the LLMContent.
+    2. Check for the skip sentinel (``__skipped__``).
+    3. Transform to ``{"user_input": text}`` for the model.
+
+    Non-chat functions pass through unchanged.
+    """
+    if func_name == "chat_request_user_input":
+        llm_content = response.get("input")
+        if isinstance(llm_content, dict):
+            parts = llm_content.get("parts", [])
+            first_text = next(
+                (p.get("text", "") for p in parts if "text" in p), ""
+            )
+            if first_text == SKIPPED_SENTINEL:
+                return {"skipped": True}
+            return {"user_input": first_text}
+    return response
+
 def _build_function_groups(
     *,
     controller: LoopController,
@@ -241,11 +306,12 @@ def _build_function_groups(
     backend: BackendClient,
     flags: dict[str, Any],
     sheet_manager: SheetManager | None = None,
+    on_chat_entry: Any = None,
 ) -> list:
     """Build the standard set of function groups."""
     enable_g1_quota = flags.get("googleOne", False)
 
-    return [
+    groups = [
         get_system_function_group(
             controller,
             file_system=file_system,
@@ -277,6 +343,7 @@ def _build_function_groups(
         get_chat_function_group(
             task_tree_manager=task_tree_manager,
             file_system=file_system,
+            on_chat_entry=on_chat_entry,
         ),
     ]
 
@@ -301,7 +368,8 @@ async def _stream_loop(
     backend: BackendClient,
     store: InteractionStore,
     flags: dict[str, Any] | None = None,
-    graph: dict[str, Any] | None = None,
+    graph: dict[str, Any],
+    session_id: str = "",
 ) -> AsyncIterator[AgentEvent]:
     """Run the loop and yield events.
 
@@ -330,6 +398,7 @@ async def _stream_loop(
                         task_tree_manager=task_tree_manager,
                         flags=flags or {},
                         graph=graph,
+                        session_id=session_id,
                     ),
                 )
                 result.suspend_event.interaction_id = (
