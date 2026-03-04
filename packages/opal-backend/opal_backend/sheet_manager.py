@@ -308,8 +308,10 @@ class SheetManager:
 
         Returns ``{"sheets": [{"name": ..., "file_path": ..., "columns": [...]}]}``.
         """
+
         sid = await self._check_spreadsheet_id()
         if not sid:
+
             return {"sheets": []}
 
         try:

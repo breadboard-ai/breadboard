@@ -54,6 +54,7 @@ type SegmentResolution = {
     useNotebookLM: boolean;
     googleOne: boolean;
   };
+  graph: { url: string; title: string };
 };
 
 /**
@@ -158,6 +159,11 @@ async function resolveToSegments(
   }
 
   const runtimeFlags = await moduleArgs.context.flags?.flags();
+  const currentGraph = moduleArgs.context.currentGraph;
+
+  if (!currentGraph?.url) {
+    return err("Cannot run remotely: graph identity (URL) is missing");
+  }
 
   return {
     segments: segments.filter((s): s is Segment => s !== null),
@@ -165,6 +171,7 @@ async function resolveToSegments(
       useNotebookLM,
       googleOne: runtimeFlags?.googleOne ?? false,
     },
+    graph: { url: currentGraph.url, title: currentGraph.title ?? "" },
   };
 }
 

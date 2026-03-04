@@ -64,6 +64,7 @@ class SSEAgentRun implements AgentRunHandle {
         kind: config.kind,
         segments: config.segments.map(segmentToProto),
         flags: config.flags,
+        graph: config.graph,
       },
       this.events,
       fetchWithCreds,

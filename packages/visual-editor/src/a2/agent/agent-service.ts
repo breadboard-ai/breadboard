@@ -32,6 +32,7 @@ type RemoteAgentRunConfig = {
   kind: string;
   segments: Segment[];
   flags: SegmentResolution["flags"];
+  graph: SegmentResolution["graph"];
 };
 
 type AgentRunConfig = LocalAgentRunConfig | RemoteAgentRunConfig;

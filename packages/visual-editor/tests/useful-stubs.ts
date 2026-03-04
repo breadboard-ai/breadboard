@@ -30,7 +30,9 @@ const stubModuleArgs: A2ModuleArgs = {
   fetchWithCreds: () => {
     throw new Error(`fetchWithCreds not implemented`);
   },
-  context: {},
+  context: {
+    currentGraph: { url: "drive:/test-stub", title: "Test Stub" } as never,
+  },
   shell: {} as unknown as OpalShellHostProtocol,
   getConsentController() {
     return {
