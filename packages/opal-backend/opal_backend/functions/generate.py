@@ -201,7 +201,7 @@ def _define_generate_text(
             status_cb("Generating Text")
 
         # 1. Resolve pidgin <file> tags in the prompt
-        translated = from_pidgin_string(prompt, file_system)
+        translated = await from_pidgin_string(prompt, file_system)
         if isinstance(translated, dict) and "$error" in translated:
             return {"error": translated["$error"]}
 
@@ -449,7 +449,7 @@ def _define_generate_and_execute_code(
             status_cb("Generating Code")
 
         # 1. Resolve pidgin <file> tags in the prompt
-        translated = from_pidgin_string(prompt, file_system)
+        translated = await from_pidgin_string(prompt, file_system)
         if isinstance(translated, dict) and "$error" in translated:
             return {"error": translated["$error"]}
 

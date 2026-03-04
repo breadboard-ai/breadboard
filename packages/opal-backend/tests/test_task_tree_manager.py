@@ -75,14 +75,15 @@ class TestSetAndGet:
             ],
         }
 
-    def test_set_saves_to_file_system(self):
+    @pytest.mark.asyncio
+    async def test_set_saves_to_file_system(self):
         fs = AgentFileSystem()
         mgr = TaskTreeManager(fs)
         tree = self._make_tree()
         path = mgr.set(tree)
         assert path == "/mnt/task_tree.json"
         # Verify it's in the file system
-        content = fs.read_text(path)
+        content = await fs.read_text(path)
         assert isinstance(content, str)
         parsed = json.loads(content)
         assert parsed["task_id"] == "task_001"
@@ -183,14 +184,15 @@ class TestStatusTracking:
         tree = json.loads(mgr.get())
         assert tree["subtasks"][0]["status"] == "in_progress"
 
-    def test_complete_persists_to_file_system(self):
+    @pytest.mark.asyncio
+    async def test_complete_persists_to_file_system(self):
         fs = AgentFileSystem()
         mgr = TaskTreeManager(fs)
         mgr.set(self._make_tree())
 
         mgr.set_complete(["task_002"])
         # Read directly from file system
-        content = fs.read_text("/mnt/task_tree.json")
+        content = await fs.read_text("/mnt/task_tree.json")
         assert isinstance(content, str)
         parsed = json.loads(content)
         assert parsed["subtasks"][0]["status"] == "complete"

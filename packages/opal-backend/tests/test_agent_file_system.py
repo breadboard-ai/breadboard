@@ -23,11 +23,12 @@ from opal_backend.agent_file_system import (
 class TestWriteAndRead:
     """Tests for write, overwrite, append, and read_text."""
 
-    def test_write_creates_file(self):
+    @pytest.mark.asyncio
+    async def test_write_creates_file(self):
         fs = AgentFileSystem()
         path = fs.write("hello.txt", "world")
         assert path == "/mnt/hello.txt"
-        text = fs.read_text(path)
+        text = await fs.read_text(path)
         assert text == "world"
 
     def test_write_adds_extension_when_missing(self):
@@ -42,12 +43,13 @@ class TestWriteAndRead:
         file = fs.files[path]
         assert file.type == "inlineData"
 
-    def test_overwrite_replaces_content(self):
+    @pytest.mark.asyncio
+    async def test_overwrite_replaces_content(self):
         fs = AgentFileSystem()
         path = fs.overwrite("data.txt", "first")
-        assert fs.read_text(path) == "first"
+        assert await fs.read_text(path) == "first"
         fs.overwrite("data.txt", "second")
-        assert fs.read_text(path) == "second"
+        assert await fs.read_text(path) == "second"
 
     def test_overwrite_does_not_warn(self):
         """overwrite always silently replaces."""
@@ -81,17 +83,19 @@ class TestWriteAndRead:
         file = fs.files[path]
         assert file.mime_type == "application/json"
 
-    def test_append_creates_file_if_not_exists(self):
+    @pytest.mark.asyncio
+    async def test_append_creates_file_if_not_exists(self):
         fs = AgentFileSystem()
         result = fs.append("/mnt/log.md", "line 1")
         assert result is None
-        assert fs.read_text("/mnt/log.md") == "line 1"
+        assert await fs.read_text("/mnt/log.md") == "line 1"
 
-    def test_append_adds_to_existing_file(self):
+    @pytest.mark.asyncio
+    async def test_append_adds_to_existing_file(self):
         fs = AgentFileSystem()
         fs.append("/mnt/log.md", "line 1")
         fs.append("/mnt/log.md", "line 2")
-        assert fs.read_text("/mnt/log.md") == "line 1\nline 2"
+        assert await fs.read_text("/mnt/log.md") == "line 1\nline 2"
 
     def test_append_errors_on_non_text_file(self):
         fs = AgentFileSystem()
@@ -100,9 +104,10 @@ class TestWriteAndRead:
         assert result is not None
         assert "$error" in result
 
-    def test_read_text_errors_on_missing_file(self):
+    @pytest.mark.asyncio
+    async def test_read_text_errors_on_missing_file(self):
         fs = AgentFileSystem()
-        result = fs.read_text("/mnt/nope.txt")
+        result = await fs.read_text("/mnt/nope.txt")
         assert isinstance(result, dict)
         assert "$error" in result
 
@@ -115,22 +120,25 @@ class TestWriteAndRead:
 class TestListFiles:
     """Tests for list_files."""
 
-    def test_empty_fs_returns_empty_string(self):
+    @pytest.mark.asyncio
+    async def test_empty_fs_returns_empty_string(self):
         fs = AgentFileSystem()
-        assert fs.list_files() == ""
+        assert await fs.list_files() == ""
 
-    def test_lists_written_files(self):
+    @pytest.mark.asyncio
+    async def test_lists_written_files(self):
         fs = AgentFileSystem()
         fs.write("a.txt", "content a")
         fs.write("b.md", "content b")
-        listing = fs.list_files()
+        listing = await fs.list_files()
         assert "/mnt/a.txt" in listing
         assert "/mnt/b.md" in listing
 
-    def test_lists_system_files(self):
+    @pytest.mark.asyncio
+    async def test_lists_system_files(self):
         fs = AgentFileSystem()
         fs.add_system_file("/mnt/system/status", lambda: "ok")
-        listing = fs.list_files()
+        listing = await fs.list_files()
         assert "/mnt/system/status" in listing
 
 
@@ -142,27 +150,30 @@ class TestListFiles:
 class TestSystemFiles:
     """Tests for virtual system files."""
 
-    def test_get_system_file(self):
+    @pytest.mark.asyncio
+    async def test_get_system_file(self):
         fs = AgentFileSystem()
         fs.add_system_file("/mnt/system/task_tree", lambda: '{"tasks": []}')
-        result = fs.get("/mnt/system/task_tree")
+        result = await fs.get("/mnt/system/task_tree")
         assert isinstance(result, list)
         assert result[0]["text"] == '{"tasks": []}'
 
-    def test_get_missing_system_file_errors(self):
+    @pytest.mark.asyncio
+    async def test_get_missing_system_file_errors(self):
         fs = AgentFileSystem()
-        result = fs.get("/mnt/system/nope")
+        result = await fs.get("/mnt/system/nope")
         assert isinstance(result, dict)
         assert "$error" in result
 
-    def test_system_file_getter_returning_error_propagates(self):
+    @pytest.mark.asyncio
+    async def test_system_file_getter_returning_error_propagates(self):
         """Ported from TS: handles failure to get a system file."""
         fs = AgentFileSystem()
         fs.add_system_file(
             "/mnt/system/broken",
             lambda: {"$error": "Sorry"},
         )
-        result = fs.get("/mnt/system/broken")
+        result = await fs.get("/mnt/system/broken")
         assert isinstance(result, dict)
         assert "$error" in result
 
@@ -175,17 +186,19 @@ class TestSystemFiles:
 class TestPathFixup:
     """Tests for path normalization."""
 
-    def test_fixes_missing_slash(self):
+    @pytest.mark.asyncio
+    async def test_fixes_missing_slash(self):
         fs = AgentFileSystem()
         fs.write("test.txt", "content")
         # Gemini sometimes omits the leading slash
-        result = fs.get("mnt/test.txt")
+        result = await fs.get("mnt/test.txt")
         assert isinstance(result, list)
         assert result[0]["text"] == "content"
 
-    def test_missing_file_returns_error(self):
+    @pytest.mark.asyncio
+    async def test_missing_file_returns_error(self):
         fs = AgentFileSystem()
-        result = fs.get("/mnt/nope.txt")
+        result = await fs.get("/mnt/nope.txt")
         assert isinstance(result, dict)
         assert "$error" in result
 
@@ -257,12 +270,13 @@ class TestRouteMapping:
 class TestAddPart:
     """Tests for add_part (data parts)."""
 
-    def test_add_text_part(self):
+    @pytest.mark.asyncio
+    async def test_add_text_part(self):
         fs = AgentFileSystem()
         path = fs.add_part({"text": "hello world"})
         assert isinstance(path, str)
         assert path.startswith("/mnt/")
-        assert fs.read_text(path) == "hello world"
+        assert await fs.read_text(path) == "hello world"
 
     def test_add_inline_data_part(self):
         fs = AgentFileSystem()
@@ -387,7 +401,8 @@ class TestGetFileUrl:
 class TestRestoreFrom:
     """Tests for restore_from."""
 
-    def test_restores_files_from_snapshot(self):
+    @pytest.mark.asyncio
+    async def test_restores_files_from_snapshot(self):
         fs = AgentFileSystem()
         fs.restore_from({
             "/mnt/a.txt": {
@@ -401,10 +416,11 @@ class TestRestoreFrom:
                 "type": "text",
             },
         })
-        assert fs.read_text("/mnt/a.txt") == "hello"
-        assert fs.read_text("/mnt/b.md") == "world"
+        assert await fs.read_text("/mnt/a.txt") == "hello"
+        assert await fs.read_text("/mnt/b.md") == "world"
 
-    def test_restore_clears_previous_files(self):
+    @pytest.mark.asyncio
+    async def test_restore_clears_previous_files(self):
         fs = AgentFileSystem()
         fs.write("old.txt", "old content")
         fs.restore_from({
@@ -414,8 +430,8 @@ class TestRestoreFrom:
                 "type": "text",
             },
         })
-        assert isinstance(fs.read_text("/mnt/old.txt"), dict)  # error
-        assert fs.read_text("/mnt/new.txt") == "new content"
+        assert isinstance(await fs.read_text("/mnt/old.txt"), dict)  # error
+        assert await fs.read_text("/mnt/new.txt") == "new content"
 
 
 # =============================================================================
@@ -426,34 +442,37 @@ class TestRestoreFrom:
 class TestGetMany:
     """Tests for get_many — port of TS getMany."""
 
-    def test_all_found(self):
+    @pytest.mark.asyncio
+    async def test_all_found(self):
         fs = AgentFileSystem()
         fs.write("a.txt", "aaa")
         fs.write("b.txt", "bbb")
-        result = fs.get_many(["/mnt/a.txt", "/mnt/b.txt"])
+        result = await fs.get_many(["/mnt/a.txt", "/mnt/b.txt"])
         assert isinstance(result, list)
         assert len(result) == 2
 
-    def test_all_missing_collects_errors(self):
+    @pytest.mark.asyncio
+    async def test_all_missing_collects_errors(self):
         fs = AgentFileSystem()
-        result = fs.get_many(["/mnt/x.txt", "/mnt/y.txt"])
+        result = await fs.get_many(["/mnt/x.txt", "/mnt/y.txt"])
         assert isinstance(result, dict)
         assert "$error" in result
         assert "x.txt" in result["$error"]
         assert "y.txt" in result["$error"]
 
-    def test_empty_paths_returns_empty_list(self):
+    @pytest.mark.asyncio
+    async def test_empty_paths_returns_empty_list(self):
         fs = AgentFileSystem()
-        result = fs.get_many([])
+        result = await fs.get_many([])
         assert isinstance(result, list)
         assert len(result) == 0
 
-    def test_mixed_found_and_missing_returns_error(self):
+    @pytest.mark.asyncio
+    async def test_mixed_found_and_missing_returns_error(self):
         """Like TS: if any path fails, return all errors (not partial data)."""
         fs = AgentFileSystem()
         fs.write("a.txt", "aaa")
-        result = fs.get_many(["/mnt/a.txt", "/mnt/missing.txt"])
+        result = await fs.get_many(["/mnt/a.txt", "/mnt/missing.txt"])
         assert isinstance(result, dict)
         assert "$error" in result
         assert "missing.txt" in result["$error"]
-

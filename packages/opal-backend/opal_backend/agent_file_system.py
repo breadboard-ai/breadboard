@@ -103,13 +103,13 @@ class AgentFileSystem:
         file.data = f"{file.data}\n{data}"
         return None
 
-    def read_text(self, path: str) -> str | dict[str, str]:
+    async def read_text(self, path: str) -> str | dict[str, str]:
         """Read the text content of a file.
 
         Returns the text string, or an error dict if the file is not found
         or is not a text file.
         """
-        parts = self.get(path)
+        parts = await self.get(path)
         if isinstance(parts, dict):
             return parts  # error
 
@@ -123,7 +123,7 @@ class AgentFileSystem:
                 }
         return "\n".join(texts)
 
-    def get(self, path: str) -> list[dict[str, Any]] | dict[str, str]:
+    async def get(self, path: str) -> list[dict[str, Any]] | dict[str, str]:
         """Get the data parts for a file path.
 
         Returns a list of data parts, or an error dict.
@@ -141,7 +141,7 @@ class AgentFileSystem:
 
         return [self._file_to_part(file)]
 
-    def get_many(
+    async def get_many(
         self, paths: list[str]
     ) -> list[dict[str, Any]] | dict[str, str]:
         """Get data parts for multiple file paths.
@@ -154,7 +154,7 @@ class AgentFileSystem:
         errors: list[str] = []
         parts: list[dict[str, Any]] = []
         for path in paths:
-            result = self.get(path)
+            result = await self.get(path)
             if isinstance(result, dict) and "$error" in result:
                 errors.append(result["$error"])
             else:
@@ -163,7 +163,7 @@ class AgentFileSystem:
             return {"$error": ",".join(errors)}
         return parts
 
-    def list_files(self) -> str:
+    async def list_files(self) -> str:
         """List all files as newline-separated paths."""
         all_paths = list(self._files.keys()) + list(self._system_files.keys())
         return "\n".join(all_paths)

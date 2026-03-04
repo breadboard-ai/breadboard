@@ -172,7 +172,7 @@ def _define_generate_video(
         # 1. Resolve optional reference image paths from agent FS
         image_chunks: list[dict[str, Any]] = []
         for image_path in reference_images:
-            result = file_system.get(image_path)
+            result = await file_system.get(image_path)
             if isinstance(result, dict) and "$error" in result:
                 return {"error": result["$error"]}
             if not result:

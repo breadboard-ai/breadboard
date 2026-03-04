@@ -196,12 +196,12 @@ def _define_present_choices(
         # Resolve pidgin file references in the prompt and choice labels.
         # The agent writes pidgin text (<file src="/mnt/..." />) which
         # must be resolved to inline data before sending to the client.
-        prompt_content = from_pidgin_string(user_message, file_system)
+        prompt_content = await from_pidgin_string(user_message, file_system)
 
         choice_events = []
         for c in choices:
             label = c.get("label", "")
-            choice_content = from_pidgin_string(label, file_system)
+            choice_content = await from_pidgin_string(label, file_system)
             choice_events.append({
                 "id": c.get("id", ""),
                 "content": choice_content,
