@@ -220,10 +220,19 @@ def _define_objective_fulfilled(
             if isinstance(result, dict) and "$error" in result:
                 return {"error": result["$error"]}
 
+        # Resolve the route name to its original href.
+        # Port of fileSystem.getOriginalRoute(href) in loop-setup.ts.
+        resolved_href = href
+        if file_system:
+            original_route = file_system.get_original_route(href)
+            if isinstance(original_route, dict) and "$error" in original_route:
+                return {"error": original_route["$error"]}
+            resolved_href = cast(str, original_route)
+
         # Resolve pidgin <file> tags in the outcome text to LLMContent.
         # Port of the translator.fromPidginString() call in loop-setup.ts.
         outcomes: dict[str, Any]
-        intermediate: list[dict[str, Any]] | None = None
+        intermediate: list[FileData] | None = None
 
         if file_system and outcome_text:
             resolved = await from_pidgin_string(outcome_text, file_system)
@@ -234,22 +243,28 @@ def _define_objective_fulfilled(
 
             # Collect all intermediate files with their resolved parts.
             # Port of the intermediate file collection in loop-setup.ts.
-            intermediate: list[FileData] = []
+            errors: list[str] = []
+            intermediate = []
             for path in list(file_system.files.keys()):
                 file_parts = await file_system.get(path)
                 if isinstance(file_parts, dict) and "$error" in file_parts:
+                    errors.append(file_parts["$error"])
                     continue
-                # file_parts is a list of data parts; take the first one
                 if file_parts:
                     intermediate.append(
-                        FileData(path=path, content=file_parts[0])
+                        FileData(
+                            path=path,
+                            content={"parts": file_parts},
+                        )
                     )
+            if errors:
+                return {"error": "; ".join(errors)}
         else:
             outcomes = {"parts": [{"text": outcome_text}]}
 
         result_data = AgentResult(
             success=True,
-            href=href,
+            href=resolved_href,
             outcomes=outcomes,
         )
         if intermediate is not None:
@@ -326,6 +341,7 @@ def _define_failed_to_fulfill(
 
     async def handler(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
         user_message = args.get("user_message", "")
+        href = args.get("href", "/")
 
         if failure_callback:
             failure_callback(user_message)
@@ -333,6 +349,7 @@ def _define_failed_to_fulfill(
         controller.terminate(
             AgentResult(
                 success=False,
+                href=href,
                 outcomes={"parts": [{"text": user_message}]},
             )
         )
