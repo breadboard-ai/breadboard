@@ -44,6 +44,20 @@ function isConsoleUpdate(
   );
 }
 
+/**
+ * Returns true when every product in the work item is a token-usage entry.
+ * Used to hide per-call token rows when the showTokenCounter flag is off.
+ */
+function isTokenUsageOnly(
+  product: Map<string, LLMContent | SimplifiedA2UIClient | ConsoleUpdate>
+): boolean {
+  if (product.size === 0) return false;
+  for (const [, item] of product) {
+    if (!isConsoleUpdate(item) || item.type !== "token-usage") return false;
+  }
+  return true;
+}
+
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
@@ -669,6 +683,13 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                   item.work.entries(),
                   ([key]) => key,
                   ([workItemId, workItem]) => {
+                    // Hide per-call token usage rows when flag is off
+                    if (
+                      !this.sca.env.flags.get("showTokenCounter") &&
+                      isTokenUsageOnly(workItem.product)
+                    ) {
+                      return nothing;
+                    }
                     const icon = iconSubstitute(workItem.icon);
 
                     const workItemClasses: Record<string, boolean> = {
