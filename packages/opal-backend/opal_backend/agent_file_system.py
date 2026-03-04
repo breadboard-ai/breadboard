@@ -14,15 +14,20 @@ Provides a simple
 retrieve files during execution. Files are keyed by path and stored as
 ``FileDescriptor`` dicts.
 
-Deferred to Phase 4.6: ``MemoryManager``, ``StoredData``/``FileData``
-resolution. For now, only plain text and inline data are supported.
+When a ``SheetManager`` is attached via ``set_sheet_manager()``, paths
+starting with ``/mnt/memory/`` are resolved to Google Sheets data.
 """
 
 from __future__ import annotations
 
+import json
+import logging
 import mimetypes
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
+
+if TYPE_CHECKING:
+    from .sheet_manager import SheetManager
 
 # Ensure common MIME types are registered
 mimetypes.add_type("text/markdown", ".md")
@@ -60,6 +65,8 @@ class AgentFileSystem:
         self._files: dict[str, FileDescriptor] = {}
         self._routes: dict[str, str] = {"": "", "/": "/"}
         self._system_files: dict[str, SystemFileGetter] = {}
+        self._sheet_manager: SheetManager | None = None
+        self._logger = logging.getLogger(__name__)
 
     # ---- Public API ----
 
@@ -135,6 +142,9 @@ class AgentFileSystem:
         if path.startswith("/mnt/system/"):
             return self._get_system_file(path)
 
+        if path.startswith("/mnt/memory/") and self._sheet_manager:
+            return await self._get_memory_file(path)
+
         file = self._files.get(path)
         if file is None:
             return {"$error": f'file "{path}" not found'}
@@ -166,6 +176,17 @@ class AgentFileSystem:
     async def list_files(self) -> str:
         """List all files as newline-separated paths."""
         all_paths = list(self._files.keys()) + list(self._system_files.keys())
+
+        # Include memory sheet paths when a sheet manager is attached.
+        if self._sheet_manager:
+            try:
+                metadata = await self._sheet_manager.get_sheet_metadata()
+                sheets = metadata.get("sheets", [])
+                for sheet in sheets:
+                    all_paths.append(f"/mnt/memory/{sheet['name']}")
+            except Exception:
+                pass  # Best-effort; don't fail list_files on metadata errors.
+
         return "\n".join(all_paths)
 
     def get_file_url(self, maybe_path: str) -> str | None:
@@ -183,6 +204,24 @@ class AgentFileSystem:
         if file.type == "storedData":
             return file.data
         return None
+
+    def set_sheet_manager(self, manager: SheetManager) -> None:
+        """Attach a SheetManager for /mnt/memory/ path resolution."""
+        self._sheet_manager = manager
+
+    async def _get_memory_file(
+        self, path: str
+    ) -> list[dict[str, Any]] | dict[str, str]:
+        """Resolve a /mnt/memory/{sheet_name} path via the SheetManager.
+
+        Port of ``#getMemoryFile`` from ``file-system.ts``.
+        """
+        assert self._sheet_manager is not None
+        sheet_name = path.replace("/mnt/memory/", "")
+        text = await self._sheet_manager.read_sheet_as_text(sheet_name)
+        if text is None:
+            return []
+        return [{"text": text}]
 
     # ---- Route mapping ----
 

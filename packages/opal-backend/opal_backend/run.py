@@ -46,10 +46,12 @@ from .functions.audio import get_audio_function_group
 from .functions.chat import get_chat_function_group
 from .functions.generate import get_generate_function_group
 from .functions.image import get_image_function_group
+from .functions.memory import get_memory_function_group
 from .functions.system import get_system_function_group
 from .functions.video import get_video_function_group
 from .interaction_store import InteractionState, InteractionStore
 from .loop import AgentRunArgs, Loop, LoopController
+from .sheet_manager import SheetManager
 from .suspend import SuspendResult
 from .task_tree_manager import TaskTreeManager
 
@@ -82,6 +84,7 @@ async def run(
     flags: dict[str, Any] | None = None,
     graph: GraphInfo | None = None,
     drive: DriveOperationsClient | None = None,
+    use_memory: bool = False,
 ) -> AsyncIterator[AgentEvent]:
     """Start a new agent run.
 
@@ -93,8 +96,9 @@ async def run(
         backend: Backend client for all API calls.
         store: Interaction store for suspend/resume state.
         flags: Optional feature flags (e.g. ``{"googleOne": True}``).
-        graph: Optional graph identity (url, title). Reserved for future use.
-        drive: Optional Drive/Sheets operations client. Reserved for future use.
+        graph: Optional graph identity (url, title).
+        drive: Optional Drive/Sheets operations client for memory.
+        use_memory: Whether memory functions should be enabled.
 
     Yields:
         Typed ``AgentEvent`` instances.
@@ -105,12 +109,25 @@ async def run(
     task_tree_manager = TaskTreeManager(file_system)
     controller = LoopController()
 
+    # Set up memory (SheetManager) if requested and drive is available.
+    sheet_manager: SheetManager | None = None
+    if use_memory and drive:
+        graph_url = (graph or {}).get("url", "")
+        graph_title = (graph or {}).get("title", "")
+        sheet_manager = SheetManager(
+            drive=drive,
+            graph_url=graph_url,
+            graph_title=graph_title,
+        )
+        file_system.set_sheet_manager(sheet_manager)
+
     function_groups = _build_function_groups(
         controller=controller,
         file_system=file_system,
         task_tree_manager=task_tree_manager,
         backend=backend,
         flags=resolved_flags,
+        sheet_manager=sheet_manager,
     )
 
     run_args = AgentRunArgs(
@@ -223,6 +240,7 @@ def _build_function_groups(
     task_tree_manager: TaskTreeManager,
     backend: BackendClient,
     flags: dict[str, Any],
+    sheet_manager: SheetManager | None = None,
 ) -> list:
     """Build the standard set of function groups."""
     enable_g1_quota = flags.get("googleOne", False)
@@ -261,6 +279,17 @@ def _build_function_groups(
             file_system=file_system,
         ),
     ]
+
+    if sheet_manager:
+        groups.append(
+            get_memory_function_group(
+                sheet_manager=sheet_manager,
+                file_system=file_system,
+                task_tree_manager=task_tree_manager,
+            )
+        )
+
+    return groups
 
 
 async def _stream_loop(

@@ -193,12 +193,17 @@ class DevAgentBackend:
                 }],
                 "role": "user",
             }
+            use_memory = pidgin_result.use_memory
         else:
             objective = body.get("objective")
+            use_memory = False
             if not objective:
                 return _error_stream(
                     "Missing 'segments' or 'objective' in request body"
                 )
+
+        # Extract graph identity from flags (when provided by the client).
+        graph_info = flags.get("graph")
 
         backend = HttpBackendClient(
             upstream_base=UPSTREAM_BASE,
@@ -217,7 +222,9 @@ class DevAgentBackend:
             backend=backend,
             store=_interaction_store,
             flags=flags,
+            graph=graph_info,
             drive=drive,
+            use_memory=use_memory,
         ))
 
     async def _resume(

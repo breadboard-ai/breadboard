@@ -476,3 +476,74 @@ class TestGetMany:
         assert isinstance(result, dict)
         assert "$error" in result
         assert "missing.txt" in result["$error"]
+
+
+# =============================================================================
+# Memory paths (/mnt/memory/)
+# =============================================================================
+
+
+class TestMemoryPaths:
+    """Tests for /mnt/memory/ path resolution via SheetManager."""
+
+    @pytest.mark.asyncio
+    async def test_get_memory_file_returns_text(self):
+        from unittest.mock import AsyncMock
+
+        mock_sm = AsyncMock()
+        mock_sm.read_sheet_as_text = AsyncMock(
+            return_value='[["a", "b"]]'
+        )
+
+        fs = AgentFileSystem()
+        fs.set_sheet_manager(mock_sm)
+
+        result = await fs.get("/mnt/memory/scores")
+        assert isinstance(result, list)
+        assert result[0]["text"] == '[["a", "b"]]'
+        mock_sm.read_sheet_as_text.assert_called_once_with("scores")
+
+    @pytest.mark.asyncio
+    async def test_get_memory_file_not_found(self):
+        from unittest.mock import AsyncMock
+
+        mock_sm = AsyncMock()
+        mock_sm.read_sheet_as_text = AsyncMock(return_value=None)
+
+        fs = AgentFileSystem()
+        fs.set_sheet_manager(mock_sm)
+
+        result = await fs.get("/mnt/memory/missing")
+        assert isinstance(result, list)
+        assert len(result) == 0
+
+    @pytest.mark.asyncio
+    async def test_memory_path_without_manager_returns_error(self):
+        """Without set_sheet_manager(), /mnt/memory/ falls through to file lookup."""
+        fs = AgentFileSystem()
+        result = await fs.get("/mnt/memory/scores")
+        assert isinstance(result, dict)
+        assert "$error" in result
+
+    @pytest.mark.asyncio
+    async def test_list_files_includes_memory_sheets(self):
+        from unittest.mock import AsyncMock
+
+        mock_sm = AsyncMock()
+        mock_sm.get_sheet_metadata = AsyncMock(
+            return_value={
+                "sheets": [
+                    {"name": "scores", "file_path": "/mnt/memory/scores"},
+                    {"name": "notes", "file_path": "/mnt/memory/notes"},
+                ]
+            }
+        )
+
+        fs = AgentFileSystem()
+        fs.set_sheet_manager(mock_sm)
+        fs.write("file.txt", "content")
+
+        listing = await fs.list_files()
+        assert "/mnt/file.txt" in listing
+        assert "/mnt/memory/scores" in listing
+        assert "/mnt/memory/notes" in listing
