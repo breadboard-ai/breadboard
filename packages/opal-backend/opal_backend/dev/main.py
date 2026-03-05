@@ -27,7 +27,6 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
 
-from opal_backend.agent_file_system import AgentFileSystem
 from opal_backend.events import ErrorEvent
 from opal_backend.local.api_surface import create_api_router
 from opal_backend.local.backend_client_impl import HttpBackendClient
@@ -36,7 +35,6 @@ from opal_backend.local.drive_operations_client_impl import (
 )
 
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
-from opal_backend.pidgin import to_pidgin
 from opal_backend.run import run as run_agent, resume as resume_agent
 
 logger = logging.getLogger(__name__)
@@ -167,40 +165,13 @@ class DevAgentBackend:
         self, body: dict, access_token: str, origin: str,
     ) -> EventSourceResponse:
         """Start a new agent run."""
-        # Build the objective — segments-based or legacy.
         segments = body.get("segments")
         flags = body.get("flags", {})
-        if segments is not None:
-            use_notebooklm_flag = flags.get("useNotebookLM", False)
 
-            # to_pidgin needs a file_system to register data parts.
-            # run() creates its own, but pidgin resolution happens
-            # before we call run(). Create a temporary one that
-            # run() will adopt via the objective parts.
-            file_system = AgentFileSystem()
-            pidgin_result = to_pidgin(
-                segments,
-                file_system,
-                use_notebooklm_flag=use_notebooklm_flag,
+        if not segments:
+            return _error_stream(
+                "Missing 'segments' in request body"
             )
-
-            if isinstance(pidgin_result, dict) and "$error" in pidgin_result:
-                return _error_stream(pidgin_result["$error"])
-
-            objective = {
-                "parts": [{
-                    "text": f"<objective>{pidgin_result.text}</objective>"
-                }],
-                "role": "user",
-            }
-            use_memory = pidgin_result.use_memory
-        else:
-            objective = body.get("objective")
-            use_memory = False
-            if not objective:
-                return _error_stream(
-                    "Missing 'segments' or 'objective' in request body"
-                )
 
         # Extract graph identity (sibling of flags in the wire protocol).
         graph_info = body.get("graph")
@@ -217,13 +188,12 @@ class DevAgentBackend:
         )
 
         return self._as_sse(run_agent(
-            objective=objective,
+            segments=segments,
             backend=backend,
             store=_interaction_store,
             flags=flags,
             graph=graph_info,
             drive=drive,
-            use_memory=use_memory,
         ))
 
     async def _resume(

@@ -698,3 +698,16 @@ Body (resume): {interactionId, response}
       (`RunStateManager.pushContent`), ignored by remote client. Removed
       server-side emission from `build_hooks_from_sink` and loop. The event can
       be fully removed if `LocalAgentRun` is removed.
+- [x] Segment data-parts transfer — moved `to_pidgin()` inside `run()` so
+      segments are converted using the loop's own `AgentFileSystem`. Data parts
+      from `asset`/`input` segments now survive into the loop. `run()` accepts
+      `segments` (not `objective`) as its primary input; `dev/main.py` passes
+      segments straight through.
+- [ ] Chat resume multimodal parts — `_process_chat_response` extracts only the
+      first text part from the user's chat response (`{user_input: text}`). The
+      UI supports file uploads and images in chat input (`input_type: "any"` /
+      `"file-upload"`). The TS local path handles this correctly: it calls
+      `toPidgin(input)` which registers binary parts in `AgentFileSystem` and
+      produces pidgin text with `<file>` tags. The Python remote path skips this
+      entirely. Fix: run the response parts through `content_to_pidgin_string`
+      to register files in the FS and produce proper pidgin text.

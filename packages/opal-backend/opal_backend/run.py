@@ -44,6 +44,7 @@ from .events import (
     FileData,
 )
 from .chat_log_manager import ChatLogManager
+from .pidgin import to_pidgin
 from .functions.audio import get_audio_function_group
 from .functions.chat import get_chat_function_group, CHAT_LOG_PATH, SKIPPED_SENTINEL
 from .functions.generate import get_generate_function_group
@@ -80,38 +81,56 @@ class GraphInfo(TypedDict, total=False):
 
 async def run(
     *,
-    objective: dict[str, Any],
+    segments: list[dict[str, Any]],
     backend: BackendClient,
     store: InteractionStore,
     graph: GraphInfo,
     flags: dict[str, Any] | None = None,
     drive: DriveOperationsClient | None = None,
-    use_memory: bool = False,
 ) -> AsyncIterator[AgentEvent]:
     """Start a new agent run.
 
     Creates all internal state (file system, task tree, function groups,
     loop) and yields events as the agent executes.
 
+    The caller provides structured ``segments`` (text, asset, input, tool).
+    ``run()`` owns the full pipeline: segments → ``to_pidgin`` →
+    objective → loop. Data parts from asset/input segments are registered
+    in the same ``AgentFileSystem`` that the loop uses.
+
     Args:
-        objective: The user's objective as an LLMContent dict.
+        segments: Structured segments from the wire protocol.
         backend: Backend client for all API calls.
         store: Interaction store for suspend/resume state.
         flags: Optional feature flags (e.g. ``{"googleOne": True}``).
         graph: Graph identity (url, title).
         drive: Optional Drive/Sheets operations client for memory.
-        use_memory: Whether memory functions should be enabled.
 
     Yields:
         Typed ``AgentEvent`` instances.
     """
     resolved_flags = flags or {}
-    if use_memory:
-        resolved_flags["useMemory"] = True
 
     file_system = AgentFileSystem()
     task_tree_manager = TaskTreeManager(file_system)
     controller = LoopController()
+
+    # Convert segments to pidgin text using the loop's own file system.
+    use_notebooklm = resolved_flags.get("useNotebookLM", False)
+    pidgin_result = to_pidgin(
+        segments, file_system, use_notebooklm_flag=use_notebooklm,
+    )
+    if isinstance(pidgin_result, dict) and "$error" in pidgin_result:
+        yield ErrorEvent(message=pidgin_result["$error"])
+        return
+
+    objective: dict[str, Any] = {
+        "parts": [{"text": f"<objective>{pidgin_result.text}</objective>"}],
+        "role": "user",
+    }
+    use_memory = pidgin_result.use_memory
+    if use_memory:
+        resolved_flags["useMemory"] = True
 
     # Set up memory (SheetManager) if requested and drive is available.
     sheet_manager: SheetManager | None = None
