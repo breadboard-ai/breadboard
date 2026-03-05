@@ -16,16 +16,20 @@ the Loop uses to declare and dispatch function calls.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Awaitable
+from typing import Any, Callable, Awaitable, TypedDict
 
 # Types matching the Gemini API function declaration format.
 FunctionDeclaration = dict[str, Any]
 
+# Options for status update callbacks, matching TS StatusUpdateCallbackOptions.
+class StatusUpdateOptions(TypedDict, total=False):
+    is_thought: bool
+    expected_duration_in_sec: int
+
+
 # A callback that allows function handlers to update their status.
 # When status is None, it means "clear my status".
-# TODO: Port full statusUpdater options from TS (expectedDurationInSec,
-# isThought). Currently only the text is forwarded.
-StatusUpdateCallback = Callable[[str | None], None]
+StatusUpdateCallback = Callable[[str | None, StatusUpdateOptions | None], None]
 
 # Handler: receives parsed args + status callback, returns dict response.
 FunctionHandler = Callable[

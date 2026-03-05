@@ -156,21 +156,35 @@ class TestBuildHooksFromSink:
         assert events[0].to_dict() == {"finish": {}}
 
     @pytest.mark.asyncio
-    async def test_on_content_emits_content_event(self):
+    async def test_on_content_not_set(self):
+        """Content events are not emitted over the wire (remote client ignores them)."""
+        sink = AgentEventSink()
+        hooks = build_hooks_from_sink(sink)
+        assert hooks.on_content is None
+
+    @pytest.mark.asyncio
+    async def test_on_function_call_update_forwards_opts(self):
         sink = AgentEventSink()
         hooks = build_hooks_from_sink(sink)
 
-        content = {"parts": [{"text": "result"}]}
-        hooks.on_content(content)
+        hooks.on_function_call_update(
+            "call-1", "Generating Text",
+            {"expectedDurationInSec": 20, "isThought": False},
+        )
         sink.close()
 
         events = []
         async for event in sink:
             events.append(event)
 
-        assert isinstance(events[0], ContentEvent)
-        assert events[0].content == content
-        assert events[0].to_dict() == {"content": {"content": content}}
+        assert isinstance(events[0], FunctionCallUpdateEvent)
+        assert events[0].to_dict() == {
+            "functionCallUpdate": {
+                "callId": "call-1",
+                "status": "Generating Text",
+                "opts": {"expectedDurationInSec": 20, "isThought": False},
+            },
+        }
 
     @pytest.mark.asyncio
     async def test_on_turn_complete_emits_event(self):

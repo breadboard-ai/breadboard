@@ -27,7 +27,7 @@ from opal_backend.functions.generate import (
 # ---------------------------------------------------------------------------
 
 
-def _noop_status(_msg):
+def _noop_status(_msg, _opts=None):
     """No-op status callback."""
     pass
 
@@ -155,7 +155,7 @@ class TestGenerateTextHandler:
         statuses = []
         result = await defn.handler(
             {"prompt": "What is the answer?", "model": "pro"},
-            statuses.append,
+            lambda msg, opts=None: statuses.append(msg),
         )
         assert result == {"text": "The answer is 42"}
         assert "Hmm let me think..." in statuses
@@ -414,7 +414,7 @@ class TestGenerateTextHandler:
         defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
 
         statuses = []
-        def track_status(msg):
+        def track_status(msg, opts=None):
             statuses.append(msg)
 
         await defn.handler(

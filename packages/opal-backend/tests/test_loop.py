@@ -362,7 +362,6 @@ class TestLoop:
         hooks = LoopHooks(
             on_start=lambda obj: events.append("start"),
             on_finish=lambda: events.append("finish"),
-            on_content=lambda c: events.append("content"),
             on_thought=lambda t: events.append(f"thought:{t}"),
             on_send_request=lambda m, b: events.append("send_request"),
             on_turn_complete=lambda: events.append("turn_complete"),
@@ -395,9 +394,80 @@ class TestLoop:
         assert "start" in events
         assert "finish" in events
         assert "send_request" in events
-        assert "content" in events
         assert any(e.startswith("thought:") for e in events)
         assert "turn_complete" in events
+
+    @pytest.mark.asyncio
+    async def test_status_opts_snake_to_camel(self):
+        """make_status_cb converts snake_case opts to camelCase on the wire."""
+        loop = Loop(backend=MagicMock())
+
+        system_fns = make_system_functions(loop.controller)
+
+        async def fn_with_status(args, status_cb):
+            status_cb("Working", {
+                "expected_duration_in_sec": 20,
+                "is_thought": True,
+            })
+            return {"ok": True}
+
+        system_fns.append(
+            FunctionDefinition(
+                name="do_work",
+                description="Does work",
+                handler=fn_with_status,
+            )
+        )
+
+        mapped = map_definitions(system_fns)
+        group = FunctionGroup(
+            definitions=mapped.definitions,
+            declarations=mapped.declarations,
+        )
+
+        received_updates: list[tuple] = []
+
+        hooks = LoopHooks(
+            on_function_call_update=lambda cid, status, opts=None: (
+                received_updates.append((cid, status, opts))
+            ),
+        )
+
+        turn = 0
+
+        async def mock_stream(*args, **kwargs):
+            nonlocal turn
+            turn += 1
+            if turn == 1:
+                yield make_function_call_chunk("do_work", {})
+            else:
+                yield make_function_call_chunk(
+                    "system_objective_fulfilled",
+                    {"objective_outcome": "Done"},
+                )
+
+        with patch(
+            "opal_backend.loop.stream_generate_content",
+            side_effect=mock_stream,
+        ):
+            await loop.run(
+                AgentRunArgs(
+                    objective={"parts": [{"text": "Test"}], "role": "user"},
+                    function_groups=[group],
+                    hooks=hooks,
+                )
+            )
+
+        # Find the "Working" update (not the None status clear)
+        working = [u for u in received_updates if u[1] == "Working"]
+        assert len(working) == 1
+        _, status, opts = working[0]
+        assert status == "Working"
+        # Opts should be camelCase on the wire
+        assert opts == {
+            "expectedDurationInSec": 20,
+            "isThought": True,
+        }
 
     @pytest.mark.asyncio
     async def test_function_call_and_result_share_same_call_id(self):

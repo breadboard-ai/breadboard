@@ -483,7 +483,7 @@ Body (resume): {interactionId, response}
       restored; `shared_schemas.py` centralizes `statusUpdateSchema`,
       `taskIdSchema`, `fileNameSchema`
 
-### Phase 5: Python Consolidation & Copybara Prep ← **we are here** (5.6 next)
+### Phase 5: Python Consolidation & Copybara Prep
 
 > **🎯 Objective:** `opal-backend-shared` code is pure Python (no `httpx`,
 > `fastapi`, or `pydantic` imports in synced files). The shared code can be
@@ -498,7 +498,7 @@ Body (resume): {interactionId, response}
 > # → no results
 > ```
 
-#### 5.1: Package Consolidation
+#### 5.1: Package Consolidation ✅
 
 - [x] Merge `opal-backend-shared`, `opal-backend-dev`, `opal-backend-fake` into
       single `packages/opal-backend/` with one `pyproject.toml` and one `.venv`
@@ -510,7 +510,7 @@ Body (resume): {interactionId, response}
 - [x] Update wireit scripts (`setup:python`, `test:python`, `dev:backend`,
       `dev:fake`)
 
-#### 5.2: HTTP Transport Abstraction
+#### 5.2: HTTP Transport Abstraction ✅
 
 - [x] `http_client.py` — `HttpClient` protocol (synced, no deps)
 - [x] `local/http_client_impl.py` — `httpx`-based implementation (not synced)
@@ -520,7 +520,7 @@ Body (resume): {interactionId, response}
 - [x] Thread `HttpClient` through `Loop` and function group factories
 - [x] Update all tests to inject `HttpClient`
 
-#### 5.3: Typed Event Models
+#### 5.3: Typed Event Models ✅
 
 - [x] `opal_backend/events.py` — dataclass models for all 22 `AgentEvent` types,
       `AgentResult`, `FileData`, request/response bodies (`StartRunRequest`,
@@ -539,7 +539,7 @@ Body (resume): {interactionId, response}
 - [x] Update all tests (`test_agent_events.py`, `test_chat_functions.py`,
       `test_suspend_resume.py`)
 
-#### 5.4: BackendClient Protocol
+#### 5.4: BackendClient Protocol ✅
 
 - [x] `backend_client.py` — `BackendClient` protocol (`execute_step`,
       `upload_gemini_file`, `upload_blob_file`) + `HttpBackendClient` impl
@@ -550,7 +550,7 @@ Body (resume): {interactionId, response}
 - [x] `dev/main.py` — per-request `HttpBackendClient` with `origin`
 - [x] Tests updated (step_executor, conform_body, suspend_resume)
 
-#### 5.5: High-Level Entry Point
+#### 5.5: High-Level Entry Point ✅
 
 ##### 5.5a: Credential Internalization ✅
 
@@ -571,7 +571,7 @@ Body (resume): {interactionId, response}
       `access_token`/`origin` from `InteractionState`
 - [x] Tests updated (all 322 pass)
 
-##### 5.5b: `run()` / `resume()` Entry Point
+##### 5.5b: `run()` / `resume()` Entry Point ✅
 
 > **🎯 Objective:** `opal_backend.run()` is a single async iterator that takes
 > an objective + injected deps and yields `AgentEvent`s. Consumers provide only
@@ -614,31 +614,87 @@ Body (resume): {interactionId, response}
 - [x] Updated imports: `dev/main.py`, `test_step_executor.py`,
       `test_suspend_resume.py`, `test_run.py` (328 pass)
 
-#### Future Phases (deferred)
+#### 5.6: Memory & Storage ✅
 
-##### Graph-Editing Functions (from 4.8d)
+> **🎯 Objective:** Agents running on the Python backend can use persistent
+> Google Sheets-backed memory. Chat conversations are persisted and recalled
+> across sessions. The `graph` identity is required and anchors all storage.
 
-- [ ] Port graph-editing chat functions to Python (uses suspend protocol for
-      `readGraph`, `applyEdits`, etc.)
+- [x] `DriveOperationsClient` protocol (9 methods: Drive CRUD + Sheets
+      read/write/batch) + `HttpDriveOperationsClient` impl (#8089)
+- [x] `InteractionStore` protocol made async (`save`, `load`, `has`, `clear`);
+      `InMemoryInteractionStore` updated; flags/graph folded into stored
+      interaction state (#8089)
+- [x] `AgentFileSystem` made async (`get`, `list_files`, `read_text`,
+      `get_many`, `from_pidgin_string`) — prep for database-backed storage
+      (#8090)
+- [x] `SheetManager` — ported from TS `SheetManager` + `memorySheetGetter`;
+      resolves spreadsheet IDs via `DriveOperationsClient.query_files`, creates
+      / reads / updates / deletes sheets. 21 tests. (#8091)
+- [x] 5 memory functions (`create_sheet`, `read_sheet`, `update_sheet`,
+      `delete_sheet`, `get_metadata`) ported to Python with JSON schemas
+      matching TS exactly. 12 tests. Wired into `run()`. (#8091)
+- [x] `AgentFileSystem` — `/mnt/memory/` path resolution via
+      `set_sheet_manager()`. 4 tests. (#8091)
+- [x] `ChatLogManager` — seeds from existing sheets, persists new entries,
+      registers chat log as system file. Wired into `run()` and `resume()`.
+      (#8092)
+- [x] `graph` promoted to required sibling field (out of `flags`) across full
+      stack; every run anchored to graph identity (#8092)
+- [x] `session_id` in `InteractionState` for cross-suspend chat log continuity
+      (#8092)
+- [x] `_process_chat_response` — transforms `{input: LLMContent}` →
+      `{user_input: text}` on resume, matching TS handler logic (#8092)
+- [x] `.on("error")` handler in `invokeRemoteAgent` — server errors now surface
+      to users (#8092)
+- [x] Tests: 435 Python + 31 TS agent tests pass
 
-##### Production Readiness (from 4.9)
+#### 5.7: Port Fidelity & Error Handling ✅
+
+> Systematic audit-and-fix pass across all function groups to ensure the Python
+> backend matches TS behavior exactly. Also adds fatal error classification so
+> unrecoverable errors (quota-exhausted) terminate the loop immediately instead
+> of being retried by the LLM.
+
+- [x] `error_classifier.py` — `to_error_or_response()` classifies errors by
+      parsing structured JSON (`RESOURCE_EXHAUSTED`) or fuzzy keyword matching;
+      promotes quota-exhausted to `$error` outcomes. 16 tests. (#8071)
+- [x] `function_caller.py` + `loop.py` — propagate and handle `$error` from
+      function results (#8071)
+- [x] All generation handlers (`video`, `image`, `audio`, `generate`) route
+      errors through `to_error_or_response` (#8071)
+- [x] `generate.py` port fidelity — `mergeTextParts` utility, `statusUpdater`
+      TODOs, model resolution alignment. 20 tests. (#8070, #8081, #8087)
+- [x] `image.py` — batch resolution via `file_system.get_many()`, output-
+      processing drift fix (`get_many` + 5 tests) (#8082, #8088)
+- [x] `chat.py` — `computeFormat` (`inputType` → icon name mapping) ported;
+      `from_pidgin_string` resolution for choice labels (#8095)
+- [x] `system.py` — 3 drift fixes: route resolution via
+      `get_original_route(href)`, intermediate file LLMContent format, `href` in
+      `failed_to_fulfill`. 5 tests. (#8096)
+- [x] `BackendClient.stream_generate_content` — consolidated all Gemini
+      streaming into `BackendClient`, eliminated `HttpClient` protocol entirely
+      (#8074, #8075)
+- [x] `ENABLE_GEMINI_BACKEND` flag — routes Gemini calls through backend (#8076)
+- [x] Tests: 441 Python tests pass
+
+### Phase 6: Production Readiness ← **we are here**
 
 > Full parity with the in-process agent. Everything that works locally works
 > identically through the dev backend.
 
-- [ ] `MemoryManager` + `StoredData`/`FileData` resolution in Python FS
-- [ ] Status metadata plumbing — `expectedDurationInSec` from handlers → loop →
-      SSE → frontend progress bar
+- [x] Status metadata plumbing — `StatusUpdateOptions` (`expectedDurationInSec`,
+      `isThought`) flows through `StatusUpdateCallback` →
+      `FunctionCallUpdateEvent.opts` → SSE wire format. All 4 TODOs in
+      `generate.py` resolved.
 - [ ] `url_context` consent flow — suspend for `queryConsent` before enabling
-      `urlContext` tool (currently auto-approved in dev)
-- [ ] Consolidate generate function groups — merge image, video, audio into one
-      group with one instruction (matching TS `generate.ts`)
-- [ ] State store for production (Redis/Firestore instead of in-memory)
-- [ ] Reconnection — client re-POSTs with last interaction ID on drop
-- [ ] Cancel concurrent function caller tasks on suspend — avoids benign "emit()
-      called on closed sink: functionCallUpdate" warning
-- [ ] Remove `LocalAgentRun` path (or keep for offline dev)
-
-##### Fake Server
-
-- [ ] Rebuild fake server to align with dev server's approach
+      `urlContext` tool (currently auto-approved in dev). Deferred: Python's
+      exception-based suspend model needs reconciling with the inline
+      `await sink.suspend()` pattern from TS.
+- [x] Cancel concurrent function caller tasks on suspend — `loop.py` now cancels
+      sibling `asyncio.Task`s before saving state, eliminating the "emit()
+      called on closed sink" warning.
+- [x] `content` event — investigation result: only consumed in local mode
+      (`RunStateManager.pushContent`), ignored by remote client. Removed
+      server-side emission from `build_hooks_from_sink` and loop. The event can
+      be fully removed if `LocalAgentRun` is removed.

@@ -51,7 +51,7 @@ def _mock_sheet_manager(**overrides) -> AsyncMock:
     return sm
 
 
-def _noop_status(msg: str | None) -> None:
+def _noop_status(msg: str | None, opts: Any = None) -> None:
     pass
 
 

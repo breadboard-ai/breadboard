@@ -23,6 +23,7 @@ This makes the Loop reusable across different agent types:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import uuid
 from dataclasses import dataclass, field
@@ -93,7 +94,7 @@ class LoopHooks:
         | None
     ) = None
     on_function_call_update: (
-        Callable[[str, str | None], None] | None
+        Callable[[str, str | None, dict[str, Any] | None], None] | None
     ) = None
     on_function_result: (
         Callable[[str, LLMContent], None] | None
@@ -253,8 +254,6 @@ class Loop:
                         )
 
                     contents.append(content)
-                    if hooks.on_content:
-                        hooks.on_content(content)
 
                     parts = content.get("parts", [])
                     for part in parts:
@@ -286,11 +285,19 @@ class Loop:
 
                             def make_status_cb(cid: str) -> Any:
                                 def cb(
-                                    status: str | None, **kwargs: Any
+                                    status: str | None,
+                                    opts: dict[str, Any] | None = None,
                                 ) -> None:
                                     if hooks.on_function_call_update:
+                                        wire_opts = None
+                                        if opts:
+                                            wire_opts = {}
+                                            if "expected_duration_in_sec" in opts:
+                                                wire_opts["expectedDurationInSec"] = opts["expected_duration_in_sec"]
+                                            if "is_thought" in opts:
+                                                wire_opts["isThought"] = opts["is_thought"]
                                         hooks.on_function_call_update(
-                                            cid, status
+                                            cid, status, wire_opts
                                         )
 
                                 return cb
@@ -306,9 +313,17 @@ class Loop:
                 try:
                     function_results = await function_caller.get_results()
                 except SuspendError as suspend:
-                    # A function needs client input. Package the current
-                    # conversation state so the caller can save it and
-                    # resume later.
+                    # A function needs client input. Cancel any sibling
+                    # tasks still running — they would emit on a closed
+                    # sink otherwise.
+                    for task in function_caller._tasks:
+                        if not task.done():
+                            task.cancel()
+                    await asyncio.gather(
+                        *function_caller._tasks, return_exceptions=True
+                    )
+                    # Package the current conversation state so the
+                    # caller can save it and resume later.
                     _suspended = True
                     return SuspendResult(
                         interaction_id=suspend.interaction_id,
@@ -335,8 +350,6 @@ class Loop:
                         )
 
                 contents.append(function_results["combined"])
-                if hooks.on_content:
-                    hooks.on_content(function_results["combined"])
 
                 if hooks.on_turn_complete:
                     hooks.on_turn_complete()

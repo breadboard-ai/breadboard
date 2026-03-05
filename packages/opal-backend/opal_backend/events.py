@@ -385,12 +385,16 @@ class FunctionCallUpdateEvent:
     type: str = "functionCallUpdate"
     call_id: str = ""
     status: str | None = None
+    opts: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {"functionCallUpdate": {
+        payload: dict[str, Any] = {
             "callId": self.call_id,
             "status": self.status,
-        }}
+        }
+        if self.opts:
+            payload["opts"] = self.opts
+        return {"functionCallUpdate": payload}
 
 
 @dataclass

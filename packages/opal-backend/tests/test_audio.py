@@ -193,7 +193,7 @@ class TestGenerateSpeechHandler:
         defn = _define_generate_speech(file_system=fs)
 
         statuses = []
-        await defn.handler({"text": "Hello"}, statuses.append)
+        await defn.handler({"text": "Hello"}, lambda msg, opts=None: statuses.append(msg))
         assert statuses[0] == "Generating Speech"
         assert statuses[-1] is None
 
@@ -326,7 +326,7 @@ class TestGenerateMusicHandler:
         defn = _define_generate_music(file_system=fs)
 
         statuses = []
-        await defn.handler({"prompt": "Jazz piano"}, statuses.append)
+        await defn.handler({"prompt": "Jazz piano"}, lambda msg, opts=None: statuses.append(msg))
         assert statuses[0] == "Generating Music"
         assert statuses[-1] is None
 
