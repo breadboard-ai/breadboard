@@ -65,12 +65,9 @@ def make_function_call_chunk(name: str, args: dict | None = None) -> dict:
     }
 
 
-def make_objective() -> dict:
-    """Create a minimal objective."""
-    return {
-        "parts": [{"text": "<objective>Say hello</objective>"}],
-        "role": "user",
-    }
+def make_segments() -> list[dict]:
+    """Create minimal segments for a text objective."""
+    return [{"type": "text", "text": "Say hello"}]
 
 
 
@@ -127,7 +124,7 @@ class TestRun:
             side_effect=fake_stream,
         ):
             events = await collect_events(run(
-                objective=make_objective(),
+                segments=make_segments(),
                 backend=make_mock_backend(),
                 store=InMemoryInteractionStore(),
                 graph=make_graph(),
@@ -153,7 +150,7 @@ class TestRun:
             side_effect=exploding_stream,
         ):
             events = await collect_events(run(
-                objective=make_objective(),
+                segments=make_segments(),
                 backend=make_mock_backend(),
                 store=InMemoryInteractionStore(),
                 graph=make_graph(),
@@ -183,7 +180,7 @@ class TestRun:
             side_effect=fake_stream,
         ):
             events = await collect_events(run(
-                objective=make_objective(),
+                segments=make_segments(),
                 backend=make_mock_backend(),
                 store=store,
                 graph=make_graph(),
@@ -215,7 +212,7 @@ class TestRun:
             side_effect=fake_stream,
         ):
             events = await collect_events(run(
-                objective=make_objective(),
+                segments=make_segments(),
                 backend=make_mock_backend(),
                 store=InMemoryInteractionStore(),
                 graph=make_graph(),
@@ -272,7 +269,7 @@ class TestResume:
             side_effect=suspend_stream,
         ):
             run_events = await collect_events(run(
-                objective=make_objective(),
+                segments=make_segments(),
                 backend=make_mock_backend(),
                 store=store,
                 graph=make_graph(),
@@ -338,7 +335,7 @@ class TestResume:
             side_effect=suspend_stream,
         ):
             await collect_events(run(
-                objective=make_objective(),
+                segments=make_segments(),
                 backend=make_mock_backend(),
                 store=store,
                 flags=test_flags,
@@ -381,6 +378,126 @@ class TestResume:
 
         types = [event_type(e) for e in resume_events]
         assert "complete" in types
+
+    @pytest.mark.asyncio
+    async def test_memory_tool_segment_sets_use_memory_flag(self):
+        """A memory tool segment should set useMemory in saved flags."""
+        suspend_chunks = [
+            make_function_call_chunk(
+                "chat_request_user_input",
+                {"user_message": "What?"},
+            ),
+        ]
+
+        async def fake_stream(*args, **kwargs):
+            for chunk in suspend_chunks:
+                yield chunk
+
+        store = InMemoryInteractionStore()
+
+        # Segments include a memory tool — run() should derive useMemory.
+        segments_with_memory = [
+            {"type": "text", "text": "Remember things"},
+            {"type": "tool", "path": "function-group/use-memory"},
+        ]
+
+        with patch(
+            "opal_backend.loop.stream_generate_content",
+            side_effect=fake_stream,
+        ):
+            await collect_events(run(
+                segments=segments_with_memory,
+                backend=make_mock_backend(),
+                store=store,
+                graph=make_graph(),
+            ))
+
+        saved_state = next(iter(store._store.values()))
+        assert saved_state.flags.get("useMemory") is True
+
+    @pytest.mark.asyncio
+    async def test_text_only_segments_do_not_set_use_memory(self):
+        """Plain text segments should not set useMemory."""
+        suspend_chunks = [
+            make_function_call_chunk(
+                "chat_request_user_input",
+                {"user_message": "What?"},
+            ),
+        ]
+
+        async def fake_stream(*args, **kwargs):
+            for chunk in suspend_chunks:
+                yield chunk
+
+        store = InMemoryInteractionStore()
+
+        with patch(
+            "opal_backend.loop.stream_generate_content",
+            side_effect=fake_stream,
+        ):
+            await collect_events(run(
+                segments=make_segments(),
+                backend=make_mock_backend(),
+                store=store,
+                graph=make_graph(),
+            ))
+
+        saved_state = next(iter(store._store.values()))
+        assert "useMemory" not in saved_state.flags
+
+    @pytest.mark.asyncio
+    async def test_asset_data_parts_survive_into_loop(self):
+        """Data parts from asset segments should appear in intermediate files."""
+        chunks = [
+            make_function_call_chunk(
+                "system_objective_fulfilled",
+                {"objective_outcome": "Done", "href": "/"},
+            ),
+        ]
+
+        async def fake_stream(*args, **kwargs):
+            for chunk in chunks:
+                yield chunk
+
+        # An asset segment with an inline image part.
+        segments_with_asset = [
+            {"type": "text", "text": "Describe this"},
+            {
+                "type": "asset",
+                "title": "photo",
+                "content": {
+                    "parts": [{"inlineData": {
+                        "mimeType": "image/png",
+                        "data": "iVBOR",
+                    }}],
+                    "role": "user",
+                },
+            },
+        ]
+
+        with patch(
+            "opal_backend.loop.stream_generate_content",
+            side_effect=fake_stream,
+        ):
+            events = await collect_events(run(
+                segments=segments_with_asset,
+                backend=make_mock_backend(),
+                store=InMemoryInteractionStore(),
+                graph=make_graph(),
+            ))
+
+        complete = next(e for e in events if event_type(e) == "complete")
+        intermediate = complete["complete"]["result"].get("intermediate")
+        # The asset's inline data should have been registered in the FS
+        # and appear as an intermediate file.
+        assert intermediate is not None
+        assert len(intermediate) >= 1
+        # Verify the data survived.
+        found_image = any(
+            f.get("content", {}).get("inlineData", {}).get("mimeType")
+            == "image/png"
+            for f in intermediate
+        )
 
 
 # =============================================================================
