@@ -242,6 +242,9 @@ class TestObjectiveFulfilledPidginResolution:
         paths = [f.path for f in result.intermediate]
         assert "/mnt/image1.png" in paths
         assert "/mnt/image2.jpg" in paths
+        # Each intermediate content is LLMContent (dict with 'parts')
+        for f in result.intermediate:
+            assert "parts" in f.content
 
     @pytest.mark.asyncio
     async def test_outcomes_without_file_system_uses_raw_text(self):
@@ -275,6 +278,71 @@ class TestObjectiveFulfilledPidginResolution:
 
         # Should return an error dict, not terminate
         assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_href_resolved_via_get_original_route(self):
+        """href is resolved through fileSystem.get_original_route."""
+        controller = LoopController()
+        fs = AgentFileSystem()
+        # Register a route so get_original_route can resolve it
+        pidgin_name = fs.add_route("/original/agent/path")
+
+        group = get_system_function_group(controller, file_system=fs)
+        defn = dict(group.definitions)[OBJECTIVE_FULFILLED_FUNCTION]
+
+        await defn.handler(
+            {"objective_outcome": "Done", "href": pidgin_name},
+            lambda s: None,
+        )
+
+        result = controller.result
+        assert isinstance(result, AgentResult)
+        assert result.href == "/original/agent/path"
+
+    @pytest.mark.asyncio
+    async def test_unknown_route_returns_error(self):
+        """An unknown route name returns an error instead of terminating."""
+        controller = LoopController()
+        fs = AgentFileSystem()
+
+        group = get_system_function_group(controller, file_system=fs)
+        defn = dict(group.definitions)[OBJECTIVE_FULFILLED_FUNCTION]
+
+        result = await defn.handler(
+            {"objective_outcome": "Done", "href": "/nonexistent"},
+            lambda s: None,
+        )
+
+        assert "error" in result
+        assert controller.terminated is False
+
+    @pytest.mark.asyncio
+    async def test_intermediate_error_propagated(self):
+        """Errors from intermediate file resolution are propagated."""
+        controller = LoopController()
+        fs = AgentFileSystem()
+        fs.add_part({"inlineData": {"data": "img1", "mimeType": "image/png"}})
+
+        group = get_system_function_group(controller, file_system=fs)
+        defn = dict(group.definitions)[OBJECTIVE_FULFILLED_FUNCTION]
+
+        # Monkeypatch get to return an error for the first file
+        original_get = fs.get
+
+        async def failing_get(path: str):
+            return {"$error": f"resolution failed for {path}"}
+
+        fs.get = failing_get  # type: ignore[assignment]
+
+        result = await defn.handler(
+            {"objective_outcome": '<file src="/mnt/image1.png" />'},
+            lambda s: None,
+        )
+
+        # Should propagate the error instead of silently skipping
+        assert "error" in result
+        assert "resolution failed" in result["error"]
+        fs.get = original_get  # type: ignore[assignment]
 
 
 # =============================================================================
@@ -344,3 +412,35 @@ class TestFailedToFulfill:
         await defn.handler({"user_message": ""}, lambda s: None)
 
         assert controller.terminated is True
+
+    @pytest.mark.asyncio
+    async def test_href_passed_to_agent_result(self):
+        """The href parameter is passed through to AgentResult."""
+        controller = LoopController()
+        group = get_system_function_group(controller)
+
+        defn = dict(group.definitions)[FAILED_TO_FULFILL_FUNCTION]
+        await defn.handler(
+            {"user_message": "Can't do it", "href": "/fallback-agent"},
+            lambda s: None,
+        )
+
+        result = controller.result
+        assert isinstance(result, AgentResult)
+        assert result.href == "/fallback-agent"
+
+    @pytest.mark.asyncio
+    async def test_href_defaults_to_root(self):
+        """The href defaults to '/' when not provided."""
+        controller = LoopController()
+        group = get_system_function_group(controller)
+
+        defn = dict(group.definitions)[FAILED_TO_FULFILL_FUNCTION]
+        await defn.handler(
+            {"user_message": "Nope"},
+            lambda s: None,
+        )
+
+        result = controller.result
+        assert isinstance(result, AgentResult)
+        assert result.href == "/"
