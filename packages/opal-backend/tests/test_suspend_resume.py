@@ -551,6 +551,137 @@ class TestLoopSuspend(unittest.TestCase):
 
         asyncio.run(run())
 
+    def test_completed_sibling_emits_result_on_suspend(self):
+        """Completed sibling functions emit on_function_result on suspend.
+
+        When create_task_tree completes before a sibling function suspends
+        (e.g. consent precondition), on_function_result must fire for the
+        completed function so the client sees a matching FunctionResultEvent.
+        """
+        from opal_backend.events import QueryConsentEvent
+        from opal_backend.function_definition import FunctionGroup
+        from opal_backend.loop import LoopHooks
+
+        consent_event = QueryConsentEvent(
+            request_id="req-consent",
+            consent_type="GET_ANY_WEBPAGE",
+        )
+        function_call_part = {
+            "functionCall": {
+                "name": "generate_text",
+                "args": {"url_context": True},
+            }
+        }
+
+        async def fast_handler(args, status_cb):
+            return {"file_path": "/mnt/task-tree.json"}
+
+        async def precondition(args):
+            # Yield control so the fast sibling can complete first.
+            await asyncio.sleep(0)
+            raise SuspendError(
+                consent_event,
+                function_call_part,
+                is_precondition_check=True,
+            )
+
+        async def suspending_handler(args, status_cb):
+            return {"text": "never reached"}
+
+        fast_defn = FunctionDefinition(
+            name="system_create_task_tree",
+            description="Create a task tree",
+            handler=fast_handler,
+        )
+        suspend_defn = FunctionDefinition(
+            name="generate_text",
+            description="Generate text",
+            handler=suspending_handler,
+            precondition=precondition,
+        )
+
+        group = FunctionGroup(
+            instruction="",
+            definitions=[
+                ("system_create_task_tree", fast_defn),
+                ("generate_text", suspend_defn),
+            ],
+            declarations=[
+                {"name": "system_create_task_tree", "description": "Task tree"},
+                {"name": "generate_text", "description": "Generate"},
+            ],
+        )
+
+        # Gemini returns both function calls in one chunk.
+        gemini_response = {
+            "candidates": [{
+                "content": {
+                    "parts": [
+                        {
+                            "functionCall": {
+                                "name": "system_create_task_tree",
+                                "args": {"task_tree": {"tasks": []}},
+                            }
+                        },
+                        {
+                            "functionCall": {
+                                "name": "generate_text",
+                                "args": {"url_context": True},
+                            }
+                        },
+                    ],
+                    "role": "model",
+                }
+            }]
+        }
+
+        async def fake_stream(*_args, **_kwargs):
+            yield gemini_response
+
+        objective = {
+            "parts": [{"text": "Test sibling result on suspend"}],
+            "role": "user",
+        }
+
+        function_call_ids: list[str] = []
+        function_result_ids: list[str] = []
+
+        def on_function_call(part, icon=None, title=None):
+            import uuid
+            call_id = str(uuid.uuid4())
+            function_call_ids.append(call_id)
+            return {"callId": call_id, "reporter": None}
+
+        def on_function_result(call_id, content):
+            function_result_ids.append(call_id)
+
+        async def run():
+            with patch(
+                "opal_backend.loop.stream_generate_content",
+                side_effect=fake_stream,
+            ):
+                loop = Loop(backend=MagicMock())
+                result = await loop.run(
+                    AgentRunArgs(
+                        objective=objective,
+                        function_groups=[group],
+                        hooks=LoopHooks(
+                            on_function_call=on_function_call,
+                            on_function_result=on_function_result,
+                        ),
+                    )
+                )
+                self.assertIsInstance(result, SuspendResult)
+                # Both function calls should have been reported.
+                self.assertEqual(len(function_call_ids), 2)
+                # The fast sibling (create_task_tree) should have its
+                # result emitted even though the turn ended with a suspend.
+                self.assertEqual(len(function_result_ids), 1)
+                # The emitted result must match one of the call IDs.
+                self.assertIn(function_result_ids[0], function_call_ids)
+
+        asyncio.run(run())
+
 
 class TestPreconditionSuspend(unittest.TestCase):
     """Tests for precondition-based suspend/resume."""
