@@ -552,5 +552,160 @@ class TestLoopSuspend(unittest.TestCase):
         asyncio.run(run())
 
 
+class TestPreconditionSuspend(unittest.TestCase):
+    """Tests for precondition-based suspend/resume."""
+
+    def test_precondition_suspend_propagates_through_caller(self):
+        """SuspendError from a precondition propagates with is_precondition_check."""
+        from opal_backend.events import QueryConsentEvent
+
+        consent_event = QueryConsentEvent(
+            request_id="req-consent",
+            consent_type="GET_ANY_WEBPAGE",
+            scope={},
+            graph_url="https://example.com/graph",
+        )
+
+        async def precondition(args):
+            raise SuspendError(
+                consent_event,
+                {"functionCall": {"name": "generate_text", "args": args}},
+                is_precondition_check=True,
+            )
+
+        async def handler(args, status_cb):
+            return {"text": "should not be called"}
+
+        defn = FunctionDefinition(
+            name="generate_text",
+            description="Generate text",
+            handler=handler,
+            precondition=precondition,
+        )
+
+        async def run():
+            caller = FunctionCaller({"generate_text": defn})
+            caller.call(
+                "call-1",
+                {"functionCall": {"name": "generate_text", "args": {"url_context": True}}},
+            )
+            with self.assertRaises(SuspendError) as ctx:
+                await caller.get_results()
+            self.assertTrue(ctx.exception.is_precondition_check)
+            self.assertIsInstance(ctx.exception.event, QueryConsentEvent)
+
+        asyncio.run(run())
+
+    def test_loop_suspend_result_has_precondition_flag(self):
+        """Loop SuspendResult carries is_precondition_check flag."""
+        from opal_backend.events import QueryConsentEvent
+        from opal_backend.function_definition import FunctionGroup
+
+        consent_event = QueryConsentEvent(
+            request_id="req-consent",
+            consent_type="GET_ANY_WEBPAGE",
+        )
+        function_call_part = {
+            "functionCall": {
+                "name": "generate_text",
+                "args": {"url_context": True, "prompt": "test"},
+            }
+        }
+
+        async def precondition(args):
+            raise SuspendError(
+                consent_event,
+                function_call_part,
+                is_precondition_check=True,
+            )
+
+        async def handler(args, status_cb):
+            return {"text": "never reached"}
+
+        defn = FunctionDefinition(
+            name="generate_text",
+            description="Generate text",
+            handler=handler,
+            precondition=precondition,
+        )
+        group = FunctionGroup(
+            instruction="Test",
+            definitions=[("generate_text", defn)],
+            declarations=[{"name": "generate_text", "description": "Generate text"}],
+        )
+
+        gemini_response = {
+            "candidates": [{
+                "content": {
+                    "parts": [{
+                        "functionCall": {
+                            "name": "generate_text",
+                            "args": {"url_context": True, "prompt": "test"},
+                        }
+                    }],
+                    "role": "model",
+                }
+            }]
+        }
+
+        async def fake_stream(*_args, **_kwargs):
+            yield gemini_response
+
+        objective = {
+            "parts": [{"text": "Test objective"}],
+            "role": "user",
+        }
+
+        async def run():
+            with patch(
+                "opal_backend.loop.stream_generate_content",
+                side_effect=fake_stream,
+            ):
+                loop = Loop(backend=MagicMock())
+                result = await loop.run(
+                    AgentRunArgs(
+                        objective=objective,
+                        function_groups=[group],
+                    )
+                )
+                self.assertIsInstance(result, SuspendResult)
+                self.assertTrue(result.is_precondition_check)
+                self.assertEqual(result.suspend_event.type, "queryConsent")
+
+        asyncio.run(run())
+
+    def test_precondition_passes_when_condition_met(self):
+        """When precondition passes, handler runs normally."""
+        handler_called = False
+
+        async def precondition(args):
+            # Condition is met — no raise.
+            pass
+
+        async def handler(args, status_cb):
+            nonlocal handler_called
+            handler_called = True
+            return {"text": "success"}
+
+        defn = FunctionDefinition(
+            name="test_fn",
+            description="Test",
+            handler=handler,
+            precondition=precondition,
+        )
+
+        async def run():
+            caller = FunctionCaller({"test_fn": defn})
+            caller.call(
+                "call-1",
+                {"functionCall": {"name": "test_fn", "args": {}}},
+            )
+            results = await caller.get_results()
+            self.assertTrue(handler_called)
+            self.assertIsNotNone(results)
+
+        asyncio.run(run())
+
+
 if __name__ == "__main__":
     unittest.main()

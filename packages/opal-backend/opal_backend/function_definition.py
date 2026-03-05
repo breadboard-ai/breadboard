@@ -37,6 +37,13 @@ FunctionHandler = Callable[
     Awaitable[dict[str, Any]],
 ]
 
+# Precondition: receives args, raises SuspendError if the function
+# should not proceed (e.g. consent not yet granted).
+PreconditionHandler = Callable[
+    [dict[str, Any]],
+    Awaitable[None],
+]
+
 
 @dataclass
 class FunctionDefinition:
@@ -48,6 +55,7 @@ class FunctionDefinition:
     name: str
     description: str
     handler: FunctionHandler
+    precondition: PreconditionHandler | None = None
     parameters_json_schema: dict[str, Any] | None = None
     response_json_schema: dict[str, Any] | None = None
     icon: str | None = None

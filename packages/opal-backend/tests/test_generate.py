@@ -233,17 +233,49 @@ class TestGenerateTextHandler:
         assert "googleMaps" in tool_types
 
     @pytest.mark.asyncio
+    async def test_url_context_raises_suspend_without_consent(self):
+        """url_context precondition raises SuspendError when consent not granted."""
+        from opal_backend.suspend import SuspendError
+        from opal_backend.events import QueryConsentEvent
+
+        fs = AgentFileSystem()
+        defn = _define_generate_text(
+            file_system=fs,
+            task_tree_manager=_mock_ttm(),
+            graph_url="https://example.com/graph",
+        )
+
+        with pytest.raises(SuspendError) as exc_info:
+            await defn.precondition({"url_context": True, "prompt": "test"})
+
+        suspend = exc_info.value
+        assert isinstance(suspend.event, QueryConsentEvent)
+        assert suspend.event.consent_type == "GET_ANY_WEBPAGE"
+        assert suspend.event.graph_url == "https://example.com/graph"
+        assert suspend.event.scope == {}
+        assert suspend.is_precondition_check is True
+        assert suspend.function_call_part["functionCall"]["name"] == GENERATE_TEXT_FUNCTION
+
+    @pytest.mark.asyncio
     @patch(
         "opal_backend.functions.generate.stream_generate_content"
     )
-    async def test_url_context_tool(self, mock_stream):
-        """URL context adds urlContext tool (auto-approved in dev)."""
+    async def test_url_context_with_consent_granted(self, mock_stream):
+        """url_context with consent pre-granted adds urlContext tool."""
         chunks = _make_gemini_chunks(["result"])
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
+        defn = _define_generate_text(
+            file_system=fs,
+            task_tree_manager=_mock_ttm(),
+            consents_granted={"GET_ANY_WEBPAGE"},
+        )
 
+        # Precondition should pass (consent granted).
+        await defn.precondition({"url_context": True, "prompt": "test"})
+
+        # Handler should add urlContext tool.
         await defn.handler(
             {
                 "prompt": "Check this URL",
@@ -257,6 +289,18 @@ class TestGenerateTextHandler:
         body = call_kwargs.args[1]
         tool_types = [list(t.keys())[0] for t in body["tools"]]
         assert "urlContext" in tool_types
+
+    @pytest.mark.asyncio
+    async def test_url_context_precondition_skipped_when_no_url_context(self):
+        """Precondition does nothing when url_context is not requested."""
+        fs = AgentFileSystem()
+        defn = _define_generate_text(
+            file_system=fs,
+            task_tree_manager=_mock_ttm(),
+        )
+
+        # Should not raise — no url_context requested.
+        await defn.precondition({"prompt": "test"})
 
     @pytest.mark.asyncio
     @patch(

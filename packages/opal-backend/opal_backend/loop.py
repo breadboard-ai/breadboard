@@ -330,6 +330,7 @@ class Loop:
                         suspend_event=suspend.event,
                         contents=contents,
                         function_call_part=suspend.function_call_part,
+                        is_precondition_check=suspend.is_precondition_check,
                     )
 
                 if function_results is None:

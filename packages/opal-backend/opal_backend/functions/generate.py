@@ -24,6 +24,7 @@ The handler flow:
 from __future__ import annotations
 
 import logging
+import uuid
 from typing import Any
 
 from ..agent_file_system import AgentFileSystem
@@ -38,8 +39,10 @@ from ..function_definition import (
     StatusUpdateOptions,
     map_definitions,
 )
+from ..events import QueryConsentEvent
 from ..gemini_client import stream_generate_content
 from ..pidgin import content_to_pidgin_string, from_pidgin_string, merge_text_parts
+from ..suspend import SuspendError
 from ..task_tree_manager import TaskTreeManager
 from ..shared_schemas import (
     STATUS_UPDATE_SCHEMA,
@@ -171,12 +174,34 @@ def _define_generate_text(
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager,
     backend: BackendClient | None = None,
+    graph_url: str = "",
+    consents_granted: set[str] | None = None,
 ) -> FunctionDefinition:
     """Port of the ``generate_text`` function from generate.ts.
 
     Makes a Gemini sub-call with the user's prompt, optional grounding
     tools, and returns the generated text.
     """
+    granted = consents_granted or set()
+
+    async def precondition(args: dict[str, Any]) -> None:
+        """Gate: require user consent before enabling url_context."""
+        if args.get("url_context"):
+            consent_key = "GET_ANY_WEBPAGE"
+            if consent_key not in granted:
+                raise SuspendError(
+                    QueryConsentEvent(
+                        request_id=str(uuid.uuid4()),
+                        consent_type=consent_key,
+                        scope={},
+                        graph_url=graph_url,
+                    ),
+                    {"functionCall": {
+                        "name": GENERATE_TEXT_FUNCTION,
+                        "args": args,
+                    }},
+                    is_precondition_check=True,
+                )
 
     async def handler(
         args: dict[str, Any], status_cb: StatusUpdateCallback
@@ -210,8 +235,7 @@ def _define_generate_text(
         if maps_grounding:
             tools.append({"googleMaps": {}})
         if url_context:
-            # TODO: Implement consent flow using suspend/resume machinery
-            # (TS uses sink.suspend with ConsentType.GET_ANY_WEBPAGE).
+            # Consent already verified by precondition.
             tools.append({"urlContext": {}})
 
         # 3. Build the Gemini body
@@ -285,6 +309,7 @@ def _define_generate_text(
             "Supports multimodal content input."
         ),
         handler=handler,
+        precondition=precondition,
         icon="text_analysis",
         title="Generating Text",
         parameters_json_schema={
@@ -631,6 +656,8 @@ def get_generate_function_group(
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager,
     backend: BackendClient | None = None,
+    graph_url: str = "",
+    consents_granted: set[str] | None = None,
 ) -> FunctionGroup:
     """Build a FunctionGroup with the generate_text function.
 
@@ -640,8 +667,9 @@ def get_generate_function_group(
     Args:
         file_system: The AgentFileSystem for resolving file references.
         task_tree_manager: Optional TaskTreeManager for progress tracking.
-
         backend: BackendClient for One Platform upload calls.
+        graph_url: Graph URL for consent events.
+        consents_granted: Set of already-granted consent types.
 
     Returns:
         A FunctionGroup with the generate_text declaration, definition,
@@ -652,6 +680,8 @@ def get_generate_function_group(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
             backend=backend,
+            graph_url=graph_url,
+            consents_granted=consents_granted,
         ),
         _define_generate_and_execute_code(
             file_system=file_system,

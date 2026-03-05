@@ -71,6 +71,15 @@ class InteractionState:
     # single conversation, and available for future session-scoped uses.
     session_id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
+    # True when the suspend was raised by a precondition handler rather
+    # than the main handler. On resume, this tells ``resume()`` to
+    # re-dispatch the function call instead of injecting the response.
+    is_precondition_check: bool = False
+
+    # Consent types that have been granted across the lifetime of this
+    # run. Preconditions check this set before suspending.
+    consents_granted: set[str] = field(default_factory=set)
+
 
 @runtime_checkable
 class InteractionStore(Protocol):

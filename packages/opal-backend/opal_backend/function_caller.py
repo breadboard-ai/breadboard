@@ -108,6 +108,9 @@ class FunctionCaller:
         cb = status_callback or noop_status
 
         try:
+            # Run precondition gate (e.g. consent check) before handler.
+            if definition.precondition:
+                await definition.precondition(args)
             response = await definition.handler(args, cb)
             # If the handler returned a $error outcome (fatal error),
             # propagate it directly — don't wrap in functionResponse.
