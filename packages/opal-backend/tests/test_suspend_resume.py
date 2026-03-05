@@ -452,6 +452,105 @@ class TestLoopSuspend(unittest.TestCase):
 
         asyncio.run(run())
 
+    def test_concurrent_tasks_cancelled_on_suspend(self):
+        """When one function suspends, sibling concurrent tasks are cancelled."""
+        suspend_event = WaitForInputEvent(
+            request_id="req-1",
+            prompt={"parts": [{"text": "Name?"}]},
+        )
+        function_call_part = {
+            "functionCall": {
+                "name": "chat_request_user_input",
+                "args": {"user_message": "Name?"},
+            }
+        }
+
+        sibling_completed = False
+
+        async def suspending_handler(args, status_cb):
+            raise SuspendError(suspend_event, function_call_part)
+
+        async def slow_handler(args, status_cb):
+            nonlocal sibling_completed
+            # This should be cancelled before it completes.
+            await asyncio.sleep(10)
+            sibling_completed = True
+            return {"result": "should not reach here"}
+
+        suspend_defn = FunctionDefinition(
+            name="chat_request_user_input",
+            description="Request user input",
+            handler=suspending_handler,
+        )
+        slow_defn = FunctionDefinition(
+            name="slow_function",
+            description="A slow function",
+            handler=slow_handler,
+        )
+
+        from opal_backend.function_definition import FunctionGroup
+
+        group = FunctionGroup(
+            instruction="",
+            definitions=[
+                ("chat_request_user_input", suspend_defn),
+                ("slow_function", slow_defn),
+            ],
+            declarations=[
+                {"name": "chat_request_user_input", "description": "Input"},
+                {"name": "slow_function", "description": "Slow"},
+            ],
+        )
+
+        # Gemini returns both function calls in one chunk (concurrent).
+        gemini_response = {
+            "candidates": [{
+                "content": {
+                    "parts": [
+                        {
+                            "functionCall": {
+                                "name": "slow_function",
+                                "args": {},
+                            }
+                        },
+                        {
+                            "functionCall": {
+                                "name": "chat_request_user_input",
+                                "args": {"user_message": "Name?"},
+                            }
+                        },
+                    ],
+                    "role": "model",
+                }
+            }]
+        }
+
+        async def fake_stream(*_args, **_kwargs):
+            yield gemini_response
+
+        objective = {
+            "parts": [{"text": "Test cancel"}],
+            "role": "user",
+        }
+
+        async def run():
+            with patch(
+                "opal_backend.loop.stream_generate_content",
+                side_effect=fake_stream,
+            ):
+                loop = Loop(backend=MagicMock())
+                result = await loop.run(
+                    AgentRunArgs(
+                        objective=objective,
+                        function_groups=[group],
+                    )
+                )
+                self.assertIsInstance(result, SuspendResult)
+                # The slow sibling must NOT have completed.
+                self.assertFalse(sibling_completed)
+
+        asyncio.run(run())
+
 
 if __name__ == "__main__":
     unittest.main()

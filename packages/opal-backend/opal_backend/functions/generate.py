@@ -24,7 +24,7 @@ The handler flow:
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Awaitable
+from typing import Any
 
 from ..agent_file_system import AgentFileSystem
 from ..conform_body import conform_body
@@ -34,6 +34,8 @@ from ..error_classifier import to_error_or_response
 from ..function_definition import (
     FunctionDefinition,
     FunctionGroup,
+    StatusUpdateCallback,
+    StatusUpdateOptions,
     map_definitions,
 )
 from ..gemini_client import stream_generate_content
@@ -176,10 +178,6 @@ def _define_generate_text(
     tools, and returns the generated text.
     """
 
-    # TODO: Port full statusUpdater options from TS (expectedDurationInSec,
-    # isThought). Currently only the text is forwarded.
-    StatusUpdateCallback = Callable[[str | None], None]
-
     async def handler(
         args: dict[str, Any], status_cb: StatusUpdateCallback
     ) -> dict[str, Any]:
@@ -194,11 +192,11 @@ def _define_generate_text(
         task_tree_manager.set_in_progress(task_id, status_update)
 
         if status_update:
-            status_cb(status_update)
+            status_cb(status_update, {"expected_duration_in_sec": 20})
         elif search_grounding or maps_grounding:
-            status_cb("Researching")
+            status_cb("Researching", {"expected_duration_in_sec": 30})
         else:
-            status_cb("Generating Text")
+            status_cb("Generating Text", {"expected_duration_in_sec": 20})
 
         # 1. Resolve pidgin <file> tags in the prompt
         translated = await from_pidgin_string(prompt, file_system)
@@ -263,10 +261,7 @@ def _define_generate_text(
                         continue
                     if "text" in part:
                         if part.get("thought"):
-                            # TODO: Forward isThought metadata to
-                            # status_cb (TS passes { isThought: true }
-                            # to statusUpdater).
-                            status_cb(part["text"])
+                            status_cb(part["text"], {"is_thought": True})
                         else:
                             result_parts.append(part)
         except Exception as e:
@@ -427,10 +422,6 @@ def _define_generate_and_execute_code(
     returning text results and inline file outputs.
     """
 
-    # TODO: Port full statusUpdater options from TS (expectedDurationInSec,
-    # isThought). Currently only the text is forwarded.
-    StatusUpdateCallback = Callable[[str | None], None]
-
     async def handler(
         args: dict[str, Any], status_cb: StatusUpdateCallback
     ) -> dict[str, Any]:
@@ -442,11 +433,11 @@ def _define_generate_and_execute_code(
         task_tree_manager.set_in_progress(task_id, status_update)
 
         if status_update:
-            status_cb(status_update)
+            status_cb(status_update, {"expected_duration_in_sec": 40})
         elif search_grounding:
-            status_cb("Researching")
+            status_cb("Researching", {"expected_duration_in_sec": 50})
         else:
-            status_cb("Generating Code")
+            status_cb("Generating Code", {"expected_duration_in_sec": 40})
 
         # 1. Resolve pidgin <file> tags in the prompt
         translated = await from_pidgin_string(prompt, file_system)
@@ -498,10 +489,7 @@ def _define_generate_and_execute_code(
                         continue
                     if "text" in part:
                         if part.get("thought"):
-                            # TODO: Forward isThought metadata to
-                            # status_cb (TS passes { isThought: true }
-                            # to statusUpdater).
-                            status_cb(part["text"])
+                            status_cb(part["text"], {"is_thought": True})
                         else:
                             result_parts.append(part)
                     elif "inlineData" in part:

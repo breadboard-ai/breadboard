@@ -26,7 +26,7 @@ from opal_backend.functions.image import (
 # ---------------------------------------------------------------------------
 
 
-def _noop_status(_msg):
+def _noop_status(_msg, _opts=None):
     """No-op status callback."""
     pass
 

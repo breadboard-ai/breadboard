@@ -26,7 +26,7 @@ from opal_backend.functions.generate import (
 # ---------------------------------------------------------------------------
 
 
-def _noop_status(_msg):
+def _noop_status(_msg, _opts=None):
     pass
 
 
@@ -194,7 +194,7 @@ class TestGenerateAndExecuteCode:
         defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         statuses = []
-        result = await defn.handler({"prompt": "test"}, statuses.append)
+        result = await defn.handler({"prompt": "test"}, lambda msg, opts=None: statuses.append(msg))
 
         assert "result" in result
         assert "Result" in result["result"]
@@ -366,7 +366,7 @@ class TestGenerateAndExecuteCode:
         defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         statuses = []
-        await defn.handler({"prompt": "test"}, statuses.append)
+        await defn.handler({"prompt": "test"}, lambda msg, opts=None: statuses.append(msg))
         assert statuses[0] == "Generating Code"
         assert statuses[-1] is None
 
@@ -389,7 +389,7 @@ class TestGenerateAndExecuteCode:
         statuses = []
         await defn.handler(
             {"prompt": "test", "search_grounding": True},
-            statuses.append,
+            lambda msg, opts=None: statuses.append(msg),
         )
         assert statuses[0] == "Researching"
 

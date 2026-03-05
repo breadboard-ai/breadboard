@@ -27,7 +27,7 @@ from opal_backend.functions.video import (
 # ---------------------------------------------------------------------------
 
 
-def _noop_status(_msg):
+def _noop_status(_msg, _opts=None):
     """No-op status callback."""
     pass
 

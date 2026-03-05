@@ -102,7 +102,7 @@ class FunctionCaller:
 
         logger.info("Calling function: %s", name)
 
-        def noop_status(_status: str | None, **_kwargs: Any) -> None:
+        def noop_status(_status: str | None, _opts: Any = None) -> None:
             pass
 
         cb = status_callback or noop_status

@@ -97,13 +97,12 @@ def build_hooks_from_sink(sink: AgentEventSink) -> LoopHooks:
             StartEvent(objective=objective)
         ),
         on_finish=lambda: sink.emit(FinishEvent()),
-        on_content=lambda content: sink.emit(
-            ContentEvent(content=content)
-        ),
         on_thought=lambda text: sink.emit(ThoughtEvent(text=text)),
         on_function_call=_make_on_function_call(sink),
-        on_function_call_update=lambda call_id, status: sink.emit(
-            FunctionCallUpdateEvent(call_id=call_id, status=status)
+        on_function_call_update=lambda call_id, status, opts=None: sink.emit(
+            FunctionCallUpdateEvent(
+                call_id=call_id, status=status, opts=opts,
+            )
         ),
         on_function_result=lambda call_id, content: sink.emit(
             FunctionResultEvent(call_id=call_id, content=content)
