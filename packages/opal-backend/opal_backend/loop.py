@@ -31,7 +31,7 @@ from typing import Any, Callable, Awaitable
 
 from .backend_client import BackendClient
 from .events import AgentResult, FileData, LLMContent
-from .function_caller import FunctionCaller
+from .function_caller import FunctionCallResult, FunctionCaller
 from .function_definition import FunctionGroup
 from .conform_body import conform_body
 from .gemini_client import (
@@ -322,6 +322,23 @@ class Loop:
                     await asyncio.gather(
                         *function_caller._tasks, return_exceptions=True
                     )
+                    # Emit results for sibling functions that completed
+                    # before the suspend. Without this, the client sees
+                    # FunctionCallEvents with no matching
+                    # FunctionResultEvents.
+                    if hooks.on_function_result:
+                        for task in function_caller._tasks:
+                            if task.cancelled():
+                                continue
+                            try:
+                                result = task.result()
+                                if isinstance(result, FunctionCallResult):
+                                    hooks.on_function_result(
+                                        result.call_id,
+                                        {"parts": [result.response]},
+                                    )
+                            except Exception:
+                                pass
                     # Package the current conversation state so the
                     # caller can save it and resume later.
                     _suspended = True
