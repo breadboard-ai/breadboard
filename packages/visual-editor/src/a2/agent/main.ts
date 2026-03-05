@@ -413,6 +413,17 @@ async function invokeRemoteAgent(
         event.selectionMode,
         event.noneOfTheAboveLabel
       );
+    })
+    .on("queryConsent", async (event) => {
+      const consent = await moduleArgs.getConsentController().queryConsent(
+        {
+          type: event.consentType,
+          scope: event.scope,
+          graphUrl: event.graphUrl,
+        } as ConsentRequest,
+        ConsentUIType.MODAL
+      );
+      return { consent };
     });
 
   await handle.connect();

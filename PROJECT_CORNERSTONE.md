@@ -687,10 +687,12 @@ Body (resume): {interactionId, response}
       `isThought`) flows through `StatusUpdateCallback` →
       `FunctionCallUpdateEvent.opts` → SSE wire format. All 4 TODOs in
       `generate.py` resolved.
-- [ ] `url_context` consent flow — suspend for `queryConsent` before enabling
-      `urlContext` tool (currently auto-approved in dev). Deferred: Python's
-      exception-based suspend model needs reconciling with the inline
-      `await sink.suspend()` pattern from TS.
+- [x] `url_context` consent flow — `FunctionDefinition` gains an optional
+      `precondition` handler, run by `FunctionCaller` before the main handler.
+      The consent precondition raises `SuspendError(QueryConsentEvent)` with
+      `is_precondition_check=True`. On resume, `_resume_precondition` records
+      the grant and re-dispatches the function call — the model never sees the
+      consent round-trip.
 - [x] Cancel concurrent function caller tasks on suspend — `loop.py` now cancels
       sibling `asyncio.Task`s before saving state, eliminating the "emit()
       called on closed sink" warning.

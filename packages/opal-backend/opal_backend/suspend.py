@@ -43,6 +43,7 @@ class SuspendResult:
     suspend_event: SuspendEvent
     contents: list[LLMContent]
     function_call_part: dict[str, Any]
+    is_precondition_check: bool = False
 
 
 class SuspendError(Exception):
@@ -61,9 +62,12 @@ class SuspendError(Exception):
         self,
         event: SuspendEvent,
         function_call_part: dict[str, Any] | None = None,
+        *,
+        is_precondition_check: bool = False,
     ) -> None:
         self.event = event
         self.function_call_part = function_call_part or {}
+        self.is_precondition_check = is_precondition_check
         # Assign a unique interaction ID for the reconnect protocol.
         self.interaction_id = str(uuid.uuid4())
         super().__init__(f"Suspend: {getattr(event, 'type', 'unknown')}")

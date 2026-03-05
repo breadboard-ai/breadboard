@@ -42,6 +42,7 @@ from .events import (
     CompleteEvent,
     ErrorEvent,
     FileData,
+    QueryConsentEvent,
 )
 from .chat_log_manager import ChatLogManager
 from .pidgin import to_pidgin
@@ -52,6 +53,8 @@ from .functions.image import get_image_function_group
 from .functions.memory import get_memory_function_group
 from .functions.system import get_system_function_group
 from .functions.video import get_video_function_group
+from .function_caller import FunctionCaller
+from .function_definition import FunctionDefinition
 from .interaction_store import InteractionState, InteractionStore
 from .loop import AgentRunArgs, Loop, LoopController
 from .sheet_manager import SheetManager
@@ -161,6 +164,7 @@ async def run(
         flags=resolved_flags,
         sheet_manager=sheet_manager,
         on_chat_entry=chat_mgr.on_chat_entry,
+        graph_url=graph.get("url", ""),
     )
 
     run_args = AgentRunArgs(
@@ -194,6 +198,10 @@ async def resume(
 
     Loads saved state from ``store``, injects the client's response as a
     function result, rebuilds function groups, and continues the loop.
+
+    For precondition suspends (e.g. consent), the response is recorded in
+    shared state and the original function call is re-dispatched — the
+    precondition passes on the second attempt and the handler runs.
 
     Flags and graph identity are restored from the saved interaction
     state — callers do not need to re-supply them.
@@ -230,26 +238,40 @@ async def resume(
         )
         state.file_system.set_sheet_manager(sheet_manager)
 
-    # Inject the client's response as a function result.
     fc = state.function_call_part.get("functionCall", {})
     func_name = fc.get("name", "unknown")
 
-    function_response_turn = {
-        "parts": [{
-            "functionResponse": {
-                "name": func_name,
-                "response": _process_chat_response(func_name, response),
-            }
-        }],
-        "role": "user",
-    }
-
-    contents = state.contents + [function_response_turn]
+    if state.is_precondition_check:
+        # Precondition suspend (e.g. consent). Record the grant in shared
+        # state and re-dispatch the same function call.
+        contents = await _resume_precondition(
+            state=state,
+            response=response,
+            func_name=func_name,
+            fc=fc,
+            backend=backend,
+            resolved_flags=resolved_flags,
+            sheet_manager=sheet_manager,
+        )
+    else:
+        # Normal suspend (chat input, choice, etc.). Inject the client's
+        # response as the function result.
+        function_response_turn = {
+            "parts": [{
+                "functionResponse": {
+                    "name": func_name,
+                    "response": _process_chat_response(func_name, response),
+                }
+            }],
+            "role": "user",
+        }
+        contents = state.contents + [function_response_turn]
 
     # Set up the chat log manager for sheet persistence and system file.
     chat_mgr = ChatLogManager(sheet_manager, session_id=state.session_id)
     await chat_mgr.seed()
-    chat_mgr.persist_user_response(func_name, fc.get("args", {}), response)
+    if not state.is_precondition_check:
+        chat_mgr.persist_user_response(func_name, fc.get("args", {}), response)
     state.file_system.add_system_file(
         CHAT_LOG_PATH, lambda: chat_mgr.get_chat_log(contents),
     )
@@ -263,6 +285,8 @@ async def resume(
         flags=resolved_flags,
         sheet_manager=sheet_manager,
         on_chat_entry=chat_mgr.on_chat_entry,
+        consents_granted=state.consents_granted,
+        graph_url=(state.graph or {}).get("url", ""),
     )
 
     run_args = AgentRunArgs(
@@ -281,6 +305,7 @@ async def resume(
         flags=resolved_flags,
         graph=state.graph,
         session_id=state.session_id,
+        consents_granted=state.consents_granted,
     ):
         yield event
 
@@ -288,6 +313,89 @@ async def resume(
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+
+async def _resume_precondition(
+    *,
+    state: InteractionState,
+    response: dict[str, Any],
+    func_name: str,
+    fc: dict[str, Any],
+    backend: BackendClient,
+    resolved_flags: dict[str, Any],
+    sheet_manager: "SheetManager | None",
+) -> list[dict[str, Any]]:
+    """Handle resume from a precondition suspend (e.g. consent).
+
+    If the client granted the precondition (e.g. consent), records the grant
+    and re-executes the original function call directly. The real handler
+    result is injected as the function response — the model never sees the
+    consent round-trip.
+
+    If the client denied, injects an error as the function response.
+    """
+    # Determine consent type from the suspend event stored on the state.
+    # Currently, consent is the only precondition type.
+    consent_type = getattr(
+        state, "_suspend_consent_type", "GET_ANY_WEBPAGE"
+    )
+
+    if not response.get("consent"):
+        # Denied — inject error as the function response.
+        func_response = {"error": "User declined URL access consent"}
+    else:
+        # Granted — record in shared state and re-execute the handler.
+        state.consents_granted.add(consent_type)
+
+        # Rebuild function groups with the updated consent state so
+        # the precondition passes on re-dispatch.
+        controller = LoopController()
+        function_groups = _build_function_groups(
+            controller=controller,
+            file_system=state.file_system,
+            task_tree_manager=state.task_tree_manager,
+            backend=backend,
+            flags=resolved_flags,
+            sheet_manager=sheet_manager,
+            consents_granted=state.consents_granted,
+            graph_url=(state.graph or {}).get("url", ""),
+        )
+
+        # Build definition map from function groups.
+        definition_map: dict[str, FunctionDefinition] = {}
+        for group in function_groups:
+            for name, defn in group.definitions:
+                definition_map[name] = defn
+
+        defn = definition_map.get(func_name)
+        if not defn:
+            func_response = {"error": f"Unknown function: {func_name}"}
+        else:
+            try:
+                def noop_status(
+                    _s: str | None, _o: Any = None
+                ) -> None:
+                    pass
+
+                # Precondition should pass now (consent recorded).
+                if defn.precondition:
+                    await defn.precondition(fc.get("args", {}))
+                func_response = await defn.handler(
+                    fc.get("args", {}), noop_status
+                )
+            except Exception as e:
+                func_response = {"error": str(e)}
+
+    function_response_turn = {
+        "parts": [{
+            "functionResponse": {
+                "name": func_name,
+                "response": func_response,
+            }
+        }],
+        "role": "user",
+    }
+    return state.contents + [function_response_turn]
 
 
 def _process_chat_response(
@@ -326,6 +434,8 @@ def _build_function_groups(
     flags: dict[str, Any],
     sheet_manager: SheetManager | None = None,
     on_chat_entry: Any = None,
+    consents_granted: set[str] | None = None,
+    graph_url: str = "",
 ) -> list:
     """Build the standard set of function groups."""
     enable_g1_quota = flags.get("googleOne", False)
@@ -340,6 +450,8 @@ def _build_function_groups(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
             backend=backend,
+            graph_url=graph_url,
+            consents_granted=consents_granted,
         ),
         get_image_function_group(
             file_system=file_system,
@@ -389,6 +501,7 @@ async def _stream_loop(
     flags: dict[str, Any] | None = None,
     graph: dict[str, Any],
     session_id: str = "",
+    consents_granted: set[str] | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Run the loop and yield events.
 
@@ -418,6 +531,12 @@ async def _stream_loop(
                         flags=flags or {},
                         graph=graph,
                         session_id=session_id,
+                        is_precondition_check=(
+                            result.is_precondition_check
+                        ),
+                        consents_granted=(
+                            consents_granted or set()
+                        ),
                     ),
                 )
                 result.suspend_event.interaction_id = (
