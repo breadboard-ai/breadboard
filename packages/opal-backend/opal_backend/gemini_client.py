@@ -64,16 +64,28 @@ async def stream_generate_content(
     """
     for attempt in range(STREAM_MAX_RETRIES):
         found_content = False
+        # Buffer chunks only until we see real content.  Once content
+        # is detected, flush the buffer and stream directly so that
+        # consumers (e.g. generate_text thought callbacks) receive
+        # updates in real time instead of all-at-once after the full
+        # response completes.
         buffer: list[GeminiChunk] = []
 
         async for chunk in backend.stream_generate_content(model, body):
             if has_content(chunk):
                 found_content = True
-            buffer.append(chunk)
+
+            if found_content:
+                # Flush any pre-content chunks we buffered earlier.
+                if buffer:
+                    for b in buffer:
+                        yield b
+                    buffer.clear()
+                yield chunk
+            else:
+                buffer.append(chunk)
 
         if found_content:
-            for chunk in buffer:
-                yield chunk
             return
 
         # No content found — retry
