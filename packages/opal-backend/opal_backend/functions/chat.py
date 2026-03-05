@@ -42,6 +42,14 @@ VALID_LAYOUTS = ["list", "row", "grid"]
 
 CHAT_LOG_PATH = "/mnt/system/chat_log.json"
 SKIPPED_SENTINEL = "__skipped__"
+
+# Maps the LLM-facing input_type parameter to the icon name sent
+# on the wire in the waitForInput event.  Mirrors TS computeFormat().
+_INPUT_TYPE_TO_FORMAT = {
+    "any": "asterisk",
+    "text": "edit_note",
+    "file-upload": "upload",
+}
 NONE_OF_THE_ABOVE_ID = "__none_of_the_above__"
 
 # Type alias for the optional chat log entry callback.
@@ -102,7 +110,7 @@ def _define_request_user_input(
         event = WaitForInputEvent(
             request_id=request_id,
             prompt=prompt_content,
-            input_type=input_type,
+            input_type=_INPUT_TYPE_TO_FORMAT.get(input_type, "asterisk"),
             skip_label=skip_label,
         )
 

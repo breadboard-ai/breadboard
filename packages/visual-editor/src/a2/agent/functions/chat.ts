@@ -68,7 +68,7 @@ function defineChatFunctions(args: ChatFunctionsArgs): FunctionDefinition[] {
         title: "Asking the user",
         icon: "chat_bubble",
         description: tr`
-Requests input from user. Call this function to hold a conversatio with the user. Each call corresponds to a conversation turn. Use only when necessary to fulfill the objective.
+Requests input from user. Call this function to hold a conversation with the user. Each call corresponds to a conversation turn. Use only when necessary to fulfill the objective.
 `,
         parameters: {
           user_message: z.string().describe(
