@@ -1,0 +1,33 @@
+{
+  "name": "component-generator",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "npx tsx --test tests/**/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/acorn": "^4.0.6",
+    "@types/markdown-it": "^14.1.2",
+    "dotenv": "^17.2.3",
+    "typescript": "^5.8.3",
+    "vite": "^7.2.6"
+  },
+  "dependencies": {
+    "@lit-labs/signals": "^0.1.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "acorn": "^8.16.0",
+    "acorn-jsx": "^5.3.2",
+    "lit": "^3.3.2",
+    "markdown-it": "^14.1.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "signal-polyfill": "^0.2.2",
+    "signal-utils": "^0.21.1",
+    "tweakpane": "^4.0.5"
+  }
+}

@@ -1,0 +1,66 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
+ * Global styles — design tokens and document-level resets.
+ *
+ * Component-specific styles live inside each Lit component's `static styles`.
+ * This file only contains:
+ *
+ * 1. **CSS Reset** — box-sizing, margin/padding normalization
+ * 2. **Design tokens** — CSS custom properties used throughout the app
+ * 3. **Document resets** — root element styling (font, background, height)
+ *
+ * The tokens defined here (e.g. `--host-surface`, `--host-accent`) are
+ * inherited by Lit components through the shadow DOM, since CSS custom
+ * properties pierce shadow boundaries.
+ */
+
+/* ───── Global Reset ───── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ───── Design Tokens ───── */
+
+:root {
+  --host-surface: #0a0a0a;
+  --host-surface-1: #141414;
+  --host-surface-2: #1e1e1e;
+  --host-surface-3: #2a2a2a;
+  --host-border: #2a2a2a;
+  --host-text: #f0f0f0;
+  --host-text-muted: #8a8a8a;
+  --host-accent: #a3e635;
+  --host-accent-dim: #84cc16;
+  --host-accent-glow: rgba(163, 230, 53, 0.12);
+  --host-radius: 12px;
+  --host-radius-sm: 8px;
+  --host-font: "Inter", sans-serif;
+  --host-font-mono: "JetBrains Mono", monospace;
+
+  color-scheme: dark;
+}
+
+/* ───── Document ───── */
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--host-font);
+  background: var(--host-surface);
+  color: var(--host-text);
+  -webkit-font-smoothing: antialiased;
+}
