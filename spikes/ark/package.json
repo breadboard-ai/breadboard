@@ -1,0 +1,51 @@
+{
+  "name": "ark",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ark spike — FastAPI backend + Vite frontend",
+  "scripts": {
+    "setup": "wireit",
+    "setup:backend": "wireit",
+    "setup:frontend": "wireit",
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "dev:backend": "cd backend && .venv/bin/uvicorn ark_backend.main:app --reload --port 8080",
+    "dev:frontend": "cd frontend && npx vite",
+    "test": "wireit",
+    "test:backend": "wireit"
+  },
+  "wireit": {
+    "setup": {
+      "dependencies": [
+        "setup:backend",
+        "setup:frontend"
+      ]
+    },
+    "setup:backend": {
+      "command": "cd backend && python3 -m venv .venv && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '.[dev]'",
+      "files": [
+        "backend/pyproject.toml"
+      ],
+      "output": []
+    },
+    "setup:frontend": {
+      "command": "cd frontend && npm install",
+      "files": [
+        "frontend/package.json"
+      ],
+      "output": []
+    },
+    "test": {
+      "dependencies": [
+        "test:backend"
+      ]
+    },
+    "test:backend": {
+      "command": "cd backend && .venv/bin/python -m pytest tests/ -v",
+      "files": [
+        "backend/ark_backend/**/*.py",
+        "backend/tests/**/*.py"
+      ],
+      "dependencies": []
+    }
+  }
+}
