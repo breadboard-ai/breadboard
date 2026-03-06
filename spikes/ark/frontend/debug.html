@@ -148,7 +148,7 @@
 
     <script type="module">
       const BACKEND_URL = "http://localhost:8080";
-      const POLL_INTERVAL = 1000;
+      const POLL_INTERVAL_MS = 1000;
 
       const objectiveInput = document.querySelector("#objective");
       const startBtn = document.querySelector("#start-btn");
@@ -171,6 +171,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ objective, type: "ui" }),
         });
+        startPolling();
       });
 
       objectiveInput.addEventListener("keydown", (e) => {
@@ -178,17 +179,42 @@
       });
 
       // ── Polling ─────────────────────────────────────────────
+      let pollTimer = null;
+
       async function poll() {
         try {
           const res = await fetch(`${BACKEND_URL}/agent/runs/status`);
           const runs = await res.json();
           renderRunList(runs);
+
+          // Stop polling when all runs are quiescent.
+          const hasActive = runs.some((r) => r.status !== "complete");
+          if (!hasActive) stopPolling();
         } catch {
           /* ignore transient errors */
         }
       }
 
+      function startPolling() {
+        if (pollTimer) return; // already polling
+        poll(); // immediate first tick
+        pollTimer = setInterval(poll, POLL_INTERVAL_MS);
+      }
+
+      function stopPolling() {
+        if (!pollTimer) return;
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+
       function renderRunList(runs) {
+        // Snapshot which artifact panels are open before re-rendering.
+        const openDetails = new Set();
+        for (const card of runsContainer.querySelectorAll(".run-card")) {
+          const details = card.querySelector("details.artifacts");
+          if (details?.open) openDetails.add(card.dataset.runId);
+        }
+
         runsContainer.innerHTML = "";
         for (const run of runs) {
           const pct =
@@ -199,9 +225,11 @@
           const card = document.createElement("div");
           card.className = `run-card${run.id === selectedRunId ? " selected" : ""}`;
           card.dataset.status = run.status;
+          card.dataset.runId = run.id;
 
           let artifactsHtml = "";
           if (run.artifacts && run.artifacts.length > 0) {
+            const isOpen = openDetails.has(run.id) ? " open" : "";
             const links = run.artifacts
               .map(
                 (f) =>
@@ -209,7 +237,7 @@
               )
               .join("");
             artifactsHtml = `
-              <details class="artifacts">
+              <details class="artifacts"${isOpen}>
                 <summary>📦 ${run.artifacts.length} artifacts</summary>
                 <ul>${links}</ul>
               </details>
@@ -240,7 +268,7 @@
         return d.innerHTML;
       }
 
-      setInterval(poll, POLL_INTERVAL);
+      // One initial poll to pick up disk-hydrated runs, then stop.
       poll();
 
       // ── Detail / SSE ───────────────────────────────────────

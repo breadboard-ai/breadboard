@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import mimetypes
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -88,6 +89,47 @@ class Run:
 
 # In-memory run store (spike-grade).
 runs: dict[str, Run] = {}
+
+
+def _hydrate_from_disk():
+    """Populate runs from existing artifacts in OUT_DIR (survives restarts)."""
+    if not OUT_DIR.is_dir():
+        return
+    for run_dir in OUT_DIR.iterdir():
+        if not run_dir.is_dir():
+            continue
+        run_id = run_dir.name
+        if run_id in runs:
+            continue
+
+        # Extract objective from SKILL.md heading: "# Generated UI: <objective>"
+        skill_path = run_dir / "SKILL.md"
+        objective = run_id  # fallback
+        if skill_path.is_file():
+            first_line = skill_path.read_text().split("\n", 1)[0]
+            if first_line.startswith("# Generated UI: "):
+                objective = first_line.removeprefix("# Generated UI: ")
+
+        # Collect all files relative to the run dir.
+        artifacts = [
+            str(p.relative_to(run_dir))
+            for p in sorted(run_dir.rglob("*"))
+            if p.is_file()
+        ]
+
+        runs[run_id] = Run(
+            id=run_id,
+            objective=objective,
+            agent_type="ui",
+            status="complete",
+            current_step="complete",
+            current_detail="UI generation finished.",
+            progress=len(_SIMULATION_STEPS),
+            artifacts=artifacts,
+        )
+
+
+_hydrate_from_disk()
 
 
 class StartRunRequest(BaseModel):
@@ -190,4 +232,44 @@ async def stream_run(run_id: str):
         _stream_run(run),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Artifact bundle
+# ---------------------------------------------------------------------------
+
+BOUNDARY = "ark-bundle-boundary"
+
+
+def _stream_bundle(run_id: str, files: list[str]):
+    """Yield a multipart/mixed body with one part per artifact file."""
+    run_dir = OUT_DIR / run_id
+    for rel_path in files:
+        path = run_dir / rel_path
+        if not path.is_file():
+            continue
+        content_type = mimetypes.guess_type(rel_path)[0] or "application/octet-stream"
+        yield f"--{BOUNDARY}\r\n".encode()
+        yield f"Content-Disposition: attachment; filename=\"{rel_path}\"\r\n".encode()
+        yield f"Content-Type: {content_type}\r\n".encode()
+        yield b"\r\n"
+        yield path.read_bytes()
+        yield b"\r\n"
+    yield f"--{BOUNDARY}--\r\n".encode()
+
+
+@app.get("/agent/runs/{run_id}/bundle")
+async def get_bundle(run_id: str):
+    """Return all artifacts for a run as a multipart/mixed bundle."""
+    run = runs.get(run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Run not found")
+    if run.status != "complete":
+        raise HTTPException(status_code=409, detail="Run not yet complete")
+    if not run.artifacts:
+        raise HTTPException(status_code=404, detail="No artifacts")
+    return StreamingResponse(
+        _stream_bundle(run_id, run.artifacts),
+        media_type=f"multipart/mixed; boundary={BOUNDARY}",
     )
