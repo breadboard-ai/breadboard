@@ -3,10 +3,17 @@
 Each template is a dict mapping relative file paths to their content.
 The `generate_artifacts` function picks a template based on the objective
 and customizes it with the run's objective and ID.
+
+Media assets (images, video, audio) are served by the frontend from a
+well-known base path. Both backend templates and the frontend agree on
+the path `/assets/media/`.
 """
 
-import hashlib
 from pathlib import Path
+
+# The well-known base URL where the frontend serves shared media files.
+# This path is relative to the frontend origin (Vite serves public/ at /).
+MEDIA_BASE = "/assets/media"
 
 TEMPLATES: list[dict[str, str]] = [
     # ── Template 0: Dashboard ──────────────────────────────────
@@ -32,12 +39,10 @@ export default function App() {{
 """,
         "components/Header.jsx": """\
 import React from "react";
-import logo from "../assets/logo.svg";
 
 export default function Header({{ title }}) {{
   return (
     <header className="header">
-      <img src={{logo}} alt="Logo" className="header-logo" />
       <h1>{{title}}</h1>
       <nav className="header-nav">
         <a href="#overview">Overview</a>
@@ -108,7 +113,6 @@ body {{ margin: 0; font-family: system-ui, sans-serif; color: var(--text); }}
   display: flex; align-items: center; gap: 1rem;
   padding: 1rem 2rem; background: white; border-bottom: 1px solid var(--border);
 }}
-.header-logo {{ width: 32px; height: 32px; }}
 .header h1 {{ flex: 1; font-size: 1.25rem; }}
 .header-nav {{ display: flex; gap: 1rem; }}
 .header-nav a {{ text-decoration: none; color: var(--primary); }}
@@ -157,7 +161,6 @@ export default function App() {{
 """,
         "components/Hero.jsx": """\
 import React from "react";
-import heroImg from "../assets/hero.svg";
 
 export default function Hero({{ headline }}) {{
   return (
@@ -167,7 +170,7 @@ export default function Hero({{ headline }}) {{
         <p>Build something extraordinary with a single prompt.</p>
         <button className="cta-btn">Get Started</button>
       </div>
-      <img src={{heroImg}} alt="Hero" className="hero-img" />
+      <img src="{media_base}/exterior.jpg" alt="Hero" className="hero-img" />
     </section>
   );
 }}
@@ -227,7 +230,7 @@ body {{ margin: 0; font-family: system-ui, sans-serif; color: var(--text); }}
 .hero-text {{ max-width: 480px; }}
 .hero-text h1 {{ font-size: 2.5rem; line-height: 1.2; }}
 .hero-text p {{ font-size: 1.15rem; opacity: 0.8; margin: 1rem 0 1.5rem; }}
-.hero-img {{ width: 320px; height: 240px; }}
+.hero-img {{ width: 320px; height: 240px; border-radius: 12px; object-fit: cover; }}
 
 .cta-btn {{
   background: var(--primary); color: white; border: none;
@@ -279,7 +282,6 @@ export default function App() {{
 """,
         "components/Sidebar.jsx": """\
 import React from "react";
-import icon from "../assets/icon.svg";
 
 const links = ["General", "Profile", "Notifications", "Security", "Billing"];
 
@@ -287,7 +289,6 @@ export default function Sidebar() {{
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <img src={{icon}} alt="Icon" />
         <span>Admin</span>
       </div>
       <nav>
@@ -351,7 +352,6 @@ body {{ margin: 0; font-family: system-ui, sans-serif; color: var(--text); }}
   display: flex; align-items: center; gap: 0.5rem;
   margin-bottom: 2rem; font-weight: 700; font-size: 1.1rem;
 }}
-.sidebar-brand img {{ width: 24px; height: 24px; filter: invert(1); }}
 .sidebar-link {{
   display: block; padding: 0.5rem 0.75rem; border-radius: 6px;
   color: rgba(255,255,255,0.8); text-decoration: none; margin-bottom: 0.25rem;
@@ -379,86 +379,418 @@ body {{ margin: 0; font-family: system-ui, sans-serif; color: var(--text); }}
 .save-btn:hover {{ opacity: 0.9; }}
 """,
     },
+
+    # ── Template 3: House Hunter ───────────────────────────────
+    {
+        "App.jsx": """\
+import React from "react";
+import Header from "./components/Header";
+import ListingGallery from "./components/ListingGallery";
+import VirtualTour from "./components/VirtualTour";
+import AgentVoiceover from "./components/AgentVoiceover";
+import "./styles.css";
+
+export default function App() {{
+  return (
+    <div className="house-hunter">
+      <Header title="{objective}" />
+      <main className="hh-body">
+        <ListingGallery />
+        <VirtualTour />
+        <AgentVoiceover />
+      </main>
+    </div>
+  );
+}}
+""",
+        "components/Header.jsx": """\
+import React from "react";
+
+export default function Header({{ title }}) {{
+  return (
+    <header className="hh-header">
+      <h1>{{title}}</h1>
+      <nav className="hh-nav">
+        <a href="#listings">Listings</a>
+        <a href="#tour">Tour</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </header>
+  );
+}}
+""",
+        "components/ListingGallery.jsx": """\
+import React from "react";
+
+const photos = [
+  {{ src: "{media_base}/exterior.jpg", alt: "Exterior view", caption: "Front of property" }},
+  {{ src: "{media_base}/interior.jpg", alt: "Interior view", caption: "Open-plan living area" }},
+  {{ src: "{media_base}/backyard.jpg", alt: "Backyard", caption: "Landscaped garden" }},
+];
+
+export default function ListingGallery() {{
+  return (
+    <section className="gallery" id="listings">
+      <h2>Property Photos</h2>
+      <div className="gallery-grid">
+        {{photos.map((p) => (
+          <figure key={{p.alt}} className="gallery-item">
+            <img src={{p.src}} alt={{p.alt}} />
+            <figcaption>{{p.caption}}</figcaption>
+          </figure>
+        ))}}
+      </div>
+    </section>
+  );
+}}
+""",
+        "components/VirtualTour.jsx": """\
+import React from "react";
+
+export default function VirtualTour() {{
+  return (
+    <section className="virtual-tour" id="tour">
+      <h2>Virtual Tour</h2>
+      <video controls className="tour-video">
+        <source src="{media_base}/tour.mp4" type="video/mp4" />
+        Your browser does not support video playback.
+      </video>
+    </section>
+  );
+}}
+""",
+        "components/AgentVoiceover.jsx": """\
+import React from "react";
+
+export default function AgentVoiceover() {{
+  return (
+    <section className="voiceover">
+      <h2>Agent's Walkthrough</h2>
+      <p>Listen to your agent describe the key features of this property.</p>
+      <audio controls className="voiceover-player">
+        <source src="{media_base}/narration.mp3" type="audio/mpeg" />
+        Your browser does not support audio playback.
+      </audio>
+    </section>
+  );
+}}
+""",
+        "styles.css": """\
+:root {{
+  --primary: #b45309;
+  --surface: #fffbeb;
+  --text: #451a03;
+  --border: #fde68a;
+  --accent: #d97706;
+}}
+
+body {{ margin: 0; font-family: system-ui, sans-serif; color: var(--text); }}
+
+.house-hunter {{ min-height: 100vh; background: var(--surface); }}
+
+.hh-header {{
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1rem 2rem; background: white; border-bottom: 1px solid var(--border);
+}}
+.hh-header h1 {{ flex: 1; font-size: 1.25rem; }}
+.hh-nav {{ display: flex; gap: 1rem; }}
+.hh-nav a {{ text-decoration: none; color: var(--primary); }}
+
+.hh-body {{ padding: 2rem; max-width: 900px; margin: 0 auto; }}
+
+.gallery h2 {{ font-size: 1.3rem; margin-bottom: 1rem; }}
+.gallery-grid {{
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem; margin-bottom: 2rem;
+}}
+.gallery-item {{
+  margin: 0; border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--border); background: white;
+}}
+.gallery-item img {{ width: 100%; height: 160px; object-fit: cover; }}
+.gallery-item figcaption {{ padding: 0.5rem 0.75rem; font-size: 0.85rem; }}
+
+.virtual-tour {{ margin-bottom: 2rem; }}
+.virtual-tour h2 {{ font-size: 1.3rem; margin-bottom: 1rem; }}
+.tour-video {{ width: 100%; border-radius: 8px; background: #000; }}
+
+.voiceover {{ margin-bottom: 2rem; }}
+.voiceover h2 {{ font-size: 1.3rem; margin-bottom: 0.5rem; }}
+.voiceover p {{ font-size: 0.95rem; opacity: 0.7; margin-bottom: 0.75rem; }}
+.voiceover-player {{ width: 100%; }}
+""",
+    },
+
+    # ── Template 4: Personal Chef ──────────────────────────────
+    {
+        "App.jsx": """\
+import React from "react";
+import Header from "./components/Header";
+import RecipeCard from "./components/RecipeCard";
+import CookingVideo from "./components/CookingVideo";
+import NarrationPlayer from "./components/NarrationPlayer";
+import "./styles.css";
+
+export default function App() {{
+  return (
+    <div className="personal-chef">
+      <Header title="{objective}" />
+      <main className="chef-body">
+        <RecipeCard />
+        <CookingVideo />
+        <NarrationPlayer />
+      </main>
+    </div>
+  );
+}}
+""",
+        "components/Header.jsx": """\
+import React from "react";
+
+export default function Header({{ title }}) {{
+  return (
+    <header className="chef-header">
+      <h1>{{title}}</h1>
+      <nav className="chef-nav">
+        <a href="#recipe">Recipe</a>
+        <a href="#video">Video</a>
+        <a href="#narration">Narration</a>
+      </nav>
+    </header>
+  );
+}}
+""",
+        "components/RecipeCard.jsx": """\
+import React from "react";
+
+export default function RecipeCard() {{
+  return (
+    <section className="recipe-card" id="recipe">
+      <div className="recipe-hero">
+        <img src="{media_base}/dish.jpg" alt="Finished dish" className="dish-photo" />
+      </div>
+      <div className="recipe-details">
+        <h2>Pan-Seared Salmon with Lemon Dill</h2>
+        <p className="recipe-meta">⏱ 25 min · 🍽 2 servings · ⭐ 4.8</p>
+        <h3>Ingredients</h3>
+        <img src="{media_base}/ingredients.jpg" alt="Ingredients" className="ingredients-img" />
+        <ul className="ingredient-list">
+          <li>2 salmon fillets (6 oz each)</li>
+          <li>2 tbsp olive oil</li>
+          <li>1 lemon, sliced</li>
+          <li>Fresh dill sprigs</li>
+          <li>Salt and pepper to taste</li>
+        </ul>
+      </div>
+    </section>
+  );
+}}
+""",
+        "components/CookingVideo.jsx": """\
+import React from "react";
+
+export default function CookingVideo() {{
+  return (
+    <section className="cooking-video" id="video">
+      <h2>Step-by-Step Video</h2>
+      <video controls className="video-player">
+        <source src="{media_base}/tour.mp4" type="video/mp4" />
+        Your browser does not support video playback.
+      </video>
+    </section>
+  );
+}}
+""",
+        "components/NarrationPlayer.jsx": """\
+import React from "react";
+
+export default function NarrationPlayer() {{
+  return (
+    <section className="narration" id="narration">
+      <h2>Chef's Commentary</h2>
+      <p>Listen to the chef explain each technique as you cook along.</p>
+      <audio controls className="narration-player">
+        <source src="{media_base}/narration.mp3" type="audio/mpeg" />
+        Your browser does not support audio playback.
+      </audio>
+    </section>
+  );
+}}
+""",
+        "styles.css": """\
+:root {{
+  --primary: #15803d;
+  --surface: #f0fdf4;
+  --text: #14532d;
+  --border: #bbf7d0;
+  --accent: #16a34a;
+}}
+
+body {{ margin: 0; font-family: system-ui, sans-serif; color: var(--text); }}
+
+.personal-chef {{ min-height: 100vh; background: var(--surface); }}
+
+.chef-header {{
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1rem 2rem; background: white; border-bottom: 1px solid var(--border);
+}}
+.chef-header h1 {{ flex: 1; font-size: 1.25rem; }}
+.chef-nav {{ display: flex; gap: 1rem; }}
+.chef-nav a {{ text-decoration: none; color: var(--primary); }}
+
+.chef-body {{ padding: 2rem; max-width: 800px; margin: 0 auto; }}
+
+.recipe-card {{ margin-bottom: 2rem; }}
+.recipe-hero {{ margin-bottom: 1rem; }}
+.dish-photo {{ width: 100%; height: 280px; object-fit: cover; border-radius: 12px; }}
+.recipe-meta {{ font-size: 0.9rem; opacity: 0.7; margin: 0.5rem 0 1rem; }}
+.ingredients-img {{ width: 100%; max-height: 120px; object-fit: cover; border-radius: 8px; margin: 0.5rem 0; }}
+.ingredient-list {{ padding-left: 1.25rem; }}
+.ingredient-list li {{ padding: 0.25rem 0; }}
+
+.cooking-video {{ margin-bottom: 2rem; }}
+.cooking-video h2 {{ font-size: 1.3rem; margin-bottom: 1rem; }}
+.video-player {{ width: 100%; border-radius: 8px; background: #000; }}
+
+.narration {{ margin-bottom: 2rem; }}
+.narration h2 {{ font-size: 1.3rem; margin-bottom: 0.5rem; }}
+.narration p {{ font-size: 0.95rem; opacity: 0.7; margin-bottom: 0.75rem; }}
+.narration-player {{ width: 100%; }}
+""",
+    },
 ]
 
 
-def _make_svg(label: str, color: str) -> str:
-    """Generate a minimal SVG placeholder image."""
-    return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" '
-        f'viewBox="0 0 200 150">'
-        f'<rect width="200" height="150" fill="{color}" rx="8"/>'
-        f'<text x="100" y="80" text-anchor="middle" fill="white" '
-        f'font-family="system-ui" font-size="14">{label}</text>'
-        f'</svg>'
-    )
+# ---------------------------------------------------------------------------
+# Media file inventory — shared between backend and frontend
+# ---------------------------------------------------------------------------
 
+# Files the frontend serves from public/assets/media/.
+# Referenced in templates via {media_base} and documented in SKILL.md.
+MEDIA_FILES = [
+    ("exterior.jpg",    "image/jpeg",  "Exterior property photo"),
+    ("interior.jpg",    "image/jpeg",  "Interior property photo"),
+    ("backyard.jpg",    "image/jpeg",  "Backyard / garden photo"),
+    ("dish.jpg",        "image/jpeg",  "Finished dish photo"),
+    ("ingredients.jpg", "image/jpeg",  "Ingredients layout photo"),
+    ("tour.mp4",        "video/mp4",   "Virtual tour / demo video"),
+    ("narration.mp3",   "audio/mpeg",  "Agent voiceover / narration audio"),
+]
 
-# Asset sets per template index — (filename, label, color).
-_ASSET_SPECS: list[list[tuple[str, str, str]]] = [
-    # Dashboard
-    [("assets/logo.svg", "Logo", "#4f46e5")],
-    # Landing
-    [("assets/hero.svg", "Hero Image", "#7c3aed")],
-    # Admin
-    [("assets/icon.svg", "Icon", "#0891b2")],
+# Which media files each template references.
+_TEMPLATE_MEDIA: list[list[str]] = [
+    # 0: Dashboard — no media
+    [],
+    # 1: Landing — hero image
+    ["exterior.jpg"],
+    # 2: Admin — no media
+    [],
+    # 3: House Hunter — images + video + audio
+    ["exterior.jpg", "interior.jpg", "backyard.jpg", "tour.mp4", "narration.mp3"],
+    # 4: Personal Chef — images + video + audio
+    ["dish.jpg", "ingredients.jpg", "tour.mp4", "narration.mp3"],
 ]
 
 
-def _make_skill_md(objective: str, files: list[str]) -> str:
-    file_list = "\n".join(f"- `{f}`" for f in sorted(files))
-    return f"""\
-# Generated UI: {objective}
+# ---------------------------------------------------------------------------
+# SKILL.md generation
+# ---------------------------------------------------------------------------
 
-## Overview
 
-This UI was generated for the objective: **{objective}**.
+def _make_skill_md(objective: str, files: list[str], media_refs: list[str]) -> str:
+    sections = []
+    sections.append(f"# Generated UI: {objective}\n")
+    sections.append(f"## Overview\n\nThis UI was generated for the objective: **{objective}**.\n")
 
-## Files
+    # Code files.
+    sections.append("## Files\n")
+    sections.append("\n".join(f"- `{f}`" for f in sorted(files)))
+    sections.append("")
 
-{file_list}
+    # Media dependencies.
+    if media_refs:
+        media_lookup = {m[0]: m for m in MEDIA_FILES}
+        sections.append("## Media Dependencies\n")
+        sections.append(
+            "These files are served by the frontend at the well-known path "
+            f"`{MEDIA_BASE}/`. The JSX components reference them directly.\n"
+        )
+        for filename in media_refs:
+            meta = media_lookup.get(filename)
+            if meta:
+                sections.append(f"- `{MEDIA_BASE}/{filename}` ({meta[1]}) — {meta[2]}")
+        sections.append("")
 
-## Usage
+    sections.append("""## Usage
 
 1. Install dependencies: `npm install`
 2. Import `App.jsx` as the root component.
 3. Styles are in `styles.css` — edit CSS custom properties in `:root` to re-theme.
-4. Asset placeholders are in `assets/` — replace with production artwork.
+4. Media assets are served from `{media_base}` — see Media Dependencies above.
 
 ## Customization
 
 - **Colors**: Edit the CSS custom properties in `:root`.
 - **Content**: Component data is inline — extract to a data file or API as needed.
 - **Layout**: Components use CSS Grid and Flexbox — responsive by default.
-"""
+- **Media**: Replace referenced media files at the well-known paths.
+""".format(media_base=MEDIA_BASE))
+    return "\n".join(sections)
+
+
+# ---------------------------------------------------------------------------
+# Template selection
+# ---------------------------------------------------------------------------
+
+_next_template_idx = 0
+
+# First-word → template index mapping (case-insensitive).
+_KEYWORD_MAP: dict[str, int] = {
+    "dashboard": 0,
+    "landing": 1,
+    "admin": 2,
+    "settings": 2,
+    "house": 3,
+    "property": 3,
+    "chef": 4,
+    "recipe": 4,
+    "cook": 4,
+}
+
+
+# ---------------------------------------------------------------------------
+# Main entry point
+# ---------------------------------------------------------------------------
 
 
 def generate_artifacts(run_id: str, objective: str, out_root: Path):
     """Write generated UI artifacts to `out_root / run_id`."""
-    idx = int(hashlib.md5(objective.encode()).hexdigest(), 16) % len(TEMPLATES)
+    global _next_template_idx
+
+    first_word = objective.strip().split()[0].lower() if objective.strip() else ""
+    if first_word in _KEYWORD_MAP:
+        idx = _KEYWORD_MAP[first_word]
+    else:
+        idx = _next_template_idx % len(TEMPLATES)
+        _next_template_idx += 1
+
     template = TEMPLATES[idx]
+    media_refs = _TEMPLATE_MEDIA[idx]
     run_dir = out_root / run_id
 
     all_files: list[str] = []
 
-    # Write code/style files.
+    # Write code/style files, substituting objective and media base URL.
     for rel_path, content in template.items():
-        text = content.format(objective=objective)
+        text = content.format(objective=objective, media_base=MEDIA_BASE)
         dest = run_dir / rel_path
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(text)
         all_files.append(rel_path)
 
-    # Write SVG asset placeholders.
-    for filename, label, color in _ASSET_SPECS[idx]:
-        dest = run_dir / filename
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(_make_svg(label, color))
-        all_files.append(filename)
-
     # Write SKILL.md.
     skill_path = run_dir / "SKILL.md"
-    skill_path.write_text(_make_skill_md(objective, all_files))
+    skill_path.write_text(_make_skill_md(objective, all_files, media_refs))
     all_files.append("SKILL.md")
 
     return all_files

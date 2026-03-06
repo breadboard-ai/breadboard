@@ -57,17 +57,17 @@ async def echo(request: EchoRequest) -> EchoResponse:
 
 # Simulated generation steps — each is (delay_seconds, event_data).
 _SIMULATION_STEPS = [
-    (1.0,  {"step": "thinking",    "detail": "Analyzing objective…"}),
-    (3.0,  {"step": "planning",    "detail": "Breaking down into components…"}),
-    (2.0,  {"step": "scaffolding", "detail": "Generating HTML skeleton…"}),
-    (5.0,  {"step": "component",   "detail": "Building header component…",    "code": "<header>…</header>"}),
-    (4.0,  {"step": "component",   "detail": "Building main content area…",   "code": "<main>…</main>"}),
-    (6.0,  {"step": "component",   "detail": "Building sidebar navigation…",  "code": "<nav>…</nav>"}),
-    (5.0,  {"step": "styling",     "detail": "Applying design tokens…"}),
-    (4.0,  {"step": "styling",     "detail": "Adding responsive breakpoints…"}),
-    (3.0,  {"step": "refinement",  "detail": "Polishing interactions…"}),
-    (2.0,  {"step": "refinement",  "detail": "Accessibility pass…"}),
-    (1.0,  {"step": "complete",    "detail": "UI generation finished."}),
+    (0.5,  {"step": "thinking",    "detail": "Analyzing objective…"}),
+    (1.5,  {"step": "planning",    "detail": "Breaking down into components…"}),
+    (1.0,  {"step": "scaffolding", "detail": "Generating HTML skeleton…"}),
+    (3.0,  {"step": "component",   "detail": "Building header component…",    "code": "<header>…</header>"}),
+    (2.5,  {"step": "component",   "detail": "Building main content area…",   "code": "<main>…</main>"}),
+    (3.0,  {"step": "component",   "detail": "Building sidebar navigation…",  "code": "<nav>…</nav>"}),
+    (2.5,  {"step": "styling",     "detail": "Applying design tokens…"}),
+    (2.0,  {"step": "styling",     "detail": "Adding responsive breakpoints…"}),
+    (2.0,  {"step": "refinement",  "detail": "Polishing interactions…"}),
+    (1.5,  {"step": "refinement",  "detail": "Accessibility pass…"}),
+    (0.5,  {"step": "complete",    "detail": "UI generation finished."}),
 ]
 
 
