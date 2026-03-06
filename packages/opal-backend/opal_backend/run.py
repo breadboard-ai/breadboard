@@ -30,7 +30,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
-from typing import Any, AsyncIterator, TypedDict
+from typing import Any, AsyncIterator, TypedDict, cast
 
 from .agent_events import AgentEventSink, build_hooks_from_sink
 from .agent_file_system import AgentFileSystem
@@ -45,7 +45,7 @@ from .events import (
     QueryConsentEvent,
 )
 from .chat_log_manager import ChatLogManager
-from .pidgin import content_to_pidgin_string, to_pidgin
+from .pidgin import ToPidginResult, content_to_pidgin_string, to_pidgin
 from .functions.audio import get_audio_function_group
 from .functions.chat import get_chat_function_group, CHAT_LOG_PATH, SKIPPED_SENTINEL
 from .functions.generate import get_generate_function_group
@@ -127,11 +127,13 @@ async def run(
         yield ErrorEvent(message=pidgin_result["$error"])
         return
 
+    pidgin = cast(ToPidginResult, pidgin_result)
+
     objective: dict[str, Any] = {
-        "parts": [{"text": f"<objective>{pidgin_result.text}</objective>"}],
+        "parts": [{"text": f"<objective>{pidgin.text}</objective>"}],
         "role": "user",
     }
-    use_memory = pidgin_result.use_memory
+    use_memory = pidgin.use_memory
     if use_memory:
         resolved_flags["useMemory"] = True
 

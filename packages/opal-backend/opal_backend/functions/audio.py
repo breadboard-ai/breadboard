@@ -16,12 +16,13 @@ Contains two functions, both ported from ``functions/generate.ts``:
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable
+from typing import Any
 
 from ..agent_file_system import AgentFileSystem
 from ..function_definition import (
     FunctionDefinition,
     FunctionGroup,
+    StatusUpdateCallback,
     map_definitions,
 )
 from ..step_executor import (
@@ -72,8 +73,6 @@ def _define_generate_speech(
 ) -> FunctionDefinition:
     """Port of the speech agent function from generate.ts + callAudioGen."""
 
-    StatusUpdateCallback = Callable[[str | None], None]
-
     async def handler(
         args: dict[str, Any], status_cb: StatusUpdateCallback
     ) -> dict[str, Any]:
@@ -86,7 +85,7 @@ def _define_generate_speech(
         if task_tree_manager and task_id:
             task_tree_manager.set_in_progress(task_id, status_update)
 
-        status_cb(status_update or "Generating Speech")
+        status_cb(status_update or "Generating Speech", None)
 
         # Resolve voice parameter.
         voice_param = VOICE_MAP.get(voice, "en-US-female")
@@ -133,7 +132,7 @@ def _define_generate_speech(
             logger.error("generate_speech executeStep error: %s", e)
             return to_error_or_response({"error": str(e)})
 
-        status_cb(None)
+        status_cb(None, None)
 
         # Save output audio to agent FS — single output.
         output_chunks = result.get("chunks", [])
@@ -207,8 +206,6 @@ def _define_generate_music(
 ) -> FunctionDefinition:
     """Port of the music agent function from generate.ts + callMusicGen."""
 
-    StatusUpdateCallback = Callable[[str | None], None]
-
     async def handler(
         args: dict[str, Any], status_cb: StatusUpdateCallback
     ) -> dict[str, Any]:
@@ -220,7 +217,7 @@ def _define_generate_music(
         if task_tree_manager and task_id:
             task_tree_manager.set_in_progress(task_id, status_update)
 
-        status_cb(status_update or "Generating Music")
+        status_cb(status_update or "Generating Music", None)
 
         # Build ExecuteStepRequest — port of callMusicGen.
         execution_inputs: dict[str, Any] = {
@@ -256,7 +253,7 @@ def _define_generate_music(
             logger.error("generate_music executeStep error: %s", e)
             return to_error_or_response({"error": str(e)})
 
-        status_cb(None)
+        status_cb(None, None)
 
         # Save output audio to agent FS — single output.
         output_chunks = result.get("chunks", [])

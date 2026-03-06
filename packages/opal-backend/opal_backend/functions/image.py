@@ -25,12 +25,13 @@ The handler flow:
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable
+from typing import Any
 
 from ..agent_file_system import AgentFileSystem
 from ..function_definition import (
     FunctionDefinition,
     FunctionGroup,
+    StatusUpdateCallback,
     map_definitions,
 )
 from ..step_executor import (
@@ -79,8 +80,6 @@ def _define_generate_images(
 ) -> FunctionDefinition:
     """Port of the ``generate_images`` function from generate.ts."""
 
-    StatusUpdateCallback = Callable[[str | None], None]
-
     async def handler(
         args: dict[str, Any], status_cb: StatusUpdateCallback
     ) -> dict[str, Any]:
@@ -95,7 +94,7 @@ def _define_generate_images(
         if task_tree_manager and task_id:
             task_tree_manager.set_in_progress(task_id, status_update)
 
-        status_cb(status_update or "Generating Image(s)")
+        status_cb(status_update or "Generating Image(s)", None)
 
         # 1. Resolve input image paths from agent FS (batch, like TS getMany)
         image_parts = await file_system.get_many(input_images)
@@ -169,7 +168,7 @@ def _define_generate_images(
             logger.error("generate_images executeStep error: %s", e)
             return to_error_or_response({"error": str(e)})
 
-        status_cb(None)
+        status_cb(None, None)
 
         # 5. Save output images to agent FS
         output_chunks = result.get("chunks", [])

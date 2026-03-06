@@ -24,7 +24,7 @@ import json
 import logging
 import mimetypes
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, cast
 
 if TYPE_CHECKING:
     from .sheet_manager import SheetManager
@@ -165,10 +165,11 @@ class AgentFileSystem:
         parts: list[dict[str, Any]] = []
         for path in paths:
             result = await self.get(path)
-            if isinstance(result, dict) and "$error" in result:
-                errors.append(result["$error"])
-            else:
-                parts.extend(result)
+            if isinstance(result, dict):
+                if "$error" in result:
+                    errors.append(result["$error"])
+                continue
+            parts.extend(cast(list[dict[str, Any]], result))
         if errors:
             return {"$error": ",".join(errors)}
         return parts
