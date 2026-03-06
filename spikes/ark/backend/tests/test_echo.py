@@ -71,3 +71,37 @@ async def test_status_after_start(client: AsyncClient):
 async def test_stream_run_not_found(client: AsyncClient):
     response = await client.get("/agent/runs/nonexistent")
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_bundle_not_found(client: AsyncClient):
+    response = await client.get("/agent/runs/nonexistent/bundle")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_bundle_not_complete(client: AsyncClient):
+    res = await client.post(
+        "/agent/runs/start",
+        json={"objective": "test", "type": "ui"},
+    )
+    run_id = res.json()["id"]
+    response = await client.get(f"/agent/runs/{run_id}/bundle")
+    assert response.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_bundle_complete(client: AsyncClient):
+    from ark_backend.main import Run, OUT_DIR
+    from ark_backend.artifacts import generate_artifacts
+
+    run = Run(id="testbundle", objective="test bundle", agent_type="ui", status="complete")
+    files = generate_artifacts(run.id, run.objective, OUT_DIR)
+    run.artifacts = files
+    runs["testbundle"] = run
+
+    response = await client.get("/agent/runs/testbundle/bundle")
+    assert response.status_code == 200
+    assert "multipart/mixed" in response.headers["content-type"]
+    assert b"--ark-bundle-boundary" in response.content
+    assert b"--ark-bundle-boundary--" in response.content
