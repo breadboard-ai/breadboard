@@ -26,12 +26,13 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Callable
+from typing import Any
 
 from ..agent_file_system import AgentFileSystem
 from ..function_definition import (
     FunctionDefinition,
     FunctionGroup,
+    StatusUpdateCallback,
     map_definitions,
 )
 from ..step_executor import (
@@ -148,8 +149,6 @@ def _define_generate_video(
 ) -> FunctionDefinition:
     """Port of ``callVideoGen`` from video-generator/main.ts."""
 
-    StatusUpdateCallback = Callable[[str | None], None]
-
     async def handler(
         args: dict[str, Any], status_cb: StatusUpdateCallback
     ) -> dict[str, Any]:
@@ -163,7 +162,7 @@ def _define_generate_video(
         if task_tree_manager and task_id:
             task_tree_manager.set_in_progress(task_id, status_update)
 
-        status_cb(status_update or "Generating Video")
+        status_cb(status_update or "Generating Video", None)
 
         # Validate aspect ratio.
         if aspect_ratio not in ASPECT_RATIOS:
@@ -242,7 +241,7 @@ def _define_generate_video(
             expanded = expand_veo_error(error_msg, VIDEO_MODEL_NAME)
             return to_error_or_response(expanded)
 
-        status_cb(None)
+        status_cb(None, None)
 
         # 5. Save output video to agent FS
         # Veo produces one video — take the first chunk only.

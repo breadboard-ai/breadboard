@@ -292,7 +292,7 @@ def _define_generate_text(
             logger.error("generate_text streaming error: %s", e)
             return to_error_or_response({"error": str(e)})
 
-        status_cb(None)
+        status_cb(None, None)
 
         # 6. Merge and return
         text_parts = merge_text_parts(result_parts, separator="")
@@ -552,7 +552,7 @@ def _define_generate_and_execute_code(
                 )
             }
 
-        status_cb(None)
+        status_cb(None, None)
 
         # 7. Merge and return
         text_parts = merge_text_parts(result_parts, separator="")

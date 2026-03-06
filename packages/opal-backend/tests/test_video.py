@@ -271,7 +271,7 @@ class TestGenerateVideoHandler:
         defn = _define_generate_video(file_system=fs)
 
         statuses = []
-        def track(msg):
+        def track(msg, opts=None):
             statuses.append(msg)
 
         await defn.handler(

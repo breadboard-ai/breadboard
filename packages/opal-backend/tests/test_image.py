@@ -285,7 +285,7 @@ class TestGenerateImagesHandler:
         defn = _define_generate_images(file_system=fs)
 
         statuses = []
-        def track(msg):
+        def track(msg, opts=None):
             statuses.append(msg)
 
         await defn.handler(

@@ -23,12 +23,13 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Callable
+from typing import Any, cast
 
 from ..agent_file_system import AgentFileSystem
 from ..function_definition import (
     FunctionDefinition,
     FunctionGroup,
+    StatusUpdateCallback,
     map_definitions,
 )
 from ..pidgin import from_pidgin_string
@@ -100,8 +101,6 @@ def _define_memory_create_sheet(
 ) -> FunctionDefinition:
     """Port of the ``memory_create_sheet`` function from memory.ts."""
 
-    StatusUpdateCallback = Callable[[str | None], None]
-
     async def handler(
         args: dict[str, Any], status_cb: StatusUpdateCallback
     ) -> dict[str, Any]:
@@ -159,8 +158,6 @@ def _define_memory_read_sheet(
     task_tree_manager: TaskTreeManager | None = None,
 ) -> FunctionDefinition:
     """Port of the ``memory_read_sheet`` function from memory.ts."""
-
-    StatusUpdateCallback = Callable[[str | None], None]
 
     async def handler(
         args: dict[str, Any], status_cb: StatusUpdateCallback
@@ -286,8 +283,6 @@ def _define_memory_update_sheet(
 ) -> FunctionDefinition:
     """Port of the ``memory_update_sheet`` function from memory.ts."""
 
-    StatusUpdateCallback = Callable[[str | None], None]
-
     async def handler(
         args: dict[str, Any], status_cb: StatusUpdateCallback
     ) -> dict[str, Any]:
@@ -310,8 +305,9 @@ def _define_memory_update_sheet(
                     resolved_row.append("")
                 else:
                     # Extract text from the content parts.
+                    translated_dict = cast(dict[str, Any], translated)
                     texts = []
-                    parts = translated.get("parts", [])
+                    parts = translated_dict.get("parts", [])
                     for part in parts:
                         if isinstance(part, dict) and "text" in part:
                             texts.append(part["text"])
@@ -380,8 +376,6 @@ def _define_memory_delete_sheet(
 ) -> FunctionDefinition:
     """Port of the ``memory_delete_sheet`` function from memory.ts."""
 
-    StatusUpdateCallback = Callable[[str | None], None]
-
     async def handler(
         args: dict[str, Any], status_cb: StatusUpdateCallback
     ) -> dict[str, Any]:
@@ -424,8 +418,6 @@ def _define_memory_get_metadata(
     task_tree_manager: TaskTreeManager | None = None,
 ) -> FunctionDefinition:
     """Port of the ``memory_get_metadata`` function from memory.ts."""
-
-    StatusUpdateCallback = Callable[[str | None], None]
 
     async def handler(
         args: dict[str, Any], status_cb: StatusUpdateCallback
