@@ -1176,55 +1176,58 @@ export const publishStale = asAction(
     }
 
     share.status = "publishing-stale";
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    using _ = share.markPublishAsInProgress();
-    await boardServer.flushSaveQueue(graph.url);
+    const publishGuard = share.markPublishAsInProgress();
+    try {
+      await boardServer.flushSaveQueue(graph.url);
 
-    const shareableFileUrl = new URL(`drive:/${share.shareableFile.id}`);
-    const updatedShareableGraph = structuredClone(graph);
-    delete updatedShareableGraph["url"];
+      const shareableFileUrl = new URL(`drive:/${share.shareableFile.id}`);
+      const updatedShareableGraph = structuredClone(graph);
+      delete updatedShareableGraph["url"];
 
-    const staleUpdateResult = await resultify(() =>
-      googleDriveClient.updateFileMetadata(
-        share.shareableFile!.id,
-        {
-          properties: {
-            [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: share.editableVersion,
-            ...writeViewerModeProperty(share.viewerMode),
+      const staleUpdateResult = await resultify(() =>
+        googleDriveClient.updateFileMetadata(
+          share.shareableFile!.id,
+          {
+            properties: {
+              [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: share.editableVersion,
+              ...writeViewerModeProperty(share.viewerMode),
+            },
           },
-        },
-        { fields: ["modifiedTime"] }
-      )
-    );
-    // Ensure all assets have the same permissions as the shareable file,
-    // since they might have been added since the last publish.
-    if (
-      handleFatalShareError(
-        await handleAssetPermissions(share.shareableFile!.id, graph)
-      )
-    ) {
-      return;
-    }
-    await boardServer.ops.writeGraphToDrive(
-      shareableFileUrl,
-      updatedShareableGraph
-    );
-    if (handleFatalShareError(staleUpdateResult)) {
-      return;
-    }
+          { fields: ["modifiedTime"] }
+        )
+      );
+      // Ensure all assets have the same permissions as the shareable file,
+      // since they might have been added since the last publish.
+      if (
+        handleFatalShareError(
+          await handleAssetPermissions(share.shareableFile!.id, graph)
+        )
+      ) {
+        return;
+      }
+      await boardServer.ops.writeGraphToDrive(
+        shareableFileUrl,
+        updatedShareableGraph
+      );
+      if (handleFatalShareError(staleUpdateResult)) {
+        return;
+      }
 
-    share.status = "ready";
-    share.sharedVersion = share.editableVersion;
-    share.lastPublishedIso = staleUpdateResult.value.modifiedTime ?? "";
+      share.status = "ready";
+      share.sharedVersion = share.editableVersion;
+      share.lastPublishedIso = staleUpdateResult.value.modifiedTime ?? "";
 
-    Utils.Logging.getLogger(controller).log(
-      Utils.Logging.Formatter.verbose(
-        `Updated stale shareable graph copy` +
-          ` "${share.shareableFile!.id}" to version` +
-          ` "${share.editableVersion}".`
-      ),
-      "Share.publishStale"
-    );
+      Utils.Logging.getLogger(controller).log(
+        Utils.Logging.Formatter.verbose(
+          `Updated stale shareable graph copy` +
+            ` "${share.shareableFile!.id}" to version` +
+            ` "${share.editableVersion}".`
+        ),
+        "Share.publishStale"
+      );
+    } finally {
+      publishGuard();
+    }
   }
 );
 
