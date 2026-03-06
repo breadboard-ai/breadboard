@@ -221,15 +221,18 @@ export class ShareController extends RootController {
 
   #inProgressPublish: Promise<void> | null = null;
 
-  /** Must be used with `using` so that cleanup runs on scope exit. */
-  markPublishAsInProgress(): Disposable {
+  /**
+   * Marks a publish as in-progress and returns a cleanup function that
+   * resolves the in-progress promise and clears the field.
+   *
+   * Callers must invoke the returned function in a `finally` block.
+   */
+  markPublishAsInProgress(): () => void {
     const { promise, resolve } = Promise.withResolvers<void>();
     this.#inProgressPublish = promise;
-    return {
-      [Symbol.dispose]: () => {
-        resolve();
-        this.#inProgressPublish = null;
-      },
+    return () => {
+      resolve();
+      this.#inProgressPublish = null;
     };
   }
 
