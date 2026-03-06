@@ -572,33 +572,84 @@ class TestBuildFunctionGroups:
 class TestProcessChatResponse:
     """Tests for _process_chat_response."""
 
-    def test_skip_sentinel_transformed(self):
+    @pytest.mark.asyncio
+    async def test_skip_sentinel_transformed(self):
         """__skipped__ sentinel in LLMContent is transformed to {skipped: true}."""
+        from opal_backend.agent_file_system import AgentFileSystem
+
+        fs = AgentFileSystem()
         response = {
             "input": {"role": "user", "parts": [{"text": "__skipped__"}]}
         }
-        result = _process_chat_response(
-            "chat_request_user_input", response
+        result = await _process_chat_response(
+            "chat_request_user_input", response, fs,
         )
         assert result == {"skipped": True}
 
-    def test_extracts_text_from_llm_content(self):
+    @pytest.mark.asyncio
+    async def test_extracts_text_from_llm_content(self):
         """Client sends {input: LLMContent} — text is extracted."""
+        from opal_backend.agent_file_system import AgentFileSystem
+
+        fs = AgentFileSystem()
         response = {
             "input": {"role": "user", "parts": [{"text": "hello"}]}
         }
-        result = _process_chat_response("chat_request_user_input", response)
+        result = await _process_chat_response(
+            "chat_request_user_input", response, fs,
+        )
         assert result == {"user_input": "hello"}
 
-    def test_non_chat_function_passthrough(self):
+    @pytest.mark.asyncio
+    async def test_non_chat_function_passthrough(self):
         """Non-chat functions pass through unchanged."""
+        from opal_backend.agent_file_system import AgentFileSystem
+
+        fs = AgentFileSystem()
         response = {"text": "generated"}
-        result = _process_chat_response("generate_text", response)
+        result = await _process_chat_response("generate_text", response, fs)
         assert result is response
 
-    def test_missing_input_passes_through(self):
+    @pytest.mark.asyncio
+    async def test_missing_input_passes_through(self):
         """If 'input' key is missing, response passes through unchanged."""
+        from opal_backend.agent_file_system import AgentFileSystem
+
+        fs = AgentFileSystem()
         response = {"other": "data"}
-        result = _process_chat_response("chat_request_user_input", response)
+        result = await _process_chat_response(
+            "chat_request_user_input", response, fs,
+        )
         assert result is response
+
+    @pytest.mark.asyncio
+    async def test_multimodal_parts_registered_in_fs(self):
+        """Image parts are registered in FS and produce <file> pidgin tags."""
+        from opal_backend.agent_file_system import AgentFileSystem
+
+        fs = AgentFileSystem()
+        response = {
+            "input": {
+                "role": "user",
+                "parts": [
+                    {"text": "Here is a photo"},
+                    {"inlineData": {
+                        "mimeType": "image/png",
+                        "data": "iVBORw0KGgo=",
+                    }},
+                ],
+            }
+        }
+        result = await _process_chat_response(
+            "chat_request_user_input", response, fs,
+        )
+
+        user_input = result["user_input"]
+        # The text part should be present.
+        assert "Here is a photo" in user_input
+        # The image should be registered and produce a <file> tag.
+        assert '<file src="' in user_input
+        assert '" />' in user_input
+        # The FS should contain the registered image.
+        assert len(fs.files) >= 1
 

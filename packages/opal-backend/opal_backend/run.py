@@ -45,7 +45,7 @@ from .events import (
     QueryConsentEvent,
 )
 from .chat_log_manager import ChatLogManager
-from .pidgin import to_pidgin
+from .pidgin import content_to_pidgin_string, to_pidgin
 from .functions.audio import get_audio_function_group
 from .functions.chat import get_chat_function_group, CHAT_LOG_PATH, SKIPPED_SENTINEL
 from .functions.generate import get_generate_function_group
@@ -260,7 +260,9 @@ async def resume(
             "parts": [{
                 "functionResponse": {
                     "name": func_name,
-                    "response": _process_chat_response(func_name, response),
+                    "response": await _process_chat_response(
+                        func_name, response, state.file_system,
+                    ),
                 }
             }],
             "role": "user",
@@ -398,8 +400,9 @@ async def _resume_precondition(
     return state.contents + [function_response_turn]
 
 
-def _process_chat_response(
-    func_name: str, response: dict[str, Any]
+async def _process_chat_response(
+    func_name: str, response: dict[str, Any],
+    file_system: AgentFileSystem,
 ) -> dict[str, Any]:
     """Process a chat function response before injecting into contents.
 
@@ -407,9 +410,11 @@ def _process_chat_response(
     ``{"role": "user", "parts": [{"text": "..."}]}``.
 
     This mirrors the TS handler logic (chat.ts L121-131):
-    1. Extract text from the first text part of the LLMContent.
-    2. Check for the skip sentinel (``__skipped__``).
-    3. Transform to ``{"user_input": text}`` for the model.
+    1. Check for the skip sentinel (``__skipped__``).
+    2. Run LLMContent through ``content_to_pidgin_string`` to register
+       binary parts (images, file uploads) in the AgentFileSystem and
+       produce pidgin text with ``<file>`` tags.
+    3. Return ``{"user_input": pidgin_text}`` for the model.
 
     Non-chat functions pass through unchanged.
     """
@@ -422,7 +427,10 @@ def _process_chat_response(
             )
             if first_text == SKIPPED_SENTINEL:
                 return {"skipped": True}
-            return {"user_input": first_text}
+            pidgin_text = content_to_pidgin_string(
+                llm_content, file_system,
+            )
+            return {"user_input": pidgin_text}
     return response
 
 def _build_function_groups(
