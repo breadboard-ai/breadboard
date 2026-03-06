@@ -705,11 +705,7 @@ Body (resume): {interactionId, response}
       from `asset`/`input` segments now survive into the loop. `run()` accepts
       `segments` (not `objective`) as its primary input; `dev/main.py` passes
       segments straight through.
-- [ ] Chat resume multimodal parts — `_process_chat_response` extracts only the
-      first text part from the user's chat response (`{user_input: text}`). The
-      UI supports file uploads and images in chat input (`input_type: "any"` /
-      `"file-upload"`). The TS local path handles this correctly: it calls
-      `toPidgin(input)` which registers binary parts in `AgentFileSystem` and
-      produces pidgin text with `<file>` tags. The Python remote path skips this
-      entirely. Fix: run the response parts through `content_to_pidgin_string`
-      to register files in the FS and produce proper pidgin text.
+- [x] Chat resume multimodal parts — `_process_chat_response` uses
+      `content_to_pidgin_string` to register binary parts (images, file uploads)
+      in `AgentFileSystem` and produce pidgin text with `<file>` tags, matching
+      the TS local path behavior.
