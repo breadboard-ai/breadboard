@@ -21,6 +21,7 @@ export type {
   AgentEventMap,
   AgentEventType,
   Payload,
+  StreamRunAgentResponse,
   SuspendEvent,
   AgentInputResponse,
   TransformDescriptor,
@@ -287,6 +288,17 @@ type Payload<T extends AgentEventType> = AgentEventMap[T];
 type AgentEvent = {
   [K in AgentEventType]: { [P in K]: AgentEventMap[K] };
 }[AgentEventType];
+
+/**
+ * The full SSE `data:` line envelope from `StreamRunAgentResponse`.
+ *
+ * Wraps an `AgentEvent` (the `oneof event`) with optional top-level fields
+ * that the proto places alongside the event:
+ * - `snapshotId`: sandbox snapshot captured after each agent action.
+ */
+type StreamRunAgentResponse = AgentEvent & {
+  snapshotId?: string;
+};
 
 /**
  * All event types that suspend the loop and wait for a client response.

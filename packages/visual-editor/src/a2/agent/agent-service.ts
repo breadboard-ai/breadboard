@@ -69,6 +69,9 @@ interface AgentRunHandle {
 
   /** The AbortSignal for this run, usable by the agent loop. */
   readonly signal: AbortSignal;
+
+  /** The latest sandbox snapshot ID received from the server. */
+  readonly snapshotId?: string | undefined;
 }
 
 // =============================================================================
@@ -104,6 +107,7 @@ interface AgentRunHandle {
  */
 class AgentService {
   readonly #runs = new Map<string, AgentRunHandle>();
+  #snapshotId: string | undefined;
 
   /**
    * Remote server URL. When set, `startRun()` will POST to the server and
@@ -164,7 +168,8 @@ class AgentService {
         config.kind,
         this.#remoteBaseUrl,
         config,
-        this.#remoteFetchWithCreds
+        this.#remoteFetchWithCreds,
+        this.#snapshotId
       );
     } else {
       run = new LocalAgentRun(runId, config.kind);
@@ -184,6 +189,10 @@ class AgentService {
    * Call this after the agent loop finishes to avoid memory leaks.
    */
   endRun(runId: string): void {
+    const run = this.#runs.get(runId);
+    if (run?.snapshotId) {
+      this.#snapshotId = run.snapshotId;
+    }
     this.#runs.delete(runId);
   }
 

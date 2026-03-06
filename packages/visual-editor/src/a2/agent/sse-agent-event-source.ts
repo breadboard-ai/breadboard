@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { AgentEvent } from "./agent-event.js";
+import type { AgentEvent, StreamRunAgentResponse } from "./agent-event.js";
 import { SUSPEND_TYPES, eventType, eventPayload } from "./agent-event.js";
 import type { AgentEventConsumer } from "./agent-event-consumer.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
@@ -27,12 +27,15 @@ export { SSEAgentEventSource };
  * open that long.
  */
 class SSEAgentEventSource {
+  #snapshotId: string | undefined;
+
   constructor(
     private readonly baseUrl: string,
     private readonly config: Record<string, unknown>,
     private readonly consumer: AgentEventConsumer,
     private readonly fetchWithCreds: typeof fetch,
-    private readonly signal?: AbortSignal
+    private readonly signal?: AbortSignal,
+    private readonly baseSnapshotId?: string
   ) {
     console.log("[SSE] Created SSEAgentEventSource", { baseUrl, config });
   }
@@ -50,7 +53,10 @@ class SSEAgentEventSource {
    */
   async connect(): Promise<void> {
     // First connection: wrap config under "start" (proto oneof).
-    let body: Record<string, unknown> = { start: this.config };
+    let body: Record<string, unknown> = {
+      start: this.config,
+      ...(this.baseSnapshotId && { baseSnapshotId: this.baseSnapshotId }),
+    };
 
     // Reconnect loop: each iteration is one POST → stream cycle.
     // eslint-disable-next-line no-constant-condition
@@ -70,6 +76,7 @@ class SSEAgentEventSource {
           interactionId: result.interactionId,
           response: result.response,
         },
+        ...(this.#snapshotId && { baseSnapshotId: this.#snapshotId }),
       };
     }
   }
@@ -108,15 +115,22 @@ class SSEAgentEventSource {
 
     // The stream yields proto-style oneof objects — our AgentEvent type
     // matches the wire format directly, no transformation needed.
-    const events = iteratorFromStream<AgentEvent>(response.body);
+    const events = iteratorFromStream<StreamRunAgentResponse>(response.body);
     for await (const event of events) {
-      const type = eventType(event);
+      // Capture snapshot ID from the response envelope.
+      if (event.snapshotId) {
+        this.#snapshotId = event.snapshotId;
+      }
+
+      const type = eventType(event as AgentEvent);
       console.log("[SSE] Event:", type, event);
 
       if (SUSPEND_TYPES.has(type)) {
         // Suspend: await the consumer handler to get the user's response.
-        const payload = eventPayload(event) as { interactionId: string };
-        const userResponse = await this.consumer.handle(event);
+        const payload = eventPayload(event as AgentEvent) as {
+          interactionId: string;
+        };
+        const userResponse = await this.consumer.handle(event as AgentEvent);
         console.log("[SSE] Suspend resolved, reconnecting:", type);
         return {
           done: false,
@@ -126,7 +140,8 @@ class SSEAgentEventSource {
       }
 
       // Fire-and-forget: dispatch and continue.
-      this.consumer.handle(event);
+      // Cast to AgentEvent since the consumer doesn't need envelope fields.
+      this.consumer.handle(event as AgentEvent);
 
       if (type === "complete" || type === "error") {
         return { done: true };
@@ -136,5 +151,10 @@ class SSEAgentEventSource {
     // Stream ended without complete/error — treat as done.
     console.log("[SSE] Stream ended normally");
     return { done: true };
+  }
+
+  /** The latest sandbox snapshot ID received from the server. */
+  get snapshotId(): string | undefined {
+    return this.#snapshotId;
   }
 }

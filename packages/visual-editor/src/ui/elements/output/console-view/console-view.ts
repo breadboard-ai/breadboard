@@ -37,6 +37,7 @@ function isConsoleUpdate(
   item: LLMContent | SimplifiedA2UIClient | ConsoleUpdate
 ): item is ConsoleUpdate {
   return (
+    item &&
     "type" in item &&
     (item.type === "text" ||
       item.type === "links" ||

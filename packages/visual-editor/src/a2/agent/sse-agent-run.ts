@@ -55,7 +55,8 @@ class SSEAgentRun implements AgentRunHandle {
     readonly kind: string,
     baseUrl: string,
     config: RemoteAgentRunConfig,
-    fetchWithCreds: typeof fetch
+    fetchWithCreds: typeof fetch,
+    baseSnapshotId?: string
   ) {
     this.events = new AgentEventConsumer();
     this.#source = new SSEAgentEventSource(
@@ -68,7 +69,8 @@ class SSEAgentRun implements AgentRunHandle {
       },
       this.events,
       fetchWithCreds,
-      this.#abortController.signal
+      this.#abortController.signal,
+      baseSnapshotId
     );
   }
 
@@ -90,5 +92,10 @@ class SSEAgentRun implements AgentRunHandle {
 
   get signal(): AbortSignal {
     return this.#abortController.signal;
+  }
+
+  /** The latest sandbox snapshot ID received from the server. */
+  get snapshotId(): string | undefined {
+    return this.#source.snapshotId;
   }
 }

@@ -488,6 +488,92 @@ suite("SSEAgentEventSource", () => {
 
     await assert.rejects(() => source.connect(), /SSE response has no body/);
   });
+
+  test("snapshotId is extracted from response and forwarded on resume", async () => {
+    // Stream 1: event with snapshotId → suspend
+    const stream1Events = [
+      { thought: { text: "thinking" }, snapshotId: "snap-001" },
+      {
+        waitForInput: {
+          requestId: "req-1",
+          interactionId: "int-1",
+          prompt: { parts: [{ text: "Name?" }], role: "model" },
+          inputType: "text",
+        },
+        snapshotId: "snap-002",
+      },
+    ];
+
+    // Stream 2: complete with updated snapshotId
+    const stream2Events = [
+      {
+        complete: {
+          result: { success: true, href: "/", outcomes: undefined },
+        },
+        snapshotId: "snap-003",
+      },
+    ];
+
+    let callCount = 0;
+    mock.method(
+      globalThis,
+      "fetch",
+      async (url: string | URL | Request, init?: RequestInit) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        fetchCalls.push({ url: urlStr, init });
+        callCount++;
+        if (callCount === 1) {
+          return mockFetchResponse(sseStream(stream1Events as AgentEvent[]));
+        }
+        return mockFetchResponse(sseStream(stream2Events as AgentEvent[]));
+      }
+    );
+
+    const consumer = new AgentEventConsumer();
+    consumer.on("waitForInput", () =>
+      Promise.resolve({ input: { parts: [{ text: "Alice" }] } })
+    );
+
+    const source = new SSEAgentEventSource(
+      "http://test",
+      TEST_CONFIG,
+      consumer,
+      fetch,
+      undefined,
+      "snap-initial"
+    );
+    await source.connect();
+
+    // First POST should include the initial baseSnapshotId.
+    const body1 = JSON.parse(fetchCalls[0].init?.body as string);
+    assert.strictEqual(body1.baseSnapshotId, "snap-initial");
+
+    // Second POST (resume) should include the latest snapshotId from stream.
+    const body2 = JSON.parse(fetchCalls[1].init?.body as string);
+    assert.strictEqual(body2.baseSnapshotId, "snap-002");
+
+    // Final snapshotId should be the last one received.
+    assert.strictEqual(source.snapshotId, "snap-003");
+  });
+
+  test("snapshotId getter returns undefined when server sends none", async () => {
+    const events: AgentEvent[] = [
+      { thought: { text: "no snapshot" } },
+      { finish: {} },
+    ];
+    installFetch(events);
+
+    const consumer = new AgentEventConsumer();
+    const source = new SSEAgentEventSource(
+      "http://test",
+      TEST_CONFIG,
+      consumer,
+      fetch
+    );
+    await source.connect();
+
+    assert.strictEqual(source.snapshotId, undefined);
+  });
 });
 
 suite("AgentService remote mode", () => {
