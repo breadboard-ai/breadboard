@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ark View</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #fff;
+      }
+      #root {
+        min-height: 100vh;
+      }
+      #error {
+        display: none;
+        padding: 16px;
+        margin: 16px;
+        background: #450a0a;
+        color: #fecaca;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="error"></div>
+    <script type="module" src="/src/iframe/entry.ts"></script>
+  </body>
+</html>

@@ -1,8 +1,28 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 :root {
-  font-family: system-ui, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   color-scheme: light dark;
+  --ark-surface: #f5f5f5;
+  --ark-header: #1a1a2e;
+  --ark-accent: #0d9488;
+  --ark-text: #1a1a2e;
 }
 
 body {
-  margin: 2rem;
+  background: var(--ark-surface);
+  color: var(--ark-text);
+  height: 100vh;
+  overflow: hidden;
+}
+
+#app {
+  height: 100vh;
 }
