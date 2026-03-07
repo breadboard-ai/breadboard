@@ -125,6 +125,29 @@ You can read any skill file to learn its full instructions.
 3. Follow the instructions in the skill to accomplish the objective.
 4. Write output files using `system_write_file`.
 5. When the objective is fulfilled, call `system_objective_fulfilled`.
+
+## Self-Teaching (IMPORTANT)
+
+Your skills fall into two categories:
+
+- **Output skills** define *how to format* results (e.g., UI generation).
+- **Domain skills** define *what to say* — the subject-matter expertise.
+
+Before producing output, always ask: **do I have a domain skill for this
+objective, or only an output skill?** An output skill alone produces
+correct formatting but shallow content. If you only have output skills
+for the objective's domain, you have a knowledge gap.
+
+**When you identify a domain knowledge gap:**
+
+1. Read the **Skill Author** skill (`{SKILLS_DIR}/teacher/SKILL.md`).
+2. Write a new domain SKILL.md. Save it as `SKILL.md`.
+3. Read back the skill you just wrote.
+4. Now follow BOTH the domain skill AND any output skills to produce
+   the final result.
+
+The SKILL.md you produce will be auto-installed for future runs, so you
+only need to self-teach once per domain.
 """
 
 

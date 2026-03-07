@@ -5,6 +5,7 @@ import json
 import logging
 import mimetypes
 import os
+import re
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -245,6 +246,71 @@ def _resolve_library_imports(run_id: str, artifacts: list[str]) -> None:
             logger.info("Resolved %s from library for run %s", lib_name, run_id)
 
 
+def _promote_skill_output(run_id: str, artifacts: list[str]) -> None:
+    """Auto-install a SKILL.md produced by the agent (Teacher workflow).
+
+    If the run output contains a SKILL.md, parse its front matter,
+    derive a slug from the name, and copy it to skills/{slug}/SKILL.md.
+    Also stamps knowledge_sources with hashes of current references.
+    """
+    import hashlib
+    from opal_backend.skilled_agent import parse_skill_front_matter
+
+    run_dir = OUT_DIR / run_id
+    if "SKILL.md" not in artifacts:
+        return
+
+    skill_path = run_dir / "SKILL.md"
+    if not skill_path.is_file():
+        return
+
+    content = skill_path.read_text()
+    name, _description = parse_skill_front_matter(content)
+    if not name or name == "SKILL.md":
+        logger.warning("SKILL.md in run %s has no valid name, skipping", run_id)
+        return
+
+    # Derive slug: "Recipe Generation" -> "recipe-generation"
+    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+    if not slug:
+        slug = run_id[:8]
+
+    # Stamp knowledge_sources: hash all current references (excluding _staging).
+    refs_dir = Path(__file__).resolve().parent.parent / "references"
+    knowledge_lines: list[str] = []
+    if refs_dir.is_dir():
+        for ref_file in sorted(refs_dir.rglob("*.md")):
+            if ref_file.parent.name == "_staging":
+                continue
+            rel = str(ref_file.relative_to(refs_dir))
+            h = hashlib.sha256(ref_file.read_bytes()).hexdigest()[:12]
+            knowledge_lines.append(f"  - path: {rel}\n    hash: {h}")
+
+    if knowledge_lines:
+        ks_block = "knowledge_sources:\n" + "\n".join(knowledge_lines)
+        # Inject into front matter before the closing ---.
+        fm_match = re.match(r"(---\s*\n)(.*?)(\n---)", content, re.DOTALL)
+        if fm_match:
+            # Remove any existing knowledge_sources from the front matter.
+            fm_body = re.sub(
+                r"knowledge_sources:.*?(?=\n[a-z]|\n---|\Z)",
+                "", fm_match.group(2), flags=re.DOTALL,
+            ).rstrip()
+            content = (
+                fm_match.group(1)
+                + fm_body + "\n"
+                + ks_block + "\n"
+                + "---"
+                + content[fm_match.end():]
+            )
+
+    dest_dir = SKILLS_DIR / slug
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / "SKILL.md"
+    dest.write_text(content)
+    logger.info("Auto-installed skill '%s' as %s", name, slug)
+
+
 async def _simulate_run(run: Run):
     """Background task that walks through simulation steps."""
     for i, (delay, data) in enumerate(_SIMULATION_STEPS):
@@ -335,10 +401,19 @@ async def _run_with_skilled_agent(run: Run):
                     key = f"library/{other_id}/{artifact}"
                     pre_loaded[key] = artifact_path.read_text()
 
+    # Pre-load reference material from backend/references/.
+    refs_dir = Path(__file__).resolve().parent.parent / "references"
+    if refs_dir.is_dir():
+        for ref_file in sorted(refs_dir.rglob("*.md")):
+            # Skip _staging directories (unpublished references).
+            if "/_staging/" in str(ref_file) or ref_file.parent.name == "_staging":
+                continue
+            key = f"references/{ref_file.relative_to(refs_dir)}"
+            pre_loaded[key] = ref_file.read_text()
+            logger.info("Pre-loaded reference: %s", key)
+
     if pre_loaded:
-        logger.info("Pre-loaded %d files from %d previous runs",
-                     len(pre_loaded),
-                     len({k.split("/")[1] for k in pre_loaded}))
+        logger.info("Pre-loaded %d files total", len(pre_loaded))
 
     try:
         async for event in run_skilled_agent(
@@ -405,6 +480,8 @@ async def _run_with_skilled_agent(run: Run):
     _promote_to_library(run.id, run.artifacts)
     # Also resolve any imports the agent used but didn't save.
     _resolve_library_imports(run.id, run.artifacts)
+    # Auto-install any SKILL.md the agent produced (Teacher workflow).
+    _promote_skill_output(run.id, run.artifacts)
 
     run.status = "complete"
     done_event = {"type": "done", "id": run.id, "artifacts": run.artifacts}
@@ -446,6 +523,242 @@ async def delete_run(run_id: str):
         shutil.rmtree(run_dir)
 
     return {"deleted": run_id}
+
+
+# ─── Skill Management ─────────────────────────────────────────────────────────
+
+SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
+
+
+@app.get("/skills")
+async def list_skills():
+    """List all available skills with metadata."""
+    from opal_backend.skilled_agent import parse_skill_front_matter
+
+    result = []
+    if not SKILLS_DIR.is_dir():
+        return result
+
+    for skill_dir in sorted(SKILLS_DIR.iterdir()):
+        skill_path = skill_dir / "SKILL.md"
+        if not skill_path.is_file():
+            continue
+        content = skill_path.read_text()
+        name, description = parse_skill_front_matter(content)
+        result.append({
+            "slug": skill_dir.name,
+            "name": name,
+            "description": description,
+        })
+    return result
+
+
+@app.get("/skills/{slug}")
+async def get_skill(slug: str):
+    """Return the full content of a skill, with knowledge audit."""
+    import hashlib
+    import yaml
+
+    skill_path = SKILLS_DIR / slug / "SKILL.md"
+    if not skill_path.is_file():
+        raise HTTPException(status_code=404, detail="Skill not found")
+    content = skill_path.read_text()
+    from opal_backend.skilled_agent import parse_skill_front_matter
+    name, description = parse_skill_front_matter(content)
+
+    # Parse knowledge_sources from front matter.
+    audit = {"status": "unknown", "sources": []}
+    fm_match = re.match(r"^---\s*\n(.*?)\n---", content, re.DOTALL)
+    if fm_match:
+        try:
+            fm = yaml.safe_load(fm_match.group(1)) or {}
+        except Exception:
+            fm = {}
+        declared = fm.get("knowledge_sources", [])
+        if declared:
+            refs_dir = Path(__file__).resolve().parent.parent / "references"
+            tracked_domains: set[str] = set()
+            all_current = True
+            sources = []
+
+            for src in declared:
+                src_path = refs_dir / src["path"]
+                tracked_domains.add(src["path"].split("/")[0])
+                if src_path.is_file():
+                    current_hash = hashlib.sha256(
+                        src_path.read_bytes()
+                    ).hexdigest()[:12]
+                    matches = current_hash == src.get("hash", "")
+                    if not matches:
+                        all_current = False
+                    sources.append({
+                        "path": src["path"],
+                        "declared_hash": src.get("hash"),
+                        "current_hash": current_hash,
+                        "status": "current" if matches else "changed",
+                    })
+                else:
+                    all_current = False
+                    sources.append({
+                        "path": src["path"],
+                        "status": "missing",
+                    })
+
+            # Check for NEW references the skill doesn't know about.
+            for domain in tracked_domains:
+                domain_dir = refs_dir / domain
+                if not domain_dir.is_dir():
+                    continue
+                for ref_file in sorted(domain_dir.rglob("*.md")):
+                    if ref_file.parent.name == "_staging":
+                        continue
+                    rel = str(ref_file.relative_to(refs_dir))
+                    known_paths = {s["path"] for s in declared}
+                    if rel not in known_paths:
+                        all_current = False
+                        current_hash = hashlib.sha256(
+                            ref_file.read_bytes()
+                        ).hexdigest()[:12]
+                        sources.append({
+                            "path": rel,
+                            "current_hash": current_hash,
+                            "status": "new_untracked",
+                        })
+
+            audit = {
+                "status": "current" if all_current else "stale",
+                "sources": sources,
+            }
+
+    return {
+        "slug": slug,
+        "name": name,
+        "description": description,
+        "content": content,
+        "knowledge_audit": audit,
+    }
+
+
+@app.delete("/skills/{slug}")
+async def delete_skill(slug: str):
+    """Delete a skill directory."""
+    import shutil
+
+    skill_dir = SKILLS_DIR / slug
+    if not skill_dir.is_dir():
+        raise HTTPException(status_code=404, detail="Skill not found")
+    shutil.rmtree(skill_dir)
+    return {"deleted": slug}
+
+
+@app.post("/skills/{slug}/refresh")
+async def refresh_skill(slug: str):
+    """Trigger CPD: re-read references and update the skill via Teacher.
+
+    This runs the Teacher skill with all current references, producing
+    an updated SKILL.md that reflects the latest knowledge.
+    """
+    import hashlib
+
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=503, detail="No API key configured")
+
+    skill_path = SKILLS_DIR / slug / "SKILL.md"
+    if not skill_path.is_file():
+        raise HTTPException(status_code=404, detail="Skill not found")
+
+    # Load the Teacher skill.
+    from ark_backend.gemini_client import ApiKeyBackendClient
+    from opal_backend.skilled_agent import (
+        Skill, parse_skill_front_matter, run_skilled_agent,
+    )
+
+    teacher_path = SKILLS_DIR / "teacher" / "SKILL.md"
+    if not teacher_path.is_file():
+        raise HTTPException(status_code=500, detail="Teacher skill not found")
+
+    teacher_content = teacher_path.read_text()
+    t_name, t_desc = parse_skill_front_matter(teacher_content)
+    teacher_skill = Skill(name=t_name, description=t_desc, content=teacher_content)
+
+    # Pre-load all current references (excluding _staging).
+    refs_dir = Path(__file__).resolve().parent.parent / "references"
+    pre_loaded: dict[str, str] = {}
+    if refs_dir.is_dir():
+        for ref_file in sorted(refs_dir.rglob("*.md")):
+            if ref_file.parent.name == "_staging":
+                continue
+            key = f"references/{ref_file.relative_to(refs_dir)}"
+            pre_loaded[key] = ref_file.read_text()
+
+    # Also pre-load the current skill so the Teacher can see what to update.
+    current_content = skill_path.read_text()
+    current_name, _ = parse_skill_front_matter(current_content)
+    pre_loaded["current_skill/SKILL.md"] = current_content
+
+    objective = (
+        f"Update the existing '{current_name}' skill. "
+        f"The current skill is at /mnt/current_skill/SKILL.md. "
+        f"Read ALL reference material in /mnt/references/ and update "
+        f"the skill to reflect the latest knowledge. Preserve the skill's "
+        f"domain scope but incorporate any new rules, categories, or changes. "
+        f"Save the updated skill as SKILL.md."
+    )
+
+    backend_client = ApiKeyBackendClient(api_key=GEMINI_API_KEY)
+    new_content: str | None = None
+
+    async for event in run_skilled_agent(
+        objective=objective,
+        skills=[teacher_skill],
+        backend=backend_client,
+        pre_loaded_files=pre_loaded,
+    ):
+        etype = getattr(event, "type", "unknown")
+        if etype == "complete":
+            result = getattr(event, "result", None)
+            if result and getattr(result, "intermediate", None):
+                for file_data in result.intermediate:
+                    if file_data.path.rstrip("/").endswith("SKILL.md"):
+                        parts = file_data.content.get("parts", []) if isinstance(file_data.content, dict) else []
+                        text = parts[0].get("text", "") if parts else ""
+                        if text:
+                            new_content = text
+
+    if not new_content:
+        raise HTTPException(status_code=500, detail="Teacher did not produce a SKILL.md")
+
+    # Compute fresh hashes for knowledge_sources.
+    knowledge_sources = []
+    if refs_dir.is_dir():
+        for ref_file in sorted(refs_dir.rglob("*.md")):
+            if ref_file.parent.name == "_staging":
+                continue
+            rel = str(ref_file.relative_to(refs_dir))
+            h = hashlib.sha256(ref_file.read_bytes()).hexdigest()[:12]
+            knowledge_sources.append(f"  - path: {rel}\n    hash: {h}")
+
+    # Inject knowledge_sources into front matter.
+    if knowledge_sources:
+        ks_block = "knowledge_sources:\n" + "\n".join(knowledge_sources)
+        # Insert before closing ---.
+        new_content = re.sub(
+            r"\n---\s*$",
+            f"\n{ks_block}\n---",
+            new_content.split("\n---", 1)[0] + "\n---" + (new_content.split("\n---", 1)[1] if "\n---" in new_content else ""),
+            count=1,
+        )
+
+    skill_path.write_text(new_content)
+    new_name, new_desc = parse_skill_front_matter(new_content)
+    logger.info("CPD refresh complete for skill '%s'", slug)
+
+    return {
+        "slug": slug,
+        "name": new_name,
+        "description": new_desc,
+        "status": "refreshed",
+    }
 
 
 @app.get("/agent/runs/{run_id}/reuse")

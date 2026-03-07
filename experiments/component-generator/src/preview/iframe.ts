@@ -157,12 +157,18 @@ function findDependencies(
 }
 
 /**
- * Strip duplicate top-level `const` declarations from combined code.
+ * Strip duplicate top-level `const` declarations and `export default`
+ * statements from combined code.
  *
  * When multiple code blocks are stitched together, the model often repeats
  * `const { useState, useEffect, ... } = React;` before each function.
  * esbuild rejects these as redeclarations. This function keeps only the
  * first occurrence of each unique `const` line.
+ *
+ * It also strips every `export default` — when multiple components are
+ * combined, each may carry its own `export default`, and esbuild rejects
+ * duplicates. The iframe entry resolves components by name, not by default
+ * export, so these are safely removable.
  */
 function deduplicateDeclarations(code: string): string {
   const lines = code.split("\n");
@@ -171,6 +177,22 @@ function deduplicateDeclarations(code: string): string {
 
   for (const line of lines) {
     const trimmed = line.trim();
+
+    // Strip `export default function Foo` → `function Foo`
+    // Strip `export default class Foo`    → `class Foo`
+    if (
+      trimmed.startsWith("export default function ") ||
+      trimmed.startsWith("export default class ")
+    ) {
+      result.push(line.replace("export default ", ""));
+      continue;
+    }
+
+    // Remove standalone `export default Foo;` lines entirely.
+    if (/^export\s+default\s+\w+\s*;?\s*$/.test(trimmed)) {
+      continue;
+    }
+
     // Only deduplicate top-level const declarations (not inside functions).
     // We identify these as lines starting with `const ` that aren't indented.
     if (trimmed.startsWith("const ") && line === trimmed) {
