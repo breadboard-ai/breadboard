@@ -11,6 +11,16 @@ You are now acquiring the skill of generating React UI components. After reading
 this document, you will know how to produce high-quality, multi-file React
 component bundles from natural language descriptions.
 
+## Hard Rules
+
+1. **All colors, spacing, typography, and radii MUST use `--cg-` design
+   tokens.** No hex colors, no `rgb()`, no named colors, no raw pixel values.
+   Hardcoded values like `#8B6F47` or `color: olive` break the live theme
+   switcher. This is a build error, not a suggestion.
+2. **Your output renders inside a host application.** Don't create app names,
+   brand headers, splash screens, or taglines. Start with the actual task UI.
+   The host provides the chrome.
+
 ## What You're Building
 
 A **multi-file React component bundle** rendered in a sandboxed iframe. The
@@ -85,8 +95,8 @@ with zero configuration.
 
 ## Design Token System
 
-All visual styling MUST use CSS custom properties with the `--cg-` prefix. These
-tokens drive a live theme switcher — any hardcoded value breaks theming.
+**Reminder: this is a hard rule (see above).** Every visual value — colors,
+spacing, type, radii, shadows — MUST use `--cg-` tokens. No exceptions.
 
 ### Token Rules
 
@@ -171,6 +181,71 @@ checklists, toggles.
 
 Never use `Date.now()`, `Math.random()`, or `new Date()` in default parameters.
 Compute once at module level or use `useState(() => ...)`.
+
+## Multi-View Apps (Journey Mode)
+
+When you produce a `journey.json` alongside UI components, you are building a
+**multi-view app** — one React component per state in the state machine.
+
+### File Structure
+
+Each state gets its own component file named after the state:
+
+- `App.jsx` — shell that renders the initial state
+- `views/InputRequirements.jsx` — one view per state
+- `views/SelectModels.jsx`
+- `views/DetailedComparison.jsx`
+- `views/DecisionReport.jsx`
+- `components/*.jsx` — shared sub-components (reusable across views)
+- `styles.css` — shared styles
+
+### Navigation
+
+Views transition using the **Ark SDK** available as `window.ark`. The SDK has
+exactly three methods — no others exist:
+
+```jsx
+// Navigate to another state, carrying context data forward.
+window.ark.navigateTo("select_models", { teamProfile });
+
+// Send data to the host (e.g. final outcome).
+window.ark.emit("journey:complete", { decision, comparisonSet });
+
+// Get an asset URL by reference name.
+window.ark.asset("logo"); // → "blob:..."
+```
+
+**Do not call any other methods on `window.ark`.** There is no `onNavigation`,
+`subscribe`, or event listener API. Navigation state is managed internally by
+your App component (e.g. `useState` + switch statement), not by the SDK.
+
+### View Contract
+
+Each view component receives two props:
+
+- `data` — the journey context relevant to this state
+- `onTransition` — callback for state transitions (wired to ark.navigateTo)
+
+```jsx
+export default function SelectModels({ data = {}, onTransition }) {
+  const handleSelect = (item) => {
+    onTransition("detailed_comparison", {
+      ...data,
+      shortlist: [...(data.shortlist || []), item],
+    });
+  };
+  // ...
+}
+```
+
+### Rules
+
+1. **One view per state.** Don't merge states into a single component.
+2. **Views are self-contained.** Each view renders standalone with defaults.
+3. **Shared components go in `components/`.** Headers, cards, buttons used
+   across multiple views should be extracted.
+4. **Context flows forward.** Each transition carries the data the next view
+   needs. Views never fetch — they receive.
 
 ## Available Globals
 

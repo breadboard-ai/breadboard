@@ -136,6 +136,9 @@ def _hydrate_from_disk():
             if not p.is_file():
                 continue
             rel = str(p.relative_to(run_dir))
+            # Skip non-artifact files.
+            if rel == "objective.txt" or rel.startswith("references/"):
+                continue
             if rel.endswith(".ref"):
                 # components/PieChart.jsx.ref → components/PieChart.jsx
                 artifacts.append(rel.removesuffix(".ref"))
@@ -247,68 +250,48 @@ def _resolve_library_imports(run_id: str, artifacts: list[str]) -> None:
 
 
 def _promote_skill_output(run_id: str, artifacts: list[str]) -> None:
-    """Auto-install a SKILL.md produced by the agent (Teacher workflow).
+    """Auto-install skills produced by the agent.
 
-    If the run output contains a SKILL.md, parse its front matter,
-    derive a slug from the name, and copy it to skills/{slug}/SKILL.md.
-    Also stamps knowledge_sources with hashes of current references.
+    Scans all .md files in the run output for skill front matter (YAML
+    with a ``name`` field). Each detected skill is installed to
+    skills/{slug}/SKILL.md.
     """
-    import hashlib
     from opal_backend.skilled_agent import parse_skill_front_matter
 
     run_dir = OUT_DIR / run_id
-    if "SKILL.md" not in artifacts:
+    md_files = [a for a in artifacts if a.endswith(".md")]
+    if not md_files:
         return
 
-    skill_path = run_dir / "SKILL.md"
-    if not skill_path.is_file():
-        return
+    for md_file in md_files:
+        # Skip reference material and other non-skill files.
+        if md_file.startswith("references/"):
+            continue
 
-    content = skill_path.read_text()
-    name, _description = parse_skill_front_matter(content)
-    if not name or name == "SKILL.md":
-        logger.warning("SKILL.md in run %s has no valid name, skipping", run_id)
-        return
+        skill_path = run_dir / md_file
+        if not skill_path.is_file():
+            continue
 
-    # Derive slug: "Recipe Generation" -> "recipe-generation"
-    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
-    if not slug:
-        slug = run_id[:8]
+        content = skill_path.read_text()
 
-    # Stamp knowledge_sources: hash all current references (excluding _staging).
-    refs_dir = Path(__file__).resolve().parent.parent / "references"
-    knowledge_lines: list[str] = []
-    if refs_dir.is_dir():
-        for ref_file in sorted(refs_dir.rglob("*.md")):
-            if ref_file.parent.name == "_staging":
-                continue
-            rel = str(ref_file.relative_to(refs_dir))
-            h = hashlib.sha256(ref_file.read_bytes()).hexdigest()[:12]
-            knowledge_lines.append(f"  - path: {rel}\n    hash: {h}")
+        # Quick check: must have YAML front matter delimiters.
+        if not content.startswith("---"):
+            continue
 
-    if knowledge_lines:
-        ks_block = "knowledge_sources:\n" + "\n".join(knowledge_lines)
-        # Inject into front matter before the closing ---.
-        fm_match = re.match(r"(---\s*\n)(.*?)(\n---)", content, re.DOTALL)
-        if fm_match:
-            # Remove any existing knowledge_sources from the front matter.
-            fm_body = re.sub(
-                r"knowledge_sources:.*?(?=\n[a-z]|\n---|\Z)",
-                "", fm_match.group(2), flags=re.DOTALL,
-            ).rstrip()
-            content = (
-                fm_match.group(1)
-                + fm_body + "\n"
-                + ks_block + "\n"
-                + "---"
-                + content[fm_match.end():]
-            )
+        name, _description = parse_skill_front_matter(content)
+        if not name or name == "Untitled" or name == md_file:
+            continue
 
-    dest_dir = SKILLS_DIR / slug
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    dest = dest_dir / "SKILL.md"
-    dest.write_text(content)
-    logger.info("Auto-installed skill '%s' as %s", name, slug)
+        # Derive slug: "Recipe Generation" -> "recipe-generation"
+        slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+        if not slug:
+            continue
+
+        dest_dir = SKILLS_DIR / slug
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        dest = dest_dir / "SKILL.md"
+        dest.write_text(content)
+        logger.info("Auto-installed skill '%s' as %s", name, slug)
 
 
 async def _simulate_run(run: Run):
@@ -522,7 +505,41 @@ async def delete_run(run_id: str):
     if run_dir.is_dir():
         shutil.rmtree(run_dir)
 
+    # Clean up orphaned library files.
+    _gc_library()
+
     return {"deleted": run_id}
+
+
+def _gc_library() -> None:
+    """Remove library files that no remaining run references.
+
+    Scans all run directories for .ref files and deletes any library
+    entry not referenced by at least one run.
+    """
+    if not LIBRARY_DIR.is_dir():
+        return
+
+    library_files = {f.name for f in LIBRARY_DIR.iterdir() if f.is_file()}
+    if not library_files:
+        return
+
+    # Collect all referenced library filenames from .ref files.
+    referenced: set[str] = set()
+    for run_dir in OUT_DIR.iterdir():
+        if not run_dir.is_dir() or run_dir.name.startswith("_"):
+            continue
+        for ref_file in run_dir.rglob("*.ref"):
+            referenced.add(ref_file.read_text().strip())
+
+    # Delete orphans.
+    orphans = library_files - referenced
+    for orphan in orphans:
+        (LIBRARY_DIR / orphan).unlink(missing_ok=True)
+        logger.info("Removed orphaned library file: %s", orphan)
+
+    if orphans:
+        logger.info("Library GC: removed %d orphan(s)", len(orphans))
 
 
 # ─── Skill Management ─────────────────────────────────────────────────────────
