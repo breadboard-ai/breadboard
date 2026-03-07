@@ -129,11 +129,14 @@ class DevAgentBackend:
     async def run(self, request: Request) -> EventSourceResponse:
         raw_body = await request.json()
 
-        # Extract access token from Authorization header.
-        auth_header = request.headers.get("authorization", "")
-        access_token = ""
-        if auth_header.startswith("Bearer "):
-            access_token = auth_header[len("Bearer "):]
+        # Extract access token: prefer body parameter (production path
+        # where ESP may replace the Authorization header with a service
+        # account token) over Authorization header (dev convenience).
+        access_token = raw_body.pop("accessToken", "")
+        if not access_token:
+            auth_header = request.headers.get("authorization", "")
+            if auth_header.startswith("Bearer "):
+                access_token = auth_header[len("Bearer "):]
 
         # OP validates Origin to identify the requesting app.
         origin = request.headers.get("origin", "")
