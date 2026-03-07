@@ -6,27 +6,32 @@
 
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, css } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { RunStore } from "../state/run-store.js";
 import { ViewManager } from "../host/view-manager.js";
 import "./ark-prompt.js";
 import "./ark-run-card.js";
 import "./ark-theme-bar.js";
 import "./ark-inspector.js";
+import "./ark-skills.js";
 
 export { ArkApp };
+
+type AppMode = "runs" | "skills";
 
 /**
  * Top-level application shell.
  *
- * Two modes:
+ * Three modes:
  * 1. Run list — prompt input + run cards.
  * 2. Viewport — full-screen iframe + inspector sidebar.
+ * 3. Skills — skill browser and management.
  */
 @customElement("ark-app")
 class ArkApp extends SignalWatcher(LitElement) {
   readonly #store = new RunStore();
   #viewManager: ViewManager | null = null;
+  @state() private mode: AppMode = "runs";
 
   static override styles = css`
     :host {
@@ -58,6 +63,32 @@ class ArkApp extends SignalWatcher(LitElement) {
       letter-spacing: -0.5px;
       margin: 0;
       color: #999;
+    }
+
+    .spacer {
+      flex: 1;
+    }
+
+    .nav-btn {
+      border: none;
+      background: rgba(255, 255, 255, 0.06);
+      color: #888;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #eee;
+    }
+
+    .nav-btn[data-active] {
+      background: rgba(255, 255, 255, 0.12);
+      color: #eee;
     }
 
     .back-btn {
@@ -130,6 +161,12 @@ class ArkApp extends SignalWatcher(LitElement) {
       height: 100%;
       border: none;
     }
+
+    /* Skills panel fills the content area */
+    ark-skills {
+      flex: 1;
+      overflow-y: auto;
+    }
   `;
 
   override connectedCallback() {
@@ -167,14 +204,37 @@ class ArkApp extends SignalWatcher(LitElement) {
       `;
     }
 
-    // Run list mode.
-    const runs = this.#store.runs.get();
-
+    // Normal modes: runs or skills.
     return html`
       <header>
         <h1>Ark</h1>
+        <div class="spacer"></div>
+        <button
+          class="nav-btn"
+          ?data-active=${this.mode === "runs"}
+          @click=${() => (this.mode = "runs")}
+        >
+          Runs
+        </button>
+        <button
+          class="nav-btn"
+          ?data-active=${this.mode === "skills"}
+          @click=${() => (this.mode = "skills")}
+        >
+          Skills
+        </button>
       </header>
 
+      ${this.mode === "skills"
+        ? html`<ark-skills></ark-skills>`
+        : this.#renderRunList()}
+    `;
+  }
+
+  #renderRunList() {
+    const runs = this.#store.runs.get();
+
+    return html`
       <ark-prompt @start-run=${this.#onStartRun}></ark-prompt>
 
       <div class="content">

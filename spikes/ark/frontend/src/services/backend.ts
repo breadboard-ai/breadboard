@@ -10,9 +10,43 @@
  * All network calls live here. No state, no signals — pure fetch wrappers.
  */
 
-export { backend, type RunSummary, type RunEvent, type ReuseInfo };
+export {
+  backend,
+  type RunSummary,
+  type RunEvent,
+  type ReuseInfo,
+  type SkillSummary,
+  type SkillDetail,
+};
 
 const BACKEND_URL = "http://localhost:8080";
+
+/** Skill listing entry. */
+interface SkillSummary {
+  slug: string;
+  name: string;
+  description: string;
+}
+
+/** Full skill detail. */
+interface SkillDetail extends SkillSummary {
+  content: string;
+  knowledge_audit?: KnowledgeAudit;
+}
+
+/** Knowledge freshness audit result. */
+interface KnowledgeAudit {
+  status: "current" | "stale" | "unknown";
+  sources: KnowledgeSource[];
+}
+
+/** Individual knowledge source status. */
+interface KnowledgeSource {
+  path: string;
+  declared_hash?: string;
+  current_hash?: string;
+  status: "current" | "changed" | "missing" | "new_untracked";
+}
 
 /** Reuse analysis for a single file. */
 interface ReuseInfo {
@@ -120,6 +154,35 @@ const backend = {
   async checkReuse(runId: string): Promise<Record<string, ReuseInfo>> {
     const res = await fetch(`${BACKEND_URL}/agent/runs/${runId}/reuse`);
     if (!res.ok) return {};
+    return res.json();
+  },
+
+  // ─── Skills ───────────────────────────────────────────────────────────
+
+  /** List all available skills. */
+  async listSkills(): Promise<SkillSummary[]> {
+    const res = await fetch(`${BACKEND_URL}/skills`);
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  /** Get full content of a skill. */
+  async getSkill(slug: string): Promise<SkillDetail | null> {
+    const res = await fetch(`${BACKEND_URL}/skills/${slug}`);
+    if (!res.ok) return null;
+    return res.json();
+  },
+
+  /** Delete a skill. */
+  async deleteSkill(slug: string): Promise<void> {
+    await fetch(`${BACKEND_URL}/skills/${slug}`, { method: "DELETE" });
+  },
+
+  /** Trigger CPD refresh for a stale skill. */
+  async refreshSkill(slug: string): Promise<{ status: string }> {
+    const res = await fetch(`${BACKEND_URL}/skills/${slug}/refresh`, {
+      method: "POST",
+    });
     return res.json();
   },
 };
