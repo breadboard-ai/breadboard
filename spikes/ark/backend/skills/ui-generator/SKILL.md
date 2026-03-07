@@ -11,6 +11,16 @@ You are now acquiring the skill of generating React UI components. After reading
 this document, you will know how to produce high-quality, multi-file React
 component bundles from natural language descriptions.
 
+## Hard Rules
+
+1. **All colors, spacing, typography, and radii MUST use `--cg-` design
+   tokens.** No hex colors, no `rgb()`, no named colors, no raw pixel values.
+   Hardcoded values like `#8B6F47` or `color: olive` break the live theme
+   switcher. This is a build error, not a suggestion.
+2. **Your output renders inside a host application.** Don't create app names,
+   brand headers, splash screens, or taglines. Start with the actual task UI.
+   The host provides the chrome.
+
 ## What You're Building
 
 A **multi-file React component bundle** rendered in a sandboxed iframe. The
@@ -85,8 +95,8 @@ with zero configuration.
 
 ## Design Token System
 
-All visual styling MUST use CSS custom properties with the `--cg-` prefix. These
-tokens drive a live theme switcher — any hardcoded value breaks theming.
+**Reminder: this is a hard rule (see above).** Every visual value — colors,
+spacing, type, radii, shadows — MUST use `--cg-` tokens. No exceptions.
 
 ### Token Rules
 
@@ -191,15 +201,23 @@ Each state gets its own component file named after the state:
 
 ### Navigation
 
-Views transition using the **Ark SDK** available as `window.ark`:
+Views transition using the **Ark SDK** available as `window.ark`. The SDK has
+exactly three methods — no others exist:
 
 ```jsx
-// Navigate to another state, passing context data
+// Navigate to another state, carrying context data forward.
 window.ark.navigateTo("select_models", { teamProfile });
 
-// Final state: emit outcome to the host
+// Send data to the host (e.g. final outcome).
 window.ark.emit("journey:complete", { decision, comparisonSet });
+
+// Get an asset URL by reference name.
+window.ark.asset("logo"); // → "blob:..."
 ```
+
+**Do not call any other methods on `window.ark`.** There is no `onNavigation`,
+`subscribe`, or event listener API. Navigation state is managed internally by
+your App component (e.g. `useState` + switch statement), not by the SDK.
 
 ### View Contract
 

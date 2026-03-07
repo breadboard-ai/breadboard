@@ -54,7 +54,22 @@ const ark: ArkSDK = {
   },
 };
 
-(window as unknown as Record<string, unknown>).ark = ark;
+// Proxy guards against hallucinated API calls (e.g. window.ark.onNavigation).
+// Returns a no-op function for any unknown method instead of crashing.
+const safeArk = new Proxy(ark, {
+  get(target, prop, receiver) {
+    if (prop in target) {
+      return Reflect.get(target, prop, receiver);
+    }
+    console.warn(
+      `[ark-sdk] Unknown method "${String(prop)}" — ` +
+        `available: navigateTo, emit, asset`
+    );
+    return () => {};
+  },
+});
+
+(window as unknown as Record<string, unknown>).ark = safeArk;
 
 // ─── React State ─────────────────────────────────────────────────────────────
 
