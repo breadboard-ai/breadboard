@@ -279,11 +279,29 @@ class ConsoleProgressManager implements AgentProgressManager {
   functionResult(callId: string, content: LLMContent) {
     const workItem = this.#pendingCalls.get(callId);
     if (workItem) {
+      // If text parts contain valid JSON, convert them to json parts so that
+      // bb-llm-output renders them with <bb-json-tree> (same as function calls).
+      const body: LLMContent = {
+        ...content,
+        parts: content.parts.map((part) => {
+          if ("text" in part && typeof part.text === "string") {
+            try {
+              const parsed = JSON.parse(part.text);
+              if (typeof parsed === "object" && parsed !== null) {
+                return { json: parsed };
+              }
+            } catch {
+              // Not JSON — keep as text.
+            }
+          }
+          return part;
+        }),
+      };
       workItem.addProduct({
         type: "text",
         title: "Function response",
         icon: "robot_server",
-        body: content,
+        body,
       });
       workItem.finish();
       this.#pendingCalls.delete(callId);
