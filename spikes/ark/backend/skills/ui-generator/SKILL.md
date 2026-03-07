@@ -172,6 +172,63 @@ checklists, toggles.
 Never use `Date.now()`, `Math.random()`, or `new Date()` in default parameters.
 Compute once at module level or use `useState(() => ...)`.
 
+## Multi-View Apps (Journey Mode)
+
+When you produce a `journey.json` alongside UI components, you are building a
+**multi-view app** — one React component per state in the state machine.
+
+### File Structure
+
+Each state gets its own component file named after the state:
+
+- `App.jsx` — shell that renders the initial state
+- `views/InputRequirements.jsx` — one view per state
+- `views/SelectModels.jsx`
+- `views/DetailedComparison.jsx`
+- `views/DecisionReport.jsx`
+- `components/*.jsx` — shared sub-components (reusable across views)
+- `styles.css` — shared styles
+
+### Navigation
+
+Views transition using the **Ark SDK** available as `window.ark`:
+
+```jsx
+// Navigate to another state, passing context data
+window.ark.navigateTo("select_models", { teamProfile });
+
+// Final state: emit outcome to the host
+window.ark.emit("journey:complete", { decision, comparisonSet });
+```
+
+### View Contract
+
+Each view component receives two props:
+
+- `data` — the journey context relevant to this state
+- `onTransition` — callback for state transitions (wired to ark.navigateTo)
+
+```jsx
+export default function SelectModels({ data = {}, onTransition }) {
+  const handleSelect = (item) => {
+    onTransition("detailed_comparison", {
+      ...data,
+      shortlist: [...(data.shortlist || []), item],
+    });
+  };
+  // ...
+}
+```
+
+### Rules
+
+1. **One view per state.** Don't merge states into a single component.
+2. **Views are self-contained.** Each view renders standalone with defaults.
+3. **Shared components go in `components/`.** Headers, cards, buttons used
+   across multiple views should be extracted.
+4. **Context flows forward.** Each transition carries the data the next view
+   needs. Views never fetch — they receive.
+
 ## Available Globals
 
 `React`, `useState`, `useEffect`, `useRef`, `useCallback`, `useMemo`,

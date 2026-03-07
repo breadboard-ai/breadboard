@@ -150,17 +150,30 @@ async function buildBundle(
             }
 
             // Resolve relative paths against the importer's directory.
-            let normalized = args.path.replace(/^\.\//, "");
+            let normalized = args.path;
             if (
-              args.path.startsWith("./") &&
-              args.resolveDir !== "/" &&
+              (args.path.startsWith("./") || args.path.startsWith("../")) &&
               args.importer
             ) {
-              // args.importer is the virtual path (e.g. "components/Foo.jsx")
+              // args.importer is the virtual path (e.g. "views/Foo.jsx")
               const importerDir = args.importer.includes("/")
                 ? args.importer.substring(0, args.importer.lastIndexOf("/") + 1)
                 : "";
-              normalized = importerDir + normalized;
+              // Resolve: importerDir + relative path, then normalize.
+              const joined = importerDir + args.path;
+              // Normalize "views/../components/Foo" → "components/Foo"
+              const parts = joined.split("/");
+              const resolved: string[] = [];
+              for (const part of parts) {
+                if (part === "..") {
+                  resolved.pop();
+                } else if (part !== ".") {
+                  resolved.push(part);
+                }
+              }
+              normalized = resolved.join("/");
+            } else {
+              normalized = normalized.replace(/^\.\//, "");
             }
 
             // CSS file?
