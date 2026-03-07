@@ -21,7 +21,7 @@
       ]
     },
     "setup:backend": {
-      "command": "cd backend && python3 -m venv .venv && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '.[dev]'",
+      "command": "cd backend && python3 -m venv .venv && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '../../../packages/opal-backend[local]' && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '.[dev]'",
       "files": [
         "backend/pyproject.toml"
       ],

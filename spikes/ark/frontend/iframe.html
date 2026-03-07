@@ -5,15 +5,192 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ark View</title>
     <style>
+      /* Google Material Symbols */
+      @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap");
+
+      /* ─── Design Token System (--cg- prefix) ─────────────────── */
+      :root {
+        /* Colors — Material Design 3 light palette */
+        --cg-color-surface-dim: #d9d9d9;
+        --cg-color-surface: #fcfcfc;
+        --cg-color-surface-bright: #ffffff;
+        --cg-color-surface-container-lowest: #ffffff;
+        --cg-color-surface-container-low: #f6f6f6;
+        --cg-color-surface-container: #f0f0f0;
+        --cg-color-surface-container-high: #eaeaea;
+        --cg-color-surface-container-highest: #e4e4e4;
+        --cg-color-on-surface: #1c1c1e;
+        --cg-color-on-surface-muted: #6e6e73;
+        --cg-color-primary: #4a6cf7;
+        --cg-color-primary-container: #dee3ff;
+        --cg-color-on-primary: #ffffff;
+        --cg-color-on-primary-container: #001a6b;
+        --cg-color-secondary: #5a5d72;
+        --cg-color-secondary-container: #dfe1f9;
+        --cg-color-on-secondary: #ffffff;
+        --cg-color-on-secondary-container: #171a2c;
+        --cg-color-tertiary: #76546e;
+        --cg-color-tertiary-container: #ffd7f2;
+        --cg-color-on-tertiary: #ffffff;
+        --cg-color-on-tertiary-container: #2d1228;
+        --cg-color-error: #ba1a1a;
+        --cg-color-error-container: #ffdad6;
+        --cg-color-on-error: #ffffff;
+        --cg-color-on-error-container: #410002;
+        --cg-color-outline: #c4c4c6;
+        --cg-color-outline-variant: #e0e0e0;
+
+        /* Typography */
+        --cg-font-sans:
+          system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        --cg-font-mono:
+          "SF Mono", SFMono-Regular, ui-monospace, Menlo, monospace;
+
+        --cg-text-display-lg-size: 57px;
+        --cg-text-display-lg-line-height: 64px;
+        --cg-text-display-lg-weight: 400;
+        --cg-text-display-md-size: 45px;
+        --cg-text-display-md-line-height: 52px;
+        --cg-text-display-md-weight: 400;
+        --cg-text-display-sm-size: 36px;
+        --cg-text-display-sm-line-height: 44px;
+        --cg-text-display-sm-weight: 400;
+        --cg-text-headline-lg-size: 32px;
+        --cg-text-headline-lg-line-height: 40px;
+        --cg-text-headline-lg-weight: 400;
+        --cg-text-headline-md-size: 28px;
+        --cg-text-headline-md-line-height: 36px;
+        --cg-text-headline-md-weight: 400;
+        --cg-text-headline-sm-size: 24px;
+        --cg-text-headline-sm-line-height: 32px;
+        --cg-text-headline-sm-weight: 400;
+        --cg-text-title-lg-size: 22px;
+        --cg-text-title-lg-line-height: 28px;
+        --cg-text-title-lg-weight: 500;
+        --cg-text-title-md-size: 16px;
+        --cg-text-title-md-line-height: 24px;
+        --cg-text-title-md-weight: 500;
+        --cg-text-title-sm-size: 14px;
+        --cg-text-title-sm-line-height: 20px;
+        --cg-text-title-sm-weight: 500;
+        --cg-text-body-lg-size: 16px;
+        --cg-text-body-lg-line-height: 24px;
+        --cg-text-body-lg-weight: 400;
+        --cg-text-body-md-size: 14px;
+        --cg-text-body-md-line-height: 20px;
+        --cg-text-body-md-weight: 400;
+        --cg-text-body-sm-size: 12px;
+        --cg-text-body-sm-line-height: 16px;
+        --cg-text-body-sm-weight: 400;
+        --cg-text-label-lg-size: 14px;
+        --cg-text-label-lg-line-height: 20px;
+        --cg-text-label-lg-weight: 500;
+        --cg-text-label-md-size: 12px;
+        --cg-text-label-md-line-height: 16px;
+        --cg-text-label-md-weight: 500;
+        --cg-text-label-sm-size: 11px;
+        --cg-text-label-sm-line-height: 16px;
+        --cg-text-label-sm-weight: 500;
+
+        /* Spacing — 4px grid */
+        --cg-sp-0: 0px;
+        --cg-sp-1: 4px;
+        --cg-sp-2: 8px;
+        --cg-sp-3: 12px;
+        --cg-sp-4: 16px;
+        --cg-sp-5: 20px;
+        --cg-sp-6: 24px;
+        --cg-sp-7: 28px;
+        --cg-sp-8: 32px;
+        --cg-sp-9: 36px;
+        --cg-sp-10: 40px;
+        --cg-sp-11: 44px;
+        --cg-sp-12: 48px;
+        --cg-sp-13: 52px;
+        --cg-sp-14: 56px;
+        --cg-sp-15: 60px;
+        --cg-sp-16: 64px;
+
+        /* Border radius */
+        --cg-radius-xs: 4px;
+        --cg-radius-sm: 8px;
+        --cg-radius-md: 12px;
+        --cg-radius-lg: 16px;
+        --cg-radius-xl: 28px;
+        --cg-radius-full: 9999px;
+
+        /* Elevation */
+        --cg-elevation-1:
+          0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+        --cg-elevation-2:
+          0 3px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+        --cg-elevation-3:
+          0 10px 20px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.05);
+
+        /* Motion */
+        --cg-motion-duration-short: 100ms;
+        --cg-motion-duration-medium: 250ms;
+        --cg-motion-duration-long: 500ms;
+        --cg-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+        --cg-motion-easing-decel: cubic-bezier(0, 0, 0, 1);
+        --cg-motion-easing-accel: cubic-bezier(0.3, 0, 1, 1);
+
+        /* Component tokens — Card */
+        --cg-card-bg: var(--cg-color-surface-container-low);
+        --cg-card-radius: var(--cg-radius-lg);
+        --cg-card-padding: var(--cg-sp-4);
+        --cg-card-shadow: var(--cg-elevation-1);
+
+        /* Component tokens — Button */
+        --cg-button-radius: var(--cg-radius-full);
+        --cg-button-padding: var(--cg-sp-2) var(--cg-sp-6);
+        --cg-button-bg: var(--cg-color-primary);
+        --cg-button-color: var(--cg-color-on-primary);
+        --cg-button-font-size: var(--cg-text-label-lg-size);
+        --cg-button-font-weight: var(--cg-text-label-lg-weight);
+
+        /* Component tokens — Input */
+        --cg-input-bg: var(--cg-color-surface-container-highest);
+        --cg-input-border: var(--cg-color-outline);
+        --cg-input-radius: var(--cg-radius-sm);
+        --cg-input-padding: var(--cg-sp-2) var(--cg-sp-3);
+        --cg-input-color: var(--cg-color-on-surface);
+        --cg-input-placeholder: var(--cg-color-on-surface-muted);
+
+        /* Component tokens — Badge */
+        --cg-badge-bg: var(--cg-color-secondary-container);
+        --cg-badge-color: var(--cg-color-on-secondary-container);
+        --cg-badge-radius: var(--cg-radius-full);
+        --cg-badge-padding: var(--cg-sp-1) var(--cg-sp-2);
+        --cg-badge-font-size: var(--cg-text-label-sm-size);
+
+        /* Component tokens — Divider */
+        --cg-divider-color: var(--cg-color-outline-variant);
+        --cg-divider-thickness: 1px;
+        --cg-divider-style: solid;
+
+        /* Expressive */
+        --cg-border-style: solid;
+        --cg-border-width: 1px;
+        --cg-heading-transform: none;
+        --cg-heading-letter-spacing: -0.02em;
+        --cg-img-radius: var(--cg-radius-md);
+        --cg-img-border: none;
+        --cg-img-shadow: var(--cg-elevation-1);
+        --cg-img-filter: none;
+        --cg-hover-scale: 1.02;
+        --cg-hover-brightness: 1.05;
+        --cg-hover-shadow: var(--cg-elevation-2);
+      }
+
       html,
       body {
         margin: 0;
         padding: 0;
-        font-family:
-          system-ui,
-          -apple-system,
-          sans-serif;
-        background: #fff;
+        font-family: var(--cg-font-sans);
+        background: var(--cg-color-surface);
+        color: var(--cg-color-on-surface);
       }
       #root {
         min-height: 100vh;

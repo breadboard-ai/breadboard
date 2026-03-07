@@ -133,7 +133,7 @@ function handleMessage(event: MessageEvent<HostMessage>) {
 }
 
 function handleRender(msg: HostMessage & { type: "render" }) {
-  const { code, componentName, props, assets } = msg;
+  const { code, props, assets } = msg;
 
   // Update the SDK's asset map.
   currentAssets = assets;
@@ -142,16 +142,13 @@ function handleRender(msg: HostMessage & { type: "render" }) {
     // CJS shims: esbuild output uses require() and module.exports.
     const moduleShim = { exports: {} as Record<string, unknown> };
 
-    const fn = new Function(
-      "React",
-      "require",
-      "module",
-      "exports",
-      code +
-        `\nreturn typeof ${componentName} !== 'undefined' ? ${componentName} : module.exports.default || module.exports;`
-    );
+    const fn = new Function("React", "require", "module", "exports", code);
 
-    const Component = fn(React, requireShim, moduleShim, moduleShim.exports);
+    fn(React, requireShim, moduleShim, moduleShim.exports);
+
+    // esbuild CJS sets exports.default for `export default App`.
+    const Component = (moduleShim.exports.default ??
+      moduleShim.exports) as React.ComponentType<Record<string, unknown>>;
 
     const rootEl = document.getElementById("root")!;
 

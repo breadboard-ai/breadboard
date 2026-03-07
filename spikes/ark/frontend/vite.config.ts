@@ -82,6 +82,28 @@ async function transformSingle(code: string): Promise<string> {
 }
 
 /**
+ * Auto-export: if a JSX source has no explicit export, detect the
+ * component name and append `export default ComponentName;`.
+ *
+ * Handles both `function App(` and `const App =` patterns.
+ */
+function autoExportComponent(source: string): string {
+  if (source.includes("export default") || source.includes("module.exports")) {
+    return source;
+  }
+
+  // Match `function App(` or `const App =`
+  const match =
+    source.match(/^function\s+([A-Z]\w*)/m) ??
+    source.match(/^const\s+([A-Z]\w*)\s*=/m);
+
+  if (match) {
+    return source + `\nexport default ${match[1]};\n`;
+  }
+  return source;
+}
+
+/**
  * Multi-file bundle → CJS via esbuild.build with virtual module plugins.
  *
  * - Component imports (./components/Foo) → resolved from the files map
@@ -101,9 +123,12 @@ async function buildBundle(
     throw new Error("No App.jsx found in bundle files");
   }
 
+  // Auto-export the entry point if needed.
+  const entrySource = autoExportComponent(entry);
+
   const result = await esbuild.build({
     stdin: {
-      contents: entry,
+      contents: entrySource,
       loader: "jsx",
       resolveDir: "/",
     },
@@ -124,8 +149,19 @@ async function buildBundle(
               return { path: args.path, external: true };
             }
 
-            // Normalize relative path: ./components/Foo → components/Foo
-            const normalized = args.path.replace(/^\.\//, "");
+            // Resolve relative paths against the importer's directory.
+            let normalized = args.path.replace(/^\.\//, "");
+            if (
+              args.path.startsWith("./") &&
+              args.resolveDir !== "/" &&
+              args.importer
+            ) {
+              // args.importer is the virtual path (e.g. "components/Foo.jsx")
+              const importerDir = args.importer.includes("/")
+                ? args.importer.substring(0, args.importer.lastIndexOf("/") + 1)
+                : "";
+              normalized = importerDir + normalized;
+            }
 
             // CSS file?
             const cssKey =
@@ -156,7 +192,7 @@ async function buildBundle(
 
           // Load virtual JSX modules.
           build.onLoad({ filter: /.*/, namespace: "virtual-jsx" }, (args) => ({
-            contents: files[args.path],
+            contents: autoExportComponent(files[args.path] ?? ""),
             loader: "jsx",
           })); // Load virtual CSS modules as style injection.
           build.onLoad({ filter: /.*/, namespace: "virtual-css" }, (args) => ({
