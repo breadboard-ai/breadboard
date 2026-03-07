@@ -30,6 +30,7 @@ class ViewManager {
   #container: HTMLElement;
   #bundle: ViewBundle | null = null;
   #activeView: ActiveView | null = null;
+  #themeCss = "";
   #onEvent: ViewEventHandler;
   #onNavigate: (fromViewId: string, toViewId: string) => void;
 
@@ -91,6 +92,20 @@ class ViewManager {
   destroy() {
     this.#teardown();
     this.#bundle = null;
+  }
+
+  /** Apply a theme CSS override to the active iframe. */
+  applyTheme(themeCss: string) {
+    this.#themeCss = themeCss;
+    const doc = this.#activeView?.iframe.contentDocument;
+    if (!doc) return;
+    let el = doc.getElementById("theme-override");
+    if (!el) {
+      el = doc.createElement("style");
+      el.id = "theme-override";
+      doc.head.appendChild(el);
+    }
+    el.textContent = themeCss;
   }
 
   // ─── Private ─────────────────────────────────────────────────────────────
@@ -162,6 +177,11 @@ class ViewManager {
         props: view.props ?? {},
         assets: assetUrls,
       });
+
+      // Auto-apply current theme after render.
+      if (this.#themeCss) {
+        this.applyTheme(this.#themeCss);
+      }
     } catch (err) {
       console.error("[ark-vm] Transform failed:", err);
     }
