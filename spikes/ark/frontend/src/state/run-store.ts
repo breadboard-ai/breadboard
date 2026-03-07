@@ -43,11 +43,11 @@ class RunStore {
   #pollTimer: ReturnType<typeof setTimeout> | null = null;
   #closeStream: (() => void) | null = null;
 
-  /** Start a new run and immediately begin polling. */
+  /** Start a new run and resume polling. */
   async startRun(objective: string) {
     await backend.startRun(objective);
-    // Immediately poll so the new run appears.
-    await this.#poll();
+    // Kick off polling so the new run appears and is tracked.
+    this.#ensurePolling();
   }
 
   /** Toggle run selection. Opens/closes SSE stream accordingly. */
@@ -91,9 +91,9 @@ class RunStore {
     this.currentBundle.set(null);
   }
 
-  /** Start polling at 1 second intervals. */
+  /** Start polling (initial poll on load, then smart polling). */
   startPolling() {
-    this.#schedulePoll();
+    this.#poll(); // Initial poll on load.
   }
 
   /** Stop polling and close any active SSE stream. */
@@ -111,17 +111,25 @@ class RunStore {
     try {
       const summaries = await backend.pollRuns();
       this.runs.set(summaries);
+
+      // Smart polling: continue only if any run is still active.
+      const hasActive = summaries.some((r) => r.status !== "complete");
+      if (hasActive) {
+        this.#pollTimer = setTimeout(() => this.#poll(), 1000);
+      } else {
+        this.#pollTimer = null;
+      }
     } catch {
-      // Transient error — ignore.
+      // Transient error — retry after a delay.
+      this.#pollTimer = setTimeout(() => this.#poll(), 2000);
     }
   }
 
-  #schedulePoll() {
-    const tick = async () => {
-      await this.#poll();
-      this.#pollTimer = setTimeout(tick, 1000);
-    };
-    tick();
+  /** Kick off polling (e.g. after starting a new run). */
+  #ensurePolling() {
+    if (this.#pollTimer === null) {
+      this.#poll();
+    }
   }
 
   #openSSE(runId: string) {

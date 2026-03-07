@@ -6,6 +6,8 @@ requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
+    "python-dotenv>=1.0",
+    "opal-backend[local]",
 ]
 
 [project.optional-dependencies]
@@ -14,3 +16,10 @@ dev = [
     "httpx>=0.28",
     "pytest-asyncio>=0.25",
 ]
+
+[tool.setuptools.packages.find]
+include = ["ark_backend*"]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"

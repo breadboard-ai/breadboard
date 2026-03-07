@@ -2,11 +2,14 @@
 
 import asyncio
 import json
+import logging
 import mimetypes
+import os
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -14,6 +17,14 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from ark_backend.artifacts import generate_artifacts
+
+load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+# Gemini API key — when set, the skilled agent runs for real.
+# When absent, falls back to simulation.
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
 app = FastAPI(title="Ark Backend")
 
@@ -102,10 +113,13 @@ def _hydrate_from_disk():
         if run_id in runs:
             continue
 
-        # Extract objective from SKILL.md heading: "# Generated UI: <objective>"
+        # Recover objective: objective.txt > SKILL.md heading > run_id.
+        obj_path = run_dir / "objective.txt"
         skill_path = run_dir / "SKILL.md"
         objective = run_id  # fallback
-        if skill_path.is_file():
+        if obj_path.is_file():
+            objective = obj_path.read_text().strip()
+        elif skill_path.is_file():
             first_line = skill_path.read_text().split("\n", 1)[0]
             if first_line.startswith("# Generated UI: "):
                 objective = first_line.removeprefix("# Generated UI: ")
@@ -174,8 +188,110 @@ async def start_run(request: StartRunRequest) -> StartRunResponse:
     run_id = uuid.uuid4().hex[:12]
     run = Run(id=run_id, objective=request.objective, agent_type=request.type)
     runs[run_id] = run
-    asyncio.create_task(_simulate_run(run))
+
+    # Persist objective so it survives server restarts.
+    run_dir = OUT_DIR / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "objective.txt").write_text(request.objective)
+
+    if GEMINI_API_KEY:
+        asyncio.create_task(_run_with_skilled_agent(run))
+    else:
+        asyncio.create_task(_simulate_run(run))
     return StartRunResponse(id=run_id)
+
+
+async def _run_with_skilled_agent(run: Run):
+    """Run the real skilled agent loop."""
+    from ark_backend.gemini_client import ApiKeyBackendClient
+    from opal_backend.skilled_agent import (
+        Skill, parse_skill_front_matter, run_skilled_agent,
+    )
+
+    # Discover skills from backend/skills/*/SKILL.md.
+    skills_dir = Path(__file__).resolve().parent.parent / "skills"
+    skills: list[Skill] = []
+    if skills_dir.is_dir():
+        for skill_path in sorted(skills_dir.glob("*/SKILL.md")):
+            content = skill_path.read_text()
+            name, description = parse_skill_front_matter(content)
+            skills.append(Skill(
+                name=name, description=description, content=content,
+            ))
+            logger.info("Loaded skill: %s (%s)", name, skill_path.parent.name)
+
+    if not skills:
+        logger.warning("No skills found in %s, falling back to simulation", skills_dir)
+        await _simulate_run(run)
+        return
+
+    backend = ApiKeyBackendClient(api_key=GEMINI_API_KEY)
+
+    try:
+        async for event in run_skilled_agent(
+            objective=run.objective,
+            skills=skills,
+            backend=backend,
+        ):
+            etype = getattr(event, "type", "unknown")
+
+            # Map agent events to run progress.
+            if etype == "start":
+                run.current_step = "thinking"
+                run.current_detail = "Agent started…"
+            elif etype == "thought":
+                run.current_step = "thinking"
+                run.current_detail = getattr(event, "text", "")[:100]
+            elif etype == "functionCall":
+                name = getattr(event, "name", "")
+                run.current_step = "working"
+                run.current_detail = f"Calling {name}…"
+                run.progress += 1
+            elif etype == "functionCallUpdate":
+                status = getattr(event, "status", "")
+                if status:
+                    run.current_detail = status[:100]
+            elif etype == "complete":
+                result = getattr(event, "result", None)
+                if result and getattr(result, "intermediate", None):
+                    # Write agent-produced files to disk.
+                    run_dir = OUT_DIR / run.id
+                    run_dir.mkdir(parents=True, exist_ok=True)
+                    for file_data in result.intermediate:
+                        dest = run_dir / file_data.path.lstrip("/")
+                        dest.parent.mkdir(parents=True, exist_ok=True)
+                        content = file_data.content
+                        # content is LLMContent: {"parts": [{"text": "..."}]}
+                        parts = content.get("parts", []) if isinstance(content, dict) else []
+                        text = parts[0].get("text", "") if parts else ""
+                        if text:
+                            dest.write_text(text)
+                        else:
+                            dest.write_text(str(content))
+                        run.artifacts.append(
+                            str(dest.relative_to(run_dir))
+                        )
+
+            # Broadcast progress event.
+            progress_event = {
+                "type": "progress",
+                "step": run.current_step,
+                "detail": run.current_detail,
+            }
+            run.events.append(progress_event)
+            for q in run.subscribers:
+                await q.put(progress_event)
+
+    except Exception as e:
+        logger.exception("Skilled agent failed, falling back to simulation")
+        await _simulate_run(run)
+        return
+
+    run.status = "complete"
+    done_event = {"type": "done", "id": run.id, "artifacts": run.artifacts}
+    run.events.append(done_event)
+    for q in run.subscribers:
+        await q.put(done_event)
 
 
 @app.get("/agent/runs/status")
