@@ -110,6 +110,9 @@ def _hydrate_from_disk():
         if not run_dir.is_dir():
             continue
         run_id = run_dir.name
+        # Skip the shared library directory — it's not a run.
+        if run_id.startswith("_"):
+            continue
         if run_id in runs:
             continue
 
@@ -125,11 +128,18 @@ def _hydrate_from_disk():
                 objective = first_line.removeprefix("# Generated UI: ")
 
         # Collect all files relative to the run dir.
-        artifacts = [
-            str(p.relative_to(run_dir))
-            for p in sorted(run_dir.rglob("*"))
-            if p.is_file()
-        ]
+        # .ref files represent library-promoted components — map them back
+        # to their original artifact name so _stream_bundle can resolve them.
+        artifacts: list[str] = []
+        for p in sorted(run_dir.rglob("*")):
+            if not p.is_file():
+                continue
+            rel = str(p.relative_to(run_dir))
+            if rel.endswith(".ref"):
+                # components/PieChart.jsx.ref → components/PieChart.jsx
+                artifacts.append(rel.removesuffix(".ref"))
+            else:
+                artifacts.append(rel)
 
         runs[run_id] = Run(
             id=run_id,
@@ -155,6 +165,86 @@ class StartRunResponse(BaseModel):
     id: str
 
 
+LIBRARY_DIR = OUT_DIR / "_library"
+
+
+def _promote_to_library(run_id: str, artifacts: list[str]) -> None:
+    """Promote sub-components to the shared library.
+
+    - Copies sub-component files (not App.jsx) to _library/.
+    - Replaces the run-local file with a .ref pointer.
+    - Both the original run and future runs resolve via _stream_bundle.
+    """
+    import shutil
+
+    LIBRARY_DIR.mkdir(parents=True, exist_ok=True)
+    run_dir = OUT_DIR / run_id
+
+    for artifact in artifacts:
+        # Only promote sub-components, not App.jsx or CSS.
+        if artifact == "App.jsx" or not artifact.endswith(".jsx"):
+            continue
+
+        source = run_dir / artifact
+        if not source.is_file():
+            continue
+
+        # Library key is just the basename: PieChart.jsx, Header.jsx, etc.
+        lib_name = Path(artifact).name
+        lib_dest = LIBRARY_DIR / lib_name
+
+        # Copy to library if not already there (first writer wins).
+        if not lib_dest.is_file():
+            shutil.copy2(source, lib_dest)
+            logger.info("Promoted %s to library as %s", artifact, lib_name)
+
+        # Replace original with a .ref pointer.
+        source.unlink()
+        ref_path = run_dir / (artifact + ".ref")
+        ref_path.parent.mkdir(parents=True, exist_ok=True)
+        ref_path.write_text(lib_name)
+
+
+def _resolve_library_imports(run_id: str, artifacts: list[str]) -> None:
+    """Scan App.jsx for component imports and create .ref files for any
+    that are missing locally but exist in the library.
+
+    This handles the case where the agent imported a library component
+    but didn't save it — the bundle endpoint resolves via .ref.
+    """
+    import re
+
+    run_dir = OUT_DIR / run_id
+    app_path = run_dir / "App.jsx"
+    if not app_path.is_file():
+        return
+
+    source = app_path.read_text()
+    # Match: import Foo from "./components/Foo"
+    imports = re.findall(
+        r'import\s+\w+\s+from\s+["\']\./(components/\w+)["\']', source
+    )
+
+    for imp in imports:
+        rel_path = imp + ".jsx"  # components/PieChart -> components/PieChart.jsx
+        local_file = run_dir / rel_path
+        ref_file = run_dir / (rel_path + ".ref")
+        lib_name = Path(rel_path).name  # PieChart.jsx
+
+        if local_file.is_file() or ref_file.is_file():
+            continue  # Already resolved.
+
+        lib_path = LIBRARY_DIR / lib_name
+        if lib_path.is_file():
+            # Create a .ref pointer.
+            ref_file.parent.mkdir(parents=True, exist_ok=True)
+            ref_file.write_text(lib_name)
+            # Add to artifacts so the bundle endpoint includes it.
+            if rel_path not in artifacts:
+                artifacts.append(rel_path)
+            logger.info("Resolved %s from library for run %s", lib_name, run_id)
+
+
 async def _simulate_run(run: Run):
     """Background task that walks through simulation steps."""
     for i, (delay, data) in enumerate(_SIMULATION_STEPS):
@@ -171,6 +261,9 @@ async def _simulate_run(run: Run):
     # Generate artifacts on completion.
     files = generate_artifacts(run.id, run.objective, OUT_DIR)
     run.artifacts = files
+
+    # Promote sub-components to the shared library.
+    _promote_to_library(run.id, files)
 
     run.status = "complete"
     done_event = {"type": "done", "id": run.id, "artifacts": files}
@@ -227,11 +320,32 @@ async def _run_with_skilled_agent(run: Run):
 
     backend = ApiKeyBackendClient(api_key=GEMINI_API_KEY)
 
+    # Pre-load previous runs' components into the agent's file system.
+    pre_loaded: dict[str, str] = {}
+    for other_id, other_run in runs.items():
+        if other_id == run.id or other_run.status != "complete":
+            continue
+        other_dir = OUT_DIR / other_id
+        if not other_dir.is_dir():
+            continue
+        for artifact in other_run.artifacts:
+            if artifact.endswith((".jsx", ".css")):
+                artifact_path = other_dir / artifact
+                if artifact_path.is_file():
+                    key = f"library/{other_id}/{artifact}"
+                    pre_loaded[key] = artifact_path.read_text()
+
+    if pre_loaded:
+        logger.info("Pre-loaded %d files from %d previous runs",
+                     len(pre_loaded),
+                     len({k.split("/")[1] for k in pre_loaded}))
+
     try:
         async for event in run_skilled_agent(
             objective=run.objective,
             skills=skills,
             backend=backend,
+            pre_loaded_files=pre_loaded if pre_loaded else None,
         ):
             etype = getattr(event, "type", "unknown")
 
@@ -287,6 +401,11 @@ async def _run_with_skilled_agent(run: Run):
         await _simulate_run(run)
         return
 
+    # Promote sub-components to the shared library.
+    _promote_to_library(run.id, run.artifacts)
+    # Also resolve any imports the agent used but didn't save.
+    _resolve_library_imports(run.id, run.artifacts)
+
     run.status = "complete"
     done_event = {"type": "done", "id": run.id, "artifacts": run.artifacts}
     run.events.append(done_event)
@@ -310,6 +429,54 @@ async def list_runs():
         }
         for r in runs.values()
     ]
+
+
+@app.delete("/agent/runs/{run_id}")
+async def delete_run(run_id: str):
+    """Delete a run and its artifacts from disk."""
+    import shutil
+
+    run = runs.pop(run_id, None)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    # Remove artifacts from disk.
+    run_dir = OUT_DIR / run_id
+    if run_dir.is_dir():
+        shutil.rmtree(run_dir)
+
+    return {"deleted": run_id}
+
+
+@app.get("/agent/runs/{run_id}/reuse")
+async def check_reuse(run_id: str):
+    """Check which files in a run were reused from the library.
+
+    Source of truth: .ref files created by _promote_to_library.
+    If components/PieChart.jsx.ref exists, that component is reused.
+    """
+    run = runs.get(run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    run_dir = OUT_DIR / run_id
+    result: dict[str, dict] = {}
+
+    for artifact in run.artifacts:
+        if not artifact.endswith(".jsx"):
+            continue
+
+        ref_path = run_dir / (artifact + ".ref")
+        if ref_path.is_file():
+            lib_name = ref_path.read_text().strip()
+            result[artifact] = {
+                "status": "reused",
+                "library_file": lib_name,
+            }
+        else:
+            result[artifact] = {"status": "new"}
+
+    return result
 
 
 async def _stream_run(run: Run):
@@ -359,12 +526,25 @@ BOUNDARY = "ark-bundle-boundary"
 
 
 def _stream_bundle(run_id: str, files: list[str]):
-    """Yield a multipart/mixed body with one part per artifact file."""
+    """Yield a multipart/mixed body with one part per artifact file.
+
+    Resolves .ref files from _library/ — the file served is the library
+    copy, but the filename in the multipart response is the original name.
+    """
+    library_dir = OUT_DIR / "_library"
     run_dir = OUT_DIR / run_id
     for rel_path in files:
         path = run_dir / rel_path
+        ref_path = run_dir / (rel_path + ".ref")
+
+        # Resolve .ref -> library.
+        if not path.is_file() and ref_path.is_file():
+            lib_name = ref_path.read_text().strip()
+            path = library_dir / lib_name
+
         if not path.is_file():
             continue
+
         content_type = mimetypes.guess_type(rel_path)[0] or "application/octet-stream"
         yield f"--{BOUNDARY}\r\n".encode()
         yield f"Content-Disposition: attachment; filename=\"{rel_path}\"\r\n".encode()

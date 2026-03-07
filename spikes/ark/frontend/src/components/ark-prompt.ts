@@ -22,14 +22,15 @@ class ArkPrompt extends LitElement {
       display: flex;
       gap: 8px;
       padding: 16px 24px;
-      background: var(--ark-surface, #f5f5f5);
+      background: #f8f8f8;
+      border-bottom: 1px solid #e8e8e8;
     }
 
     input {
       flex: 1;
       padding: 12px 16px;
       border: 1px solid #ddd;
-      border-radius: 10px;
+      border-radius: 8px;
       font-size: 15px;
       font-family: inherit;
       background: #fff;
@@ -38,7 +39,7 @@ class ArkPrompt extends LitElement {
     }
 
     input:focus {
-      border-color: var(--ark-accent, #4f46e5);
+      border-color: #444;
     }
 
     input::placeholder {
@@ -48,8 +49,8 @@ class ArkPrompt extends LitElement {
     button {
       padding: 12px 24px;
       border: none;
-      border-radius: 10px;
-      background: var(--ark-accent, #4f46e5);
+      border-radius: 8px;
+      background: #222;
       color: white;
       font-size: 15px;
       font-weight: 600;
@@ -60,11 +61,11 @@ class ArkPrompt extends LitElement {
     }
 
     button:hover {
-      background: #4338ca;
+      background: #333;
     }
 
     button:active {
-      background: #3730a3;
+      background: #111;
     }
   `;
 

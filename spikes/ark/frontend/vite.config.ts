@@ -190,11 +190,13 @@ async function buildBundle(
             return undefined;
           });
 
-          // Load virtual JSX modules.
+          // Load virtual JSX modules (auto-export if needed).
           build.onLoad({ filter: /.*/, namespace: "virtual-jsx" }, (args) => ({
             contents: autoExportComponent(files[args.path] ?? ""),
             loader: "jsx",
-          })); // Load virtual CSS modules as style injection.
+          }));
+
+          // Load virtual CSS modules as style injection.
           build.onLoad({ filter: /.*/, namespace: "virtual-css" }, (args) => ({
             contents: [
               `const style = document.createElement("style");`,

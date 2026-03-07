@@ -139,6 +139,7 @@ async def run_skilled_agent(
     skills: list[Skill],
     backend: BackendClient,
     flags: dict[str, Any] | None = None,
+    pre_loaded_files: dict[str, str] | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Run a skill-driven agent.
 
@@ -147,6 +148,8 @@ async def run_skilled_agent(
         skills: Pre-loaded skills to make available to the agent.
         backend: Backend client for Gemini API calls.
         flags: Optional feature flags.
+        pre_loaded_files: Optional dict of path -> content to pre-load
+            into the agent's file system (e.g., previous components).
 
     Yields:
         Typed ``AgentEvent`` instances.
@@ -162,6 +165,12 @@ async def run_skilled_agent(
         slug = _slug(skill.name)
         filename = f"skills/{slug}.md"
         file_system.write(filename, skill.content)
+
+    # Pre-load additional files (e.g., previous components for reuse).
+    pre_loaded_prefixes: list[str] = ["skills/", "library/"]
+    if pre_loaded_files:
+        for path, content in pre_loaded_files.items():
+            file_system.write(path, content)
 
     # Build function groups.
     groups: list[FunctionGroup] = [
@@ -232,7 +241,10 @@ async def run_skilled_agent(
                     for fd in result.intermediate:
                         if fd.path.startswith("/mnt/"):
                             fd.path = fd.path[len("/mnt/"):]
-                        if fd.path.startswith("skills/"):
+                        if any(
+                            fd.path.startswith(p)
+                            for p in pre_loaded_prefixes
+                        ):
                             continue
                         filtered.append(fd)
                     result.intermediate = filtered or None

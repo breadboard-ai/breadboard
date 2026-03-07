@@ -11,6 +11,8 @@ import { RunStore } from "../state/run-store.js";
 import { ViewManager } from "../host/view-manager.js";
 import "./ark-prompt.js";
 import "./ark-run-card.js";
+import "./ark-theme-bar.js";
+import "./ark-inspector.js";
 
 export { ArkApp };
 
@@ -19,7 +21,7 @@ export { ArkApp };
  *
  * Two modes:
  * 1. Run list — prompt input + run cards.
- * 2. Viewport — full-screen iframe rendering a fetched bundle.
+ * 2. Viewport — full-screen iframe + inspector sidebar.
  */
 @customElement("ark-app")
 class ArkApp extends SignalWatcher(LitElement) {
@@ -31,40 +33,48 @@ class ArkApp extends SignalWatcher(LitElement) {
       display: flex;
       flex-direction: column;
       height: 100vh;
-      background: var(--ark-surface, #f5f5f5);
-      color: var(--ark-text, #1a1a2e);
+      background: #f8f8f8;
+      color: #1a1a1a;
+      font-family:
+        "Inter",
+        -apple-system,
+        BlinkMacSystemFont,
+        sans-serif;
     }
 
     header {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 12px 24px;
-      background: var(--ark-header, #1a1a2e);
-      color: white;
+      padding: 10px 20px;
+      background: #111;
+      color: #eee;
       flex-shrink: 0;
     }
 
     header h1 {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
       letter-spacing: -0.5px;
       margin: 0;
+      color: #999;
     }
 
     .back-btn {
       border: none;
-      background: rgba(255, 255, 255, 0.15);
-      color: white;
-      padding: 6px 14px;
-      border-radius: 6px;
-      font-size: 13px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #999;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 12px;
       cursor: pointer;
       font-family: inherit;
+      transition: all 0.15s;
     }
 
     .back-btn:hover {
-      background: rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.15);
+      color: #eee;
     }
 
     .content {
@@ -76,7 +86,7 @@ class ArkApp extends SignalWatcher(LitElement) {
     .runs {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       max-width: 700px;
       margin: 0 auto;
     }
@@ -84,14 +94,14 @@ class ArkApp extends SignalWatcher(LitElement) {
     .empty {
       text-align: center;
       padding: 64px 24px;
-      color: #999;
+      color: #aaa;
       font-size: 15px;
     }
 
     .empty p {
       margin: 8px 0 0;
       font-size: 13px;
-      color: #bbb;
+      color: #ccc;
     }
 
     .loading {
@@ -99,6 +109,13 @@ class ArkApp extends SignalWatcher(LitElement) {
       padding: 64px 24px;
       color: #888;
       font-size: 15px;
+    }
+
+    /* Viewport mode: iframe + inspector sidebar */
+    .viewport-layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
     }
 
     .viewport {
@@ -138,7 +155,15 @@ class ArkApp extends SignalWatcher(LitElement) {
         </header>
         ${loading
           ? html`<div class="loading">⏳ Fetching bundle…</div>`
-          : html`<div class="viewport"></div>`}
+          : html`
+              <ark-theme-bar
+                @theme-change=${this.#onThemeChange}
+              ></ark-theme-bar>
+              <div class="viewport-layout">
+                <div class="viewport"></div>
+                <ark-inspector .bundle=${bundle}></ark-inspector>
+              </div>
+            `}
       `;
     }
 
@@ -167,6 +192,7 @@ class ArkApp extends SignalWatcher(LitElement) {
                     <ark-run-card
                       .run=${run}
                       @open-bundle=${this.#onOpenBundle}
+                      @delete-run=${this.#onDeleteRun}
                     ></ark-run-card>
                   `
                 )}
@@ -201,5 +227,13 @@ class ArkApp extends SignalWatcher(LitElement) {
       this.#viewManager = null;
     }
     this.#store.closeBundle();
+  }
+
+  #onThemeChange(e: CustomEvent<{ css: string }>) {
+    this.#viewManager?.applyTheme(e.detail.css);
+  }
+
+  async #onDeleteRun(e: CustomEvent<{ id: string }>) {
+    await this.#store.deleteRun(e.detail.id);
   }
 }

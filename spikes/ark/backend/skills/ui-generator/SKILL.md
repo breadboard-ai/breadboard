@@ -28,6 +28,27 @@ pipeline.
 
 Save files as jsx and return all of them as the outcome.
 
+## Component Library
+
+Before generating sub-components, check `/mnt/library/` for existing components
+from previous runs. Each subdirectory is a previous run, containing its
+`App.jsx` and `components/*.jsx`.
+
+**Reuse workflow:**
+
+1. Use `system_read_text_from_file` to list `/mnt/library/` and browse available
+   components.
+2. If a component matches what you need (e.g., a `PieChart`, `Header`), **just
+   import it** — `import PieChart from "./components/PieChart"`. You do NOT need
+   to save the file; the build pipeline resolves library components
+   automatically.
+3. Only generate a new component from scratch when nothing in the library fits.
+4. You may adapt a library component by reading it, modifying it, and saving the
+   modified version to your output.
+
+When you reuse a component, include a comment at the top:
+`// Reused from: library/<run-id>/<filename>`
+
 ### Rules
 
 1. **App.jsx is the entry point.** It must be named exactly `App.jsx` and

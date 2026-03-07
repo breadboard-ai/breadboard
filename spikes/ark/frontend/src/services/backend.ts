@@ -10,9 +10,15 @@
  * All network calls live here. No state, no signals — pure fetch wrappers.
  */
 
-export { backend, type RunSummary, type RunEvent };
+export { backend, type RunSummary, type RunEvent, type ReuseInfo };
 
 const BACKEND_URL = "http://localhost:8080";
+
+/** Reuse analysis for a single file. */
+interface ReuseInfo {
+  status: "new" | "reused";
+  library_file?: string;
+}
 
 /** Shape returned by GET /agent/runs/status. */
 interface RunSummary {
@@ -103,5 +109,17 @@ const backend = {
       throw new Error(`Bundle fetch failed: ${res.status} ${res.statusText}`);
     }
     return res;
+  },
+
+  /** Delete a run and its artifacts. */
+  async deleteRun(runId: string): Promise<void> {
+    await fetch(`${BACKEND_URL}/agent/runs/${runId}`, { method: "DELETE" });
+  },
+
+  /** Check reuse for a completed run's files. */
+  async checkReuse(runId: string): Promise<Record<string, ReuseInfo>> {
+    const res = await fetch(`${BACKEND_URL}/agent/runs/${runId}/reuse`);
+    if (!res.ok) return {};
+    return res.json();
   },
 };

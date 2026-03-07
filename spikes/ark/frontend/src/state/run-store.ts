@@ -91,6 +91,12 @@ class RunStore {
     this.currentBundle.set(null);
   }
 
+  /** Delete a run and refresh the list. */
+  async deleteRun(id: string) {
+    await backend.deleteRun(id);
+    await this.#poll();
+  }
+
   /** Start polling (initial poll on load, then smart polling). */
   startPolling() {
     this.#poll(); // Initial poll on load.
