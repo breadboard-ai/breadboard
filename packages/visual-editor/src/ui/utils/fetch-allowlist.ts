@@ -45,7 +45,8 @@ const FETCH_ALLOWLIST: AllowListParams[] = [
     shouldAddAccessTokenToJsonBody: (url: string) =>
       url.endsWith("/uploadGeminiFile") ||
       url.endsWith("/uploadBlobFile") ||
-      url.includes("/generateWebpageStream"),
+      url.includes("/generateWebpageStream") ||
+      url.includes("/streamRunAgent"),
   },
   {
     canonicalPrefix: new URL(CANONICAL.GOOGLE_DRIVE_FILES_API_PREFIX),
