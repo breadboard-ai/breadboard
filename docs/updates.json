@@ -1,5 +1,10 @@
 [
   {
+    "date": "2026-03-09",
+    "type": "info",
+    "text": "All systems green. If you see any problems, please use the \"Send feedback\" link in the gear menu."
+  },
+  {
     "date": "2026-03-08",
     "type": "warning",
     "text": "We're experiencing a temporary issue accessing assets in generate steps. We're working on a fix!"
