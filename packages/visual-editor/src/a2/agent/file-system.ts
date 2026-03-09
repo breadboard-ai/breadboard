@@ -17,7 +17,7 @@ import { err, ok } from "@breadboard-ai/utils";
 import mime from "mime";
 import { toText } from "../a2/utils.js";
 import { FileDescriptor, MemoryManager } from "./types.js";
-import { GENERATE_TEXT_FUNCTION } from "./functions/generate.js";
+import { GENERATE_TEXT_FUNCTION } from "./functions/shared.js";
 
 export { AgentFileSystem };
 

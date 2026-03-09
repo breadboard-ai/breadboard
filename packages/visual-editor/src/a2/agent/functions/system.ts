@@ -14,7 +14,6 @@ import {
   defineFunctionLoose,
   FunctionDefinition,
   mapDefinitions,
-  type ArgsRawShape,
 } from "../function-definition.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import {
@@ -23,7 +22,12 @@ import {
   TaskTreeManager,
 } from "../task-tree-manager.js";
 import { FunctionGroup } from "../types.js";
-import { GENERATE_TEXT_FUNCTION } from "./generate.js";
+import {
+  fileNameSchema,
+  GENERATE_TEXT_FUNCTION,
+  statusUpdateSchema,
+  taskIdSchema,
+} from "./shared.js";
 
 export {
   FAILED_TO_FULFILL_FUNCTION,
@@ -48,31 +52,10 @@ const CREATE_TASK_TREE_FUNCTION = "system_create_task_tree";
 const MARK_COMPLETED_TASKS_FUNCTION = "system_mark_completed_tasks";
 
 const OBJECTIVE_OUTCOME_PARAMETER = "objective_outcome";
-const TASK_ID_PARAMETER = "task_id";
 
-const statusUpdateSchema = {
-  status_update: z.string().describe(tr`
-  A status update to show in the UI that provides more detail on the reason why this function was called.
-  
-  For example, "Creating random values", "Writing the memo", "Generating videos", "Making music", etc.`),
-} satisfies ArgsRawShape;
-
-const taskIdSchema = {
-  [TASK_ID_PARAMETER]: z
-    .string(
-      tr`If applicable, the "task_id" value of the relevant task in the task tree.`
-    )
-    .optional(),
-} satisfies ArgsRawShape;
-
-const fileNameSchema = {
-  file_name: z
-    .string()
-    .describe(
-      tr`Optional name for the generated file (without extension). Use snake_case for naming. The system will automatically add the appropriate extension based on the file type.`
-    )
-    .optional(),
-} satisfies ArgsRawShape;
+// Shared schemas (statusUpdateSchema, taskIdSchema, fileNameSchema) are
+// defined in ./shared.ts and re-exported from this module for backward
+// compatibility.
 
 const instruction = tr`
 
@@ -151,7 +134,7 @@ Now, start executing the plan.
 
 For concurrent tasks, make sure to generate multiple function calls simultaneously. 
 
-To better match function calls to tasks, use the "${TASK_ID_PARAMETER}" parameter in the function calls. To express more granularity within a task, add extra identifiers at the end like this: "task_001_1". This means "task_001, part 1".
+To better match function calls to tasks, use the "task_id" parameter in the function calls. To express more granularity within a task, add extra identifiers at the end like this: "task_001_1". This means "task_001, part 1".
 
 After each task is completed, examine: is the plan still good? Did the results of the tasks affect the outcome? If not, keep going. Otherwise, reexamine the plan and adjust it accordingly.
 

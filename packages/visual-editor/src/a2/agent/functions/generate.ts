@@ -32,7 +32,12 @@ import { expandVeoError } from "../../video-generator/main.js";
 import { VOICES } from "../../audio-generator/main.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup, Generators } from "../types.js";
-import { fileNameSchema, statusUpdateSchema, taskIdSchema } from "./system.js";
+import {
+  fileNameSchema,
+  GENERATE_TEXT_FUNCTION,
+  statusUpdateSchema,
+  taskIdSchema,
+} from "./shared.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 import { createReporter } from "../progress-work-item.js";
 import type { AgentEventSink } from "../agent-event-sink.js";
@@ -68,7 +73,7 @@ export type GenerateFunctionArgs = {
   sink: AgentEventSink;
 };
 
-const GENERATE_TEXT_FUNCTION = "generate_text";
+
 const GENERATE_AND_EXECUTE_CODE_FUNCTION = "generate_and_execute_code";
 
 const instruction = tr`
