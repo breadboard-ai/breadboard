@@ -1,0 +1,354 @@
+[
+  {
+    "name": "generate_images",
+    "description": "Generates one or more images based on a prompt and optionally, one or more images",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "description": "Detailed prompt to use for image generation.\n\nThis model can generate multiple images from a single prompt. Especially when\nlooking for consistency across images (for instance, when generating video\nkeyframes), this is a very useful capability.\n\nBe specific about how many images to generate.\n\nWhen composing the prompt, be as descriptive as possible. Describe the scene, don't just list keywords.\n\nThe model's core strength is its deep language understanding. A narrative, descriptive paragraph will almost always produce a better, more coherent image than a list of disconnected words.\n\nThis function allows you to use multiple input images to compose a new scene or transfer the style from one image to another.\n\nHere are some possible applications:\n\n- Text-to-Image: Generate high-quality images from simple or complex text descriptions. Provide a text prompt and no images as input.\n\n- Image + Text-to-Image (Editing): Provide an image and use the text prompt to add, remove, or modify elements, change the style, or adjust the color grading.\n\n- Multi-Image to Image (Composition & style transfer): Use multiple input images to compose a new scene or transfer the style from one image to another.\n\n- High-Fidelity text rendering: Accurately generate images that contain legible and well-placed text, ideal for logos, diagrams, and posters.\n"
+        },
+        "model": {
+          "default": "flash",
+          "type": "string",
+          "enum": [
+            "pro",
+            "flash"
+          ],
+          "description": "The Gemini model to use for image generation. How to choose the right model:\n\n- choose \"pro\" to accurately generate images that contain legible and well-placed text, ideal for logos, diagrams, and posters. This model is designed for professional asset production and complex instructions\n- choose \"flash\" for speed and efficiency. This model is optimized for high-volume, low-latency tasks."
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "An input image, specified as a VS path"
+          },
+          "description": "A list of input images, specified as file paths"
+        },
+        "aspect_ratio": {
+          "default": "16:9",
+          "type": "string",
+          "enum": [
+            "1:1",
+            "9:16",
+            "16:9",
+            "4:3",
+            "3:4"
+          ],
+          "description": "The aspect ratio for the generated images"
+        },
+        "file_name": {
+          "type": "string",
+          "description": "Optional name for the generated file (without extension). Use snake_case for naming. The system will automatically add the appropriate extension based on the file type."
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called.\n  \n  For example, \"Creating random values\", \"Writing the memo\", \"Generating videos\", \"Making music\", etc."
+        }
+      },
+      "required": [
+        "prompt",
+        "model",
+        "images",
+        "aspect_ratio",
+        "status_update"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "description": "If an error has occurred, will contain a description of the error"
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "A generated image, specified as a file path"
+          },
+          "description": "Array of generated images"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "generate_text",
+    "description": "An extremely versatile text generator, powered by Gemini. Use it for any tasks\nthat involve generation of text. Supports multimodal content input.",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "description": "Detailed prompt to use for text generation. The prompt may include references to files. For instance, if you have an existing file at \"/mnt/text3.md\", you can reference it as <file src=\"/mnt/text3.md\" /> in the prompt. If you do not use <file> tags, the text generator will not be able to access the file.\n\nThese references can point to files of any type, such as images, audio, videos, etc."
+        },
+        "model": {
+          "type": "string",
+          "enum": [
+            "pro",
+            "flash",
+            "lite"
+          ],
+          "description": "The Gemini model to use for text generation. How to choose the right model:\n\n- choose \"pro\" when reasoning over complex problems in code, math, and STEM, as well as analyzing large datasets, codebases, and documents using long context. Use this model only when dealing with exceptionally complex problems.\n- choose \"flash\" for large scale processing, low-latency, high volume tasks that require thinking. This is the model you would use most of the time.\n- choose \"lite\" for high throughput. Use this model when speed is paramount."
+        },
+        "search_grounding": {
+          "type": "boolean",
+          "description": "Whether or not to use Google Search grounding. Grounding with Google Search\nconnects the Gemini model to real-time web content and works with all available\nlanguages. This allows Gemini to provide more accurate answers and cite\nverifiable sources beyond its knowledge cutoff."
+        },
+        "maps_grounding": {
+          "type": "boolean",
+          "description": "Whether or not to use\nGoogle Maps grounding. Grounding with Google Maps connects the generative\ncapabilities of Gemini with the rich, factual, and up-to-date data of Google\nMaps"
+        },
+        "url_context": {
+          "type": "boolean",
+          "description": "Set to true to allow Gemini to retrieve context from URLs. Useful for tasks like the following:\n\n- Extract Data: Pull specific info like prices, names, or key findings from multiple URLs.\n- Compare Documents: Using URLs, analyze multiple reports, articles, or PDFs to identify differences and track trends.\n- Synthesize & Create Content: Combine information from several source URLs to generate accurate summaries, blog posts, or reports.\n- Analyze Code & Docs: Point to a GitHub repository or technical documentation URL to explain code, generate setup instructions, or answer questions.\n\nSpecify URLs in the prompt."
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called.\n  \n  For example, \"Creating random values\", \"Writing the memo\", \"Generating videos\", \"Making music\", etc."
+        }
+      },
+      "required": [
+        "prompt",
+        "model",
+        "status_update"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "description": "If an error has occurred, will contain a description of the error"
+        },
+        "text": {
+          "type": "string",
+          "description": "The output of the text generator."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "generate_video",
+    "description": "Generating high-fidelity, 8-second videos featuring stunning realism and natively generated audio",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "description": "The prompt to generate the video.\n\nGood prompts are descriptive and clear. Start with identifying your core idea, refine your idea by adding keywords and modifiers, and incorporate video-specific terminology into your prompts.\n\nThe following elements should be included in your prompt:\n\n- Subject: The object, person, animal, or scenery that you want in your video, such as cityscape, nature, vehicles, or puppies.\n- Action: What the subject is doing (for example, walking, running, or turning their head).\n- Style: Specify creative direction using specific film style keywords, such as sci-fi, horror film, film noir, or animated styles like cartoon.\n- Camera positioning and motion: [Optional] Control the camera's location and movement using terms like aerial view, eye-level, top-down shot, dolly shot, or worms eye.\n- Composition: [Optional] How the shot is framed, such as wide shot, close-up, single-shot or two-shot.\n- Focus and lens effects: [Optional] Use terms like shallow focus, deep focus, soft focus, macro lens, and wide-angle lens to achieve specific visual effects.\n- Ambiance: [Optional] How the color and light contribute to the scene, such as blue tones, night, or warm tones."
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "A reference input image, specified as a VS path"
+          },
+          "description": "A list of input reference images, specified as file paths. Use reference images only when you need to start with a particular image."
+        },
+        "aspect_ratio": {
+          "default": "16:9",
+          "type": "string",
+          "enum": [
+            "16:9",
+            "9:16"
+          ],
+          "description": "The aspect ratio of the video"
+        },
+        "file_name": {
+          "type": "string",
+          "description": "Optional name for the generated file (without extension). Use snake_case for naming. The system will automatically add the appropriate extension based on the file type."
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called.\n  \n  For example, \"Creating random values\", \"Writing the memo\", \"Generating videos\", \"Making music\", etc."
+        }
+      },
+      "required": [
+        "prompt",
+        "aspect_ratio",
+        "status_update"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "description": "If an error has occurred, will contain a description of the error"
+        },
+        "video": {
+          "type": "string",
+          "description": "Generated video, specified as file path"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "generate_speech_from_text",
+    "description": "Generates speech from text",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "The verbatim text to turn into speech."
+        },
+        "voice": {
+          "default": "Female (English)",
+          "description": "The voice to use for speech generation",
+          "type": "string",
+          "enum": [
+            "Male (English)",
+            "Female (English)"
+          ]
+        },
+        "file_name": {
+          "type": "string",
+          "description": "Optional name for the generated file (without extension). Use snake_case for naming. The system will automatically add the appropriate extension based on the file type."
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called.\n  \n  For example, \"Creating random values\", \"Writing the memo\", \"Generating videos\", \"Making music\", etc."
+        }
+      },
+      "required": [
+        "text",
+        "voice",
+        "status_update"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "description": "If an error has occurred, will contain a description of the error"
+        },
+        "speech": {
+          "type": "string",
+          "description": "Generated speech as a file path"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "generate_music_from_text",
+    "description": "Generates instrumental music and audio soundscapes based on the provided prompt.\n\nTo get your generated music closer to what you want, start with identifying your core musical idea and then refine your idea by adding keywords and modifiers.\n\nThe following elements should be considered for your prompt:\n\n- Genre & Style: The primary musical category (e.g., electronic dance, classical, jazz, ambient) and stylistic characteristics (e.g., 8-bit, cinematic, lo-fi).\n- Mood & Emotion: The desired feeling the music should evoke (e.g., energetic, melancholy, peaceful, tense).\n- Instrumentation: Key instruments you want to hear (e.g., piano, synthesizer, acoustic guitar, string orchestra, electronic drums).\n- Tempo & Rhythm: The pace (e.g., fast tempo, slow ballad, 120 BPM) and rhythmic character (e.g., driving beat, syncopated rhythm, gentle waltz).\n- (Optional) Arrangement/Structure: How the music progresses or layers (e.g., starts with a solo piano, then strings enter, crescendo into a powerful chorus).\n- (Optional) Soundscape/Ambiance: Background sounds or overall sonic environment (e.g., rain falling, city nightlife, spacious reverb, underwater feel).\n- (Optional) Production Quality: Desired audio fidelity or recording style (e.g., high-quality production, clean mix, vintage recording, raw demo feel).\n\nFor example:\n\nAn energetic (mood) electronic dance track (genre) with a fast tempo (tempo) and a driving beat (rhythm), featuring prominent synthesizers (instrumentation) and electronic drums (instrumentation). High-quality production (production quality).\n\nA calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synthesizers (instrumentation) and soft, evolving pads (instrumentation/arrangement). Slow tempo (tempo) with a spacious reverb (ambiance/production). Starts with a simple synth melody, then adds layers of atmospheric pads (arrangement).",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "description": "The prompt from which to generate music"
+        },
+        "file_name": {
+          "type": "string",
+          "description": "Optional name for the generated file (without extension). Use snake_case for naming. The system will automatically add the appropriate extension based on the file type."
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called.\n  \n  For example, \"Creating random values\", \"Writing the memo\", \"Generating videos\", \"Making music\", etc."
+        }
+      },
+      "required": [
+        "prompt",
+        "status_update"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "description": "If an error has occurred, will contain a description of the error"
+        },
+        "music": {
+          "type": "string",
+          "description": "Generated music as a file path"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "generate_and_execute_code",
+    "description": "Generates and executes Python code, returning the result of execution.\n\nThe code is generated by a Gemini model, so a precise spec is all that's necessary in the prompt: Gemini will generate the actual code.\n\nAfter it's generated, the code is immediately executed in a sandboxed environment that has access to the following libraries:\n\nattrs\nchess\ncontourpy\nfpdf\ngeopandas\nimageio\njinja2\njoblib\njsonschema\njsonschema-specifications\nlxml\nmatplotlib\nmpmath\nnumpy\nopencv-python\nopenpyxl\npackaging\npandas\npillow\nprotobuf\npylatex\npyparsing\nPyPDF2\npython-dateutil\npython-docx\npython-pptx\nreportlab\nscikit-learn\nscipy\nseaborn\nsix\nstriprtf\nsympy\ntabulate\ntensorflow\ntoolz\nxlrd\n\nCode execution works best with text and CSV files.\n\nIf the code environment generates an error, the model may decide to regenerate the code output. This can happen up to 5 times.\n\nNOTE: The Python code execution environment has no access to your file system, so don't use it to access or manipulate your files.",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "description": "Detailed prompt for the code to generate. DO NOT write Python code as the prompt. Instead DO use the natural language. This will let the code generator within this tool make the best decisions on what code to write. Your job is not to write code, but to direct the code generator.\n\nThe prompt may include references to files as <file> tags. They will be correctly marshalled across the sandbox boundary."
+        },
+        "search_grounding": {
+          "type": "boolean",
+          "description": "Whether or not to use Google Search grounding. Grounding with Google Search\nconnects the code generation model to real-time web content and works with all available languages. This allows Gemini to power more complex use cases."
+        },
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called.\n  \n  For example, \"Creating random values\", \"Writing the memo\", \"Generating videos\", \"Making music\", etc."
+        },
+        "task_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "prompt",
+        "status_update"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "description": "If an error has occurred, will contain a description of the error"
+        },
+        "result": {
+          "type": "string",
+          "description": "The result of code execution as text that may contain file path references"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+]

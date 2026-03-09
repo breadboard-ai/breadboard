@@ -25,7 +25,8 @@
     "eval:autoname": "wireit",
     "eval:viewer": "wireit",
     "eval:viewer:build": "wireit",
-    "lint": "wireit"
+    "lint": "wireit",
+    "export-functions": "wireit"
   },
   "wireit": {
     "build": {
@@ -206,6 +207,16 @@
         "src/**/*.ts",
         "eslint-rules/**/*.js",
         "../../eslint.config.js"
+      ],
+      "output": []
+    },
+    "export-functions": {
+      "command": "tsx scripts/export-functions.ts",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "scripts/export-functions.ts"
       ],
       "output": []
     }

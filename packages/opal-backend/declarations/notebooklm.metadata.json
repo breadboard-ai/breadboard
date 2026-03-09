@@ -1,0 +1,8 @@
+[
+  {
+    "name": "notebooklm_retrieve_relevant_chunks"
+  },
+  {
+    "name": "notebooklm_generate_answer"
+  }
+]

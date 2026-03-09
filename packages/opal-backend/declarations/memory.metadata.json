@@ -1,0 +1,27 @@
+[
+  {
+    "name": "memory_create_sheet",
+    "icon": "table_chart",
+    "title": "Creating a new memory sheet"
+  },
+  {
+    "name": "memory_read_sheet",
+    "icon": "table_chart",
+    "title": "Reading memory"
+  },
+  {
+    "name": "memory_update_sheet",
+    "icon": "table_chart",
+    "title": "Updating memory"
+  },
+  {
+    "name": "memory_delete_sheet",
+    "icon": "table_chart",
+    "title": "Deleting a memory sheet"
+  },
+  {
+    "name": "memory_get_metadata",
+    "icon": "table_chart",
+    "title": "Reading memory metadata"
+  }
+]

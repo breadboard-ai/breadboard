@@ -1,0 +1,12 @@
+[
+  {
+    "name": "chat_request_user_input",
+    "icon": "chat_bubble",
+    "title": "Asking the user"
+  },
+  {
+    "name": "chat_present_choices",
+    "icon": "list",
+    "title": "Presenting Choices to the User"
+  }
+]
