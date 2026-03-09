@@ -1,0 +1,265 @@
+[
+  {
+    "name": "system_objective_fulfilled",
+    "description": "Inidicates completion of the overall objective. \nCall only when the specified objective is entirely fulfilled",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "objective_outcome": {
+          "type": "string",
+          "description": "Your return value: the content of the fulfilled objective. The content may include references to files. For instance, if you have an existing file at \"/mnt/image4.png\", you can reference it as <file src=\"/mnt/image4.png\" /> in content. If you do not use <file> tags, the contents of this file will not be included as part of the outcome.\n\nThese references can point to files of any type, such as text, audio, videos, etc. Projects can also be referenced in this way.\n\nYou are working as part of an AI system, so don't add chit-chat or meta-monologue, and don't explain what you did or why. Just the outcome, please."
+        },
+        "href": {
+          "default": "/",
+          "type": "string",
+          "description": "The url of the next agent to which to transfer control upon\ncompletion. By default, the control is transferred to the root agent \"/\". \nIf the objective specifies other agent URLs using the\n <a href=\"url\">title</a> syntax, and calls to choose a different agent to which\n to  transfer control, then that url should be used instead."
+        }
+      },
+      "required": [
+        "objective_outcome",
+        "href"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "description": "A detailed error message that usually indicates invalid parameters being passed into the function"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "system_failed_to_fulfill_objective",
+    "description": "Inidicates that the agent failed to fulfill of the overall\nobjective. Call ONLY when all means of fulfilling the objective have been\nexhausted.",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "user_message": {
+          "type": "string",
+          "description": "Text to display to the user upon admitting failure to\nfulfill the objective. Provide a friendly explanation of why the objective\nis impossible to fulfill and offer helpful suggestions, but don't end with a question, since that would leave the user hanging: you've failed and can't answer that question"
+        },
+        "href": {
+          "default": "/",
+          "type": "string",
+          "description": "The url of the next agent to which to transfer control upon\nfailure. By default, the control is transferred to the root agent \"/\". \nIf the objective specifies other agent URLs using the\n <a href=\"url\">title</a> syntax, and calls to choose a different agent to which\n to  transfer control, then that url should be used instead."
+        }
+      },
+      "required": [
+        "user_message",
+        "href"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "system_list_files",
+    "description": "Lists all files",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called.\n  \n  For example, \"Creating random values\", \"Writing the memo\", \"Generating videos\", \"Making music\", etc."
+        }
+      },
+      "required": [
+        "status_update"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "string",
+          "description": "List of all files as file paths"
+        }
+      },
+      "required": [
+        "list"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "system_write_file",
+    "description": "Writes the provided text to a file",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "file_name": {
+          "type": "string",
+          "description": "The name of the file with the extension.\nThis is the name that will come after the \"/mnt/\" prefix in the file path.\nUse snake_case for naming. If the file does not exist, it will be created. If the file already exists, its content will be overwritten.\nExamples: \"report.md\", \"data.csv\", \"notes.txt\", \"config.json\", \"index.html\""
+        },
+        "content": {
+          "type": "string",
+          "description": "The content to write into a file"
+        }
+      },
+      "required": [
+        "file_name",
+        "content"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "The VS path to the file containing the provided text"
+        },
+        "error": {
+          "type": "string",
+          "description": "The error message if the file could not be written"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "system_read_text_from_file",
+    "description": "Reads text from a file and return text as string. If the file does not contain text or is not supported, an error will be returned. Google Drive files may contain images and other non-textual content. Please use \"generate_text\" to read them at full fidelity.",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "The file path of the file to read the text from."
+        }
+      },
+      "required": [
+        "file_path"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "The text contents of a file as a string."
+        },
+        "error": {
+          "type": "string",
+          "description": "If an error has occurred, will contain a description of the error"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "system_create_task_tree",
+    "description": "When working on a complicated problem, use this function to create a scratch pad to reason about a dependency tree of tasks, like about the order of tasks, and which tasks can be executed concurrently and which ones must be executed serially.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "definitions": {
+        "TaskNode": {
+          "type": "object",
+          "required": [
+            "task_id",
+            "description",
+            "execution_mode",
+            "status"
+          ],
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "description": "The unique id of the task, must be in the format of \"task_NNN\" where NNN is the number"
+            },
+            "description": {
+              "type": "string",
+              "description": "Detailed explanation of what fulfilling this objective entails."
+            },
+            "execution_mode": {
+              "type": "string",
+              "description": "Defines how immediate subtasks should be executed. 'serial' means one by one in order; 'concurrent' means all at the same time.",
+              "enum": [
+                "serial",
+                "concurrent"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "description": "The current status of a task",
+              "enum": [
+                "not_started",
+                "in_progress",
+                "complete"
+              ]
+            },
+            "subtasks": {
+              "type": "array",
+              "description": "Ordered list of child tasks. If execution_mode is serial, the order matters.",
+              "items": {
+                "$ref": "#/definitions/TaskNode"
+              }
+            }
+          }
+        }
+      },
+      "properties": {
+        "task_tree": {
+          "type": "object",
+          "$ref": "#/definitions/TaskNode"
+        }
+      }
+    },
+    "responseJsonSchema": {
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  {
+    "name": "system_mark_completed_tasks",
+    "description": "Mark one or more tasks defined with the \"system_create_task_tree\" as complete.",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "task_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The list of tasks to mark as completed"
+        }
+      },
+      "required": [
+        "task_ids"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "The file path to the updated task tree"
+        }
+      },
+      "required": [
+        "file_path"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "name": "generate_images",
+    "icon": "photo_spark",
+    "title": "Generating Image(s)"
+  },
+  {
+    "name": "generate_text",
+    "icon": "text_analysis",
+    "title": "Generating Text"
+  },
+  {
+    "name": "generate_video",
+    "icon": "videocam_auto",
+    "title": "Generating Video"
+  },
+  {
+    "name": "generate_speech_from_text",
+    "icon": "audio_magic_eraser",
+    "title": "Generating Speech"
+  },
+  {
+    "name": "generate_music_from_text",
+    "icon": "audio_magic_eraser",
+    "title": "Generating Music"
+  },
+  {
+    "name": "generate_and_execute_code",
+    "icon": "code",
+    "title": "Generating and Executing Code"
+  }
+]

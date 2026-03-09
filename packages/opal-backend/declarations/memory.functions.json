@@ -1,0 +1,216 @@
+[
+  {
+    "name": "memory_create_sheet",
+    "description": "Creates a new memory sheet",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the sheet. Use snake_case for\nnaming."
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "The name of the column header"
+          },
+          "description": "An array of strings representing the column headers (e.g., ['Name', 'Status'])."
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called.\n  \n  For example, \"Creating random values\", \"Writing the memo\", \"Generating videos\", \"Making music\", etc."
+        }
+      },
+      "required": [
+        "name",
+        "columns",
+        "status_update"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "memory_read_sheet",
+    "description": "Reads values from a specific memory range (e.g. Scores!A1:B3)",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "range": {
+          "type": "string",
+          "description": "The Google Sheets range which must include the name of the sheet"
+        },
+        "file_name": {
+          "type": "string",
+          "description": "The name of the file to save the output to. This is the name that\nwill come after \"/mnt/\" prefix in the file path. Use snake_case for\nnaming. Only use when the \"output_format\" is set to \"file\"."
+        },
+        "output_format": {
+          "type": "string",
+          "enum": [
+            "file",
+            "json"
+          ],
+          "description": "The output format. When \"file\" is specified, the output will be saved as a file and the \"file_path\" response parameter will be provided as output. Use this when you expect a long output from the sheet. NOTE that choosing this option will prevent you from seeing the output directly: you only get back the file path. You can read this file as a separate action, but if you do expect to read it, the \"json\" output format might be a better choice.\n\nWhen \"json\" is specified, the output will be returned as JSON directlty, and the \"json\" response parameter will be provided."
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called.\n  \n  For example, \"Creating random values\", \"Writing the memo\", \"Generating videos\", \"Making music\", etc."
+        }
+      },
+      "required": [
+        "range",
+        "output_format",
+        "status_update"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "The file path with the output of the\ngenerator. Will be provided when the \"output_format\" is set to \"file\""
+        },
+        "json": {
+          "type": "string",
+          "description": "The JSON output of the generator. Will be \nprovided when the \"output_format\" is set to \"json\""
+        },
+        "error": {
+          "type": "string",
+          "description": "If an error has occurred, will contain a description of the error"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "memory_update_sheet",
+    "description": "Overwrites a specific memory range with new data. Used for editing specific rows.",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "range": {
+          "type": "string",
+          "description": "The Google Sheets range which must include the name of the sheet"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "The data to write, may include references to files. For instance, if you have an existing file at \"/mnt/text3.md\", you can reference it as <file src=\"/mnt/text3.md\" /> in the in data. At update time, the tag will be replaced with the file contents."
+            }
+          },
+          "description": "The 2D array of data to write."
+        },
+        "task_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "range",
+        "values"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "memory_delete_sheet",
+    "description": "Deletes a specific memory sheet",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the sheet"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called.\n  \n  For example, \"Creating random values\", \"Writing the memo\", \"Generating videos\", \"Making music\", etc."
+        }
+      },
+      "required": [
+        "name",
+        "status_update"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "memory_get_metadata",
+    "description": "Returns the names and header rows of all memory sheets.",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "type": "string"
+        },
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called.\n  \n  For example, \"Creating random values\", \"Writing the memo\", \"Generating videos\", \"Making music\", etc."
+        }
+      },
+      "required": [
+        "status_update"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sheets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the memory sheet"
+              },
+              "file_path": {
+                "type": "string",
+                "description": "The file path to read the memory sheet"
+              },
+              "columns": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "The column name"
+                },
+                "description": "The list of column names"
+              }
+            },
+            "required": [
+              "name",
+              "file_path",
+              "columns"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "error": {
+          "type": "string",
+          "description": "If an error has occurred, will contain a description of the error"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+]

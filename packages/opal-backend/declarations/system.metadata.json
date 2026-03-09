@@ -1,0 +1,36 @@
+[
+  {
+    "name": "system_objective_fulfilled",
+    "icon": "check_circle",
+    "title": "Returning final outcome"
+  },
+  {
+    "name": "system_failed_to_fulfill_objective",
+    "icon": "cancel",
+    "title": "Unable to proceed"
+  },
+  {
+    "name": "system_list_files",
+    "icon": "folder"
+  },
+  {
+    "name": "system_write_file",
+    "icon": "edit",
+    "title": "Writing to file"
+  },
+  {
+    "name": "system_read_text_from_file",
+    "icon": "description",
+    "title": "Reading from file"
+  },
+  {
+    "name": "system_create_task_tree",
+    "icon": "task",
+    "title": "Creating task tree"
+  },
+  {
+    "name": "system_mark_completed_tasks",
+    "icon": "task",
+    "title": "Marking tasks complete"
+  }
+]
