@@ -10,16 +10,11 @@ import {
   TextCapabilityPart,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
-import z from "zod";
 import { GenerationConfig, Tool } from "../../a2/gemini.js";
 import { type ExecuteStepArgs } from "../../a2/step-executor.js";
 import { A2ModuleArgs } from "../../runnable-module-factory.js";
 import { AgentFileSystem } from "../file-system.js";
-import {
-  defineFunction,
-  FunctionDefinition,
-  mapDefinitions,
-} from "../function-definition.js";
+import { assembleFunctionGroup } from "../function-definition.js";
 import { defaultSystemInstruction } from "../../generate-text/system-instruction.js";
 import {
   llm,
@@ -29,21 +24,28 @@ import {
   tr,
 } from "../../a2/utils.js";
 import { expandVeoError } from "../../video-generator/main.js";
-import { VOICES } from "../../audio-generator/main.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup, Generators } from "../types.js";
-import {
-  fileNameSchema,
-  GENERATE_TEXT_FUNCTION,
-  statusUpdateSchema,
-  taskIdSchema,
-} from "./shared.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 import { createReporter } from "../progress-work-item.js";
 import type { AgentEventSink } from "../agent-event-sink.js";
 import { decodeErrorData } from "../../../sca/utils/decode-error.js";
 
+import {
+  declarations,
+  metadata,
+  instruction,
+  type GenerateImagesParams,
+  type GenerateTextParams,
+  type GenerateVideoParams,
+  type GenerateSpeechFromTextParams,
+  type GenerateMusicFromTextParams,
+  type GenerateAndExecuteCodeParams,
+} from "./generated/generate.js";
+
 export { getGenerateFunctionGroup, GENERATE_TEXT_FUNCTION };
+
+const GENERATE_TEXT_FUNCTION = "generate_text";
 
 const VIDEO_MODEL_NAME = "veo-3.1-generate-preview";
 
@@ -73,53 +75,7 @@ export type GenerateFunctionArgs = {
   sink: AgentEventSink;
 };
 
-
-const GENERATE_AND_EXECUTE_CODE_FUNCTION = "generate_and_execute_code";
-
-const instruction = tr`
-
-## When to call "${GENERATE_TEXT_FUNCTION}" function
-
-When evaluating the objective, make sure to determine whether calling "${GENERATE_TEXT_FUNCTION}" function is warranted. The key tradeoff here is latency: because it's an additional model call, the "generate_text" will take longer to finish.
-
-Your job is to fulfill the objective as efficiently as possible, so weigh the need to invoke "${GENERATE_TEXT_FUNCTION}" carefully.
-
-Here is the rules of thumb:
-
-- For shorter responses like a chat conversation, just do the text generation yourself. You are an LLM and you can do it without calling "${GENERATE_TEXT_FUNCTION}" function.
-- For longer responses like generating a chapter of a book or analyzing a large and complex set of files, use "${GENERATE_TEXT_FUNCTION}" function.
-
-
-### How to write a good prompt for the code generator
-
-The "${GENERATE_AND_EXECUTE_CODE_FUNCTION}" function is a self-contained code generator with a sandboxed code execution environment. Think of it as a sub-agent that both generates the code and executes it, then provides the result. This sub-agent takes a natural language prompt to do its job.
-
-A good code generator prompt will include the following components:
-
-1. Preference for the Python library to use. For example "Use the reportlab library to generate PDF"
-
-2. What to consume as input. Focus on the "what", rather than the "how". When binary files are passed as input, use the key words "use provided file". Do NOT refer to file paths, see below.
-
-3. The high-level approach to solving the problem with code. If applicable, specify algorithms or techniques to use.
-
-4. What to deliver as output. Again, do not worry about the "how", instead specify the "what". For text files, use the key word "return" in the prompt. For binary files, use the key word word "save". For example, "Return the resulting number" or "Save the PDF file" or "Save all four resulting images". Do NOT ask to name the files, see below.
-
-The code generator prompt may include references to files and it may output references to files. However, theses references are translated at the boundary of the sandboxed code execution environment into actual files and file handles that will be different from what you specify. The Python code execution environment has no access to your file system.
-
-Because of this translation layer, DO NOT mention file system paths or file references in the prompt outside of the <file> tag.
-
-For example, if you need to include  an existing file at "/mnt/text3.md" into the prompt, you can reference it as <file src="/mnt/text3.md" />. If you do not use <file> tags, the code generator will not be able to access the file.
-
-For output, do not ask the code generator to name the files. It will assign its own file names names to save in the sandbox, and these will be picked up at the sandbox boundary and translated into <file> tags for you.
-`;
-
 function getGenerateFunctionGroup(args: GenerateFunctionArgs): FunctionGroup {
-  return { ...mapDefinitions(defineGenerateFunctions(args)), instruction };
-}
-
-function defineGenerateFunctions(
-  args: GenerateFunctionArgs
-): FunctionDefinition[] {
   const {
     fileSystem,
     moduleArgs,
@@ -128,77 +84,9 @@ function defineGenerateFunctions(
     generators,
     sink,
   } = args;
-  const imageFunction = defineFunction(
-    {
-      name: "generate_images",
-      icon: "photo_spark",
-      title: "Generating Image(s)",
-      description: `Generates one or more images based on a prompt and optionally, one or more images`,
-      parameters: {
-        prompt: z.string()
-          .describe(`Detailed prompt to use for image generation.
 
-This model can generate multiple images from a single prompt. Especially when
-looking for consistency across images (for instance, when generating video
-keyframes), this is a very useful capability.
-
-Be specific about how many images to generate.
-
-When composing the prompt, be as descriptive as possible. Describe the scene, don't just list keywords.
-
-The model's core strength is its deep language understanding. A narrative, descriptive paragraph will almost always produce a better, more coherent image than a list of disconnected words.
-
-This function allows you to use multiple input images to compose a new scene or transfer the style from one image to another.
-
-Here are some possible applications:
-
-- Text-to-Image: Generate high-quality images from simple or complex text descriptions. Provide a text prompt and no images as input.
-
-- Image + Text-to-Image (Editing): Provide an image and use the text prompt to add, remove, or modify elements, change the style, or adjust the color grading.
-
-- Multi-Image to Image (Composition & style transfer): Use multiple input images to compose a new scene or transfer the style from one image to another.
-
-- High-Fidelity text rendering: Accurately generate images that contain legible and well-placed text, ideal for logos, diagrams, and posters.
-`),
-        model: z
-          .enum(["pro", "flash"])
-          .describe(
-            tr`
-
-The Gemini model to use for image generation. How to choose the right model:
-
-- choose "pro" to accurately generate images that contain legible and well-placed text, ideal for logos, diagrams, and posters. This model is designed for professional asset production and complex instructions
-- choose "flash" for speed and efficiency. This model is optimized for high-volume, low-latency tasks.
-`
-          )
-          .default("flash"),
-        images: z
-          .array(z.string().describe("An input image, specified as a VS path"))
-          .describe("A list of input images, specified as file paths"),
-        aspect_ratio: z
-          .enum(["1:1", "9:16", "16:9", "4:3", "3:4"])
-          .describe(`The aspect ratio for the generated images`)
-          .default("16:9"),
-        ...fileNameSchema,
-        ...taskIdSchema,
-        ...statusUpdateSchema,
-      },
-      response: {
-        error: z
-          .string()
-          .describe(
-            `If an error has occurred, will contain a description of the error`
-          )
-          .optional(),
-        images: z
-          .array(
-            z.string().describe(`A generated image, specified as a file path`)
-          )
-          .describe(`Array of generated images`)
-          .optional(),
-      },
-    },
-    async (
+  return assembleFunctionGroup(declarations, metadata, instruction, {
+    generate_images: async (
       {
         prompt,
         images: inputImages,
@@ -207,7 +95,7 @@ The Gemini model to use for image generation. How to choose the right model:
         aspect_ratio,
         file_name,
         task_id,
-      },
+      }: GenerateImagesParams,
       statusUpdater,
       reporter
     ) => {
@@ -229,12 +117,12 @@ The Gemini model to use for image generation. How to choose the right model:
           title: `Generating Image(s)`,
           icon: "photo_spark",
         });
-      const args: ExecuteStepArgs = {
+      const execArgs: ExecuteStepArgs = {
         ...moduleArgs,
         reporter: effectiveReporter,
       };
       const generated = await generators.callImage(
-        args,
+        execArgs,
         modelName,
         prompt,
         imageParts.map((part) => ({ parts: [part] })),
@@ -263,85 +151,9 @@ The Gemini model to use for image generation. How to choose the right model:
         return { error: errors.join(",") };
       }
       return { images };
-    }
-  );
-  const textFunction = defineFunction(
-    {
-      name: GENERATE_TEXT_FUNCTION,
-      icon: "text_analysis",
-      title: "Generating Text",
-      description: `
-An extremely versatile text generator, powered by Gemini. Use it for any tasks
-that involve generation of text. Supports multimodal content input.`.trim(),
-      parameters: {
-        prompt: z.string().describe(tr`
-
-Detailed prompt to use for text generation. The prompt may include references to files. For instance, if you have an existing file at "/mnt/text3.md", you can reference it as <file src="/mnt/text3.md" /> in the prompt. If you do not use <file> tags, the text generator will not be able to access the file.
-
-These references can point to files of any type, such as images, audio, videos, etc.
-`),
-        model: z.enum(["pro", "flash", "lite"]).describe(tr`
-
-The Gemini model to use for text generation. How to choose the right model:
-
-- choose "pro" when reasoning over complex problems in code, math, and STEM, as well as analyzing large datasets, codebases, and documents using long context. Use this model only when dealing with exceptionally complex problems.
-- choose "flash" for large scale processing, low-latency, high volume tasks that require thinking. This is the model you would use most of the time.
-- choose "lite" for high throughput. Use this model when speed is paramount.
-
-`),
-        search_grounding: z
-          .boolean()
-          .describe(
-            `
-Whether or not to use Google Search grounding. Grounding with Google Search
-connects the Gemini model to real-time web content and works with all available
-languages. This allows Gemini to provide more accurate answers and cite
-verifiable sources beyond its knowledge cutoff.`.trim()
-          )
-          .optional(),
-        maps_grounding: z
-          .boolean()
-          .describe(
-            `Whether or not to use
-Google Maps grounding. Grounding with Google Maps connects the generative
-capabilities of Gemini with the rich, factual, and up-to-date data of Google
-Maps`
-          )
-          .optional(),
-        url_context: z
-          .boolean()
-          .describe(
-            tr`
-
-Set to true to allow Gemini to retrieve context from URLs. Useful for tasks like the following:
-
-- Extract Data: Pull specific info like prices, names, or key findings from multiple URLs.
-- Compare Documents: Using URLs, analyze multiple reports, articles, or PDFs to identify differences and track trends.
-- Synthesize & Create Content: Combine information from several source URLs to generate accurate summaries, blog posts, or reports.
-- Analyze Code & Docs: Point to a GitHub repository or technical documentation URL to explain code, generate setup instructions, or answer questions.
-
-Specify URLs in the prompt.
-
-`
-          )
-          .optional(),
-        ...taskIdSchema,
-        ...statusUpdateSchema,
-      },
-      response: {
-        error: z
-          .string()
-          .describe(
-            `If an error has occurred, will contain a description of the error`
-          )
-          .optional(),
-        text: z
-          .string()
-          .describe(`The output of the text generator.`)
-          .optional(),
-      },
     },
-    async (
+
+    generate_text: async (
       {
         prompt,
         model,
@@ -350,7 +162,7 @@ Specify URLs in the prompt.
         url_context,
         status_update,
         task_id,
-      },
+      }: GenerateTextParams,
       statusUpdater
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
@@ -426,64 +238,17 @@ Specify URLs in the prompt.
         return { error: `No text was generated. Please try again` };
       }
       return { text: translator.contentToPidginString({ parts: textParts }) };
-    }
-  );
-  const videoFunction = defineFunction(
-    {
-      name: "generate_video",
-      icon: "videocam_auto",
-      title: "Generating Video",
-      description:
-        "Generating high-fidelity, 8-second videos featuring stunning realism and natively generated audio",
-      parameters: {
-        prompt: z.string().describe(tr`
-The prompt to generate the video.
-
-Good prompts are descriptive and clear. Start with identifying your core idea, refine your idea by adding keywords and modifiers, and incorporate video-specific terminology into your prompts.
-
-The following elements should be included in your prompt:
-
-- Subject: The object, person, animal, or scenery that you want in your video, such as cityscape, nature, vehicles, or puppies.
-- Action: What the subject is doing (for example, walking, running, or turning their head).
-- Style: Specify creative direction using specific film style keywords, such as sci-fi, horror film, film noir, or animated styles like cartoon.
-- Camera positioning and motion: [Optional] Control the camera's location and movement using terms like aerial view, eye-level, top-down shot, dolly shot, or worms eye.
-- Composition: [Optional] How the shot is framed, such as wide shot, close-up, single-shot or two-shot.
-- Focus and lens effects: [Optional] Use terms like shallow focus, deep focus, soft focus, macro lens, and wide-angle lens to achieve specific visual effects.
-- Ambiance: [Optional] How the color and light contribute to the scene, such as blue tones, night, or warm tones.
-`),
-        images: z
-          .array(
-            z
-              .string()
-              .describe("A reference input image, specified as a VS path")
-          )
-          .describe(
-            "A list of input reference images, specified as file paths. Use reference images only when you need to start with a particular image."
-          )
-          .optional(),
-        aspect_ratio: z
-          .enum(["16:9", "9:16"])
-          .describe(`The aspect ratio of the video`)
-          .default("16:9"),
-        ...fileNameSchema,
-        ...taskIdSchema,
-        ...statusUpdateSchema,
-      },
-      response: {
-        error: z
-          .string()
-          .describe(
-            `If an error has occurred, will contain a description of the error`
-          )
-          .optional(),
-        video: z
-          .string()
-          .describe(`Generated video, specified as file path`)
-          .optional(),
-      },
     },
-    async (
-      { prompt, status_update, aspect_ratio, images, file_name, task_id },
+
+    generate_video: async (
+      {
+        prompt,
+        status_update,
+        aspect_ratio,
+        images,
+        file_name,
+        task_id,
+      }: GenerateVideoParams,
       statusUpdateCallback,
       reporter
     ) => {
@@ -500,12 +265,12 @@ The following elements should be included in your prompt:
           title: `Generating Video`,
           icon: "videocam_auto",
         });
-      const args: ExecuteStepArgs = {
+      const execArgs: ExecuteStepArgs = {
         ...moduleArgs,
         reporter: effectiveReporter,
       };
       const generating = await generators.callVideo(
-        args,
+        execArgs,
         prompt,
         imageParts.map((part) => ({ parts: [part] })),
         false,
@@ -523,39 +288,16 @@ The following elements should be included in your prompt:
         return { error: video.$error };
       }
       return { video };
-    }
-  );
-  const speechFunction = defineFunction(
-    {
-      name: "generate_speech_from_text",
-      icon: "audio_magic_eraser",
-      title: "Generating Speech",
-      description: "Generates speech from text",
-      parameters: {
-        text: z.string().describe("The verbatim text to turn into speech."),
-        voice: z
-          .enum(VOICES)
-          .default("Female (English)")
-          .describe("The voice to use for speech generation"),
-        ...fileNameSchema,
-        ...taskIdSchema,
-        ...statusUpdateSchema,
-      },
-      response: {
-        error: z
-          .string()
-          .describe(
-            `If an error has occurred, will contain a description of the error`
-          )
-          .optional(),
-        speech: z
-          .string()
-          .describe("Generated speech as a file path")
-          .optional(),
-      },
     },
-    async (
-      { text, status_update, voice, file_name, task_id },
+
+    generate_speech_from_text: async (
+      {
+        text,
+        status_update,
+        voice,
+        file_name,
+        task_id,
+      }: GenerateSpeechFromTextParams,
       statusUpdateCallback,
       reporter
     ) => {
@@ -569,11 +311,11 @@ The following elements should be included in your prompt:
           title: `Generating Speech`,
           icon: "audio_magic_eraser",
         });
-      const args: ExecuteStepArgs = {
+      const execArgs: ExecuteStepArgs = {
         ...moduleArgs,
         reporter: effectiveReporter,
       };
-      const generating = await generators.callAudio(args, text, voice);
+      const generating = await generators.callAudio(execArgs, text, voice);
       if (!ok(generating)) return toErrorOrResponse(generating);
 
       const dataPart = generating.parts.at(0);
@@ -583,52 +325,15 @@ The following elements should be included in your prompt:
       const speech = fileSystem.add(dataPart, file_name);
       if (!ok(speech)) return { error: speech.$error };
       return { speech };
-    }
-  );
-  const musicFunction = defineFunction(
-    {
-      name: "generate_music_from_text",
-      icon: "audio_magic_eraser",
-      title: "Generating Music",
-      description: tr`
-Generates instrumental music and audio soundscapes based on the provided prompt.
-
-To get your generated music closer to what you want, start with identifying your core musical idea and then refine your idea by adding keywords and modifiers.
-
-The following elements should be considered for your prompt:
-
-- Genre & Style: The primary musical category (e.g., electronic dance, classical, jazz, ambient) and stylistic characteristics (e.g., 8-bit, cinematic, lo-fi).
-- Mood & Emotion: The desired feeling the music should evoke (e.g., energetic, melancholy, peaceful, tense).
-- Instrumentation: Key instruments you want to hear (e.g., piano, synthesizer, acoustic guitar, string orchestra, electronic drums).
-- Tempo & Rhythm: The pace (e.g., fast tempo, slow ballad, 120 BPM) and rhythmic character (e.g., driving beat, syncopated rhythm, gentle waltz).
-- (Optional) Arrangement/Structure: How the music progresses or layers (e.g., starts with a solo piano, then strings enter, crescendo into a powerful chorus).
-- (Optional) Soundscape/Ambiance: Background sounds or overall sonic environment (e.g., rain falling, city nightlife, spacious reverb, underwater feel).
-- (Optional) Production Quality: Desired audio fidelity or recording style (e.g., high-quality production, clean mix, vintage recording, raw demo feel).
-
-For example:
-
-An energetic (mood) electronic dance track (genre) with a fast tempo (tempo) and a driving beat (rhythm), featuring prominent synthesizers (instrumentation) and electronic drums (instrumentation). High-quality production (production quality).
-
-A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synthesizers (instrumentation) and soft, evolving pads (instrumentation/arrangement). Slow tempo (tempo) with a spacious reverb (ambiance/production). Starts with a simple synth melody, then adds layers of atmospheric pads (arrangement).
-`,
-      parameters: {
-        prompt: z.string().describe(`The prompt from which to generate music`),
-        ...fileNameSchema,
-        ...taskIdSchema,
-        ...statusUpdateSchema,
-      },
-      response: {
-        error: z
-          .string()
-          .describe(
-            `If an error has occurred, will contain a description of the error`
-          )
-          .optional(),
-        music: z.string().describe("Generated music as a file path").optional(),
-      },
     },
-    async (
-      { prompt, status_update, file_name, task_id },
+
+    generate_music_from_text: async (
+      {
+        prompt,
+        status_update,
+        file_name,
+        task_id,
+      }: GenerateMusicFromTextParams,
       statusUpdateCallback,
       reporter
     ) => {
@@ -642,11 +347,11 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
           title: `Generating Music`,
           icon: "audio_magic_eraser",
         });
-      const args: ExecuteStepArgs = {
+      const execArgs: ExecuteStepArgs = {
         ...moduleArgs,
         reporter: effectiveReporter,
       };
-      const generating = await generators.callMusic(args, prompt);
+      const generating = await generators.callMusic(execArgs, prompt);
       if (!ok(generating)) return toErrorOrResponse(generating);
 
       const dataPart = generating.parts.at(0);
@@ -656,99 +361,15 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
       const music = fileSystem.add(dataPart, file_name);
       if (!ok(music)) return { error: music.$error };
       return { music };
-    }
-  );
-  const codeFunction = defineFunction(
-    {
-      name: GENERATE_AND_EXECUTE_CODE_FUNCTION,
-      icon: "code",
-      title: "Generating and Executing Code",
-      description: tr`
-Generates and executes Python code, returning the result of execution.
-
-The code is generated by a Gemini model, so a precise spec is all that's necessary in the prompt: Gemini will generate the actual code.
-
-After it's generated, the code is immediately executed in a sandboxed environment that has access to the following libraries:
-
-attrs
-chess
-contourpy
-fpdf
-geopandas
-imageio
-jinja2
-joblib
-jsonschema
-jsonschema-specifications
-lxml
-matplotlib
-mpmath
-numpy
-opencv-python
-openpyxl
-packaging
-pandas
-pillow
-protobuf
-pylatex
-pyparsing
-PyPDF2
-python-dateutil
-python-docx
-python-pptx
-reportlab
-scikit-learn
-scipy
-seaborn
-six
-striprtf
-sympy
-tabulate
-tensorflow
-toolz
-xlrd
-
-Code execution works best with text and CSV files.
-
-If the code environment generates an error, the model may decide to regenerate the code output. This can happen up to 5 times.
-
-NOTE: The Python code execution environment has no access to your file system, so don't use it to access or manipulate your files.
-
-        `,
-      parameters: {
-        prompt: z.string().describe(tr`
-Detailed prompt for the code to generate. DO NOT write Python code as the prompt. Instead DO use the natural language. This will let the code generator within this tool make the best decisions on what code to write. Your job is not to write code, but to direct the code generator.
-
-The prompt may include references to files as <file> tags. They will be correctly marshalled across the sandbox boundary.
-`),
-        search_grounding: z
-          .boolean()
-          .describe(
-            tr`
-Whether or not to use Google Search grounding. Grounding with Google Search
-connects the code generation model to real-time web content and works with all available languages. This allows Gemini to power more complex use cases.`.trim()
-          )
-          .optional(),
-        ...statusUpdateSchema,
-        ...taskIdSchema,
-      },
-      response: {
-        error: z
-          .string()
-          .describe(
-            `If an error has occurred, will contain a description of the error`
-          )
-          .optional(),
-        result: z
-          .string()
-          .describe(
-            "The result of code execution as text that may contain file path references"
-          )
-          .optional(),
-      },
     },
-    async (
-      { prompt, search_grounding, status_update, task_id },
+
+    generate_and_execute_code: async (
+      {
+        prompt,
+        search_grounding,
+        status_update,
+        task_id,
+      }: GenerateAndExecuteCodeParams,
       statusUpdater
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
@@ -836,17 +457,8 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
         console.warn(`More than one part generated`, results);
       }
       return { result: toText({ parts: textParts }) };
-    }
-  );
-
-  return [
-    imageFunction,
-    textFunction,
-    videoFunction,
-    speechFunction,
-    musicFunction,
-    codeFunction,
-  ];
+    },
+  });
 }
 
 function resolveTextModel(model: "pro" | "lite" | "flash"): string {
