@@ -113,8 +113,7 @@ export const generate = asAction(
       createThemeGenerationPrompt(args),
       abortSignal,
       bind.controller,
-      bind.services,
-      bind.env.flags.get("enableGeminiBackend")
+      bind.services
     );
     if (!ok(theme)) return theme;
     return addImpl(theme);
@@ -137,8 +136,7 @@ export const generateFromIntent = asAction(
       getThemeFromIntentGenerationPrompt(intent),
       abortSignal,
       bind.controller,
-      bind.services,
-      bind.env.flags.get("enableGeminiBackend")
+      bind.services
     );
     if (!ok(appTheme)) return appTheme;
     return persistTheme(appTheme, bind.controller, bind.services);

@@ -53,7 +53,7 @@ function makeRuntimeConfig(
         showTokenCounter: false,
 
         enableOpalBackend: false,
-        enableGeminiBackend: false,
+
       },
     },
     shellHost: {
@@ -89,7 +89,7 @@ const testFlags: RuntimeFlags = {
   showTokenCounter: false,
 
   enableOpalBackend: false,
-  enableGeminiBackend: false,
+
 };
 
 suite("createEnvironment", () => {

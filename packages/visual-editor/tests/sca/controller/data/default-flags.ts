@@ -27,5 +27,5 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   showTokenCounter: false,
 
   enableOpalBackend: false,
-  enableGeminiBackend: false,
+
 };

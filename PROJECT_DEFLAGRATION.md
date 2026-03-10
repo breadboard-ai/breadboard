@@ -110,10 +110,10 @@ is in service of reaching them.
 > 🎯 **Objective:** `enableGeminiBackend` / `ENABLE_GEMINI_BACKEND` does not
 > appear anywhere. Build and tests pass.
 
-- [ ] Trace all consumers
-- [ ] Inline true-branch at each call site
-- [ ] Remove from flag definitions and config wiring
-- [ ] Verify
+- [x] Trace all consumers
+- [x] Inline true-branch at each call site
+- [x] Remove from flag definitions and config wiring
+- [x] Verify
 
 ### Phase 6: `ENABLE_NEW_URL_SCHEME`
 

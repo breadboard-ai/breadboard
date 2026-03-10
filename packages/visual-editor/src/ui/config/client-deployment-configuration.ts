@@ -35,7 +35,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   showTokenCounter: false,
 
   enableOpalBackend: false,
-  enableGeminiBackend: false,
+
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(
