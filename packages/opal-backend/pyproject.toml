@@ -27,6 +27,9 @@ asyncio_mode = "auto"
 [tool.setuptools.packages.find]
 include = ["opal_backend*"]
 
+[tool.setuptools.package-data]
+opal_backend = ["declarations/**/*"]
+
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
