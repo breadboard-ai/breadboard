@@ -23,7 +23,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DECLARATIONS_DIR = resolve(
   __dirname,
-  "../../opal-backend/declarations"
+  "../../opal-backend/opal_backend/declarations"
 );
 const GENERATED_DIR = resolve(
   __dirname,

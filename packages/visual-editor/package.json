@@ -225,7 +225,7 @@
       "command": "tsx scripts/import-declarations.ts",
       "files": [
         "scripts/import-declarations.ts",
-        "../../packages/opal-backend/declarations/**/*"
+        "../../packages/opal-backend/opal_backend/declarations/**/*"
       ],
       "output": [
         "src/a2/agent/functions/generated/**/*.ts"

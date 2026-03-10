@@ -121,9 +121,9 @@ def empty_definitions() -> MappedDefinitions:
 import json
 from pathlib import Path
 
-_DECLARATIONS_DIR = (
-    Path(__file__).resolve().parent.parent / "declarations"
-)
+from importlib import resources
+
+_DECLARATIONS_DIR = resources.files("opal_backend") / "declarations"
 
 
 @dataclass

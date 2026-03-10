@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DECLARATIONS_DIR = resolve(
   __dirname,
-  "../../opal-backend/declarations"
+  "../../opal-backend/opal_backend/declarations"
 );
 
 // Stub args — defineFunction eagerly converts Zod → JSON Schema during
