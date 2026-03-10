@@ -126,7 +126,8 @@ export const SHELL_HOST_ORIGINS = getStringList("SHELL_HOST_ORIGINS");
 
 export const SHELL_PREFIX = getString("SHELL_PREFIX");
 
-export const ENABLE_EMAIL_OPT_IN = getBoolean("ENABLE_EMAIL_OPT_IN");
+
+
 
 export const ENABLE_OPAL_ADK = getBoolean("ENABLE_OPAL_ADK");
 
