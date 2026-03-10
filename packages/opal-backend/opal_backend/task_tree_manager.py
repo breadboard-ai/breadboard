@@ -17,6 +17,7 @@ The tree is persisted as ``task_tree.json`` in the ``AgentFileSystem``.
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from typing import Any
 
 from .agent_file_system import AgentFileSystem
@@ -77,6 +78,18 @@ TASK_TREE_SCHEMA: dict[str, Any] = {
 }
 
 
+@dataclass
+class TaskTreeSnapshot:
+    """Serializable snapshot of TaskTreeManager state.
+
+    Contains only the tree structure. The derived ``_task_map`` index
+    is rebuilt on restore. The ephemeral ``_message_map`` (in-progress
+    status strings) is intentionally not persisted.
+    """
+
+    tree: dict[str, Any] | None
+
+
 class TaskTreeManager:
     """Manages a hierarchical task tree persisted in the agent file system.
 
@@ -90,6 +103,24 @@ class TaskTreeManager:
         self._tree: dict[str, Any] | None = None
         self._task_map: dict[str, dict[str, Any]] = {}
         self._message_map: dict[str, str] = {}
+
+    # ---- Snapshot / restore ----
+
+    @property
+    def snapshot(self) -> TaskTreeSnapshot:
+        """Capture serializable state."""
+        return TaskTreeSnapshot(tree=self._tree)
+
+    @classmethod
+    def from_snapshot(
+        cls, snap: TaskTreeSnapshot, file_system: AgentFileSystem
+    ) -> "TaskTreeManager":
+        """Construct a live instance from a snapshot."""
+        mgr = cls(file_system)
+        if snap.tree is not None:
+            mgr._tree = snap.tree
+            mgr._update_task_map([mgr._tree])
+        return mgr
 
     def set(self, tree: dict[str, Any]) -> str:
         """Set the task tree, index all nodes by task_id, and save."""

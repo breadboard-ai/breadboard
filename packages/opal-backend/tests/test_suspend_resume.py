@@ -13,8 +13,10 @@ from opal_backend.suspend import SuspendError, SuspendResult
 from opal_backend.events import WaitForInputEvent
 from opal_backend.interaction_store import InteractionState
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
-from opal_backend.agent_file_system import AgentFileSystem
-from opal_backend.task_tree_manager import TaskTreeManager
+from opal_backend.agent_file_system import (
+    AgentFileSystem, FileDescriptor, FileSystemSnapshot,
+)
+from opal_backend.task_tree_manager import TaskTreeManager, TaskTreeSnapshot
 from opal_backend.function_caller import FunctionCaller
 from opal_backend.function_definition import FunctionDefinition
 from opal_backend.loop import Loop, AgentRunArgs, LoopController
@@ -48,14 +50,15 @@ class TestInteractionStore:
 
     def _make_state(self) -> InteractionState:
         fs = AgentFileSystem()
+        fs.write("test.md", "hello world")
         ttm = TaskTreeManager(fs)
         return InteractionState(
             contents=[{"parts": [{"text": "hello"}], "role": "user"}],
             function_call_part={
                 "functionCall": {"name": "test_fn", "args": {}}
             },
-            file_system=fs,
-            task_tree_manager=ttm,
+            file_system=fs.snapshot,
+            task_tree=ttm.snapshot,
         )
 
     @pytest.mark.asyncio
@@ -64,7 +67,9 @@ class TestInteractionStore:
         state = self._make_state()
         await store.save("int-1", state)
         loaded = await store.load("int-1")
-        assert loaded is state
+        assert loaded is not None
+        assert loaded.contents == state.contents
+        assert loaded.function_call_part == state.function_call_part
 
     @pytest.mark.asyncio
     async def test_load_removes_entry(self):
@@ -95,6 +100,73 @@ class TestInteractionStore:
         await store.clear()
         assert not await store.has("a")
         assert not await store.has("b")
+
+    @pytest.mark.asyncio
+    async def test_round_trip_serialization(self):
+        """to_dict → from_dict produces equivalent state."""
+        state = self._make_state()
+        state.flags = {"enableFeature": True}
+        state.graph = {"url": "drive:/abc", "title": "Test"}
+        state.consents_granted = {"GET_ANY_WEBPAGE"}
+
+        data = state.to_dict()
+        restored = InteractionState.from_dict(data)
+
+        assert restored.contents == state.contents
+        assert restored.function_call_part == state.function_call_part
+        assert restored.flags == state.flags
+        assert restored.graph == state.graph
+        assert restored.session_id == state.session_id
+        assert restored.is_precondition_check == state.is_precondition_check
+        assert restored.consents_granted == state.consents_granted
+
+        # Snapshot data equality.
+        assert restored.file_system.file_count == state.file_system.file_count
+        assert restored.file_system.routes == state.file_system.routes
+        assert len(restored.file_system.files) == len(state.file_system.files)
+        for path, fd in restored.file_system.files.items():
+            orig = state.file_system.files[path]
+            assert fd.data == orig.data
+            assert fd.mime_type == orig.mime_type
+            assert fd.type == orig.type
+
+        assert restored.task_tree.tree == state.task_tree.tree
+
+    @pytest.mark.asyncio
+    async def test_round_trip_with_task_tree(self):
+        """Task tree snapshot survives serialization."""
+        fs = AgentFileSystem()
+        ttm = TaskTreeManager(fs)
+        tree = {
+            "task_id": "task_001",
+            "description": "Root",
+            "execution_mode": "serial",
+            "status": "in_progress",
+            "subtasks": [{
+                "task_id": "task_002",
+                "description": "Child",
+                "execution_mode": "serial",
+                "status": "not_started",
+            }],
+        }
+        ttm.set(tree)
+
+        state = InteractionState(
+            contents=[{"parts": [{"text": "obj"}], "role": "user"}],
+            function_call_part={"functionCall": {"name": "fn", "args": {}}},
+            file_system=fs.snapshot,
+            task_tree=ttm.snapshot,
+        )
+
+        data = state.to_dict()
+        restored = InteractionState.from_dict(data)
+
+        assert restored.task_tree.tree == tree
+
+        # Verify live TaskTreeManager can be reconstructed.
+        live_fs = AgentFileSystem.from_snapshot(restored.file_system)
+        live_ttm = TaskTreeManager.from_snapshot(restored.task_tree, live_fs)
+        assert live_ttm.get() != ""  # tree is populated
 
 
 class TestFunctionCallerSuspend(unittest.TestCase):
