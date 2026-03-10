@@ -25,8 +25,8 @@ export { generateImage, persistTheme };
 
 const IMAGE_GENERATOR = "gemini-2.5-flash-image";
 
-function endpointURL(model: string, enableGeminiBackend: boolean) {
-  return `${geminiApiPrefix(enableGeminiBackend)}/${encodeURIComponent(model)}:generateContent`;
+function endpointURL(model: string) {
+  return `${geminiApiPrefix()}/${encodeURIComponent(model)}:generateContent`;
 }
 
 /**
@@ -38,8 +38,7 @@ async function generateImage(
   contents: LLMContent,
   abortSignal: AbortSignal | undefined,
   controller: AppController,
-  services: AppServices,
-  enableGeminiBackend: boolean
+  services: AppServices
 ): Promise<Outcome<AppTheme>> {
   const editor = controller.editor.graph.editor;
   if (!editor) {
@@ -53,7 +52,7 @@ async function generateImage(
   controller.editor.theme.status = "generating";
   try {
     const response = await services.fetchWithCreds(
-      endpointURL(IMAGE_GENERATOR, enableGeminiBackend),
+      endpointURL(IMAGE_GENERATOR),
       {
         method: "POST",
         body: JSON.stringify({ contents }),

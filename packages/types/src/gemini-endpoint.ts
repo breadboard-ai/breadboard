@@ -5,7 +5,6 @@
  */
 
 import {
-  GOOGLE_GENAI_API_PREFIX,
   OPAL_BACKEND_API_PREFIX,
 } from "./canonical-endpoints.js";
 
@@ -14,12 +13,8 @@ export { geminiApiPrefix };
 /**
  * Returns the Gemini API base prefix for model calls.
  *
- * When `enableGeminiBackend` is true, calls are routed through the
- * Opal backend proxy at `/v1beta/models/`. When false (the default),
- * calls go directly to the public Gemini API.
+ * Calls are routed through the Opal backend proxy at `/v1beta1/models/`.
  */
-function geminiApiPrefix(enableGeminiBackend: boolean): string {
-  return enableGeminiBackend
-    ? `${OPAL_BACKEND_API_PREFIX}/v1beta1/models`
-    : GOOGLE_GENAI_API_PREFIX;
+function geminiApiPrefix(): string {
+  return `${OPAL_BACKEND_API_PREFIX}/v1beta1/models`;
 }

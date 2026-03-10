@@ -92,10 +92,7 @@ export type RuntimeFlags = {
    */
   enableOpalBackend: boolean;
 
-  /**
-   * Use the Gemini API backend directly for model calls
-   */
-  enableGeminiBackend: boolean;
+
 };
 
 /**
@@ -235,9 +232,5 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     description: "Route agent runs through the backend instead of in-process",
     visibility: "experimental",
   },
-  enableGeminiBackend: {
-    title: "Gemini Backend",
-    description: "Use the Gemini API backend directly for model calls",
-    visibility: "experimental",
-  },
+
 };
