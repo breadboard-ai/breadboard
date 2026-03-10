@@ -35,13 +35,6 @@ flags:
 | `enable_stream_gen_webpage`               | `ENABLE_STREAM_GEN_WEBPAGE`               | `streamGenWebpage`             | flags block      |
 | `enable_stream_planner`                   | `ENABLE_STREAM_PLANNER`                   | `streamPlanner`                | flags block      |
 
-### Always-Off Flags (remove flag, delete dead code)
-
-| TF Variable         | Env Var             | `RuntimeFlags` key | Location    |
-| ------------------- | ------------------- | ------------------ | ----------- |
-| `enable_google_one` | `ENABLE_GOOGLE_ONE` | `googleOne`        | flags block |
-| `enable_opal_adk`   | `ENABLE_OPAL_ADK`   | `opalAdk`          | flags block |
-
 ## Anatomy of a Flag Removal
 
 Each phase follows the same pattern:
@@ -106,11 +99,11 @@ is in service of reaching them.
 > This is a top-level `ClientDeploymentConfiguration` property, not a
 > `RuntimeFlags` entry — the removal pattern differs slightly.
 
-- [ ] Trace all consumers of `ENABLE_EMAIL_OPT_IN`
-- [ ] Inline true-branch at each call site
-- [ ] Remove from server flags, config wiring, and
+- [x] Trace all consumers of `ENABLE_EMAIL_OPT_IN`
+- [x] Inline true-branch at each call site
+- [x] Remove from server flags, config wiring, and
       `ClientDeploymentConfiguration` type
-- [ ] Verify
+- [x] Verify
 
 ### Phase 5: `enableGeminiBackend`
 

@@ -18,7 +18,7 @@ import * as BreadboardUI from "../../../ui/index.js";
 import type { UI } from "../../../sca/types.js";
 import { EmailPrefsManager } from "../../utils/email-prefs-manager.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
+
 import { consume } from "@lit/context";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
@@ -33,7 +33,7 @@ enum TabId {
 
 function getTabEnabledMap(sca: SCA | undefined): Record<TabId, boolean> {
   return {
-    [TabId.GENERAL]: Boolean(CLIENT_DEPLOYMENT_CONFIG.ENABLE_EMAIL_OPT_IN),
+    [TabId.GENERAL]: true,
     [TabId.INTEGRATIONS]: Boolean(sca?.env?.flags?.get("mcp")),
     [TabId.EXPERIMENTAL]: true,
   };
@@ -76,9 +76,7 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
     ) {
       this.activeTabId = this.initialTab as TabId;
     }
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_EMAIL_OPT_IN) {
-      this.emailPrefsManager?.refreshPrefs();
-    }
+    this.emailPrefsManager?.refreshPrefs();
   }
 
   static styles = [
@@ -176,8 +174,7 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
       [TabId.GENERAL]: {
         name: Strings.from("LABEL_SETTINGS_GENERAL"),
         template: () =>
-          html` ${CLIENT_DEPLOYMENT_CONFIG.ENABLE_EMAIL_OPT_IN
-            ? html`<label
+          html`<label
                   class=${classMap({
                     disabled: !this.emailPrefsManager?.prefsValid,
                   })}
@@ -210,8 +207,7 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
                       ])}
                   ></md-checkbox>
                   ${Strings.from("LABEL_EMAIL_RESEARCH")}
-                </label>`
-            : nothing}`,
+                </label>`,
       },
       [TabId.INTEGRATIONS]: {
         name: Strings.from("LABEL_SETTINGS_INTEGRATIONS"),
