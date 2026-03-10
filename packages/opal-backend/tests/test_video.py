@@ -12,9 +12,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from opal_backend.agent_file_system import AgentFileSystem
-from opal_backend.functions.video import (
+from opal_backend.functions.generate import (
     get_video_function_group,
-    _define_generate_video,
     expand_veo_error,
     GENERATE_VIDEO_FUNCTION,
     VIDEO_MODEL_NAME,
@@ -51,6 +50,15 @@ def _make_execute_step_result(mime_type="video/mp4"):
     }
 
 
+def _get_handler(name: str, **kwargs):
+    """Extract a handler from the video function group by name."""
+    group = get_video_function_group(**kwargs)
+    for defn_name, defn in group.definitions:
+        if defn_name == name:
+            return defn
+    raise KeyError(f"No definition found for {name}")
+
+
 # ---------------------------------------------------------------------------
 # Function group
 # ---------------------------------------------------------------------------
@@ -84,13 +92,13 @@ class TestGetVideoFunctionGroup:
 
 class TestGenerateVideoHandler:
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.video.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_basic_video_generation(self, mock_execute):
         """Handler generates a video and saves to FS."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         result = await defn.handler(
             {"prompt": "Waves crashing on a beach"},
@@ -101,13 +109,13 @@ class TestGenerateVideoHandler:
         mock_execute.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.video.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_uses_hardcoded_model(self, mock_execute):
         """Model is hardcoded to VIDEO_MODEL_NAME."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         await defn.handler(
             {"prompt": "A sunset"},
@@ -119,13 +127,13 @@ class TestGenerateVideoHandler:
         assert body["planStep"]["options"]["modelName"] == VIDEO_MODEL_NAME
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.video.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_aspect_ratio_passed(self, mock_execute):
         """Aspect ratio is encoded in execution_inputs."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         await defn.handler(
             {"prompt": "A sunset", "aspect_ratio": "9:16"},
@@ -139,13 +147,13 @@ class TestGenerateVideoHandler:
         assert base64.b64decode(ar_data).decode() == "9:16"
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.video.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_invalid_aspect_ratio_defaults(self, mock_execute):
         """Invalid aspect ratio falls back to 16:9."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         await defn.handler(
             {"prompt": "A sunset", "aspect_ratio": "4:3"},
@@ -159,8 +167,8 @@ class TestGenerateVideoHandler:
         assert base64.b64decode(ar_data).decode() == "16:9"
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.video.execute_step")
-    @patch("opal_backend.functions.video.resolve_part_to_chunk")
+    @patch("opal_backend.functions.generate.execute_step")
+    @patch("opal_backend.functions.generate.resolve_part_to_chunk")
     async def test_with_reference_images(self, mock_resolve, mock_execute):
         """Reference images are resolved and added as reference_image."""
         mock_resolve.return_value = {
@@ -174,7 +182,7 @@ class TestGenerateVideoHandler:
             {"inlineData": {"data": "base64data", "mimeType": "image/png"}}
         )
 
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         result = await defn.handler(
             {
@@ -196,7 +204,7 @@ class TestGenerateVideoHandler:
     async def test_missing_reference_image(self):
         """Missing reference image path → error."""
         fs = AgentFileSystem()
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         result = await defn.handler(
             {
@@ -209,13 +217,13 @@ class TestGenerateVideoHandler:
         assert "not found" in result["error"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.video.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_execute_step_error(self, mock_execute):
         """executeStep error → returned as error."""
         mock_execute.side_effect = ValueError("Model quota exceeded")
 
         fs = AgentFileSystem()
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         result = await defn.handler(
             {"prompt": "A cat"},
@@ -225,7 +233,7 @@ class TestGenerateVideoHandler:
         assert "quota" in result["error"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.video.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_execute_step_safety_error(self, mock_execute):
         """executeStep safety error → expanded with metadata."""
         mock_execute.side_effect = ValueError(
@@ -233,7 +241,7 @@ class TestGenerateVideoHandler:
         )
 
         fs = AgentFileSystem()
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         result = await defn.handler(
             {"prompt": "Inappropriate content"},
@@ -246,13 +254,13 @@ class TestGenerateVideoHandler:
         assert "sexual" in result["metadata"]["reasons"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.video.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_empty_result(self, mock_execute):
         """Empty executeStep result → error."""
         mock_execute.return_value = {"chunks": []}
 
         fs = AgentFileSystem()
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         result = await defn.handler(
             {"prompt": "A sunset"},
@@ -262,13 +270,13 @@ class TestGenerateVideoHandler:
         assert "No video" in result["error"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.video.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_status_callback(self, mock_execute):
         """Status callback is called and cleared."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         statuses = []
         def track(msg, opts=None):
@@ -282,13 +290,13 @@ class TestGenerateVideoHandler:
         assert statuses[-1] is None
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.video.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_no_reference_images(self, mock_execute):
         """No reference images → no reference_image in execution_inputs."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         await defn.handler(
             {"prompt": "A sunset"},
@@ -301,13 +309,13 @@ class TestGenerateVideoHandler:
         assert body["planStep"]["inputParameters"] == ["text_instruction"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.video.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_model_api_is_generate_video(self, mock_execute):
         """The modelApi field is 'generate_video'."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         await defn.handler(
             {"prompt": "A sunset"},
@@ -320,7 +328,7 @@ class TestGenerateVideoHandler:
         assert body["planStep"]["stepName"] == "GenerateVideo"
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.video.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_empty_parts_in_chunk(self, mock_execute):
         """Output chunk with no parts → error."""
         mock_execute.return_value = {
@@ -328,7 +336,7 @@ class TestGenerateVideoHandler:
         }
 
         fs = AgentFileSystem()
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         result = await defn.handler(
             {"prompt": "A sunset"},
@@ -338,7 +346,7 @@ class TestGenerateVideoHandler:
         assert "No video" in result["error"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.video.resolve_part_to_chunk")
+    @patch("opal_backend.functions.generate.resolve_part_to_chunk")
     async def test_resolve_part_to_chunk_error(self, mock_resolve):
         """resolve_part_to_chunk raises → error returned."""
         mock_resolve.side_effect = ValueError("Unsupported part format")
@@ -348,7 +356,7 @@ class TestGenerateVideoHandler:
             {"inlineData": {"data": "base64data", "mimeType": "image/png"}}
         )
 
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         result = await defn.handler(
             {
@@ -361,7 +369,7 @@ class TestGenerateVideoHandler:
         assert "Unsupported part format" in result["error"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.video.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_add_part_error(self, mock_execute):
         """add_part returning $error → error returned."""
         mock_execute.return_value = _make_execute_step_result()
@@ -370,7 +378,7 @@ class TestGenerateVideoHandler:
         # Monkey-patch add_part to simulate an error
         fs.add_part = lambda part, name=None: {"$error": "FS write failed"}
 
-        defn = _define_generate_video(file_system=fs)
+        defn = _get_handler(GENERATE_VIDEO_FUNCTION, file_system=fs)
 
         result = await defn.handler(
             {"prompt": "A sunset"},

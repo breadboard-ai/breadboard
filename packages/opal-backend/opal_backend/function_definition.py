@@ -112,3 +112,99 @@ def map_definitions(functions: list[FunctionDefinition]) -> MappedDefinitions:
 def empty_definitions() -> MappedDefinitions:
     """Return an empty MappedDefinitions."""
     return MappedDefinitions()
+
+
+# ---------------------------------------------------------------------------
+# Declaration-driven assembly (JSON as source of truth)
+# ---------------------------------------------------------------------------
+
+import json
+from pathlib import Path
+
+_DECLARATIONS_DIR = (
+    Path(__file__).resolve().parent.parent / "declarations"
+)
+
+
+@dataclass
+class LoadedDeclarations:
+    """Raw declarations, metadata, and instruction loaded from JSON/md."""
+
+    declarations: list[FunctionDeclaration]
+    metadata: list[dict[str, Any]]
+    instruction: str | None
+
+
+def load_declarations(group: str) -> LoadedDeclarations:
+    """Load declarations, metadata, and instruction for a function group.
+
+    Reads from ``opal-backend/declarations/<group>.*`` files.
+    """
+    decls = json.loads(
+        (_DECLARATIONS_DIR / f"{group}.functions.json").read_text()
+    )
+    meta = json.loads(
+        (_DECLARATIONS_DIR / f"{group}.metadata.json").read_text()
+    )
+    instr_path = _DECLARATIONS_DIR / f"{group}.instruction.md"
+    instr = instr_path.read_text() if instr_path.exists() else None
+    return LoadedDeclarations(
+        declarations=decls, metadata=meta, instruction=instr
+    )
+
+
+def assemble_function_group(
+    loaded: LoadedDeclarations,
+    handlers: dict[str, FunctionHandler],
+    *,
+    instruction_override: str | None = None,
+    preconditions: dict[str, "PreconditionHandler"] | None = None,
+) -> FunctionGroup:
+    """Build a FunctionGroup from loaded JSON declarations and a handler map.
+
+    Only declarations that have a matching handler are included.
+    This allows partial coverage (e.g., Python implements 2 of 6
+    generate functions while the rest live in separate modules).
+
+    Args:
+        loaded: Declarations loaded via ``load_declarations``.
+        handlers: Map of function name to async handler.
+        instruction_override: If provided, replaces the loaded instruction
+            (used when the instruction needs runtime interpolation).
+        preconditions: Optional map of function name to precondition handler.
+    """
+    metadata_by_name: dict[str, dict[str, Any]] = {
+        entry["name"]: entry for entry in loaded.metadata
+    }
+    preconds = preconditions or {}
+
+    definitions: list[tuple[str, FunctionDefinition]] = []
+    declarations: list[FunctionDeclaration] = []
+
+    for decl in loaded.declarations:
+        name = decl["name"]
+        handler = handlers.get(name)
+        if handler is None:
+            continue  # Skip declarations without handlers.
+
+        meta = metadata_by_name.get(name, {})
+        func_def = FunctionDefinition(
+            name=name,
+            description=decl.get("description", ""),
+            handler=handler,
+            precondition=preconds.get(name),
+            parameters_json_schema=decl.get("parametersJsonSchema"),
+            response_json_schema=decl.get("responseJsonSchema"),
+            icon=meta.get("icon"),
+            title=meta.get("title"),
+        )
+        definitions.append((name, func_def))
+        declarations.append(decl)
+
+    instruction = instruction_override if instruction_override is not None else loaded.instruction
+
+    return FunctionGroup(
+        definitions=definitions,
+        declarations=declarations,
+        instruction=instruction,
+    )

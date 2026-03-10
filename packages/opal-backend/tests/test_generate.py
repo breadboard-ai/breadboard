@@ -15,7 +15,6 @@ from opal_backend.agent_file_system import AgentFileSystem
 from opal_backend.task_tree_manager import TaskTreeManager
 from opal_backend.functions.generate import (
     get_generate_function_group,
-    _define_generate_text,
     _resolve_text_model,
     GENERATE_TEXT_FUNCTION,
     DEFAULT_SYSTEM_INSTRUCTION,
@@ -66,6 +65,15 @@ async def _fake_stream(chunks):
     """Async generator that yields chunks."""
     for chunk in chunks:
         yield chunk
+
+
+def _get_handler(name: str, **kwargs):
+    """Extract a handler from the generate function group by name."""
+    group = get_generate_function_group(**kwargs)
+    for defn_name, defn in group.definitions:
+        if defn_name == name:
+            return defn
+    raise KeyError(f"No definition found for {name}")
 
 
 # ---------------------------------------------------------------------------
@@ -128,7 +136,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
+        defn = _get_handler(GENERATE_TEXT_FUNCTION, file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler(
             {"prompt": "Say hello", "model": "flash"},
@@ -150,7 +158,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
+        defn = _get_handler(GENERATE_TEXT_FUNCTION, file_system=fs, task_tree_manager=_mock_ttm())
 
         statuses = []
         result = await defn.handler(
@@ -169,7 +177,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream([])
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
+        defn = _get_handler(GENERATE_TEXT_FUNCTION, file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler(
             {"prompt": "Generate something", "model": "flash"},
@@ -188,7 +196,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
+        defn = _get_handler(GENERATE_TEXT_FUNCTION, file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler(
             {
@@ -216,7 +224,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
+        defn = _get_handler(GENERATE_TEXT_FUNCTION, file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler(
             {
@@ -239,7 +247,8 @@ class TestGenerateTextHandler:
         from opal_backend.events import QueryConsentEvent
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(
+        defn = _get_handler(
+            GENERATE_TEXT_FUNCTION,
             file_system=fs,
             task_tree_manager=_mock_ttm(),
             graph_url="https://example.com/graph",
@@ -266,7 +275,8 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(
+        defn = _get_handler(
+            GENERATE_TEXT_FUNCTION,
             file_system=fs,
             task_tree_manager=_mock_ttm(),
             consents_granted={"GET_ANY_WEBPAGE"},
@@ -294,7 +304,8 @@ class TestGenerateTextHandler:
     async def test_url_context_precondition_skipped_when_no_url_context(self):
         """Precondition does nothing when url_context is not requested."""
         fs = AgentFileSystem()
-        defn = _define_generate_text(
+        defn = _get_handler(
+            GENERATE_TEXT_FUNCTION,
             file_system=fs,
             task_tree_manager=_mock_ttm(),
         )
@@ -312,7 +323,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
+        defn = _get_handler(GENERATE_TEXT_FUNCTION, file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler(
             {"prompt": "Simple prompt", "model": "flash"},
@@ -333,7 +344,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
+        defn = _get_handler(GENERATE_TEXT_FUNCTION, file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler(
             {"prompt": "Complex problem", "model": "pro"},
@@ -355,7 +366,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
+        defn = _get_handler(GENERATE_TEXT_FUNCTION, file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler(
             {"prompt": "test", "model": "lite"},
@@ -376,7 +387,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
+        defn = _get_handler(GENERATE_TEXT_FUNCTION, file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler(
             {"prompt": "test", "model": "flash"},
@@ -403,7 +414,7 @@ class TestGenerateTextHandler:
         })
         # The auto-generated path is /mnt/image1.png
 
-        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
+        defn = _get_handler(GENERATE_TEXT_FUNCTION, file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler(
             {
@@ -436,7 +447,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = failing_stream()
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
+        defn = _get_handler(GENERATE_TEXT_FUNCTION, file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler(
             {"prompt": "test", "model": "flash"},
@@ -455,7 +466,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
+        defn = _get_handler(GENERATE_TEXT_FUNCTION, file_system=fs, task_tree_manager=_mock_ttm())
 
         statuses = []
         def track_status(msg, opts=None):

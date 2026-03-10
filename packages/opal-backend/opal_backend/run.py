@@ -46,13 +46,15 @@ from .events import (
 )
 from .chat_log_manager import ChatLogManager
 from .pidgin import ToPidginResult, content_to_pidgin_string, to_pidgin
-from .functions.audio import get_audio_function_group
 from .functions.chat import get_chat_function_group, CHAT_LOG_PATH, SKIPPED_SENTINEL
-from .functions.generate import get_generate_function_group
-from .functions.image import get_image_function_group
+from .functions.generate import (
+    get_generate_function_group,
+    get_image_function_group,
+    get_audio_function_group,
+    get_video_function_group,
+)
 from .functions.memory import get_memory_function_group
 from .functions.system import get_system_function_group
-from .functions.video import get_video_function_group
 from .function_caller import FunctionCaller
 from .function_definition import FunctionDefinition
 from .interaction_store import InteractionState, InteractionStore

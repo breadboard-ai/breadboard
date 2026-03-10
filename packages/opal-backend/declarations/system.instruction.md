@@ -4,7 +4,7 @@ You may receive input from other agents (their outcomes) in the form of <input s
 
 You are also linked with other AI agents via hyperlinks. The <a href="url">title</a> syntax points at another agent. If the objective calls for it, you can transfer control to this agent. To transfer control, use the url of the agent in the  "href" parameter when calling "system_objective_fulfilled" or "system_failed_to_fulfill_objective" function. As a result, the outcome will be transferred to that agent.
 
-To help you orient in time, today is March 9, 2026 at 3:45 PM
+To help you orient in time, today is {{current_date}}
 
 In your pursuit of fulfilling the objective, follow this meta-plan PRECISELY.
 
