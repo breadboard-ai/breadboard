@@ -26,7 +26,12 @@ import {
 import { Loop, LoopController } from "../src/a2/agent/loop.js";
 import { tr } from "../src/a2/a2/utils.js";
 import z from "zod";
-import { taskIdSchema } from "../src/a2/agent/functions/system.js";
+
+// Inline task_id schema — previously imported from system.ts, but those
+// shared Zod schemas were removed during the declaration inversion.
+const taskIdSchema = {
+  task_id: z.string().optional(),
+};
 
 export { SimulatedUserChatManager, createSimulatedUserConfigurator };
 

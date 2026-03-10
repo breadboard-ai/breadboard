@@ -10,7 +10,7 @@ import { Outcome, Schema } from "@breadboard-ai/types";
 import { z, ZodObject, ZodType } from "zod";
 import type { HTMLTemplateResult } from "lit";
 import { FunctionDeclaration, GeminiSchema } from "../a2/gemini.js";
-import { MappedDefinitions } from "./types.js";
+import { FunctionGroup, MappedDefinitions } from "./types.js";
 import type { ProgressReporter } from "./types.js";
 
 export {
@@ -19,6 +19,7 @@ export {
   defineResponseSchema,
   mapDefinitions,
   emptyDefinitions,
+  assembleFunctionGroup,
 };
 
 export type ZodFunctionDefinition<
@@ -156,4 +157,45 @@ function mapDefinitions(functions: FunctionDefinition[]): MappedDefinitions {
 
 function emptyDefinitions(): MappedDefinitions {
   return { definitions: [], declarations: [] };
+}
+
+/**
+ * Assembles a FunctionGroup from generated declarations, metadata, and
+ * hand-written handlers. This is the inverse of `mapDefinitions` — used
+ * when declarations are the source of truth (from JSON) rather than Zod.
+ *
+ * Type safety for handler params is provided by generated interfaces
+ * (e.g. `MemoryCreateSheetParams`), not by Zod inference.
+ *
+ * Throws at construction time if any declaration lacks a handler.
+ */
+function assembleFunctionGroup(
+  declarations: FunctionDeclaration[],
+  meta: Record<string, { icon?: string; title?: string }>,
+  instruction: string | undefined,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  handlers: Record<string, (...args: any[]) => Promise<any>>
+): FunctionGroup {
+  const definitions: [string, FunctionDefinition][] = declarations.map(
+    (decl) => {
+      const name = decl.name!;
+      const handler = handlers[name];
+      if (!handler) {
+        throw new Error(
+          `assembleFunctionGroup: missing handler for "${name}"`
+        );
+      }
+      const entry = meta[name];
+      return [
+        name,
+        {
+          ...decl,
+          handler: handler as FunctionDefinition["handler"],
+          icon: entry?.icon,
+          title: entry?.title,
+        },
+      ];
+    }
+  );
+  return { declarations, definitions, instruction };
 }

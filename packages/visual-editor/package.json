@@ -26,7 +26,8 @@
     "eval:viewer": "wireit",
     "eval:viewer:build": "wireit",
     "lint": "wireit",
-    "export-functions": "wireit"
+    "export-functions": "wireit",
+    "import-declarations": "wireit"
   },
   "wireit": {
     "build": {
@@ -219,6 +220,16 @@
         "scripts/export-functions.ts"
       ],
       "output": []
+    },
+    "import-declarations": {
+      "command": "tsx scripts/import-declarations.ts",
+      "files": [
+        "scripts/import-declarations.ts",
+        "../../packages/opal-backend/declarations/**/*"
+      ],
+      "output": [
+        "src/a2/agent/functions/generated/**/*.ts"
+      ]
     }
   },
   "repository": {
