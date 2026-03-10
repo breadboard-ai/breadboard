@@ -178,13 +178,13 @@ For derived state, use getters (they recompute on access):
 ```typescript
 class FlagController extends RootController {
   @field({ persist: "idb" })
-  private accessor _agentMode: boolean | null = null;
+  private accessor _mcp: boolean | null = null;
 
   #envFlags: RuntimeFlags;
 
   // Computed: override ?? environment value
-  get agentMode(): boolean {
-    return this._agentMode ?? this.#envFlags.agentMode;
+  get mcp(): boolean {
+    return this._mcp ?? this.#envFlags.mcp;
   }
 }
 ```

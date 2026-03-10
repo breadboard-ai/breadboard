@@ -31,12 +31,12 @@ suite("EnvironmentFlags", () => {
   });
 
   test("get() returns env default when no override is set", async () => {
-    const env: RuntimeFlags = { ...defaultRuntimeFlags, agentMode: true };
+    const env: RuntimeFlags = { ...defaultRuntimeFlags, mcp: true };
     const store = makeEnvFlags(env);
     await store.isHydrated;
     await store.isSettled;
 
-    assert.strictEqual(store.get("agentMode"), true);
+    assert.strictEqual(store.get("mcp"), true);
   });
 
   test("get() returns override when set", async () => {
@@ -44,10 +44,10 @@ suite("EnvironmentFlags", () => {
     await store.isHydrated;
     await store.isSettled;
 
-    await store.override("agentMode", true);
+    await store.override("mcp", true);
     await store.isSettled;
 
-    assert.strictEqual(store.get("agentMode"), true);
+    assert.strictEqual(store.get("mcp"), true);
   });
 
   test("flags() merges env defaults with overrides", async () => {
@@ -81,22 +81,22 @@ suite("EnvironmentFlags", () => {
   });
 
   test("clearOverride() reverts to env default", async () => {
-    const env: RuntimeFlags = { ...defaultRuntimeFlags, agentMode: true };
+    const env: RuntimeFlags = { ...defaultRuntimeFlags, mcp: true };
     const store = makeEnvFlags(env);
     await store.isHydrated;
     await store.isSettled;
 
     // Override to a different value
-    await store.override("agentMode", false);
+    await store.override("mcp", false);
     await store.isSettled;
-    assert.strictEqual(store.get("agentMode"), false);
+    assert.strictEqual(store.get("mcp"), false);
 
     // Clear the override
-    await store.clearOverride("agentMode");
+    await store.clearOverride("mcp");
     await store.isSettled;
 
     // Should now follow env
-    assert.strictEqual(store.get("agentMode"), true);
+    assert.strictEqual(store.get("mcp"), true);
   });
 
   test("overrides() returns only user-set values", async () => {
@@ -108,13 +108,13 @@ suite("EnvironmentFlags", () => {
     assert.deepStrictEqual(overrides, {});
 
     await store.override("consistentUI", true);
-    await store.override("agentMode", true);
+    await store.override("mcp", true);
     await store.isSettled;
 
     overrides = await store.overrides();
-    assert.deepStrictEqual(overrides, { agentMode: true, consistentUI: true });
+    assert.deepStrictEqual(overrides, { mcp: true, consistentUI: true });
 
-    await store.clearOverride("agentMode");
+    await store.clearOverride("mcp");
     await store.isSettled;
 
     overrides = await store.overrides();
@@ -126,15 +126,18 @@ suite("EnvironmentFlags", () => {
     await store.isHydrated;
     await store.isSettled;
 
-    await store.override("agentMode", true);
     await store.override("mcp", true);
+    await store.override("force2DGraph", true);
     await store.isSettled;
 
     store.resetAll();
     await store.isSettled;
 
-    assert.strictEqual(store.get("agentMode"), defaultRuntimeFlags.agentMode);
     assert.strictEqual(store.get("mcp"), defaultRuntimeFlags.mcp);
+    assert.strictEqual(
+      store.get("force2DGraph"),
+      defaultRuntimeFlags.force2DGraph
+    );
 
     const overrides = await store.overrides();
     assert.deepStrictEqual(overrides, {});

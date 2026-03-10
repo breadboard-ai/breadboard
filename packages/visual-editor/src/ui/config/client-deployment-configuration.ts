@@ -18,7 +18,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   mcp: false,
   force2DGraph: false,
   consistentUI: false,
-  agentMode: false,
+
   opalAdk: false,
   outputTemplates: false,
   googleOne: false,
@@ -26,14 +26,14 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   requireConsentForOpenWebpage: false,
   streamPlanner: false,
   streamGenWebpage: false,
-  enableDrivePickerInLiteMode: false,
+
   enableGoogleDriveTools: false,
   enableResumeAgentRun: false,
   enableNotebookLm: false,
   enableGraphEditorAgent: false,
   textEditorRemix: false,
   showTokenCounter: false,
-  enableContextCaching: false,
+
   enableOpalBackend: false,
   enableGeminiBackend: false,
 };

@@ -69,7 +69,7 @@ export async function createClientConfig(opts: {
       mcp: flags.ENABLE_MCP,
       force2DGraph: flags.ENABLE_FORCE_2D_GRAPH,
       consistentUI: flags.ENABLE_CONSISTENT_UI,
-      agentMode: flags.ENABLE_AGENT_MODE,
+
       opalAdk: flags.ENABLE_OPAL_ADK,
       outputTemplates: flags.ENABLE_OUTPUT_TEMPLATES,
       googleOne: flags.ENABLE_GOOGLE_ONE,
@@ -78,14 +78,14 @@ export async function createClientConfig(opts: {
         flags.ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE,
       streamPlanner: flags.STREAM_PLANNER,
       streamGenWebpage: flags.ENABLE_STREAM_GEN_WEBPAGE,
-      enableDrivePickerInLiteMode: flags.ENABLE_DRIVE_PICKER_IN_LITE_MODE,
+
       enableGoogleDriveTools: flags.ENABLE_GOOGLE_DRIVE_TOOLS,
       enableNotebookLm: flags.ENABLE_NOTEBOOK_LM,
       enableResumeAgentRun: flags.ENABLE_RESUME_AGENT_RUN,
       enableGraphEditorAgent: flags.ENABLE_GRAPH_EDITOR_AGENT,
       textEditorRemix: flags.ENABLE_TEXT_EDITOR_REMIX,
       showTokenCounter: flags.ENABLE_SHOW_TOKEN_COUNTER,
-      enableContextCaching: flags.ENABLE_CONTEXT_CACHING,
+
       enableOpalBackend: flags.ENABLE_OPAL_BACKEND,
       enableGeminiBackend: flags.ENABLE_GEMINI_BACKEND,
     },

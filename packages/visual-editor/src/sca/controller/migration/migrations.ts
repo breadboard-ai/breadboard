@@ -90,7 +90,7 @@ export async function flagsMigration(
  * ```typescript
  * this.isHydrated.then(() => {
  *   const onlyIfNull = true;
- *   this.#set("agentMode", env.agentMode, onlyIfNull);
+ *   this.#set("mcp", env.mcp, onlyIfNull);
  *   // ...
  * });
  * ```
@@ -100,8 +100,8 @@ export async function flagsMigration(
  * the stored value took precedence—even though the user never explicitly chose
  * it.
  *
- * **Example:** Server has `agentMode: false`. User visits for the first time,
- * and `false` gets persisted. Server later changes to `agentMode: true`, but
+ * **Example:** Server has `mcp: false`. User visits for the first time,
+ * and `false` gets persisted. Server later changes to `mcp: true`, but
  * the user still sees `false` because their stored value takes precedence.
  *
  * ## The Fix
