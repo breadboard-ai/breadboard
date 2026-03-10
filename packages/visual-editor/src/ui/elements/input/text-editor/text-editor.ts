@@ -185,8 +185,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
   @property()
   accessor readOnly = false;
 
-  @property({ type: Boolean })
-  accessor isAgentMode = false;
+
 
   static styles = [
     icons,

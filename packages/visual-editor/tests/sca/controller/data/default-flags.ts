@@ -7,9 +7,9 @@
 import { RuntimeFlags } from "@breadboard-ai/types";
 
 export const defaultRuntimeFlags: RuntimeFlags = {
-  agentMode: false,
+
   consistentUI: false,
-  enableDrivePickerInLiteMode: false,
+
   force2DGraph: false,
   googleOne: false,
   mcp: false,
@@ -25,7 +25,7 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   enableGraphEditorAgent: false,
   textEditorRemix: false,
   showTokenCounter: false,
-  enableContextCaching: false,
+
   enableOpalBackend: false,
   enableGeminiBackend: false,
 };

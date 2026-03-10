@@ -103,9 +103,7 @@ export class FlowGenerator {
       ],
       appOptions: {
         format: "FORMAT_GEMINI_FLOWS",
-        ...(flags.agentMode && {
-          featureFlags: { enable_agent_mode_planner: true },
-        }),
+        featureFlags: { enable_agent_mode_planner: true },
       },
     };
     // Check to see if there's an existing flow with nodes and if so,
@@ -183,19 +181,14 @@ export class FlowGenerator {
     responseMessages: string[],
     suggestions: string[]
   ) {
-    const flags = await this.#flagManager.flags();
     let stream: AsyncGenerator<LLMContent>;
     if (context?.flow && context.flow.nodes.length > 0) {
       stream = this.#appCatalystApiClient.editOpalStream(
         intent,
-        context.flow,
-        flags.agentMode
+        context.flow
       );
     } else {
-      stream = this.#appCatalystApiClient.generateOpalStream(
-        intent,
-        flags.agentMode
-      );
+      stream = this.#appCatalystApiClient.generateOpalStream(intent);
     }
 
     for await (const chunk of stream) {

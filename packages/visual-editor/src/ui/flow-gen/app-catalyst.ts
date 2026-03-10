@@ -158,16 +158,13 @@ export class AppCatalystApiClient {
   }
 
   async *generateOpalStream(
-    intent: string,
-    agentMode = false
+    intent: string
   ): AsyncGenerator<LLMContent> {
     const request: AppCatalystChatRequestV2 = {
       intent,
       appOptions: {
         format: "FORMAT_GEMINI_FLOWS",
-        ...(agentMode && {
-          featureFlags: { enable_agent_mode_planner: true },
-        }),
+        featureFlags: { enable_agent_mode_planner: true },
       },
     };
     yield* this.chatStream(request, "generateOpalStream");
@@ -175,16 +172,13 @@ export class AppCatalystApiClient {
 
   async *editOpalStream(
     intent: string,
-    flow: GraphDescriptor,
-    agentMode = false
+    flow: GraphDescriptor
   ): AsyncGenerator<LLMContent> {
     const request: AppCatalystChatRequestV2 = {
       reviseIntent: intent,
       appOptions: {
         format: "FORMAT_GEMINI_FLOWS",
-        ...(agentMode && {
-          featureFlags: { enable_agent_mode_planner: true },
-        }),
+        featureFlags: { enable_agent_mode_planner: true },
       },
       app: {
         parts: [

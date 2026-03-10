@@ -98,13 +98,13 @@ class FlagDisplay extends SignalWatcher(LitElement) {
 
   render() {
     // Reading signals auto-registers reactivity
-    const agentModeEnabled = this.sca?.controller.global.flags.agentMode;
+    const mcpEnabled = this.sca?.controller.global.flags.mcp;
 
     return html`
-      <div>Agent Mode: ${agentModeEnabled ? "ON" : "OFF"}</div>
+      <div>MCP: ${mcpEnabled ? "ON" : "OFF"}</div>
     `;
   }
 }
 ```
 
-When `flags.agentMode` changes, the component automatically re-renders.
+When `flags.mcp` changes, the component automatically re-renders.

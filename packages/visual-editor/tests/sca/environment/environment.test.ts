@@ -36,7 +36,7 @@ function makeRuntimeConfig(
         mcp: false,
         force2DGraph: false,
         consistentUI: false,
-        agentMode: false,
+
         opalAdk: false,
         outputTemplates: false,
         googleOne: false,
@@ -44,14 +44,14 @@ function makeRuntimeConfig(
         requireConsentForOpenWebpage: false,
         streamPlanner: false,
         streamGenWebpage: false,
-        enableDrivePickerInLiteMode: false,
+
         enableGoogleDriveTools: false,
         enableResumeAgentRun: false,
         enableNotebookLm: false,
         enableGraphEditorAgent: false,
         textEditorRemix: false,
         showTokenCounter: false,
-        enableContextCaching: false,
+
         enableOpalBackend: false,
         enableGeminiBackend: false,
       },
@@ -72,7 +72,7 @@ const testFlags: RuntimeFlags = {
   mcp: true,
   force2DGraph: false,
   consistentUI: false,
-  agentMode: true,
+
   opalAdk: false,
   outputTemplates: false,
   googleOne: false,
@@ -80,14 +80,14 @@ const testFlags: RuntimeFlags = {
   requireConsentForOpenWebpage: false,
   streamPlanner: false,
   streamGenWebpage: false,
-  enableDrivePickerInLiteMode: false,
+
   enableGoogleDriveTools: false,
   enableResumeAgentRun: false,
   enableNotebookLm: false,
   enableGraphEditorAgent: false,
   textEditorRemix: false,
   showTokenCounter: false,
-  enableContextCaching: false,
+
   enableOpalBackend: false,
   enableGeminiBackend: false,
 };
@@ -129,7 +129,6 @@ suite("createEnvironment", () => {
     const env = createEnvironment(config, testFlags);
     const all = await env.flags.flags();
     assert.strictEqual(all.mcp, true, "mcp should match testFlags");
-    assert.strictEqual(all.agentMode, true, "agentMode should match testFlags");
     assert.strictEqual(
       all.force2DGraph,
       false,

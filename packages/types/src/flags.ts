@@ -29,10 +29,7 @@ export type RuntimeFlags = {
    * Experimental Consistent UI output mode
    */
   consistentUI: boolean;
-  /**
-   * Agent mode
-   */
-  agentMode: boolean;
+
   /**
    * Enables Google One Quotas
    */
@@ -62,11 +59,6 @@ export type RuntimeFlags = {
    */
   streamGenWebpage: boolean;
   /**
-   * Enables the "Add from Drive" option in lite mode (it is always enabled in
-   * non-lite mode).
-   */
-  enableDrivePickerInLiteMode: boolean;
-  /**
    * Enables "export to Drive" capability for the agent
    */
   enableGoogleDriveTools: boolean;
@@ -94,10 +86,6 @@ export type RuntimeFlags = {
    * Show a running token counter in the console view
    */
   showTokenCounter: boolean;
-  /**
-   * Enables explicit context caching for agent loop invocations
-   */
-  enableContextCaching: boolean;
 
   /**
    * Use the remote (Python) agent backend instead of in-process execution
@@ -176,11 +164,7 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     description: "Experimental consistent UI output mode",
     visibility: "experimental",
   },
-  agentMode: {
-    title: "Agent Mode",
-    description: "Enable agent mode",
-    visibility: "public",
-  },
+
   googleOne: {
     title: "Google One Quotas",
     description: "Enable Google One charging for certain models",
@@ -216,11 +200,6 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     description: "Enable SSE streaming for HTML generation",
     visibility: "experimental",
   },
-  enableDrivePickerInLiteMode: {
-    title: "Drive Picker (Lite Mode)",
-    description: "Enable 'Add from Drive' in lite mode",
-    visibility: "experimental",
-  },
   enableGoogleDriveTools: {
     title: "Google Drive Tools",
     description: "Enable 'export to Drive' capability",
@@ -249,11 +228,6 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
   showTokenCounter: {
     title: "Token Counter",
     description: "Show a running token counter in the console view",
-    visibility: "experimental",
-  },
-  enableContextCaching: {
-    title: "Context Caching",
-    description: "Enable explicit context caching for agent loop invocations",
     visibility: "experimental",
   },
   enableOpalBackend: {

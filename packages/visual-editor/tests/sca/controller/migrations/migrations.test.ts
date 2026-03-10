@@ -77,7 +77,7 @@ suite("Migrations", () => {
   test("flagsMigration", async () => {
     // TEST 1: Put something in the old store and migrate it.
     const oldStore = new IdbFlagManager(defaultRuntimeFlags);
-    await oldStore.override("agentMode", true);
+    await oldStore.override("mcp", true);
     await oldStore.override("consistentUI", true);
 
     const envFlags = new EnvironmentFlags(
@@ -99,19 +99,19 @@ suite("Migrations", () => {
 
     let overrides = await envFlags.overrides();
     assert.deepStrictEqual(overrides, {
-      agentMode: true,
+      mcp: true,
       consistentUI: true,
     });
 
     // TEST 2: Check for double migration.
     // Reset a value; this should not be carried forward.
-    await oldStore.override("agentMode", false);
+    await oldStore.override("mcp", false);
     await Migrations.flagsMigration(flagController, defaultRuntimeFlags);
     await flagController.isSettled;
 
     overrides = await envFlags.overrides();
     assert.deepStrictEqual(overrides, {
-      agentMode: true,
+      mcp: true,
       consistentUI: true,
     });
   });

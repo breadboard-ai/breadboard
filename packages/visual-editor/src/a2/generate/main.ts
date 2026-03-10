@@ -3,7 +3,7 @@
  */
 
 import { readFlags } from "../a2/settings.js";
-import { LLMContent, RuntimeFlags, Schema } from "@breadboard-ai/types";
+import { LLMContent, Schema } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import {
   makeTextInstruction,
@@ -329,11 +329,8 @@ const ALL_MODES: Mode[] = [
   },
 ] as const;
 
-// Modes only available in agent mode (hidden when agentMode is off)
-const AGENT_ONLY_IDS = new Set(["agent"]);
-
-// Modes NOT available in agent mode (hidden when agentMode is on)
-const NON_AGENT_IDS = new Set([
+// Modes that are hidden from the drop-down but still usable if persisted.
+const HIDDEN_MODE_IDS = new Set([
   "text-2.0-flash",
   "text",
   "text-2.5-pro",
@@ -384,16 +381,10 @@ function receivePorts<T extends Record<string, unknown>>(
   return translate(ports, reverseMap);
 }
 
-function resolveModes(
-  modeId: string | undefined,
-  flags: Readonly<RuntimeFlags> | undefined
-): ResolvedModes {
-  const agentMode = flags?.agentMode;
+function resolveModes(modeId: string | undefined): ResolvedModes {
   const modes = ALL_MODES.map((mode) => ({
     ...mode,
-    hidden:
-      mode.hidden ||
-      (agentMode ? NON_AGENT_IDS.has(mode.id) : AGENT_ONLY_IDS.has(mode.id)),
+    hidden: mode.hidden || HIDDEN_MODE_IDS.has(mode.id),
   }));
   const defaultMode = modes.find((m) => !m.hidden) || modes[0];
   const current =
@@ -405,33 +396,20 @@ async function invoke(
   { "generation-mode": mode, ...rest }: Inputs,
   moduleArgs: A2ModuleArgs
 ) {
-  const flags = await readFlags(moduleArgs);
-  const { current } = resolveModes(mode, flags);
+  const { current } = resolveModes(mode);
 
-  if (flags?.agentMode) {
-    if (current.id === "agent") {
-      // Only "agent" mode gets full agentic behavior
-      const agentInputs: AgentInputs = {
-        "b-ui-consistent": false,
-        "b-ui-prompt": { parts: [] },
-        ...rest,
-      };
-      return agent(agentInputs, moduleArgs);
-    } else {
-      // Other modes dispatch directly to their module
-      const { type, modelName } = current;
-      if (modelName) {
-        rest["p-model-name"] = modelName;
-      }
-      const inputs = forwardPorts(type, rest);
-      return current.invoke(inputs, moduleArgs);
-    }
+  if (current.id === "agent") {
+    // Only "agent" mode gets full agentic behavior
+    const agentInputs: AgentInputs = {
+      "b-ui-consistent": false,
+      "b-ui-prompt": { parts: [] },
+      ...rest,
+    };
+    return agent(agentInputs, moduleArgs);
   } else {
+    // Other modes dispatch directly to their module
     const { type, modelName } = current;
-    // Model is treated as part of the Mode, but actually maps N:1
-    // on actual underlying step type.
     if (modelName) {
-      console.log(`Generating with ${modelName}`);
       rest["p-model-name"] = modelName;
     }
     const inputs = forwardPorts(type, rest);
@@ -465,12 +443,12 @@ async function describe(
 
   const flags = await readFlags(moduleArgs);
 
-  const { current, modes } = resolveModes(mode, flags);
+  const { current, modes } = resolveModes(mode);
   const { type } = current;
   let modeSchema: Schema["properties"] = {};
   let behavior: Schema["behavior"] = [];
 
-  if (flags?.agentMode && current.id === "agent") {
+  if (current.id === "agent") {
     // Agent mode has its own schema; skip text-generation describe entirely.
     modeSchema = computeAgentSchema(flags, rest);
     behavior = ["at-wireable"];

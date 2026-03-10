@@ -42,7 +42,8 @@ export const ENABLE_STREAM_GEN_WEBPAGE: boolean = getBoolean(
   "ENABLE_STREAM_GEN_WEBPAGE"
 );
 
-export const ENABLE_AGENT_MODE: boolean = getBoolean("ENABLE_AGENT_MODE");
+
+
 
 export const STREAM_PLANNER: boolean = getBoolean("ENABLE_STREAM_PLANNER");
 
@@ -145,9 +146,7 @@ export const ENABLE_NEW_URL_SCHEME = getBoolean("ENABLE_NEW_URL_SCHEME");
 export const SHARE_SURFACE_URL_TEMPLATES =
   (getJson("SHARE_SURFACE_URL_TEMPLATES") as Record<string, string>) ?? {};
 
-export const ENABLE_DRIVE_PICKER_IN_LITE_MODE = getBoolean(
-  "ENABLE_DRIVE_PICKER_IN_LITE_MODE"
-);
+
 
 export const ENABLE_GOOGLE_DRIVE_TOOLS = getBoolean(
   "ENABLE_GOOGLE_DRIVE_TOOLS"
@@ -167,7 +166,8 @@ export const ENABLE_SHOW_TOKEN_COUNTER = getBoolean(
   "ENABLE_SHOW_TOKEN_COUNTER"
 );
 
-export const ENABLE_CONTEXT_CACHING = getBoolean("ENABLE_CONTEXT_CACHING");
+
+
 
 export const ENABLE_OPAL_BACKEND = getBoolean("ENABLE_OPAL_BACKEND");
 

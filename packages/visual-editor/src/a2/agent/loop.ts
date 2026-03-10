@@ -178,31 +178,26 @@ class Loop {
         functionCallingConfig: { mode: "ANY" as const },
       };
 
-      // Check if context caching is enabled.
-      const flags = await moduleArgs.context.flags?.flags();
-      const enableContextCaching = flags?.enableContextCaching ?? false;
+      // Create a cache with only the static parts (SI + tools).
+      // Contents are always sent fresh — no duplication, no empty arrays.
       let cachedContentName: string | undefined;
       // How many entries in `contents` are covered by the current cache.
       // 0 means the cache only has the static envelope (SI + tools).
       let cachedContentCount = 0;
 
-      // Create a cache with only the static parts (SI + tools).
-      // Contents are always sent fresh — no duplication, no empty arrays.
-      if (enableContextCaching) {
-        const cacheBody: GeminiBody = {
-          contents: [],
-          systemInstruction,
-          toolConfig,
-          tools,
-        };
-        const cacheName = await createCachedContent(
-          moduleArgs,
-          AGENT_MODEL,
-          cacheBody
-        );
-        if (ok(cacheName)) {
-          cachedContentName = cacheName;
-        }
+      const cacheBody: GeminiBody = {
+        contents: [],
+        systemInstruction,
+        toolConfig,
+        tools,
+      };
+      const cacheName = await createCachedContent(
+        moduleArgs,
+        AGENT_MODEL,
+        cacheBody
+      );
+      if (ok(cacheName)) {
+        cachedContentName = cacheName;
       }
 
       while (!this.controller.terminated) {
