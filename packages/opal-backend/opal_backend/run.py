@@ -225,6 +225,12 @@ async def resume(
         yield ErrorEvent(message=f"Unknown interaction ID: {interaction_id}")
         return
 
+    # Hydrate live objects from snapshots.
+    file_system = AgentFileSystem.from_snapshot(state.file_system)
+    task_tree_manager = TaskTreeManager.from_snapshot(
+        state.task_tree, file_system,
+    )
+
     # Restore flags and graph from saved state.
     resolved_flags = state.flags
 
@@ -238,7 +244,7 @@ async def resume(
             graph_url=graph_url,
             graph_title=graph_title,
         )
-        state.file_system.set_sheet_manager(sheet_manager)
+        file_system.set_sheet_manager(sheet_manager)
 
     fc = state.function_call_part.get("functionCall", {})
     func_name = fc.get("name", "unknown")
@@ -254,6 +260,8 @@ async def resume(
             backend=backend,
             resolved_flags=resolved_flags,
             sheet_manager=sheet_manager,
+            file_system=file_system,
+            task_tree_manager=task_tree_manager,
         )
     else:
         # Normal suspend (chat input, choice, etc.). Inject the client's
@@ -263,7 +271,7 @@ async def resume(
                 "functionResponse": {
                     "name": func_name,
                     "response": await _process_chat_response(
-                        func_name, response, state.file_system,
+                        func_name, response, file_system,
                     ),
                 }
             }],
@@ -276,15 +284,15 @@ async def resume(
     await chat_mgr.seed()
     if not state.is_precondition_check:
         chat_mgr.persist_user_response(func_name, fc.get("args", {}), response)
-    state.file_system.add_system_file(
+    file_system.add_system_file(
         CHAT_LOG_PATH, lambda: chat_mgr.get_chat_log(contents),
     )
 
     controller = LoopController()
     function_groups = _build_function_groups(
         controller=controller,
-        file_system=state.file_system,
-        task_tree_manager=state.task_tree_manager,
+        file_system=file_system,
+        task_tree_manager=task_tree_manager,
         backend=backend,
         flags=resolved_flags,
         sheet_manager=sheet_manager,
@@ -302,8 +310,8 @@ async def resume(
     async for event in _stream_loop(
         run_args=run_args,
         controller=controller,
-        file_system=state.file_system,
-        task_tree_manager=state.task_tree_manager,
+        file_system=file_system,
+        task_tree_manager=task_tree_manager,
         backend=backend,
         store=store,
         flags=resolved_flags,
@@ -328,6 +336,8 @@ async def _resume_precondition(
     backend: BackendClient,
     resolved_flags: dict[str, Any],
     sheet_manager: "SheetManager | None",
+    file_system: AgentFileSystem,
+    task_tree_manager: TaskTreeManager,
 ) -> list[dict[str, Any]]:
     """Handle resume from a precondition suspend (e.g. consent).
 
@@ -356,8 +366,8 @@ async def _resume_precondition(
         controller = LoopController()
         function_groups = _build_function_groups(
             controller=controller,
-            file_system=state.file_system,
-            task_tree_manager=state.task_tree_manager,
+            file_system=file_system,
+            task_tree_manager=task_tree_manager,
             backend=backend,
             flags=resolved_flags,
             sheet_manager=sheet_manager,
@@ -536,8 +546,8 @@ async def _stream_loop(
                     InteractionState(
                         contents=result.contents,
                         function_call_part=result.function_call_part,
-                        file_system=file_system,
-                        task_tree_manager=task_tree_manager,
+                        file_system=file_system.snapshot,
+                        task_tree=task_tree_manager.snapshot,
                         flags=flags or {},
                         graph=graph,
                         session_id=session_id,

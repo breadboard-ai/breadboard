@@ -49,6 +49,20 @@ class FileDescriptor:
     resource_key: str | None = None
 
 
+@dataclass
+class FileSystemSnapshot:
+    """Serializable snapshot of AgentFileSystem state.
+
+    Contains everything needed to reconstruct an ``AgentFileSystem``.
+    Transient state (system file getters, sheet manager) is re-attached
+    by the caller after reconstruction.
+    """
+
+    files: dict[str, FileDescriptor]
+    routes: dict[str, str]
+    file_count: int
+
+
 SystemFileGetter = Callable[[], str | dict[str, str]]
 """A callable that returns file content or an error dict."""
 
@@ -243,6 +257,30 @@ class AgentFileSystem:
         if original is None:
             return {"$error": f'Route "{route_name}" not found'}
         return original
+
+    # ---- Snapshot / restore ----
+
+    @property
+    def snapshot(self) -> FileSystemSnapshot:
+        """Capture serializable state."""
+        return FileSystemSnapshot(
+            files=dict(self._files),
+            routes=dict(self._routes),
+            file_count=self._file_count,
+        )
+
+    @classmethod
+    def from_snapshot(cls, snap: FileSystemSnapshot) -> "AgentFileSystem":
+        """Construct a live instance from a snapshot.
+
+        Transient state (system files, sheet manager) must be re-attached
+        by the caller.
+        """
+        fs = cls()
+        fs._files = dict(snap.files)
+        fs._routes = dict(snap.routes)
+        fs._file_count = snap.file_count
+        return fs
 
     # ---- File access (read-only) ----
 
