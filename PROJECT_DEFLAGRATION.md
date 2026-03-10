@@ -122,11 +122,11 @@ is in service of reaching them.
 >
 > Top-level `ClientDeploymentConfiguration` property.
 
-- [ ] Trace all consumers
-- [ ] Inline true-branch at each call site
-- [ ] Remove from server flags, config wiring, and
+- [x] Trace all consumers
+- [x] Inline true-branch at each call site
+- [x] Remove from server flags, config wiring, and
       `ClientDeploymentConfiguration` type
-- [ ] Verify
+- [x] Verify
 
 ### Phase 7: `requireConsentForGetWebpage`
 
