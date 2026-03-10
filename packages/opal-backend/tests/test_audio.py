@@ -12,10 +12,8 @@ from unittest.mock import patch
 import pytest
 
 from opal_backend.agent_file_system import AgentFileSystem
-from opal_backend.functions.audio import (
+from opal_backend.functions.generate import (
     get_audio_function_group,
-    _define_generate_speech,
-    _define_generate_music,
     GENERATE_SPEECH_FUNCTION,
     GENERATE_MUSIC_FUNCTION,
     VOICE_MAP,
@@ -30,6 +28,15 @@ from opal_backend.functions.audio import (
 def _noop_status(_msg, _opts=None):
     """No-op status callback."""
     pass
+
+
+def _get_handler(name: str, **kwargs):
+    """Extract a handler from the audio function group by name."""
+    group = get_audio_function_group(**kwargs)
+    for defn_name, defn in group.definitions:
+        if defn_name == name:
+            return defn
+    raise KeyError(f"No definition found for {name}")
 
 
 def _make_execute_step_result(mime_type="audio/mp3"):
@@ -86,13 +93,13 @@ class TestGetAudioFunctionGroup:
 
 class TestGenerateSpeechHandler:
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_basic_speech_generation(self, mock_execute):
         """Handler generates speech and saves to FS."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_speech(file_system=fs)
+        defn = _get_handler(GENERATE_SPEECH_FUNCTION, file_system=fs)
 
         result = await defn.handler(
             {"text": "Hello world"},
@@ -103,13 +110,13 @@ class TestGenerateSpeechHandler:
         mock_execute.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_default_voice(self, mock_execute):
         """Default voice is Female (English) → en-US-female."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_speech(file_system=fs)
+        defn = _get_handler(GENERATE_SPEECH_FUNCTION, file_system=fs)
 
         await defn.handler(
             {"text": "Hello"},
@@ -123,13 +130,13 @@ class TestGenerateSpeechHandler:
         assert base64.b64decode(voice_data).decode() == "en-US-female"
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_male_voice(self, mock_execute):
         """Male (English) → en-US-male."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_speech(file_system=fs)
+        defn = _get_handler(GENERATE_SPEECH_FUNCTION, file_system=fs)
 
         await defn.handler(
             {"text": "Hello", "voice": "Male (English)"},
@@ -143,13 +150,13 @@ class TestGenerateSpeechHandler:
         assert base64.b64decode(voice_data).decode() == "en-US-male"
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_unknown_voice_defaults(self, mock_execute):
         """Unknown voice falls back to en-US-female."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_speech(file_system=fs)
+        defn = _get_handler(GENERATE_SPEECH_FUNCTION, file_system=fs)
 
         await defn.handler(
             {"text": "Hello", "voice": "Unknown Voice"},
@@ -163,13 +170,13 @@ class TestGenerateSpeechHandler:
         assert base64.b64decode(voice_data).decode() == "en-US-female"
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_step_api_fields(self, mock_execute):
         """executeStep body has correct API fields."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_speech(file_system=fs)
+        defn = _get_handler(GENERATE_SPEECH_FUNCTION, file_system=fs)
 
         await defn.handler(
             {"text": "Hello"},
@@ -184,13 +191,13 @@ class TestGenerateSpeechHandler:
         assert body["planStep"]["inputParameters"] == ["text_to_speak"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_status_callback(self, mock_execute):
         """Status callback is called and cleared."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_speech(file_system=fs)
+        defn = _get_handler(GENERATE_SPEECH_FUNCTION, file_system=fs)
 
         statuses = []
         await defn.handler({"text": "Hello"}, lambda msg, opts=None: statuses.append(msg))
@@ -198,46 +205,46 @@ class TestGenerateSpeechHandler:
         assert statuses[-1] is None
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_execute_step_error(self, mock_execute):
         """executeStep error → returned as error."""
         mock_execute.side_effect = ValueError("TTS quota exceeded")
 
         fs = AgentFileSystem()
-        defn = _define_generate_speech(file_system=fs)
+        defn = _get_handler(GENERATE_SPEECH_FUNCTION, file_system=fs)
 
         result = await defn.handler({"text": "Hello"}, _noop_status)
         assert "error" in result
         assert "quota" in result["error"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_empty_result(self, mock_execute):
         """Empty executeStep result → error."""
         mock_execute.return_value = {"chunks": []}
 
         fs = AgentFileSystem()
-        defn = _define_generate_speech(file_system=fs)
+        defn = _get_handler(GENERATE_SPEECH_FUNCTION, file_system=fs)
 
         result = await defn.handler({"text": "Hello"}, _noop_status)
         assert "error" in result
         assert "No speech" in result["error"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_empty_parts(self, mock_execute):
         """Output chunk with no parts → error."""
         mock_execute.return_value = {"chunks": [{"parts": [], "role": "user"}]}
 
         fs = AgentFileSystem()
-        defn = _define_generate_speech(file_system=fs)
+        defn = _get_handler(GENERATE_SPEECH_FUNCTION, file_system=fs)
 
         result = await defn.handler({"text": "Hello"}, _noop_status)
         assert "error" in result
         assert "No speech" in result["error"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_add_part_error(self, mock_execute):
         """add_part returning $error → error returned."""
         mock_execute.return_value = _make_execute_step_result()
@@ -245,7 +252,7 @@ class TestGenerateSpeechHandler:
         fs = AgentFileSystem()
         fs.add_part = lambda part, name=None: {"$error": "FS write failed"}
 
-        defn = _define_generate_speech(file_system=fs)
+        defn = _get_handler(GENERATE_SPEECH_FUNCTION, file_system=fs)
 
         result = await defn.handler({"text": "Hello"}, _noop_status)
         assert "error" in result
@@ -259,13 +266,13 @@ class TestGenerateSpeechHandler:
 
 class TestGenerateMusicHandler:
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_basic_music_generation(self, mock_execute):
         """Handler generates music and saves to FS."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_music(file_system=fs)
+        defn = _get_handler(GENERATE_MUSIC_FUNCTION, file_system=fs)
 
         result = await defn.handler(
             {"prompt": "Upbeat electronic dance music"},
@@ -276,13 +283,13 @@ class TestGenerateMusicHandler:
         mock_execute.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_step_api_fields(self, mock_execute):
         """executeStep body has correct API fields."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_music(file_system=fs)
+        defn = _get_handler(GENERATE_MUSIC_FUNCTION, file_system=fs)
 
         await defn.handler(
             {"prompt": "Jazz piano"},
@@ -297,13 +304,13 @@ class TestGenerateMusicHandler:
         assert body["planStep"]["inputParameters"] == ["prompt"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_prompt_encoded(self, mock_execute):
         """Prompt is base64-encoded in execution_inputs."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_music(file_system=fs)
+        defn = _get_handler(GENERATE_MUSIC_FUNCTION, file_system=fs)
 
         await defn.handler(
             {"prompt": "Jazz piano"},
@@ -317,13 +324,13 @@ class TestGenerateMusicHandler:
         assert base64.b64decode(prompt_data).decode() == "Jazz piano"
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_status_callback(self, mock_execute):
         """Status callback is called and cleared."""
         mock_execute.return_value = _make_execute_step_result()
 
         fs = AgentFileSystem()
-        defn = _define_generate_music(file_system=fs)
+        defn = _get_handler(GENERATE_MUSIC_FUNCTION, file_system=fs)
 
         statuses = []
         await defn.handler({"prompt": "Jazz piano"}, lambda msg, opts=None: statuses.append(msg))
@@ -331,46 +338,46 @@ class TestGenerateMusicHandler:
         assert statuses[-1] is None
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_execute_step_error(self, mock_execute):
         """executeStep error → returned as error."""
         mock_execute.side_effect = ValueError("Music quota exceeded")
 
         fs = AgentFileSystem()
-        defn = _define_generate_music(file_system=fs)
+        defn = _get_handler(GENERATE_MUSIC_FUNCTION, file_system=fs)
 
         result = await defn.handler({"prompt": "Jazz"}, _noop_status)
         assert "error" in result
         assert "quota" in result["error"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_empty_result(self, mock_execute):
         """Empty executeStep result → error."""
         mock_execute.return_value = {"chunks": []}
 
         fs = AgentFileSystem()
-        defn = _define_generate_music(file_system=fs)
+        defn = _get_handler(GENERATE_MUSIC_FUNCTION, file_system=fs)
 
         result = await defn.handler({"prompt": "Jazz"}, _noop_status)
         assert "error" in result
         assert "No music" in result["error"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_empty_parts(self, mock_execute):
         """Output chunk with no parts → error."""
         mock_execute.return_value = {"chunks": [{"parts": [], "role": "user"}]}
 
         fs = AgentFileSystem()
-        defn = _define_generate_music(file_system=fs)
+        defn = _get_handler(GENERATE_MUSIC_FUNCTION, file_system=fs)
 
         result = await defn.handler({"prompt": "Jazz"}, _noop_status)
         assert "error" in result
         assert "No music" in result["error"]
 
     @pytest.mark.asyncio
-    @patch("opal_backend.functions.audio.execute_step")
+    @patch("opal_backend.functions.generate.execute_step")
     async def test_add_part_error(self, mock_execute):
         """add_part returning $error → error returned."""
         mock_execute.return_value = _make_execute_step_result()
@@ -378,7 +385,7 @@ class TestGenerateMusicHandler:
         fs = AgentFileSystem()
         fs.add_part = lambda part, name=None: {"$error": "FS write failed"}
 
-        defn = _define_generate_music(file_system=fs)
+        defn = _get_handler(GENERATE_MUSIC_FUNCTION, file_system=fs)
 
         result = await defn.handler({"prompt": "Jazz"}, _noop_status)
         assert "error" in result

@@ -9,21 +9,23 @@ Port of ``functions/generate.ts``.
 Status: Behind flag (enableOpalBackend). The TypeScript implementation is
 the production code path. Changes to the TS source may need to be ported here.
 
-Currently provides ``generate_text``,
-the core text-generation function that makes a sub-call to Gemini.
+Provides all generation functions:
+- ``generate_text`` — sub-call to Gemini for text generation
+- ``generate_and_execute_code`` — Gemini with code execution tool
+- ``generate_images`` — executeStep with the ``ai_image_tool`` model API
+- ``generate_speech_from_text`` — executeStep with the ``tts`` model API
+- ``generate_music_from_text`` — executeStep with the ``generate_music``
+  model API
+- ``generate_video`` — executeStep with the ``generate_video`` model API
 
-The handler flow:
-1. ``from_pidgin_string(prompt)`` — resolve ``<file>`` tags to data parts
-2. Build Gemini body with system instruction, contents, and grounding tools
-3. ``conform_body(body)`` — resolve ``storedData``/``fileData`` parts
-4. ``stream_generate_content(model, body)`` — stream from Gemini
-5. Merge text parts from the response
-6. Return the merged text
+The first two return text; the remaining four produce media files saved
+to the agent file system.
 """
 
 from __future__ import annotations
 
 import logging
+import re
 import uuid
 from typing import Any
 
@@ -33,25 +35,36 @@ from ..backend_client import BackendClient
 from ..error_classifier import to_error_or_response
 
 from ..function_definition import (
-    FunctionDefinition,
     FunctionGroup,
     StatusUpdateCallback,
-    StatusUpdateOptions,
-    map_definitions,
+    load_declarations,
+    assemble_function_group,
 )
 from ..events import QueryConsentEvent
 from ..gemini_client import stream_generate_content
 from ..pidgin import content_to_pidgin_string, from_pidgin_string, merge_text_parts
+from ..step_executor import (
+    execute_step,
+    resolve_part_to_chunk,
+    encode_base64,
+)
 from ..suspend import SuspendError
 from ..task_tree_manager import TaskTreeManager
-from ..shared_schemas import (
-    STATUS_UPDATE_SCHEMA,
-    TASK_ID_SCHEMA,
-)
 
 logger = logging.getLogger(__name__)
 
-export = ["get_generate_function_group", "GENERATE_TEXT_FUNCTION"]
+export = [
+    "get_generate_function_group",
+    "get_image_function_group",
+    "get_audio_function_group",
+    "get_video_function_group",
+    "GENERATE_TEXT_FUNCTION",
+    "GENERATE_AND_EXECUTE_CODE_FUNCTION",
+    "GENERATE_IMAGES_FUNCTION",
+    "GENERATE_SPEECH_FUNCTION",
+    "GENERATE_MUSIC_FUNCTION",
+    "GENERATE_VIDEO_FUNCTION",
+]
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -59,13 +72,32 @@ export = ["get_generate_function_group", "GENERATE_TEXT_FUNCTION"]
 
 GENERATE_TEXT_FUNCTION = "generate_text"
 GENERATE_AND_EXECUTE_CODE_FUNCTION = "generate_and_execute_code"
+GENERATE_IMAGES_FUNCTION = "generate_images"
+GENERATE_SPEECH_FUNCTION = "generate_speech_from_text"
+GENERATE_MUSIC_FUNCTION = "generate_music_from_text"
+GENERATE_VIDEO_FUNCTION = "generate_video"
 
+# Text model names
 FLASH_MODEL_NAME = "gemini-3-flash-preview"
 PRO_MODEL_NAME = "gemini-3.1-pro-preview"
 LITE_MODEL_NAME = "gemini-2.5-flash-lite"
 
+# Image model names
+IMAGE_PRO_MODEL_NAME = "gemini-3-pro-image-preview"
+IMAGE_FLASH_MODEL_NAME = "gemini-2.5-flash-image"
+
+# Video model name
+VIDEO_MODEL_NAME = "veo-3.1-generate-preview"
+
+# Voice map — port of VoiceMap from audio-generator/main.ts
+VOICE_MAP: dict[str, str] = {
+    "Male (English)": "en-US-male",
+    "Female (English)": "en-US-female",
+}
+VOICES = list(VOICE_MAP.keys())
+DEFAULT_VOICE = "Female (English)"
+
 # The default system instruction for generate_text sub-calls.
-# Matches ``defaultSystemInstruction()`` from generate-text/system-instruction.ts.
 DEFAULT_SYSTEM_INSTRUCTION = {
     "parts": [
         {
@@ -80,76 +112,29 @@ DEFAULT_SYSTEM_INSTRUCTION = {
     "role": "user",
 }
 
-# The instruction that tells the outer agent when to use generate_text.
-# Port of the ``instruction`` template literal from generate.ts.
-_INSTRUCTION = f"""
+# System instruction for the code generation sub-agent.
+_CODE_SYSTEM_INSTRUCTION = {
+    "parts": [
+        {
+            "text": (
+                "Your job is to generate and execute code to fulfill "
+                "your objective.\n\n"
+                "You are working as part of an AI system, so no chit-chat "
+                "and no explaining what you're doing and why.\n"
+                'DO NOT start with "Okay", or "Alright" or any preambles. '
+                "Just the output, please."
+            )
+        }
+    ],
+    "role": "user",
+}
 
-## When to call "{GENERATE_TEXT_FUNCTION}" function
-
-When evaluating the objective, make sure to determine whether calling \
-"{GENERATE_TEXT_FUNCTION}" function is warranted. The key tradeoff here is \
-latency: because it's an additional model call, the "generate_text" will \
-take longer to finish.
-
-Your job is to fulfill the objective as efficiently as possible, so weigh \
-the need to invoke "{GENERATE_TEXT_FUNCTION}" carefully.
-
-Here is the rules of thumb:
-
-- For shorter responses like a chat conversation, just do the text \
-generation yourself. You are an LLM and you can do it without calling \
-"{GENERATE_TEXT_FUNCTION}" function.
-- For longer responses like generating a chapter of a book or analyzing a \
-large and complex set of files, use "{GENERATE_TEXT_FUNCTION}" function.
-
-
-### How to write a good prompt for the code generator
-
-The "{GENERATE_AND_EXECUTE_CODE_FUNCTION}" function is a self-contained \
-code generator with a sandboxed code execution environment. Think of it as \
-a sub-agent that both generates the code and executes it, then provides \
-the result. This sub-agent takes a natural language prompt to do its job.
-
-A good code generator prompt will include the following components:
-
-1. Preference for the Python library to use. For example "Use the \
-reportlab library to generate PDF"
-
-2. What to consume as input. Focus on the "what", rather than the "how". \
-When binary files are passed as input, use the key words "use provided \
-file". Do NOT refer to file paths, see below.
-
-3. The high-level approach to solving the problem with code. If \
-applicable, specify algorithms or techniques to use.
-
-4. What to deliver as output. Again, do not worry about the "how", \
-instead specify the "what". For text files, use the key word "return" in \
-the prompt. For binary files, use the key word word "save". For example, \
-"Return the resulting number" or "Save the PDF file" or "Save all four \
-resulting images". Do NOT ask to name the files, see below.
-
-The code generator prompt may include references to files and it may \
-output references to files. However, theses references are translated at \
-the boundary of the sandboxed code execution environment into actual \
-files and file handles that will be different from what you specify. The \
-Python code execution environment has no access to your file system.
-
-Because of this translation layer, DO NOT mention file system paths or \
-file references in the prompt outside of the <file> tag.
-
-For example, if you need to include an existing file at "/mnt/text3.md" \
-into the prompt, you can reference it as <file src="/mnt/text3.md" />. \
-If you do not use <file> tags, the code generator will not be able to \
-access the file.
-
-For output, do not ask the code generator to name the files. It will \
-assign its own file names to save in the sandbox, and these will be \
-picked up at the sandbox boundary and translated into <file> tags for you.
-"""
+# Load declarations once at module level.
+_LOADED = load_declarations("generate")
 
 
 # ---------------------------------------------------------------------------
-# Model resolution
+# Shared helpers
 # ---------------------------------------------------------------------------
 
 
@@ -165,26 +150,83 @@ def _resolve_text_model(model: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# generate_text function definition
+# Veo safety-code expansion
+# ---------------------------------------------------------------------------
+
+SUPPORT_CODES: dict[int, str] = {
+    58061214: "child",
+    17301594: "child",
+    29310472: "celebrity",
+    15236754: "celebrity",
+    64151117: "unsafe",
+    42237218: "unsafe",
+    62263041: "dangerous",
+    57734940: "hate",
+    22137204: "hate",
+    74803281: "other",
+    29578790: "other",
+    42876398: "other",
+    39322892: "face",
+    92201652: "pii",
+    89371032: "prohibited",
+    49114662: "prohibited",
+    72817394: "prohibited",
+    90789179: "sexual",
+    63429089: "sexual",
+    43188360: "sexual",
+    78610348: "toxic",
+    61493863: "violence",
+    56562880: "violence",
+    32635315: "vulgar",
+}
+
+_SUPPORT_CODE_RE = re.compile(r"Support codes: ([\d, ]+)")
+
+
+def expand_veo_error(error_message: str, model: str) -> dict[str, Any]:
+    """Expand a Veo error message with safety reason metadata."""
+    match = _SUPPORT_CODE_RE.search(error_message)
+    reasons: set[str] = set()
+
+    if match:
+        codes = [int(c.strip()) for c in match.group(1).split(",")]
+        for code in codes:
+            reasons.add(SUPPORT_CODES.get(code, "other"))
+
+    if reasons:
+        return {
+            "error": error_message,
+            "metadata": {
+                "origin": "server",
+                "kind": "safety",
+                "reasons": sorted(reasons),
+                "model": model,
+            },
+        }
+
+    return {"error": error_message}
+
+
+# ---------------------------------------------------------------------------
+# Text generation handlers
 # ---------------------------------------------------------------------------
 
 
-def _define_generate_text(
+def _make_text_handlers(
     *,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager,
     backend: BackendClient | None = None,
     graph_url: str = "",
     consents_granted: set[str] | None = None,
-) -> FunctionDefinition:
-    """Port of the ``generate_text`` function from generate.ts.
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build handler map and preconditions for text generation functions.
 
-    Makes a Gemini sub-call with the user's prompt, optional grounding
-    tools, and returns the generated text.
+    Returns (handlers, preconditions) tuple.
     """
     granted = consents_granted or set()
 
-    async def precondition(args: dict[str, Any]) -> None:
+    async def generate_text_precondition(args: dict[str, Any]) -> None:
         """Gate: require user consent before enabling url_context."""
         if args.get("url_context"):
             consent_key = "GET_ANY_WEBPAGE"
@@ -203,7 +245,7 @@ def _define_generate_text(
                     is_precondition_check=True,
                 )
 
-    async def handler(
+    async def generate_text(
         args: dict[str, Any], status_cb: StatusUpdateCallback
     ) -> dict[str, Any]:
         prompt = args.get("prompt", "")
@@ -223,22 +265,18 @@ def _define_generate_text(
         else:
             status_cb("Generating Text", {"expected_duration_in_sec": 20})
 
-        # 1. Resolve pidgin <file> tags in the prompt
         translated = await from_pidgin_string(prompt, file_system)
         if isinstance(translated, dict) and "$error" in translated:
             return {"error": translated["$error"]}
 
-        # 2. Build grounding tools
         tools: list[dict[str, Any]] = []
         if search_grounding:
             tools.append({"googleSearch": {}})
         if maps_grounding:
             tools.append({"googleMaps": {}})
         if url_context:
-            # Consent already verified by precondition.
             tools.append({"urlContext": {}})
 
-        # 3. Build the Gemini body
         generation_config: dict[str, Any] = {}
         if model == "pro":
             generation_config["thinkingConfig"] = {
@@ -254,26 +292,19 @@ def _define_generate_text(
         if tools:
             body["tools"] = tools
 
-        # 4. Resolve storedData/fileData parts
         try:
             if backend:
-                body = await conform_body(
-                    body,
-                    backend=backend,
-                )
+                body = await conform_body(body, backend=backend)
         except Exception as e:
             logger.error("generate_text conform_body error: %s", e)
             return {"error": f"Failed to resolve data parts: {e}"}
 
-        # 5. Stream from Gemini
         resolved_model = _resolve_text_model(model)
         result_parts: list[dict[str, Any]] = []
 
         try:
             async for chunk in stream_generate_content(
-                resolved_model,
-                body,
-                backend=backend,
+                resolved_model, body, backend=backend,
             ):
                 candidates = chunk.get("candidates", [])
                 if not candidates:
@@ -294,160 +325,13 @@ def _define_generate_text(
 
         status_cb(None, None)
 
-        # 6. Merge and return
         text_parts = merge_text_parts(result_parts, separator="")
         if not text_parts:
             return {"error": "No text was generated. Please try again"}
         merged = {"parts": text_parts}
         return {"text": content_to_pidgin_string(merged, file_system)}
 
-    return FunctionDefinition(
-        name=GENERATE_TEXT_FUNCTION,
-        description=(
-            "An extremely versatile text generator, powered by Gemini. "
-            "Use it for any tasks that involve generation of text. "
-            "Supports multimodal content input."
-        ),
-        handler=handler,
-        precondition=precondition,
-        icon="text_analysis",
-        title="Generating Text",
-        parameters_json_schema={
-            "type": "object",
-            "properties": {
-                "prompt": {
-                    "type": "string",
-                    "description": (
-                        "Detailed prompt to use for text generation. The "
-                        "prompt may include references to files. For "
-                        'instance, if you have an existing file at '
-                        '"/mnt/text3.md", you can reference it as '
-                        '<file src="/mnt/text3.md" /> in the prompt. If '
-                        "you do not use <file> tags, the text generator "
-                        "will not be able to access the file.\n\n"
-                        "These references can point to files of any type, "
-                        "such as images, audio, videos, etc."
-                    ),
-                },
-                "model": {
-                    "type": "string",
-                    "enum": ["pro", "flash", "lite"],
-                    "description": (
-                        "The Gemini model to use for text generation. "
-                        "How to choose the right model:\n\n"
-                        '- choose "pro" when reasoning over complex '
-                        "problems in code, math, and STEM, as well as "
-                        "analyzing large datasets, codebases, and "
-                        "documents using long context. Use this model "
-                        "only when dealing with exceptionally complex "
-                        "problems.\n"
-                        '- choose "flash" for large scale processing, '
-                        "low-latency, high volume tasks that require "
-                        "thinking. This is the model you would use most "
-                        "of the time.\n"
-                        '- choose "lite" for high throughput. Use this '
-                        "model when speed is paramount."
-                    ),
-                },
-                "search_grounding": {
-                    "type": "boolean",
-                    "description": (
-                        "Whether or not to use Google Search grounding. "
-                        "Grounding with Google Search connects the "
-                        "Gemini model to real-time web content and works "
-                        "with all available languages. This allows "
-                        "Gemini to provide more accurate answers and "
-                        "cite verifiable sources beyond its knowledge "
-                        "cutoff."
-                    ),
-                },
-                "maps_grounding": {
-                    "type": "boolean",
-                    "description": (
-                        "Whether or not to use Google Maps grounding. "
-                        "Grounding with Google Maps connects the "
-                        "generative capabilities of Gemini with the "
-                        "rich, factual, and up-to-date data of "
-                        "Google Maps."
-                    ),
-                },
-                "url_context": {
-                    "type": "boolean",
-                    "description": (
-                        "Set to true to allow Gemini to retrieve "
-                        "context from URLs. Useful for tasks like: "
-                        "extracting data (pull specific info like "
-                        "prices, names, or key findings from multiple "
-                        "URLs), comparing documents (analyze multiple "
-                        "reports, articles, or PDFs to identify "
-                        "differences and track trends), synthesizing "
-                        "and creating content (combine information from "
-                        "several source URLs to generate accurate "
-                        "summaries, blog posts, or reports), and "
-                        "analyzing code and docs (point to a GitHub "
-                        "repository or technical documentation URL to "
-                        "explain code, generate setup instructions, or "
-                        "answer questions). Specify URLs in the prompt."
-                    ),
-                },
-                **TASK_ID_SCHEMA,
-                **STATUS_UPDATE_SCHEMA,
-            },
-            "required": ["prompt", "model"],
-        },
-        response_json_schema={
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string",
-                    "description": (
-                        "If an error occurred, a description of the error"
-                    ),
-                },
-                "text": {
-                    "type": "string",
-                    "description": "The output of the text generator.",
-                },
-            },
-        },
-    )
-
-
-# ---------------------------------------------------------------------------
-# generate_and_execute_code function definition
-# ---------------------------------------------------------------------------
-
-# System instruction for the code generation sub-agent.
-_CODE_SYSTEM_INSTRUCTION = {
-    "parts": [
-        {
-            "text": (
-                "Your job is to generate and execute code to fulfill "
-                "your objective.\n\n"
-                "You are working as part of an AI system, so no chit-chat "
-                "and no explaining what you're doing and why.\n"
-                'DO NOT start with "Okay", or "Alright" or any preambles. '
-                "Just the output, please."
-            )
-        }
-    ],
-    "role": "user",
-}
-
-
-def _define_generate_and_execute_code(
-    *,
-    file_system: AgentFileSystem,
-    task_tree_manager: TaskTreeManager,
-    backend: BackendClient | None = None,
-) -> FunctionDefinition:
-    """Port of the ``generate_and_execute_code`` function from generate.ts.
-
-    Uses Gemini with codeExecution tool to generate and run Python code,
-    returning text results and inline file outputs.
-    """
-
-    async def handler(
+    async def generate_and_execute_code(
         args: dict[str, Any], status_cb: StatusUpdateCallback
     ) -> dict[str, Any]:
         prompt = args.get("prompt", "")
@@ -464,18 +348,15 @@ def _define_generate_and_execute_code(
         else:
             status_cb("Generating Code", {"expected_duration_in_sec": 40})
 
-        # 1. Resolve pidgin <file> tags in the prompt
         translated = await from_pidgin_string(prompt, file_system)
         if isinstance(translated, dict) and "$error" in translated:
             return {"error": translated["$error"]}
 
-        # 2. Build tools
         tools: list[dict[str, Any]] = []
         if search_grounding:
             tools.append({"googleSearch": {}})
         tools.append({"codeExecution": {}})
 
-        # 3. Build the Gemini body
         body: dict[str, Any] = {
             "systemInstruction": _CODE_SYSTEM_INSTRUCTION,
             "contents": [translated],
@@ -483,26 +364,19 @@ def _define_generate_and_execute_code(
         if tools:
             body["tools"] = tools
 
-        # 4. Resolve storedData/fileData parts
         try:
             if backend:
-                body = await conform_body(
-                    body,
-                    backend=backend,
-                )
+                body = await conform_body(body, backend=backend)
         except Exception as e:
             logger.error("generate_code conform_body error: %s", e)
             return {"error": f"Failed to resolve data parts: {e}"}
 
-        # 5. Stream from Gemini
         result_parts: list[dict[str, Any]] = []
         last_code_execution_error: str | None = None
 
         try:
             async for chunk in stream_generate_content(
-                FLASH_MODEL_NAME,
-                body,
-                backend=backend,
+                FLASH_MODEL_NAME, body, backend=backend,
             ):
                 candidates = chunk.get("candidates", [])
                 if not candidates:
@@ -518,7 +392,6 @@ def _define_generate_and_execute_code(
                         else:
                             result_parts.append(part)
                     elif "inlineData" in part:
-                        # File result from code execution
                         file_path = file_system.add_part(part)
                         if isinstance(file_path, dict) and "$error" in file_path:
                             return {
@@ -529,12 +402,8 @@ def _define_generate_and_execute_code(
                             }
                         result_parts.append({"text": f'<file src="{file_path}" />'})
                     elif "codeExecutionResult" in part:
-                        outcome = part["codeExecutionResult"].get(
-                            "outcome", ""
-                        )
-                        output = part["codeExecutionResult"].get(
-                            "output", ""
-                        )
+                        outcome = part["codeExecutionResult"].get("outcome", "")
+                        output = part["codeExecutionResult"].get("output", "")
                         if outcome != "OUTCOME_OK":
                             last_code_execution_error = output
                         else:
@@ -543,7 +412,6 @@ def _define_generate_and_execute_code(
             logger.error("generate_code streaming error: %s", e)
             return to_error_or_response({"error": str(e)})
 
-        # 6. Check for code execution errors
         if last_code_execution_error:
             return {
                 "error": (
@@ -554,7 +422,6 @@ def _define_generate_and_execute_code(
 
         status_cb(None, None)
 
-        # 7. Merge and return
         text_parts = merge_text_parts(result_parts, separator="")
         if not text_parts:
             return {"error": "No text was generated. Please try again"}
@@ -563,87 +430,397 @@ def _define_generate_and_execute_code(
         merged = "".join(p["text"] for p in text_parts if "text" in p)
         return {"result": merged}
 
-    return FunctionDefinition(
-        name=GENERATE_AND_EXECUTE_CODE_FUNCTION,
-        description=(
-            "Generates and executes Python code, returning the result "
-            "of execution.\n\n"
-            "The code is generated by a Gemini model, so a precise spec "
-            "is all that's necessary in the prompt: Gemini will generate "
-            "the actual code.\n\n"
-            "After it's generated, the code is immediately executed in a "
-            "sandboxed environment that has access to the following "
-            "libraries:\n\n"
-            "attrs, chess, contourpy, fpdf, geopandas, imageio, jinja2, "
-            "joblib, jsonschema, jsonschema-specifications, lxml, "
-            "matplotlib, mpmath, numpy, opencv-python, openpyxl, "
-            "packaging, pandas, pillow, protobuf, pylatex, pyparsing, "
-            "PyPDF2, python-dateutil, python-docx, python-pptx, "
-            "reportlab, scikit-learn, scipy, seaborn, six, striprtf, "
-            "sympy, tabulate, tensorflow, toolz, xlrd\n\n"
-            "Code execution works best with text and CSV files.\n\n"
-            "If the code environment generates an error, the model may "
-            "decide to regenerate the code output. This can happen up "
-            "to 5 times.\n\n"
-            "NOTE: The Python code execution environment has no access "
-            "to your file system, so don't use it to access or "
-            "manipulate your files."
-        ),
-        handler=handler,
-        icon="code",
-        title="Generating and Executing Code",
-        parameters_json_schema={
-            "type": "object",
-            "properties": {
-                "prompt": {
-                    "type": "string",
-                    "description": (
-                        "Detailed prompt for the code to generate. "
-                        "DO NOT write Python code as the prompt. Instead "
-                        "DO use the natural language. This will let the "
-                        "code generator within this tool make the best "
-                        "decisions on what code to write. Your job is "
-                        "not to write code, but to direct the code "
-                        "generator.\n\n"
-                        "The prompt may include references to files as "
-                        "<file> tags. They will be correctly marshalled "
-                        "across the sandbox boundary."
-                    ),
-                },
-                "search_grounding": {
-                    "type": "boolean",
-                    "description": (
-                        "Whether or not to use Google Search grounding. "
-                        "Grounding with Google Search connects the code "
-                        "generation model to real-time web content and "
-                        "works with all available languages. This allows "
-                        "Gemini to power more complex use cases."
-                    ),
-                },
-                **TASK_ID_SCHEMA,
-                **STATUS_UPDATE_SCHEMA,
+    handlers = {
+        "generate_text": generate_text,
+        "generate_and_execute_code": generate_and_execute_code,
+    }
+    preconditions = {
+        "generate_text": generate_text_precondition,
+    }
+    return handlers, preconditions
+
+
+# ---------------------------------------------------------------------------
+# Image generation handler
+# ---------------------------------------------------------------------------
+
+_IMAGE_STEP_NAME = "AI Image Tool"
+_IMAGE_OUTPUT_NAME = "generated_image"
+_IMAGE_API_NAME = "ai_image_tool"
+
+
+def _make_image_handler(
+    *,
+    file_system: AgentFileSystem,
+    task_tree_manager: TaskTreeManager | None = None,
+    backend: BackendClient | None = None,
+    enable_g1_quota: bool = False,
+) -> dict[str, Any]:
+    """Build handler map for generate_images."""
+
+    async def generate_images(
+        args: dict[str, Any], status_cb: StatusUpdateCallback
+    ) -> dict[str, Any]:
+        prompt = args.get("prompt", "")
+        model = args.get("model", "flash")
+        input_images = args.get("images", [])
+        aspect_ratio = args.get("aspect_ratio", "16:9")
+        file_name = args.get("file_name")
+        task_id = args.get("task_id")
+        status_update = args.get("status_update")
+
+        if task_tree_manager and task_id:
+            task_tree_manager.set_in_progress(task_id, status_update)
+
+        status_cb(status_update or "Generating Image(s)", None)
+
+        image_parts = await file_system.get_many(input_images)
+        if isinstance(image_parts, dict) and "$error" in image_parts:
+            return {"error": image_parts["$error"]}
+
+        image_chunks: list[dict[str, Any]] = []
+        for data_part in image_parts:
+            try:
+                chunk = await resolve_part_to_chunk(data_part, backend=backend)
+                image_chunks.append(chunk)
+            except ValueError as e:
+                return {"error": str(e)}
+
+        model_name = (
+            IMAGE_PRO_MODEL_NAME if model == "pro" else IMAGE_FLASH_MODEL_NAME
+        )
+
+        execution_inputs: dict[str, Any] = {
+            "input_instruction": {
+                "chunks": [{
+                    "mimetype": "text/plain",
+                    "data": encode_base64(prompt),
+                }]
             },
-            "required": ["prompt"],
-        },
-        response_json_schema={
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string",
-                    "description": (
-                        "If an error occurred, a description of the error"
-                    ),
-                },
-                "result": {
-                    "type": "string",
-                    "description": (
-                        "The result of code execution as text that may "
-                        "contain file path references."
-                    ),
-                },
+            "aspect_ratio_key": {
+                "chunks": [{
+                    "mimetype": "text/plain",
+                    "data": encode_base64(aspect_ratio),
+                }]
             },
-        },
-    )
+        }
+
+        input_parameters = ["input_instruction"]
+        if image_chunks:
+            execution_inputs["input_image"] = {"chunks": image_chunks}
+            input_parameters.append("input_image")
+
+        body = {
+            "planStep": {
+                "stepName": _IMAGE_STEP_NAME,
+                "modelApi": _IMAGE_API_NAME,
+                "inputParameters": input_parameters,
+                "systemPrompt": "",
+                "options": {
+                    "modelName": model_name,
+                    "disablePromptRewrite": True,
+                },
+                "output": _IMAGE_OUTPUT_NAME,
+            },
+            "execution_inputs": execution_inputs,
+            **({"enableG1Quota": True} if enable_g1_quota else {}),
+        }
+
+        try:
+            result = await execute_step(body, backend=backend)
+        except ValueError as e:
+            logger.error("generate_images executeStep error: %s", e)
+            return to_error_or_response({"error": str(e)})
+
+        status_cb(None, None)
+
+        output_chunks = result.get("chunks", [])
+        if not output_chunks:
+            return {"error": "No images were generated. Please try again"}
+
+        all_parts: list[dict[str, Any]] = []
+        for llm_content in output_chunks:
+            for part in llm_content.get("parts", []):
+                all_parts.append(part)
+
+        errors: list[str] = []
+        image_paths: list[str] = []
+
+        for i, part in enumerate(all_parts):
+            name = file_name
+            if name and len(all_parts) > 1:
+                name = f"{name}_{i + 1}"
+            result_path = file_system.add_part(part, name)
+            if isinstance(result_path, dict) and "$error" in result_path:
+                errors.append(result_path["$error"])
+            elif isinstance(result_path, str):
+                image_paths.append(result_path)
+
+        if errors:
+            return {"error": ", ".join(errors)}
+        return {"images": image_paths}
+
+    return {"generate_images": generate_images}
+
+
+# ---------------------------------------------------------------------------
+# Audio generation handlers
+# ---------------------------------------------------------------------------
+
+
+def _make_audio_handlers(
+    *,
+    file_system: AgentFileSystem,
+    task_tree_manager: TaskTreeManager | None = None,
+    backend: BackendClient | None = None,
+    enable_g1_quota: bool = False,
+) -> dict[str, Any]:
+    """Build handler map for generate_speech_from_text and
+    generate_music_from_text."""
+
+    async def generate_speech_from_text(
+        args: dict[str, Any], status_cb: StatusUpdateCallback
+    ) -> dict[str, Any]:
+        text = args.get("text", "")
+        voice = args.get("voice", DEFAULT_VOICE)
+        file_name = args.get("file_name")
+        task_id = args.get("task_id")
+        status_update = args.get("status_update")
+
+        if task_tree_manager and task_id:
+            task_tree_manager.set_in_progress(task_id, status_update)
+
+        status_cb(status_update or "Generating Speech", None)
+
+        voice_param = VOICE_MAP.get(voice, "en-US-female")
+
+        execution_inputs: dict[str, Any] = {
+            "text_to_speak": {
+                "chunks": [{
+                    "mimetype": "text/plain",
+                    "data": encode_base64(text),
+                }]
+            },
+            "voice_key": {
+                "chunks": [{
+                    "mimetype": "text/plain",
+                    "data": encode_base64(voice_param),
+                }]
+            },
+        }
+
+        body = {
+            "planStep": {
+                "stepName": "GenerateAudio",
+                "modelApi": "tts",
+                "inputParameters": ["text_to_speak"],
+                "systemPrompt": "",
+                "output": "generated_speech",
+            },
+            "execution_inputs": execution_inputs,
+            **({"enableG1Quota": True} if enable_g1_quota else {}),
+        }
+
+        try:
+            result = await execute_step(body, backend=backend)
+        except ValueError as e:
+            logger.error("generate_speech executeStep error: %s", e)
+            return to_error_or_response({"error": str(e)})
+
+        status_cb(None, None)
+
+        output_chunks = result.get("chunks", [])
+        if not output_chunks:
+            return {"error": "No speech was generated"}
+
+        first_content = output_chunks[0]
+        parts = first_content.get("parts", [])
+        if not parts:
+            return {"error": "No speech was generated"}
+
+        part = parts[0]
+        result_path = file_system.add_part(part, file_name)
+        if isinstance(result_path, dict) and "$error" in result_path:
+            return {"error": result_path["$error"]}
+
+        return {"speech": result_path}
+
+    async def generate_music_from_text(
+        args: dict[str, Any], status_cb: StatusUpdateCallback
+    ) -> dict[str, Any]:
+        prompt = args.get("prompt", "")
+        file_name = args.get("file_name")
+        task_id = args.get("task_id")
+        status_update = args.get("status_update")
+
+        if task_tree_manager and task_id:
+            task_tree_manager.set_in_progress(task_id, status_update)
+
+        status_cb(status_update or "Generating Music", None)
+
+        execution_inputs: dict[str, Any] = {
+            "prompt": {
+                "chunks": [{
+                    "mimetype": "text/plain",
+                    "data": encode_base64(prompt),
+                }]
+            },
+        }
+
+        body = {
+            "planStep": {
+                "stepName": "GenerateMusic",
+                "modelApi": "generate_music",
+                "inputParameters": ["prompt"],
+                "systemPrompt": "",
+                "output": "generated_music",
+            },
+            "execution_inputs": execution_inputs,
+            **({"enableG1Quota": True} if enable_g1_quota else {}),
+        }
+
+        try:
+            result = await execute_step(body, backend=backend)
+        except ValueError as e:
+            logger.error("generate_music executeStep error: %s", e)
+            return to_error_or_response({"error": str(e)})
+
+        status_cb(None, None)
+
+        output_chunks = result.get("chunks", [])
+        if not output_chunks:
+            return {"error": "No music was generated"}
+
+        first_content = output_chunks[0]
+        parts = first_content.get("parts", [])
+        if not parts:
+            return {"error": "No music was generated"}
+
+        part = parts[0]
+        result_path = file_system.add_part(part, file_name)
+        if isinstance(result_path, dict) and "$error" in result_path:
+            return {"error": result_path["$error"]}
+
+        return {"music": result_path}
+
+    return {
+        "generate_speech_from_text": generate_speech_from_text,
+        "generate_music_from_text": generate_music_from_text,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Video generation handler
+# ---------------------------------------------------------------------------
+
+ASPECT_RATIOS = ["16:9", "9:16"]
+
+
+def _make_video_handler(
+    *,
+    file_system: AgentFileSystem,
+    task_tree_manager: TaskTreeManager | None = None,
+    backend: BackendClient | None = None,
+    enable_g1_quota: bool = False,
+) -> dict[str, Any]:
+    """Build handler map for generate_video."""
+
+    async def generate_video(
+        args: dict[str, Any], status_cb: StatusUpdateCallback
+    ) -> dict[str, Any]:
+        prompt = args.get("prompt", "")
+        reference_images = args.get("images", [])
+        aspect_ratio = args.get("aspect_ratio", "16:9")
+        file_name = args.get("file_name")
+        task_id = args.get("task_id")
+        status_update = args.get("status_update")
+
+        if task_tree_manager and task_id:
+            task_tree_manager.set_in_progress(task_id, status_update)
+
+        status_cb(status_update or "Generating Video", None)
+
+        if aspect_ratio not in ASPECT_RATIOS:
+            aspect_ratio = "16:9"
+
+        image_chunks: list[dict[str, Any]] = []
+        for image_path in reference_images:
+            result = await file_system.get(image_path)
+            if isinstance(result, dict) and "$error" in result:
+                return {"error": result["$error"]}
+            if not result:
+                return {"error": f'Empty file: "{image_path}"'}
+            data_part = result[0]
+
+            try:
+                chunk = await resolve_part_to_chunk(data_part, backend=backend)
+                image_chunks.append(chunk)
+            except ValueError as e:
+                return {"error": str(e)}
+
+        execution_inputs: dict[str, Any] = {
+            "text_instruction": {
+                "chunks": [{
+                    "mimetype": "text/plain",
+                    "data": encode_base64(prompt),
+                }]
+            },
+            "aspect_ratio_key": {
+                "chunks": [{
+                    "mimetype": "text/plain",
+                    "data": encode_base64(aspect_ratio),
+                }]
+            },
+        }
+
+        input_parameters = ["text_instruction"]
+        if image_chunks:
+            execution_inputs["reference_image"] = {"chunks": image_chunks}
+            input_parameters.append("reference_image")
+
+        body = {
+            "planStep": {
+                "stepName": "GenerateVideo",
+                "modelApi": "generate_video",
+                "inputParameters": input_parameters,
+                "systemPrompt": "",
+                "options": {
+                    "modelName": VIDEO_MODEL_NAME,
+                    "disablePromptRewrite": False,
+                },
+                "output": "generated_video",
+            },
+            "execution_inputs": execution_inputs,
+            **({"enableG1Quota": True} if enable_g1_quota else {}),
+        }
+
+        try:
+            result = await execute_step(body, backend=backend)
+        except ValueError as e:
+            logger.error("generate_video executeStep error: %s", e)
+            error_msg = str(e)
+            expanded = expand_veo_error(error_msg, VIDEO_MODEL_NAME)
+            return to_error_or_response(expanded)
+
+        status_cb(None, None)
+
+        output_chunks = result.get("chunks", [])
+        if not output_chunks:
+            return {"error": "No video was generated. Please try again"}
+
+        first_content = output_chunks[0]
+        parts = first_content.get("parts", [])
+        if not parts:
+            return {"error": "No video was generated. Please try again"}
+
+        part = parts[0]
+        result_path = file_system.add_part(part, file_name)
+        if isinstance(result_path, dict) and "$error" in result_path:
+            return {"error": result_path["$error"]}
+
+        return {"video": result_path}
+
+    return {"generate_video": generate_video}
 
 
 # ---------------------------------------------------------------------------
@@ -659,40 +836,73 @@ def get_generate_function_group(
     graph_url: str = "",
     consents_granted: set[str] | None = None,
 ) -> FunctionGroup:
-    """Build a FunctionGroup with the generate_text function.
+    """Build a FunctionGroup with generate_text and
+    generate_and_execute_code."""
+    handlers, preconditions = _make_text_handlers(
+        file_system=file_system,
+        task_tree_manager=task_tree_manager,
+        backend=backend,
+        graph_url=graph_url,
+        consents_granted=consents_granted,
+    )
+    return assemble_function_group(
+        _LOADED, handlers, preconditions=preconditions
+    )
 
-    This is the Python equivalent of ``getGenerateFunctionGroup`` from
-    generate.ts.
 
-    Args:
-        file_system: The AgentFileSystem for resolving file references.
-        task_tree_manager: Optional TaskTreeManager for progress tracking.
-        backend: BackendClient for One Platform upload calls.
-        graph_url: Graph URL for consent events.
-        consents_granted: Set of already-granted consent types.
+def get_image_function_group(
+    *,
+    file_system: AgentFileSystem,
+    task_tree_manager: TaskTreeManager | None = None,
+    backend: BackendClient | None = None,
+    enable_g1_quota: bool = False,
+) -> FunctionGroup:
+    """Build a FunctionGroup with generate_images."""
+    handlers = _make_image_handler(
+        file_system=file_system,
+        task_tree_manager=task_tree_manager,
+        backend=backend,
+        enable_g1_quota=enable_g1_quota,
+    )
+    return assemble_function_group(
+        _LOADED, handlers, instruction_override=""
+    )
 
-    Returns:
-        A FunctionGroup with the generate_text declaration, definition,
-        and instruction.
-    """
-    functions: list[FunctionDefinition] = [
-        _define_generate_text(
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
-            backend=backend,
-            graph_url=graph_url,
-            consents_granted=consents_granted,
-        ),
-        _define_generate_and_execute_code(
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
-            backend=backend,
-        ),
-    ]
 
-    mapped = map_definitions(functions)
-    return FunctionGroup(
-        definitions=mapped.definitions,
-        declarations=mapped.declarations,
-        instruction=_INSTRUCTION,
+def get_audio_function_group(
+    *,
+    file_system: AgentFileSystem,
+    task_tree_manager: TaskTreeManager | None = None,
+    backend: BackendClient | None = None,
+    enable_g1_quota: bool = False,
+) -> FunctionGroup:
+    """Build a FunctionGroup with generate_speech_from_text and
+    generate_music_from_text."""
+    handlers = _make_audio_handlers(
+        file_system=file_system,
+        task_tree_manager=task_tree_manager,
+        backend=backend,
+        enable_g1_quota=enable_g1_quota,
+    )
+    return assemble_function_group(
+        _LOADED, handlers, instruction_override=""
+    )
+
+
+def get_video_function_group(
+    *,
+    file_system: AgentFileSystem,
+    task_tree_manager: TaskTreeManager | None = None,
+    backend: BackendClient | None = None,
+    enable_g1_quota: bool = False,
+) -> FunctionGroup:
+    """Build a FunctionGroup with generate_video."""
+    handlers = _make_video_handler(
+        file_system=file_system,
+        task_tree_manager=task_tree_manager,
+        backend=backend,
+        enable_g1_quota=enable_g1_quota,
+    )
+    return assemble_function_group(
+        _LOADED, handlers, instruction_override=""
     )
