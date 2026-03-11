@@ -390,6 +390,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         margin-left: var(--bb-grid-size-2);
       }
 
+
       #back-button {
         padding: 0;
         margin: 0 var(--bb-grid-size-3) 0 0;
@@ -493,44 +494,44 @@ export class VEHeader extends SignalWatcher(LitElement) {
         <button
           id="back-button"
           @click=${() => {
-            this.dispatchEvent(new CloseEvent());
-          }}
+        this.dispatchEvent(new CloseEvent());
+      }}
         >
           <span class="g-icon">arrow_back</span>
         </button>
         <input
           autocomplete="off"
           @blur=${async (evt: Event) => {
-            this.#handleTitleUpdate(evt);
-          }}
+        this.#handleTitleUpdate(evt);
+      }}
           @keydown=${async (evt: KeyboardEvent) => {
-            if (evt.key !== "Enter") {
-              return;
-            }
+        if (evt.key !== "Enter") {
+          return;
+        }
 
-            this.#handleTitleUpdate(evt);
-          }}
+        this.#handleTitleUpdate(evt);
+      }}
           ?disabled=${!this.canSave ||
-          this.saveStatus === BOARD_SAVE_STATUS.SAVING}
+      this.saveStatus === BOARD_SAVE_STATUS.SAVING}
           required
           type="text"
           class="sans-flex round w-500"
           id="tab-title"
           .value=${this.tabTitle}
         />
-        ${this.#renderExperimentalLabel()} ${this.#renderStatusLabel()}
+        ${this.#renderExperimentalLabel({ overridesOnly: true })} ${this.#renderStatusLabel()}
       </div>
       ${this.#renderModeToggle()}
       <div id="right">
         ${[
-          this.#renderSaveStatusLabel(),
-          this.#renderPublishButton(),
-          this.#renderShareButton(),
-          this.#renderRemixButton(),
-          this.#renderGraphItemSelect(),
-          this.#renderGlobalItemSelect(),
-          this.#renderUser(),
-        ]}
+        this.#renderSaveStatusLabel(),
+        this.#renderPublishButton(),
+        this.#renderShareButton(),
+        this.#renderRemixButton(),
+        this.#renderGraphItemSelect(),
+        this.#renderGlobalItemSelect(),
+        this.#renderUser(),
+      ]}
       </div>
     </section>`;
   }
@@ -556,34 +557,34 @@ export class VEHeader extends SignalWatcher(LitElement) {
       <button
         id="canvas"
         @click=${() => {
-          this.dispatchEvent(
-            new StateEvent({ eventType: "host.modetoggle", mode: "canvas" })
-          );
-        }}
+        this.dispatchEvent(
+          new StateEvent({ eventType: "host.modetoggle", mode: "canvas" })
+        );
+      }}
         class=${classMap({
-          "sans-flex": true,
-          round: true,
-          "w-500": true,
-          "md-body-small": true,
-          selected: this.mode === "canvas",
-        })}
+        "sans-flex": true,
+        round: true,
+        "w-500": true,
+        "md-body-small": true,
+        selected: this.mode === "canvas",
+      })}
       >
         Editor
       </button>
       <button
         id="app"
         @click=${() => {
-          this.dispatchEvent(
-            new StateEvent({ eventType: "host.modetoggle", mode: "app" })
-          );
-        }}
+        this.dispatchEvent(
+          new StateEvent({ eventType: "host.modetoggle", mode: "app" })
+        );
+      }}
         class=${classMap({
-          "sans-flex": true,
-          round: true,
-          "w-500": true,
-          "md-body-small": true,
-          selected: this.mode === "app",
-        })}
+        "sans-flex": true,
+        round: true,
+        "w-500": true,
+        "md-body-small": true,
+        selected: this.mode === "app",
+      })}
       >
         App
       </button>
@@ -746,7 +747,17 @@ export class VEHeader extends SignalWatcher(LitElement) {
     >`;
   }
 
-  #renderExperimentalLabel() {
+
+
+  #renderStatusLabel() {
+    return html`<span class="sans" id="status"
+      >${this.status === "Published"
+        ? html`<span class="g-icon w-400">cloud_done</span>`
+        : nothing}${this.status}</span
+    >`;
+  }
+
+  #renderExperimentalLabel({ overridesOnly = false } = {}) {
     const hasOverrides = this.sca.env.flags.overrides().then((overrides) => {
       const count = Object.keys(overrides).length;
 
@@ -754,6 +765,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
         Strings.from("PROVIDER_NAME") === "PROVIDER_NAME" ||
         Strings.from("PROVIDER_NAME") === ""
       ) {
+        return nothing;
+      }
+
+      if (overridesOnly && count <= 0) {
         return nothing;
       }
 
@@ -797,14 +812,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
     });
 
     return html`${until(hasOverrides, nothing)}`;
-  }
-
-  #renderStatusLabel() {
-    return html`<span class="sans" id="status"
-      >${this.status === "Published"
-        ? html`<span class="g-icon w-400">cloud_done</span>`
-        : nothing}${this.status}</span
-    >`;
   }
 
   #renderDefaultControls() {
@@ -879,12 +886,12 @@ export class VEHeader extends SignalWatcher(LitElement) {
     return html`<button
       id="share-button"
       class=${classMap({
-        "sans-flex": true,
-        round: true,
-        "w-500": true,
-        owner: !!this.isMine,
-        "sharing-v2": !!CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2,
-      })}
+      "sans-flex": true,
+      round: true,
+      "w-500": true,
+      owner: !!this.isMine,
+      "sharing-v2": !!CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2,
+    })}
       @mouseenter=${() => this.sca.actions.share.flushSave()}
       @click=${() => {
         this.dispatchEvent(new ShareRequestedEvent());
@@ -907,20 +914,20 @@ export class VEHeader extends SignalWatcher(LitElement) {
     return html`<button
         id="toggle-user-menu"
         @click=${() => {
-          this.#showAccountSwitcher = true;
-        }}
+        this.#showAccountSwitcher = true;
+      }}
       >
         ${picture
-          ? html`<img
+        ? html`<img
               id="user-pic"
               crossorigin
               .src=${picture}
               alt=${name ?? "No name"}
             />`
-          : // For unknown reasons, the token info may not include a `picture` URL or `name`.
-            // Since we use the avatar as a button to access the menu, we render an icon in
-            // place of user picture if it's not available.
-            html`<span id="user-pic-unknown" class="g-icon filled"
+        : // For unknown reasons, the token info may not include a `picture` URL or `name`.
+        // Since we use the avatar as a button to access the menu, we render an icon in
+        // place of user picture if it's not available.
+        html`<span id="user-pic-unknown" class="g-icon filled"
               >person</span
             >`}
       </button>
