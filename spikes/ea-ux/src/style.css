@@ -1,0 +1,681 @@
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* ─── Reset + Base ──────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Dark palette */
+  --bg: #0a0a0f;
+  --surface: #14141f;
+  --surface-raised: #1c1c2e;
+  --surface-glow: #22223a;
+  --text: #e8e8f0;
+  --text-muted: #8888a0;
+  --text-dim: #555570;
+  --accent: #7c6aff;
+  --accent-glow: rgba(124, 106, 255, 0.3);
+  --accent-soft: rgba(124, 106, 255, 0.08);
+  --warm: #ff9f6a;
+  --warm-glow: rgba(255, 159, 106, 0.25);
+  --success: #6aff9f;
+  --glass: rgba(20, 20, 35, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-highlight: rgba(255, 255, 255, 0.03);
+
+  /* Typography */
+  --font-display: "Outfit", sans-serif;
+  --font-body: "Inter", sans-serif;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 600ms;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ─── Projection Surface ────────────────────────────────────── */
+#projection {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding: 40px;
+  transition: filter var(--duration-slow) cubic-bezier(0.73, 0, 0.33, 1);
+}
+
+#projection.blurred {
+  pointer-events: none;
+}
+
+/* Blur overlay sits between projection and lifted cards. */
+#blur-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  background: rgba(10, 10, 15, 0.25);
+  backdrop-filter: blur(6px) saturate(0.7);
+  -webkit-backdrop-filter: blur(6px) saturate(0.7);
+  opacity: 0;
+  pointer-events: none;
+  cursor: pointer;
+  transition: opacity var(--duration-slow) var(--ease-out);
+}
+
+#blur-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ─── Gesture Canvas ────────────────────────────────────────── */
+#gesture-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  touch-action: none;
+  pointer-events: none;
+}
+
+#gesture-canvas.active {
+  pointer-events: auto;
+}
+
+/* ─── Contextual Input ──────────────────────────────────────── */
+#context-input {
+  position: absolute;
+  z-index: 20;
+  left: 50%;
+  bottom: 80px;
+  transform: translateX(-50%) translateY(20px);
+  width: min(640px, 90vw);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(40px) saturate(1.5);
+  -webkit-backdrop-filter: blur(40px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-xl);
+  padding: 8px;
+  opacity: 0;
+  transition:
+    opacity var(--duration-normal) var(--ease-out),
+    transform var(--duration-normal) var(--ease-spring);
+  box-shadow:
+    0 0 80px rgba(124, 106, 255, 0.15),
+    0 8px 40px rgba(0, 0, 0, 0.3),
+    0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+#context-input.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+#context-input.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(20px);
+}
+
+#context-selection-label {
+  padding: 8px 16px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+#context-field {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #1a1a2e;
+  font-family: var(--font-body);
+  font-size: 18px;
+  padding: 8px 16px 14px;
+  caret-color: var(--accent);
+}
+
+#context-field::placeholder {
+  color: rgba(26, 26, 46, 0.4);
+}
+
+/* ─── Onboarding ───────────────────────────────────────────── */
+
+#onboarding-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  transition: opacity 0.6s var(--ease-out);
+}
+
+#onboarding-overlay.dismissed {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#onboarding-card {
+  text-align: center;
+  padding: 48px 64px;
+  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  max-width: 420px;
+  cursor: default;
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity var(--duration-normal) var(--ease-out),
+    transform var(--duration-normal) var(--ease-spring);
+}
+
+#onboarding-card.hidden {
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+#onboarding-card.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+#onboarding-card .onboarding-icon {
+  font-size: 48px;
+  color: var(--accent);
+  margin-bottom: 16px;
+  display: block;
+  opacity: 0.7;
+}
+
+#onboarding-card h2 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+
+#onboarding-card p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Arrow hint pointing to activate button */
+#arrow-hint {
+  position: absolute;
+  z-index: 25;
+  bottom: 0;
+  right: 0;
+  width: 400px;
+  height: 260px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.8s var(--ease-out),
+    transform 0.6s var(--ease-out);
+  pointer-events: none;
+
+  text {
+    font-size: 16px;
+    font-family: var(--font-display);
+  }
+}
+
+#arrow-hint.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#arrow-hint.hidden {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.arrow-svg {
+  overflow: visible;
+}
+
+/* Draw-on animation for the arrow path */
+.arrow-path,
+.arrow-head {
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+}
+
+#arrow-hint.visible .arrow-path {
+  animation: draw-arrow 1s var(--ease-out) 0.3s forwards;
+}
+
+#arrow-hint.visible .arrow-head {
+  animation: draw-arrow 1s var(--ease-out) 0.5s forwards;
+}
+
+@keyframes draw-arrow {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Success message */
+#onboarding-success {
+  position: absolute;
+  inset: 0;
+  z-index: 22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  opacity: 0;
+  transition: opacity 0.5s var(--ease-out);
+  pointer-events: none;
+}
+
+#onboarding-success.visible {
+  opacity: 1;
+}
+
+#onboarding-success.hidden {
+  opacity: 0;
+}
+
+#onboarding-success h2 {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--text);
+  opacity: 0.9;
+}
+
+/* ─── Demo Content: Dinner Planner ──────────────────────────── */
+.demo-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.demo-header h1 {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 300;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+
+.demo-header p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.demo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ─── Circable Cards ────────────────────────────────────────── */
+.circable {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  cursor: default;
+  transition:
+    background var(--duration-fast),
+    border-color var(--duration-fast),
+    box-shadow var(--duration-fast);
+}
+
+.circable::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: calc(var(--radius-lg) + 2px);
+  opacity: 0;
+  background: conic-gradient(
+    from 0deg,
+    var(--accent),
+    var(--warm),
+    var(--success),
+    var(--accent)
+  );
+  z-index: -1;
+  transition: opacity var(--duration-normal);
+  filter: blur(8px);
+}
+
+.circable:hover::after {
+  opacity: 0.15;
+}
+
+.circable:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--surface-raised);
+}
+
+.circable.selected {
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 0 40px rgba(124, 106, 255, 0.5),
+    0 0 80px rgba(255, 159, 106, 0.2);
+  transition: none;
+}
+
+.circable.selected::after {
+  opacity: 0.5;
+  transition: none;
+}
+
+.card-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.card-detail {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.card-tags {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.tag.warm {
+  background: rgba(255, 159, 106, 0.08);
+  color: var(--warm);
+}
+
+.tag.success {
+  background: rgba(106, 255, 159, 0.08);
+  color: var(--success);
+}
+
+/* ─── Full-width cards ──────────────────────────────────────── */
+.demo-full {
+  max-width: 900px;
+  margin: 24px auto 0;
+}
+
+/* ─── Timeline items ────────────────────────────────────────── */
+.timeline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+}
+
+.timeline + .timeline {
+  border-top: 1px solid var(--glass-border);
+}
+
+.timeline-time {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  min-width: 52px;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.timeline-dot.warm {
+  background: var(--warm);
+}
+
+.timeline-dot.success {
+  background: var(--success);
+}
+
+.timeline-text {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* ─── Resolved State ────────────────────────────────────────── */
+.resolved-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-slow) var(--ease-out);
+}
+
+.resolved-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.resolved-card {
+  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 32px 40px;
+  max-width: 420px;
+  text-align: center;
+}
+
+.resolved-card h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.resolved-card p {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ─── Activation Button ─────────────────────────────────────── */
+#activate-btn {
+  position: absolute;
+  z-index: 30;
+  bottom: 24px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background var(--duration-fast),
+    color var(--duration-fast),
+    border-color var(--duration-fast),
+    box-shadow var(--duration-normal),
+    transform var(--duration-fast) var(--ease-spring);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+#activate-btn:hover {
+  background: var(--surface-raised);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+#activate-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+  box-shadow: 0 0 30px var(--accent-glow);
+}
+
+#activate-btn .material-symbols-outlined {
+  font-size: 24px;
+}
+
+/* ─── Selection Mode ────────────────────────────────────────── */
+
+/*
+ * Selection mode — items need to clearly communicate they're selectable.
+ * Uses a sweeping highlight shimmer that works on any theme.
+ */
+.selection-mode .circable {
+  cursor: crosshair;
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 20px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+/* Sweeping shimmer highlight — runs across each card */
+.selection-mode .circable::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.08) 45%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.08) 55%,
+    transparent 70%
+  );
+  animation: shimmer-sweep 2.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.selection-mode .circable::after {
+  opacity: 0.3;
+}
+
+.selection-mode .circable:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.01);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 0 30px rgba(255, 255, 255, 0.1);
+}
+
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ─── Lifted Cards (Context Preservation) ───────────────────── */
+
+/*
+ * Lifted cards float above the blur overlay.
+ * Clean elevation — white border, strong shadow, no gradient bleed.
+ * filter: none overrides the parent's SVG distortion filter.
+ */
+.circable.lifted {
+  position: relative;
+  z-index: 15;
+  transform: scale(1.03);
+  filter: none !important;
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.15),
+    0 16px 48px rgba(0, 0, 0, 0.6),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+  transition:
+    transform 1s cubic-bezier(0.1, 0.5, 0.3, 1),
+    box-shadow var(--duration-normal) ease-in-out,
+    border-color var(--duration-fast) ease-in-out;
+}
+
+/* Kill the rainbow pseudo-element on lifted cards — keep it clean. */
+.circable.lifted::after {
+  opacity: 0;
+  transition: none;
+}
+
+/* Subtle breathing animation on lifted card */
+.circable.lifted::before {
+  content: none;
+}

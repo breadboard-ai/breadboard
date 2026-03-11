@@ -1,0 +1,125 @@
+<!--
+  @license
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EA — Circle to Invoke</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Demo projection surface -->
+      <div id="projection"></div>
+
+      <!-- Blur overlay — separate from projection so lifted cards escape it -->
+      <div id="blur-overlay"></div>
+
+      <!-- Gesture canvas overlay -->
+      <canvas id="gesture-canvas"></canvas>
+
+      <!-- Contextual input (hidden by default) -->
+      <div id="context-input" class="hidden">
+        <div id="context-selection-label"></div>
+        <input
+          id="context-field"
+          type="text"
+          placeholder="What would you like to do?"
+          autocomplete="off"
+        />
+      </div>
+
+      <!-- Onboarding overlay -->
+      <div id="onboarding-overlay">
+        <div id="onboarding-card" class="hidden" data-circable="onboarding">
+          <span class="material-symbols-outlined onboarding-icon">gesture</span>
+          <h2>Circle me to begin</h2>
+          <p>Draw a circle around this card to get started</p>
+        </div>
+      </div>
+
+      <!-- Arrow hint pointing to the activate button -->
+      <div id="arrow-hint" class="hidden">
+        <svg
+          class="arrow-svg"
+          width="400"
+          height="260"
+          viewBox="0 0 400 260"
+          fill="none"
+        >
+          <defs>
+            <linearGradient
+              id="arrow-gradient"
+              x1="58"
+              y1="40"
+              x2="336"
+              y2="207"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stop-color="rgba(255,255,255,0.2)" />
+              <stop offset="60%" stop-color="rgba(255,255,255,0.6)" />
+              <stop offset="100%" stop-color="white" />
+            </linearGradient>
+          </defs>
+          <!-- Label -->
+          <text
+            fill="rgba(255,255,255,0.5)"
+            x="0"
+            y="15"
+            dominant-baseline="hanging"
+            font-family="inherit"
+          >
+            Tap to start selecting
+          </text>
+          <!-- Group compositing: prevents double-opacity at arrowhead junction -->
+          <g opacity="0.4">
+            <!-- Arc: sweeps from text area down to near the button -->
+            <path
+              class="arrow-path"
+              d="M58 40 C 40 170, 190 200, 296 207"
+              stroke="url(#arrow-gradient)"
+              stroke-width="2"
+              stroke-linecap="round"
+              fill="none"
+            />
+            <!-- Arrowhead chevron -->
+            <path
+              class="arrow-head"
+              d="M282 197 L298 207 L282 217"
+              stroke="url(#arrow-gradient)"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              fill="none"
+            />
+          </g>
+        </svg>
+      </div>
+
+      <!-- Success message -->
+      <div id="onboarding-success" class="hidden">
+        <h2>Great, let's get started…</h2>
+      </div>
+
+      <!-- Selection mode activation button -->
+      <button id="activate-btn" aria-label="Select something">
+        <span class="material-symbols-outlined">gesture</span>
+      </button>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
