@@ -184,8 +184,21 @@ Compute once at module level or use `useState(() => ...)`.
 
 ## Multi-View Apps (Journey Mode)
 
-When you produce a `journey.json` alongside UI components, you are building a
-**multi-view app** — one React component per state in the state machine.
+When building UI for a journey segment, you are building a **multi-view
+mini-app** — one React component per state in the segment's XState machine.
+
+### Critical: You're a Segment, Not a Standalone App
+
+Your mini-app is **one segment** of a wider orchestrated journey. Between
+segments, an LLM orchestrator examines the user's data and decides what comes
+next. This means:
+
+- **Don't brand it.** No app names, no splash screens, no taglines. The host
+  application provides the chrome and framing. Start with the task UI.
+- **Emit your data.** The last view in your segment MUST call `ark.emit()` to
+  hand collected data back to the orchestrator. Without this, the journey stalls.
+- **Receive context.** Your segment may receive data from prior segments as
+  props. Use it to personalize the experience.
 
 ### File Structure
 
@@ -201,15 +214,19 @@ Each state gets its own component file named after the state:
 
 ### Navigation
 
-Views transition using the **Ark SDK** available as `window.ark`. The SDK has
-exactly three methods — no others exist:
+**Within** the segment, views navigate using `window.ark.navigateTo`. At the
+**boundary** (the segment's final view), use `window.ark.emit` to send data
+back to the orchestrator.
+
+The **Ark SDK** is available as `window.ark`. It has exactly three methods:
 
 ```jsx
-// Navigate to another state, carrying context data forward.
+// Navigate to another view WITHIN this segment.
 window.ark.navigateTo("select_models", { teamProfile });
 
-// Send data to the host (e.g. final outcome).
-window.ark.emit("journey:complete", { decision, comparisonSet });
+// Send data BACK TO THE ORCHESTRATOR (segment boundary).
+// Use on the final view's CTA — this is what connects segments.
+window.ark.emit("journey:result", { decision, comparisonSet });
 
 // Get an asset URL by reference name.
 window.ark.asset("logo"); // → "blob:..."
@@ -246,6 +263,9 @@ export default function SelectModels({ data = {}, onTransition }) {
    across multiple views should be extracted.
 4. **Context flows forward.** Each transition carries the data the next view
    needs. Views never fetch — they receive.
+5. **Final view emits.** The last view must include a CTA that calls
+   `window.ark.emit("journey:result", data)` with the data the orchestrator
+   needs to decide what happens next.
 
 ## Available Globals
 
@@ -255,3 +275,4 @@ export default function SelectModels({ data = {}, onTransition }) {
 
 Generate realistic, plausible sample data — no "Lorem ipsum". Be creative and
 visually impressive.
+

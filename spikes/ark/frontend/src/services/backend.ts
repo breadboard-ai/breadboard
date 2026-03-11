@@ -17,9 +17,36 @@ export {
   type ReuseInfo,
   type SkillSummary,
   type SkillDetail,
+  type JourneySummary,
+  type JourneyStatus,
+  type JourneyUpdate,
 };
 
 const BACKEND_URL = "http://localhost:8080";
+
+/** Journey summary (from listing). */
+interface JourneySummary {
+  id: string;
+  objective: string;
+  status: "planning" | "generating" | "active" | "processing" | "complete" | "error";
+  progress: { current: number; total: number; label: string };
+}
+
+/** Full journey status. */
+interface JourneyStatus extends JourneySummary {
+  context: Record<string, unknown>;
+  view_available: boolean;
+}
+
+/** Result of submitting a journey step result. */
+interface JourneyUpdate {
+  journey_id: string;
+  new_state: string | null;
+  new_label: string;
+  view_available: boolean;
+  complete: boolean;
+  context: Record<string, unknown>;
+}
 
 /** Skill listing entry. */
 interface SkillSummary {
@@ -185,4 +212,68 @@ const backend = {
     });
     return res.json();
   },
+
+  // ─── Journeys ─────────────────────────────────────────────────────────
+
+  /** Start a new journey. Returns the journey ID. */
+  async startJourney(objective: string): Promise<string> {
+    const res = await fetch(`${BACKEND_URL}/journeys/start`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ objective }),
+    });
+    const data = await res.json();
+    return data.id;
+  },
+
+  /** Submit a result from a journey step. */
+  async submitResult(
+    journeyId: string,
+    payload: Record<string, unknown>
+  ): Promise<JourneyUpdate> {
+    const res = await fetch(`${BACKEND_URL}/journeys/${journeyId}/result`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ payload }),
+    });
+    return res.json();
+  },
+
+  /** Get the current status of a journey. */
+  async getJourneyStatus(journeyId: string): Promise<JourneyStatus> {
+    const res = await fetch(`${BACKEND_URL}/journeys/${journeyId}/status`);
+    return res.json();
+  },
+
+  /** List all journeys. */
+  async listJourneys(): Promise<JourneySummary[]> {
+    const res = await fetch(`${BACKEND_URL}/journeys`);
+    return res.json();
+  },
+
+  /** Fetch the multipart bundle for the current journey step. */
+  async fetchJourneyBundle(journeyId: string): Promise<Response> {
+    const res = await fetch(`${BACKEND_URL}/journeys/${journeyId}/bundle`);
+    if (!res.ok) {
+      throw new Error(
+        `Journey bundle fetch failed: ${res.status} ${res.statusText}`
+      );
+    }
+    return res;
+  },
+
+  /** Delete a journey and its artifacts. */
+  async deleteJourney(journeyId: string): Promise<void> {
+    await fetch(`${BACKEND_URL}/journeys/${journeyId}`, {
+      method: "DELETE",
+    });
+  },
+
+  /** Retry a failed journey generation. */
+  async retryJourney(journeyId: string): Promise<void> {
+    await fetch(`${BACKEND_URL}/journeys/${journeyId}/retry`, {
+      method: "POST",
+    });
+  },
 };
+

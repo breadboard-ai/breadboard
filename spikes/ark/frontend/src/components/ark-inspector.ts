@@ -232,7 +232,7 @@ class ArkInspector extends LitElement {
   `;
 
   override willUpdate(changed: Map<string, unknown>) {
-    if (changed.has("bundle") && this.bundle) {
+    if (changed.has("bundle") && this.bundle && this.bundle.source !== "journey") {
       this.#fetchReuse();
     }
   }
