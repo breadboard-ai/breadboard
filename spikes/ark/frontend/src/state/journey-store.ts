@@ -40,10 +40,11 @@ class JourneyStore {
   /** Loading state for bundle fetch. */
   readonly bundleLoading = new Signal.State(false);
 
+  /** True when the active journey has finished all steps. */
+  readonly completed = new Signal.State<boolean>(false);
+
   /** Whether the journey is processing (auto-advancing). */
   readonly processing = new Signal.State(false);
-
-
 
   /** Start a new journey. The backend returns immediately; generation
    *  runs in the background. We poll until the first view is ready. */
@@ -71,10 +72,12 @@ class JourneyStore {
       const update = await backend.submitResult(journeyId, payload);
 
       if (update.complete) {
-        // Journey is done.
+        // Journey is done — stay in the journey view, show completion.
         this.processing.set(false);
-        this.activeJourneyId.set(null);
-        this.activeStatus.set(null);
+        this.completed.set(true);
+        // Refresh status so context is up-to-date.
+        const status = await backend.getJourneyStatus(journeyId);
+        this.activeStatus.set(status);
         await this.#pollJourneys();
         return;
       }
@@ -101,6 +104,7 @@ class JourneyStore {
     this.activeJourneyId.set(null);
     this.activeStatus.set(null);
     this.processing.set(false);
+    this.completed.set(false);
   }
 
   /** Delete a journey. */
@@ -109,6 +113,18 @@ class JourneyStore {
     if (this.activeJourneyId.get() === id) {
       this.closeJourney();
     }
+    await this.#pollJourneys();
+  }
+
+  /** Retry a failed journey — resets and re-triggers generation. */
+  async retryJourney() {
+    const journeyId = this.activeJourneyId.get();
+    if (!journeyId) return;
+
+    this.processing.set(true);
+    this.activeStatus.set(null);
+    await backend.retryJourney(journeyId);
+    await this.#pollUntilReady(journeyId);
     await this.#pollJourneys();
   }
 
@@ -125,8 +141,11 @@ class JourneyStore {
     const status = await backend.getJourneyStatus(id);
     this.activeStatus.set(status);
 
-    if (status.status === "planning" || status.status === "generating" ||
-        !status.view_available) {
+    if (
+      status.status === "planning" ||
+      status.status === "generating" ||
+      !status.view_available
+    ) {
       this.processing.set(true);
       await this.#pollUntilReady(id);
     } else {

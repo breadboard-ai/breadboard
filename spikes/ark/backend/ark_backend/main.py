@@ -1007,6 +1007,16 @@ async def api_journey_status(journey_id: str):
     }
 
 
+@app.post("/journeys/{journey_id}/retry")
+async def api_retry_journey(journey_id: str):
+    """Retry a failed journey generation."""
+    try:
+        await journey_router.retry_journey(world, journey_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True}
+
+
 @app.get("/journeys")
 async def api_list_journeys():
     """List all journeys."""

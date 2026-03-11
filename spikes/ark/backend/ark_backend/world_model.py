@@ -42,6 +42,7 @@ class Journey:
     context: dict = field(default_factory=dict)  # Accumulated data across steps
     status: str = "active"  # planning | generating | active | processing | complete | error
     current_detail: str = ""  # Real-time progress from the agent
+    error_message: str = ""  # Populated when status == "error"
 
     @property
     def current_step(self) -> JourneyStep | None:
@@ -55,7 +56,9 @@ class Journey:
 
     @property
     def progress(self) -> dict:
-        if self.status in ("planning", "generating"):
+        if self.status == "error":
+            label = self.error_message or "Something went wrong"
+        elif self.status in ("planning", "generating"):
             label = self.current_detail or (
                 "Planning your journey…" if self.status == "planning"
                 else "Generating views…"
@@ -65,7 +68,7 @@ class Journey:
         else:
             label = "Complete"
         return {
-            "current": self.current_step_index,
+            "current": min(self.current_step_index, len(self.steps)),
             "total": len(self.steps),
             "label": label,
         }

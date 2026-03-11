@@ -268,5 +268,12 @@ const backend = {
       method: "DELETE",
     });
   },
+
+  /** Retry a failed journey generation. */
+  async retryJourney(journeyId: string): Promise<void> {
+    await fetch(`${BACKEND_URL}/journeys/${journeyId}/retry`, {
+      method: "POST",
+    });
+  },
 };
 

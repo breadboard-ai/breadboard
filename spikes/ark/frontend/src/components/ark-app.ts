@@ -10,7 +10,7 @@ import { customElement, state } from "lit/decorators.js";
 import { RunStore } from "../state/run-store.js";
 import { JourneyStore } from "../state/journey-store.js";
 import { ViewManager } from "../host/view-manager.js";
-import type { JourneySummary } from "../services/backend.js";
+import { backend, type JourneySummary, type JourneyStatus } from "../services/backend.js";
 import "./ark-prompt.js";
 import "./ark-run-card.js";
 import "./ark-theme-bar.js";
@@ -281,6 +281,112 @@ class ArkApp extends SignalWatcher(LitElement) {
       to { transform: rotate(360deg); }
     }
 
+    /* Journey completion view */
+    .completion-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 24px;
+      padding: 40px;
+      background: var(--cg-color-surface, #f8f8f8);
+      color: var(--cg-color-on-surface, #1a1a1a);
+    }
+
+    .completion-view .completion-icon {
+      font-size: 48px;
+    }
+
+    .completion-view h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .completion-view .outcome {
+      max-width: 480px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .completion-view .outcome-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--cg-color-surface-container, #f0f0f0);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .completion-view .outcome-key {
+      color: var(--cg-color-on-surface-muted, #666);
+      text-transform: capitalize;
+    }
+
+    .completion-view .outcome-value {
+      font-weight: 600;
+    }
+
+    .completion-view .done-btn {
+      border: none;
+      background: var(--cg-color-primary, #333);
+      color: var(--cg-color-on-primary, #fff);
+      padding: 10px 28px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 8px;
+      transition: opacity 0.15s;
+    }
+
+    .completion-view .done-btn:hover {
+      opacity: 0.85;
+    }
+
+    /* Journey error view */
+    .error-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 20px;
+      padding: 40px;
+      background: var(--cg-color-surface, #f8f8f8);
+      color: var(--cg-color-on-surface, #1a1a1a);
+      text-align: center;
+    }
+
+    .error-view .error-icon {
+      font-size: 40px;
+    }
+
+    .error-view .error-message {
+      font-size: 15px;
+      color: var(--cg-color-on-surface-muted, #666);
+      max-width: 400px;
+    }
+
+    .error-view .retry-btn {
+      border: none;
+      background: var(--cg-color-primary, #333);
+      color: var(--cg-color-on-primary, #fff);
+      padding: 10px 28px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.15s;
+    }
+
+    .error-view .retry-btn:hover {
+      opacity: 0.85;
+    }
+
     /* Journey progress bar in header */
     .journey-progress {
       display: flex;
@@ -329,7 +435,10 @@ class ArkApp extends SignalWatcher(LitElement) {
     const journeyProcessing = this.#journeyStore.processing.get();
     const journeyStatus = this.#journeyStore.activeStatus.get();
 
-    if (journeyBundle || journeyLoading || journeyProcessing) {
+    const journeyCompleted = this.#journeyStore.completed.get();
+    const journeyError = journeyStatus?.status === "error" && !journeyProcessing;
+
+    if (journeyBundle || journeyLoading || journeyProcessing || journeyCompleted || journeyError) {
       // Remap :root → :host so theme tokens resolve in shadow DOM.
       const hostThemeCss = this.themeCss
         ? html`<style>${this.themeCss.replace(/:root/g, ":host")}</style>`
@@ -342,27 +451,36 @@ class ArkApp extends SignalWatcher(LitElement) {
           <h1>${journeyLoading ? "Loading…" : journeyStatus?.progress.label ?? "Journey"}</h1>
           ${journeyStatus && journeyStatus.progress.total > 0 ? this.#renderProgressDots(journeyStatus.progress) : nothing}
         </header>
-        ${journeyLoading
-          ? html`<div class="loading">⏳ Fetching view…</div>`
-          : journeyProcessing
-            ? html`
-                <ark-theme-bar
-                  @theme-change=${this.#onThemeChange}
-                ></ark-theme-bar>
-                <div class="processing-indicator">
-                  <div class="spinner"></div>
-                  <span>${journeyStatus?.progress.label ?? "Working on it…"}</span>
-                </div>
-              `
-            : html`
-                <ark-theme-bar
-                  @theme-change=${this.#onThemeChange}
-                ></ark-theme-bar>
-                <div class="viewport-layout">
-                  <div class="viewport"></div>
-                  <ark-inspector .bundle=${journeyBundle}></ark-inspector>
-                </div>
-              `}
+        ${journeyError
+          ? html`
+              <div class="error-view">
+                <span class="error-icon">⚠️</span>
+                <p class="error-message">${journeyStatus!.progress.label}</p>
+                <button class="retry-btn" @click=${this.#onRetry}>Retry</button>
+              </div>
+            `
+          : journeyCompleted
+            ? this.#renderJourneyCompletion(journeyStatus)
+            : journeyLoading
+              ? html`<div class="loading">⏳ Fetching view…</div>`
+              : journeyProcessing
+                ? html`
+                    <ark-theme-bar
+                      @theme-change=${this.#onThemeChange}
+                    ></ark-theme-bar>
+                    <div class="processing-indicator">
+                      <div class="spinner"></div>
+                      <span>${journeyStatus?.progress.label ?? "Working on it…"}</span>
+                    </div>
+                  `
+                : html`
+                    <ark-theme-bar
+                      @theme-change=${this.#onThemeChange}
+                    ></ark-theme-bar>
+                    <div class="viewport-layout">
+                      <div class="viewport"></div>
+                    </div>
+                  `}
       `;
     }
 
@@ -566,10 +684,52 @@ class ArkApp extends SignalWatcher(LitElement) {
 
   async #onOpenJourney(j: JourneySummary) {
     if (j.status === "complete") {
-      // Nothing to show for a complete journey (yet).
+      // Show the completion view for finished journeys.
+      const status = await backend.getJourneyStatus(j.id);
+      this.#journeyStore.activeJourneyId.set(j.id);
+      this.#journeyStore.activeStatus.set(status);
+      this.#journeyStore.completed.set(true);
+      return;
+    }
+    if (j.status === "error") {
+      // Show the error view so the user can retry.
+      const status = await backend.getJourneyStatus(j.id);
+      this.#journeyStore.activeJourneyId.set(j.id);
+      this.#journeyStore.activeStatus.set(status);
       return;
     }
     await this.#journeyStore.openJourney(j.id);
+  }
+
+  #renderJourneyCompletion(status: JourneyStatus | null) {
+    const context = status?.context ?? {};
+    const entries = Object.entries(context).filter(
+      ([, v]) => v !== null && v !== "" && v !== undefined
+    );
+
+    return html`
+      <div class="completion-view">
+        <span class="completion-icon">✨</span>
+        <h2>Journey Complete</h2>
+        <p style="margin:0;opacity:0.7">${status?.objective ?? ""}</p>
+        ${entries.length > 0
+          ? html`
+            <div class="outcome">
+              ${entries.map(([key, value]) => html`
+                <div class="outcome-item">
+                  <span class="outcome-key">${key.replace(/_/g, " ")}</span>
+                  <span class="outcome-value">${String(value)}</span>
+                </div>
+              `)}
+            </div>`
+          : nothing}
+        <button class="done-btn" @click=${this.#onJourneyBack}>Done</button>
+      </div>
+    `;
+  }
+
+  #onRetry() {
+    this.#journeyStore.retryJourney();
   }
 
   #onJourneyBack() {

@@ -315,10 +315,39 @@ async def _generate_journey(
         world.save()
         logger.info("Journey %s fully generated (%d segments)", journey_id, len(steps))
 
-    except Exception:
+    except Exception as exc:
         logger.exception("Journey %s generation failed", journey_id)
+        # Extract a human-friendly message from the exception.
+        msg = str(exc)
+        if "503" in msg:
+            journey.error_message = "The AI service is temporarily overloaded. Try again in a moment."
+        elif "429" in msg:
+            journey.error_message = "Rate limited — too many requests. Try again shortly."
+        else:
+            journey.error_message = "Generation failed. You can retry."
         journey.status = "error"
         world.save()
+
+
+async def retry_journey(world: WorldModel, journey_id: str) -> None:
+    """Reset a failed journey and re-trigger generation."""
+    journey = world.get_journey(journey_id)
+    if journey is None:
+        raise ValueError(f"Journey {journey_id} not found")
+
+    if journey.status != "error":
+        raise ValueError(f"Journey {journey_id} is not in error state")
+
+    # Reset to planning state.
+    journey.status = "planning"
+    journey.error_message = ""
+    journey.current_detail = ""
+    journey.steps.clear()
+    journey.current_step_index = 0
+    world.save()
+
+    # Re-trigger background generation.
+    asyncio.create_task(_generate_journey(world, journey_id, journey.objective))
 
 
 async def submit_result(
