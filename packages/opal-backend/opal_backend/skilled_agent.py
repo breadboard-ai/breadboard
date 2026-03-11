@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 SKILLS_DIR = "/mnt/skills"
+REFERENCES_DIR = "/mnt/references"
 
 
 @dataclass
@@ -97,11 +98,15 @@ def parse_skill_front_matter(text: str) -> tuple[str, str]:
 # ---------------------------------------------------------------------------
 
 
-def _build_skill_instruction(skills: list[Skill]) -> str:
+def _build_skill_instruction(
+    skills: list[Skill],
+    skills_dir: str = SKILLS_DIR,
+) -> str:
     """Build the meta-instruction for the skilled agent."""
     skill_catalog = "\n".join(
         f"  - **{s.name}**: {s.description}" for s in skills
     )
+    references_dir = skills_dir.rsplit("/", 1)[0] + "/references"
 
     return f"""\
 You are an Executive Assistant. Your job is to help users accomplish
@@ -120,7 +125,7 @@ your outputs.
 
 ## Your Skills
 
-Skills are stored under `{SKILLS_DIR}/`. Read any skill file using
+Skills are stored under `{skills_dir}/`. Read any skill file using
 `system_read_text_from_file` when you need its instructions.
 
 {skill_catalog}
@@ -139,7 +144,7 @@ Skills come in different kinds:
 
 ### 1. Ground Yourself
 
-Read any reference material in `/mnt/references/`. This gives you
+Read any reference material in `{references_dir}/`. This gives you
 domain context before making decisions.
 
 ### 2. Plan
@@ -174,9 +179,11 @@ usable, call `system_objective_fulfilled`.
 ### Self-Teaching
 
 When you identify a domain knowledge gap, read the Skill Author
-skill (`{SKILLS_DIR}/teacher/SKILL.md`) and write a new SKILL.md.
+skill (`{skills_dir}/teacher/SKILL.md`) and write a new SKILL.md.
 It will be auto-installed for future runs — you only need to
 self-teach once per domain.
+
+Skills are stored as markdown files in `{skills_dir}/`.
 """
 
 
@@ -194,6 +201,7 @@ async def run_skilled_agent(
     pre_loaded_files: dict[str, str] | None = None,
     extra_groups: list[FunctionGroup] | None = None,
     function_groups: Callable[[LoopController], list[FunctionGroup]] | None = None,
+    skills_dir: str = SKILLS_DIR,
 ) -> AsyncIterator[AgentEvent]:
     """Run a skill-driven agent.
 
@@ -268,7 +276,7 @@ async def run_skilled_agent(
     # Override the system instruction with the skill-aware one.
     # This applies to both paths — the meta-instruction stays with
     # run_skilled_agent regardless of who built the groups.
-    skill_instruction = _build_skill_instruction(skills)
+    skill_instruction = _build_skill_instruction(skills, skills_dir=skills_dir)
     groups[0] = FunctionGroup(
         definitions=groups[0].definitions,
         declarations=groups[0].declarations,
