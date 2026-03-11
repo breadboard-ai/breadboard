@@ -354,6 +354,7 @@ async def _run_bash_agent(run: Run):
     """Run the bash sandbox agent — no skills, just shell access."""
     from ark_backend.gemini_client import ApiKeyBackendClient
     from ark_backend.sandbox import get_sandbox_function_group
+    from ark_backend.system import get_ark_system_group
     from opal_backend.skilled_agent import run_skilled_agent, Skill
 
     backend = ApiKeyBackendClient(api_key=GEMINI_API_KEY)
@@ -386,7 +387,10 @@ async def _run_bash_agent(run: Run):
             objective=run.objective,
             skills=[bash_skill],
             backend=backend,
-            extra_groups=[sandbox_group],
+            function_groups=lambda controller: [
+                get_ark_system_group(controller, work_dir=sandbox_dir),
+                sandbox_group,
+            ],
         ):
             etype = getattr(event, "type", "unknown")
             emit = False

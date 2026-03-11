@@ -21,7 +21,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -193,6 +193,7 @@ async def run_skilled_agent(
     flags: dict[str, Any] | None = None,
     pre_loaded_files: dict[str, str] | None = None,
     extra_groups: list[FunctionGroup] | None = None,
+    function_groups: Callable[[LoopController], list[FunctionGroup]] | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Run a skill-driven agent.
 
@@ -203,66 +204,76 @@ async def run_skilled_agent(
         flags: Optional feature flags.
         pre_loaded_files: Optional dict of path -> content to pre-load
             into the agent's file system (e.g., previous components).
-        extra_groups: Optional additional function groups to append to
-            the agent's tool set.
+        extra_groups: Deprecated. Use function_groups instead.
+        function_groups: Optional factory that receives a LoopController
+            and returns the complete list of FunctionGroups. When
+            provided, built-in environment assembly (AgentFileSystem,
+            TaskTreeManager, built-in groups) is skipped.
 
     Yields:
         Typed ``AgentEvent`` instances.
     """
     resolved_flags = flags or {}
-
-    file_system = AgentFileSystem()
-    task_tree_manager = TaskTreeManager(file_system)
     controller = LoopController()
-
-    # Pre-load skills into the file system.
-    for skill in skills:
-        slug = _slug(skill.name)
-        filename = f"skills/{slug}.md"
-        file_system.write(filename, skill.content)
-
-    # Pre-load additional files (e.g., previous components for reuse).
     pre_loaded_prefixes: list[str] = ["skills/", "library/"]
-    if pre_loaded_files:
-        for path, content in pre_loaded_files.items():
-            file_system.write(path, content)
 
-    # Build function groups.
-    groups: list[FunctionGroup] = [
-        get_system_function_group(
-            controller,
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
-        ),
-        get_generate_function_group(
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
-            backend=backend,
-        ),
-    ]
+    if function_groups is not None:
+        # Caller-owned groups: skip built-in assembly.
+        groups = function_groups(controller)
+    else:
+        # Built-in assembly (default path).
+        file_system = AgentFileSystem()
+        task_tree_manager = TaskTreeManager(file_system)
 
-    # Chat is flag-gated.
-    if resolved_flags.get("enableChat", False):
-        from .functions.chat import get_chat_function_group
+        # Pre-load skills into the file system.
+        for skill in skills:
+            slug = _slug(skill.name)
+            filename = f"skills/{slug}.md"
+            file_system.write(filename, skill.content)
 
-        groups.append(
-            get_chat_function_group(
-                task_tree_manager=task_tree_manager,
+        # Pre-load additional files (e.g., previous components for reuse).
+        if pre_loaded_files:
+            for path, content in pre_loaded_files.items():
+                file_system.write(path, content)
+
+        # Build function groups.
+        groups: list[FunctionGroup] = [
+            get_system_function_group(
+                controller,
                 file_system=file_system,
+                task_tree_manager=task_tree_manager,
+            ),
+            get_generate_function_group(
+                file_system=file_system,
+                task_tree_manager=task_tree_manager,
+                backend=backend,
+            ),
+        ]
+
+        # Chat is flag-gated.
+        if resolved_flags.get("enableChat", False):
+            from .functions.chat import get_chat_function_group
+
+            groups.append(
+                get_chat_function_group(
+                    task_tree_manager=task_tree_manager,
+                    file_system=file_system,
+                )
             )
-        )
+
+        # Append caller-provided extra groups (deprecated path).
+        if extra_groups:
+            groups.extend(extra_groups)
 
     # Override the system instruction with the skill-aware one.
+    # This applies to both paths — the meta-instruction stays with
+    # run_skilled_agent regardless of who built the groups.
     skill_instruction = _build_skill_instruction(skills)
     groups[0] = FunctionGroup(
         definitions=groups[0].definitions,
         declarations=groups[0].declarations,
         instruction=skill_instruction,
     )
-
-    # Append caller-provided extra groups (e.g., sandbox functions).
-    if extra_groups:
-        groups.extend(extra_groups)
 
     objective_content = {
         "parts": [{"text": f"<objective>{objective}</objective>"}],
