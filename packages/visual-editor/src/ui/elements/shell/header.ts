@@ -518,7 +518,8 @@ export class VEHeader extends SignalWatcher(LitElement) {
           id="tab-title"
           .value=${this.tabTitle}
         />
-        ${this.#renderExperimentalLabel()} ${this.#renderStatusLabel()}
+        ${this.#renderExperimentalLabel({ overridesOnly: true })}
+        ${this.#renderStatusLabel()}
       </div>
       ${this.#renderModeToggle()}
       <div id="right">
@@ -746,7 +747,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
     >`;
   }
 
-  #renderExperimentalLabel() {
+  #renderExperimentalLabel({ overridesOnly = false } = {}) {
     const hasOverrides = this.sca.env.flags.overrides().then((overrides) => {
       const count = Object.keys(overrides).length;
 
@@ -754,6 +755,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
         Strings.from("PROVIDER_NAME") === "PROVIDER_NAME" ||
         Strings.from("PROVIDER_NAME") === ""
       ) {
+        return nothing;
+      }
+
+      if (overridesOnly && count <= 0) {
         return nothing;
       }
 
