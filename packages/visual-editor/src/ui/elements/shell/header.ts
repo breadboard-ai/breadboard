@@ -390,7 +390,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
         margin-left: var(--bb-grid-size-2);
       }
 
-
       #back-button {
         padding: 0;
         margin: 0 var(--bb-grid-size-3) 0 0;
@@ -519,7 +518,8 @@ export class VEHeader extends SignalWatcher(LitElement) {
           id="tab-title"
           .value=${this.tabTitle}
         />
-        ${this.#renderExperimentalLabel({ overridesOnly: true })} ${this.#renderStatusLabel()}
+        ${this.#renderExperimentalLabel({ overridesOnly: true })}
+        ${this.#renderStatusLabel()}
       </div>
       ${this.#renderModeToggle()}
       <div id="right">
@@ -746,8 +746,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
       >${saveStatusLabel}</span
     >`;
   }
-
-
 
   #renderStatusLabel() {
     return html`<span class="sans" id="status"
