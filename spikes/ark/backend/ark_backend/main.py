@@ -18,6 +18,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from ark_backend.artifacts import generate_artifacts
+from ark_backend.world_model import WorldModel
+import ark_backend.journey_router as journey_router
 
 load_dotenv()
 
@@ -43,6 +45,9 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Serve generated artifacts as static files.
 app.mount("/out", StaticFiles(directory=str(OUT_DIR)), name="out")
+
+# Load the world model from disk (survives restarts).
+world = WorldModel.load()
 
 # ---------------------------------------------------------------------------
 # Echo
@@ -937,6 +942,136 @@ async def refresh_skill(slug: str):
         "description": new_desc,
         "status": "refreshed",
     }
+
+
+# ─── Journeys ─────────────────────────────────────────────────────────────────
+
+
+class StartJourneyRequest(BaseModel):
+    objective: str
+
+
+class StartJourneyResponse(BaseModel):
+    id: str
+
+
+@app.post("/journeys/start")
+async def api_start_journey(request: StartJourneyRequest) -> StartJourneyResponse:
+    """Create a new journey and return its ID.
+
+    View pre-production runs as a background task (LLM generation takes
+    time). The frontend polls GET /journeys/{id}/status until views are
+    ready.
+    """
+    journey_id = await journey_router.start_journey(world, request.objective)
+    return StartJourneyResponse(id=journey_id)
+
+
+class SubmitResultRequest(BaseModel):
+    payload: dict
+
+
+@app.post("/journeys/{journey_id}/result")
+async def api_submit_result(journey_id: str, request: SubmitResultRequest):
+    """Submit a user result for a journey step, advancing the state machine."""
+    try:
+        update = await journey_router.submit_result(
+            world, journey_id, request.payload
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    return {
+        "journey_id": update.journey_id,
+        "new_state": update.new_state,
+        "new_label": update.new_label,
+        "view_available": update.view_available,
+        "complete": update.complete,
+        "context": update.context,
+    }
+
+
+@app.get("/journeys/{journey_id}/status")
+async def api_journey_status(journey_id: str):
+    """Get the current status of a journey."""
+    journey = world.get_journey(journey_id)
+    if journey is None:
+        raise HTTPException(status_code=404, detail="Journey not found")
+    projection = journey_router.get_projection(world, journey_id)
+    return {
+        "id": journey.id,
+        "objective": journey.objective,
+        "status": journey.status,
+        "progress": journey.progress,
+        "context": journey.context,
+        "view_available": projection is not None,
+    }
+
+
+@app.get("/journeys")
+async def api_list_journeys():
+    """List all journeys."""
+    return [
+        {
+            "id": j.id,
+            "objective": j.objective,
+            "status": j.status,
+            "progress": j.progress,
+        }
+        for j in world.journeys.values()
+    ]
+
+
+@app.get("/journeys/{journey_id}/bundle")
+async def api_journey_bundle(journey_id: str):
+    """Return the multipart bundle for the current journey step's view."""
+    projection = journey_router.get_projection(world, journey_id)
+    if projection is None:
+        raise HTTPException(
+            status_code=404, detail="No view available for this journey"
+        )
+
+    # Build the file list relative to the step's output directory.
+    step_dir_name = f"journey-{journey_id}/{projection.state_id}"
+
+    def _stream():
+        step_dir = OUT_DIR / step_dir_name
+        for rel_path in projection.view_files:
+            path = step_dir / rel_path
+            if not path.is_file():
+                continue
+            content_type = (
+                mimetypes.guess_type(rel_path)[0] or "application/octet-stream"
+            )
+            yield f"--{BOUNDARY}\r\n".encode()
+            yield f'Content-Disposition: attachment; filename="{rel_path}"\r\n'.encode()
+            yield f"Content-Type: {content_type}\r\n".encode()
+            yield b"\r\n"
+            yield path.read_bytes()
+            yield b"\r\n"
+        yield f"--{BOUNDARY}--\r\n".encode()
+
+    return StreamingResponse(
+        _stream(),
+        media_type=f"multipart/mixed; boundary={BOUNDARY}",
+    )
+
+
+@app.delete("/journeys/{journey_id}")
+async def api_delete_journey(journey_id: str):
+    """Delete a journey and its artifacts."""
+    import shutil
+
+    journey = world.journeys.pop(journey_id, None)
+    if journey is None:
+        raise HTTPException(status_code=404, detail="Journey not found")
+
+    # Remove artifacts from disk.
+    journey_dir = OUT_DIR / f"journey-{journey_id}"
+    if journey_dir.is_dir():
+        shutil.rmtree(journey_dir)
+
+    world.save()
+    return {"deleted": journey_id}
 
 
 @app.get("/agent/runs/{run_id}/reuse")

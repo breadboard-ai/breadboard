@@ -19,6 +19,9 @@ export interface ViewBundle {
   /** Unique ID for this bundle (from the backend). */
   id: string;
 
+  /** Where this bundle came from — 'run' or 'journey'. */
+  source?: "run" | "journey";
+
   /** The views to render. */
   views: ViewDescriptor[];
 
