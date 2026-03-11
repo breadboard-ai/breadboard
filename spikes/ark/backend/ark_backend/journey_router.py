@@ -68,18 +68,8 @@ class ProjectionInfo:
 
 def _load_skills():
     """Discover skills from backend/skills/*/SKILL.md."""
-    from opal_backend.skilled_agent import Skill, parse_skill_front_matter
-
-    skills_dir = Path(__file__).resolve().parent.parent / "skills"
-    skills: list = []
-    if skills_dir.is_dir():
-        for skill_path in sorted(skills_dir.glob("*/SKILL.md")):
-            content = skill_path.read_text()
-            name, description = parse_skill_front_matter(content)
-            skills.append(Skill(
-                name=name, description=description, content=content,
-            ))
-    return skills
+    from ark_backend.skill_loader import load_skills
+    return [ls.skill for ls in load_skills()]
 
 
 def _load_references() -> dict[str, str]:

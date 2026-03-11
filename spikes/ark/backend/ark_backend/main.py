@@ -1,6 +1,7 @@
 """Ark backend — FastAPI spike server."""
 
 import asyncio
+from contextlib import asynccontextmanager
 import json
 import logging
 import mimetypes
@@ -29,7 +30,26 @@ logger = logging.getLogger(__name__)
 # When absent, falls back to simulation.
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
-app = FastAPI(title="Ark Backend")
+
+
+
+@asynccontextmanager
+async def lifespan(app):
+    """Manage application lifecycle — cancel agent tasks on shutdown."""
+    yield
+    # Shutdown: cancel all running agent tasks.
+    await _cancel_running_tasks()
+
+
+async def _cancel_running_tasks():
+    """Cancel all running agent tasks."""
+    for run in runs.values():
+        if run.task and not run.task.done():
+            run.task.cancel()
+            logger.info("Cancelled task for run %s", run.id)
+
+
+app = FastAPI(title="Ark Backend", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -102,6 +122,8 @@ class Run:
     artifacts: list[str] = field(default_factory=list)
     # Subscribers waiting for new events (live SSE connections).
     subscribers: list[asyncio.Queue] = field(default_factory=list)
+    # Background task handle for cancellation on shutdown.
+    task: asyncio.Task | None = field(default=None, repr=False)
 
 
 # In-memory run store (spike-grade).
@@ -348,19 +370,21 @@ async def start_run(request: StartRunRequest) -> StartRunResponse:
     (run_dir / "objective.txt").write_text(request.objective)
 
     if request.type == "bash":
-        asyncio.create_task(_run_bash_agent(run))
+        run.task = asyncio.create_task(_run_bash_agent(run))
     elif GEMINI_API_KEY:
-        asyncio.create_task(_run_with_skilled_agent(run))
+        run.task = asyncio.create_task(_run_with_skilled_agent(run))
     else:
-        asyncio.create_task(_simulate_run(run))
+        run.task = asyncio.create_task(_simulate_run(run))
     return StartRunResponse(id=run_id)
 
 async def _run_bash_agent(run: Run):
-    """Run the bash sandbox agent — no skills, just shell access."""
+    """Run the bash sandbox agent with skills loaded from disk."""
     from ark_backend.gemini_client import ApiKeyBackendClient
     from ark_backend.sandbox import get_sandbox_function_group
     from ark_backend.system import get_ark_system_group
-    from opal_backend.skilled_agent import run_skilled_agent, Skill
+    from opal_backend.skilled_agent import (
+        run_skilled_agent, Skill,
+    )
 
     backend = ApiKeyBackendClient(api_key=GEMINI_API_KEY)
 
@@ -369,29 +393,30 @@ async def _run_bash_agent(run: Run):
     sandbox_dir.mkdir(parents=True, exist_ok=True)
     sandbox_group = get_sandbox_function_group(work_dir=sandbox_dir)
 
-    # Minimal "skill" that just tells the agent to use bash.
-    bash_skill = Skill(
-        name="Bash Runner",
-        description="Accomplish objectives using shell commands.",
-        content=(
-            "---\n"
-            "name: Bash Runner\n"
-            "description: Accomplish objectives using shell commands.\n"
-            "---\n\n"
-            "# Bash Runner\n\n"
-            "You have access to `execute_bash` to run shell commands.\n"
-            "Your working directory is `$HOME`. Use it to accomplish\n"
-            "the user's objective. Install tools as needed.\n"
-        ),
-    )
+    # Load skills from backend/skills/*/SKILL.md and copy into work_dir.
+    from ark_backend.skill_loader import load_skills, copy_skills_to_work_dir
+    loaded = load_skills(include=["teacher"])
+    # Kludge: rewrite /mnt/ references to $HOME/ for the real FS.
+    _mnt_to_home = lambda s: s.replace("/mnt/", "$HOME/")
+    copy_skills_to_work_dir(loaded, work_dir=sandbox_dir, transform=_mnt_to_home)
+    # Adapt skill content for the real filesystem.
+    skills = [
+        Skill(
+            name=ls.skill.name,
+            description=ls.skill.description,
+            content=ls.skill.content.replace("/mnt/", "$HOME/"),
+        )
+        for ls in loaded
+    ]
 
     try:
         last_detail = None
 
         async for event in run_skilled_agent(
             objective=run.objective,
-            skills=[bash_skill],
+            skills=skills,
             backend=backend,
+            skills_dir="$HOME/skills",
             function_groups=lambda controller: [
                 get_ark_system_group(controller, work_dir=sandbox_dir),
                 sandbox_group,
@@ -401,7 +426,7 @@ async def _run_bash_agent(run: Run):
             emit = False
 
             if etype == "thought":
-                text = getattr(event, "text", "")[:200]
+                text = getattr(event, "text", "")
                 if text:
                     run.current_step = "thinking"
                     run.current_detail = text
@@ -412,38 +437,38 @@ async def _run_bash_agent(run: Run):
                 run.current_step = "working"
                 if name == "execute_bash":
                     cmd = args.get("command", "")
-                    preview = cmd[:120] + ("…" if len(cmd) > 120 else "")
-                    run.current_detail = f"$ {preview}"
+                    run.current_detail = f"$ {cmd}"
                 else:
-                    run.current_detail = f"Calling {name}…"
+                    args_str = json.dumps(args, indent=2) if args else ""
+                    run.current_detail = f"Calling {name}\n{args_str}" if args_str else f"Calling {name}"
                 run.progress += 1
                 emit = True
             elif etype == "functionResult":
-                # The Loop wraps handler results as:
-                # content = {"parts": [{"functionResponse": {
-                #     "name": "execute_bash",
-                #     "response": {"stdout": "...", "exit_code": 0}
-                # }}]}
                 content = getattr(event, "content", {})
                 parts = content.get("parts", []) if isinstance(content, dict) else []
                 if parts:
                     fr = parts[0].get("functionResponse", {})
+                    fn_name = fr.get("name", "")
                     result_data = fr.get("response", {})
-                    stdout = result_data.get("stdout", "")
-                    exit_code = result_data.get("exit_code")
+
+                    # Format the result for display.
                     error = result_data.get("error")
                     if error:
                         run.current_step = "result"
                         run.current_detail = f"Error: {error}"
                         emit = True
-                    elif stdout:
-                        # Truncate for display.
-                        preview = stdout[:500]
-                        if len(stdout) > 500:
-                            preview += "\n…"
-                        suffix = f" (exit {exit_code})" if exit_code else ""
+                    elif fn_name == "execute_bash":
+                        stdout = result_data.get("stdout", "")
+                        exit_code = result_data.get("exit_code")
+                        if stdout:
+                            suffix = f" (exit {exit_code})" if exit_code else ""
+                            run.current_step = "result"
+                            run.current_detail = f"{stdout}{suffix}"
+                            emit = True
+                    else:
+                        # Non-bash functions: show the response as JSON.
                         run.current_step = "result"
-                        run.current_detail = f"{preview}{suffix}"
+                        run.current_detail = json.dumps(result_data, indent=2)
                         emit = True
             elif etype == "complete":
                 result = getattr(event, "result", None)
@@ -487,6 +512,12 @@ async def _run_bash_agent(run: Run):
                 for q in run.subscribers:
                     await q.put(progress_event)
 
+    except asyncio.CancelledError:
+        logger.info("Bash agent cancelled for run %s", run.id)
+        cancel_event = {"type": "progress", "step": "error", "detail": "Agent cancelled (server shutting down)"}
+        run.events.append(cancel_event)
+        for q in run.subscribers:
+            await q.put(cancel_event)
     except Exception as e:
         logger.exception("Bash agent failed")
         error_event = {"type": "progress", "step": "error", "detail": str(e)}
@@ -510,24 +541,15 @@ async def _run_with_skilled_agent(run: Run):
     """Run the real skilled agent loop."""
     from ark_backend.gemini_client import ApiKeyBackendClient
     from ark_backend.sandbox import get_sandbox_function_group
-    from opal_backend.skilled_agent import (
-        Skill, parse_skill_front_matter, run_skilled_agent,
-    )
+    from ark_backend.skill_loader import load_skills
+    from opal_backend.skilled_agent import run_skilled_agent
 
     # Discover skills from backend/skills/*/SKILL.md.
-    skills_dir = Path(__file__).resolve().parent.parent / "skills"
-    skills: list[Skill] = []
-    if skills_dir.is_dir():
-        for skill_path in sorted(skills_dir.glob("*/SKILL.md")):
-            content = skill_path.read_text()
-            name, description = parse_skill_front_matter(content)
-            skills.append(Skill(
-                name=name, description=description, content=content,
-            ))
-            logger.info("Loaded skill: %s (%s)", name, skill_path.parent.name)
+    loaded = load_skills()
+    skills = [ls.skill for ls in loaded]
 
     if not skills:
-        logger.warning("No skills found in %s, falling back to simulation", skills_dir)
+        logger.warning("No skills found, falling back to simulation")
         await _simulate_run(run)
         return
 
@@ -657,7 +679,7 @@ async def list_runs():
             "total_steps": r.total_steps,
             "artifacts": r.artifacts,
         }
-        for r in runs.values()
+        for r in reversed(list(runs.values()))
     ]
 
 
