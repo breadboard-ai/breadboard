@@ -324,8 +324,14 @@ async def _simulate_run(run: Run):
 @app.post("/agent/runs/start")
 async def start_run(request: StartRunRequest) -> StartRunResponse:
     """Create a new agent run and return its ID."""
-    if request.type != "ui":
+    if request.type not in ("ui", "bash"):
         raise HTTPException(status_code=400, detail=f"Unknown agent type: {request.type}")
+
+    if request.type == "bash" and not GEMINI_API_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="GEMINI_API_KEY required for bash agent",
+        )
 
     run_id = uuid.uuid4().hex[:12]
     run = Run(id=run_id, objective=request.objective, agent_type=request.type)
@@ -336,16 +342,165 @@ async def start_run(request: StartRunRequest) -> StartRunResponse:
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "objective.txt").write_text(request.objective)
 
-    if GEMINI_API_KEY:
+    if request.type == "bash":
+        asyncio.create_task(_run_bash_agent(run))
+    elif GEMINI_API_KEY:
         asyncio.create_task(_run_with_skilled_agent(run))
     else:
         asyncio.create_task(_simulate_run(run))
     return StartRunResponse(id=run_id)
 
+async def _run_bash_agent(run: Run):
+    """Run the bash sandbox agent — no skills, just shell access."""
+    from ark_backend.gemini_client import ApiKeyBackendClient
+    from ark_backend.sandbox import get_sandbox_function_group
+    from opal_backend.skilled_agent import run_skilled_agent, Skill
+
+    backend = ApiKeyBackendClient(api_key=GEMINI_API_KEY)
+
+    # Create a persistent working directory for this run.
+    sandbox_dir = OUT_DIR / run.id / "sandbox"
+    sandbox_dir.mkdir(parents=True, exist_ok=True)
+    sandbox_group = get_sandbox_function_group(work_dir=sandbox_dir)
+
+    # Minimal "skill" that just tells the agent to use bash.
+    bash_skill = Skill(
+        name="Bash Runner",
+        description="Accomplish objectives using shell commands.",
+        content=(
+            "---\n"
+            "name: Bash Runner\n"
+            "description: Accomplish objectives using shell commands.\n"
+            "---\n\n"
+            "# Bash Runner\n\n"
+            "You have access to `execute_bash` to run shell commands.\n"
+            "Your working directory is `$HOME`. Use it to accomplish\n"
+            "the user's objective. Install tools as needed.\n"
+        ),
+    )
+
+    try:
+        last_detail = None
+
+        async for event in run_skilled_agent(
+            objective=run.objective,
+            skills=[bash_skill],
+            backend=backend,
+            extra_groups=[sandbox_group],
+        ):
+            etype = getattr(event, "type", "unknown")
+            emit = False
+
+            if etype == "thought":
+                text = getattr(event, "text", "")[:200]
+                if text:
+                    run.current_step = "thinking"
+                    run.current_detail = text
+                    emit = True
+            elif etype == "functionCall":
+                name = getattr(event, "name", "")
+                args = getattr(event, "args", {})
+                run.current_step = "working"
+                if name == "execute_bash":
+                    cmd = args.get("command", "")
+                    preview = cmd[:120] + ("…" if len(cmd) > 120 else "")
+                    run.current_detail = f"$ {preview}"
+                else:
+                    run.current_detail = f"Calling {name}…"
+                run.progress += 1
+                emit = True
+            elif etype == "functionResult":
+                # The Loop wraps handler results as:
+                # content = {"parts": [{"functionResponse": {
+                #     "name": "execute_bash",
+                #     "response": {"stdout": "...", "exit_code": 0}
+                # }}]}
+                content = getattr(event, "content", {})
+                parts = content.get("parts", []) if isinstance(content, dict) else []
+                if parts:
+                    fr = parts[0].get("functionResponse", {})
+                    result_data = fr.get("response", {})
+                    stdout = result_data.get("stdout", "")
+                    exit_code = result_data.get("exit_code")
+                    error = result_data.get("error")
+                    if error:
+                        run.current_step = "result"
+                        run.current_detail = f"Error: {error}"
+                        emit = True
+                    elif stdout:
+                        # Truncate for display.
+                        preview = stdout[:500]
+                        if len(stdout) > 500:
+                            preview += "\n…"
+                        suffix = f" (exit {exit_code})" if exit_code else ""
+                        run.current_step = "result"
+                        run.current_detail = f"{preview}{suffix}"
+                        emit = True
+            elif etype == "complete":
+                result = getattr(event, "result", None)
+                if result:
+                    # Extract the agent's outcome text.
+                    outcomes = getattr(result, "outcomes", None)
+                    if outcomes and isinstance(outcomes, dict):
+                        parts = outcomes.get("parts", [])
+                        for p in parts:
+                            text = p.get("text", "")
+                            if text:
+                                run.outcome = text
+
+                    # Save any intermediate files.
+                    if getattr(result, "intermediate", None):
+                        run_dir = OUT_DIR / run.id
+                        run_dir.mkdir(parents=True, exist_ok=True)
+                        for file_data in result.intermediate:
+                            dest = run_dir / file_data.path.lstrip("/")
+                            dest.parent.mkdir(parents=True, exist_ok=True)
+                            content = file_data.content
+                            fparts = content.get("parts", []) if isinstance(content, dict) else []
+                            text = fparts[0].get("text", "") if fparts else ""
+                            if text:
+                                dest.write_text(text)
+                            else:
+                                dest.write_text(str(content))
+                            run.artifacts.append(
+                                str(dest.relative_to(run_dir))
+                            )
+
+            # Only emit when there's a real state change.
+            if emit and run.current_detail != last_detail:
+                last_detail = run.current_detail
+                progress_event = {
+                    "type": "progress",
+                    "step": run.current_step,
+                    "detail": run.current_detail,
+                }
+                run.events.append(progress_event)
+                for q in run.subscribers:
+                    await q.put(progress_event)
+
+    except Exception as e:
+        logger.exception("Bash agent failed")
+        error_event = {"type": "progress", "step": "error", "detail": str(e)}
+        run.events.append(error_event)
+        for q in run.subscribers:
+            await q.put(error_event)
+
+    run.status = "complete"
+    done_event = {
+        "type": "done",
+        "id": run.id,
+        "artifacts": run.artifacts,
+        "outcome": getattr(run, "outcome", None),
+    }
+    run.events.append(done_event)
+    for q in run.subscribers:
+        await q.put(done_event)
+
 
 async def _run_with_skilled_agent(run: Run):
     """Run the real skilled agent loop."""
     from ark_backend.gemini_client import ApiKeyBackendClient
+    from ark_backend.sandbox import get_sandbox_function_group
     from opal_backend.skilled_agent import (
         Skill, parse_skill_front_matter, run_skilled_agent,
     )
@@ -398,12 +553,18 @@ async def _run_with_skilled_agent(run: Run):
     if pre_loaded:
         logger.info("Pre-loaded %d files total", len(pre_loaded))
 
+    # Create a persistent working directory for this run's bash sandbox.
+    sandbox_dir = OUT_DIR / run.id / "sandbox"
+    sandbox_dir.mkdir(parents=True, exist_ok=True)
+    sandbox_group = get_sandbox_function_group(work_dir=sandbox_dir)
+
     try:
         async for event in run_skilled_agent(
             objective=run.objective,
             skills=skills,
             backend=backend,
             pre_loaded_files=pre_loaded if pre_loaded else None,
+            extra_groups=[sandbox_group],
         ):
             etype = getattr(event, "type", "unknown")
 

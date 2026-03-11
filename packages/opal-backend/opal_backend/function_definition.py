@@ -135,18 +135,24 @@ class LoadedDeclarations:
     instruction: str | None
 
 
-def load_declarations(group: str) -> LoadedDeclarations:
+def load_declarations(
+    group: str,
+    *,
+    declarations_dir: Path | None = None,
+) -> LoadedDeclarations:
     """Load declarations, metadata, and instruction for a function group.
 
-    Reads from ``opal-backend/declarations/<group>.*`` files.
+    Reads from ``<declarations_dir>/<group>.*`` files. Defaults to
+    ``opal-backend/declarations/``.
     """
+    root = declarations_dir or _DECLARATIONS_DIR
     decls = json.loads(
-        (_DECLARATIONS_DIR / f"{group}.functions.json").read_text()
+        (root / f"{group}.functions.json").read_text()
     )
     meta = json.loads(
-        (_DECLARATIONS_DIR / f"{group}.metadata.json").read_text()
+        (root / f"{group}.metadata.json").read_text()
     )
-    instr_path = _DECLARATIONS_DIR / f"{group}.instruction.md"
+    instr_path = root / f"{group}.instruction.md"
     instr = instr_path.read_text() if instr_path.exists() else None
     return LoadedDeclarations(
         declarations=decls, metadata=meta, instruction=instr

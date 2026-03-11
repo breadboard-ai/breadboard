@@ -192,6 +192,7 @@ async def run_skilled_agent(
     backend: BackendClient,
     flags: dict[str, Any] | None = None,
     pre_loaded_files: dict[str, str] | None = None,
+    extra_groups: list[FunctionGroup] | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Run a skill-driven agent.
 
@@ -202,6 +203,8 @@ async def run_skilled_agent(
         flags: Optional feature flags.
         pre_loaded_files: Optional dict of path -> content to pre-load
             into the agent's file system (e.g., previous components).
+        extra_groups: Optional additional function groups to append to
+            the agent's tool set.
 
     Yields:
         Typed ``AgentEvent`` instances.
@@ -256,6 +259,10 @@ async def run_skilled_agent(
         declarations=groups[0].declarations,
         instruction=skill_instruction,
     )
+
+    # Append caller-provided extra groups (e.g., sandbox functions).
+    if extra_groups:
+        groups.extend(extra_groups)
 
     objective_content = {
         "parts": [{"text": f"<objective>{objective}</objective>"}],
