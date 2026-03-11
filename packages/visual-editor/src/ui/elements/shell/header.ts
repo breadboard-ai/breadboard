@@ -747,14 +747,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
     >`;
   }
 
-  #renderStatusLabel() {
-    return html`<span class="sans" id="status"
-      >${this.status === "Published"
-        ? html`<span class="g-icon w-400">cloud_done</span>`
-        : nothing}${this.status}</span
-    >`;
-  }
-
   #renderExperimentalLabel({ overridesOnly = false } = {}) {
     const hasOverrides = this.sca.env.flags.overrides().then((overrides) => {
       const count = Object.keys(overrides).length;
@@ -810,6 +802,14 @@ export class VEHeader extends SignalWatcher(LitElement) {
     });
 
     return html`${until(hasOverrides, nothing)}`;
+  }
+
+  #renderStatusLabel() {
+    return html`<span class="sans" id="status"
+      >${this.status === "Published"
+        ? html`<span class="g-icon w-400">cloud_done</span>`
+        : nothing}${this.status}</span
+    >`;
   }
 
   #renderDefaultControls() {
