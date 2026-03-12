@@ -157,6 +157,15 @@ def _make_handlers(
         if not target.exists():
             return {"error": f"File not found: {file_path}"}
 
+        # If the path is a directory, try SKILL.md inside it.
+        if target.is_dir():
+            skill_md = target / "SKILL.md"
+            if skill_md.is_file():
+                target = skill_md
+            else:
+                entries = sorted(p.name for p in target.iterdir())
+                return {"error": f"Path is a directory: {file_path}. Contents: {entries}"}
+
         try:
             text = target.read_text(encoding="utf-8")
         except UnicodeDecodeError:

@@ -395,7 +395,13 @@ async def _run_bash_agent(run: Run):
 
     # Load skills from backend/skills/*/SKILL.md and copy into work_dir.
     from ark_backend.skill_loader import load_skills, copy_skills_to_work_dir
-    loaded = load_skills(include=["teacher"])
+    loaded = load_skills(include=[
+        "teacher",
+        "gws-shared",
+        "gws-calendar",
+        "gws-calendar-insert",
+        "gws-calendar-agenda",
+    ])
     # Kludge: rewrite /mnt/ references to $HOME/ for the real FS.
     _mnt_to_home = lambda s: s.replace("/mnt/", "$HOME/")
     copy_skills_to_work_dir(loaded, work_dir=sandbox_dir, transform=_mnt_to_home)
@@ -409,6 +415,32 @@ async def _run_bash_agent(run: Run):
         for ls in loaded
     ]
 
+    skill_catalog = "\n".join(
+        f"  - **{s.name}**: {s.description}" for s in skills
+    )
+    bash_instruction = f"""\
+You accomplish objectives through skills.
+
+## Skills
+
+Skills are instruction files that teach you how to use specific tools.
+Read a skill with `system_read_text_from_file` before using the tool
+it describes. Follow the skill's steps exactly.
+
+Available skills (in `$HOME/skills/`):
+
+{skill_catalog}
+
+## How You Work
+
+1. Read relevant skills for the objective.
+2. Follow skill prerequisites and setup steps.
+3. Use `execute_bash` to run commands.
+4. When the objective is met, call `system_objective_fulfilled`.
+
+If a step fails, call `system_objective_failed` with a description of what happened and stop. Do not guess or retry without understanding the error. Remember, you can do a lot of damage with `execute_bash`.
+"""
+
     try:
         last_detail = None
 
@@ -417,6 +449,7 @@ async def _run_bash_agent(run: Run):
             skills=skills,
             backend=backend,
             skills_dir="$HOME/skills",
+            system_instruction=bash_instruction,
             function_groups=lambda controller: [
                 get_ark_system_group(controller, work_dir=sandbox_dir),
                 sandbox_group,
@@ -681,6 +714,20 @@ async def list_runs():
         }
         for r in reversed(list(runs.values()))
     ]
+
+@app.post("/agent/runs/{run_id}/cancel")
+async def cancel_run(run_id: str):
+    """Cancel a running agent task."""
+    run = runs.get(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+    if run.status == "complete":
+        raise HTTPException(status_code=409, detail="Run already complete")
+    if run.task and not run.task.done():
+        run.task.cancel()
+        logger.info("Cancelled run %s via API", run_id)
+        return {"status": "cancelled", "id": run_id}
+    return {"status": "no_task", "id": run_id}
 
 
 @app.delete("/agent/runs/{run_id}")

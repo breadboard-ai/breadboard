@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -34,7 +35,8 @@ _DECLARATIONS_DIR = Path(__file__).resolve().parent.parent / "declarations"
 
 
 def _make_handlers(
-    *, work_dir: Path, timeout: int = DEFAULT_TIMEOUT_SEC
+    *, work_dir: Path, timeout: int = DEFAULT_TIMEOUT_SEC,
+    extra_env: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Build the handler map for the sandbox function group."""
 
@@ -61,7 +63,7 @@ def _make_handlers(
                 cwd=str(work_dir),
                 env={
                     "HOME": str(work_dir),
-                    "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+                    "PATH": os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin"),
                     "LANG": "en_US.UTF-8",
                 },
             )
@@ -102,7 +104,8 @@ def _make_handlers(
 
 
 def get_sandbox_function_group(
-    *, work_dir: Path | None = None, timeout: int = DEFAULT_TIMEOUT_SEC
+    *, work_dir: Path | None = None, timeout: int = DEFAULT_TIMEOUT_SEC,
+    extra_env: dict[str, str] | None = None,
 ) -> FunctionGroup:
     """Build a FunctionGroup with the execute_bash function.
 
@@ -111,6 +114,8 @@ def get_sandbox_function_group(
             a temporary directory is created (and persists for the
             process lifetime).
         timeout: Default timeout in seconds per command.
+        extra_env: Extra environment variables to inject into the
+            subprocess (e.g., access tokens).
 
     Returns:
         A FunctionGroup ready to append to the agent's tool set.
@@ -119,6 +124,6 @@ def get_sandbox_function_group(
         work_dir = Path(tempfile.mkdtemp(prefix="ark-sandbox-"))
     work_dir.mkdir(parents=True, exist_ok=True)
 
-    handlers = _make_handlers(work_dir=work_dir, timeout=timeout)
+    handlers = _make_handlers(work_dir=work_dir, timeout=timeout, extra_env=extra_env)
     loaded = load_declarations("sandbox", declarations_dir=_DECLARATIONS_DIR)
     return assemble_function_group(loaded, handlers)

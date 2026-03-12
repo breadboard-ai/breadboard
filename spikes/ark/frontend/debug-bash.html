@@ -78,6 +78,19 @@
       }
       #start-btn:hover { opacity: 0.85; }
       #start-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+      #stop-btn {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.8rem;
+        font-family: inherit;
+        font-weight: 600;
+        background: var(--red);
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+      #stop-btn:hover { opacity: 0.85; }
 
       /* Run list */
       #runs {
@@ -224,6 +237,13 @@
         color: var(--text-muted);
         min-height: 1.5rem;
       }
+      #status-text {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+      }
+      #stop-btn { margin-left: auto; }
       .spinner {
         width: 14px;
         height: 14px;
@@ -261,7 +281,10 @@
     </div>
 
     <div id="log"></div>
-    <div id="status-bar"></div>
+    <div id="status-bar">
+      <span id="status-text"></span>
+      <button id="stop-btn" hidden>Stop</button>
+    </div>
 
     <div id="runs"></div>
 
@@ -274,6 +297,7 @@
       const runsContainer = document.querySelector("#runs");
       const log = document.querySelector("#log");
       const statusBar = document.querySelector("#status-bar");
+      const stopBtn = document.querySelector("#stop-btn");
 
       let selectedRunId = null;
       let activeEventSource = null;
@@ -425,6 +449,8 @@
       function openStream(id) {
         closeStream();
         currentDetails = null;
+        stopBtn.hidden = false;
+        stopBtn.onclick = () => cancelRun(id);
         const evtSource = new EventSource(`${BACKEND_URL}/agent/runs/${id}`);
         activeEventSource = evtSource;
 
@@ -479,6 +505,7 @@
 
           evtSource.close();
           activeEventSource = null;
+          stopBtn.hidden = true;
           setStatus("");
           // Refresh the run list to show final state.
           poll();
@@ -488,6 +515,7 @@
           appendLog("❌ Connection lost", "ev-error");
           evtSource.close();
           activeEventSource = null;
+          stopBtn.hidden = true;
           setStatus("");
         });
       }
@@ -497,6 +525,18 @@
           activeEventSource.close();
           activeEventSource = null;
         }
+        stopBtn.hidden = true;
+      }
+
+      async function cancelRun(id) {
+        stopBtn.disabled = true;
+        try {
+          await fetch(`${BACKEND_URL}/agent/runs/${id}/cancel`, { method: "POST" });
+          appendLog("⛔ Cancellation requested…", "ev-error");
+        } catch (e) {
+          appendLog(`❌ Cancel failed: ${e.message}`, "ev-error");
+        }
+        stopBtn.disabled = false;
       }
 
       // ── DOM helpers ─────────────────────────────────────────
@@ -537,10 +577,11 @@
       }
 
       function setStatus(text) {
+        const statusText = document.querySelector("#status-text");
         if (text) {
-          statusBar.innerHTML = `<div class="spinner"></div><span>${escapeHtml(text)}</span>`;
+          statusText.innerHTML = `<div class="spinner"></div><span>${escapeHtml(text)}</span>`;
         } else {
-          statusBar.innerHTML = "";
+          statusText.innerHTML = "";
         }
       }
 
