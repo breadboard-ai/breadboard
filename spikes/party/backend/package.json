@@ -1,0 +1,13 @@
+{
+  "name": "party-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@google/genai": "^1.44.0",
+    "dotenv": "^17.3.1",
+    "ws": "^8.18.0",
+    "y-websocket": "^2.1.0",
+    "yjs": "^13.6.0"
+  }
+}

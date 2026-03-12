@@ -1,0 +1,186 @@
+/* Copyright 2026 Google LLC — SPDX-License-Identifier: Apache-2.0 */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+/* ── Reset & Base ────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-bg: #0f0f13;
+  --color-surface: #1a1a24;
+  --color-surface-alt: #22222e;
+  --color-border: #2e2e3e;
+  --color-text: #e8e8f0;
+  --color-text-muted: #8888a0;
+  --color-accent: #7c6cff;
+  --color-accent-glow: rgba(124, 108, 255, 0.2);
+  --color-success: #34d399;
+  --color-danger: #f87171;
+  --radius: 10px;
+  --font: "Inter", system-ui, sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ──────────────────────────────────────────────────────── */
+
+party-app {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+  height: 100vh;
+  padding: 16px;
+}
+
+/* ── Shared component tokens ─────────────────────────────────────── */
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.card h2 {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-bottom: 12px;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  font-family: var(--font);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+input[type="text"]:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-glow);
+}
+
+button {
+  padding: 6px 14px;
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+/* ── Presence dots ───────────────────────────────────────────────── */
+
+.presence-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* ── Attribution tags ────────────────────────────────────────────── */
+
+.attribution {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-left: 8px;
+}
+
+/* ── Identity picker overlay ─────────────────────────────────────── */
+
+.identity-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+}
+
+.identity-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 32px;
+  text-align: center;
+  min-width: 320px;
+  box-sizing: border-box;
+}
+
+.identity-card h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.identity-card p {
+  color: var(--color-text-muted);
+  margin-bottom: 20px;
+}
+
+.identity-card input {
+  margin-bottom: 16px;
+  box-sizing: border-box;
+}
+
+/* ── Connection status ───────────────────────────────────────────── */
+
+.connection-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.connection-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.connection-status .dot.connected {
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-success);
+}
+
+.connection-status .dot.disconnected {
+  background: var(--color-danger);
+}
