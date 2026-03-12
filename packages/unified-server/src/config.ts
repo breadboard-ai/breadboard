@@ -73,7 +73,7 @@ export async function createClientConfig(opts: {
       opalAdk: flags.ENABLE_OPAL_ADK,
       outputTemplates: flags.ENABLE_OUTPUT_TEMPLATES,
       googleOne: flags.ENABLE_GOOGLE_ONE,
-      requireConsentForGetWebpage: flags.ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE,
+
       requireConsentForOpenWebpage:
         flags.ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE,
       streamPlanner: flags.STREAM_PLANNER,
