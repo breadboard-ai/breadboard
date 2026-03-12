@@ -7,7 +7,6 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, suite, test } from "node:test";
 import { RouterController } from "../../../../../src/sca/controller/subcontrollers/router/router-controller.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../../../../src/ui/config/client-deployment-configuration.js";
 import { setDOM, unsetDOM } from "../../../../fake-dom.js";
 import { SignalWatcher } from "../../../../signal-watcher.js";
 import { Signal } from "signal-polyfill";
@@ -75,8 +74,8 @@ suite("RouterController", () => {
       assert.strictEqual(controller.parsedUrl.flow, "drive:/abcdef");
       assert.strictEqual(controller.parsedUrl.mode, "canvas");
     }
-    // URL should be updated
-    assert.ok(window.location.href.includes("flow=drive:/abcdef"));
+    // URL should be updated (new URL scheme uses pathname routing)
+    assert.ok(window.location.href.includes("/edit/abcdef"));
   });
 
   test("go() is a no-op if URL matches current location", async () => {
@@ -133,10 +132,9 @@ suite("RouterController", () => {
     controller.clearFlowParameters();
 
     const url = new URL(window.location.href);
+    // With pathname routing, flow/mode are in the pathname, not search params
     assert.strictEqual(url.searchParams.has("flow"), false);
     assert.strictEqual(url.searchParams.has("tab0"), false);
-    // mode should still be there (doesn't start with 'flow' or 'tab')
-    assert.strictEqual(url.searchParams.has("mode"), true);
   });
 
   test("updateFromCurrentUrl syncs parsedUrl with browser URL", async () => {
@@ -201,11 +199,11 @@ suite("RouterController", () => {
     const controller = new RouterController();
     await controller.isHydrated;
 
-    // The URL should be canonicalized to use drive:/ instead of drive%3A%2F
+    // The URL should be canonicalized to use the pathname scheme
     assert.notStrictEqual(window.location.href, originalHref);
     assert.ok(
-      window.location.href.includes("drive:/test"),
-      "URL should be canonicalized"
+      window.location.href.includes("/edit/test"),
+      "URL should be canonicalized to pathname form"
     );
   });
 
@@ -327,41 +325,27 @@ suite("RouterController", () => {
   });
 
   test("falls back to home and sets urlError for invalid flow ID", async () => {
-    // Enable new URL scheme so makeUrl validates Drive IDs
-    const original = structuredClone(
-      CLIENT_DEPLOYMENT_CONFIG.ENABLE_NEW_URL_SCHEME
+    // Simulate a URL with an unsupported flow ID (not a Drive URL)
+    window.history.pushState(null, "", "http://localhost/?flow=foo&mode=app");
+    const controller = new RouterController();
+    await controller.isHydrated;
+
+    // Should NOT throw — falls back to home
+    assert.strictEqual(controller.parsedUrl.page, "home");
+
+    // urlError should capture the original error message
+    assert.ok(controller.urlError, "urlError should be set");
+    assert.ok(
+      controller.urlError!.includes("foo"),
+      "urlError should mention the invalid flow ID"
     );
-    (
-      CLIENT_DEPLOYMENT_CONFIG as Record<string, unknown>
-    ).ENABLE_NEW_URL_SCHEME = true;
 
-    try {
-      // Simulate a URL with an unsupported flow ID (not a Drive URL)
-      window.history.pushState(null, "", "http://localhost/?flow=foo&mode=app");
-      const controller = new RouterController();
-      await controller.isHydrated;
-
-      // Should NOT throw — falls back to home
-      assert.strictEqual(controller.parsedUrl.page, "home");
-
-      // urlError should capture the original error message
-      assert.ok(controller.urlError, "urlError should be set");
-      assert.ok(
-        controller.urlError!.includes("foo"),
-        "urlError should mention the invalid flow ID"
-      );
-
-      // Browser URL should be reset to the origin
-      assert.strictEqual(
-        window.location.href,
-        "http://localhost/",
-        "URL should be reset to origin"
-      );
-    } finally {
-      (
-        CLIENT_DEPLOYMENT_CONFIG as Record<string, unknown>
-      ).ENABLE_NEW_URL_SCHEME = original;
-    }
+    // Browser URL should be reset to the origin
+    assert.strictEqual(
+      window.location.href,
+      "http://localhost/",
+      "URL should be reset to origin"
+    );
   });
   test("navigateAway() calls makeUrl with the provided init", async () => {
     window.history.pushState(null, "", "http://localhost/");

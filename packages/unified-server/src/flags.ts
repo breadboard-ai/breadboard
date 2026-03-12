@@ -142,7 +142,7 @@ export const ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE = getBoolean(
   "ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE"
 );
 
-export const ENABLE_NEW_URL_SCHEME = getBoolean("ENABLE_NEW_URL_SCHEME");
+
 
 export const SHARE_SURFACE_URL_TEMPLATES =
   (getJson("SHARE_SURFACE_URL_TEMPLATES") as Record<string, string>) ?? {};

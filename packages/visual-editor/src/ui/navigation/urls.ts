@@ -13,7 +13,7 @@ import {
   MakeUrlInit,
   OpenUrlInit,
 } from "../../sca/types.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
+
 
 export function devUrlParams(): Required<BaseUrlInit>["dev"] {
   // TODO(aomarks) Add a flag so that we only allow these in dev.
@@ -42,8 +42,7 @@ const DEV_PREFIX = "dev-";
  */
 export function makeUrl(
   init: MakeUrlInit,
-  base: string | URL = window.location.href,
-  enableNewUrlScheme = CLIENT_DEPLOYMENT_CONFIG.ENABLE_NEW_URL_SCHEME
+  base: string | URL = window.location.href
 ): string {
   const baseOrigin =
     typeof base === "string" ? new URL(base).origin : base.origin;
@@ -72,8 +71,17 @@ export function makeUrl(
       url.searchParams.set(NEW, init.new === true ? "true" : "false");
     }
   } else if (page === "graph") {
-    if (!enableNewUrlScheme) {
-      url.searchParams.set(FLOW, init.flow);
+    const driveId = extractGoogleDriveFileId(init.flow);
+    if (!driveId) {
+      throw new Error("unsupported graph id " + init.flow);
+    }
+    if (init.mode === "app") {
+      url.pathname = "app/" + encodeURIComponent(driveId);
+    } else if (init.mode === "canvas") {
+      url.pathname = "edit/" + encodeURIComponent(driveId);
+    } else {
+      init.mode satisfies never;
+      throw new Error("unsupported mode " + init.mode);
     }
     if (init.resourceKey) {
       url.searchParams.set(RESOURCE_KEY, init.resourceKey);
@@ -97,22 +105,6 @@ export function makeUrl(
           ? COLOR_SCHEME_LIGHT
           : COLOR_SCHEME_DARK
       );
-    }
-    if (!enableNewUrlScheme) {
-      url.searchParams.set(MODE, init.mode);
-    } else {
-      const driveId = extractGoogleDriveFileId(init.flow);
-      if (!driveId) {
-        throw new Error("unsupported graph id " + init.flow);
-      }
-      if (init.mode === "app") {
-        url.pathname = "app/" + encodeURIComponent(driveId);
-      } else if (init.mode === "canvas") {
-        url.pathname = "edit/" + encodeURIComponent(driveId);
-      } else {
-        init.mode satisfies never;
-        throw new Error("unsupported mode " + init.mode);
-      }
     }
   } else if (page === "landing") {
     url.pathname = "landing/";
@@ -140,13 +132,34 @@ export function makeUrl(
       );
     }
     if (init.redirect.page === "graph") {
-      // To encode the redirect URL, we just copy all the search params directly
-      // onto the landing page URL, and then pick them off later. Note this
-      // could be a little brittle if we add more pages, since we aren't
-      // explicitly representing which page we're redirecting to.
-      const redirectUrl = new URL(makeUrl(init.redirect, base));
-      for (const [redirectParam, redirectValue] of redirectUrl.searchParams) {
-        url.searchParams.set(redirectParam, redirectValue);
+      // Landing pages encode the redirect destination as query params so
+      // parseUrl can re-extract them (by stripping the pathname to "/" and
+      // re-parsing). We serialize the graph info directly as query params
+      // rather than calling makeUrl, which now produces pathname-based URLs.
+      url.searchParams.set(FLOW, init.redirect.flow);
+      if (init.redirect.resourceKey) {
+        url.searchParams.set(RESOURCE_KEY, init.redirect.resourceKey);
+      }
+      if (init.redirect.results) {
+        url.searchParams.set(RESULTS, init.redirect.results);
+      }
+      url.searchParams.set(MODE, init.redirect.mode);
+      if (init.redirect.lite) {
+        url.searchParams.set(LITE, init.redirect.lite === true ? "true" : "false");
+      }
+      if (
+        init.redirect.colorScheme === COLOR_SCHEME_LIGHT ||
+        init.redirect.colorScheme === COLOR_SCHEME_DARK
+      ) {
+        url.searchParams.set(
+          COLOR_SCHEME,
+          init.redirect.colorScheme === COLOR_SCHEME_LIGHT
+            ? COLOR_SCHEME_LIGHT
+            : COLOR_SCHEME_DARK
+        );
+      }
+      if (init.redirect.oauthRedirect) {
+        url.searchParams.set(OAUTH_REDIRECT, init.redirect.oauthRedirect);
       }
     }
   } else if (page === "open") {

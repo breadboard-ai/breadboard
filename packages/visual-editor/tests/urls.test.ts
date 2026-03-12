@@ -17,8 +17,7 @@ function testSymmetrical(
   init: MakeUrlInit
 ): void {
   test(oldUrl, () => {
-    assert.deepEqual(makeUrl(init, BASE_URL, true), newUrl);
-    assert.deepEqual(makeUrl(init, BASE_URL, false), oldUrl);
+    assert.deepEqual(makeUrl(init, BASE_URL), newUrl);
     assert.deepEqual(parseUrl(newUrl), init);
     assert.deepEqual(parseUrl(oldUrl), init);
   });
