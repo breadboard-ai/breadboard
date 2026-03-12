@@ -202,6 +202,7 @@ async def run_skilled_agent(
     extra_groups: list[FunctionGroup] | None = None,
     function_groups: Callable[[LoopController], list[FunctionGroup]] | None = None,
     skills_dir: str = SKILLS_DIR,
+    system_instruction: str | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Run a skill-driven agent.
 
@@ -217,6 +218,8 @@ async def run_skilled_agent(
             and returns the complete list of FunctionGroups. When
             provided, built-in environment assembly (AgentFileSystem,
             TaskTreeManager, built-in groups) is skipped.
+        system_instruction: Optional override for the system instruction.
+            When provided, replaces the default skill-aware instruction.
 
     Yields:
         Typed ``AgentEvent`` instances.
@@ -276,7 +279,9 @@ async def run_skilled_agent(
     # Override the system instruction with the skill-aware one.
     # This applies to both paths — the meta-instruction stays with
     # run_skilled_agent regardless of who built the groups.
-    skill_instruction = _build_skill_instruction(skills, skills_dir=skills_dir)
+    skill_instruction = system_instruction or _build_skill_instruction(
+        skills, skills_dir=skills_dir,
+    )
     groups[0] = FunctionGroup(
         definitions=groups[0].definitions,
         declarations=groups[0].declarations,
