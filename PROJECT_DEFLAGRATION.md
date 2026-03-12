@@ -134,10 +134,10 @@ is in service of reaching them.
 > `ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE` does not appear anywhere. Build and
 > tests pass.
 
-- [ ] Trace all consumers
-- [ ] Inline true-branch at each call site
-- [ ] Remove from flag definitions and config wiring
-- [ ] Verify
+- [x] Trace all consumers
+- [x] Inline true-branch at each call site
+- [x] Remove from flag definitions and config wiring
+- [x] Verify
 
 ### Phase 8: `requireConsentForOpenWebpage`
 

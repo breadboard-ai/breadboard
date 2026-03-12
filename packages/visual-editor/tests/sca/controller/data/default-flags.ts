@@ -15,7 +15,7 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   mcp: false,
   opalAdk: false,
   outputTemplates: false,
-  requireConsentForGetWebpage: true,
+
   requireConsentForOpenWebpage: true,
   streamGenWebpage: false,
   streamPlanner: false,

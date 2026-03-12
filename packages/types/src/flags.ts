@@ -42,10 +42,7 @@ export type RuntimeFlags = {
    * Enables output templates for consistent output.
    */
   outputTemplates: boolean;
-  /**
-   * Requres users consent to use of get_webpage tool
-   */
-  requireConsentForGetWebpage: boolean;
+
   /**
    * Requres users consent to use of open_webpage tool
    */
@@ -177,11 +174,7 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     description: "Enable output templates for consistent output",
     visibility: "experimental",
   },
-  requireConsentForGetWebpage: {
-    title: "Consent for Get Webpage",
-    description: "Require user consent to use the get_webpage tool",
-    visibility: "experimental",
-  },
+
   requireConsentForOpenWebpage: {
     title: "Consent for Open Webpage",
     description: "Require user consent to use the open_webpage tool",

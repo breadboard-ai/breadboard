@@ -40,7 +40,7 @@ function makeRuntimeConfig(
         opalAdk: false,
         outputTemplates: false,
         googleOne: false,
-        requireConsentForGetWebpage: false,
+
         requireConsentForOpenWebpage: false,
         streamPlanner: false,
         streamGenWebpage: false,
@@ -76,7 +76,7 @@ const testFlags: RuntimeFlags = {
   opalAdk: false,
   outputTemplates: false,
   googleOne: false,
-  requireConsentForGetWebpage: false,
+
   requireConsentForOpenWebpage: false,
   streamPlanner: false,
   streamGenWebpage: false,
