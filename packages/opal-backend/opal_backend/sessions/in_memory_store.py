@@ -26,6 +26,7 @@ class _Session:
     status: SessionStatus = SessionStatus.RUNNING
     events: list[dict[str, Any]] = field(default_factory=list)
     interaction: InteractionState | None = None
+    resume_id: str | None = None
 
 
 class InMemorySessionStore:
@@ -92,3 +93,20 @@ class InMemorySessionStore:
         state = session.interaction
         session.interaction = None
         return state
+
+    async def set_resume_id(
+        self, session_id: str, interaction_id: str,
+    ) -> None:
+        """Stash the interaction_id for a pending resume."""
+        session = self._sessions.get(session_id)
+        if session:
+            session.resume_id = interaction_id
+
+    async def get_resume_id(self, session_id: str) -> str | None:
+        """Retrieve and clear the stashed interaction_id."""
+        session = self._sessions.get(session_id)
+        if not session:
+            return None
+        rid = session.resume_id
+        session.resume_id = None
+        return rid

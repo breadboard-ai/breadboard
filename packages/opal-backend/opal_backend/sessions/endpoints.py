@@ -4,8 +4,8 @@
 """
 Session REST API endpoints.
 
-Phase 2: endpoints backed by real agent loop execution via
-``new_session()`` and ``start_session()``.
+Phase 3: endpoints backed by real agent loop execution via
+``new_session()``, ``start_session()``, and ``resume_session()``.
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from sse_starlette.sse import EventSourceResponse
 from ..backend_client import BackendClient
 from ..drive_operations_client import DriveOperationsClient
 from ..interaction_store import InteractionStore
-from .api import Subscribers, new_session, start_session
+from .api import Subscribers, new_session, resume_session, start_session
 from .store import SessionStatus, SessionStore
 
 __all__ = ["create_session_router"]
@@ -80,12 +80,15 @@ def create_session_router(
             await store.create(session_id)
             return JSONResponse({"sessionId": session_id})
 
-        # Extract auth context from request.
+        # Extract user's OAuth token. In production, the backend
+        # eats the Authorization header, so the original user token
+        # is only available as accessToken in the body.
         access_token = body.pop("accessToken", "")
         if not access_token:
-            auth_header = request.headers.get("authorization", "")
-            if auth_header.startswith("Bearer "):
-                access_token = auth_header[len("Bearer "):]
+            return JSONResponse(
+                {"error": "Missing 'accessToken' in request body"},
+                status_code=400,
+            )
         origin = request.headers.get("origin", "")
 
         flags = body.get("flags", {})
@@ -175,13 +178,13 @@ def create_session_router(
         return EventSourceResponse(event_generator())
 
     @router.post("/{session_id}/resume")
-    async def resume_session(
+    async def resume_session_endpoint(
         request: Request, session_id: str,
     ) -> JSONResponse:
         """Inject a response for a suspended session.
 
-        Phase 2: validates the session is suspended, returns ok.
-        Actual resume wiring comes in Phase 3.
+        Validates the session is suspended, sets status to RUNNING,
+        and spawns a background task to continue the loop.
         """
         status = await store.get_status(session_id)
         if status is None:
@@ -193,6 +196,22 @@ def create_session_router(
                 {"error": f"Session not in suspended status (current: {status})"},
                 status_code=409,
             )
+
+        body = await request.json()
+        response = body.get("response", {})
+
+        await store.set_status(session_id, SessionStatus.RUNNING)
+
+        asyncio.create_task(
+            resume_session(
+                session_id=session_id,
+                response=response,
+                store=store,
+                subscribers=subscribers,
+            ),
+            name=f"resume-{session_id}",
+        )
+
         return JSONResponse({"ok": True})
 
     @router.get("/{session_id}/status")

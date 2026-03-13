@@ -85,3 +85,15 @@ class SessionStore(Protocol):
     ) -> InteractionState | None:
         """Load and clear the interaction snapshot. Single-use."""
         ...
+
+    # ── Resume ID ──
+
+    async def set_resume_id(
+        self, session_id: str, interaction_id: str,
+    ) -> None:
+        """Stash the interaction_id for a pending resume."""
+        ...
+
+    async def get_resume_id(self, session_id: str) -> str | None:
+        """Retrieve and clear the stashed interaction_id."""
+        ...

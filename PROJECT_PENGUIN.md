@@ -96,14 +96,14 @@ immediately, then progressively wire real implementations behind them.
 > # → new events...
 > ```
 
-- [ ] Implement `resume_session()` — load interaction state, inject response,
+- [x] Implement `resume_session()` — load interaction state, inject response,
       continue loop
-- [ ] Wire `POST /sessions/{id}/resume` to call `resume_session()` +
+- [x] Wire `POST /sessions/{id}/resume` to call `resume_session()` +
       `asyncio.create_task(start_session())`
-- [ ] On suspend: set status to `SUSPENDED`, save interaction via
+- [x] On suspend: set status to `SUSPENDED`, save interaction via
       `store.save_interaction()`
-- [ ] Suspend events carry `sessionId` (replaces `interactionId` on the wire)
-- [ ] Tests: suspend → resume → complete lifecycle
+- [x] Suspend events carry `sessionId` (replaces `interactionId` on the wire)
+- [x] Tests: suspend → resume → complete lifecycle
 
 ### Phase 4: Reconnection + Cancellation + Backward Compat
 

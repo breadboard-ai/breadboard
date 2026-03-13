@@ -153,20 +153,28 @@ existing `run()` / `resume()` remain untouched as the backward-compat path for
 ```python
 async def new_session(
     *,
+    session_id: str,
     segments: list[dict[str, Any]],
     store: SessionStore,
     backend: BackendClient,
-    graph: GraphInfo,
+    interaction_store: InteractionStore,
     flags: dict[str, Any] | None = None,
+    graph: dict[str, Any] | None = None,
     drive: DriveOperationsClient | None = None,
 ) -> str:
-    """Create a session in the store. Returns the session ID.
+    """Create a session in the store and stash deps for start_session().
 
-    Parses segments, builds internal state (file system, task tree,
-    function groups), and saves everything needed to start the loop.
-    Does NOT start the loop.
+    Captures per-request dependencies (access token, clients) in a
+    _SessionContext so the background task can outlive the HTTP request.
+    Does NOT start the loop — call start_session() separately.
+
+    Returns the session ID.
     """
 ```
+
+> `interaction_store` is required because `run()` uses it internally for
+> suspend state. This is the same `InteractionStore` used by the legacy
+> `streamRunAgent` path — it coexists until that endpoint is deprecated.
 
 ### `start_session` — run
 
@@ -175,18 +183,23 @@ async def start_session(
     *,
     session_id: str,
     store: SessionStore,
-    backend: BackendClient,
+    subscribers: Subscribers,
 ) -> None:
     """Run the loop for an existing session.
 
-    Events push into store.append_event(). Status transitions
-    (SUSPENDED, COMPLETED, FAILED) are set on the store. On suspend,
-    the interaction snapshot is saved via store.save_interaction().
+    Consumes the _SessionContext stashed by new_session(). Iterates
+    run(), tees each event to store.append_event() and
+    subscribers.publish(). Sets terminal status (COMPLETED, FAILED,
+    SUSPENDED) on exit.
 
     This is a plain coroutine — the caller decides whether to await it
     or wrap it in asyncio.create_task().
     """
 ```
+
+> Dependencies (backend, drive, flags, graph) are captured in
+> `_SessionContext` at creation time. `start_session` retrieves them by
+> session ID — the background task never accesses the original HTTP request.
 
 ### `resume_session` — resume
 
@@ -196,7 +209,7 @@ async def resume_session(
     session_id: str,
     response: dict[str, Any],
     store: SessionStore,
-    backend: BackendClient,
+    subscribers: Subscribers,
 ) -> None:
     """Resume a suspended session.
 
@@ -212,15 +225,31 @@ async def resume_session(
 @app.post("/v1beta1/sessions/new")
 async def create_session(request: Request):
     body = await request.json()
+
+    # Extract auth: prefer body param, fall back to Authorization header.
+    access_token = body.pop("accessToken", "")
+    if not access_token:
+        auth_header = request.headers.get("authorization", "")
+        if auth_header.startswith("Bearer "):
+            access_token = auth_header[len("Bearer "):]
+
+    backend = backend_factory(access_token, origin)
+    drive = drive_factory(access_token)
+
     session_id = await new_session(
+        session_id=f"sess-{uuid.uuid4().hex[:12]}",
         segments=body["segments"],
         store=store,
         backend=backend,
-        graph=body.get("graph", {}),
+        interaction_store=interaction_store,
+        graph=body.get("graph"),
         flags=body.get("flags"),
+        drive=drive,
     )
     asyncio.create_task(start_session(
-        session_id=session_id, store=store, backend=backend,
+        session_id=session_id,
+        store=store,
+        subscribers=subscribers,
     ))
     return {"sessionId": session_id}
 ```
@@ -251,6 +280,33 @@ session-centric design. Session creation is decoupled from event streaming — t
 client gets a session ID synchronously, then connects to the SSE stream
 separately. The stream endpoint supports connect/disconnect/reconnect freely.
 
+### Authentication
+
+The user's OAuth token must reach the backend for Gemini and Drive API calls.
+It is passed in **two ways** — same token, two delivery paths:
+
+1. **`Authorization: Bearer <token>`** header — standard HTTP auth.
+2. **`accessToken`** field in the `POST /sessions/new` request body.
+
+Both are needed because of the production deployment. The prod backend
+**replaces** the `Authorization` header with its own service account token.
+The original user token is only preserved as `accessToken` in the request body.
+In dev, there is no such replacement, so the header carries the user token
+directly.
+
+The endpoint extracts the token with body-first precedence:
+
+```python
+access_token = body.pop("accessToken", "")
+if not access_token:
+    access_token = extract_bearer(request)  # header fallback for dev
+```
+
+The token is captured at session creation and bound to the session's clients
+(`BackendClient`, `DriveOperationsClient`) for the session's lifetime.
+
+---
+
 ### `POST /v1beta1/sessions/new`
 
 Create a session and kick off the agent loop in the background.
@@ -265,11 +321,18 @@ Create a session and kick off the agent loop in the background.
 
 ```json
 {
-  "kind": "content",
   "segments": [{ "type": "text", "text": "Generate a video of a sunset" }],
   "flags": { "googleOne": true },
-  "graph": { "url": "...", "title": "My Opal" }
+  "graph": { "url": "...", "title": "My Opal" },
+  "accessToken": "ya29..."
 }
+```
+
+Headers:
+
+```
+Authorization: Bearer <identity-token>
+Content-Type: application/json
 ```
 
 **Response `200`**
@@ -283,6 +346,12 @@ Create a session and kick off the agent loop in the background.
   "sessionId": "sess-abc-123"
 }
 ```
+
+**Errors**
+
+| Status | Condition                              |
+| ------ | -------------------------------------- |
+| `400`  | Missing `segments` in request body     |
 
 **Behavior**
 

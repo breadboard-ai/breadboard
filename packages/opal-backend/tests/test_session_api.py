@@ -222,3 +222,106 @@ async def test_start_session_exception_sets_failed(store, subscribers, monkeypat
     # Error event should be in the store.
     events = await store.get_events("sess-err")
     assert any("error" in e for e in events)
+
+
+# ── suspend / resume ──
+
+
+@pytest.mark.asyncio
+async def test_start_session_suspend_stashes_resume_id(
+    store, subscribers, monkeypatch,
+):
+    """Suspend event → SUSPENDED status, interaction_id stashed."""
+    from opal_backend.events import WaitForInputEvent
+    from opal_backend.sessions.api import _SessionContext
+
+    async def fake_run(**kwargs):
+        yield StartEvent(objective="test")
+        evt = WaitForInputEvent(
+            request_id="req-1",
+            prompt={"parts": [{"text": "What is your name?"}]},
+        )
+        evt.interaction_id = "iid-abc"
+        yield evt
+
+    monkeypatch.setattr("opal_backend.sessions.api.run_agent", fake_run)
+
+    _contexts["sess-sus"] = _SessionContext(
+        segments=[], backend=None, interaction_store=None,  # type: ignore
+    )
+    await store.create("sess-sus")
+
+    await start_session(
+        session_id="sess-sus", store=store, subscribers=subscribers,
+    )
+
+    assert await store.get_status("sess-sus") == SessionStatus.SUSPENDED
+
+    # Context should be re-stashed for resume.
+    assert "sess-sus" in _contexts
+    _contexts.pop("sess-sus", None)
+
+
+@pytest.mark.asyncio
+async def test_resume_session_lifecycle(store, subscribers, monkeypatch):
+    """Full lifecycle: start (suspend) → resume → complete."""
+    from opal_backend.events import WaitForInputEvent
+    from opal_backend.sessions.api import _SessionContext, resume_session
+
+    # Phase 1: start_session suspends.
+    async def fake_run(**kwargs):
+        yield StartEvent(objective="test")
+        evt = WaitForInputEvent(request_id="req-1")
+        evt.interaction_id = "iid-resume"
+        yield evt
+
+    monkeypatch.setattr("opal_backend.sessions.api.run_agent", fake_run)
+
+    _contexts["sess-resume"] = _SessionContext(
+        segments=[], backend=None, interaction_store=None,  # type: ignore
+    )
+    await store.create("sess-resume")
+
+    await start_session(
+        session_id="sess-resume", store=store, subscribers=subscribers,
+    )
+
+    assert await store.get_status("sess-resume") == SessionStatus.SUSPENDED
+
+    # Phase 2: resume_session completes.
+    async def fake_resume(**kwargs):
+        yield ThoughtEvent(text="writing limerick")
+        yield CompleteEvent(result=AgentResult(success=True))
+
+    monkeypatch.setattr("opal_backend.sessions.api.resume_agent", fake_resume)
+
+    await store.set_status("sess-resume", SessionStatus.RUNNING)
+    await resume_session(
+        session_id="sess-resume",
+        response={"input": {"role": "user", "parts": [{"text": "Dimitri"}]}},
+        store=store,
+        subscribers=subscribers,
+    )
+
+    assert await store.get_status("sess-resume") == SessionStatus.COMPLETED
+    events = await store.get_events("sess-resume")
+    # start + waitForInput + thought + complete = 4
+    assert len(events) == 4
+
+
+@pytest.mark.asyncio
+async def test_resume_session_no_context(store, subscribers):
+    """resume_session with missing context sets FAILED."""
+    from opal_backend.sessions.api import resume_session
+
+    await store.create("sess-no-ctx")
+    await store.set_resume_id("sess-no-ctx", "iid-orphan")
+
+    await resume_session(
+        session_id="sess-no-ctx",
+        response={},
+        store=store,
+        subscribers=subscribers,
+    )
+    assert await store.get_status("sess-no-ctx") == SessionStatus.FAILED
+

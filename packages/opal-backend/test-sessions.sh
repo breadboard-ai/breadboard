@@ -21,24 +21,22 @@ if [ -z "$TOKEN" ]; then
   echo -e "${YELLOW}Grab the token from the frontend (Network tab → Authorization header).${NC}"
   exit 1
 fi
-AUTH_HEADER="Authorization: Bearer $TOKEN"
 
 step() { echo -e "\n${BOLD}── $1${NC}"; }
 ok()   { echo -e "${GREEN}✓ $1${NC}"; }
 warn() { echo -e "${YELLOW}⚠ $1${NC}"; }
 
-# ── 1. Create session ──
-step "POST /sessions/new — create session"
+# ── 1. Create session (limerick prompt — triggers suspend) ──
+step "POST /sessions/new — create session (limerick prompt)"
 RESP=$(curl -s -X POST "$BASE/new" \
   -H 'Content-Type: application/json' \
-  -H "$AUTH_HEADER" \
-  -d '{"segments":[{"type":"text","text":"What is 2+2?"}]}')
+  -d "{\"segments\":[{\"type\":\"text\",\"text\":\"Ask for the user's name and then write a limerick for that name\"}],\"accessToken\":\"$TOKEN\"}")
 echo "$RESP" | python3 -m json.tool
 SESSION_ID=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['sessionId'])")
 ok "Session ID: $SESSION_ID"
 
-# ── 2. Poll until terminal ──
-step "Waiting for session to finish..."
+# ── 2. Poll until suspended or terminal ──
+step "Waiting for session to suspend..."
 for i in $(seq 1 30); do
   STATUS_RESP=$(curl -s "$BASE/$SESSION_ID/status")
   STATUS=$(echo "$STATUS_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['status'])")
@@ -49,14 +47,41 @@ for i in $(seq 1 30); do
   fi
   sleep 1
 done
-ok "Final status: $STATUS ($EVENT_COUNT events)"
 
-# ── 3. Replay all events ──
+if [[ "$STATUS" == "suspended" ]]; then
+  ok "Session suspended ($EVENT_COUNT events)"
+
+  # ── 3. Resume with a name ──
+  step "POST /sessions/$SESSION_ID/resume — provide name"
+  RESUME_RESP=$(curl -s -X POST "$BASE/$SESSION_ID/resume" \
+    -H 'Content-Type: application/json' \
+    -d '{"response":{"input":{"role":"user","parts":[{"text":"Dimitri"}]}}}')
+  echo "$RESUME_RESP" | python3 -m json.tool
+  ok "Resumed"
+
+  # ── 4. Poll until terminal ──
+  step "Waiting for session to complete..."
+  for i in $(seq 1 30); do
+    STATUS_RESP=$(curl -s "$BASE/$SESSION_ID/status")
+    STATUS=$(echo "$STATUS_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['status'])")
+    EVENT_COUNT=$(echo "$STATUS_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['eventCount'])")
+    echo -e "${DIM}  [$i] status=$STATUS events=$EVENT_COUNT${NC}"
+    if [[ "$STATUS" != "running" ]]; then
+      break
+    fi
+    sleep 1
+  done
+  ok "Final status: $STATUS ($EVENT_COUNT events)"
+else
+  warn "Expected suspended, got: $STATUS"
+fi
+
+# ── 5. Replay all events ──
 step "GET /sessions/$SESSION_ID — full event replay"
 curl -s --max-time 5 "$BASE/$SESSION_ID" 2>/dev/null || true
 echo ""
 
-# ── 4. Resume (should 409 unless suspended) ──
+# ── 6. Resume on non-suspended (should 409) ──
 step "POST /sessions/$SESSION_ID/resume — expect 409"
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
   "$BASE/$SESSION_ID/resume" \
@@ -64,18 +89,15 @@ HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
   -d '{"response":{}}')
 if [ "$HTTP_CODE" = "409" ]; then
   ok "Got expected 409"
-elif [ "$HTTP_CODE" = "200" ]; then
-  ok "Got 200 — session was suspended"
 else
   warn "Unexpected HTTP $HTTP_CODE"
 fi
 
-# ── 5. Create another session to test cancel ──
+# ── 7. Cancel flow (fresh session) ──
 step "Cancel flow (fresh session)"
 RESP2=$(curl -s -X POST "$BASE/new" \
   -H 'Content-Type: application/json' \
-  -H "$AUTH_HEADER" \
-  -d '{"segments":[{"type":"text","text":"Write a long essay about quantum physics"}]}')
+  -d "{\"segments\":[{\"type\":\"text\",\"text\":\"Write a long essay about quantum physics\"}],\"accessToken\":\"$TOKEN\"}")
 SID2=$(echo "$RESP2" | python3 -c "import sys,json; print(json.load(sys.stdin)['sessionId'])")
 echo -e "${DIM}  Created $SID2${NC}"
 sleep 0.5
@@ -91,7 +113,7 @@ else
   warn "Unexpected HTTP $HTTP_CODE"
 fi
 
-# ── 6. Not found ──
+# ── 8. Not found ──
 step "GET /sessions/nonexistent/status — expect 404"
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/nonexistent/status")
 if [ "$HTTP_CODE" = "404" ]; then
@@ -101,3 +123,4 @@ else
 fi
 
 echo -e "\n${GREEN}${BOLD}Done!${NC}"
+
