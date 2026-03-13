@@ -9,6 +9,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from opal_backend.sessions.api import Subscribers
 from opal_backend.sessions.endpoints import create_session_router
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
 from opal_backend.sessions.store import SessionStatus
@@ -22,7 +23,7 @@ def store():
 @pytest.fixture
 def client(store):
     app = FastAPI()
-    app.include_router(create_session_router(store))
+    app.include_router(create_session_router(store, Subscribers()))
     return TestClient(app)
 
 

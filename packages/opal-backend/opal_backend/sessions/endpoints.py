@@ -4,52 +4,129 @@
 """
 Session REST API endpoints.
 
-Stub implementations for Phase 1 — valid response shapes backed by
-``InMemorySessionStore``, no real agent loop yet.
+Phase 2: endpoints backed by real agent loop execution via
+``new_session()`` and ``start_session()``.
 """
 
 from __future__ import annotations
 
+import asyncio
+import json
 import uuid
-from typing import Any
+from typing import Any, Callable
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from sse_starlette.sse import EventSourceResponse
 
+from ..backend_client import BackendClient
+from ..drive_operations_client import DriveOperationsClient
+from ..interaction_store import InteractionStore
+from .api import Subscribers, new_session, start_session
 from .store import SessionStatus, SessionStore
 
 __all__ = ["create_session_router"]
 
 
-def create_session_router(store: SessionStore) -> APIRouter:
+class SessionDeps:
+    """Per-request dependency factory for session endpoints.
+
+    Wraps the construction of BackendClient and DriveOperationsClient
+    so the endpoint layer doesn't need to know the concrete types.
+    """
+
+    def __init__(
+        self,
+        *,
+        backend_factory: Callable[[str, str], BackendClient],
+        drive_factory: Callable[[str], DriveOperationsClient] | None = None,
+        interaction_store: InteractionStore,
+    ) -> None:
+        self.backend_factory = backend_factory
+        self.drive_factory = drive_factory
+        self.interaction_store = interaction_store
+
+
+def create_session_router(
+    store: SessionStore,
+    subscribers: Subscribers,
+    deps: SessionDeps | None = None,
+) -> APIRouter:
     """Create a FastAPI router with all session endpoints.
 
     Args:
         store: SessionStore implementation (e.g. InMemorySessionStore).
+        subscribers: Subscriber queue manager for live SSE delivery.
+        deps: Per-request dependency factories. If None, endpoints
+              return stub responses (Phase 1 behavior).
     """
     router = APIRouter(prefix="/v1beta1/sessions")
 
     @router.post("/new")
     async def create_session(request: Request) -> JSONResponse:
-        """Create a session and return its ID.
-
-        Phase 1: creates the session in the store but does not spawn a
-        loop. The session stays in RUNNING status.
-        """
+        """Create a session and start the agent loop in the background."""
         body = await request.json()
+        segments = body.get("segments")
+        if not segments:
+            return JSONResponse(
+                {"error": "Missing 'segments' in request body"},
+                status_code=400,
+            )
+
         session_id = f"sess-{uuid.uuid4().hex[:12]}"
-        await store.create(session_id)
+
+        if deps is None:
+            # Phase 1 stub: just create in store, no loop.
+            await store.create(session_id)
+            return JSONResponse({"sessionId": session_id})
+
+        # Extract auth context from request.
+        access_token = body.pop("accessToken", "")
+        if not access_token:
+            auth_header = request.headers.get("authorization", "")
+            if auth_header.startswith("Bearer "):
+                access_token = auth_header[len("Bearer "):]
+        origin = request.headers.get("origin", "")
+
+        flags = body.get("flags", {})
+        graph = body.get("graph")
+
+        # Build per-request clients.
+        backend = deps.backend_factory(access_token, origin)
+        drive = deps.drive_factory(access_token) if deps.drive_factory else None
+
+        # Create session and start loop.
+        await new_session(
+            session_id=session_id,
+            segments=segments,
+            store=store,
+            backend=backend,
+            interaction_store=deps.interaction_store,
+            flags=flags,
+            graph=graph,
+            drive=drive,
+        )
+
+        asyncio.create_task(
+            start_session(
+                session_id=session_id,
+                store=store,
+                subscribers=subscribers,
+            ),
+            name=f"session-{session_id}",
+        )
+
         return JSONResponse({"sessionId": session_id})
 
     @router.get("/{session_id}")
     async def stream_events(
         request: Request, session_id: str, after: int = -1,
     ) -> EventSourceResponse:
-        """SSE event stream with replay + live.
+        """SSE event stream: replay stored events, then stream live.
 
-        Phase 1 stub: emits a start event, replays any stored events,
-        then closes the stream.
+        Clients can reconnect at any time with ``?after=N`` to resume
+        from event N. If the session is still running, the stream stays
+        open for live events.
         """
         status = await store.get_status(session_id)
         if status is None:
@@ -58,11 +135,41 @@ def create_session_router(store: SessionStore) -> APIRouter:
             )
 
         async def event_generator():
-            yield {"event": "start", "data": f'{{"sessionId":"{session_id}"}}'}
+            yield {"event": "start", "data": json.dumps({"sessionId": session_id})}
+
+            # Phase 1: replay stored events.
             events = await store.get_events(session_id, after=after)
+            next_index = after + 1
             for i, event in enumerate(events):
-                import json
-                yield {"event": "event", "data": json.dumps(event)}
+                yield {
+                    "event": "event",
+                    "id": str(next_index + i),
+                    "data": json.dumps(event),
+                }
+            next_index += len(events)
+
+            # Only subscribe for live events when a real loop is running.
+            # In stub mode (deps is None), no background task exists.
+            current_status = await store.get_status(session_id)
+            if (
+                deps is not None
+                and current_status in (SessionStatus.RUNNING, SessionStatus.SUSPENDED)
+            ):
+                queue = subscribers.subscribe(session_id)
+                try:
+                    while True:
+                        item = await queue.get()
+                        if item is None:
+                            break  # Session ended.
+                        yield {
+                            "event": "event",
+                            "id": str(next_index),
+                            "data": json.dumps(item),
+                        }
+                        next_index += 1
+                finally:
+                    subscribers.unsubscribe(session_id, queue)
+
             yield {"event": "done", "data": "{}"}
 
         return EventSourceResponse(event_generator())
@@ -73,8 +180,8 @@ def create_session_router(store: SessionStore) -> APIRouter:
     ) -> JSONResponse:
         """Inject a response for a suspended session.
 
-        Phase 1 stub: validates the session is suspended, returns ok.
-        Does not actually resume anything.
+        Phase 2: validates the session is suspended, returns ok.
+        Actual resume wiring comes in Phase 3.
         """
         status = await store.get_status(session_id)
         if status is None:
