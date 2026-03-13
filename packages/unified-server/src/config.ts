@@ -74,8 +74,6 @@ export async function createClientConfig(opts: {
       outputTemplates: flags.ENABLE_OUTPUT_TEMPLATES,
       googleOne: flags.ENABLE_GOOGLE_ONE,
 
-      requireConsentForOpenWebpage:
-        flags.ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE,
       streamPlanner: flags.STREAM_PLANNER,
       streamGenWebpage: flags.ENABLE_STREAM_GEN_WEBPAGE,
 
@@ -87,7 +85,6 @@ export async function createClientConfig(opts: {
       showTokenCounter: flags.ENABLE_SHOW_TOKEN_COUNTER,
 
       enableOpalBackend: flags.ENABLE_OPAL_BACKEND,
-
     },
   };
 }

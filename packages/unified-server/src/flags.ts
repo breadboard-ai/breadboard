@@ -42,9 +42,6 @@ export const ENABLE_STREAM_GEN_WEBPAGE: boolean = getBoolean(
   "ENABLE_STREAM_GEN_WEBPAGE"
 );
 
-
-
-
 export const STREAM_PLANNER: boolean = getBoolean("ENABLE_STREAM_PLANNER");
 
 export const OBSERVE_SYSTEM_THEME = getBoolean("OBSERVE_SYSTEM_THEME");
@@ -126,26 +123,14 @@ export const SHELL_HOST_ORIGINS = getStringList("SHELL_HOST_ORIGINS");
 
 export const SHELL_PREFIX = getString("SHELL_PREFIX");
 
-
-
-
 export const ENABLE_OPAL_ADK = getBoolean("ENABLE_OPAL_ADK");
 
 export const ENABLE_OUTPUT_TEMPLATES = getBoolean("ENABLE_OUTPUT_TEMPLATES");
 
 export const ENABLE_GOOGLE_ONE = getBoolean("ENABLE_GOOGLE_ONE");
 
-
-export const ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE = getBoolean(
-  "ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE"
-);
-
-
-
 export const SHARE_SURFACE_URL_TEMPLATES =
   (getJson("SHARE_SURFACE_URL_TEMPLATES") as Record<string, string>) ?? {};
-
-
 
 export const ENABLE_GOOGLE_DRIVE_TOOLS = getBoolean(
   "ENABLE_GOOGLE_DRIVE_TOOLS"
@@ -165,13 +150,7 @@ export const ENABLE_SHOW_TOKEN_COUNTER = getBoolean(
   "ENABLE_SHOW_TOKEN_COUNTER"
 );
 
-
-
-
 export const ENABLE_OPAL_BACKEND = getBoolean("ENABLE_OPAL_BACKEND");
-
-
-
 
 function getDomainConfig(
   flagName: string

@@ -41,7 +41,7 @@ function makeRuntimeConfig(
         outputTemplates: false,
         googleOne: false,
 
-        requireConsentForOpenWebpage: false,
+
         streamPlanner: false,
         streamGenWebpage: false,
 
@@ -77,7 +77,7 @@ const testFlags: RuntimeFlags = {
   outputTemplates: false,
   googleOne: false,
 
-  requireConsentForOpenWebpage: false,
+
   streamPlanner: false,
   streamGenWebpage: false,
 
