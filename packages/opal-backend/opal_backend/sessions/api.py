@@ -28,7 +28,10 @@ from ..interaction_store import InteractionStore
 from ..run import run as run_agent, resume as resume_agent
 from .store import SessionStatus, SessionStore
 
-__all__ = ["new_session", "start_session", "resume_session", "Subscribers"]
+__all__ = [
+    "new_session", "start_session", "resume_session",
+    "cancel_session_task", "update_context", "Subscribers",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -96,8 +99,9 @@ class _SessionContext:
     drive: DriveOperationsClient | None = None
 
 
-# Module-level context registry — background tasks look up their context here.
+# Module-level registries.
 _contexts: dict[str, _SessionContext] = {}
+_tasks: dict[str, asyncio.Task] = {}
 
 
 # ---------------------------------------------------------------------------
@@ -133,6 +137,43 @@ async def new_session(
         drive=drive,
     )
     return session_id
+
+
+def update_context(
+    session_id: str,
+    *,
+    backend: BackendClient | None = None,
+    drive: DriveOperationsClient | None = None,
+) -> None:
+    """Refresh deps on a stashed context (e.g. after token refresh).
+
+    Call before ``resume_session()`` to swap in fresh clients when
+    the OAuth token may have expired since the session was created.
+    """
+    ctx = _contexts.get(session_id)
+    if not ctx:
+        return
+    if backend is not None:
+        ctx.backend = backend
+    if drive is not None:
+        ctx.drive = drive
+
+
+def register_task(session_id: str, task: asyncio.Task) -> None:
+    """Register a background task for a session (for cancellation)."""
+    _tasks[session_id] = task
+
+
+async def cancel_session_task(session_id: str) -> None:
+    """Cancel the background task for a session.
+
+    Raises ``CancelledError`` through the entire await chain, including
+    any in-flight Gemini API call. The ``_tee_events`` handler catches
+    this and sets CANCELLED status.
+    """
+    task = _tasks.get(session_id)
+    if task and not task.done():
+        task.cancel()
 
 
 async def start_session(
@@ -251,6 +292,9 @@ async def _tee_events(
                     await store.set_resume_id(session_id, iid)
                 _contexts[session_id] = ctx
 
+    except asyncio.CancelledError:
+        terminal_status = SessionStatus.CANCELLED
+
     except Exception as e:
         logger.exception("Session %s failed", session_id)
         await store.append_event(session_id, {"error": {"message": str(e)}})
@@ -260,6 +304,7 @@ async def _tee_events(
     finally:
         await store.set_status(session_id, terminal_status)
         await subscribers.close(session_id)
+        _tasks.pop(session_id, None)
 
 
 def _is_suspend_event(event: AgentEvent) -> bool:

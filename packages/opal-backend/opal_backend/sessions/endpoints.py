@@ -22,7 +22,10 @@ from sse_starlette.sse import EventSourceResponse
 from ..backend_client import BackendClient
 from ..drive_operations_client import DriveOperationsClient
 from ..interaction_store import InteractionStore
-from .api import Subscribers, new_session, resume_session, start_session
+from .api import (
+    Subscribers, cancel_session_task, new_session, register_task,
+    resume_session, start_session, update_context,
+)
 from .store import SessionStatus, SessionStore
 
 __all__ = ["create_session_router"]
@@ -110,7 +113,7 @@ def create_session_router(
             drive=drive,
         )
 
-        asyncio.create_task(
+        task = asyncio.create_task(
             start_session(
                 session_id=session_id,
                 store=store,
@@ -118,6 +121,7 @@ def create_session_router(
             ),
             name=f"session-{session_id}",
         )
+        register_task(session_id, task)
 
         return JSONResponse({"sessionId": session_id})
 
@@ -200,9 +204,27 @@ def create_session_router(
         body = await request.json()
         response = body.get("response", {})
 
+        # Refresh clients with the (possibly updated) token.
+        access_token = body.get("accessToken", "")
+        if not access_token:
+            auth_header = request.headers.get("authorization", "")
+            if auth_header.startswith("Bearer "):
+                access_token = auth_header[len("Bearer "):]
+
+        if access_token:
+            origin = request.headers.get("origin", "")
+            update_context(
+                session_id,
+                backend=deps.backend_factory(access_token, origin),
+                drive=(
+                    deps.drive_factory(access_token)
+                    if deps.drive_factory else None
+                ),
+            )
+
         await store.set_status(session_id, SessionStatus.RUNNING)
 
-        asyncio.create_task(
+        task = asyncio.create_task(
             resume_session(
                 session_id=session_id,
                 response=response,
@@ -211,6 +233,7 @@ def create_session_router(
             ),
             name=f"resume-{session_id}",
         )
+        register_task(session_id, task)
 
         return JSONResponse({"ok": True})
 
@@ -244,6 +267,7 @@ def create_session_router(
                 status_code=409,
             )
         await store.set_status(session_id, SessionStatus.CANCELLED)
+        await cancel_session_task(session_id)
         return JSONResponse({
             "sessionId": session_id,
             "status": "cancelled",

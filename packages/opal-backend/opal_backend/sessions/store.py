@@ -97,3 +97,9 @@ class SessionStore(Protocol):
     async def get_resume_id(self, session_id: str) -> str | None:
         """Retrieve and clear the stashed interaction_id."""
         ...
+
+    async def get_session_by_resume_id(
+        self, interaction_id: str,
+    ) -> str | None:
+        """Reverse lookup: find the session that owns this interaction_id."""
+        ...

@@ -303,7 +303,9 @@ if not access_token:
 ```
 
 The token is captured at session creation and bound to the session's clients
-(`BackendClient`, `DriveOperationsClient`) for the session's lifetime.
+(`BackendClient`, `DriveOperationsClient`). On **resume**, the client should
+send a fresh `accessToken` — the endpoint creates new clients with it,
+replacing the potentially expired originals.
 
 ---
 
@@ -451,6 +453,16 @@ The response shape depends on the suspend event type:
 // { "response": { "applied": true } }
 ```
 
+**Token refresh:** include `accessToken` to refresh the session's backend
+clients (the original token from session creation may have expired):
+
+```jsonc
+{
+  "response": { "input": { "role": "user", "parts": [...] } },
+  "accessToken": "ya29...fresh-token"
+}
+```
+
 **Response `200`**
 
 |              |                    |
@@ -473,6 +485,10 @@ The response shape depends on the suspend event type:
 No `interaction_id` is needed in the request body. The session guarantees at
 most one pending suspend at any time (the loop is sequential). The session ID in
 the URL path is sufficient to locate the stored `InteractionState`.
+
+If `accessToken` is present in the body, the endpoint creates fresh backend and
+drive clients, replacing the ones captured at session creation. This handles
+OAuth token refresh across long-lived suspends.
 
 **Errors**
 
@@ -546,9 +562,10 @@ Cancel a running session.
 
 **Behavior**
 
-The loop checks status on each event tee cycle. On `cancelled`, it raises
-`CancelledError` for graceful shutdown. Events accumulated before cancellation
-remain in the log.
+The cancel endpoint calls `asyncio.Task.cancel()` on the background task,
+raising `CancelledError` through the entire await chain — including any
+in-flight Gemini API call. No further inference is consumed. Events accumulated
+before cancellation remain in the log.
 
 **Errors**
 
