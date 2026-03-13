@@ -66,15 +66,15 @@ immediately, then progressively wire real implementations behind them.
 > # → event: complete ...
 > ```
 
-- [ ] Implement `new_session()` — parse segments, build state, create session in
+- [x] Implement `new_session()` — parse segments, build state, create session in
       store, return ID
-- [ ] Implement `start_session()` — run the loop, tee events into
+- [x] Implement `start_session()` — run the loop, tee events into
       `store.append_event()`, set terminal status on exit
-- [ ] Wire `POST /sessions/new` to call `new_session()` +
+- [x] Wire `POST /sessions/new` to call `new_session()` +
       `asyncio.create_task(start_session())`
-- [ ] Wire `GET /sessions/{id}` to replay from store + subscribe to live events
-- [ ] Subscriber queue: live event delivery to connected SSE clients
-- [ ] Tests: event tee captures all events, status transitions on complete/error
+- [x] Wire `GET /sessions/{id}` to replay from store + subscribe to live events
+- [x] Subscriber queue: live event delivery to connected SSE clients
+- [x] Tests: event tee captures all events, status transitions on complete/error
 
 ### Phase 3: Suspend/Resume
 

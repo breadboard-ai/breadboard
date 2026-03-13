@@ -37,7 +37,8 @@ from opal_backend.local.drive_operations_client_impl import (
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
 from opal_backend.run import run as run_agent, resume as resume_agent
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
-from opal_backend.sessions.endpoints import create_session_router
+from opal_backend.sessions.endpoints import SessionDeps, create_session_router
+from opal_backend.sessions.api import Subscribers
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,23 @@ _interaction_store = InMemoryInteractionStore()
 
 # In-memory store for sessions (dev only).
 _session_store = InMemorySessionStore()
-_session_router = create_session_router(_session_store)
+_subscribers = Subscribers()
+_session_deps = SessionDeps(
+    backend_factory=lambda token, origin: HttpBackendClient(
+        upstream_base=UPSTREAM_BASE,
+        httpx_client=httpx.AsyncClient(timeout=120.0),
+        access_token=token,
+        origin=origin,
+    ),
+    drive_factory=lambda token: HttpDriveOperationsClient(
+        httpx_client=httpx.AsyncClient(timeout=120.0),
+        access_token=token,
+    ),
+    interaction_store=_interaction_store,
+)
+_session_router = create_session_router(
+    _session_store, _subscribers, deps=_session_deps,
+)
 
 
 # ---------------------------------------------------------------------------
