@@ -31,20 +31,20 @@ immediately, then progressively wire real implementations behind them.
 > # → {"sessionId":"sess-abc-123","status":"running","eventCount":0}
 > ```
 
-- [ ] `SessionStatus(StrEnum)` — `running`, `suspended`, `completed`, `failed`,
+- [x] `SessionStatus(StrEnum)` — `running`, `suspended`, `completed`, `failed`,
       `cancelled`
-- [ ] `SessionStore(Protocol)` — as specified in `SESSION_PROTOCOL.md`
-- [ ] `InMemorySessionStore` — dict-backed implementation
-- [ ] `POST /v1beta1/sessions/new` — creates session in store, returns ID (no
+- [x] `SessionStore(Protocol)` — as specified in `SESSION_PROTOCOL.md`
+- [x] `InMemorySessionStore` — dict-backed implementation
+- [x] `POST /v1beta1/sessions/new` — creates session in store, returns ID (no
       loop spawned yet)
-- [ ] `GET /v1beta1/sessions/{id}` — stub SSE stream (emits `start` event, then
+- [x] `GET /v1beta1/sessions/{id}` — stub SSE stream (emits `start` event, then
       closes)
-- [ ] `POST /v1beta1/sessions/{id}/resume` — stub: validates session is
+- [x] `POST /v1beta1/sessions/{id}/resume` — stub: validates session is
       suspended, returns `{"ok": true}`
-- [ ] `GET /v1beta1/sessions/{id}/status` — returns real status from store
-- [ ] `POST /v1beta1/sessions/{id}:cancel` — sets status to `cancelled`
-- [ ] Unit tests for `InMemorySessionStore` round-trips
-- [ ] Integration tests: curl each endpoint, verify response shapes
+- [x] `GET /v1beta1/sessions/{id}/status` — returns real status from store
+- [x] `POST /v1beta1/sessions/{id}:cancel` — sets status to `cancelled`
+- [x] Unit tests for `InMemorySessionStore` round-trips
+- [x] Integration tests: curl each endpoint, verify response shapes
 
 ### Phase 2: Wire the Loop
 
