@@ -18,24 +18,18 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   mcp: false,
   force2DGraph: false,
   consistentUI: false,
-
   opalAdk: false,
   outputTemplates: false,
   googleOne: false,
-
-  requireConsentForOpenWebpage: false,
   streamPlanner: false,
   streamGenWebpage: false,
-
   enableGoogleDriveTools: false,
   enableResumeAgentRun: false,
   enableNotebookLm: false,
   enableGraphEditorAgent: false,
   textEditorRemix: false,
   showTokenCounter: false,
-
   enableOpalBackend: false,
-
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(

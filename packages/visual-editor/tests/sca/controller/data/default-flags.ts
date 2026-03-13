@@ -7,16 +7,12 @@
 import { RuntimeFlags } from "@breadboard-ai/types";
 
 export const defaultRuntimeFlags: RuntimeFlags = {
-
   consistentUI: false,
-
   force2DGraph: false,
   googleOne: false,
   mcp: false,
   opalAdk: false,
   outputTemplates: false,
-
-  requireConsentForOpenWebpage: true,
   streamGenWebpage: false,
   streamPlanner: false,
   enableGoogleDriveTools: false,
@@ -25,7 +21,5 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   enableGraphEditorAgent: false,
   textEditorRemix: false,
   showTokenCounter: false,
-
   enableOpalBackend: false,
-
 };

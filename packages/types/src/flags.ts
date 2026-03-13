@@ -44,10 +44,6 @@ export type RuntimeFlags = {
   outputTemplates: boolean;
 
   /**
-   * Requres users consent to use of open_webpage tool
-   */
-  requireConsentForOpenWebpage: boolean;
-  /**
    * Enables SSE streaming for planner calls.
    */
   streamPlanner: boolean;
@@ -88,8 +84,6 @@ export type RuntimeFlags = {
    * Use the remote (Python) agent backend instead of in-process execution
    */
   enableOpalBackend: boolean;
-
-
 };
 
 /**
@@ -175,11 +169,6 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     visibility: "experimental",
   },
 
-  requireConsentForOpenWebpage: {
-    title: "Consent for Open Webpage",
-    description: "Require user consent to use the open_webpage tool",
-    visibility: "experimental",
-  },
   streamPlanner: {
     title: "Stream Planner",
     description: "Enable SSE streaming for planner calls",
@@ -225,5 +214,4 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     description: "Route agent runs through the backend instead of in-process",
     visibility: "experimental",
   },
-
 };
