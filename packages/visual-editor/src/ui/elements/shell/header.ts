@@ -30,7 +30,7 @@ import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 import { until } from "lit/directives/until.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
+
 import {
   createAICreditsUrl,
   createMembershipUrl,
@@ -867,7 +867,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   #renderPublishButton() {
-    if (!this.isMine || !CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2) {
+    if (!this.isMine) {
       return nothing;
     }
     return html`<bb-publish-button id="publish-button"></bb-publish-button>`;
@@ -878,9 +878,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
     if (!this.isMine && share.status === "initializing") {
       return nothing;
     }
-    const label = CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
-      ? "Share"
-      : Strings.from("COMMAND_COPY_APP_PREVIEW_URL");
+    const label = "Share";
     return html`<button
       id="share-button"
       class=${classMap({
@@ -888,7 +886,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         round: true,
         "w-500": true,
         owner: !!this.isMine,
-        "sharing-v2": !!CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2,
+        "sharing-v2": true,
       })}
       @mouseenter=${() => this.sca.actions.share.flushSave()}
       @click=${() => {

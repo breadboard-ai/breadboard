@@ -36,7 +36,6 @@ export const ENABLE_FORCE_2D_GRAPH: boolean = getBoolean(
   "ENABLE_FORCE_2D_GRAPH"
 );
 
-export const ENABLE_SHARING_2: boolean = getBoolean("ENABLE_SHARING_2");
 
 export const ENABLE_STREAM_GEN_WEBPAGE: boolean = getBoolean(
   "ENABLE_STREAM_GEN_WEBPAGE"

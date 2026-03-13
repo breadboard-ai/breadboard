@@ -27,12 +27,12 @@ import { icons } from "../../styles/icons.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { match } from "../../styles/host/match.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
+
 import "./share-visibility-selector.js";
 
-const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
+
 const Strings = StringsHelper.forSection("UIController");
-const SHARING_V2 = CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2;
+const SHARING_V2 = true;
 
 @customElement("bb-share-panel")
 export class SharePanel extends SignalWatcher(LitElement) {
@@ -590,7 +590,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #dialog = createRef<HTMLDialogElement>();
-  #publishedSwitch = createRef<MdSwitch>();
+
   #googleDriveSharePanel = createRef<GoogleDriveSharePanel>();
 
   override render() {
@@ -675,21 +675,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
         status === "syncing-assets")
     ) {
       return this.#renderLoading();
-      // V1 has an inline spinner for changing-visibility on the publish switch,
-      // so only show the full-panel loader for statuses without inline affordances.
-    } else if (
-      !SHARING_V2 &&
-      (status === "initializing" ||
-        status === "syncing-native-share" ||
-        status === "publishing-stale" ||
-        status === "syncing-assets")
-    ) {
-      return this.#renderLoading();
     }
     if (this.#controller.ownership === "owner") {
-      return CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
-        ? this.#renderWritableContentsV2()
-        : this.#renderWritableContentsV1();
+      return this.#renderWritableContentsV2();
     }
     if (this.#controller.ownership === "non-owner") {
       return this.#renderReadonlyModalContents();
@@ -714,25 +702,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `;
   }
 
-  #renderWritableContentsV1() {
-    const shared =
-      this.#controller.hasBroadPermissions ||
-      this.#controller.hasCustomPermissions;
-    return [
-      this.#controller.stale && shared ? this.#renderStaleBanner() : nothing,
-      html`
-        <div id="permissions">
-          Publish your ${APP_NAME} ${this.#renderPublishedSwitch()}
-        </div>
-      `,
-      this.#renderDisallowedPublishingNotice(),
-      shared && this.#controller.status === "ready"
-        ? this.#renderAppLink()
-        : nothing,
-      this.#renderGranularSharingLink(),
-      this.#renderAdvisory(),
-    ];
-  }
 
   #renderWritableContentsV2() {
     const shared =
@@ -750,23 +719,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     ];
   }
 
-  #renderStaleBanner() {
-    return html`
-      <div id="stale">
-        <p>
-          <span class="g-icon">info</span>
-          Your app has unpublished changes
-        </p>
-        <button
-          class="bb-button-text"
-          .disabled=${this.#controller.status === "publishing-stale"}
-          @click=${this.#onClickPublishStale}
-        >
-          Update
-        </button>
-      </div>
-    `;
-  }
+
 
   async #onClickPublishStale() {
     await this.#actions.publishStale();
@@ -845,35 +798,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return html`<div id="readonly">${this.#renderAppLink()}</div>`;
   }
 
-  #renderDisallowedPublishingNotice() {
-    const status = this.#controller.status;
-    if (status !== "ready" && status !== "changing-visibility") {
-      return nothing;
-    }
-    const domain = this.#controller.userDomain;
-    if (!domain) {
-      return nothing;
-    }
-    const { disallowPublicPublishing, preferredUrl } =
-      this.sca?.env.domains?.[domain] ?? {};
-    if (!disallowPublicPublishing) {
-      return nothing;
-    }
-    return html`
-      <p id="disallowed-publishing-notice">
-        <span class="g-icon">info</span>
-        Publishing is disabled for all users from ${domain}.
-        <br />
-        ${preferredUrl
-          ? html`Please use
-              <a href="${preferredUrl}" target="_blank"
-                >${new URL(preferredUrl).hostname}</a
-              >
-              to share with other ${domain} users.`
-          : nothing}
-      </p>
-    `;
-  }
+
 
   #renderAppLink() {
     const appUrl = this.#controller.appUrl;
@@ -901,37 +826,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `;
   }
 
-  #renderGranularSharingLink() {
-    return html`
-      <a
-        id="granular-sharing-link"
-        href=""
-        @click=${this.#onClickViewSharePermissions}
-        ?disabled=${this.#controller.status !== "ready"}
-      >
-        View Share Permissions
-      </a>
-    `;
-  }
 
-  #renderAdvisory() {
-    return html`
-      <p id="advisory">
-        Granting any access to this app reveals all its content and prompts to
-        anyone with access. <strong>Share</strong> to grant access only to
-        specific people you choose. <strong>Publish</strong> to create a public
-        link for anyone that can also be reshared by anyone. Manage your app's
-        visibility at any time from the <strong>'Share app'</strong> menu within
-        the ${APP_NAME} app - simply toggle publishing off to unpublish. All
-        your ${APP_NAME} apps are saved to your Drive. Remember to share
-        <a
-          href="https://policies.google.com/terms/generative-ai/use-policy"
-          target="_blank"
-          >responsibly</a
-        >.
-      </p>
-    `;
-  }
+
+
 
   #renderAdvisoryV2() {
     return html`
@@ -972,34 +869,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return html`<bb-share-visibility-selector></bb-share-visibility-selector>`;
   }
 
-  #renderPublishedSwitch() {
-    const status = this.#controller.status;
-    if (status !== "ready" && status !== "changing-visibility") {
-      return nothing;
-    }
-    const published = this.#controller.hasBroadPermissions;
-    const domain = this.#controller.userDomain;
-    const { disallowPublicPublishing } = this.sca?.env.domains?.[domain] ?? {};
 
-    const disabled =
-      disallowPublicPublishing || status === "changing-visibility";
-    return html`
-      <div id="published-switch-container">
-        ${status === "changing-visibility"
-          ? html`<span class="g-icon spin spinner">progress_activity</span>`
-          : nothing}
-        <md-switch
-          ${ref(this.#publishedSwitch)}
-          ?selected=${published}
-          ?disabled=${disabled}
-          @change=${this.#onPublishedSwitchChange}
-        ></md-switch>
-        <label for="publishedSwitch">
-          ${published ? "Public" : "Private"}
-        </label>
-      </div>
-    `;
-  }
 
   #renderGranularSharingModal() {
     const panel = this.#panel;
@@ -1119,29 +989,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     await this.#actions.fixUnmanagedAssetProblems();
   }
 
-  async #onClickViewSharePermissions(event: MouseEvent) {
-    event.preventDefault();
-    await this.#actions.viewSharePermissions();
-  }
 
-  #onPublishedSwitchChange() {
-    const input = this.#publishedSwitch.value;
-    if (!input) {
-      console.error("Expected input element to be rendered");
-      return;
-    }
-    if (!this.#graph?.url) {
-      console.error("No graph url");
-      return;
-    }
-    const selected = input.selected;
-    if (selected) {
-      this.sca?.services.actionTracker?.publishApp(this.#graph.url);
-      this.#actions.publish();
-    } else {
-      this.#actions.unpublish();
-    }
-  }
 
   async #onClickLinkText(event: MouseEvent & { target: HTMLInputElement }) {
     event.target.select();
