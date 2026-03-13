@@ -10,7 +10,6 @@ import type {
   LLMContent,
   NodeConfiguration,
   NodeDescriptor,
-  RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import { Template } from "@breadboard-ai/utils";
 import { createContext } from "@lit/context";
@@ -62,14 +61,10 @@ export const flowGeneratorContext = createContext<FlowGenerator | undefined>(
 
 export class FlowGenerator {
   #appCatalystApiClient: AppCatalystApiClient;
-  #flagManager: RuntimeFlagManager;
 
-  constructor(
-    appCatalystApiClient: AppCatalystApiClient,
-    flagManager: RuntimeFlagManager
-  ) {
+
+  constructor(appCatalystApiClient: AppCatalystApiClient) {
     this.#appCatalystApiClient = appCatalystApiClient;
-    this.#flagManager = flagManager;
   }
 
   @signal
@@ -83,7 +78,7 @@ export class FlowGenerator {
     context,
     constraint,
   }: OneShotFlowGenRequest): Promise<OneShotFlowGenResponse> {
-    const flags = await this.#flagManager.flags();
+
     if (constraint && !context?.flow) {
       throw new Error(
         `Error editing flow with constraint ${constraint.kind}:` +
@@ -132,7 +127,7 @@ export class FlowGenerator {
     const responseMessages: string[] = [];
     const suggestions: string[] = [];
 
-    if (flags.streamPlanner && !constraint) {
+    if (!constraint) {
       await this.#streamOneShot(
         intent,
         context,

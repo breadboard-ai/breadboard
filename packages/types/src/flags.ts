@@ -43,10 +43,7 @@ export type RuntimeFlags = {
    */
   outputTemplates: boolean;
 
-  /**
-   * Enables SSE streaming for planner calls.
-   */
-  streamPlanner: boolean;
+
 
   /**
    * Enables "export to Drive" capability for the agent
@@ -166,11 +163,7 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     visibility: "experimental",
   },
 
-  streamPlanner: {
-    title: "Stream Planner",
-    description: "Enable SSE streaming for planner calls",
-    visibility: "experimental",
-  },
+
 
   enableGoogleDriveTools: {
     title: "Google Drive Tools",

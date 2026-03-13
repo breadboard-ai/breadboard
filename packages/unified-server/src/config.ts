@@ -73,7 +73,7 @@ export async function createClientConfig(opts: {
       outputTemplates: flags.ENABLE_OUTPUT_TEMPLATES,
       googleOne: flags.ENABLE_GOOGLE_ONE,
 
-      streamPlanner: flags.STREAM_PLANNER,
+
 
 
       enableGoogleDriveTools: flags.ENABLE_GOOGLE_DRIVE_TOOLS,

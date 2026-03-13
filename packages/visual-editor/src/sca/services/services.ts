@@ -165,7 +165,7 @@ export function services(
       OPAL_BACKEND_API_PREFIX
     );
     const emailPrefsManager = new EmailPrefsManager(apiClient);
-    const flowGenerator = new FlowGenerator(apiClient, env.flags);
+    const flowGenerator = new FlowGenerator(apiClient);
 
     instance = {
       actionTracker,
