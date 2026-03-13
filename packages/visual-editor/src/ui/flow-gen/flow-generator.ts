@@ -20,6 +20,7 @@ import type {
   AppCatalystContentChunk,
 } from "./app-catalyst.js";
 import { isLLMContent, isTextCapabilityPart } from "../../data/common.js";
+import { parseStreamError } from "../../utils/formatting/parse-stream-error.js";
 
 export interface OneShotFlowGenRequest {
   intent: string;
@@ -225,6 +226,8 @@ export class FlowGenerator {
           console.warn("Failed to parse breadboard chunk from text", e);
           responseMessages.push(part.text);
         }
+      } else if (type === "error") {
+        responseMessages.push(parseStreamError(part.text));
       } else if (type === "rewritten") {
         suggestions.push(part.text);
       } else {

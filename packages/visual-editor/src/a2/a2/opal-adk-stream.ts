@@ -16,6 +16,7 @@ import {
   formatAgentError,
   classifyCaughtError,
 } from "../../utils/formatting/format-agent-error.js";
+import { parseStreamError } from "../../utils/formatting/parse-stream-error.js";
 
 const OPAL_ADK_ENDPOINT = new URL(
   "v1beta1/executeAgentNodeStream",
@@ -388,7 +389,7 @@ class OpalAdkStream {
       ) {
         agentResult = (agentResult ? agentResult + "\n" : "") + text;
       } else if (type === "error") {
-        console.error(err(text));
+        error = parseStreamError(text);
       } else {
         console.log(`Received unknown chunk type: ${type}`);
       }
