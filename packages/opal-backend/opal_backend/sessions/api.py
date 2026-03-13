@@ -25,10 +25,10 @@ from ..events import (
 from ..backend_client import BackendClient
 from ..drive_operations_client import DriveOperationsClient
 from ..interaction_store import InteractionStore
-from ..run import run as run_agent
+from ..run import run as run_agent, resume as resume_agent
 from .store import SessionStatus, SessionStore
 
-__all__ = ["new_session", "start_session", "Subscribers"]
+__all__ = ["new_session", "start_session", "resume_session", "Subscribers"]
 
 logger = logging.getLogger(__name__)
 
@@ -152,17 +152,85 @@ async def start_session(
         await store.set_status(session_id, SessionStatus.FAILED)
         return
 
-    terminal_status = SessionStatus.COMPLETED
-
-    try:
-        async for event in run_agent(
+    await _tee_events(
+        session_id=session_id,
+        events=run_agent(
             segments=ctx.segments,
             backend=ctx.backend,
             store=ctx.interaction_store,
             flags=ctx.flags,
             graph=ctx.graph or {},
             drive=ctx.drive,
-        ):
+        ),
+        store=store,
+        subscribers=subscribers,
+        ctx=ctx,
+    )
+
+
+async def resume_session(
+    *,
+    session_id: str,
+    response: dict[str, Any],
+    store: SessionStore,
+    subscribers: Subscribers,
+) -> None:
+    """Resume a suspended session.
+
+    Loads the stashed interaction_id, calls ``resume()`` from run.py,
+    and tees events to store + subscribers (same as start_session).
+    """
+    ctx = _contexts.pop(session_id, None)
+    if not ctx:
+        logger.error("No context for session %s", session_id)
+        await store.set_status(session_id, SessionStatus.FAILED)
+        return
+
+    interaction_id = await store.get_resume_id(session_id)
+    if not interaction_id:
+        logger.error("No resume_id for session %s", session_id)
+        await store.set_status(session_id, SessionStatus.FAILED)
+        return
+
+    await _tee_events(
+        session_id=session_id,
+        events=resume_agent(
+            interaction_id=interaction_id,
+            response=response,
+            backend=ctx.backend,
+            store=ctx.interaction_store,
+            drive=ctx.drive,
+        ),
+        store=store,
+        subscribers=subscribers,
+        ctx=ctx,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+
+async def _tee_events(
+    *,
+    session_id: str,
+    events: AsyncIterator[AgentEvent],
+    store: SessionStore,
+    subscribers: Subscribers,
+    ctx: _SessionContext,
+) -> None:
+    """Shared event-tee loop for start_session and resume_session.
+
+    Iterates the event stream, pushes each event to the store and
+    subscribers, detects terminal/suspend events, and sets final status.
+    On suspend, re-stashes the context and the interaction_id so the
+    next resume_session call can pick them up.
+    """
+    terminal_status = SessionStatus.COMPLETED
+
+    try:
+        async for event in events:
             event_dict = event.to_dict()
             await store.append_event(session_id, event_dict)
             await subscribers.publish(session_id, event_dict)
@@ -176,10 +244,15 @@ async def start_session(
                 )
             elif _is_suspend_event(event):
                 terminal_status = SessionStatus.SUSPENDED
+                # Stash interaction_id for resume, and re-stash
+                # context so resume_session can reuse the deps.
+                iid = getattr(event, "interaction_id", None)
+                if iid:
+                    await store.set_resume_id(session_id, iid)
+                _contexts[session_id] = ctx
 
     except Exception as e:
         logger.exception("Session %s failed", session_id)
-        # Store the error as an event so clients can see it.
         await store.append_event(session_id, {"error": {"message": str(e)}})
         await subscribers.publish(session_id, {"error": {"message": str(e)}})
         terminal_status = SessionStatus.FAILED
