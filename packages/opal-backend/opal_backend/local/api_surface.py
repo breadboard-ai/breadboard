@@ -31,6 +31,7 @@ from fastapi import APIRouter, Request, Response
 from sse_starlette.sse import EventSourceResponse
 
 
+
 # ---------------------------------------------------------------------------
 # Backend protocols
 # ---------------------------------------------------------------------------
@@ -61,12 +62,14 @@ class ProxyBackend(Protocol):
 def create_api_router(
     *,
     agent: AgentBackend | None = None,
+    sessions: APIRouter | None = None,
     proxy: ProxyBackend | None = None,
 ) -> APIRouter:
     """Create a FastAPI router with the shared Opal API surface.
 
     Args:
         agent: Handler for POST /v1beta1/streamRunAgent (optional).
+        sessions: Router for session endpoints (optional).
         proxy: Handler for v1beta1/* proxy endpoints (optional).
     """
     router = APIRouter()
@@ -77,6 +80,10 @@ def create_api_router(
         @router.post("/v1beta1/streamRunAgent")
         async def run(request: Request) -> EventSourceResponse:
             return await agent.run(request)
+
+    # ----- Session endpoints (must come before catch-all proxy) -----
+    if sessions is not None:
+        router.include_router(sessions)
 
     # ----- Proxy endpoints -----
     if proxy is not None:

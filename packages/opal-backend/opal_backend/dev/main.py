@@ -36,6 +36,8 @@ from opal_backend.local.drive_operations_client_impl import (
 
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
 from opal_backend.run import run as run_agent, resume as resume_agent
+from opal_backend.sessions.in_memory_store import InMemorySessionStore
+from opal_backend.sessions.endpoints import create_session_router
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +66,10 @@ _proxy_client = httpx.AsyncClient(timeout=120.0)
 
 # In-memory store for suspended interactions (dev only).
 _interaction_store = InMemoryInteractionStore()
+
+# In-memory store for sessions (dev only).
+_session_store = InMemorySessionStore()
+_session_router = create_session_router(_session_store)
 
 
 # ---------------------------------------------------------------------------
@@ -417,6 +423,7 @@ async def _stream_gemini_model_call(
 router = create_api_router(
     proxy=_proxy,
     agent=_agent,
+    sessions=_session_router,
 )
 app.include_router(router)
 
