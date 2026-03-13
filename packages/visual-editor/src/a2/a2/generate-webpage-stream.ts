@@ -28,6 +28,7 @@ import {
   formatAgentError,
   classifyCaughtError,
 } from "../../utils/formatting/format-agent-error.js";
+import { parseStreamError } from "../../utils/formatting/parse-stream-error.js";
 
 const STREAM_BACKEND_ENDPOINT = new URL(
   "v1beta1/generateWebpageStream",
@@ -254,7 +255,7 @@ async function executeWebpageStream(
           htmlResult = text;
           reporter.addText("Generated HTML", "HTML output ready", "download");
         } else if (chunkType === "error") {
-          return reporter.addError(err(`Generation error: ${text}`));
+          return reporter.addError(err(parseStreamError(text)));
         }
       }
     }
