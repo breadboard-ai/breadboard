@@ -47,10 +47,7 @@ export type RuntimeFlags = {
    * Enables SSE streaming for planner calls.
    */
   streamPlanner: boolean;
-  /**
-   * Enables SSE streaming for GenerateWebpage (output node HTML generation).
-   */
-  streamGenWebpage: boolean;
+
   /**
    * Enables "export to Drive" capability for the agent
    */
@@ -174,11 +171,7 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     description: "Enable SSE streaming for planner calls",
     visibility: "experimental",
   },
-  streamGenWebpage: {
-    title: "Stream Generate Webpage",
-    description: "Enable SSE streaming for HTML generation",
-    visibility: "experimental",
-  },
+
   enableGoogleDriveTools: {
     title: "Google Drive Tools",
     description: "Enable 'export to Drive' capability",

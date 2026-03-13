@@ -13,7 +13,6 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   mcp: false,
   opalAdk: false,
   outputTemplates: false,
-  streamGenWebpage: false,
   streamPlanner: false,
   enableGoogleDriveTools: false,
   enableNotebookLm: false,

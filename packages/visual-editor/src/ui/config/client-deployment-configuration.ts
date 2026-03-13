@@ -22,7 +22,6 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   outputTemplates: false,
   googleOne: false,
   streamPlanner: false,
-  streamGenWebpage: false,
   enableGoogleDriveTools: false,
   enableResumeAgentRun: false,
   enableNotebookLm: false,

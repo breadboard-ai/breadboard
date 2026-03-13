@@ -74,7 +74,7 @@ export async function createClientConfig(opts: {
       googleOne: flags.ENABLE_GOOGLE_ONE,
 
       streamPlanner: flags.STREAM_PLANNER,
-      streamGenWebpage: flags.ENABLE_STREAM_GEN_WEBPAGE,
+
 
       enableGoogleDriveTools: flags.ENABLE_GOOGLE_DRIVE_TOOLS,
       enableNotebookLm: flags.ENABLE_NOTEBOOK_LM,
