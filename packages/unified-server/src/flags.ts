@@ -39,7 +39,7 @@ export const ENABLE_FORCE_2D_GRAPH: boolean = getBoolean(
 
 
 
-export const STREAM_PLANNER: boolean = getBoolean("ENABLE_STREAM_PLANNER");
+
 
 export const OBSERVE_SYSTEM_THEME = getBoolean("OBSERVE_SYSTEM_THEME");
 

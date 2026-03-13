@@ -21,7 +21,6 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   opalAdk: false,
   outputTemplates: false,
   googleOne: false,
-  streamPlanner: false,
   enableGoogleDriveTools: false,
   enableResumeAgentRun: false,
   enableNotebookLm: false,

@@ -42,7 +42,7 @@ function makeRuntimeConfig(
         googleOne: false,
 
 
-        streamPlanner: false,
+
 
 
         enableGoogleDriveTools: false,
@@ -78,7 +78,7 @@ const testFlags: RuntimeFlags = {
   googleOne: false,
 
 
-  streamPlanner: false,
+
 
 
   enableGoogleDriveTools: false,
