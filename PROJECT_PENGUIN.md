@@ -120,13 +120,13 @@ immediately, then progressively wire real implementations behind them.
 > # → {"status":"cancelled"}
 > ```
 
-- [ ] SSE replay: `GET /sessions/{id}?after=N` replays from store, then switches
+- [x] SSE replay: `GET /sessions/{id}?after=N` replays from store, then switches
       to live
-- [ ] Cancellation: loop polls `store.get_status()` on each tee cycle; if
-      `cancelled`, graceful shutdown
-- [ ] `streamRunAgent` backward-compat shim (start: `new` → stream; resume:
+- [x] Cancellation: `asyncio.Task.cancel()` kills in-flight Gemini calls; no
+      wasted inference
+- [x] `streamRunAgent` backward-compat shim (start: `new` → stream; resume:
       translate `interactionId` → `POST /sessions/{id}/resume`)
-- [ ] Tests: reconnect catches up, cancel stops loop, shim works for both start
+- [x] Tests: reconnect catches up, cancel stops loop, shim works for both start
       and resume
 
 ### Phase 5: Client Migration

@@ -110,3 +110,12 @@ class InMemorySessionStore:
         rid = session.resume_id
         session.resume_id = None
         return rid
+
+    async def get_session_by_resume_id(
+        self, interaction_id: str,
+    ) -> str | None:
+        """Reverse lookup: find the session that owns this interaction_id."""
+        for sid, session in self._sessions.items():
+            if session.resume_id == interaction_id:
+                return sid
+        return None

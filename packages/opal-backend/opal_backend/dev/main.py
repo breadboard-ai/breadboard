@@ -18,9 +18,11 @@ Run with: uvicorn opal_backend.dev.main:app --reload --port 8080
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
+import uuid
 
 import httpx
 from fastapi import FastAPI, Request, Response
@@ -35,10 +37,13 @@ from opal_backend.local.drive_operations_client_impl import (
 )
 
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
-from opal_backend.run import run as run_agent, resume as resume_agent
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
 from opal_backend.sessions.endpoints import SessionDeps, create_session_router
-from opal_backend.sessions.api import Subscribers
+from opal_backend.sessions.api import (
+    Subscribers, new_session, register_task, start_session,
+    resume_session as resume_session_fn, update_context,
+)
+from opal_backend.sessions.store import SessionStatus
 
 logger = logging.getLogger(__name__)
 
@@ -136,25 +141,23 @@ class DevProxyBackend:
 # ---------------------------------------------------------------------------
 
 class DevAgentBackend:
-    """Implements AgentBackend using the real Python agent loop.
+    """Implements AgentBackend using the session-backed agent loop.
 
     Single POST /v1beta1/streamRunAgent → SSE stream.
+    Under the hood, creates a session, starts/resumes the loop, and
+    streams events from the subscriber queue — backward-compatible
+    shim over the session API.
 
     Handles both start and resume requests:
-    - **Start**: ``{kind, segments/objective}`` — creates a new loop
-    - **Resume**: ``{interactionId, response}`` — reconstructs the loop
-      from saved state, injects the response, continues streaming
-
-    Design decision: reconnect, not keepalive. The SSE stream closes
-    when the loop suspends. Suspends can last seconds, hours, or days.
+    - **Start**: ``{kind, segments/objective}`` — creates a new session
+    - **Resume**: ``{interactionId, response}`` — finds the suspended
+      session and resumes it
     """
 
     async def run(self, request: Request) -> EventSourceResponse:
         raw_body = await request.json()
 
-        # Extract access token: prefer body parameter (production path
-        # where ESP may replace the Authorization header with a service
-        # account token) over Authorization header (dev convenience).
+        # Extract access token from body (required — matches session API).
         access_token = raw_body.pop("accessToken", "")
         if not access_token:
             auth_header = request.headers.get("authorization", "")
@@ -190,7 +193,7 @@ class DevAgentBackend:
     async def _start(
         self, body: dict, access_token: str, origin: str,
     ) -> EventSourceResponse:
-        """Start a new agent run."""
+        """Start a new agent run via the session API."""
         segments = body.get("segments")
         flags = body.get("flags", {})
 
@@ -199,61 +202,109 @@ class DevAgentBackend:
                 "Missing 'segments' in request body"
             )
 
-        # Extract graph identity (sibling of flags in the wire protocol).
         graph_info = body.get("graph")
+        session_id = f"sess-{uuid.uuid4().hex[:12]}"
+
         backend = HttpBackendClient(
             upstream_base=UPSTREAM_BASE,
             httpx_client=httpx.AsyncClient(timeout=120.0),
             access_token=access_token,
             origin=origin,
         )
-
         drive = HttpDriveOperationsClient(
             httpx_client=httpx.AsyncClient(timeout=120.0),
             access_token=access_token,
         )
 
-        return self._as_sse(run_agent(
+        await new_session(
+            session_id=session_id,
             segments=segments,
+            store=_session_store,
             backend=backend,
-            store=_interaction_store,
+            interaction_store=_interaction_store,
             flags=flags,
             graph=graph_info,
             drive=drive,
-        ))
+        )
+
+        # Subscribe BEFORE starting the loop so we don't miss events.
+        queue = _subscribers.subscribe(session_id)
+
+        task = asyncio.create_task(
+            start_session(
+                session_id=session_id,
+                store=_session_store,
+                subscribers=_subscribers,
+            ),
+            name=f"shim-{session_id}",
+        )
+        register_task(session_id, task)
+
+        return self._stream_queue(session_id, queue)
 
     async def _resume(
         self, interaction_id: str, response: dict,
         access_token: str, origin: str,
     ) -> EventSourceResponse:
-        """Resume a suspended agent run."""
-        backend = HttpBackendClient(
-            upstream_base=UPSTREAM_BASE,
-            httpx_client=httpx.AsyncClient(timeout=120.0),
-            access_token=access_token,
-            origin=origin,
+        """Resume a suspended agent run via the session API."""
+        # Find the session that owns this interaction_id.
+        session_id = await _session_store.get_session_by_resume_id(
+            interaction_id,
+        )
+        if not session_id:
+            return _error_stream(
+                f"No suspended session for interaction: {interaction_id}"
+            )
+
+        # Refresh clients with the (possibly updated) token.
+        if access_token:
+            update_context(
+                session_id,
+                backend=HttpBackendClient(
+                    upstream_base=UPSTREAM_BASE,
+                    httpx_client=httpx.AsyncClient(timeout=120.0),
+                    access_token=access_token,
+                    origin=origin,
+                ),
+                drive=HttpDriveOperationsClient(
+                    httpx_client=httpx.AsyncClient(timeout=120.0),
+                    access_token=access_token,
+                ),
+            )
+
+        await _session_store.set_status(
+            session_id, SessionStatus.RUNNING,
         )
 
-        drive = HttpDriveOperationsClient(
-            httpx_client=httpx.AsyncClient(timeout=120.0),
-            access_token=access_token,
+        # Subscribe BEFORE resuming.
+        queue = _subscribers.subscribe(session_id)
+
+        task = asyncio.create_task(
+            resume_session_fn(
+                session_id=session_id,
+                response=response,
+                store=_session_store,
+                subscribers=_subscribers,
+            ),
+            name=f"shim-resume-{session_id}",
         )
+        register_task(session_id, task)
 
-        return self._as_sse(resume_agent(
-            interaction_id=interaction_id,
-            response=response,
-            backend=backend,
-            store=_interaction_store,
-            drive=drive,
-        ))
+        return self._stream_queue(session_id, queue)
 
-    def _as_sse(self, events) -> EventSourceResponse:
-        """Wrap an async event iterator as an SSE response."""
+    def _stream_queue(
+        self, session_id: str, queue: asyncio.Queue,
+    ) -> EventSourceResponse:
+        """Stream events from a subscriber queue as SSE."""
         async def stream():
-            async for event in events:
-                yield {
-                    "data": json.dumps(event.to_dict()),
-                }
+            try:
+                while True:
+                    item = await queue.get()
+                    if item is None:
+                        break  # Session ended.
+                    yield {"data": json.dumps(item)}
+            finally:
+                _subscribers.unsubscribe(session_id, queue)
         return EventSourceResponse(content=stream())
 
 
