@@ -1916,13 +1916,6 @@ suite("Share Actions", () => {
       assert.ok(share.error);
     });
 
-    test("open sets error on Drive failure", async () => {
-      await ShareActions.initialize();
-      share.panel = "closed";
-      fakeDriveApi.forceNextError(400);
-      await ShareActions.open();
-      assert.ok(share.error);
-    });
 
     test("fixUnmanagedAssetProblems sets error on Drive failure", async () => {
       await ShareActions.initialize();

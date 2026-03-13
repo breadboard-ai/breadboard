@@ -61,7 +61,6 @@ export async function createClientConfig(opts: {
 
     SHARE_SURFACE_URL_TEMPLATES: flags.SHARE_SURFACE_URL_TEMPLATES,
 
-    ENABLE_SHARING_2: flags.ENABLE_SHARING_2,
     FAKE_MODE: flags.FAKE_MODE,
     DEV_BACKEND_MODE: flags.DEV_BACKEND_MODE,
     domains: flags.DOMAIN_CONFIG,

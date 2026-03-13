@@ -39,7 +39,7 @@ import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import { Utils } from "../../utils.js";
 import { makeUrl, parseUrl } from "../../../ui/navigation/urls.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
+
 import { onGraphUrl, onSaveComplete } from "./triggers.js";
 import { SaveCompleteEvent } from "../../../board-server/events.js";
 
@@ -328,19 +328,10 @@ export const open = asAction(
     }
     share.panel = "open";
 
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2) {
-      await share.waitForPublishToFinish();
-      share.status = "initializing";
-      await services.googleDriveBoardServer.flushSaveQueue(graphUrl);
-      share.status = "ready";
-    } else {
-      // Legacy: always re-sync on open. fetchShareData includes its own flush.
-      share.status = "initializing";
-      if (handleFatalShareError(await fetchShareData())) {
-        return;
-      }
-      share.status = "ready";
-    }
+    await share.waitForPublishToFinish();
+    share.status = "initializing";
+    await services.googleDriveBoardServer.flushSaveQueue(graphUrl);
+    share.status = "ready";
   }
 );
 
