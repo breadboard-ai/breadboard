@@ -37,9 +37,7 @@ export const ENABLE_FORCE_2D_GRAPH: boolean = getBoolean(
 );
 
 
-export const ENABLE_STREAM_GEN_WEBPAGE: boolean = getBoolean(
-  "ENABLE_STREAM_GEN_WEBPAGE"
-);
+
 
 export const STREAM_PLANNER: boolean = getBoolean("ENABLE_STREAM_PLANNER");
 

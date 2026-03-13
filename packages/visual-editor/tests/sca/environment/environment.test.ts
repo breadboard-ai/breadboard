@@ -43,7 +43,7 @@ function makeRuntimeConfig(
 
 
         streamPlanner: false,
-        streamGenWebpage: false,
+
 
         enableGoogleDriveTools: false,
         enableResumeAgentRun: false,
@@ -79,7 +79,7 @@ const testFlags: RuntimeFlags = {
 
 
   streamPlanner: false,
-  streamGenWebpage: false,
+
 
   enableGoogleDriveTools: false,
   enableResumeAgentRun: false,
