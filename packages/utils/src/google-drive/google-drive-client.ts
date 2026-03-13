@@ -795,4 +795,5 @@ function makeResourceKeysHeaderValue(
   if (headerParts.length) {
     return headerParts.join(",");
   }
+  return undefined;
 }
