@@ -20,4 +20,5 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   textEditorRemix: false,
   showTokenCounter: false,
   enableOpalBackend: false,
+  enableSessionsBackend: false,
 };

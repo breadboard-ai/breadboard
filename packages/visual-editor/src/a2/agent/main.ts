@@ -426,7 +426,26 @@ async function invokeRemoteAgent(
       return { consent };
     });
 
-  await handle.connect();
+  // Wire the plan-runner's abort signal to the SSE run so that
+  // Stop/Restart naturally cancel the backend session.
+  const signal = moduleArgs.context.signal;
+  if (signal) {
+    signal.addEventListener("abort", () => { handle.abort(); }, { once: true });
+  }
+
+  try {
+    await handle.connect();
+  } catch (e) {
+    // When the abort signal fires, the fetch body stream is killed,
+    // producing "BodyStreamBuffer was aborted". That's expected — not
+    // an error the user should see.
+    if (signal?.aborted) {
+      moduleArgs.agentService.endRun(handle.runId);
+      return err("Run was stopped");
+    }
+    moduleArgs.agentService.endRun(handle.runId);
+    throw e;
+  }
   moduleArgs.agentService.endRun(handle.runId);
 
   if (remoteError) {

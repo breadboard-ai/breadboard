@@ -57,4 +57,38 @@ suite("checkFetchAllowlist", () => {
       "executeStep should NOT add accessToken to JSON body"
     );
   });
+
+  test("sessions/new requires accessToken in body", () => {
+    const info = checkFetchAllowlist(`${BASE}/v1beta1/sessions/new`);
+    assert.ok(info, "sessions/new should be in the allowlist");
+    assert.strictEqual(
+      info.shouldAddAccessTokenToJsonBody,
+      true,
+      "sessions/new should add accessToken to JSON body"
+    );
+  });
+
+  test("sessions/{id}/resume requires accessToken in body", () => {
+    const info = checkFetchAllowlist(
+      `${BASE}/v1beta1/sessions/sess-123/resume`
+    );
+    assert.ok(info, "sessions/{id}/resume should be in the allowlist");
+    assert.strictEqual(
+      info.shouldAddAccessTokenToJsonBody,
+      true,
+      "sessions/{id}/resume should add accessToken to JSON body"
+    );
+  });
+
+  test("sessions/{id} stream does not add accessToken to body", () => {
+    const info = checkFetchAllowlist(
+      `${BASE}/v1beta1/sessions/sess-123`
+    );
+    assert.ok(info, "sessions/{id} should be in the allowlist");
+    assert.strictEqual(
+      info.shouldAddAccessTokenToJsonBody,
+      false,
+      "sessions/{id} GET should NOT add accessToken to JSON body"
+    );
+  });
 });

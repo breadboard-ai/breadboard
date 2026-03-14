@@ -46,7 +46,9 @@ const FETCH_ALLOWLIST: AllowListParams[] = [
       url.endsWith("/uploadGeminiFile") ||
       url.endsWith("/uploadBlobFile") ||
       url.includes("/generateWebpageStream") ||
-      url.includes("/streamRunAgent"),
+      url.includes("/streamRunAgent") ||
+      url.includes("/sessions/new") ||
+      (url.includes("/sessions/") && url.includes("/resume")),
   },
   {
     canonicalPrefix: new URL(CANONICAL.GOOGLE_DRIVE_FILES_API_PREFIX),

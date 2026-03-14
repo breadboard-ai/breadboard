@@ -78,6 +78,11 @@ export type RuntimeFlags = {
    * Use the remote (Python) agent backend instead of in-process execution
    */
   enableOpalBackend: boolean;
+
+  /**
+   * Use the sessions API for remote agent runs (3-endpoint protocol)
+   */
+  enableSessionsBackend: boolean;
 };
 
 /**
@@ -198,6 +203,12 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
   enableOpalBackend: {
     title: "Opal Backend",
     description: "Route agent runs through the backend instead of in-process",
+    visibility: "experimental",
+  },
+  enableSessionsBackend: {
+    title: "Sessions Backend",
+    description:
+      "Use the sessions API for remote agent runs (replaces streamRunAgent)",
     visibility: "experimental",
   },
 };

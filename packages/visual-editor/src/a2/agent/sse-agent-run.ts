@@ -8,6 +8,7 @@ import { AgentEventConsumer } from "./agent-event-consumer.js";
 import type { RemoteAgentRunConfig, AgentRunHandle } from "./agent-service.js";
 import type { Segment } from "./resolve-to-segments.js";
 import { SSEAgentEventSource } from "./sse-agent-event-source.js";
+import { StreamRunAgentEventSource } from "./stream-run-agent-event-source.js";
 
 export { SSEAgentRun };
 
@@ -36,18 +37,26 @@ function segmentToProto(segment: Segment): Record<string, unknown> {
 }
 
 /**
- * Remote agent run backed by SSE (Resumable Stream Protocol).
+ * Shared interface for event sources used by `SSEAgentRun`.
+ *
+ * Both `SSEAgentEventSource` (sessions protocol) and
+ * `StreamRunAgentEventSource` (legacy protocol) implement this.
+ */
+interface AgentEventSource {
+  connect(): Promise<void>;
+  cancel(): Promise<void>;
+}
+
+/**
+ * Remote agent run backed by SSE.
  *
  * Instead of running the agent loop in-process, this connects to a
- * remote server via a single POST request that returns an SSE stream.
- *
- * The POST body carries structured segments + flags (wire protocol).
- * The server calls `to_pidgin(segments)` to produce pidgin text and
- * handles all data part registration + tag generation.
+ * remote server via SSE. The protocol (sessions vs. streamRunAgent)
+ * is determined by the event source passed at construction time.
  */
 class SSEAgentRun implements AgentRunHandle {
   readonly events: AgentEventConsumer;
-  readonly #source: SSEAgentEventSource;
+  readonly #source: AgentEventSource;
   readonly #abortController = new AbortController();
 
   constructor(
@@ -55,21 +64,32 @@ class SSEAgentRun implements AgentRunHandle {
     readonly kind: string,
     baseUrl: string,
     config: RemoteAgentRunConfig,
-    fetchWithCreds: typeof fetch
+    fetchWithCreds: typeof fetch,
+    useSessions: boolean
   ) {
     this.events = new AgentEventConsumer();
-    this.#source = new SSEAgentEventSource(
-      baseUrl,
-      {
-        kind: config.kind,
-        segments: config.segments.map(segmentToProto),
-        flags: config.flags,
-        graph: config.graph,
-      },
-      this.events,
-      fetchWithCreds,
-      this.#abortController.signal
-    );
+    const wireConfig = {
+      kind: config.kind,
+      segments: config.segments.map(segmentToProto),
+      flags: config.flags,
+      graph: config.graph,
+    };
+
+    this.#source = useSessions
+      ? new SSEAgentEventSource(
+          baseUrl,
+          wireConfig,
+          this.events,
+          fetchWithCreds,
+          this.#abortController.signal
+        )
+      : new StreamRunAgentEventSource(
+          baseUrl,
+          wireConfig,
+          this.events,
+          fetchWithCreds,
+          this.#abortController.signal
+        );
   }
 
   /**
@@ -81,6 +101,7 @@ class SSEAgentRun implements AgentRunHandle {
   }
 
   abort(): void {
+    this.#source.cancel();
     this.#abortController.abort();
   }
 
