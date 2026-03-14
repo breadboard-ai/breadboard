@@ -129,14 +129,20 @@ immediately, then progressively wire real implementations behind them.
 - [x] Tests: reconnect catches up, cancel stops loop, shim works for both start
       and resume
 
-### Phase 5: Client Migration
+### Phase 5: Client Migration (Final)
 
-> **🎯 Objective:** The frontend uses session endpoints. Background sessions
-> survive page refresh.
+> **🎯 Objective:** The frontend uses session endpoints directly. The
+> `streamRunAgent` shim is no longer the active code path.
+>
+> ```
+> # Frontend creates a session, streams events, resumes on suspend:
+> POST /sessions/new → { sessionId }
+> GET  /sessions/{id} → SSE stream
+> POST /sessions/{id}/resume → { ok }
+> ```
 
-- [ ] `SSEAgentEventSource`: switch from `streamRunAgent` to session endpoints
-- [ ] Persist `session_id` across page loads (URL param or `localStorage`)
-- [ ] On page load: check `GET /v1beta1/sessions/{id}/status` for active
-      sessions
-- [ ] Reconnection: `GET /v1beta1/sessions/{id}?after=N` to catch up
-- [ ] UI: toast for background sessions, expand to full console on click
+- [ ] `SSEAgentEventSource`: swap from `streamRunAgent` to 3 session endpoints
+      (create → stream → resume cycle)
+- [ ] `fetch-allowlist.ts`: update URL allowlist for new endpoints
+- [ ] Tests: update `sse-agent-event-source.test.ts`
+- [ ] `abort()`: `POST /sessions/{id}:cancel` instead of dropping connection

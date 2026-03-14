@@ -149,6 +149,8 @@ export const ENABLE_SHOW_TOKEN_COUNTER = getBoolean(
 
 export const ENABLE_OPAL_BACKEND = getBoolean("ENABLE_OPAL_BACKEND");
 
+export const ENABLE_SESSIONS_BACKEND = getBoolean("ENABLE_SESSIONS_BACKEND");
+
 function getDomainConfig(
   flagName: string
 ): Record<string, DomainConfiguration> {

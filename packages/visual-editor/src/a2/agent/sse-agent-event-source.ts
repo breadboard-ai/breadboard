@@ -5,28 +5,32 @@
  */
 
 import type { AgentEvent } from "./agent-event.js";
-import { SUSPEND_TYPES, eventType, eventPayload } from "./agent-event.js";
+import { SUSPEND_TYPES, eventType } from "./agent-event.js";
 import type { AgentEventConsumer } from "./agent-event-consumer.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
 
 export { SSEAgentEventSource };
 
 /**
- * Client-side SSE adapter that reads an agent event stream from the
- * server and dispatches events to an `AgentEventConsumer`.
+ * Client-side adapter that reads an agent event stream from session
+ * endpoints and dispatches events to an `AgentEventConsumer`.
  *
- * Uses the Resumable Stream Protocol: a single POST request with
- * the run config in the body, returning an SSE stream.
+ * Uses the Session Protocol:
+ * 1. `POST /sessions/new` — create session, get `sessionId`
+ * 2. `GET /sessions/{id}` — SSE stream of events
+ * 3. `POST /sessions/{id}/resume` — inject response on suspend
  *
- * **Reconnect model:** When a suspend event arrives, the stream closes.
- * The client awaits the consumer handler (which collects user input),
- * then POSTs again with `{interactionId, response}` to resume on a
- * new stream. This repeats until the run completes.
- *
- * Suspends can last seconds, hours, or days — the stream cannot stay
- * open that long.
+ * On suspend, the SSE stream closes. The client awaits the consumer
+ * handler (which collects user input), POSTs the resume, then
+ * reconnects to the SSE stream with `?after=N` to pick up new events.
  */
 class SSEAgentEventSource {
+  /** Session ID, set after the first `POST /sessions/new`. */
+  #sessionId: string | null = null;
+
+  /** Cursor: index of the last received event (for reconnection). */
+  #eventCursor = -1;
+
   constructor(
     private readonly baseUrl: string,
     private readonly config: Record<string, unknown>,
@@ -37,65 +41,103 @@ class SSEAgentEventSource {
     console.log("[SSE] Created SSEAgentEventSource", { baseUrl, config });
   }
 
+  /** The session ID, available after `connect()` starts. */
+  get sessionId(): string | null {
+    return this.#sessionId;
+  }
+
   /**
-   * Open the SSE connection and start dispatching events.
+   * Open the session and start dispatching events.
    *
-   * Returns a Promise that resolves when the run completes (complete/error
-   * event) and rejects on unrecoverable errors.
-   *
-   * If the stream suspends, this method handles the reconnect loop
-   * internally: it awaits the user's response, POSTs again with
-   * `{interactionId, response}`, and continues dispatching from the
-   * new stream.
+   * Creates a session, connects to the SSE stream, and dispatches
+   * events. On suspend, collects the user response, POSTs the resume,
+   * and reconnects to the stream. Repeats until the run completes.
    */
   async connect(): Promise<void> {
-    // First connection: wrap config under "start" (proto oneof).
-    let body: Record<string, unknown> = { start: this.config };
+    // Step 1: Create session.
+    this.#sessionId = await this.#createSession();
+    console.log("[SSE] Session created:", this.#sessionId);
 
-    // Reconnect loop: each iteration is one POST → stream cycle.
+    // Step 2: Stream events (with reconnect on suspend).
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const result = await this.#streamOnce(body);
+      const result = await this.#streamEvents();
 
       if (result.done) {
-        // Stream completed normally (complete or error event).
         return;
       }
 
-      // Stream ended because of a suspend event.
-      // The handler has already been called and the user has responded.
-      // POST again with the interaction ID and response to continue.
-      body = {
-        resume: {
-          interactionId: result.interactionId,
-          response: result.response,
-        },
-      };
+      // Suspend: collect user response, POST resume, reconnect.
+      console.log("[SSE] Suspend resolved, resuming:", result.type);
+      await this.#resume(result.response);
     }
   }
 
   /**
-   * Run a single POST → stream cycle.
+   * Cancel the session on the server.
    *
-   * Returns `{done: true}` if the stream completed, or
-   * `{done: false, interactionId, response}` if a suspend event
-   * triggered a reconnect.
+   * Called by `SSEAgentRun.abort()` to stop the background task and
+   * prevent further inference costs.
    */
-  async #streamOnce(
-    body: Record<string, unknown>
-  ): Promise<
-    { done: true } | { done: false; interactionId: string; response: unknown }
-  > {
-    const url = `${this.baseUrl}/v1beta1/streamRunAgent?alt=sse`;
-    console.log("[SSE] Connecting:", url, body);
+  async cancel(): Promise<void> {
+    if (!this.#sessionId) return;
+    const url = `${this.baseUrl}/v1beta1/sessions/${this.#sessionId}:cancel`;
+    try {
+      await this.fetchWithCreds(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch {
+      // Best-effort — the abort signal may have already killed the fetch.
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
+
+  /** POST /sessions/new → { sessionId } */
+  async #createSession(): Promise<string> {
+    const url = `${this.baseUrl}/v1beta1/sessions/new`;
+    console.log("[SSE] Creating session:", url);
 
     const response = await this.fetchWithCreds(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(this.config),
       signal: this.signal,
     });
-    console.log("[SSE] Response:", response.status, response.statusText);
+
+    if (!response.ok) {
+      throw new Error(
+        `Session creation failed: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const data = (await response.json()) as { sessionId: string };
+    return data.sessionId;
+  }
+
+  /**
+   * GET /sessions/{id}?after=N → SSE stream.
+   *
+   * Dispatches events to the consumer. Returns when the stream ends:
+   * - `{done: true}` if the run completed (complete/error/stream end)
+   * - `{done: false, type, response}` if a suspend event triggered
+   */
+  async #streamEvents(): Promise<
+    { done: true } | { done: false; type: string; response: unknown }
+  > {
+    const after = this.#eventCursor;
+    const url =
+      after >= 0
+        ? `${this.baseUrl}/v1beta1/sessions/${this.#sessionId}?after=${after}`
+        : `${this.baseUrl}/v1beta1/sessions/${this.#sessionId}`;
+    console.log("[SSE] Streaming:", url);
+
+    const response = await this.fetchWithCreds(url, {
+      signal: this.signal,
+    });
 
     if (!response.ok) {
       throw new Error(
@@ -106,27 +148,28 @@ class SSEAgentEventSource {
       throw new Error("SSE response has no body");
     }
 
-    // The stream yields proto-style oneof objects — our AgentEvent type
-    // matches the wire format directly, no transformation needed.
-    const events = iteratorFromStream<AgentEvent>(response.body);
+    const events = iteratorFromStream<AgentEvent | SessionEnvelope>(
+      response.body
+    );
     for await (const event of events) {
-      const type = eventType(event);
+      // Skip session protocol envelope events.
+      if (isSessionEnvelope(event)) {
+        continue;
+      }
+
+      // Track cursor: each event increments the cursor.
+      this.#eventCursor++;
+
+      const type = eventType(event as AgentEvent);
       console.log("[SSE] Event:", type, event);
 
       if (SUSPEND_TYPES.has(type)) {
-        // Suspend: await the consumer handler to get the user's response.
-        const payload = eventPayload(event) as { interactionId: string };
-        const userResponse = await this.consumer.handle(event);
-        console.log("[SSE] Suspend resolved, reconnecting:", type);
-        return {
-          done: false,
-          interactionId: payload.interactionId,
-          response: userResponse,
-        };
+        const userResponse = await this.consumer.handle(event as AgentEvent);
+        return { done: false, type, response: userResponse };
       }
 
       // Fire-and-forget: dispatch and continue.
-      this.consumer.handle(event);
+      this.consumer.handle(event as AgentEvent);
 
       if (type === "complete" || type === "error") {
         return { done: true };
@@ -137,4 +180,44 @@ class SSEAgentEventSource {
     console.log("[SSE] Stream ended normally");
     return { done: true };
   }
+
+  /** POST /sessions/{id}/resume → { ok } */
+  async #resume(response: unknown): Promise<void> {
+    const url = `${this.baseUrl}/v1beta1/sessions/${this.#sessionId}/resume`;
+    console.log("[SSE] Resuming:", url);
+
+    const res = await this.fetchWithCreds(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ response }),
+      signal: this.signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(
+        `Resume failed: ${res.status} ${res.statusText}`
+      );
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Session envelope detection
+// ---------------------------------------------------------------------------
+
+/** Session protocol wrapper events (start, done). */
+type SessionEnvelope = { sessionId?: string };
+
+/**
+ * Detect session protocol envelope events that should be skipped.
+ * These are `{sessionId: "..."}` (start) and `{}` (done).
+ */
+function isSessionEnvelope(event: unknown): event is SessionEnvelope {
+  if (typeof event !== "object" || event === null) return false;
+  const keys = Object.keys(event);
+  // Empty object = "done" envelope.
+  if (keys.length === 0) return true;
+  // Single "sessionId" key = "start" envelope.
+  if (keys.length === 1 && keys[0] === "sessionId") return true;
+  return false;
 }

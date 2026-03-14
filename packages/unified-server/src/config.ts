@@ -84,6 +84,7 @@ export async function createClientConfig(opts: {
       showTokenCounter: flags.ENABLE_SHOW_TOKEN_COUNTER,
 
       enableOpalBackend: flags.ENABLE_OPAL_BACKEND,
+      enableSessionsBackend: flags.ENABLE_SESSIONS_BACKEND,
     },
   };
 }

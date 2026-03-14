@@ -114,30 +114,37 @@ class AgentService {
   #remoteBaseUrl: string | null = null;
   #remoteFetchWithCreds: typeof fetch = fetch;
   #remoteIsEnabled: () => boolean = () => true;
+  #useSessionsProtocol: () => boolean = () => false;
 
   /**
    * Configure the service for remote (SSE) mode.
    *
    * When `baseUrl` is set, `startRun()` will POST to the server and
    * return an `SSEAgentRun` that streams events via SSE.
-   * The `fetchFn` is used for all HTTP requests (typically `fetchWithCreds`).
-   * The `isEnabled` predicate is checked at `startRun()` time — when it
-   * returns false, the service falls back to local mode. This allows
-   * runtime flags to toggle remote mode without a page reload.
+   *
+   * The `isEnabled` predicate controls whether remote mode is active.
+   * The `useSessionsProtocol` predicate controls which wire protocol
+   * to use: `true` → sessions API (3-endpoint), `false` → legacy
+   * `streamRunAgent` (single POST).
+   *
+   * Both predicates are checked at `startRun()` time — toggling the
+   * underlying flags takes effect without a page reload.
    *
    * Pass `null` for baseUrl to revert to local mode.
    */
   configureRemote(
     baseUrl: string | null,
     fetchWithCreds: typeof fetch = fetch,
-    isEnabled: () => boolean = () => true
+    isEnabled: () => boolean = () => true,
+    useSessionsProtocol: () => boolean = () => false
   ): void {
     this.#remoteBaseUrl = baseUrl;
     this.#remoteFetchWithCreds = fetchWithCreds;
     this.#remoteIsEnabled = isEnabled;
+    this.#useSessionsProtocol = useSessionsProtocol;
   }
 
-  /** Whether the service is configured for remote (SSE) mode AND the flag is currently enabled. */
+  /** Whether the service is configured for remote (SSE) mode AND a remote flag is currently enabled. */
   get isRemote(): boolean {
     return this.#remoteBaseUrl !== null && this.#remoteIsEnabled();
   }
@@ -164,7 +171,8 @@ class AgentService {
         config.kind,
         this.#remoteBaseUrl,
         config,
-        this.#remoteFetchWithCreds
+        this.#remoteFetchWithCreds,
+        this.#useSessionsProtocol()
       );
     } else {
       run = new LocalAgentRun(runId, config.kind);

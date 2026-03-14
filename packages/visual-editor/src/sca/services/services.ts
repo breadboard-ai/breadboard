@@ -135,11 +135,16 @@ export function services(
 
     const agentService = new AgentService();
 
-    // Always wire up the remote URL + fetch. The isEnabled predicate
-    // reads the enableOpalBackend flag at startRun() time, so toggling
-    // the flag in Settings takes effect without a page reload.
-    agentService.configureRemote(OPAL_BACKEND_API_PREFIX, fetchWithCreds, () =>
-      env.flags.get("enableOpalBackend")
+    // Always wire up the remote URL + fetch. The predicates read flags
+    // at startRun() time, so toggling flags in Settings takes effect
+    // without a page reload.
+    agentService.configureRemote(
+      OPAL_BACKEND_API_PREFIX,
+      fetchWithCreds,
+      () =>
+        env.flags.get("enableOpalBackend") ||
+        env.flags.get("enableSessionsBackend"),
+      () => env.flags.get("enableSessionsBackend")
     );
 
     const sandbox = createA2ModuleFactory({

@@ -28,6 +28,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   textEditorRemix: false,
   showTokenCounter: false,
   enableOpalBackend: false,
+  enableSessionsBackend: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(

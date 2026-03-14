@@ -53,6 +53,7 @@ function makeRuntimeConfig(
         showTokenCounter: false,
 
         enableOpalBackend: false,
+        enableSessionsBackend: false,
 
       },
     },
@@ -89,6 +90,7 @@ const testFlags: RuntimeFlags = {
   showTokenCounter: false,
 
   enableOpalBackend: false,
+  enableSessionsBackend: false,
 
 };
 
