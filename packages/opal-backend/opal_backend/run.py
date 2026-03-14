@@ -30,6 +30,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
+from datetime import datetime
 from typing import Any, AsyncIterator, TypedDict, cast
 
 from .agent_events import AgentEventSink, build_hooks_from_sink
@@ -131,8 +132,12 @@ async def run(
 
     pidgin = cast(ToPidginResult, pidgin_result)
 
+    now = datetime.now().strftime("%B %-d, %Y %-I:%M %p")
     objective: dict[str, Any] = {
-        "parts": [{"text": f"<objective>{pidgin.text}</objective>"}],
+        "parts": [{"text": (
+            f"<metadata>\n<current_date>{now}</current_date>\n</metadata>\n"
+            f"<objective>{pidgin.text}</objective>"
+        )}],
         "role": "user",
     }
     use_memory = pidgin.use_memory
