@@ -25,7 +25,8 @@
     "markdown": "(find . -iname \"*.md\" -not -path \"*/.wireit/*\" -not -path \"*/node_modules/*\" -exec cat {} +) > all_markdown.md",
     "prepare": "husky",
     "setup:python": "wireit",
-    "test:python": "wireit"
+    "test:python": "wireit",
+    "show:archived-projects": "git log --diff-filter=D --name-only --pretty=format:'%h %s' -- 'PROJECT_*.md'"
   },
   "wireit": {
     "build": {
