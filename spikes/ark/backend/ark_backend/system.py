@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
+
 from pathlib import Path
 from typing import Any
 
@@ -30,12 +30,7 @@ __all__ = ["get_ark_system_group"]
 _DECLARATIONS_DIR = Path(__file__).resolve().parent.parent / "declarations"
 
 
-def _build_instruction() -> str:
-    """Build the system instruction with the current date interpolated."""
-    loaded = load_declarations("system", declarations_dir=_DECLARATIONS_DIR)
-    now = datetime.now().strftime("%B %-d, %Y %-I:%M %p")
-    instruction = loaded.instruction or ""
-    return instruction.replace("{{current_date}}", now)
+
 
 
 def _make_handlers(
@@ -236,5 +231,4 @@ def get_ark_system_group(
     return assemble_function_group(
         loaded,
         handlers,
-        instruction_override=_build_instruction(),
     )

@@ -23,6 +23,7 @@ import logging
 import re
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from .agent_events import AgentEventSink, build_hooks_from_sink
@@ -288,8 +289,12 @@ async def run_skilled_agent(
         instruction=skill_instruction,
     )
 
+    now = datetime.now().strftime("%B %-d, %Y %-I:%M %p")
     objective_content = {
-        "parts": [{"text": f"<objective>{objective}</objective>"}],
+        "parts": [{"text": (
+            f"<metadata>\n<current_date>{now}</current_date>\n</metadata>\n"
+            f"<objective>{objective}</objective>"
+        )}],
         "role": "user",
     }
 

@@ -88,10 +88,18 @@ async function buildAgentRun(args: {
 
   fileSystem.setUseMemory(objectivePidgin.useMemory);
 
+  const currentDate = new Date().toLocaleString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  });
+
   // 3. Start or resume the run
   const stepId = moduleArgs.context.currentStep?.id;
   const objectiveContent =
-    llm`<objective>${objectivePidgin.text}</objective>`.asContent();
+    llm`<metadata>\n<current_date>${currentDate}</current_date>\n</metadata>\n<objective>${objectivePidgin.text}</objective>`.asContent();
 
   const runtimeFlags = await moduleArgs.context.flags?.flags();
   const enableResumeAgentRun = runtimeFlags?.enableResumeAgentRun ?? false;

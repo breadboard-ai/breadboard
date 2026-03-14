@@ -18,7 +18,7 @@ file operations (``system_list_files``, ``system_write_file``,
 
 from __future__ import annotations
 
-from datetime import datetime
+
 import inspect
 from typing import Any, Callable, Awaitable, cast
 
@@ -47,16 +47,7 @@ TASK_ID_PARAMETER = "task_id"
 _LOADED = load_declarations("system")
 
 
-def _build_instruction() -> str:
-    """Build the system instruction with the current date interpolated.
 
-    The instruction template in system.instruction.md contains a
-    ``{{current_date}}`` placeholder. This function loads it and
-    replaces the placeholder with the current date/time.
-    """
-    now = datetime.now().strftime("%B %-d, %Y %-I:%M %p")
-    instruction = _LOADED.instruction or ""
-    return instruction.replace("{{current_date}}", now)
 
 
 # ---------------------------------------------------------------------------
@@ -274,5 +265,4 @@ def get_system_function_group(
     return assemble_function_group(
         _LOADED,
         handlers,
-        instruction_override=_build_instruction(),
     )

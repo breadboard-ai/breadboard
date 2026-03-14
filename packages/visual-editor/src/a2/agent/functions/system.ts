@@ -43,22 +43,7 @@ export type SystemFunctionArgs = {
 };
 
 function getSystemFunctionGroup(args: SystemFunctionArgs): FunctionGroup {
-  // The instruction template contains a {{current_date}} placeholder that
-  // must be interpolated at runtime. This was previously a JS template
-  // literal with `new Date().toLocaleString(...)`.
-  const currentDate = new Date().toLocaleString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-  });
-  const resolvedInstruction = instruction?.replace(
-    "{{current_date}}",
-    currentDate
-  );
-
-  return assembleFunctionGroup(declarations, metadata, resolvedInstruction, {
+  return assembleFunctionGroup(declarations, metadata, instruction, {
     system_objective_fulfilled: async ({
       objective_outcome,
       href,

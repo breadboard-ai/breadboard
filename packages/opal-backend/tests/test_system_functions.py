@@ -60,12 +60,14 @@ class TestGetSystemFunctionGroup:
         assert OBJECTIVE_FULFILLED_FUNCTION in group.instruction
         assert FAILED_TO_FULFILL_FUNCTION in group.instruction
 
-    def test_instruction_interpolates_date(self):
+    def test_instruction_does_not_contain_date_placeholder(self):
         controller = LoopController()
         group = get_system_function_group(controller)
 
-        # Should contain a date like "February 20, 2026"
-        assert "202" in group.instruction  # Year prefix
+        # The instruction should NOT contain the raw placeholder.
+        assert "{{current_date}}" not in group.instruction
+        # It should reference the metadata tag instead.
+        assert "<metadata>" in group.instruction
 
 
 # =============================================================================
