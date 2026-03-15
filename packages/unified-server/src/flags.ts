@@ -151,6 +151,10 @@ export const ENABLE_OPAL_BACKEND = getBoolean("ENABLE_OPAL_BACKEND");
 
 export const ENABLE_SESSIONS_BACKEND = getBoolean("ENABLE_SESSIONS_BACKEND");
 
+export const ENABLE_SINGLETON_PREFIX_CACHE = getBoolean(
+  "ENABLE_SINGLETON_PREFIX_CACHE"
+);
+
 function getDomainConfig(
   flagName: string
 ): Record<string, DomainConfiguration> {

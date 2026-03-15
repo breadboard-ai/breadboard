@@ -119,3 +119,47 @@ class BackendClient(Protocol):
             GeminiAPIError: If the API returns a non-200 status.
         """
         ...
+
+    async def create_cached_content(
+        self,
+        body: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create a Gemini cached content resource.
+
+        Sends the payload to the ``cachedContents`` API and returns the
+        raw response. Transport details (URL construction, auth headers)
+        are handled by the implementation.
+
+        Args:
+            body: The full ``cachedContents`` request body (model,
+                systemInstruction, tools, contents, ttl, etc.).
+
+        Returns:
+            The raw Gemini API response dict (containing ``name``, etc.).
+
+        Raises:
+            GeminiAPIError: If the API returns a non-200 status.
+        """
+        ...
+
+    async def update_cached_content(
+        self,
+        name: str,
+        body: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Update a Gemini cached content resource (e.g. extend TTL).
+
+        Sends a PATCH to the ``cachedContents/{name}`` API.
+
+        Args:
+            name: The cached content resource name
+                (e.g. ``"cachedContents/abc123"``).
+            body: The update body (e.g. ``{"ttl": "1800s"}``).
+
+        Returns:
+            The raw Gemini API response dict.
+
+        Raises:
+            GeminiAPIError: If the API returns a non-200 status.
+        """
+        ...

@@ -30,6 +30,7 @@ __all__ = ["HttpBackendClient"]
 logger = logging.getLogger(__name__)
 
 GENAI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+GENAI_CACHE_URL = "https://generativelanguage.googleapis.com/v1beta/cachedContents"
 
 
 class HttpBackendClient:
@@ -46,11 +47,13 @@ class HttpBackendClient:
         httpx_client: httpx.AsyncClient,
         access_token: str,
         origin: str = "",
+        gemini_key: str = "",
     ) -> None:
         self._upstream_base = upstream_base
         self._httpx = httpx_client
         self._access_token = access_token
         self._origin = origin
+        self._gemini_key = gemini_key
 
     def _headers(self) -> dict[str, str]:
         """Build standard request headers."""
@@ -182,6 +185,53 @@ class HttpBackendClient:
                         logger.warning(
                             "Failed to parse SSE chunk: %s", json_str[:100]
                         )
+
+    async def create_cached_content(
+        self,
+        body: dict[str, Any],
+    ) -> dict[str, Any]:
+        """POST to Gemini cachedContents API and return the response."""
+        if not self._gemini_key:
+            raise GeminiAPIError("gemini_key is required for create_cached_content")
+
+        url = f"{GENAI_CACHE_URL}?key={self._gemini_key}"
+        headers = {"Content-Type": "application/json"}
+
+        response = await self._httpx.post(
+            url, json=body, headers=headers
+        )
+        if response.status_code != 200:
+            error_text = response.text[:500]
+            raise GeminiAPIError(
+                f"cachedContents API error {response.status_code}: "
+                f"{error_text}"
+            )
+        return response.json()
+
+    async def update_cached_content(
+        self,
+        name: str,
+        body: dict[str, Any],
+    ) -> dict[str, Any]:
+        """PATCH a Gemini cachedContents resource (e.g. extend TTL)."""
+        if not self._gemini_key:
+            raise GeminiAPIError("gemini_key is required for update_cached_content")
+
+        # name is e.g. "cachedContents/abc123" — build the full URL.
+        base = "https://generativelanguage.googleapis.com/v1beta"
+        url = f"{base}/{name}?key={self._gemini_key}"
+        headers = {"Content-Type": "application/json"}
+
+        response = await self._httpx.patch(
+            url, json=body, headers=headers
+        )
+        if response.status_code != 200:
+            error_text = response.text[:500]
+            raise GeminiAPIError(
+                f"cachedContents PATCH error {response.status_code}: "
+                f"{error_text}"
+            )
+        return response.json()
 
 
 def _decode_error(text: str) -> str:

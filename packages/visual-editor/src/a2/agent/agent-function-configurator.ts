@@ -120,8 +120,7 @@ function createAgentConfigurator(
       groups.push(getNoUiFunctionGroup());
     }
 
-    const enableGoogleDriveTools = await moduleArgs.context.flags?.flags();
-    if (enableGoogleDriveTools) {
+    if (runtimeFlags?.enableGoogleDriveTools) {
       groups.push(
         getGoogleDriveFunctionGroup({
           fileSystem: deps.fileSystem,

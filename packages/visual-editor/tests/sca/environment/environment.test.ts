@@ -54,6 +54,7 @@ function makeRuntimeConfig(
 
         enableOpalBackend: false,
         enableSessionsBackend: false,
+        enableSingletonPrefixCache: false,
 
       },
     },
@@ -91,6 +92,7 @@ const testFlags: RuntimeFlags = {
 
   enableOpalBackend: false,
   enableSessionsBackend: false,
+  enableSingletonPrefixCache: false,
 
 };
 
