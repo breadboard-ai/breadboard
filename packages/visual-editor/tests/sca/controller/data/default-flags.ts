@@ -21,4 +21,5 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   showTokenCounter: false,
   enableOpalBackend: false,
   enableSessionsBackend: false,
+  enableSingletonPrefixCache: false,
 };

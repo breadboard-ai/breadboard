@@ -83,6 +83,12 @@ export type RuntimeFlags = {
    * Use the sessions API for remote agent runs (3-endpoint protocol)
    */
   enableSessionsBackend: boolean;
+
+  /**
+   * Cache the agent prefix (system instruction, tools, config) once on the
+   * backend and reuse the cached content ID across client calls.
+   */
+  enableSingletonPrefixCache: boolean;
 };
 
 /**
@@ -209,6 +215,12 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     title: "Sessions Backend",
     description:
       "Use the sessions API for remote agent runs (replaces streamRunAgent)",
+    visibility: "experimental",
+  },
+  enableSingletonPrefixCache: {
+    title: "Singleton Prefix Cache",
+    description:
+      "Cache agent prefix on the backend and reuse the cached content ID",
     visibility: "experimental",
   },
 };

@@ -47,6 +47,12 @@ type AgentRunArgs = {
    * dispatch is available.
    */
   customTools?: SimplifiedToolManager;
+  /**
+   * Pre-fetched singleton cached content name. When present, the loop
+   * skips per-client cache creation and uses this shared resource.
+   * Set by buildAgentRun when singleton prefix caching is eligible.
+   */
+  singletonCachedContentName?: string;
 };
 
 type AgentResult = {
@@ -141,6 +147,7 @@ class Loop {
     hooks = {},
     contents: initialContents,
     customTools,
+    singletonCachedContentName,
   }: AgentRunArgs): Promise<Outcome<AgentResult>> {
     const { moduleArgs } = this;
     const contents = initialContents || [objective];
@@ -178,26 +185,30 @@ class Loop {
         functionCallingConfig: { mode: "ANY" as const },
       };
 
-      // Create a cache with only the static parts (SI + tools).
-      // Contents are always sent fresh — no duplication, no empty arrays.
-      let cachedContentName: string | undefined;
+      // --- Prefix caching ---
+      // When a singleton cache name is provided (shared across clients),
+      // skip per-client cache creation entirely.
+      let cachedContentName = singletonCachedContentName;
       // How many entries in `contents` are covered by the current cache.
       // 0 means the cache only has the static envelope (SI + tools).
       let cachedContentCount = 0;
 
-      const cacheBody: GeminiBody = {
-        contents: [],
-        systemInstruction,
-        toolConfig,
-        tools,
-      };
-      const cacheName = await createCachedContent(
-        moduleArgs,
-        AGENT_MODEL,
-        cacheBody
-      );
-      if (ok(cacheName)) {
-        cachedContentName = cacheName;
+      if (!cachedContentName) {
+        // No singleton cache — fall back to per-client cache creation.
+        const cacheBody: GeminiBody = {
+          contents: [],
+          systemInstruction,
+          toolConfig,
+          tools,
+        };
+        const cacheName = await createCachedContent(
+          moduleArgs,
+          AGENT_MODEL,
+          cacheBody
+        );
+        if (ok(cacheName)) {
+          cachedContentName = cacheName;
+        }
       }
 
       while (!this.controller.terminated) {
@@ -229,6 +240,18 @@ class Loop {
           moduleArgs
         );
         if (!ok(generated)) {
+          // If the request failed and we were using a cached content
+          // reference, the resource may have expired on Gemini's side.
+          // Drop the cache and retry this turn with a full uncached body.
+          if (cachedContentName) {
+            console.warn(
+              `Cached content "${cachedContentName}" may have expired, ` +
+                `retrying without cache: ${generated.$error}`
+            );
+            cachedContentName = undefined;
+            cachedContentCount = 0;
+            continue;
+          }
           return generated;
         }
         const functionCaller = new FunctionCallerImpl(

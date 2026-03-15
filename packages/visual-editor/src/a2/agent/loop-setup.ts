@@ -23,6 +23,7 @@ import {
 } from "./types.js";
 import { Loop, AgentRunArgs } from "./loop.js";
 import type { AgentEventSink } from "./agent-event-sink.js";
+import { getSingletonPrefixCache } from "../a2/singleton-cache.js";
 
 export { buildAgentRun, buildHooksFromSink };
 
@@ -171,13 +172,45 @@ async function buildAgentRun(args: {
   // 6. Compose hooks from sink
   const hooks = buildHooksFromSink(sink);
 
-  // 7. Assemble the run args
+  // 7. Singleton prefix cache eligibility.
+  //
+  // When all three conditions are met, the agent uses a shared
+  // cached-content resource from the backend instead of creating
+  // a per-client cache. This amortizes the cache creation cost
+  // across all clients running with the same flag combination.
+  //
+  // Conditions:
+  //   - enableSingletonPrefixCache runtime flag is on
+  //   - UI type is "chat" (a2ui has dynamic functions, simulated is headless)
+  //   - No custom tools (user-defined tools are unbounded and can't
+  //     be part of a shared cache)
+  const hasCustomTools = objectivePidgin.tools.list().length > 0;
+  const singletonCacheEligible =
+    runtimeFlags?.enableSingletonPrefixCache === true &&
+    uiType === "chat" &&
+    !hasCustomTools;
+
+  let singletonCachedContentName: string | undefined;
+  if (singletonCacheEligible) {
+    const result = await getSingletonPrefixCache(moduleArgs, {
+      useMemory: objectivePidgin.useMemory,
+      useNotebookLM: objectivePidgin.useNotebookLM,
+      useGoogleDrive: runtimeFlags?.enableGoogleDriveTools ?? false,
+    });
+    if (ok(result)) {
+      singletonCachedContentName = result;
+    }
+    // On failure, fall through — loop.ts will create a per-client cache.
+  }
+
+  // 8. Assemble the run args
   const runArgs: AgentRunArgs = {
     objective,
     functionGroups: functionGroupsResult,
     hooks,
     contents,
     customTools: objectivePidgin.tools,
+    singletonCachedContentName,
   };
 
   return {

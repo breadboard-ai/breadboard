@@ -386,6 +386,54 @@ async def create_cached_content(request: Request) -> Response:
 GENAI_MODELS_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 
 
+# ---------------------------------------------------------------------------
+# Singleton prefix cache
+# ---------------------------------------------------------------------------
+
+from opal_backend.singleton_cache import get_singleton_prefix_cache
+
+
+@app.post("/v1beta1/getSingletonPrefixCache")
+async def singleton_prefix_cache(request: Request) -> Response:
+    """Return a shared cached content resource for the given flag combination.
+
+    The frontend sends three boolean flags that fully determine the prefix
+    shape (system instruction + tool declarations). The backend maintains
+    an in-memory cache of Gemini cachedContents resources keyed by these
+    flags, creating new ones lazily on cache miss.
+    """
+    body = await request.json()
+
+    auth_header = request.headers.get("Authorization", "")
+    access_token = auth_header.removeprefix("Bearer ").strip()
+
+    backend = HttpBackendClient(
+        upstream_base=UPSTREAM_BASE,
+        httpx_client=httpx.AsyncClient(timeout=120.0),
+        access_token=access_token,
+        gemini_key=GEMINI_KEY,
+    )
+
+    result = await get_singleton_prefix_cache(
+        use_memory=body.get("useMemory", False),
+        use_notebooklm=body.get("useNotebookLM", False),
+        use_google_drive=body.get("useGoogleDrive", False),
+        client=backend,
+    )
+
+    if "errorMessage" in result:
+        return Response(
+            content=json.dumps(result),
+            status_code=500,
+            media_type="application/json",
+        )
+
+    return Response(
+        content=json.dumps(result),
+        status_code=200,
+        media_type="application/json",
+    )
+
 @app.post("/v1beta1/models/{model}:generateContent")
 async def proxy_generate_content(model: str, request: Request) -> Response:
     """Proxy a generateContent call to the Gemini API."""
