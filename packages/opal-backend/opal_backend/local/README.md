@@ -14,6 +14,7 @@ Everything outside this directory IS synced to production.
 | `backend_client_impl.py`    | `HttpBackendClient` — HTTP-based `BackendClient` (POSTs to OP + streams Gemini) |
 | `interaction_store_impl.py` | `InMemoryInteractionStore` — dict-based `InteractionStore`                      |
 | `pending_requests.py`       | `PendingRequestMap` — asyncio futures for fake server suspend/resume            |
+| `session_router.py`         | FastAPI router factory + `SessionDeps` for session REST endpoints                |
 | `sse_sink.py`               | `SSEAgentEventSink` — bridges `AgentEvent` → SSE strings for fake server        |
 
 ## The Resumable Stream Protocol

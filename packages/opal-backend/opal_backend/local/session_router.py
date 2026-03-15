@@ -2,10 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-Session REST API endpoints.
+Session REST API endpoints (FastAPI transport layer).
 
-Phase 3: endpoints backed by real agent loop execution via
-``new_session()``, ``start_session()``, and ``resume_session()``.
+This module lives in ``local/`` because it depends on FastAPI and
+sse_starlette — transport-specific packages that are NOT available in
+the production backend. The transport-agnostic session logic lives in
+``sessions/api.py``.
 """
 
 from __future__ import annotations
@@ -22,11 +24,11 @@ from sse_starlette.sse import EventSourceResponse
 from ..backend_client import BackendClient
 from ..drive_operations_client import DriveOperationsClient
 from ..interaction_store import InteractionStore
-from .api import (
+from ..sessions.api import (
     Subscribers, cancel_session_task, new_session, register_task,
     resume_session, start_session, update_context,
 )
-from .store import SessionStatus, SessionStore
+from ..sessions.store import SessionStatus, SessionStore
 
 __all__ = ["create_session_router"]
 
