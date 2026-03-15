@@ -38,7 +38,7 @@ from opal_backend.local.drive_operations_client_impl import (
 
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
-from opal_backend.sessions.endpoints import SessionDeps, create_session_router
+from opal_backend.local.session_router import SessionDeps, create_session_router
 from opal_backend.sessions.api import (
     Subscribers, new_session, register_task, start_session,
     resume_session as resume_session_fn, update_context,
