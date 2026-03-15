@@ -153,7 +153,10 @@ def load_declarations(
         (root / f"{group}.metadata.json").read_text()
     )
     instr_path = root / f"{group}.instruction.md"
-    instr = instr_path.read_text() if instr_path.exists() else None
+    try:
+        instr = instr_path.read_text()
+    except FileNotFoundError:
+        instr = None
     return LoadedDeclarations(
         declarations=decls, metadata=meta, instruction=instr
     )
