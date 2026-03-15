@@ -159,6 +159,7 @@ def _make_handlers(
             status_cb(status_update)
         elif status_cb:
             status_cb("Getting a list of files")
+        assert file_system is not None
         return {"list": await file_system.list_files()}
 
     async def system_write_file(
@@ -166,6 +167,7 @@ def _make_handlers(
     ) -> dict[str, Any]:
         file_name = args.get("file_name", "")
         content = args.get("content", "")
+        assert file_system is not None
 
         # Resolve <file> tags in the content via pidgin translator
         translated = await from_pidgin_string(content, file_system)
@@ -188,6 +190,7 @@ def _make_handlers(
         args: dict[str, Any], status_cb: Any
     ) -> dict[str, Any]:
         file_path = args.get("file_path", "")
+        assert file_system is not None
         text = await file_system.read_text(file_path)
         if isinstance(text, dict) and "$error" in text:
             return {"error": text["$error"]}
@@ -199,6 +202,7 @@ def _make_handlers(
         task_tree = args.get("task_tree")
         if not task_tree:
             return {"error": "task_tree is required"}
+        assert task_tree_manager is not None
         file_path = task_tree_manager.set(task_tree)
         return {"file_path": file_path}
 
@@ -206,6 +210,7 @@ def _make_handlers(
         args: dict[str, Any], status_cb: Any
     ) -> dict[str, Any]:
         task_ids = args.get("task_ids", [])
+        assert task_tree_manager is not None
         file_path = task_tree_manager.set_complete(task_ids)
         return {"file_path": file_path}
 
