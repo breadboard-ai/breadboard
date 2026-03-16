@@ -197,8 +197,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
         if (urlStr.includes("/sessions/new") && init?.method === "POST") {
           return jsonResponse({ sessionId: SESSION_ID });
         }
-        // POST /sessions/{id}/resume.
-        if (urlStr.includes("/resume") && init?.method === "POST") {
+        // POST /sessions/{id}:resume.
+        if (urlStr.includes(":resume") && init?.method === "POST") {
           return jsonResponse({ ok: true });
         }
         // GET /sessions/{id} → SSE stream (first or second).
@@ -257,8 +257,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
     assert.ok(fetchCalls[1].url.includes(`/sessions/${SESSION_ID}`));
     assert.ok(!fetchCalls[1].url.includes("after="));
 
-    // 3. POST /sessions/{id}/resume.
-    assert.ok(fetchCalls[2].url.includes("/resume"));
+    // 3. POST /sessions/{id}:resume.
+    assert.ok(fetchCalls[2].url.includes(":resume"));
     const resumeBody = JSON.parse(fetchCalls[2].init?.body as string);
     assert.deepStrictEqual(resumeBody.response, {
       input: { parts: [{ text: "Alice" }] },
@@ -678,7 +678,7 @@ suite("SSEAgentEventSource (session protocol)", () => {
         if (urlStr.includes("/sessions/new") && init?.method === "POST") {
           return jsonResponse({ sessionId: SESSION_ID });
         }
-        if (urlStr.includes("/resume") && init?.method === "POST") {
+        if (urlStr.includes(":resume") && init?.method === "POST") {
           return jsonResponse({ ok: true });
         }
         if (urlStr.includes(`/sessions/${SESSION_ID}`)) {

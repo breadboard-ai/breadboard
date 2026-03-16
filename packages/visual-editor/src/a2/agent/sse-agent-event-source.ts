@@ -18,7 +18,7 @@ export { SSEAgentEventSource };
  * Uses the Session Protocol:
  * 1. `POST /sessions/new` — create session, get `sessionId`
  * 2. `GET /sessions/{id}` — SSE stream of events
- * 3. `POST /sessions/{id}/resume` — inject response on suspend
+ * 3. `POST /sessions/{id}:resume` — inject response on suspend
  *
  * On suspend, the SSE stream closes. The client awaits the consumer
  * handler (which collects user input), POSTs the resume, then
@@ -131,8 +131,8 @@ class SSEAgentEventSource {
     const after = this.#eventCursor;
     const url =
       after >= 0
-        ? `${this.baseUrl}/v1beta1/sessions/${this.#sessionId}?after=${after}`
-        : `${this.baseUrl}/v1beta1/sessions/${this.#sessionId}`;
+        ? `${this.baseUrl}/v1beta1/sessions/${this.#sessionId}?alt=sse&after=${after}`
+        : `${this.baseUrl}/v1beta1/sessions/${this.#sessionId}?alt=sse`;
     console.log("[SSE] Streaming:", url);
 
     const response = await this.fetchWithCreds(url, {
@@ -181,9 +181,9 @@ class SSEAgentEventSource {
     return { done: true };
   }
 
-  /** POST /sessions/{id}/resume → { ok } */
+  /** POST /sessions/{id}:resume → { ok } */
   async #resume(response: unknown): Promise<void> {
-    const url = `${this.baseUrl}/v1beta1/sessions/${this.#sessionId}/resume`;
+    const url = `${this.baseUrl}/v1beta1/sessions/${this.#sessionId}:resume`;
     console.log("[SSE] Resuming:", url);
 
     const res = await this.fetchWithCreds(url, {

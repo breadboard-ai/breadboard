@@ -203,7 +203,7 @@ class DevAgentBackend:
             )
 
         graph_info = body.get("graph")
-        session_id = f"sess-{uuid.uuid4().hex[:12]}"
+        session_id = str(uuid.uuid4())
 
         backend = HttpBackendClient(
             upstream_base=UPSTREAM_BASE,

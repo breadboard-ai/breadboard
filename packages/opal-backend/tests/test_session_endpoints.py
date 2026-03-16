@@ -38,7 +38,6 @@ def test_create_session(client):
     assert resp.status_code == 200
     data = resp.json()
     assert "sessionId" in data
-    assert data["sessionId"].startswith("sess-")
 
 
 # ── GET /v1beta1/sessions/{id}/status ──
@@ -89,7 +88,7 @@ def test_stream_events_not_found(client):
     assert resp.status_code == 404
 
 
-# ── POST /v1beta1/sessions/{id}/resume ──
+# ── POST /v1beta1/sessions/{id}:resume ──
 
 
 @pytest.mark.asyncio
@@ -103,7 +102,7 @@ async def test_resume_suspended_session(client, store):
     await store.set_status(session_id, SessionStatus.SUSPENDED)
 
     resp = client.post(
-        f"/v1beta1/sessions/{session_id}/resume",
+        f"/v1beta1/sessions/{session_id}:resume",
         json={"response": {"input": {"role": "user", "parts": [{"text": "Yes"}]}}},
     )
     assert resp.status_code == 200
@@ -118,7 +117,7 @@ def test_resume_not_suspended(client):
     session_id = create_resp.json()["sessionId"]
 
     resp = client.post(
-        f"/v1beta1/sessions/{session_id}/resume",
+        f"/v1beta1/sessions/{session_id}:resume",
         json={"response": {}},
     )
     assert resp.status_code == 409
@@ -126,7 +125,7 @@ def test_resume_not_suspended(client):
 
 def test_resume_not_found(client):
     resp = client.post(
-        "/v1beta1/sessions/nonexistent/resume",
+        "/v1beta1/sessions/nonexistent:resume",
         json={"response": {}},
     )
     assert resp.status_code == 404

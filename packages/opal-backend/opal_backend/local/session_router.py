@@ -78,7 +78,7 @@ def create_session_router(
                 status_code=400,
             )
 
-        session_id = f"sess-{uuid.uuid4().hex[:12]}"
+        session_id = str(uuid.uuid4())
 
         if deps is None:
             # Phase 1 stub: just create in store, no loop.
@@ -183,7 +183,7 @@ def create_session_router(
 
         return EventSourceResponse(event_generator())
 
-    @router.post("/{session_id}/resume")
+    @router.post("/{session_id}:resume")
     async def resume_session_endpoint(
         request: Request, session_id: str,
     ) -> JSONResponse:
