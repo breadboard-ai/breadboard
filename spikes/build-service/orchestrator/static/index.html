@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ticket Pipeline</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <nav class="tab-bar">
+        <button class="tab active" data-view="task" id="tab-task">
+          <span class="material-symbols-outlined icon">build</span>
+          Tasks
+        </button>
+        <button class="tab" data-view="tickets" id="tab-tickets">
+          <span class="material-symbols-outlined icon">terminal</span>
+          Debug
+          <span class="tab-badge" id="ticket-count">0</span>
+        </button>
+      </nav>
+
+      <div class="view active" id="view-task"></div>
+      <div class="view" id="view-tickets"></div>
+    </div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
