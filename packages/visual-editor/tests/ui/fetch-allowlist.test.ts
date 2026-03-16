@@ -68,15 +68,15 @@ suite("checkFetchAllowlist", () => {
     );
   });
 
-  test("sessions/{id}/resume requires accessToken in body", () => {
+  test("sessions/{id}:resume requires accessToken in body", () => {
     const info = checkFetchAllowlist(
-      `${BASE}/v1beta1/sessions/sess-123/resume`
+      `${BASE}/v1beta1/sessions/sess-123:resume`
     );
-    assert.ok(info, "sessions/{id}/resume should be in the allowlist");
+    assert.ok(info, "sessions/{id}:resume should be in the allowlist");
     assert.strictEqual(
       info.shouldAddAccessTokenToJsonBody,
       true,
-      "sessions/{id}/resume should add accessToken to JSON body"
+      "sessions/{id}:resume should add accessToken to JSON body"
     );
   });
 

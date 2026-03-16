@@ -237,7 +237,7 @@ async def create_session(request: Request):
     drive = drive_factory(access_token)
 
     session_id = await new_session(
-        session_id=f"sess-{uuid.uuid4().hex[:12]}",
+        session_id=str(uuid.uuid4()),
         segments=body["segments"],
         store=store,
         backend=backend,
@@ -268,11 +268,11 @@ migrate to the session endpoints, `run()` / `resume()` can be deprecated.
 ### Overview
 
 ```
-POST /v1beta1/sessions/new                  → { sessionId }
-GET  /v1beta1/sessions/{id}                 → SSE stream (replay + live)
-POST /v1beta1/sessions/{id}/resume          → { ok }
-GET  /v1beta1/sessions/{id}/status          → { status, eventCount, ... }
-POST /v1beta1/sessions/{id}:cancel          → { status: "cancelled" }
+POST /v1beta1/sessions/new                       → { sessionId }
+GET  /v1beta1/sessions/{id}?alt=sse              → SSE stream (replay + live)
+POST /v1beta1/sessions/{id}:resume                → { ok }
+GET  /v1beta1/sessions/{id}/status               → { status, eventCount, ... }
+POST /v1beta1/sessions/{id}:cancel               → { status: "cancelled" }
 ```
 
 This replaces the current single `POST /v1beta1/streamRunAgent` endpoint with a
@@ -345,7 +345,7 @@ Content-Type: application/json
 
 ```json
 {
-  "sessionId": "sess-abc-123"
+  "sessionId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 }
 ```
 
@@ -372,9 +372,10 @@ SSE event stream. Replays history, then streams live. Connect at any time.
 
 |        |                                                          |
 | ------ | -------------------------------------------------------- |
-| Method | `GET`                                                    |
-| Path   | `/v1beta1/sessions/{session_id}`                         |
-| Query  | `after` (int, optional) — replay events after this index |
+| Method | `GET`                                                        |
+| Path   | `/v1beta1/sessions/{session_id}`                             |
+| Query  | `alt=sse` (required) — signals SSE response format           |
+|        | `after` (int, optional) — replay events after this index     |
 
 **Response `200`**
 
@@ -384,7 +385,7 @@ SSE event stream. Replays history, then streams live. Connect at any time.
 
 ```
 event: start
-data: {"sessionId":"sess-abc-123"}
+data: {"sessionId":"a1b2c3d4-e5f6-7890-abcd-ef1234567890"}
 
 event: functionCall
 data: {"functionCall":{"name":"generate_video","args":{...}}}
@@ -398,10 +399,13 @@ data: {"complete":{"result":{...}}}
 
 **Behavior**
 
-- **Replay**: on connect, replays all events from the log (or from `?after=N`).
+- **`alt=sse`**: required on every request to this endpoint. The production
+  deployment uses this parameter to route SSE requests correctly (same
+  convention as `streamRunAgent?alt=sse`).
+- **Replay**: on connect, replays all events from the log (or from `&after=N`).
   Then switches to live streaming via subscriber queue.
-- **Reconnect**: client disconnects, reconnects with `?after=47` to pick up
-  where it left off. No data loss.
+- **Reconnect**: client disconnects, reconnects with `?alt=sse&after=47` to
+  pick up where it left off. No data loss.
 - **Multiple connections**: allowed. Each gets its own subscriber queue.
 
 **Errors**
@@ -412,7 +416,7 @@ data: {"complete":{"result":{...}}}
 
 ---
 
-### `POST /v1beta1/sessions/{id}/resume`
+### `POST /v1beta1/sessions/{id}:resume`
 
 Inject a response for a suspended session. The loop resumes in the background.
 
@@ -421,7 +425,7 @@ Inject a response for a suspended session. The loop resumes in the background.
 |              |                                         |
 | ------------ | --------------------------------------- |
 | Method       | `POST`                                  |
-| Path         | `/v1beta1/sessions/{session_id}/resume` |
+| Path         | `/v1beta1/sessions/{session_id}:resume` |
 | Content-Type | `application/json`                      |
 
 The response shape depends on the suspend event type:
@@ -518,7 +522,7 @@ Lightweight status check. No event replay.
 
 ```json
 {
-  "sessionId": "sess-abc-123",
+  "sessionId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "status": "running",
   "statusMessage": "Generating video...",
   "eventCount": 47,
@@ -555,7 +559,7 @@ Cancel a running session.
 
 ```json
 {
-  "sessionId": "sess-abc-123",
+  "sessionId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "status": "cancelled"
 }
 ```
@@ -580,9 +584,9 @@ before cancellation remain in the log.
 
 ```
  1. POST /v1beta1/sessions/new { segments, flags, graph }
-    → { sessionId: "sess-123" }
+    → { sessionId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890" }
 
- 2. GET /v1beta1/sessions/sess-123
+ 2. GET /v1beta1/sessions/a1b2c3d4-e5f6-7890-abcd-ef1234567890?alt=sse
     → SSE stream: start, functionCall, thought, content, ...
 
  3. Stream completes → done event → close
@@ -591,11 +595,11 @@ before cancellation remain in the log.
 #### Disconnect + Reconnect
 
 ```
- 1. POST /v1beta1/sessions/new → { sessionId: "sess-123" }
- 2. GET /v1beta1/sessions/sess-123 → SSE events flowing...
+ 1. POST /v1beta1/sessions/new → { sessionId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890" }
+ 2. GET /v1beta1/sessions/a1b2c3d4-e5f6-7890-abcd-ef1234567890?alt=sse → SSE events flowing...
  3. Connection drops (network, page refresh)
  4. Client has session_id (URL param or localStorage)
- 5. GET /v1beta1/sessions/sess-123?after=12 → replay from event 13, live thereafter
+ 5. GET /v1beta1/sessions/a1b2c3d4-e5f6-7890-abcd-ef1234567890?alt=sse&after=12 → replay from event 13, live thereafter
  6. Stream completes → done
 ```
 
@@ -623,7 +627,7 @@ event: waitForInput
 data: {
   "waitForInput": {
     "requestId": "req-001",
-    "sessionId": "sess-abc-123",
+    "sessionId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "prompt": { "parts": [{ "text": "What topic?" }] },
     "inputType": "text"
   }
@@ -647,7 +651,7 @@ data: {
 
 ```
  1. Client collects user input based on suspend event type
- 2. POST /v1beta1/sessions/sess-123/resume
+ 2. POST /v1beta1/sessions/a1b2c3d4-e5f6-7890-abcd-ef1234567890:resume
     Body: {
       "response": {
         "input": { "role": "user", "parts": [{ "text": "..." }] }
@@ -657,7 +661,7 @@ data: {
  3. Session status: RUNNING
  4. Loop spawns a new segment as a background task
  5. Client reconnects to SSE (or is already connected):
-    GET /v1beta1/sessions/sess-123?after=12 → new events flow
+    GET /v1beta1/sessions/a1b2c3d4-e5f6-7890-abcd-ef1234567890?alt=sse&after=12 → new events flow
 ```
 
 **Multiple suspends in one session:**
@@ -674,7 +678,7 @@ each point — the loop is sequential.
 - **Start**: the shim calls `POST /v1beta1/sessions/new` internally, then
   immediately streams `GET /v1beta1/sessions/{id}` as the SSE response.
 - **Resume**: when the request body contains an `interactionId`, the shim
-  translates it to `POST /v1beta1/sessions/{id}/resume` and streams the
+  translates it to `POST /v1beta1/sessions/{id}:resume` and streams the
   session afterward.
 
 Existing clients see no change. New clients use the session endpoints directly.
