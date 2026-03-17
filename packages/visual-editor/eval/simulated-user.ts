@@ -193,7 +193,7 @@ Stay in character. Keep responses concise and natural. Do NOT explain that you a
         .filter((id) => validIds.has(id));
       if (selected.length === 0) selected = [choices[0].id];
     }
-    return { selected };
+    return { selected: { ids: selected } };
   }
 
   /**
@@ -455,7 +455,7 @@ function createSimulatedUserConfigurator(
             none_of_the_above_label
           );
           if (!ok(choicesResponse)) return { error: choicesResponse.$error };
-          return { selected: choicesResponse.selected };
+          return { selected: choicesResponse.selected.ids };
         }
       ),
     ];

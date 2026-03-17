@@ -118,7 +118,7 @@ describe("ChoicePresenter", () => {
       if (!ok(result)) {
         fail(`Expected success, got error: ${result.$error}`);
       }
-      deepStrictEqual(result.selected, ["option-b"]);
+      deepStrictEqual(result.selected, { ids: ["option-b"] });
     });
 
     it("creates a MultipleChoice component with maxAllowedSelections=1", async () => {
@@ -278,7 +278,7 @@ describe("ChoicePresenter", () => {
       if (!ok(result)) {
         fail(`Expected success, got error: ${result.$error}`);
       }
-      deepStrictEqual(result.selected, ["opt-1", "opt-3"]);
+      deepStrictEqual(result.selected, { ids: ["opt-1", "opt-3"] });
     });
 
     it("returns empty array when nothing selected", async () => {
@@ -299,7 +299,7 @@ describe("ChoicePresenter", () => {
       if (!ok(result)) {
         fail(`Expected success, got error: ${result.$error}`);
       }
-      deepStrictEqual(result.selected, []);
+      deepStrictEqual(result.selected, { ids: [] });
     });
 
     it("creates a MultipleChoice component", async () => {
@@ -725,7 +725,7 @@ describe("ChoicePresenter", () => {
       if (!ok(result)) {
         fail(`Expected success, got error: ${result.$error}`);
       }
-      deepStrictEqual(result.selected, ["__none_of_the_above__"]);
+      deepStrictEqual(result.selected, { ids: ["__none_of_the_above__"] });
     });
 
     it("does not create none button when noneOfTheAboveLabel is not provided", async () => {

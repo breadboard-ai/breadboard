@@ -103,7 +103,7 @@ async def test_resume_suspended_session(client, store):
 
     resp = client.post(
         f"/v1beta1/sessions/{session_id}:resume",
-        json={"response": {"input": {"role": "user", "parts": [{"text": "Yes"}]}}},
+        json={"input": {"role": "user", "parts": [{"text": "Yes"}]}},
     )
     assert resp.status_code == 200
     assert resp.json() == {"ok": True}
@@ -118,7 +118,7 @@ def test_resume_not_suspended(client):
 
     resp = client.post(
         f"/v1beta1/sessions/{session_id}:resume",
-        json={"response": {}},
+        json={},
     )
     assert resp.status_code == 409
 
@@ -126,7 +126,7 @@ def test_resume_not_suspended(client):
 def test_resume_not_found(client):
     resp = client.post(
         "/v1beta1/sessions/nonexistent:resume",
-        json={"response": {}},
+        json={},
     )
     assert resp.status_code == 404
 

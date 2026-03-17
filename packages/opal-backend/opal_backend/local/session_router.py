@@ -204,10 +204,14 @@ def create_session_router(
             )
 
         body = await request.json()
-        response = body.get("response", {})
+
+        # The One Platform proto flattens the response oneof, so the
+        # wire format is {"input": {...}, "accessToken": "..."} rather
+        # than {"response": {"input": {...}}}.  Extract transport-level
+        # fields first; everything remaining is the response payload.
+        access_token = body.pop("accessToken", "")
 
         # Refresh clients with the (possibly updated) token.
-        access_token = body.get("accessToken", "")
         if not access_token:
             auth_header = request.headers.get("authorization", "")
             if auth_header.startswith("Bearer "):
@@ -229,7 +233,7 @@ def create_session_router(
         task = asyncio.create_task(
             resume_session(
                 session_id=session_id,
-                response=response,
+                response=body,
                 store=store,
                 subscribers=subscribers,
             ),

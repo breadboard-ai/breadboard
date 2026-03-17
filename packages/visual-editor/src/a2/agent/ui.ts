@@ -213,7 +213,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     if (!ok(choicesResponse)) return choicesResponse;
 
     // Build user response text from selected choice labels
-    const selectedLabels = choicesResponse.selected
+    const selectedLabels = choicesResponse.selected.ids
       .map((id: string) => choices.find((c) => c.id === id)?.label ?? id)
       .join(", ");
     this.#chatLog.push({

@@ -10,7 +10,7 @@ directory. The production backend has its own HTTP plumbing.
 The Resumable Stream Protocol:
     POST /v1beta1/streamRunAgent  →  SSE stream
 
-Body (start):  {"kind": "...", "objective": {...}}
+Body (start):  {"segments": [...], "flags": {...}}
 Body (resume): {"interactionId": "...", "response": {...}}
 
 The handler receives the raw Request to extract both the JSON body
