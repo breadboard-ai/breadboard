@@ -69,7 +69,8 @@ def derive_chat_log(contents: list[dict[str, Any]]) -> list[dict]:
                         {"role": "user", "parts": [{"text": user_text}]}
                     )
                 # chat_present_choices → selected IDs.
-                selected = resp.get("selected")
+                selected_obj = resp.get("selected", {})
+                selected = selected_obj.get("ids") if isinstance(selected_obj, dict) else None
                 if selected:
                     entries.append(
                         {"role": "user", "parts": [{"text": ", ".join(selected)}]}
@@ -189,7 +190,8 @@ class ChatLogManager:
                     (p.get("text", "") for p in parts if "text" in p), None
                 )
         elif func_name == "chat_present_choices":
-            selected_ids = response.get("selected", [])
+            selected_obj = response.get("selected", {})
+            selected_ids = selected_obj.get("ids", []) if isinstance(selected_obj, dict) else []
             choices = func_args.get("choices", [])
             choice_map = {
                 c.get("id", ""): c.get("label", "") for c in choices

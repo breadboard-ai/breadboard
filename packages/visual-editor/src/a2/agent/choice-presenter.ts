@@ -342,10 +342,10 @@ class ChoicePresenter {
     // The selections come back as an array of choice IDs
     const selections = context.selections;
     if (Array.isArray(selections)) {
-      return { selected: selections as string[] };
+      return { selected: { ids: selections as string[] } };
     }
 
     // Fallback: if selections is not an array, return empty
-    return { selected: [] };
+    return { selected: { ids: [] } };
   }
 }

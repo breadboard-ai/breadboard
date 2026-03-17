@@ -156,6 +156,10 @@ suite("SSEAgentEventSource (session protocol)", () => {
     assert.ok(fetchCalls[0].url.includes("/sessions/new"));
     assert.strictEqual(fetchCalls[0].init?.method, "POST");
 
+    // `kind` must NOT be sent on the wire — the sessions proto doesn't have it.
+    const createBody = JSON.parse(fetchCalls[0].init?.body as string);
+    assert.strictEqual(createBody.kind, undefined, "kind should be stripped from sessions/new body");
+
     // Second call: GET /sessions/{id}.
     assert.ok(fetchCalls[1].url.includes(`/sessions/${SESSION_ID}`));
     assert.strictEqual(fetchCalls[1].init?.method, undefined); // GET
@@ -260,7 +264,7 @@ suite("SSEAgentEventSource (session protocol)", () => {
     // 3. POST /sessions/{id}:resume.
     assert.ok(fetchCalls[2].url.includes(":resume"));
     const resumeBody = JSON.parse(fetchCalls[2].init?.body as string);
-    assert.deepStrictEqual(resumeBody.response, {
+    assert.deepStrictEqual(resumeBody, {
       input: { parts: [{ text: "Alice" }] },
     });
 

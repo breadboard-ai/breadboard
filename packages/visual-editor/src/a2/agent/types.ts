@@ -205,7 +205,7 @@ export type ChatChoiceSelectionMode = "single" | "multiple";
 export type ChatChoiceLayout = "list" | "row" | "grid";
 
 export type ChatChoicesResponse = {
-  selected: string[];
+  selected: { ids: string[] };
 };
 
 export type ChatManager = {

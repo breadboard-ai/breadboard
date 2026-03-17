@@ -80,7 +80,7 @@ function getChatFunctionGroup(args: ChatFunctionsArgs): FunctionGroup {
         none_of_the_above_label
       );
       if (!ok(choicesResponse)) return { error: choicesResponse.$error };
-      return { selected: choicesResponse.selected };
+      return { selected: choicesResponse.selected.ids };
     },
   });
 }

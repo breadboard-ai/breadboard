@@ -183,7 +183,7 @@ suite("AgentUI suspend/resume", () => {
     const captured: WaitForChoicePayload[] = [];
     consumer.on("waitForChoice", (payload) => {
       captured.push(payload);
-      return Promise.resolve({ selected: ["a"] });
+      return Promise.resolve({ selected: { ids: ["a"] } });
     });
 
     const ui = new AgentUI(makeModuleArgsStub(), makeTranslatorStub(), bridge);
@@ -215,7 +215,7 @@ suite("AgentUI suspend/resume", () => {
     const bridge = new LocalAgentEventBridge(consumer);
 
     const expectedResponse: ChatChoicesResponse = {
-      selected: ["b", "c"],
+      selected: { ids: ["b", "c"] },
     };
 
     consumer.on("waitForChoice", () => {
@@ -234,7 +234,7 @@ suite("AgentUI suspend/resume", () => {
     );
 
     assert.ok(ok(result));
-    assert.deepStrictEqual(result.selected, ["b", "c"]);
+    assert.deepStrictEqual(result.selected, { ids: ["b", "c"] });
   });
 
   test("presentChoices() passes layout and noneOfTheAboveLabel", async () => {
@@ -244,7 +244,7 @@ suite("AgentUI suspend/resume", () => {
     const captured: WaitForChoicePayload[] = [];
     consumer.on("waitForChoice", (payload) => {
       captured.push(payload);
-      return Promise.resolve({ selected: [] });
+      return Promise.resolve({ selected: { ids: [] } });
     });
 
     const ui = new AgentUI(makeModuleArgsStub(), makeTranslatorStub(), bridge);

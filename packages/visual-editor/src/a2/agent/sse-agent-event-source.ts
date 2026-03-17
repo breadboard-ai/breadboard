@@ -101,10 +101,15 @@ class SSEAgentEventSource {
     const url = `${this.baseUrl}/v1beta1/sessions/new`;
     console.log("[SSE] Creating session:", url);
 
+    // Strip `kind` — the sessions proto doesn't include it; the server
+    // derives the agent kind from the session's segments.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { kind: _, ...wireBody } = this.config as { kind?: string };
+
     const response = await this.fetchWithCreds(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(this.config),
+      body: JSON.stringify(wireBody),
       signal: this.signal,
     });
 
@@ -189,14 +194,12 @@ class SSEAgentEventSource {
     const res = await this.fetchWithCreds(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ response }),
+      body: JSON.stringify(response as Record<string, unknown>),
       signal: this.signal,
     });
 
     if (!res.ok) {
-      throw new Error(
-        `Resume failed: ${res.status} ${res.statusText}`
-      );
+      throw new Error(`Resume failed: ${res.status} ${res.statusText}`);
     }
   }
 }

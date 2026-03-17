@@ -48,7 +48,7 @@ class TestDeriveChatLog:
             }}], "role": "model"},
             {"parts": [{"functionResponse": {
                 "name": "chat_present_choices",
-                "response": {"selected": ["red", "blue"]},
+                "response": {"selected": {"ids": ["red", "blue"]}},
             }}], "role": "user"},
         ]
         log = derive_chat_log(contents)
@@ -307,7 +307,7 @@ class TestPersistUserResponse:
                 {"id": "a", "label": "Apple"},
                 {"id": "b", "label": "Banana"},
             ]},
-            {"selected": ["a", "b"]},
+            {"selected": {"ids": ["a", "b"]}},
         )
 
         import asyncio

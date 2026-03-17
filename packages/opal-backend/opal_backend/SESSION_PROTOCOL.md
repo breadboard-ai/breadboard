@@ -428,41 +428,41 @@ Inject a response for a suspended session. The loop resumes in the background.
 | Path         | `/v1beta1/sessions/{session_id}:resume` |
 | Content-Type | `application/json`                      |
 
-The response shape depends on the suspend event type:
+The request body is the response payload directly (One Platform flattens the
+proto oneof). The shape depends on the suspend event type:
 
 ```jsonc
 // For waitForInput — user text or file upload:
 {
-  "response": {
-    "input": {
-      "role": "user",
-      "parts": [{ "text": "Make it a beach sunset" }],
-    },
-  },
+  "input": {
+    "role": "user",
+    "parts": [{ "text": "Make it a beach sunset" }]
+  }
 }
 
-// For waitForChoice — selected option:
-// { "response": { "choice": "option-2" } }
+// For waitForChoice — selected option(s):
+// { "selected": { "ids": ["option-2"] } }
 
 // For queryConsent — grant or deny:
-// { "response": { "consent": true } }
+// { "consent": true }
 
 // For readGraph — current graph structure:
-// { "response": { "graph": { ... } } }
+// { "graph": { ... } }
 
 // For inspectNode — node inspection data:
-// { "response": { "node": { ... } } }
+// { "node": { ... } }
 
 // For applyEdits — confirmation of graph edits:
-// { "response": { "applied": true } }
+// { "applied": true }
 ```
 
-**Token refresh:** include `accessToken` to refresh the session's backend
-clients (the original token from session creation may have expired):
+**Token refresh:** include `accessToken` at the top level to refresh the
+session's backend clients (the original token from session creation may have
+expired):
 
 ```jsonc
 {
-  "response": { "input": { "role": "user", "parts": [...] } },
+  "input": { "role": "user", "parts": [...] },
   "accessToken": "ya29...fresh-token"
 }
 ```
@@ -653,9 +653,7 @@ data: {
  1. Client collects user input based on suspend event type
  2. POST /v1beta1/sessions/a1b2c3d4-e5f6-7890-abcd-ef1234567890:resume
     Body: {
-      "response": {
-        "input": { "role": "user", "parts": [{ "text": "..." }] }
-      }
+      "input": { "role": "user", "parts": [{ "text": "..." }] }
     }
     → { "ok": true }
  3. Session status: RUNNING
