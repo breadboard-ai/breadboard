@@ -315,7 +315,7 @@ export class PartyApp extends LitElement {
     this.identity = getIdentity();
     provider.on("status", this.#handleConnectionStatus);
     this.#handleConnectionStatus({
-      status: provider.wsconnected ? "connected" : "disconnected",
+      status: provider.connected ? "connected" : "disconnected",
     });
 
     // Global keyboard shortcuts.
