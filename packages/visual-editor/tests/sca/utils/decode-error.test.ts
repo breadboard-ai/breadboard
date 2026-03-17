@@ -204,6 +204,17 @@ suite("decodeErrorData", () => {
     assert.ok(result.message.includes("credits"));
   });
 
+  test("auto-extracts free-quota-exhausted-can-pay from RESOURCE_EXHAUSTED JSON", () => {
+    const json = JSON.stringify({
+      code: "RESOURCE_EXHAUSTED",
+      error_reason: "FREE_QUOTA_EXHAUSTED_CAN_PAY",
+      message: "Free quota exceeded",
+    });
+    const result = decodeErrorData(json);
+    assert.strictEqual(result.metadata?.kind, "free-quota-exhausted-can-pay");
+    assert.ok(result.message.includes("upgrade"));
+  });
+
   test("auto-extracts safety kind from plain string via fuzzy match", () => {
     const result = decodeErrorData("blocked for safety reasons");
     assert.strictEqual(result.metadata?.kind, "safety");

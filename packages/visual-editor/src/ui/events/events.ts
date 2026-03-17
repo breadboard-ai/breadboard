@@ -196,7 +196,7 @@ export class EnhanceNodeResetEvent extends Event {
 export class ShowTooltipEvent extends Event {
   static eventName = "bbshowtooltip";
   constructor(
-    public readonly message: string,
+    public readonly message: string | HTMLTemplateResult,
     public readonly x: number,
     public readonly y: number,
     public readonly extendedOptions: {
