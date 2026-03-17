@@ -185,8 +185,6 @@ export class TextEditor extends SignalWatcher(LitElement) {
   @property()
   accessor readOnly = false;
 
-
-
   static styles = [
     icons,
     ChicletStyles,
@@ -913,6 +911,39 @@ export class TextEditor extends SignalWatcher(LitElement) {
       return;
     }
 
+    this.#insertPastedText(evt.clipboardData.getData("text"));
+  }
+
+  /**
+   * Older versions of Safari (18.x) may not deliver the `paste` event into
+   * Shadow DOM, but `beforeinput` with `insertFromPaste` still fires. Catch it
+   * here so pasted text goes into the editor instead of landing at the document
+   * level.
+   */
+  #onBeforeInput(evt: InputEvent) {
+    if (
+      evt.inputType !== "insertFromPaste" &&
+      evt.inputType !== "insertFromDrop"
+    ) {
+      return;
+    }
+
+    evt.preventDefault();
+    const text = evt.dataTransfer?.getData("text/plain") ?? evt.data;
+    if (text) {
+      this.#insertPastedText(text);
+    }
+  }
+
+  /**
+   * Shared paste logic: parse the text as chiclet HTML, build a DOM
+   * fragment, and insert it at the current selection.
+   */
+  #insertPastedText(text: string) {
+    if (!this.#editorRef.value) {
+      return;
+    }
+
     const selection = this.#getCurrentSelection();
     if (!selection || selection.rangeCount === 0) {
       return;
@@ -922,11 +953,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
     const tempEl = document.createElement("div");
     setTrustedHTML(
       tempEl,
-      createTrustedChicletHTML(
-        evt.clipboardData.getData("text"),
-        this.sca,
-        this.subGraphId
-      )
+      createTrustedChicletHTML(text, this.sca, this.subGraphId)
     );
 
     while (tempEl.firstChild) {
@@ -1127,6 +1154,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
         ${ref(this.#editorRef)}
         @dblclick=${() => {}}
         @paste=${this.#sanitizePastedContent}
+        @beforeinput=${this.#onBeforeInput}
         @selectionchange=${this.#checkChicletSelections}
         @keydown=${(evt: KeyboardEvent) => {
           const isMac = navigator.platform.indexOf("Mac") === 0;
