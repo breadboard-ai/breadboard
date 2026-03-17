@@ -15,12 +15,14 @@ type Medium = {
   title: string;
   plural: string;
   singular: string;
+  aiCredits?: number;
 };
 
 const VIDEO_MEDIUM: Readonly<Medium> = {
   title: "Video",
   plural: "videos",
   singular: "video",
+  aiCredits: 20,
 };
 
 const TEXT_MEDIUM: Readonly<Medium> = {
@@ -83,7 +85,9 @@ function maybeExtractRichError(s: string): RichError {
               ? "paid-quota-exhausted"
               : json?.error_reason === "FREE_QUOTA_EXHAUSTED"
                 ? "free-quota-exhausted"
-                : "capacity",
+                : json?.error_reason === "FREE_QUOTA_EXHAUSTED_CAN_PAY"
+                  ? "free-quota-exhausted-can-pay"
+                  : "capacity",
         },
       };
     }
@@ -166,19 +170,22 @@ function decodeErrorData(
     }
     case "free-quota-exhausted": {
       return {
-        message: `You have reached the ${medium.singular} generation quota. Please try again later.`,
+        message: `**You have reached the ${medium.singular} generation quota.**  \nPlease try again later.`,
         metadata,
       };
     }
     case "free-quota-exhausted-can-pay": {
       return {
-        message: `You have reached the ${medium.singular} generation quota. To generate more ${medium.plural}, upgrade to a Google AI plan`,
+        message: `**You have reached the ${medium.singular} generation quota.**  \nTo generate more ${medium.plural}, upgrade to a Google AI plan`,
         metadata,
       };
     }
     case "paid-quota-exhausted": {
+      const creditInfo = medium.aiCredits
+        ? `\nEach ${medium.singular} you generate uses ${medium.aiCredits} AI credits per ${medium.singular}.`
+        : "";
       return {
-        message: `You need more AI credits to generate more ${medium.plural}. To generate more ${medium.plural}, add AI credits to your account.`,
+        message: `**You need more AI credits to generate more ${medium.plural}.**  ${creditInfo}`,
         metadata,
       };
     }

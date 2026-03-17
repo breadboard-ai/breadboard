@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, type HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
@@ -22,7 +22,7 @@ export class Tooltip extends LitElement {
   }
 
   @property()
-  accessor message: string | null = null;
+  accessor message: string | HTMLTemplateResult | null = null;
 
   #x = 100;
   #y = 100;

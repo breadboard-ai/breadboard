@@ -20,6 +20,7 @@ import type {
   Schema,
   WorkItem,
 } from "@breadboard-ai/types";
+import { html } from "lit";
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
 import { SnackType, STATUS } from "../../types.js";
@@ -57,6 +58,8 @@ import {
   dispatchStop,
   handleInputRequested,
 } from "./helpers/helpers.js";
+import { markdown } from "../../../ui/directives/markdown.js";
+import { createAICreditsUrl } from "../../utils/google-one-urls.js";
 
 export const bind = makeAction();
 
@@ -355,7 +358,7 @@ export const onError = asAction(
     triggeredBy: () => onRunnerError(bind),
   },
   async (evt?: CustomEvent): Promise<void> => {
-    const { controller } = bind;
+    const { controller, services } = bind;
 
     // Status + ticker cleanup
     controller.run.main.setStatus(STATUS.STOPPED);
@@ -376,8 +379,31 @@ export const onError = asAction(
     const actions = decoded.details
       ? [{ action: "details", title: "View details", value: decoded.details }]
       : [];
+
+    // Add metadata-specific actions (e.g. AI credits links)
+    const kind = decoded.metadata?.kind;
+    if (
+      kind === "free-quota-exhausted-can-pay" ||
+      kind === "paid-quota-exhausted"
+    ) {
+      const authuser =
+        services.signinAdapter.authuserSignal ?? 0;
+      const url = createAICreditsUrl(
+        authuser,
+        `opal_${kind.replaceAll("-", "_")}`
+      );
+      actions.push({
+        action: "link",
+        title:
+          kind === "free-quota-exhausted-can-pay"
+            ? "See Google AI plans"
+            : "Get more AI credits",
+        value: url,
+      });
+    }
+
     controller.global.snackbars.snackbar(
-      decoded.message,
+      html`${markdown(decoded.message)}`,
       SnackType.ERROR,
       actions,
       true,

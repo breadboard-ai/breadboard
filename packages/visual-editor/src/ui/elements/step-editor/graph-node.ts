@@ -8,6 +8,7 @@ import { html, css, PropertyValues, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
+import { markdown } from "../../directives/markdown.js";
 import { toCSSMatrix } from "./utils/to-css-matrix.js";
 import { Box } from "./box.js";
 import {
@@ -774,7 +775,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         @pointerover=${(evt: PointerEvent) => {
           this.dispatchEvent(
             new ShowTooltipEvent(
-              status.errorMessage,
+              html`${markdown(status.errorMessage)}`,
               evt.clientX,
               evt.clientY,
               {
