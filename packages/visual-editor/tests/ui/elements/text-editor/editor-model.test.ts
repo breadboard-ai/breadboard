@@ -761,6 +761,64 @@ describe("EditorModel", () => {
       // ensureTextBoundaries means empty model has 1 segment.
       assert.equal(model.length, 1);
     });
+
+    it("preserves cursor offset when undoing a paste", () => {
+      // Simulate: type "Add a node" (debounced snapshot), then paste
+      // "node" at the end → "Add a nodenode", then undo.
+      // Cursor should return to offset 10 (end of "Add a node"), NOT 0.
+      const model = EditorModel.fromRawValue("");
+
+      // Simulate typing "Add a node" — insert text and capture snapshot.
+      model.insertTextAtOffset(0, "Add a node");
+      // This simulates the debounced snapshot being flushed.
+      model.pushSnapshot(10);
+
+      assert.equal(model.toRawValue(), "Add a node");
+
+      // Simulate #pasteText: push pre-paste snapshot, then mutate.
+      model.pushSnapshot(10); // pre-paste cursor position
+      model.replaceAll("Add a nodenode", /* resetHistory */ false);
+      model.pushSnapshot(14); // post-paste cursor position
+
+      assert.equal(model.toRawValue(), "Add a nodenode");
+
+      // Undo should restore "Add a node" with cursorOffset=10.
+      const result = model.undo();
+      assert.ok(result);
+      assert.equal(model.toRawValue(), "Add a node");
+      assert.equal(
+        result!.cursorOffset,
+        10,
+        "Cursor should be at end of 'Add a node', not 0"
+      );
+    });
+
+    it("preserves cursor offset when undoing a paste after external value set", () => {
+      // Simulate: parent sets value via property (replaceAll with reset),
+      // user places cursor at end, then pastes "node".
+      // This is the exact scenario that was broken: replaceAll seeds
+      // history with cursorOffset: 0, so without a pre-paste snapshot
+      // the cursor reverts to 0 on undo.
+      const model = EditorModel.fromRawValue("Add any node");
+      // ^ This seeds history[0] = { "Add any node", cursorOffset: 0 }
+
+      // Simulate #pasteText: push pre-paste snapshot at cursor position 12.
+      model.pushSnapshot(12);
+      model.replaceAll("Add any nodenode", /* resetHistory */ false);
+      model.pushSnapshot(16); // cursor at end of pasted content
+
+      assert.equal(model.toRawValue(), "Add any nodenode");
+
+      // Undo should restore "Add any node" with cursorOffset=12.
+      const result = model.undo();
+      assert.ok(result);
+      assert.equal(model.toRawValue(), "Add any node");
+      assert.equal(
+        result!.cursorOffset,
+        12,
+        "Cursor should be at end of 'Add any node' (12), not 0"
+      );
+    });
   });
 
   // ---------------------------------------------------------------------------

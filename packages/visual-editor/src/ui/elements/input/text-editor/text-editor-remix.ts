@@ -256,6 +256,14 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   /** Whether the pending cursor should be placed after a chiclet. */
   #pendingCursorAfterChiclet = false;
 
+  /**
+   * When true, focus the editor after the next cursor restoration in
+   * `updated()`. Set only by the undo/redo handler — we can't call
+   * `focus()` synchronously there because it races with Lit's async
+   * render cycle and can reset the caret to position 0.
+   */
+  #pendingFocus = false;
+
   /** True while the fast access menu is open and capturing keyboard input. */
   #isUsingFastAccess = false;
 
@@ -410,8 +418,16 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     if (this.#pendingCursorOffset !== null) {
       const offset = this.#pendingCursorOffset;
       const afterChiclet = this.#pendingCursorAfterChiclet;
+      const shouldFocus = this.#pendingFocus;
       this.#pendingCursorOffset = null;
       this.#pendingCursorAfterChiclet = false;
+      this.#pendingFocus = false;
+
+      // Focus BEFORE setting cursor — focus() on a contenteditable can
+      // reset the browser's selection, clobbering setCursorAtCharOffset.
+      if (shouldFocus) {
+        this.#editorRef.value?.focus();
+      }
       this.#selection.setCursorAtCharOffset(offset, afterChiclet);
     }
   }
@@ -911,6 +927,19 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
         break;
       }
 
+      case "insertFromPaste":
+      case "insertFromDrop": {
+        // Belt-and-suspenders for Safari: older versions may not deliver
+        // the `paste` event into Shadow DOM, but `beforeinput` with
+        // `insertFromPaste` still fires. Handle it here so the text goes
+        // through the model instead of landing at the document level.
+        const pasteText = evt.dataTransfer?.getData("text/plain") ?? evt.data;
+        if (pasteText) {
+          this.#pasteText(pasteText, charOffset);
+        }
+        return;
+      }
+
       default:
         // Formatting commands and other unhandled types — just block them.
         return;
@@ -957,6 +986,27 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       const endOffset = this.#selection.rangeToCharOffset(endRange);
       charOffset = this.#model.deleteSelection(charOffset, endOffset);
     }
+
+    this.#pasteText(text, charOffset);
+  }
+
+  /**
+   * Splice pasted text into the model's raw value so that `{JSON}` chiclet
+   * syntax is parsed back into chiclets.
+   *
+   * Shared by `#onPaste` (ClipboardEvent) and the `insertFromPaste` /
+   * `insertFromDrop` cases in `#onBeforeInput` (belt-and-suspenders for
+   * Safari, where `paste` events may not reach Shadow DOM).
+   *
+   * @param text The raw text to paste (may contain `{JSON}` chiclet syntax).
+   * @param charOffset Cursor position in visible text after any selection
+   *   deletion has been applied.
+   */
+  #pasteText(text: string, charOffset: number): void {
+    // Snapshot the pre-paste state so undo restores the cursor to where
+    // it was before the paste, not to the initial cursorOffset: 0.
+    this.#flushPendingSnapshot();
+    this.#model.pushSnapshot(charOffset);
 
     // Convert the visible-text cursor offset to a raw-string offset,
     // splice the pasted text in at that position, then re-parse.
@@ -1024,11 +1074,11 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
           this.#pendingCursorAfterChiclet = result.afterChiclet;
         }
 
+        // Defer focus to updated() — calling focus() here races with
+        // Lit's async render cycle and can reset the caret to position 0.
+        this.#pendingFocus = true;
         this.requestUpdate();
         this.#captureEditorValue();
-
-        // Ensure focus so the user can type immediately after undo/redo.
-        this.#editorRef.value?.focus();
       }
       return;
     }
