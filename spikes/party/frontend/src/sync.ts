@@ -2,34 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * Yjs document + WebSocket provider setup.
+ * Yjs sync — barrel module.
  *
- * Shared across all components — import `doc`, `provider`, and `awareness`
- * from here.
+ * Initializes the selected transport (WebSocket or Firestore) and
+ * re-exports `doc`, `provider`, and `awareness` so all existing
+ * consumers work without changes.
+ *
+ * Uses top-level await to resolve the async transport factory before
+ * any consumer accesses the exports.
  */
 
-import * as Y from "yjs";
-import { WebsocketProvider } from "y-websocket";
+import { createTransport } from "./transport.js";
 
 export { doc, provider, awareness };
 
-/** The room name. All tabs with the same room share state. */
-const ROOM = "party-default";
-const WS_URL = "ws://localhost:4444";
-
-const doc = new Y.Doc();
-
-const provider = new WebsocketProvider(WS_URL, ROOM, doc);
-
-const awareness = provider.awareness;
-
-/**
- * Clean up presence on tab close / navigation.
- *
- * Without this, the awareness entry lingers for ~30 seconds after the tab
- * is closed. Explicitly clearing it gives instant feedback in other tabs.
- */
-window.addEventListener("beforeunload", () => {
-  awareness.setLocalState(null);
-  provider.disconnect();
-});
+const provider = await createTransport();
+const { doc, awareness } = provider;

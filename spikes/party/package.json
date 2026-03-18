@@ -5,7 +5,9 @@
   "type": "module",
   "description": "Collaboration spike — Yjs CRDTs + Lit frontend",
   "scripts": {
-    "dev": "npm run dev:backend & npm run dev:frontend",
+    "dev": "npm run dev:ws",
+    "dev:ws": "npm run dev:backend & npm run dev:frontend -- --mode websocket",
+    "dev:firestore": "cd frontend && npx vite --mode firestore",
     "dev:backend": "node backend/server.js",
     "dev:frontend": "cd frontend && npx vite",
     "setup": "cd frontend && npm install"
