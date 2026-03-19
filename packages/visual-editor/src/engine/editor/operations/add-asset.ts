@@ -38,6 +38,7 @@ class AddAsset implements EditOperation {
       success: true,
       affectedGraphs: [],
       affectedNodes: [],
+      topologyChange: true,
     };
   }
 }
