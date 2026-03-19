@@ -1970,4 +1970,82 @@ suite("GraphController", () => {
 
     assert.strictEqual(store.empty, false);
   });
+
+  test("graphContentState transitions to 'loaded' after addasset edit", async () => {
+    const store = new GraphController(
+      "Graph_ContentState_AddAsset",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    // Start with an empty graph (no nodes, no assets, no sub-graphs)
+    const emptyGraph: GraphDescriptor = { nodes: [], edges: [] };
+    loadGraphIntoStore(graphStore, emptyGraph);
+    const editable = editGraphStore(graphStore);
+    if (!editable) assert.fail("Unable to edit graph");
+
+    initAndSetEditor(store, editable);
+    await store.isSettled;
+    assert.strictEqual(store.graphContentState, "empty");
+
+    // Add an asset via editor.edit()
+    const result = await editable.edit(
+      [
+        {
+          type: "addasset",
+          path: "file://test-asset.txt" as AssetPath,
+          data: { inlineData: { data: "hello", mimeType: "text/plain" } },
+          metadata: { title: "Test Asset", type: "content" },
+        },
+      ],
+      "Add test asset"
+    );
+    assert.ok(result.success, "addasset edit should succeed");
+    await store.isSettled;
+
+    // graphContentState must now be "loaded"
+    assert.strictEqual(store.graphContentState, "loaded");
+  });
+
+  test("graphContentState transitions to 'empty' after removeasset edit on asset-only graph", async () => {
+    const store = new GraphController(
+      "Graph_ContentState_RemoveAsset",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    // Start with a graph that has only one asset (no nodes)
+    const assetOnlyGraph: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+      assets: {
+        ["file://only-asset.txt" as AssetPath]: {
+          data: { inlineData: { data: "data", mimeType: "text/plain" } },
+        },
+      },
+    };
+    loadGraphIntoStore(graphStore, assetOnlyGraph);
+    const editable = editGraphStore(graphStore);
+    if (!editable) assert.fail("Unable to edit graph");
+
+    initAndSetEditor(store, editable);
+    await store.isSettled;
+    assert.strictEqual(store.graphContentState, "loaded");
+
+    // Remove the asset via editor.edit()
+    const result = await editable.edit(
+      [
+        {
+          type: "removeasset",
+          path: "file://only-asset.txt" as AssetPath,
+        },
+      ],
+      "Remove only asset"
+    );
+    assert.ok(result.success, "removeasset edit should succeed");
+    await store.isSettled;
+
+    // graphContentState must now be "empty"
+    assert.strictEqual(store.graphContentState, "empty");
+  });
 });

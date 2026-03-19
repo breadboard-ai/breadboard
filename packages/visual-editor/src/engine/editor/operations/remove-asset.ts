@@ -41,6 +41,7 @@ class RemoveAsset implements EditOperation {
       success: true,
       affectedGraphs: [],
       affectedNodes: [],
+      topologyChange: true,
     };
   }
 }
