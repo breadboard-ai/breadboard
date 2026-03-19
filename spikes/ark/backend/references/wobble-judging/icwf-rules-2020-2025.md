@@ -70,17 +70,6 @@ form. Gleam capped at 8.0. Judged strictly on form.
 Signature leans allowed. Full Gleam range available. Crowd response factors into
 Gleam score.
 
-### Weight Classes
-
-- Featherweight: Under 60kg ("Whispers")
-- Middleweight: 60-80kg ("Standards")
-- Heavyweight: 80-100kg ("Thunders")
-- Ultra: 100kg+ ("Monuments")
-
-Heavier Wobblers have a natural amplitude advantage but struggle with frequency.
-The greatest champions have historically been Middleweight, as they balance all
-four scoring categories most naturally.
-
 ### Historic Note
 
 The legendary Wobbler "Steady" Elara Voss holds the all-time record: AMP 9.2,

@@ -5,6 +5,32 @@ _By Tariq Osei, Senior Correspondent_
 The ICWF has finally pulled the trigger on Duo Wobbling, and the community is
 split right down the middle — appropriately enough for a sport about balance.
 
+## Season 14: The Year of Controversy
+
+Before we look forward, let's look back. Season 14 was a ride.
+
+Kenji Hashimoto's "Stomp Drift" dominated the headlines. By subtly shifting
+the Disc's resting position between oscillations — legal at the time, if barely
+— he gained an amplitude edge that felt, to put it diplomatically, like
+cheating. Three separate protests were filed during the Tokyo Regional alone.
+The Board's silence until the off-season frustrated everyone: athletes, judges,
+and the increasingly vocal fan community who flooded ICWF forums with frame-by-
+frame analysis videos.
+
+Meanwhile, Maren Solberg quietly had one of the great seasons. Her average FRQ
+of 9.4 across all rounds was absurd — the kind of metronome consistency that
+makes other Wobblers look like they're guessing. She took the overall title at
+Helsinki, but the narrative was always about Hashimoto. Solberg deserved better
+press. Consider this a correction.
+
+The other moment nobody's forgotten: Juno Park's recovered Splort in the
+Freestyle semi-final. She went past 30° — deep into Danger Arc territory —
+caught herself at what the official timer logged as 0.97 seconds, and somehow
+channelled the recovery into a transition so fluid the judges awarded her a 9.1
+Gleam. The crowd lost it. If you want to understand why the Board raised the
+Technical Gleam cap, watch that clip. The argument writes itself: if a recovery
+can be that beautiful, the scoring system should have room for it.
+
 ## The Resonance Question
 
 The new fifth category, Resonance, is where things get interesting.
@@ -28,14 +54,6 @@ I spoke to retired judge Cass Witmer about this: "It changes the entire
 preparation strategy for Technical. Athletes used to ignore the Gleam in
 Technical because the ceiling was so low. Now they have to train artistry
 alongside form. Elara Voss could have scored 39.0+ under these rules."
-
-## Titans on the Disc
-
-The Titan class is overdue. Everyone in the Ultra bracket knew that a 105kg
-Wobbler and a 135kg Wobbler were playing completely different games. The wider
-Disc for Titans makes sense from a physics standpoint — moment of inertia scales
-with mass distribution, and a standard 60cm Disc just doesn't give a 130kg
-athlete enough surface.
 
 ## My Hot Take
 
