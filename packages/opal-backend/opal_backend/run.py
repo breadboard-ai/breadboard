@@ -61,6 +61,7 @@ from .function_definition import FunctionDefinition
 from .interaction_store import InteractionState, InteractionStore
 from .loop import AgentRunArgs, Loop, LoopController
 from .sheet_manager import SheetManager
+from .singleton_cache import get_singleton_prefix_cache
 from .suspend import SuspendResult
 from .task_tree_manager import TaskTreeManager
 
@@ -176,9 +177,15 @@ async def run(
         graph_url=graph.get("url", ""),
     )
 
+    # Fetch a shared singleton prefix cache (amortized across clients).
+    cached_name = await _get_singleton_cache_name(
+        flags=resolved_flags, backend=backend,
+    )
+
     run_args = AgentRunArgs(
         objective=objective,
         function_groups=function_groups,
+        singleton_cached_content_name=cached_name,
     )
 
     async for event in _stream_loop(
@@ -308,10 +315,16 @@ async def resume(
         graph_url=(state.graph or {}).get("url", ""),
     )
 
+    # Fetch a shared singleton prefix cache (amortized across clients).
+    cached_name = await _get_singleton_cache_name(
+        flags=resolved_flags, backend=backend,
+    )
+
     run_args = AgentRunArgs(
         objective=contents[0],
         function_groups=function_groups,
         contents=contents,
+        singleton_cached_content_name=cached_name,
     )
 
     async for event in _stream_loop(
@@ -451,6 +464,31 @@ async def _process_chat_response(
             )
             return {"user_input": pidgin_text}
     return response
+
+
+async def _get_singleton_cache_name(
+    *,
+    flags: dict[str, Any],
+    backend: BackendClient,
+) -> str | None:
+    """Fetch a shared singleton prefix cache name.
+
+    Calls :func:`get_singleton_prefix_cache` with the resolved flag
+    combination.  Returns the Gemini ``cachedContent`` resource name on
+    success, or ``None`` on failure (the loop runs uncached as a
+    fallback).
+    """
+    result = await get_singleton_prefix_cache(
+        use_memory=flags.get("useMemory", False),
+        use_notebooklm=flags.get("useNotebookLM", False),
+        use_google_drive=flags.get("enableGoogleDriveTools", False),
+        client=backend,
+    )
+    cached_content = result.get("cachedContent")
+    if cached_content:
+        return cached_content.get("name")
+    return None
+
 
 def _build_function_groups(
     *,
