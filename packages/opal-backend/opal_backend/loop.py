@@ -72,6 +72,7 @@ class AgentRunArgs:
     function_groups: list[FunctionGroup]
     hooks: LoopHooks | None = None
     contents: list[LLMContent] | None = None
+    singleton_cached_content_name: str | None = None
 
 
 @dataclass
@@ -195,28 +196,48 @@ class Loop:
             ]
             system_instruction_text = "\n\n".join(system_instruction_parts)
 
+            # --- Prefix caching ---
+            # When a singleton cache name is provided (shared across
+            # clients), reference it in the Gemini body and omit
+            # SI/tools/toolConfig — Gemini serves them from the cache.
+            cached_content_name = args.singleton_cached_content_name
+            # How many entries in `contents` are covered by the cache.
+            # 0 means the cache only has the static envelope (SI + tools).
+            cached_content_count = 0
+
             while not self.controller.terminated:
-                body: GeminiBody = {
-                    "contents": contents,
-                    "generationConfig": {
-                        "temperature": 1,
-                        "topP": 1,
-                        "thinkingConfig": {
-                            "includeThoughts": True,
-                            "thinkingBudget": -1,
-                        },
+                generation_config: dict[str, Any] = {
+                    "temperature": 1,
+                    "topP": 1,
+                    "thinkingConfig": {
+                        "includeThoughts": True,
+                        "thinkingBudget": -1,
                     },
-                    "toolConfig": {
-                        "functionCallingConfig": {"mode": "ANY"},
-                    },
-                    "tools": tools,
                 }
 
-                if system_instruction_text:
-                    body["systemInstruction"] = {
-                        "parts": [{"text": system_instruction_text}],
-                        "role": "user",
+                if cached_content_name:
+                    # Cached path: reference the cache, send only
+                    # contents accumulated after what's cached.
+                    body: GeminiBody = {
+                        "contents": contents[cached_content_count:],
+                        "generationConfig": generation_config,
+                        "cachedContent": cached_content_name,
                     }
+                else:
+                    # Uncached path: inline everything.
+                    body = {
+                        "contents": contents,
+                        "generationConfig": generation_config,
+                        "toolConfig": {
+                            "functionCallingConfig": {"mode": "ANY"},
+                        },
+                        "tools": tools,
+                    }
+                    if system_instruction_text:
+                        body["systemInstruction"] = {
+                            "parts": [{"text": system_instruction_text}],
+                            "role": "user",
+                        }
 
                 if hooks.on_send_request:
                     hooks.on_send_request(AGENT_MODEL, body)
@@ -234,80 +255,103 @@ class Loop:
                 if not self._backend:
                     return err("No BackendClient provided")
 
-                async for chunk in stream_generate_content(
-                    AGENT_MODEL,
-                    body,
-                    backend=self._backend,
-                ):
-                    candidates = chunk.get("candidates", [])
-                    if not candidates:
-                        return err(
-                            "Agent unable to proceed: "
-                            "no candidates in Gemini response"
-                        )
-
-                    content = candidates[0].get("content")
-                    if not content:
-                        return err(
-                            "Agent unable to proceed: "
-                            "no content in Gemini response"
-                        )
-
-                    contents.append(content)
-
-                    parts = content.get("parts", [])
-                    for part in parts:
-                        # Handle thoughts
-                        if part.get("thought"):
-                            text = part.get("text", "")
-                            if text and hooks.on_thought:
-                                hooks.on_thought(text)
-
-                        # Handle function calls
-                        if "functionCall" in part:
-                            func_def = definition_map.get(
-                                part["functionCall"]["name"]
+                try:
+                    chunks_iter = stream_generate_content(
+                        AGENT_MODEL,
+                        body,
+                        backend=self._backend,
+                    )
+                    # Peek for errors before entering the chunk loop.
+                    # If the cached resource expired, we'll catch it
+                    # and retry without cache.
+                    first_chunk_seen = False
+                    async for chunk in chunks_iter:
+                        first_chunk_seen = True
+                        candidates = chunk.get("candidates", [])
+                        if not candidates:
+                            return err(
+                                "Agent unable to proceed: "
+                                "no candidates in Gemini response"
                             )
 
-                            reporter = None
-                            if hooks.on_function_call:
-                                result = hooks.on_function_call(
+                        content = candidates[0].get("content")
+                        if not content:
+                            return err(
+                                "Agent unable to proceed: "
+                                "no content in Gemini response"
+                            )
+
+                        contents.append(content)
+
+                        parts = content.get("parts", [])
+                        for part in parts:
+                            # Handle thoughts
+                            if part.get("thought"):
+                                text = part.get("text", "")
+                                if text and hooks.on_thought:
+                                    hooks.on_thought(text)
+
+                            # Handle function calls
+                            if "functionCall" in part:
+                                func_def = definition_map.get(
+                                    part["functionCall"]["name"]
+                                )
+
+                                reporter = None
+                                if hooks.on_function_call:
+                                    result = hooks.on_function_call(
+                                        part,
+                                        func_def.icon if func_def else None,
+                                        func_def.title if func_def else None,
+                                    )
+                                    call_id = result.get(
+                                        "callId", str(uuid.uuid4())
+                                    )
+                                    reporter = result.get("reporter")
+                                else:
+                                    call_id = str(uuid.uuid4())
+
+                                def make_status_cb(cid: str) -> Any:
+                                    def cb(
+                                        status: str | None,
+                                        opts: dict[str, Any] | None = None,
+                                    ) -> None:
+                                        if hooks.on_function_call_update:
+                                            wire_opts = None
+                                            if opts:
+                                                wire_opts = {}
+                                                if "expected_duration_in_sec" in opts:
+                                                    wire_opts["expectedDurationInSec"] = opts["expected_duration_in_sec"]
+                                                if "is_thought" in opts:
+                                                    wire_opts["isThought"] = opts["is_thought"]
+                                            hooks.on_function_call_update(
+                                                cid, status, wire_opts
+                                            )
+
+                                    return cb
+
+                                function_caller.call(
+                                    call_id,
                                     part,
-                                    func_def.icon if func_def else None,
-                                    func_def.title if func_def else None,
+                                    make_status_cb(call_id),
+                                    reporter,
                                 )
-                                call_id = result.get(
-                                    "callId", str(uuid.uuid4())
-                                )
-                                reporter = result.get("reporter")
-                            else:
-                                call_id = str(uuid.uuid4())
 
-                            def make_status_cb(cid: str) -> Any:
-                                def cb(
-                                    status: str | None,
-                                    opts: dict[str, Any] | None = None,
-                                ) -> None:
-                                    if hooks.on_function_call_update:
-                                        wire_opts = None
-                                        if opts:
-                                            wire_opts = {}
-                                            if "expected_duration_in_sec" in opts:
-                                                wire_opts["expectedDurationInSec"] = opts["expected_duration_in_sec"]
-                                            if "is_thought" in opts:
-                                                wire_opts["isThought"] = opts["is_thought"]
-                                        hooks.on_function_call_update(
-                                            cid, status, wire_opts
-                                        )
-
-                                return cb
-
-                            function_caller.call(
-                                call_id,
-                                part,
-                                make_status_cb(call_id),
-                                reporter,
-                            )
+                except Exception as stream_err:
+                    # If we were using a cached content reference and
+                    # the resource may have expired, drop the cache and
+                    # retry this turn with a full uncached body.
+                    if cached_content_name and not first_chunk_seen:
+                        logger.warning(
+                            "Cached content '%s' may have expired, "
+                            "retrying without cache: %s",
+                            cached_content_name,
+                            stream_err,
+                        )
+                        cached_content_name = None
+                        cached_content_count = 0
+                        continue
+                    raise
 
                 # Get function results
                 try:
