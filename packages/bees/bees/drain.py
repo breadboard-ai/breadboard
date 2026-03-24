@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-ticket:drain CLI — run all available tickets in parallel.
+ticket:drain CLI — run tickets in dependency-aware waves.
 
 Usage::
 
@@ -26,7 +26,12 @@ from bees.session import (
     resume_session,
     run_session,
 )
-from bees.ticket import Ticket, list_tickets
+from bees.ticket import (
+    Ticket,
+    _DEP_PATTERN,
+    load_ticket,
+    list_tickets,
+)
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
 
@@ -44,8 +49,9 @@ async def _run_ticket(
     print(f"▶ [{label}] {ticket.objective!r}", file=sys.stderr)
 
     try:
+        segments = resolve_segments(ticket)
         result = await run_session(
-            ticket.objective, http=http, backend=backend, label=label,
+            segments=segments, http=http, backend=backend, label=label,
             ticket_dir=ticket.dir,
         )
     except Exception as exc:
@@ -74,6 +80,8 @@ async def _run_ticket(
         ticket.metadata.error = result.error
     if result.outcome:
         ticket.metadata.outcome = result.outcome
+    if result.outcome_content:
+        ticket.metadata.outcome_content = result.outcome_content
 
     # Extract agent file system to ticket directory.
     file_manifest = extract_files(
@@ -164,6 +172,8 @@ async def _resume_ticket(
         ticket.metadata.error = result.error
     if result.outcome:
         ticket.metadata.outcome = result.outcome
+    if result.outcome_content:
+        ticket.metadata.outcome_content = result.outcome_content
 
     # Extract agent file system.
     file_manifest = extract_files(
@@ -186,25 +196,15 @@ async def _resume_ticket(
 
 
 async def drain() -> list[dict]:
-    """Load all available tickets and run them in parallel."""
-    tickets = list_tickets(status="available")
-    resumable = [
-        t for t in list_tickets(status="suspended")
-        if t.metadata.assignee == "agent"
-    ]
+    """Run tickets in dependency-aware waves.
 
-    if not tickets and not resumable:
-        print("No available or resumable tickets.", file=sys.stderr)
-        return []
-
-    total = len(tickets) + len(resumable)
-    print(
-        f"Draining {len(tickets)} new + {len(resumable)} resumable "
-        f"= {total} ticket(s)...",
-        file=sys.stderr,
-    )
-
+    Each wave runs all available + resumable tickets in parallel.
+    After a wave, blocked tickets whose dependencies are now met
+    are promoted to available, and the next wave starts.
+    """
     gemini_key = load_gemini_key()
+    all_summaries: list[dict] = []
+    wave = 0
 
     async with httpx.AsyncClient(timeout=httpx.Timeout(300.0)) as http:
         backend = HttpBackendClient(
@@ -214,33 +214,164 @@ async def drain() -> list[dict]:
             gemini_key=gemini_key,
         )
 
-        tasks = [
-            _run_ticket(ticket, http=http, backend=backend)
-            for ticket in tickets
-        ] + [
-            _resume_ticket(ticket, http=http, backend=backend)
-            for ticket in resumable
-        ]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        while True:
+            tickets = list_tickets(status="available")
+            resumable = [
+                t for t in list_tickets(status="suspended")
+                if t.metadata.assignee == "agent"
+            ]
 
-    summaries = []
-    all_tickets = tickets + resumable
-    for ticket, result in zip(all_tickets, results):
-        if isinstance(result, Exception):
-            summaries.append({
-                "ticket": ticket.id,
-                "status": "failed",
-                "error": str(result),
-            })
+            if not tickets and not resumable:
+                if wave == 0:
+                    # Check if there are blocked tickets with no hope.
+                    blocked = list_tickets(status="blocked")
+                    if blocked:
+                        print(
+                            f"No runnable tickets. "
+                            f"{len(blocked)} blocked ticket(s) remain.",
+                            file=sys.stderr,
+                        )
+                    else:
+                        print(
+                            "No available or resumable tickets.",
+                            file=sys.stderr,
+                        )
+                break
+
+            wave += 1
+            total = len(tickets) + len(resumable)
+            print(
+                f"Wave {wave}: {len(tickets)} new + {len(resumable)} "
+                f"resumable = {total} ticket(s)...",
+                file=sys.stderr,
+            )
+
+            tasks = [
+                _run_ticket(ticket, http=http, backend=backend)
+                for ticket in tickets
+            ] + [
+                _resume_ticket(ticket, http=http, backend=backend)
+                for ticket in resumable
+            ]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            all_tickets_in_wave = tickets + resumable
+            for ticket, result in zip(all_tickets_in_wave, results):
+                if isinstance(result, Exception):
+                    all_summaries.append({
+                        "ticket": ticket.id,
+                        "status": "failed",
+                        "error": str(result),
+                    })
+                else:
+                    all_summaries.append({
+                        "ticket": ticket.id,
+                        "status": result.status,
+                        "events": result.events,
+                        "output": result.output,
+                    })
+
+            # Promote blocked tickets whose dependencies are now met.
+            promoted = _promote_blocked_tickets()
+            if not promoted:
+                break
+            print(
+                f"Promoted {promoted} blocked ticket(s) to available.",
+                file=sys.stderr,
+            )
+
+    return all_summaries
+
+
+def _promote_blocked_tickets() -> int:
+    """Check blocked tickets and promote those whose deps are met.
+
+    Returns the number of tickets promoted.
+    """
+    blocked = list_tickets(status="blocked")
+    promoted = 0
+
+    for ticket in blocked:
+        deps = ticket.metadata.depends_on or []
+        all_met = True
+        any_failed = False
+
+        for dep_id in deps:
+            dep = load_ticket(dep_id)
+            if dep is None:
+                all_met = False
+                continue
+            if dep.metadata.status == "completed":
+                continue
+            if dep.metadata.status == "failed":
+                any_failed = True
+                break
+            all_met = False
+
+        if any_failed:
+            ticket.metadata.status = "failed"
+            ticket.metadata.error = "Dependency failed"
+            ticket.save_metadata()
+            continue
+
+        if all_met:
+            ticket.metadata.status = "available"
+            ticket.save_metadata()
+            promoted += 1
+
+    return promoted
+
+
+def resolve_segments(ticket: Ticket) -> list[dict[str, Any]]:
+    """Build segments from a ticket's objective, resolving {{id}} references.
+
+    Text around ``{{id}}`` becomes text segments. Each ``{{id}}`` becomes
+    an ``input`` segment carrying the dependency's outcome as LLMContent.
+    """
+    objective = ticket.objective
+    deps = ticket.metadata.depends_on or []
+
+    # Build a lookup from dep ID to resolved outcome.
+    dep_outcomes: dict[str, dict[str, Any]] = {}
+    for dep_id in deps:
+        dep = load_ticket(dep_id)
+        if dep and dep.metadata.outcome_content:
+            dep_outcomes[dep_id] = dep.metadata.outcome_content
+
+    # Split objective on {{...}} boundaries.
+    parts = _DEP_PATTERN.split(objective)
+    segments: list[dict[str, Any]] = []
+
+    for i, part in enumerate(parts):
+        if i % 2 == 0:
+            # Text between refs.
+            if part:
+                segments.append({"type": "text", "text": part})
         else:
-            summaries.append({
-                "ticket": ticket.id,
-                "status": result.status,
-                "events": result.events,
-                "output": result.output,
-            })
+            # This is a captured ref — resolve to input segment.
+            resolved_id = _find_dep_id(part, deps)
+            if resolved_id and resolved_id in dep_outcomes:
+                segments.append({
+                    "type": "input",
+                    "title": f"ticket-{resolved_id[:8]}",
+                    "content": dep_outcomes[resolved_id],
+                })
+            else:
+                # Fallback: just include as text.
+                segments.append({
+                    "type": "text",
+                    "text": f"(output of ticket {part})",
+                })
 
-    return summaries
+    return segments
+
+
+def _find_dep_id(ref: str, dep_ids: list[str]) -> str | None:
+    """Match a ref (prefix or full UUID) against resolved dep IDs."""
+    for dep_id in dep_ids:
+        if dep_id == ref or dep_id.startswith(ref):
+            return dep_id
+    return None
 
 
 def main() -> None:

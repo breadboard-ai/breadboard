@@ -64,6 +64,7 @@ class SessionResult:
     intermediate: list[dict[str, Any]] | None = None
     suspended: bool = False
     suspend_event: dict[str, Any] | None = None
+    outcome_content: dict[str, Any] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -204,6 +205,12 @@ class EvalCollector:
         texts = [p.get("text", "") for p in parts if "text" in p]
         return "\n".join(texts) if texts else None
 
+    def outcome_llm_content(self) -> dict[str, Any] | None:
+        """Return the full LLMContent outcome, if any."""
+        if self.outcome is None:
+            return None
+        return self.outcome.get("outcomes")
+
 
 # ---------------------------------------------------------------------------
 # File extraction
@@ -282,8 +289,9 @@ def load_gemini_key() -> str:
 
 
 async def run_session(
-    text: str,
+    text: str = "",
     *,
+    segments: list[dict[str, Any]] | None = None,
     http: httpx.AsyncClient,
     backend: HttpBackendClient,
     label: str = "",
@@ -291,8 +299,8 @@ async def run_session(
 ) -> SessionResult:
     """Run a single agent session and return the result.
 
-    Streams events, writes the EvalFileData log file, and returns
-    a ``SessionResult`` with metrics.
+    Accepts either ``text`` (simple text prompt) or ``segments``
+    (structured segments for the sessions API wire protocol).
 
     If ``ticket_dir`` is provided, session state is persisted on
     suspend so it can be resumed later.
@@ -302,7 +310,8 @@ async def run_session(
     subscribers = Subscribers()
 
     session_id = str(uuid.uuid4())
-    segments = [{"type": "text", "text": text}]
+    if segments is None:
+        segments = [{"type": "text", "text": text}]
 
     await new_session(
         session_id=session_id,
@@ -372,6 +381,7 @@ async def run_session(
         intermediate=collector.intermediate,
         suspended=collector.suspended,
         suspend_event=collector.suspend_event,
+        outcome_content=collector.outcome_llm_content(),
     )
 
 
@@ -483,6 +493,7 @@ async def resume_session(
         intermediate=collector.intermediate,
         suspended=collector.suspended,
         suspend_event=collector.suspend_event,
+        outcome_content=collector.outcome_llm_content(),
     )
 
 
