@@ -296,6 +296,7 @@ async def run_session(
     backend: HttpBackendClient,
     label: str = "",
     ticket_dir: Path | None = None,
+    on_event: Any | None = None,
 ) -> SessionResult:
     """Run a single agent session and return the result.
 
@@ -345,6 +346,8 @@ async def run_session(
         collector.collect(event)
         event_count += 1
         _print_event_summary(event, prefix=prefix)
+        if on_event:
+            await on_event(event)
 
     await task
 
@@ -392,6 +395,7 @@ async def resume_session(
     http: httpx.AsyncClient,
     backend: HttpBackendClient,
     label: str = "",
+    on_event: Any | None = None,
 ) -> SessionResult:
     """Resume a suspended session from saved state on disk.
 
@@ -457,6 +461,8 @@ async def resume_session(
         collector.collect(event)
         event_count += 1
         _print_event_summary(event, prefix=prefix)
+        if on_event:
+            await on_event(event)
 
     await task
 

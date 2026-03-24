@@ -5,3 +5,5 @@ __pycache__/
 out/
 tickets/
 .env
+web/node_modules/
+web/dist/

@@ -1,0 +1,68 @@
+/* Bees — Agent Swarm UI */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-card: #1a1a26;
+  --bg-input: #0f0f18;
+  --border: #2a2a3a;
+  --border-hover: #3a3a50;
+  --text-primary: #e8e8f0;
+  --text-secondary: #8888a0;
+  --text-dim: #5a5a70;
+  --accent: #f0b429;
+  --accent-dim: #f0b42930;
+  --green: #34d399;
+  --green-dim: #34d39920;
+  --red: #f87171;
+  --red-dim: #f8717120;
+  --blue: #60a5fa;
+  --blue-dim: #60a5fa20;
+  --purple: #a78bfa;
+  --purple-dim: #a78bfa20;
+  --orange: #fb923c;
+  --orange-dim: #fb923c20;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
