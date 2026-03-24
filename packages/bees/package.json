@@ -5,7 +5,9 @@
   "description": "Bees — agent swarm orchestration framework",
   "scripts": {
     "setup": "wireit",
-    "session:start": ".venv/bin/python -m bees.cli"
+    "session:start": ".venv/bin/python -m bees.cli",
+    "ticket:add": ".venv/bin/python -m bees.add_ticket",
+    "ticket:drain": ".venv/bin/python -m bees.drain"
   },
   "wireit": {
     "setup": {
