@@ -162,8 +162,11 @@ class HttpBackendClient:
         url = f"{GENAI_API_BASE}/{model}:streamGenerateContent?alt=sse"
         headers: dict[str, str] = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self._access_token}",
         }
+        if self._access_token:
+            headers["Authorization"] = f"Bearer {self._access_token}"
+        elif self._gemini_key:
+            url += f"&key={self._gemini_key}"
 
         async with self._httpx.stream(
             "POST", url, json=body, headers=headers
