@@ -21,12 +21,17 @@ interface TicketData {
   suspend_event?: Record<string, unknown>;
   depends_on?: string[];
   events_log?: Array<Record<string, unknown>>;
+  tags?: string[];
 }
 
 @customElement("bees-app")
 export class BeesApp extends LitElement {
   @state() private tickets: TicketData[] = [];
   @state() private objective = "";
+  @state() private tagsText = "";
+  @state() private filterTag = "";
+  @state() private editingTagsId = "";
+  @state() private editedTagsText = "";
   @state() private draining = false;
   @state() private responses: Record<string, string> = {};
 
@@ -343,20 +348,62 @@ export class BeesApp extends LitElement {
       updated[idx] = ticket;
       this.tickets = updated;
     } else {
-      this.tickets = [...this.tickets, ticket];
+      this.tickets = [ticket, ...this.tickets];
     }
   }
 
   private async addTicket() {
     const text = this.objective.trim();
     if (!text) return;
+    const tags = this.tagsText.split(",").map(t => t.trim()).filter(Boolean);
+    
     this.objective = "";
+    this.tagsText = "";
 
     await fetch("/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ objective: text }),
+      body: JSON.stringify({ objective: text, tags: tags.length ? tags : undefined }),
     });
+  }
+
+  private getRelativeTime(isoString?: string): string {
+    if (!isoString) return "";
+    const now = new Date();
+    const past = new Date(isoString);
+    const diffMs = now.getTime() - past.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+
+    if (diffDay > 0) return `${diffDay} day${diffDay > 1 ? "s" : ""} ago`;
+    if (diffHr > 0) return `${diffHr} hour${diffHr > 1 ? "s" : ""} ago`;
+    if (diffMin > 0) return `${diffMin} minute${diffMin > 1 ? "s" : ""} ago`;
+    if (diffSec > 0) return `${diffSec} second${diffSec > 1 ? "s" : ""} ago`;
+    return "just now";
+  }
+
+  private async saveEditedTags(ticketId: string) {
+    const tags = this.editedTagsText
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    try {
+      const resp = await fetch(`http://localhost:3200/tickets/${ticketId}/tags`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tags }),
+      });
+      if (resp.ok) {
+        this.editingTagsId = "";
+      } else {
+        console.error("Failed to save tags");
+      }
+    } catch (e) {
+      console.error("Error saving tags:", e);
+    }
   }
 
   private async respond(ticketId: string) {
@@ -397,9 +444,20 @@ export class BeesApp extends LitElement {
 
   render() {
     return html`
-      <header>
-        <div class="status-dot ${this.draining ? "draining" : ""}"></div>
-        <h1>🐝 <span>Bees</span></h1>
+      <header style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="status-dot ${this.draining ? "draining" : ""}"></div>
+          <h1>🐝 <span>Bees</span></h1>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input
+            type="text"
+            placeholder="Filter by tag..."
+            .value=${this.filterTag}
+            @input=${(e: Event) => (this.filterTag = (e.target as HTMLInputElement).value)}
+            style="padding: 4px; background: var(--bg-input); color: var(--text); border: none; border-radius: 4px;"
+          />
+        </div>
       </header>
 
       <div class="add-form">
@@ -410,6 +468,16 @@ export class BeesApp extends LitElement {
           @input=${(e: Event) =>
             (this.objective = (e.target as HTMLInputElement).value)}
           @keydown=${this.onKeyDown}
+          style="flex: 2;"
+        />
+        <input
+          type="text"
+          placeholder="Tags (comma separated)..."
+          .value=${this.tagsText}
+          @input=${(e: Event) =>
+            (this.tagsText = (e.target as HTMLInputElement).value)}
+          @keydown=${this.onKeyDown}
+          style="flex: 1;"
         />
         <button
           @click=${this.addTicket}
@@ -422,9 +490,19 @@ export class BeesApp extends LitElement {
       ${this.tickets.length === 0
         ? html`<div class="empty">No tickets yet. Add one above.</div>`
         : html`
-            <div class="tickets">
-              ${[...this.tickets].reverse().map((t) => this.renderTicket(t))}
-            </div>
+            ${(() => {
+              const visibleTickets = this.tickets.filter(
+                (t) =>
+                  !this.filterTag.trim() ||
+                  (t.tags &&
+                    t.tags.some((tag) =>
+                      tag.toLowerCase().includes(this.filterTag.trim().toLowerCase())
+                    ))
+              );
+              return html` <div class="tickets">
+                ${visibleTickets.map((t) => this.renderTicket(t))}
+              </div>`;
+            })()}
           `}
     `;
   }
@@ -432,7 +510,7 @@ export class BeesApp extends LitElement {
   private renderTicket(t: TicketData) {
     return html`
       <div class="ticket">
-        <div class="ticket-header">
+        <div class="ticket-header" style="display: flex; gap: 8px; align-items: center;">
           <span class="ticket-id">${t.id.slice(0, 8)}</span>
           <span class="badge ${t.status}">${t.status}</span>
           ${t.assignee
@@ -440,8 +518,46 @@ export class BeesApp extends LitElement {
                 style="background: var(--bg-input); color: var(--text-dim)"
               >→ ${t.assignee}</span>`
             : nothing}
+          <span style="color: var(--text-dim); font-size: 12px;">${this.getRelativeTime(t.created_at)}</span>
         </div>
         <div class="ticket-objective">${t.objective}</div>
+        
+        <div style="display: flex; gap: 8px; align-items: center;">
+          ${t.tags && t.tags.length > 0
+            ? html`
+                <div class="tags" style="display: flex; gap: 4px; flex-wrap: wrap;">
+                  ${t.tags.map((tag) => html`<span class="badge" style="background: var(--bg-input); color: var(--text-dim)">#${tag}</span>`)}
+                </div>
+              `
+            : html`<span style="color: var(--text-dim); font-size: 12px;">(no tags)</span>`}
+          
+          <button 
+            @click=${() => {
+              this.editingTagsId = t.id;
+              this.editedTagsText = t.tags ? t.tags.join(", ") : "";
+            }}
+            style="padding: 2px 6px; font-size: 11px; background: var(--bg-input); color: var(--text-dim); border: 1px solid var(--border); border-radius: 4px; cursor: pointer;"
+          >Edit</button>
+        </div>
+
+        ${this.editingTagsId === t.id
+          ? html`
+              <div class="floating-edit" style="margin-top: 8px; padding: 8px; background: var(--bg-input); border-radius: 6px; border: 1px solid var(--border);">
+                <input
+                  type="text"
+                  placeholder="Tags (comma separated)..."
+                  .value=${this.editedTagsText}
+                  @input=${(e: Event) => (this.editedTagsText = (e.target as HTMLInputElement).value)}
+                  style="width: 100%; padding: 4px; background: var(--bg); color: var(--text); border: none; border-radius: 4px;"
+                />
+                <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px;">
+                  <button @click=${() => (this.editingTagsId = "")} style="font-size: 12px; padding: 4px 8px; background: transparent; color: var(--text-dim); border: 1px solid var(--border); border-radius: 4px; cursor: pointer;">Cancel</button>
+                  <button @click=${() => this.saveEditedTags(t.id)} style="font-size: 12px; padding: 4px 8px; background: var(--bg-input); color: var(--text); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-weight: bold;">Save</button>
+                </div>
+              </div>
+            `
+          : nothing}
+
         ${t.depends_on?.length
           ? html`<div class="ticket-deps">
               depends on: ${t.depends_on.map(

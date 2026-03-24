@@ -191,10 +191,15 @@ def _trigger_drain() -> None:
 
 class AddTicketRequest(BaseModel):
     objective: str
+    tags: list[str] | None = None
 
 
 class RespondRequest(BaseModel):
     text: str
+
+
+class UpdateTagsRequest(BaseModel):
+    tags: list[str]
 
 
 # ---------------------------------------------------------------------------
@@ -250,9 +255,17 @@ def _ticket_to_dict(ticket: Ticket) -> dict[str, Any]:
 
 
 @app.get("/tickets")
-async def get_tickets() -> list[dict[str, Any]]:
-    """List all tickets."""
-    return [_ticket_to_dict(t) for t in list_tickets()]
+async def get_tickets(tag: str | None = None) -> list[dict[str, Any]]:
+    """List all tickets, sorted by created_at latest first, optionally filtered by tag."""
+    tickets = list_tickets()
+    
+    if tag:
+        tickets = [t for t in tickets if t.metadata.tags and tag in t.metadata.tags]
+        
+    # Sort by created_at latest first (ISO string sorting works for chronological order).
+    tickets.sort(key=lambda t: t.metadata.created_at or "", reverse=True)
+    
+    return [_ticket_to_dict(t) for t in tickets]
 
 
 @app.get("/tickets/{ticket_id}")
@@ -267,7 +280,7 @@ async def get_ticket(ticket_id: str) -> dict[str, Any]:
 @app.post("/tickets")
 async def add_ticket(req: AddTicketRequest) -> dict[str, Any]:
     """Create a new ticket and trigger auto-drain."""
-    ticket = create_ticket(req.objective)
+    ticket = create_ticket(req.objective, tags=req.tags)
 
     await broadcaster.broadcast({
         "type": "ticket_added",
@@ -305,6 +318,26 @@ async def respond_to_ticket(
     })
 
     _trigger_drain()
+    return _ticket_to_dict(ticket)
+
+
+@app.post("/tickets/{ticket_id}/tags")
+async def update_ticket_tags(
+    ticket_id: str, req: UpdateTagsRequest
+) -> dict[str, Any]:
+    """Update tags for a ticket and broadcast."""
+    ticket = load_ticket(ticket_id)
+    if not ticket:
+        raise HTTPException(404, f"Ticket {ticket_id} not found")
+
+    ticket.metadata.tags = req.tags
+    ticket.save_metadata()
+
+    await broadcaster.broadcast({
+        "type": "ticket_update",
+        "ticket": _ticket_to_dict(ticket),
+    })
+
     return _ticket_to_dict(ticket)
 
 
