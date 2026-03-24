@@ -20,7 +20,7 @@ from typing import Any, Literal
 
 TICKETS_DIR = Path(__file__).resolve().parent.parent / "tickets"
 
-TicketStatus = Literal["available", "running", "completed", "failed"]
+TicketStatus = Literal["available", "running", "suspended", "completed", "failed"]
 
 
 @dataclass
@@ -35,6 +35,8 @@ class TicketMetadata:
     error: str | None = None
     outcome: str | None = None
     files: list[dict[str, str]] | None = None
+    assignee: Literal["user", "agent"] | None = None
+    suspend_event: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -52,6 +54,8 @@ class TicketMetadata:
             error=data.get("error"),
             outcome=data.get("outcome"),
             files=data.get("files"),
+            assignee=data.get("assignee"),
+            suspend_event=data.get("suspend_event"),
         )
 
 

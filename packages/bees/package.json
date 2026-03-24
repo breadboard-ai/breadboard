@@ -7,7 +7,8 @@
     "setup": "wireit",
     "session:start": ".venv/bin/python -m bees.cli",
     "ticket:add": ".venv/bin/python -m bees.add_ticket",
-    "ticket:drain": ".venv/bin/python -m bees.drain"
+    "ticket:drain": ".venv/bin/python -m bees.drain",
+    "ticket:respond": ".venv/bin/python -m bees.respond"
   },
   "wireit": {
     "setup": {
