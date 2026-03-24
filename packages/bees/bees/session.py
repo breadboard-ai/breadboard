@@ -27,11 +27,15 @@ import httpx
 
 from opal_backend.local.backend_client_impl import HttpBackendClient
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
+from opal_backend.events import SUSPEND_TYPES
+from opal_backend.interaction_store import InteractionState
 from opal_backend.sessions.api import (
     Subscribers,
     new_session,
     register_task,
+    resume_session as api_resume_session,
     start_session,
+    update_context,
 )
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
 
@@ -46,7 +50,7 @@ OUT_DIR = PACKAGE_DIR / "out"
 
 @dataclass
 class SessionResult:
-    """Result of a completed session."""
+    """Result of a completed or suspended session."""
 
     session_id: str
     status: str
@@ -58,6 +62,8 @@ class SessionResult:
     error: str | None = None
     files: list[dict[str, str]] = field(default_factory=list)
     intermediate: list[dict[str, Any]] | None = None
+    suspended: bool = False
+    suspend_event: dict[str, Any] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -94,6 +100,10 @@ class EvalCollector:
 
         # Intermediate files from the agent file system
         self.intermediate: list[dict[str, Any]] | None = None
+
+        # Suspend state
+        self.suspended: bool = False
+        self.suspend_event: dict[str, Any] | None = None
 
         # Error
         self.error: str | None = None
@@ -138,6 +148,14 @@ class EvalCollector:
             result = event["complete"].get("result", {})
             self.outcome = result
             self.intermediate = result.get("intermediate")
+
+        else:
+            # Check for suspend events.
+            for suspend_type in SUSPEND_TYPES:
+                if suspend_type in event:
+                    self.suspended = True
+                    self.suspend_event = event
+                    break
 
     def to_eval_file_data(self) -> list[dict[str, Any]]:
         """Produce the EvalFileData array (context + outcome entries)."""
@@ -269,11 +287,15 @@ async def run_session(
     http: httpx.AsyncClient,
     backend: HttpBackendClient,
     label: str = "",
+    ticket_dir: Path | None = None,
 ) -> SessionResult:
     """Run a single agent session and return the result.
 
     Streams events, writes the EvalFileData log file, and returns
     a ``SessionResult`` with metrics.
+
+    If ``ticket_dir`` is provided, session state is persisted on
+    suspend so it can be resumed later.
     """
     session_store = InMemorySessionStore()
     interaction_store = InMemoryInteractionStore()
@@ -327,6 +349,16 @@ async def run_session(
     with open(out_path, "w") as f:
         json.dump(eval_data, f, indent=2, ensure_ascii=False)
 
+    # If suspended and we have a ticket dir, persist state for resume.
+    if collector.suspended and ticket_dir:
+        await _save_suspended_state(
+            session_id=session_id,
+            collector=collector,
+            session_store=session_store,
+            interaction_store=interaction_store,
+            ticket_dir=ticket_dir,
+        )
+
     return SessionResult(
         session_id=session_id,
         status=str(status),
@@ -336,8 +368,196 @@ async def run_session(
         thoughts=collector.total_thoughts,
         outcome=collector.outcome_text(),
         error=collector.error,
-        files=[],  # Caller extracts files if needed.
+        files=[],
         intermediate=collector.intermediate,
+        suspended=collector.suspended,
+        suspend_event=collector.suspend_event,
+    )
+
+
+async def resume_session(
+    *,
+    ticket_dir: Path,
+    response: dict[str, Any],
+    http: httpx.AsyncClient,
+    backend: HttpBackendClient,
+    label: str = "",
+) -> SessionResult:
+    """Resume a suspended session from saved state on disk.
+
+    Loads session state from ``ticket_dir``, reconstructs the session
+    infrastructure, and calls the sessions API ``resume_session()``.
+    """
+    context = load_session_state(ticket_dir)
+    if context is None:
+        return SessionResult(
+            session_id="",
+            status="failed",
+            events=0,
+            output="",
+            error="No saved session state found",
+        )
+
+    session_id = context["session_id"]
+    interaction_id = context["interaction_id"]
+    interaction_state = InteractionState.from_dict(context["interaction_state"])
+
+    session_store = InMemorySessionStore()
+    interaction_store = InMemoryInteractionStore()
+    subscribers = Subscribers()
+
+    # new_session creates the _SessionContext entry and a fresh session.
+    # We must set resume_id/status AFTER this call because create()
+    # replaces any existing session state.
+    await new_session(
+        session_id=session_id,
+        segments=[],  # Not used for resume.
+        store=session_store,
+        backend=backend,
+        interaction_store=interaction_store,
+        flags={},
+        graph={},
+    )
+
+    # Now set up the session as if it had been suspended.
+    await session_store.set_status(session_id, "suspended")
+    await session_store.set_resume_id(session_id, interaction_id)
+    await interaction_store.save(interaction_id, interaction_state)
+
+    queue = subscribers.subscribe(session_id)
+
+    collector = EvalCollector()
+    task = asyncio.create_task(
+        api_resume_session(
+            session_id=session_id,
+            response=response,
+            store=session_store,
+            subscribers=subscribers,
+        )
+    )
+    register_task(session_id, task)
+
+    prefix = f"[{label}] " if label else ""
+
+    event_count = 0
+    while True:
+        event = await queue.get()
+        if event is None:
+            break
+        collector.collect(event)
+        event_count += 1
+        _print_event_summary(event, prefix=prefix)
+
+    await task
+
+    status = await session_store.get_status(session_id)
+
+    # Write EvalFileData output.
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    out_path = OUT_DIR / f"bees-session-{date_stamp}.log.json"
+    eval_data = collector.to_eval_file_data()
+    with open(out_path, "w") as f:
+        json.dump(eval_data, f, indent=2, ensure_ascii=False)
+
+    # If suspended again, persist new state.
+    if collector.suspended:
+        _save_suspended_state(
+            session_id=session_id,
+            collector=collector,
+            session_store=session_store,
+            interaction_store=interaction_store,
+            ticket_dir=ticket_dir,
+        )
+
+    return SessionResult(
+        session_id=session_id,
+        status=str(status),
+        events=event_count,
+        output=str(out_path),
+        turns=collector.turn_count,
+        thoughts=collector.total_thoughts,
+        outcome=collector.outcome_text(),
+        error=collector.error,
+        files=[],
+        intermediate=collector.intermediate,
+        suspended=collector.suspended,
+        suspend_event=collector.suspend_event,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Session state persistence
+# ---------------------------------------------------------------------------
+
+
+def save_session_state(
+    *,
+    session_id: str,
+    interaction_id: str,
+    interaction_state: InteractionState,
+    ticket_dir: Path,
+) -> None:
+    """Persist session state to the ticket directory for later resume."""
+    state_path = ticket_dir / "session_state.json"
+    state_path.write_text(json.dumps({
+        "session_id": session_id,
+        "interaction_id": interaction_id,
+        "interaction_state": interaction_state.to_dict(),
+    }, indent=2, ensure_ascii=False) + "\n")
+
+
+def load_session_state(ticket_dir: Path) -> dict[str, Any] | None:
+    """Load saved session state from the ticket directory."""
+    state_path = ticket_dir / "session_state.json"
+    if not state_path.exists():
+        return None
+    return json.loads(state_path.read_text())
+
+
+def clear_session_state(ticket_dir: Path) -> None:
+    """Remove saved session state (after successful resume)."""
+    state_path = ticket_dir / "session_state.json"
+    if state_path.exists():
+        state_path.unlink()
+
+
+async def _save_suspended_state(
+    *,
+    session_id: str,
+    collector: EvalCollector,
+    session_store: InMemorySessionStore,
+    interaction_store: InMemoryInteractionStore,
+    ticket_dir: Path,
+) -> None:
+    """Extract and persist session state when a suspend is detected."""
+    # The interaction_id is embedded in the suspend event.
+    interaction_id = None
+    if collector.suspend_event:
+        for key in SUSPEND_TYPES:
+            if key in collector.suspend_event:
+                interaction_id = collector.suspend_event[key].get(
+                    "interactionId"
+                )
+                break
+
+    if not interaction_id:
+        # Fallback: read from session store.
+        interaction_id = await session_store.get_resume_id(session_id)
+
+    if not interaction_id:
+        return
+
+    # Load the interaction state that was saved by the loop.
+    state = await interaction_store.load(interaction_id)
+    if state is None:
+        return
+
+    save_session_state(
+        session_id=session_id,
+        interaction_id=interaction_id,
+        interaction_state=state,
+        ticket_dir=ticket_dir,
     )
 
 
@@ -364,3 +584,8 @@ def _print_event_summary(
         success = event["complete"].get("result", {}).get("success", False)
         icon = "✅" if success else "❌"
         print(f"  {prefix}{icon} complete", file=sys.stderr)
+    else:
+        for suspend_type in SUSPEND_TYPES:
+            if suspend_type in event:
+                print(f"  {prefix}⏸️  {suspend_type}", file=sys.stderr)
+                break
