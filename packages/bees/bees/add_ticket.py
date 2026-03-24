@@ -11,6 +11,7 @@ Usage::
 
 from __future__ import annotations
 
+import argparse
 import sys
 
 from bees.ticket import create_ticket
@@ -18,20 +19,40 @@ from bees.ticket import create_ticket
 
 def main() -> None:
     """CLI entry point for ticket:add."""
-    args = sys.argv[1:]
-    if not args:
-        print(
-            'Usage: npm run ticket:add -w packages/bees -- "prompt text"',
-            file=sys.stderr,
-        )
+    parser = argparse.ArgumentParser(
+        description="Create a new ticket from a prompt.",
+        usage='npm run ticket:add -w packages/bees -- "prompt text" [--tags "tag1,tag2"]',
+    )
+    parser.add_argument(
+        "objective",
+        nargs="*",
+        help="The objective/prompt text for the ticket.",
+    )
+    parser.add_argument(
+        "--tags",
+        type=str,
+        help="Comma-separated list of tags.",
+    )
+    
+    args = parser.parse_args()
+
+    if not args.objective:
+        parser.print_usage(sys.stderr)
         sys.exit(1)
 
-    text = " ".join(args)
-    ticket = create_ticket(text)
+    objective = " ".join(args.objective)
+    
+    tags = None
+    if args.tags:
+        tags = [t.strip() for t in args.tags.split(",") if t.strip()]
+
+    ticket = create_ticket(objective, tags=tags)
 
     print(f"Created ticket {ticket.id}", file=sys.stderr)
-    print(f"  objective: {text!r}", file=sys.stderr)
+    print(f"  objective: {objective!r}", file=sys.stderr)
     print(f"  status: {ticket.metadata.status}", file=sys.stderr)
+    if ticket.metadata.tags:
+        print(f"  tags: {ticket.metadata.tags}", file=sys.stderr)
     if ticket.metadata.depends_on:
         short_deps = [d[:8] for d in ticket.metadata.depends_on]
         print(f"  depends on: {short_deps}", file=sys.stderr)

@@ -45,6 +45,7 @@ class TicketMetadata:
     assignee: Literal["user", "agent"] | None = None
     suspend_event: dict[str, Any] | None = None
     depends_on: list[str] | None = None
+    tags: list[str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -66,6 +67,7 @@ class TicketMetadata:
             suspend_event=data.get("suspend_event"),
             outcome_content=data.get("outcome_content"),
             depends_on=data.get("depends_on"),
+            tags=data.get("tags"),
         )
 
 
@@ -106,7 +108,7 @@ class Ticket:
         )
 
 
-def create_ticket(objective: str) -> Ticket:
+def create_ticket(objective: str, tags: list[str] | None = None) -> Ticket:
     """Create a new ticket.
 
     Scans the objective for ``{{id}}`` references. If any are found,
@@ -140,6 +142,7 @@ def create_ticket(objective: str) -> Ticket:
             status=status,
             created_at=datetime.now(timezone.utc).isoformat(),
             depends_on=resolved_deps,
+            tags=tags,
         ),
     )
     ticket.save()
@@ -190,4 +193,6 @@ def list_tickets(*, status: TicketStatus | None = None) -> list[Ticket]:
             continue
         tickets.append(ticket)
 
+    # Sort by created_at latest first
+    tickets.sort(key=lambda t: t.metadata.created_at or "", reverse=True)
     return tickets
