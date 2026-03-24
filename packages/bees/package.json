@@ -1,0 +1,19 @@
+{
+  "name": "bees",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bees — agent swarm orchestration framework",
+  "scripts": {
+    "setup": "wireit",
+    "session:start": ".venv/bin/python -m bees.cli"
+  },
+  "wireit": {
+    "setup": {
+      "command": "python3 -m venv .venv && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e ../opal-backend'[local]' -e '.[dev]'",
+      "files": [
+        "pyproject.toml"
+      ],
+      "output": []
+    }
+  }
+}

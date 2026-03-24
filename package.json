@@ -32,7 +32,8 @@
     "build": {
       "dependencies": [
         "<workspaces>#<this>",
-        "!./experiments/logic#<this>"
+        "!./experiments/logic#<this>",
+        "!./packages/bees#<this>"
       ]
     },
     "test": {
@@ -40,7 +41,8 @@
         "<workspaces>#<this>",
         "!./packages/ui-tests#<this>",
         "!./experiments/screens#<this>",
-        "!./packages/opal-backend#<this>"
+        "!./packages/opal-backend#<this>",
+        "!./packages/bees#<this>"
       ]
     },
     "test:python": {
@@ -56,14 +58,16 @@
     "coverage": {
       "dependencies": [
         "<workspaces>#<this>",
-        "!./packages/opal-backend#<this>"
+        "!./packages/opal-backend#<this>",
+        "!./packages/bees#<this>"
       ]
     },
     "lint": {
       "dependencies": [
         "<workspaces>#<this>",
         "!./packages/jsandbox#<this>",
-        "!./packages/opal-backend#<this>"
+        "!./packages/opal-backend#<this>",
+        "!./packages/bees#<this>"
       ]
     },
     "ci:local": {
