@@ -31,6 +31,10 @@ def main() -> None:
 
     print(f"Created ticket {ticket.id}", file=sys.stderr)
     print(f"  objective: {text!r}", file=sys.stderr)
+    print(f"  status: {ticket.metadata.status}", file=sys.stderr)
+    if ticket.metadata.depends_on:
+        short_deps = [d[:8] for d in ticket.metadata.depends_on]
+        print(f"  depends on: {short_deps}", file=sys.stderr)
     print(f"  path: {ticket.dir}", file=sys.stderr)
 
 

@@ -12,6 +12,7 @@ A ticket is a directory under ``tickets/{uuid}/`` containing:
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -20,7 +21,12 @@ from typing import Any, Literal
 
 TICKETS_DIR = Path(__file__).resolve().parent.parent / "tickets"
 
-TicketStatus = Literal["available", "running", "suspended", "completed", "failed"]
+TicketStatus = Literal[
+    "available", "blocked", "running", "suspended", "completed", "failed"
+]
+
+# Matches {{ticket-id-prefix}} references in objectives.
+_DEP_PATTERN = re.compile(r"\{\{([^}]+)\}\}")
 
 
 @dataclass
@@ -34,9 +40,11 @@ class TicketMetadata:
     thoughts: int = 0
     error: str | None = None
     outcome: str | None = None
+    outcome_content: dict[str, Any] | None = None
     files: list[dict[str, str]] | None = None
     assignee: Literal["user", "agent"] | None = None
     suspend_event: dict[str, Any] | None = None
+    depends_on: list[str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -56,6 +64,8 @@ class TicketMetadata:
             files=data.get("files"),
             assignee=data.get("assignee"),
             suspend_event=data.get("suspend_event"),
+            outcome_content=data.get("outcome_content"),
+            depends_on=data.get("depends_on"),
         )
 
 
@@ -97,17 +107,53 @@ class Ticket:
 
 
 def create_ticket(objective: str) -> Ticket:
-    """Create a new ticket with status 'available'."""
+    """Create a new ticket.
+
+    Scans the objective for ``{{id}}`` references. If any are found,
+    the ticket is created with status ``blocked`` and a ``depends_on``
+    list of the referenced ticket IDs (resolved by prefix match).
+    """
+    deps = _DEP_PATTERN.findall(objective)
+
+    # Resolve dependency prefixes to full ticket IDs.
+    resolved_deps: list[str] | None = None
+    status: TicketStatus = "available"
+    if deps:
+        all_tickets = list_tickets()
+        resolved_deps = []
+        for dep_ref in deps:
+            match = _resolve_ticket_id(dep_ref, all_tickets)
+            if match:
+                resolved_deps.append(match)
+            else:
+                print(
+                    f"Warning: no ticket matching '{dep_ref}'",
+                    file=__import__('sys').stderr,
+                )
+                resolved_deps.append(dep_ref)  # Keep raw for error visibility.
+        status = "blocked"
+
     ticket = Ticket(
         id=str(uuid.uuid4()),
         objective=objective,
         metadata=TicketMetadata(
-            status="available",
+            status=status,
             created_at=datetime.now(timezone.utc).isoformat(),
+            depends_on=resolved_deps,
         ),
     )
     ticket.save()
     return ticket
+
+
+def _resolve_ticket_id(
+    ref: str, tickets: list["Ticket"],
+) -> str | None:
+    """Resolve a ticket reference (prefix or full UUID) to a ticket ID."""
+    for ticket in tickets:
+        if ticket.id == ref or ticket.id.startswith(ref):
+            return ticket.id
+    return None
 
 
 def load_ticket(ticket_id: str) -> Ticket | None:
