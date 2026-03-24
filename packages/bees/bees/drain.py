@@ -40,6 +40,7 @@ async def _run_ticket(
     *,
     http: httpx.AsyncClient,
     backend: HttpBackendClient,
+    on_event: Any | None = None,
 ) -> SessionResult:
     """Run a single ticket's session and update its metadata."""
     ticket.metadata.status = "running"
@@ -52,7 +53,7 @@ async def _run_ticket(
         segments = resolve_segments(ticket)
         result = await run_session(
             segments=segments, http=http, backend=backend, label=label,
-            ticket_dir=ticket.dir,
+            ticket_dir=ticket.dir, on_event=on_event,
         )
     except Exception as exc:
         ticket.metadata.status = "failed"
@@ -108,6 +109,7 @@ async def _resume_ticket(
     *,
     http: httpx.AsyncClient,
     backend: HttpBackendClient,
+    on_event: Any | None = None,
 ) -> SessionResult:
     """Resume a suspended ticket with the user's response."""
     label = ticket.id[:8]
@@ -140,6 +142,7 @@ async def _resume_ticket(
             http=http,
             backend=backend,
             label=label,
+            on_event=on_event,
         )
     except Exception as exc:
         ticket.metadata.status = "failed"
@@ -215,6 +218,9 @@ async def drain() -> list[dict]:
         )
 
         while True:
+            # Promote blocked tickets whose dependencies are now met.
+            promoted = _promote_blocked_tickets()
+
             tickets = list_tickets(status="available")
             resumable = [
                 t for t in list_tickets(status="suspended")
@@ -271,15 +277,6 @@ async def drain() -> list[dict]:
                         "output": result.output,
                     })
 
-            # Promote blocked tickets whose dependencies are now met.
-            promoted = _promote_blocked_tickets()
-            if not promoted:
-                break
-            print(
-                f"Promoted {promoted} blocked ticket(s) to available.",
-                file=sys.stderr,
-            )
-
     return all_summaries
 
 
@@ -296,11 +293,14 @@ def _promote_blocked_tickets() -> int:
         all_met = True
         any_failed = False
 
+        print(f"Checking blocked ticket {ticket.id[:8]}, deps: {deps}", file=sys.stderr)
         for dep_id in deps:
             dep = load_ticket(dep_id)
             if dep is None:
+                print(f"  Dep {dep_id[:8]} not found on disk", file=sys.stderr)
                 all_met = False
                 continue
+            print(f"  Dep {dep_id[:8]} status: {dep.metadata.status}", file=sys.stderr)
             if dep.metadata.status == "completed":
                 continue
             if dep.metadata.status == "failed":
