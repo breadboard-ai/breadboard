@@ -28,7 +28,6 @@ import httpx
 from opal_backend.local.backend_client_impl import HttpBackendClient
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
 from opal_backend.events import SUSPEND_TYPES
-from opal_backend.skilled_agent import Skill, run_skilled_agent
 from opal_backend.interaction_store import InteractionState
 from opal_backend.sessions.api import (
     Subscribers,
@@ -389,80 +388,6 @@ async def run_session(
     )
 
 
-async def run_skilled_session(
-    *,
-    objective: str,
-    skills: list[Skill],
-    backend: HttpBackendClient,
-    http: httpx.AsyncClient,
-    label: str = "",
-    pre_loaded_files: dict[str, str] | None = None,
-    on_event: Any | None = None,
-) -> SessionResult:
-    """Run a skilled agent session.
-
-    Calls ``run_skilled_agent`` directly — no sessions API involved.
-    The agent receives all skills in its catalog and reads whichever
-    ones it decides are relevant.
-
-    ``pre_loaded_files`` are mounted on the agent's VFS so it can
-    read dependency outcomes or other context files.
-    """
-    from bees.tools.sandbox_tool import get_sandbox_tool_group
-
-    prefix = f"[{label}] " if label else ""
-    collector = EvalCollector()
-    event_count = 0
-
-    try:
-        async for event in run_skilled_agent(
-            objective=objective,
-            skills=skills,
-            backend=backend,
-            pre_loaded_files=pre_loaded_files,
-            extra_groups=[get_sandbox_tool_group(http, pre_loaded_files or {})]
-        ):
-            event_dict = event.to_dict()
-            collector.collect(event_dict)
-            event_count += 1
-            _print_event_summary(event_dict, prefix=prefix)
-            if on_event:
-                await on_event(event_dict)
-    finally:
-        # Write EvalFileData output ensuring we always save something.
-        OUT_DIR.mkdir(parents=True, exist_ok=True)
-        date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        out_path = OUT_DIR / f"bees-skilled-{date_stamp}.log.json"
-        eval_data = collector.to_eval_file_data()
-        with open(out_path, "w") as f:
-            json.dump(eval_data, f, indent=2, ensure_ascii=False)
-
-        # Create bees-skilled-latest.log.json symlink for easy reference
-        latest_path = OUT_DIR / "bees-skilled-latest.log.json"
-        try:
-            if latest_path.exists() or latest_path.is_symlink():
-                 latest_path.unlink()
-            latest_path.symlink_to(out_path.name)
-        except OSError:
-            pass
-
-    status = "completed" if not collector.error else "failed"
-
-    return SessionResult(
-        session_id="",
-        status=status,
-        events=event_count,
-        output=str(out_path),
-        turns=collector.turn_count,
-        thoughts=collector.total_thoughts,
-        outcome=collector.outcome_text(),
-        error=collector.error,
-        files=[],
-        intermediate=collector.intermediate,
-        suspended=collector.suspended,
-        suspend_event=collector.suspend_event,
-        outcome_content=collector.outcome_llm_content(),
-    )
 
 
 async def resume_session(
