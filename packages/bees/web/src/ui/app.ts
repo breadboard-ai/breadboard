@@ -12,7 +12,7 @@ import { BeesAPI } from "../data/api.js";
 import { BeesConnection } from "../data/connection.js";
 import { BeesState } from "../data/state.js";
 import type { TicketData } from "../data/types.js";
-import { getRelativeTime, extractPrompt, parseTags } from "../utils.js";
+import { getRelativeTime, extractPrompt, extractChoices, parseTags } from "../utils.js";
 import { APP_NAME, APP_ICON } from "../constants.js";
 import { styles } from "./app.styles.js";
 
@@ -39,6 +39,9 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   @state()
   private responses: Record<string, string> = {};
+
+  @state()
+  private selectedChoices: Record<string, string[]> = {};
 
   private connection = new BeesConnection(appState);
   private api = new BeesAPI();
@@ -222,6 +225,50 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   private renderRespond(t: TicketData) {
     const prompt = extractPrompt(t);
+    const choices = extractChoices(t);
+    const selectionMode =
+      ((t.suspend_event?.waitForChoice as Record<string, unknown>)
+        ?.selectionMode as string) ?? "single";
+
+    if (choices.length > 0) {
+      return html`
+        <div class="respond-prompt">🤖 ${prompt}</div>
+        <div
+          class="respond-form choices ${selectionMode === "multiple"
+            ? "multiple"
+            : "single"}"
+        >
+          <div class="choices-list">
+            ${choices.map(
+              (c) => html`
+                <label class="choice-label">
+                  <input
+                    type="${selectionMode === "multiple"
+                      ? "checkbox"
+                      : "radio"}"
+                    name="choice-${t.id}"
+                    .checked=${this.selectedChoices[t.id]?.includes(c.id) ??
+                    false}
+                    @change=${(e: Event) =>
+                      this.handleChoiceChange(
+                        t.id,
+                        c.id,
+                        selectionMode === "multiple",
+                        (e.target as HTMLInputElement).checked
+                      )}
+                  />
+                  <span>${c.text}</span>
+                </label>
+              `
+            )}
+          </div>
+          <button @click=${() => this.respondWithChoices(t.id)}>
+            Send Selection
+          </button>
+        </div>
+      `;
+    }
+
     return html`
       <div class="respond-prompt">🤖 ${prompt}</div>
       <div class="respond-form">
@@ -281,6 +328,38 @@ class BeesApp extends SignalWatcher(LitElement) {
     if (ok) {
       this.editingTagsId = "";
     }
+  }
+
+  private handleChoiceChange(
+    ticketId: string,
+    choiceId: string,
+    isMultiple: boolean,
+    checked: boolean
+  ) {
+    const current = this.selectedChoices[ticketId] ?? [];
+    if (isMultiple) {
+      if (checked) {
+        this.selectedChoices = {
+          ...this.selectedChoices,
+          [ticketId]: [...current, choiceId],
+        };
+      } else {
+        this.selectedChoices = {
+          ...this.selectedChoices,
+          [ticketId]: current.filter((id) => id !== choiceId),
+        };
+      }
+    } else {
+      this.selectedChoices = { ...this.selectedChoices, [ticketId]: [choiceId] };
+    }
+  }
+
+  private async respondWithChoices(ticketId: string) {
+    const selectedIds = this.selectedChoices[ticketId] ?? [];
+    if (selectedIds.length === 0) return;
+
+    this.selectedChoices = { ...this.selectedChoices, [ticketId]: [] };
+    await this.api.respond(ticketId, undefined, selectedIds);
   }
 
   private async respond(ticketId: string) {

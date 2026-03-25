@@ -6,7 +6,13 @@
 
 import type { TicketData } from "./data/types.js";
 
-export { getRelativeTime, extractPrompt, parseTags };
+export { getRelativeTime, extractPrompt, extractChoices, parseTags };
+export type { Choice };
+
+interface Choice {
+  id: string;
+  text: string;
+}
 
 function getRelativeTime(isoString?: string): string {
   if (!isoString) return "";
@@ -39,6 +45,19 @@ function extractPrompt(ticket: TicketData): string {
   return "(no prompt)";
 }
 
+function extractChoices(ticket: TicketData): Choice[] {
+  const se = ticket.suspend_event;
+  if (!se || !se.waitForChoice) return [];
+  const payload = se.waitForChoice as Record<string, unknown>;
+  const choices = (payload.choices as Array<Record<string, unknown>>) || [];
+  return choices.map((c) => {
+    const id = (c.id as string) || "";
+    const content = c.content as Record<string, unknown>;
+    const parts = (content?.parts as Array<Record<string, string>>) || [];
+    const texts = parts.filter((p) => p.text).map((p) => p.text);
+    return { id, text: texts.join("\n") || id };
+  });
+}
 function parseTags(text: string): string[] {
   return text
     .split(",")

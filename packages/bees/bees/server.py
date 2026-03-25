@@ -212,7 +212,8 @@ class AddTicketRequest(BaseModel):
 
 
 class RespondRequest(BaseModel):
-    text: str
+    text: str | None = None
+    selectedIds: list[str] | None = None
 
 
 class UpdateTagsRequest(BaseModel):
@@ -322,8 +323,15 @@ async def respond_to_ticket(
 
     # Write response and flip assignee.
     response_path = ticket.dir / "response.json"
+    
+    response: dict[str, Any] = {}
+    if req.selectedIds is not None:
+        response["selectedIds"] = req.selectedIds
+    elif req.text is not None:
+        response["text"] = req.text
+        
     response_path.write_text(
-        json.dumps({"text": req.text}, indent=2, ensure_ascii=False) + "\n"
+        json.dumps(response, indent=2, ensure_ascii=False) + "\n"
     )
     ticket.metadata.assignee = "agent"
     ticket.save_metadata()
