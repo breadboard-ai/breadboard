@@ -61,18 +61,18 @@ def _parse_frontmatter(text: str) -> dict[str, str]:
 
 
 def scan_skills(
-    skills_dir: Path,
+    base_dir: Path,
     *,
     vfs_prefix: str = "skills",
 ) -> tuple[str, dict[str, str]]:
     """Scan a directory for SKILL.md files and build the listing + files dict.
 
-    Each immediate subdirectory of ``skills_dir`` that contains a
-    ``SKILL.md`` file is treated as a skill. The frontmatter is parsed
-    for ``title`` and ``description``.
+    Looks for skill folders in ``base_dir / "skills"``. Each immediate
+    subdirectory of ``base_dir / "skills"`` that contains a ``SKILL.md``
+    file is treated as a skill.
 
     Args:
-        skills_dir: Disk path to the directory containing skill folders.
+        base_dir: Disk path to the bees directory.
         vfs_prefix: VFS path prefix (default ``"skills"``). Files are
             written to ``/mnt/{vfs_prefix}/{skill_dir_name}/SKILL.md``.
 
@@ -85,8 +85,10 @@ def scan_skills(
     skills: list[SkillInfo] = []
     initial_files: dict[str, str] = {}
 
+    skills_dir = base_dir / "skills"
     if not skills_dir.is_dir():
         return "", {}
+
 
     for child in sorted(skills_dir.iterdir()):
         if not child.is_dir():
