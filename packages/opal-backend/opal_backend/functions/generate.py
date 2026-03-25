@@ -865,7 +865,7 @@ def get_image_function_group(
         enable_g1_quota=enable_g1_quota,
     )
     return assemble_function_group(
-        _LOADED, handlers, instruction_override=""
+        _LOADED, handlers, name="image", instruction_override=""
     )
 
 
@@ -885,7 +885,7 @@ def get_audio_function_group(
         enable_g1_quota=enable_g1_quota,
     )
     return assemble_function_group(
-        _LOADED, handlers, instruction_override=""
+        _LOADED, handlers, name="audio", instruction_override=""
     )
 
 
@@ -904,5 +904,5 @@ def get_video_function_group(
         enable_g1_quota=enable_g1_quota,
     )
     return assemble_function_group(
-        _LOADED, handlers, instruction_override=""
+        _LOADED, handlers, name="video", instruction_override=""
     )

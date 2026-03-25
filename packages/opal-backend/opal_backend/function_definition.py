@@ -82,8 +82,13 @@ class FunctionGroup(MappedDefinitions):
 
     Function groups compose the agent's toolset. The Loop merges all
     groups into a single tool set and concatenates their instructions.
+
+    The ``name`` identifies the group for filtering (e.g. ``"system"``,
+    ``"generate"``, ``"chat"``). When a function filter pattern like
+    ``"system.*"`` is applied, it matches against this name.
     """
 
+    name: str | None = None
     instruction: str | None = None
 
 
@@ -130,6 +135,7 @@ _DECLARATIONS_DIR = resources.files("opal_backend") / "declarations"
 class LoadedDeclarations:
     """Raw declarations, metadata, and instruction loaded from JSON/md."""
 
+    name: str
     declarations: list[FunctionDeclaration]
     metadata: list[dict[str, Any]]
     instruction: str | None
@@ -158,7 +164,7 @@ def load_declarations(
     except FileNotFoundError:
         instr = None
     return LoadedDeclarations(
-        declarations=decls, metadata=meta, instruction=instr
+        name=group, declarations=decls, metadata=meta, instruction=instr
     )
 
 
@@ -166,6 +172,7 @@ def assemble_function_group(
     loaded: LoadedDeclarations,
     handlers: dict[str, FunctionHandler],
     *,
+    name: str | None = None,
     instruction_override: str | None = None,
     preconditions: dict[str, "PreconditionHandler"] | None = None,
 ) -> FunctionGroup:
@@ -178,6 +185,8 @@ def assemble_function_group(
     Args:
         loaded: Declarations loaded via ``load_declarations``.
         handlers: Map of function name to async handler.
+        name: Optional group name for identification and filtering.
+            Defaults to ``loaded.name`` if not provided.
         instruction_override: If provided, replaces the loaded instruction
             (used when the instruction needs runtime interpolation).
         preconditions: Optional map of function name to precondition handler.
@@ -191,28 +200,30 @@ def assemble_function_group(
     declarations: list[FunctionDeclaration] = []
 
     for decl in loaded.declarations:
-        name = decl["name"]
-        handler = handlers.get(name)
+        fname = decl["name"]
+        handler = handlers.get(fname)
         if handler is None:
             continue  # Skip declarations without handlers.
 
-        meta = metadata_by_name.get(name, {})
+        meta = metadata_by_name.get(fname, {})
         func_def = FunctionDefinition(
-            name=name,
+            name=fname,
             description=decl.get("description", ""),
             handler=handler,
-            precondition=preconds.get(name),
+            precondition=preconds.get(fname),
             parameters_json_schema=decl.get("parametersJsonSchema"),
             response_json_schema=decl.get("responseJsonSchema"),
             icon=meta.get("icon"),
             title=meta.get("title"),
         )
-        definitions.append((name, func_def))
+        definitions.append((fname, func_def))
         declarations.append(decl)
 
     instruction = instruction_override if instruction_override is not None else loaded.instruction
+    group_name = name if name is not None else loaded.name
 
     return FunctionGroup(
+        name=group_name,
         definitions=definitions,
         declarations=declarations,
         instruction=instruction,
