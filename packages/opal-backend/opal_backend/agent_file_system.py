@@ -154,9 +154,7 @@ class AgentFileSystem:
             path = f"/{path}"
 
         if path.startswith("/mnt/system/"):
-            res = self._get_system_file(path)
-            if not (isinstance(res, dict) and "$error" in res):
-                return res
+            return self._get_system_file(path)
 
         if path.startswith("/mnt/memory/") and self._sheet_manager:
             return await self._get_memory_file(path)

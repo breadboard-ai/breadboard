@@ -36,7 +36,6 @@ from bees.ticket import (
 )
 from opal_backend.local.backend_client_impl import HttpBackendClient
 from opal_backend.skilled_agent import Skill
-import httpx
 
 
 async def _run_ticket(
@@ -45,7 +44,6 @@ async def _run_ticket(
     http: httpx.AsyncClient,
     backend: HttpBackendClient,
     skills: list[Skill],
-    tool_files: dict[str, str],
     on_event: Any | None = None,
 ) -> SessionResult:
     """Run a single ticket's session and update its metadata."""
@@ -57,16 +55,10 @@ async def _run_ticket(
 
     try:
         objective, dep_files = resolve_objective(ticket)
-        # Merge skill-provided tool files into mounted VFS
-        if dep_files is None:
-             dep_files = {}
-        dep_files.update(tool_files)
-
         result = await run_skilled_session(
             objective=objective,
             skills=skills,
             backend=backend,
-            http=http,
             label=label,
             pre_loaded_files=dep_files,
             on_event=on_event,
@@ -226,7 +218,7 @@ async def drain() -> list[dict]:
     wave = 0
 
     # Load all available skills once — the agent decides which to use.
-    skills, tool_files = load_skills()
+    skills = load_skills()
     skill_names = [s.name for s in skills]
     print(f"Loaded {len(skills)} skill(s): {skill_names}", file=sys.stderr)
 
@@ -275,7 +267,7 @@ async def drain() -> list[dict]:
 
             tasks = [
                 _run_ticket(
-                    ticket, http=http, backend=backend, skills=skills, tool_files=tool_files,
+                    ticket, http=http, backend=backend, skills=skills,
                 )
                 for ticket in tickets
             ] + [

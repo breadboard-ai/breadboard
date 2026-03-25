@@ -86,7 +86,6 @@ _drain_running = False
 _http_client: httpx.AsyncClient | None = None
 _backend: HttpBackendClient | None = None
 _skills: list[Skill] = []
-_tool_files: dict[str, str] = {}
 
 
 async def _drain_loop() -> None:
@@ -167,7 +166,7 @@ async def _run_drain_wave() -> None:
 
             async def wrap_run(t=ticket):
                 try:
-                    await _run_ticket(t, http=_http_client, backend=_backend, skills=_skills, tool_files=_tool_files, on_event=_make_on_event(t.id))
+                    await _run_ticket(t, http=_http_client, backend=_backend, skills=_skills, on_event=_make_on_event(t.id))
                 finally:
                     _running_tickets.remove(t.id)
                     await broadcaster.broadcast({
@@ -229,7 +228,7 @@ class UpdateTagsRequest(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    global _http_client, _backend, _skills, _tool_files
+    global _http_client, _backend, _skills
 
     gemini_key = load_gemini_key()
     _http_client = httpx.AsyncClient(timeout=httpx.Timeout(300.0))
@@ -239,7 +238,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         access_token="",
         gemini_key=gemini_key,
     )
-    _skills, _tool_files = load_skills()
+    _skills = load_skills()
     print(f"Loaded {len(_skills)} skill(s): {[s.name for s in _skills]}", file=sys.stderr)
 
     drain_task = asyncio.create_task(_drain_loop())
@@ -361,29 +360,6 @@ async def update_ticket_tags(
     })
 
     return _ticket_to_dict(ticket)
-
-
-    return _ticket_to_dict(ticket)
-
-
-@app.get("/tickets/{ticket_id}/bundle")
-async def get_ticket_bundle(ticket_id: str) -> dict[str, str]:
-    """Get the auto-built CJS bundle for a ticket, if it exists."""
-    ticket = load_ticket(ticket_id)
-    if not ticket:
-        raise HTTPException(404, "Ticket not found")
-    
-    if not ticket.metadata.bundle_path:
-        raise HTTPException(404, "No bundle found for this ticket")
-        
-    try:
-        from pathlib import Path
-        path = Path(ticket.metadata.bundle_path)
-        if not path.exists():
-            raise HTTPException(404, "Bundle file missing from disk")
-        return {"code": path.read_text(encoding="utf-8")}
-    except Exception as e:
-        raise HTTPException(500, f"Error reading bundle: {e}")
 
 
 # ---------------------------------------------------------------------------
