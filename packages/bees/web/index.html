@@ -3,14 +3,71 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bees — Agent Swarm</title>
+  <title>Bees — New App View</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/src/styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --text: #f8fafc;
+      --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .container {
+      text-align: center;
+      max-width: 600px;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1rem;
+      letter-spacing: -0.05em;
+    }
+    p {
+      font-size: 1.25rem;
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      border-radius: 12px;
+      margin-top: 2rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+  </style>
 </head>
 <body>
-  <bees-app></bees-app>
-  <script type="module" src="/src/app.ts"></script>
+  <a href="/devtools.html" style="position: absolute; top: 1rem; right: 1rem; font-size: 0.875rem; color: #64748b; text-decoration: none;">🛠️ DevTools</a>
+
+  <div class="container">
+    <h1>Clean Slate</h1>
+    <p>Placeholder for the new Bees app view. The ticket swarm workspace is now available on DevTools.</p>
+    
+    <div class="card">
+      <div style="font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem;">🏗️ Under Construction</div>
+      <div style="color: #64748b;">Ready to start building the new app here!</div>
+    </div>
+  </div>
 </body>
 </html>
