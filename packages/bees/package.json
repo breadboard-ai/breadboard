@@ -9,7 +9,8 @@
     "ticket:add": ".venv/bin/python -m bees.add_ticket",
     "ticket:drain": ".venv/bin/python -m bees.drain",
     "ticket:respond": ".venv/bin/python -m bees.respond",
-    "dev": "npm run dev:server & npm run dev:web",
+    "dev": "npm run dev:sandbox & npm run dev:server & npm run dev:web",
+    "dev:sandbox": ".venv/bin/python -m sandbox.server",
     "dev:server": ".venv/bin/python -m bees.server",
     "dev:web": "cd web && npm run dev"
   },
