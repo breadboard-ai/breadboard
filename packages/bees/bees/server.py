@@ -107,6 +107,9 @@ async def _drain_loop() -> None:
             _drain_running = False
 
 
+_running_tickets: set[str] = set()
+
+
 async def _run_drain_wave() -> None:
     """Run drain waves until no more work is available."""
     assert _http_client and _backend
@@ -153,28 +156,41 @@ async def _run_drain_wave() -> None:
             "resumable": len(resumable),
         })
 
-        tasks = [
-            _run_ticket(ticket, http=_http_client, backend=_backend, on_event=_make_on_event(ticket.id))
-            for ticket in tickets
-        ] + [
-            _resume_ticket(ticket, http=_http_client, backend=_backend, on_event=_make_on_event(ticket.id))
-            for ticket in resumable
-        ]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        for ticket in tickets:
+            if ticket.id in _running_tickets:
+                continue
+            _running_tickets.add(ticket.id)
 
-        # Broadcast results for this wave.
-        all_wave_tickets = tickets + resumable
-        for ticket, result in zip(all_wave_tickets, results):
-            if isinstance(result, Exception):
-                status = "failed"
-            else:
-                status = result.status
-            await broadcaster.broadcast({
-                "type": "ticket_update",
-                "ticket": _ticket_to_dict(
-                    load_ticket(ticket.id) or ticket
-                ),
-            })
+            async def wrap_run(t=ticket):
+                try:
+                    await _run_ticket(t, http=_http_client, backend=_backend, on_event=_make_on_event(t.id))
+                finally:
+                    _running_tickets.remove(t.id)
+                    await broadcaster.broadcast({
+                        "type": "ticket_update",
+                        "ticket": _ticket_to_dict(load_ticket(t.id) or t),
+                    })
+
+            asyncio.create_task(wrap_run())
+
+        for ticket in resumable:
+            if ticket.id in _running_tickets:
+                continue
+            _running_tickets.add(ticket.id)
+
+            async def wrap_resume(t=ticket):
+                try:
+                    await _resume_ticket(t, http=_http_client, backend=_backend, on_event=_make_on_event(t.id))
+                finally:
+                    _running_tickets.remove(t.id)
+                    await broadcaster.broadcast({
+                        "type": "ticket_update",
+                        "ticket": _ticket_to_dict(load_ticket(t.id) or t),
+                    })
+
+            asyncio.create_task(wrap_resume())
+
+        await asyncio.sleep(1)
 
     await broadcaster.broadcast({"type": "drain_complete", "waves": wave})
 
