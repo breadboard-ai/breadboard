@@ -96,6 +96,7 @@ async def run(
     drive: DriveOperationsClient | None = None,
     extra_groups: list | None = None,
     function_filter: list[str] | None = None,
+    initial_files: dict[str, str] | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Start a new agent run.
 
@@ -121,6 +122,13 @@ async def run(
     resolved_flags = flags or {}
 
     file_system = AgentFileSystem()
+
+    # Seed the file system with any initial files provided by the caller
+    # (e.g. skill definitions placed at /mnt/skills/*).
+    if initial_files:
+        for name, content in initial_files.items():
+            file_system.write(name, content)
+
     task_tree_manager = TaskTreeManager(file_system)
     controller = LoopController()
 
@@ -181,10 +189,13 @@ async def run(
         function_filter=function_filter,
     )
 
-    # Fetch a shared singleton prefix cache (amortized across clients).
-    cached_name = await _get_singleton_cache_name(
-        flags=resolved_flags, backend=backend,
-    )
+    if (function_filter is None or len(function_filter) == 0) and (extra_groups is None or len(extra_groups) == 0):
+        # Fetch a shared singleton prefix cache (amortized across clients).
+        cached_name = await _get_singleton_cache_name(
+            flags=resolved_flags, backend=backend,
+        )
+    else:
+        cached_name = None
 
     run_args = AgentRunArgs(
         objective=objective,

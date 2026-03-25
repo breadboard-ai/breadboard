@@ -102,6 +102,7 @@ class _SessionContext:
     drive: DriveOperationsClient | None = None
     extra_groups: list["FunctionGroup"] = field(default_factory=list)
     function_filter: list[str] | None = None
+    initial_files: dict[str, str] | None = None
 
 
 # Module-level registries.
@@ -126,6 +127,7 @@ async def new_session(
     drive: DriveOperationsClient | None = None,
     extra_groups: list["FunctionGroup"] | None = None,
     function_filter: list[str] | None = None,
+    initial_files: dict[str, str] | None = None,
 ) -> str:
     """Create a session and stash its context for start_session().
 
@@ -152,6 +154,7 @@ async def new_session(
         drive=drive,
         extra_groups=extra_groups or [],
         function_filter=function_filter,
+        initial_files=initial_files,
     )
     return session_id
 
@@ -221,6 +224,7 @@ async def start_session(
             drive=ctx.drive,
             extra_groups=ctx.extra_groups or None,
             function_filter=ctx.function_filter,
+            initial_files=ctx.initial_files,
         ),
         store=store,
         subscribers=subscribers,
