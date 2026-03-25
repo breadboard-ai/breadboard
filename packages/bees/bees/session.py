@@ -394,6 +394,7 @@ async def run_skilled_session(
     objective: str,
     skills: list[Skill],
     backend: HttpBackendClient,
+    http: httpx.AsyncClient,
     label: str = "",
     pre_loaded_files: dict[str, str] | None = None,
     on_event: Any | None = None,
@@ -407,30 +408,43 @@ async def run_skilled_session(
     ``pre_loaded_files`` are mounted on the agent's VFS so it can
     read dependency outcomes or other context files.
     """
+    from bees.tools.sandbox_tool import get_sandbox_tool_group
+
     prefix = f"[{label}] " if label else ""
     collector = EvalCollector()
     event_count = 0
 
-    async for event in run_skilled_agent(
-        objective=objective,
-        skills=skills,
-        backend=backend,
-        pre_loaded_files=pre_loaded_files,
-    ):
-        event_dict = event.to_dict()
-        collector.collect(event_dict)
-        event_count += 1
-        _print_event_summary(event_dict, prefix=prefix)
-        if on_event:
-            await on_event(event_dict)
+    try:
+        async for event in run_skilled_agent(
+            objective=objective,
+            skills=skills,
+            backend=backend,
+            pre_loaded_files=pre_loaded_files,
+            extra_groups=[get_sandbox_tool_group(http, pre_loaded_files or {})]
+        ):
+            event_dict = event.to_dict()
+            collector.collect(event_dict)
+            event_count += 1
+            _print_event_summary(event_dict, prefix=prefix)
+            if on_event:
+                await on_event(event_dict)
+    finally:
+        # Write EvalFileData output ensuring we always save something.
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
+        date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        out_path = OUT_DIR / f"bees-skilled-{date_stamp}.log.json"
+        eval_data = collector.to_eval_file_data()
+        with open(out_path, "w") as f:
+            json.dump(eval_data, f, indent=2, ensure_ascii=False)
 
-    # Write EvalFileData output.
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    out_path = OUT_DIR / f"bees-skilled-{date_stamp}.log.json"
-    eval_data = collector.to_eval_file_data()
-    with open(out_path, "w") as f:
-        json.dump(eval_data, f, indent=2, ensure_ascii=False)
+        # Create bees-skilled-latest.log.json symlink for easy reference
+        latest_path = OUT_DIR / "bees-skilled-latest.log.json"
+        try:
+            if latest_path.exists() or latest_path.is_symlink():
+                 latest_path.unlink()
+            latest_path.symlink_to(out_path.name)
+        except OSError:
+            pass
 
     status = "completed" if not collector.error else "failed"
 
@@ -515,29 +529,39 @@ async def resume_session(
     register_task(session_id, task)
 
     prefix = f"[{label}] " if label else ""
-
     event_count = 0
-    while True:
-        event = await queue.get()
-        if event is None:
-            break
-        collector.collect(event)
-        event_count += 1
-        _print_event_summary(event, prefix=prefix)
-        if on_event:
-            await on_event(event)
 
-    await task
+    try:
+        while True:
+            event = await queue.get()
+            if event is None:
+                break
+            collector.collect(event)
+            event_count += 1
+            _print_event_summary(event, prefix=prefix)
+            if on_event:
+                await on_event(event)
+
+        await task
+    finally:
+        # Write EvalFileData output.
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
+        date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        out_path = OUT_DIR / f"bees-session-{date_stamp}.log.json"
+        eval_data = collector.to_eval_file_data()
+        with open(out_path, "w") as f:
+            json.dump(eval_data, f, indent=2, ensure_ascii=False)
+
+        # Create bees-session-latest.log.json symlink for easy reference
+        latest_path = OUT_DIR / "bees-session-latest.log.json"
+        try:
+            if latest_path.exists() or latest_path.is_symlink():
+                 latest_path.unlink()
+            latest_path.symlink_to(out_path.name)
+        except OSError:
+            pass
 
     status = await session_store.get_status(session_id)
-
-    # Write EvalFileData output.
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    out_path = OUT_DIR / f"bees-session-{date_stamp}.log.json"
-    eval_data = collector.to_eval_file_data()
-    with open(out_path, "w") as f:
-        json.dump(eval_data, f, indent=2, ensure_ascii=False)
 
     # If suspended again, persist new state.
     if collector.suspended:
@@ -655,8 +679,16 @@ def _print_event_summary(
         preview = text[:80].replace("\n", " ")
         print(f"  {prefix}💭 {preview}", file=sys.stderr)
     elif "functionCall" in event:
-        name = event["functionCall"].get("name", "?")
-        print(f"  {prefix}🔧 {name}", file=sys.stderr)
+        call = event["functionCall"]
+        name = call.get("name", "?")
+        args = call.get("args", {})
+        
+        # Format condensed preview of arguments
+        import json
+        args_json = json.dumps(args, ensure_ascii=False)
+        args_preview = args_json[:60] + ("..." if len(args_json) > 60 else "")
+        
+        print(f"  {prefix}🔧 {name} {args_preview}", file=sys.stderr)
     elif "error" in event:
         msg = event["error"].get("message", "?")
         print(f"  {prefix}❌ {msg}", file=sys.stderr)

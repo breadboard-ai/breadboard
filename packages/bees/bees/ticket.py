@@ -46,6 +46,7 @@ class TicketMetadata:
     suspend_event: dict[str, Any] | None = None
     depends_on: list[str] | None = None
     tags: list[str] | None = None
+    bundle_path: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -68,6 +69,7 @@ class TicketMetadata:
             outcome_content=data.get("outcome_content"),
             depends_on=data.get("depends_on"),
             tags=data.get("tags"),
+            bundle_path=data.get("bundle_path"),
         )
 
 
