@@ -94,6 +94,8 @@ async def run(
     graph: GraphInfo,
     flags: dict[str, Any] | None = None,
     drive: DriveOperationsClient | None = None,
+    extra_groups: list | None = None,
+    function_filter: list[str] | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Start a new agent run.
 
@@ -175,6 +177,8 @@ async def run(
         sheet_manager=sheet_manager,
         on_chat_entry=chat_mgr.on_chat_entry,
         graph_url=graph.get("url", ""),
+        extra_groups=extra_groups,
+        function_filter=function_filter,
     )
 
     # Fetch a shared singleton prefix cache (amortized across clients).
@@ -198,6 +202,7 @@ async def run(
         flags=resolved_flags,
         graph=graph,
         session_id=session_id,
+        function_filter=function_filter,
     ):
         yield event
 
@@ -209,6 +214,7 @@ async def resume(
     backend: BackendClient,
     store: InteractionStore,
     drive: DriveOperationsClient | None = None,
+    extra_groups: list | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Resume a suspended agent run.
 
@@ -313,6 +319,8 @@ async def resume(
         on_chat_entry=chat_mgr.on_chat_entry,
         consents_granted=state.consents_granted,
         graph_url=(state.graph or {}).get("url", ""),
+        extra_groups=extra_groups,
+        function_filter=state.function_filter,
     )
 
     # Fetch a shared singleton prefix cache (amortized across clients).
@@ -338,6 +346,7 @@ async def resume(
         graph=state.graph,
         session_id=state.session_id,
         consents_granted=state.consents_granted,
+        function_filter=state.function_filter,
     ):
         yield event
 
@@ -501,8 +510,17 @@ def _build_function_groups(
     on_chat_entry: Any = None,
     consents_granted: set[str] | None = None,
     graph_url: str = "",
+    extra_groups: list | None = None,
+    function_filter: list[str] | None = None,
 ) -> list:
-    """Build the standard set of function groups."""
+    """Build the standard set of function groups.
+
+    Args:
+        extra_groups: Additional FunctionGroups to append.
+        function_filter: Dot-notation patterns selecting which functions
+            to include (e.g. ``["system.*", "chat.request_user_input"]``).
+            ``None`` means no filtering (all functions available).
+    """
     enable_g1_quota = flags.get("googleOne", False)
 
     groups = [
@@ -552,7 +570,79 @@ def _build_function_groups(
             )
         )
 
+    if extra_groups:
+        # Extra groups with the same name as a built-in replace it.
+        override_names = {g.name for g in extra_groups if g.name is not None}
+        groups = [g for g in groups if g.name not in override_names]
+        groups.extend(extra_groups)
+
+    if function_filter is not None and function_filter:
+        groups = _apply_function_filter(groups, function_filter)
+
     return groups
+
+
+def _apply_function_filter(
+    groups: list,
+    patterns: list[str],
+) -> list:
+    """Filter function groups using dot-notation patterns.
+
+    Each pattern is one of:
+    - ``"group.*"`` — include all functions in the named group
+    - ``"group.function_name"`` — include a single function (the dot
+      translates to underscore for matching against the flat function
+      name convention, e.g. ``"system.objective_fulfilled"`` matches
+      ``system_objective_fulfilled``)
+
+    Groups whose name is ``None`` (unnamed) are always passed through
+    unfiltered. Groups with no surviving functions are dropped.
+
+    Returns a new list of FunctionGroup instances.
+    """
+    from .function_definition import FunctionGroup
+
+    # Pre-process patterns into (group, function_suffix | None) pairs.
+    wildcard_groups: set[str] = set()
+    specific_functions: set[str] = set()
+    for pattern in patterns:
+        if pattern.endswith(".*"):
+            wildcard_groups.add(pattern[:-2])
+        else:
+            # "group.func" → "group_func"
+            specific_functions.add(pattern.replace(".", "_"))
+
+    filtered: list = []
+    for group in groups:
+        if group.name is None:
+            # Unnamed groups pass through unfiltered.
+            filtered.append(group)
+            continue
+
+        if group.name in wildcard_groups:
+            # Entire group is included.
+            filtered.append(group)
+            continue
+
+        # Check individual functions.
+        kept_definitions = [
+            (name, defn) for name, defn in group.definitions
+            if name in specific_functions
+        ]
+        kept_declarations = [
+            decl for decl in group.declarations
+            if decl.get("name") in specific_functions
+        ]
+
+        if kept_definitions:
+            filtered.append(FunctionGroup(
+                name=group.name,
+                definitions=kept_definitions,
+                declarations=kept_declarations,
+                instruction=group.instruction,
+            ))
+
+    return filtered
 
 
 async def _stream_loop(
@@ -567,6 +657,7 @@ async def _stream_loop(
     graph: dict[str, Any],
     session_id: str = "",
     consents_granted: set[str] | None = None,
+    function_filter: list[str] | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Run the loop and yield events.
 
@@ -602,6 +693,7 @@ async def _stream_loop(
                         consents_granted=(
                             consents_granted or set()
                         ),
+                        function_filter=function_filter,
                     ),
                 )
                 result.suspend_event.interaction_id = (

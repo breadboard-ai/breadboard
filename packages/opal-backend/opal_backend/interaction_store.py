@@ -79,6 +79,12 @@ class InteractionState:
     # run. Preconditions check this set before suspending.
     consents_granted: set[str] = field(default_factory=set)
 
+    # Dot-notation patterns filtering which functions are available
+    # (e.g. ["system.*", "chat.request_user_input"]). ``None`` means
+    # no filtering (all functions available). Persisted so the same
+    # filter applies after suspend/resume.
+    function_filter: list[str] | None = None
+
     # ---- Serialization ----
 
     def to_dict(self) -> dict[str, Any]:
@@ -102,6 +108,7 @@ class InteractionState:
             "session_id": self.session_id,
             "is_precondition_check": self.is_precondition_check,
             "consents_granted": sorted(self.consents_granted),
+            "function_filter": self.function_filter,
         }
 
     @classmethod
@@ -127,6 +134,7 @@ class InteractionState:
             session_id=data.get("session_id", str(uuid.uuid4())),
             is_precondition_check=data.get("is_precondition_check", False),
             consents_granted=set(data.get("consents_granted", [])),
+            function_filter=data.get("function_filter"),
         )
 
 

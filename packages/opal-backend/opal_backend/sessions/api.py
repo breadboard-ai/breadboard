@@ -14,7 +14,10 @@ import asyncio
 import logging
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..function_definition import FunctionGroup
 
 from ..events import (
     AgentEvent,
@@ -97,6 +100,8 @@ class _SessionContext:
     flags: dict[str, Any] = field(default_factory=dict)
     graph: dict[str, Any] | None = None
     drive: DriveOperationsClient | None = None
+    extra_groups: list["FunctionGroup"] = field(default_factory=list)
+    function_filter: list[str] | None = None
 
 
 # Module-level registries.
@@ -119,11 +124,21 @@ async def new_session(
     flags: dict[str, Any] | None = None,
     graph: dict[str, Any] | None = None,
     drive: DriveOperationsClient | None = None,
+    extra_groups: list["FunctionGroup"] | None = None,
+    function_filter: list[str] | None = None,
 ) -> str:
     """Create a session and stash its context for start_session().
 
     Does NOT start the loop — call ``start_session()`` separately
     (typically via ``asyncio.create_task``).
+
+    Args:
+        extra_groups: Additional FunctionGroups appended to the
+            standard set. Must be re-supplied on resume since they
+            contain live handler closures.
+        function_filter: Dot-notation patterns selecting which
+            functions to include (e.g. ``["system.*"]``). ``None``
+            means no filtering.
 
     Returns the session_id.
     """
@@ -135,6 +150,8 @@ async def new_session(
         flags=flags or {},
         graph=graph,
         drive=drive,
+        extra_groups=extra_groups or [],
+        function_filter=function_filter,
     )
     return session_id
 
@@ -202,6 +219,8 @@ async def start_session(
             flags=ctx.flags,
             graph=ctx.graph or {},
             drive=ctx.drive,
+            extra_groups=ctx.extra_groups or None,
+            function_filter=ctx.function_filter,
         ),
         store=store,
         subscribers=subscribers,
@@ -241,6 +260,7 @@ async def resume_session(
             backend=ctx.backend,
             store=ctx.interaction_store,
             drive=ctx.drive,
+            extra_groups=ctx.extra_groups or None,
         ),
         store=store,
         subscribers=subscribers,

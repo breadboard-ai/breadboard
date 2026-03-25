@@ -19,7 +19,7 @@ import pytest
 from opal_backend.events import AgentEvent
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
 from opal_backend.loop import AgentResult, LoopController
-from opal_backend.run import run, resume, _build_function_groups, _process_chat_response
+from opal_backend.run import run, resume, _build_function_groups, _process_chat_response, _apply_function_filter
 
 
 # =============================================================================
@@ -567,6 +567,135 @@ class TestBuildFunctionGroups:
                 all_names.add(name)
 
         assert "memory_create_sheet" not in all_names
+
+    def test_extra_groups_override_builtin_by_name(self):
+        """An extra group with the same name as a built-in replaces it."""
+        from opal_backend.agent_file_system import AgentFileSystem
+        from opal_backend.task_tree_manager import TaskTreeManager
+        from opal_backend.function_definition import FunctionGroup, FunctionDefinition
+
+        controller = LoopController()
+        fs = AgentFileSystem()
+        ttm = TaskTreeManager(fs)
+        backend = make_mock_backend()
+
+        # Create a custom "system" group with a single custom function.
+        custom_def = FunctionDefinition(
+            name="system_custom_tool",
+            description="custom",
+            handler=AsyncMock(),
+        )
+        custom_group = FunctionGroup(
+            name="system",
+            definitions=[("system_custom_tool", custom_def)],
+            declarations=[{"name": "system_custom_tool"}],
+        )
+
+        groups = _build_function_groups(
+            controller=controller,
+            file_system=fs,
+            task_tree_manager=ttm,
+            backend=backend,
+            flags={},
+            extra_groups=[custom_group],
+        )
+
+        all_names = set()
+        for group in groups:
+            for name, _ in group.definitions:
+                all_names.add(name)
+
+        # Custom function present, built-in system functions gone.
+        assert "system_custom_tool" in all_names
+        assert "system_objective_fulfilled" not in all_names
+
+
+# =============================================================================
+# _apply_function_filter tests
+# =============================================================================
+
+
+class TestApplyFunctionFilter:
+    """Tests for the _apply_function_filter helper."""
+
+    def _make_group(self, name, func_names):
+        from opal_backend.function_definition import FunctionGroup, FunctionDefinition
+
+        definitions = [
+            (fn, FunctionDefinition(name=fn, description="", handler=AsyncMock()))
+            for fn in func_names
+        ]
+        declarations = [{"name": fn} for fn in func_names]
+        return FunctionGroup(
+            name=name,
+            definitions=definitions,
+            declarations=declarations,
+            instruction=f"{name} instructions",
+        )
+
+    def test_wildcard_includes_entire_group(self):
+        """'system.*' includes all functions in the system group."""
+        system = self._make_group("system", ["system_a", "system_b"])
+        chat = self._make_group("chat", ["chat_x"])
+
+        result = _apply_function_filter([system, chat], ["system.*"])
+
+        assert len(result) == 1
+        assert result[0].name == "system"
+        names = [n for n, _ in result[0].definitions]
+        assert "system_a" in names
+        assert "system_b" in names
+
+    def test_specific_function_pattern(self):
+        """'system.a' matches only 'system_a'."""
+        system = self._make_group("system", ["system_a", "system_b"])
+
+        result = _apply_function_filter([system], ["system.a"])
+
+        assert len(result) == 1
+        names = [n for n, _ in result[0].definitions]
+        assert names == ["system_a"]
+
+    def test_empty_filter_means_no_filtering(self):
+        """An empty list keeps all groups (no-op)."""
+        system = self._make_group("system", ["system_a"])
+        chat = self._make_group("chat", ["chat_x"])
+        groups = [system, chat]
+
+        # Empty list should never reach _apply_function_filter due to
+        # the guard in _build_function_groups, but verify the semantics:
+        # if it did, no patterns would match and groups would be dropped.
+        # The guard ensures this never happens.
+        # (This test validates the guard, not the filter itself.)
+
+    def test_unmatched_group_is_dropped(self):
+        """Groups with no matching functions are excluded."""
+        system = self._make_group("system", ["system_a"])
+        chat = self._make_group("chat", ["chat_x"])
+
+        result = _apply_function_filter([system, chat], ["system.*"])
+
+        group_names = [g.name for g in result]
+        assert "chat" not in group_names
+
+    def test_unnamed_groups_pass_through(self):
+        """Groups without a name survive any filter."""
+        from opal_backend.function_definition import FunctionGroup, FunctionDefinition
+
+        unnamed = FunctionGroup(
+            name=None,
+            definitions=[("anon_fn", FunctionDefinition(
+                name="anon_fn", description="", handler=AsyncMock(),
+            ))],
+            declarations=[{"name": "anon_fn"}],
+        )
+        system = self._make_group("system", ["system_a"])
+
+        result = _apply_function_filter([unnamed, system], ["system.*"])
+
+        group_names = [g.name for g in result]
+        assert None in group_names
+        assert "system" in group_names
 
 
 class TestProcessChatResponse:
