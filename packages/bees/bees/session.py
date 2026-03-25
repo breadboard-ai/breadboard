@@ -38,6 +38,11 @@ from opal_backend.sessions.api import (
     update_context,
 )
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
+from bees.functions.skills import get_skills_function_group, scan_skills
+
+# Scan skills once at import time.
+_BEES_DIR = Path(__file__).resolve().parent
+_SKILLS_LISTING, _SKILLS_FILES = scan_skills(_BEES_DIR)
 
 PACKAGE_DIR = Path(__file__).resolve().parent.parent
 OUT_DIR = PACKAGE_DIR / "out"
@@ -322,6 +327,10 @@ async def run_session(
         interaction_store=interaction_store,
         flags={},
         graph={},
+        extra_groups=[
+            get_skills_function_group(available_skills=_SKILLS_LISTING),
+        ],
+        initial_files=_SKILLS_FILES,
     )
 
     queue = subscribers.subscribe(session_id)
@@ -433,6 +442,10 @@ async def resume_session(
         interaction_store=interaction_store,
         flags={},
         graph={},
+        extra_groups=[
+            get_skills_function_group(available_skills=_SKILLS_LISTING),
+        ],
+        # initial_files not needed on resume — already in FS snapshot.
     )
 
     # Now set up the session as if it had been suspended.
@@ -490,7 +503,7 @@ async def resume_session(
 
     # If suspended again, persist new state.
     if collector.suspended:
-        _save_suspended_state(
+        await _save_suspended_state(
             session_id=session_id,
             collector=collector,
             session_store=session_store,

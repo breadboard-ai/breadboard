@@ -224,6 +224,77 @@ class TestRun:
         complete = next(e for e in events if event_type(e) == "complete")
         assert complete["complete"]["result"]["success"] is False
 
+    @pytest.mark.asyncio
+    async def test_run_uses_prefix_cache_no_features(self):
+        """By default, run() uses the prefix cache."""
+        with patch(
+            "opal_backend.run._get_singleton_cache_name",
+            AsyncMock(return_value="cached-content"),
+        ) as mock_get_cache:
+            async def fake_stream(*args, **kwargs):
+                yield make_function_call_chunk("system_objective_fulfilled", {"objective_outcome": "Done", "href": "/"})
+
+            with patch(
+                "opal_backend.loop.stream_generate_content",
+                side_effect=fake_stream,
+            ):
+                await collect_events(run(
+                    segments=make_segments(),
+                    backend=make_mock_backend(),
+                    store=InMemoryInteractionStore(),
+                    graph=make_graph(),
+                ))
+
+            mock_get_cache.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_run_skips_prefix_cache_with_extra_groups(self):
+        """If extra groups are provided, run() skips the prefix cache."""
+        with patch(
+            "opal_backend.run._get_singleton_cache_name",
+            AsyncMock(return_value="cached-content"),
+        ) as mock_get_cache:
+            async def fake_stream(*args, **kwargs):
+                yield make_function_call_chunk("system_objective_fulfilled", {"objective_outcome": "Done", "href": "/"})
+
+            with patch(
+                "opal_backend.loop.stream_generate_content",
+                side_effect=fake_stream,
+            ):
+                await collect_events(run(
+                    segments=make_segments(),
+                    backend=make_mock_backend(),
+                    store=InMemoryInteractionStore(),
+                    graph=make_graph(),
+                    extra_groups=[MagicMock()],
+                ))
+
+            mock_get_cache.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_run_skips_prefix_cache_with_function_filter(self):
+        """If function filter is provided, run() skips the prefix cache."""
+        with patch(
+            "opal_backend.run._get_singleton_cache_name",
+            AsyncMock(return_value="cached-content"),
+        ) as mock_get_cache:
+            async def fake_stream(*args, **kwargs):
+                yield make_function_call_chunk("system_objective_fulfilled", {"objective_outcome": "Done", "href": "/"})
+
+            with patch(
+                "opal_backend.loop.stream_generate_content",
+                side_effect=fake_stream,
+            ):
+                await collect_events(run(
+                    segments=make_segments(),
+                    backend=make_mock_backend(),
+                    store=InMemoryInteractionStore(),
+                    graph=make_graph(),
+                    function_filter=["system.*"],
+                ))
+
+            mock_get_cache.assert_not_called()
+
 
 # =============================================================================
 # resume() tests
