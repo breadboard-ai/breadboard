@@ -366,6 +366,57 @@ export const styles = css`
     margin-top: 8px;
   }
 
+  .respond-form.choices {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .choices-list {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .respond-form.multiple .choices-list {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .choice-label {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--sys-color-surface-variant);
+    border: 1px solid var(--sys-color-outline-variant);
+    border-radius: var(--sys-shape-corner-medium);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.15s, border-color 0.15s;
+    user-select: none;
+  }
+
+  .respond-form.choices .choices-list .choice-label input {
+    flex: 0 0 auto;
+    width: auto;
+  }
+
+  .choice-label:hover {
+    background: var(--sys-color-primary-container);
+    border-color: var(--sys-color-primary);
+  }
+
+  .respond-form.single .choice-label {
+    border-radius: 16px; /* Pill chip */
+  }
+
+  .respond-form.multiple .choice-label {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
   .respond-form input {
     flex: 1;
     padding: 8px 12px;

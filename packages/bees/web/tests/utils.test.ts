@@ -7,7 +7,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import { getRelativeTime, extractPrompt, parseTags } from "../src/utils.js";
+import { getRelativeTime, extractPrompt, extractChoices, parseTags } from "../src/utils.js";
 
 describe("parseTags", () => {
   it("splits comma-separated tags and trims whitespace", () => {
@@ -137,5 +137,59 @@ describe("extractPrompt", () => {
       },
     };
     assert.equal(extractPrompt(ticket), "(no prompt)");
+  });
+});
+describe("extractChoices", () => {
+  it("returns empty array when no suspend_event", () => {
+    const ticket = { id: "1", objective: "test", status: "available" };
+    assert.deepEqual(extractChoices(ticket), []);
+  });
+
+  it("extracts choices from waitForChoice", () => {
+    const ticket = {
+      id: "1",
+      objective: "test",
+      status: "suspended",
+      suspend_event: {
+        waitForChoice: {
+          choices: [
+            { id: "c1", content: { parts: [{ text: "Choice 1" }] } },
+            { id: "c2", content: { parts: [{ text: "Choice 2" }] } },
+          ],
+        },
+      },
+    };
+    assert.deepEqual(extractChoices(ticket), [
+      { id: "c1", text: "Choice 1" },
+      { id: "c2", text: "Choice 2" },
+    ]);
+  });
+
+  it("falls back to ID if text is missing", () => {
+    const ticket = {
+      id: "1",
+      objective: "test",
+      status: "suspended",
+      suspend_event: {
+        waitForChoice: {
+          choices: [{ id: "c1", content: { parts: [] } }],
+        },
+      },
+    };
+    assert.deepEqual(extractChoices(ticket), [{ id: "c1", text: "c1" }]);
+  });
+
+  it("returns defaults for empty ID/text", () => {
+    const ticket = {
+      id: "1",
+      objective: "test",
+      status: "suspended",
+      suspend_event: {
+        waitForChoice: {
+          choices: [{ id: "", content: { parts: [] } }],
+        },
+      },
+    };
+    assert.deepEqual(extractChoices(ticket), [{ id: "", text: "" }]);
   });
 });
