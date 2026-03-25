@@ -36,6 +36,7 @@ from bees.drain import (
     resolve_segments,
 )
 from bees.session import load_gemini_key
+from bees.skill_loader import load_skills
 from bees.ticket import (
     Ticket,
     create_ticket,
@@ -43,6 +44,7 @@ from bees.ticket import (
     load_ticket,
 )
 from opal_backend.local.backend_client_impl import HttpBackendClient
+from opal_backend.skilled_agent import Skill
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +85,7 @@ _drain_trigger = asyncio.Event()
 _drain_running = False
 _http_client: httpx.AsyncClient | None = None
 _backend: HttpBackendClient | None = None
+_skills: list[Skill] = []
 
 
 async def _drain_loop() -> None:
@@ -163,7 +166,7 @@ async def _run_drain_wave() -> None:
 
             async def wrap_run(t=ticket):
                 try:
-                    await _run_ticket(t, http=_http_client, backend=_backend, on_event=_make_on_event(t.id))
+                    await _run_ticket(t, http=_http_client, backend=_backend, skills=_skills, on_event=_make_on_event(t.id))
                 finally:
                     _running_tickets.remove(t.id)
                     await broadcaster.broadcast({
@@ -225,7 +228,7 @@ class UpdateTagsRequest(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    global _http_client, _backend
+    global _http_client, _backend, _skills
 
     gemini_key = load_gemini_key()
     _http_client = httpx.AsyncClient(timeout=httpx.Timeout(300.0))
@@ -235,6 +238,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         access_token="",
         gemini_key=gemini_key,
     )
+    _skills = load_skills()
+    print(f"Loaded {len(_skills)} skill(s): {[s.name for s in _skills]}", file=sys.stderr)
 
     drain_task = asyncio.create_task(_drain_loop())
 
