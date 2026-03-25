@@ -25,9 +25,7 @@ from bees.session import (
     load_gemini_key,
     resume_session,
     run_session,
-    run_skilled_session,
 )
-from bees.skill_loader import load_skills
 from bees.ticket import (
     Ticket,
     _DEP_PATTERN,
@@ -35,7 +33,6 @@ from bees.ticket import (
     list_tickets,
 )
 from opal_backend.local.backend_client_impl import HttpBackendClient
-from opal_backend.skilled_agent import Skill
 import httpx
 
 
@@ -44,8 +41,6 @@ async def _run_ticket(
     *,
     http: httpx.AsyncClient,
     backend: HttpBackendClient,
-    skills: list[Skill],
-    tool_files: dict[str, str],
     on_event: Any | None = None,
 ) -> SessionResult:
     """Run a single ticket's session and update its metadata."""
@@ -56,19 +51,13 @@ async def _run_ticket(
     print(f"▶ [{label}] {ticket.objective!r}", file=sys.stderr)
 
     try:
-        objective, dep_files = resolve_objective(ticket)
-        # Merge skill-provided tool files into mounted VFS
-        if dep_files is None:
-             dep_files = {}
-        dep_files.update(tool_files)
-
-        result = await run_skilled_session(
-            objective=objective,
-            skills=skills,
-            backend=backend,
+        segments = resolve_segments(ticket)
+        result = await run_session(
+            segments=segments,
             http=http,
+            backend=backend,
             label=label,
-            pre_loaded_files=dep_files,
+            ticket_dir=ticket.dir,
             on_event=on_event,
         )
     except Exception as exc:
@@ -225,11 +214,6 @@ async def drain() -> list[dict]:
     all_summaries: list[dict] = []
     wave = 0
 
-    # Load all available skills once — the agent decides which to use.
-    skills, tool_files = load_skills()
-    skill_names = [s.name for s in skills]
-    print(f"Loaded {len(skills)} skill(s): {skill_names}", file=sys.stderr)
-
     async with httpx.AsyncClient(timeout=httpx.Timeout(300.0)) as http:
         backend = HttpBackendClient(
             upstream_base="",
@@ -275,7 +259,7 @@ async def drain() -> list[dict]:
 
             tasks = [
                 _run_ticket(
-                    ticket, http=http, backend=backend, skills=skills, tool_files=tool_files,
+                    ticket, http=http, backend=backend,
                 )
                 for ticket in tickets
             ] + [
@@ -345,66 +329,6 @@ def _promote_blocked_tickets() -> int:
     return promoted
 
 
-def resolve_objective(ticket: Ticket) -> tuple[str, dict[str, str]]:
-    """Resolve a ticket's objective, mounting dependency outcomes.
-
-    Returns ``(objective_text, pre_loaded_files)``.
-
-    - ``{{id}}`` references in the objective are replaced with a
-      pointer to a VFS file containing the dep's full outcome.
-    - The full ``outcome_content`` (structured LLMContent) is
-      serialized as JSON at ``deps/{short_id}.json`` so the agent
-      can read rich output from upstream tickets.
-    """
-    objective = ticket.objective
-    deps = ticket.metadata.depends_on or []
-    if not deps:
-        return objective, {}
-
-    # Build lookups from dep ID to outcome data.
-    dep_text: dict[str, str] = {}
-    dep_content: dict[str, dict[str, Any]] = {}
-    for dep_id in deps:
-        dep = load_ticket(dep_id)
-        if dep is None:
-            continue
-        if dep.metadata.outcome:
-            dep_text[dep_id] = dep.metadata.outcome
-        if dep.metadata.outcome_content:
-            dep_content[dep_id] = dep.metadata.outcome_content
-
-    # Mount full outcomes as VFS files.
-    pre_loaded_files: dict[str, str] = {}
-    for dep_id, content in dep_content.items():
-        short_id = dep_id[:8]
-        path = f"deps/{short_id}.json"
-        pre_loaded_files[path] = json.dumps(content, indent=2, ensure_ascii=False)
-
-    # Replace {{id}} refs with inline text + file reference.
-    parts = _DEP_PATTERN.split(objective)
-    resolved: list[str] = []
-
-    for i, part in enumerate(parts):
-        if i % 2 == 0:
-            resolved.append(part)
-        else:
-            resolved_id = _find_dep_id(part, deps)
-            if resolved_id:
-                short = resolved_id[:8]
-                text = dep_text.get(resolved_id, "")
-                if resolved_id in dep_content:
-                    resolved.append(
-                        f"{text}\n"
-                        f"(Full output available at /mnt/deps/{short}.json)"
-                    )
-                elif text:
-                    resolved.append(text)
-                else:
-                    resolved.append(f"(output of ticket {part})")
-            else:
-                resolved.append(f"(output of ticket {part})")
-
-    return "".join(resolved), pre_loaded_files
 
 
 def resolve_segments(ticket: Ticket) -> list[dict[str, Any]]:
