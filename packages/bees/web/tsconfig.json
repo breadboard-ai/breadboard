@@ -9,7 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "useDefineForClassFields": false,
     "experimentalDecorators": true,
-    "declaration": true,
+    "declaration": false,
     "sourceMap": true,
     "outDir": "./dist"
   },
