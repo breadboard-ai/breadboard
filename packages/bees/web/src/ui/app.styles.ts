@@ -325,6 +325,17 @@ export const styles = css`
     color: var(--ext-color-blocked);
   }
 
+  .ticket-functions {
+    margin-top: 6px;
+    font-size: 0.72rem;
+    color: var(--sys-color-outline);
+  }
+
+  .ticket-functions code {
+    color: var(--sys-color-on-surface-variant);
+    font-size: 0.72rem;
+  }
+
   /* ---- Outcome / error ---- */
 
   .ticket-outcome {

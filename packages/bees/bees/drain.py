@@ -59,6 +59,7 @@ async def _run_ticket(
             label=label,
             ticket_dir=ticket.dir,
             on_event=on_event,
+            function_filter=ticket.metadata.functions,
         )
     except Exception as exc:
         ticket.metadata.status = "failed"
