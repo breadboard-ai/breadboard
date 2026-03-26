@@ -35,6 +35,7 @@ from bees.drain import (
     _run_ticket,
     resolve_segments,
 )
+from bees.playbook import PLAYBOOKS_DIR, load_playbook, run_playbook
 from bees.session import load_gemini_key
 from bees.ticket import (
     Ticket,
@@ -368,6 +369,55 @@ async def update_ticket_tags(
 
 
     return _ticket_to_dict(ticket)
+
+
+# ---------------------------------------------------------------------------
+# Playbook endpoints
+# ---------------------------------------------------------------------------
+
+
+@app.get("/playbooks")
+async def get_playbooks() -> list[dict[str, str]]:
+    """List available playbooks."""
+    if not PLAYBOOKS_DIR.exists():
+        return []
+
+    playbooks = []
+    for path in sorted(PLAYBOOKS_DIR.glob("*.yaml")):
+        try:
+            data = load_playbook(path.stem)
+            playbooks.append({
+                "name": path.stem,
+                "title": data.get("title", path.stem),
+                "description": data.get("description", ""),
+            })
+        except Exception:
+            continue
+    return playbooks
+
+
+@app.post("/playbooks/{name}/run")
+async def run_playbook_endpoint(name: str) -> dict[str, Any]:
+    """Run a playbook, creating tickets for each step."""
+    try:
+        tickets = run_playbook(name)
+    except FileNotFoundError:
+        raise HTTPException(404, f"Playbook '{name}' not found")
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+    for ticket in tickets:
+        await broadcaster.broadcast({
+            "type": "ticket_added",
+            "ticket": _ticket_to_dict(ticket),
+        })
+
+    _trigger_drain()
+
+    return {
+        "playbook": name,
+        "tickets": [_ticket_to_dict(t) for t in tickets],
+    }
 
 
 @app.get("/tickets/{ticket_id}/bundle")

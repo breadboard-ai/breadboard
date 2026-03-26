@@ -71,13 +71,16 @@ export const styles = css`
   }
 
   .filter-input {
-    padding: 6px 10px;
+    display: block;
+    margin-left: auto;
+    padding: 4px 10px;
     background: var(--sys-color-surface-variant);
-    color: var(--sys-color-on-surface);
-    border: 1px solid var(--sys-color-outline-variant);
+    color: var(--sys-color-outline);
+    border: 1px solid transparent;
     border-radius: var(--sys-shape-corner-small);
     font-family: var(--sys-typescale-mono-font);
-    font-size: 0.8rem;
+    font-size: 0.7rem;
+    width: 160px;
   }
 
   .filter-input:focus {
@@ -89,17 +92,164 @@ export const styles = css`
     color: var(--sys-color-outline);
   }
 
-  /* ---- Add form ---- */
+  /* ---- Tabs ---- */
+
+  .tab-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--sys-color-outline-variant);
+  }
+
+  .tab {
+    padding: 8px 20px;
+    font-family: var(--sys-typescale-body-font);
+    font-size: 0.8rem;
+    font-weight: 500;
+    background: transparent;
+    color: var(--sys-color-outline);
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .tab:hover {
+    color: var(--sys-color-on-surface);
+  }
+
+  .tab.active {
+    color: var(--sys-color-primary);
+    border-bottom-color: var(--sys-color-primary);
+    font-weight: 600;
+  }
+
+  .tab-content {
+    padding: 12px 0;
+  }
+
+  /* ---- Playbooks tab ---- */
+
+  .playbooks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .playbook-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--sys-color-surface);
+    border: 1px solid var(--sys-color-outline-variant);
+    border-radius: var(--sys-shape-corner-small);
+    transition: border-color 0.15s;
+  }
+
+  .playbook-card:hover {
+    border-color: var(--sys-color-outline);
+  }
+
+  .playbook-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .playbook-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--sys-color-on-surface);
+  }
+
+  .playbook-desc {
+    font-size: 0.75rem;
+    color: var(--sys-color-outline);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .playbook-run-btn {
+    padding: 6px 16px;
+    font-family: var(--sys-typescale-body-font);
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--sys-color-primary);
+    color: var(--sys-color-on-primary);
+    border: none;
+    border-radius: var(--sys-shape-corner-small);
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .playbook-run-btn:hover {
+    opacity: 0.85;
+  }
+
+  .playbooks-loading,
+  .playbooks-empty {
+    font-size: 0.8rem;
+    color: var(--sys-color-outline);
+    padding: 8px 0;
+  }
+
+  .playbooks-empty code {
+    color: var(--sys-color-on-surface-variant);
+  }
+
+  /* ---- Add form (Create Tickets tab) ---- */
 
   .add-form {
     display: flex;
-    gap: 8px;
+    flex-direction: column;
+    gap: 6px;
   }
 
-  .add-form input {
-    padding: 12px 16px;
+  .add-form .objective-input {
+    padding: 10px 12px;
     font-family: var(--sys-typescale-mono-font);
-    font-size: 0.875rem;
+    font-size: 0.85rem;
+    background: var(--sys-color-surface-variant);
+    border: 1px solid var(--sys-color-outline-variant);
+    border-radius: var(--sys-shape-corner-small);
+    color: var(--sys-color-on-surface);
+    transition: border-color 0.15s;
+    resize: vertical;
+    min-height: 2.4em;
+    line-height: 1.4;
+  }
+
+  .add-form .objective-input::placeholder {
+    color: var(--sys-color-outline);
+  }
+
+  .add-form .objective-input:focus {
+    border-color: var(--sys-color-primary);
+    outline: none;
+  }
+
+  .add-form-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .add-form-row .meta-input {
+    flex: 1;
+    padding: 6px 10px;
+    font-family: var(--sys-typescale-mono-font);
+    font-size: 0.75rem;
     background: var(--sys-color-surface-variant);
     border: 1px solid var(--sys-color-outline-variant);
     border-radius: var(--sys-shape-corner-small);
@@ -107,27 +257,19 @@ export const styles = css`
     transition: border-color 0.15s;
   }
 
-  .add-form input::placeholder {
+  .add-form-row .meta-input::placeholder {
     color: var(--sys-color-outline);
   }
 
-  .add-form input:focus {
+  .add-form-row .meta-input:focus {
     border-color: var(--sys-color-primary);
     outline: none;
   }
 
-  .objective-input {
-    flex: 2;
-  }
-
-  .tags-input {
-    flex: 1;
-  }
-
-  .add-form button {
-    padding: 12px 20px;
+  .add-form-row button {
+    padding: 6px 16px;
     font-family: var(--sys-typescale-body-font);
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 600;
     background: var(--sys-color-primary);
     color: var(--sys-color-on-primary);
@@ -138,11 +280,11 @@ export const styles = css`
     white-space: nowrap;
   }
 
-  .add-form button:hover {
+  .add-form-row button:hover {
     opacity: 0.85;
   }
 
-  .add-form button:disabled {
+  .add-form-row button:disabled {
     opacity: 0.4;
     cursor: not-allowed;
   }
