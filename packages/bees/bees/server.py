@@ -368,9 +368,6 @@ async def update_ticket_tags(
     return _ticket_to_dict(ticket)
 
 
-    return _ticket_to_dict(ticket)
-
-
 # ---------------------------------------------------------------------------
 # Playbook endpoints
 # ---------------------------------------------------------------------------
@@ -420,24 +417,6 @@ async def run_playbook_endpoint(name: str) -> dict[str, Any]:
     }
 
 
-@app.get("/tickets/{ticket_id}/bundle")
-async def get_ticket_bundle(ticket_id: str) -> dict[str, str]:
-    """Get the auto-built CJS bundle for a ticket, if it exists."""
-    ticket = load_ticket(ticket_id)
-    if not ticket:
-        raise HTTPException(404, "Ticket not found")
-    
-    if not ticket.metadata.bundle_path:
-        raise HTTPException(404, "No bundle found for this ticket")
-        
-    try:
-        from pathlib import Path
-        path = Path(ticket.metadata.bundle_path)
-        if not path.exists():
-            raise HTTPException(404, "Bundle file missing from disk")
-        return {"code": path.read_text(encoding="utf-8")}
-    except Exception as e:
-        raise HTTPException(500, f"Error reading bundle: {e}")
 
 
 # ---------------------------------------------------------------------------
