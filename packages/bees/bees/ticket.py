@@ -46,7 +46,6 @@ class TicketMetadata:
     suspend_event: dict[str, Any] | None = None
     depends_on: list[str] | None = None
     tags: list[str] | None = None
-    bundle_path: str | None = None
     functions: list[str] | None = None
     skills: list[str] | None = None
     title: str | None = None
@@ -74,7 +73,6 @@ class TicketMetadata:
             outcome_content=data.get("outcome_content"),
             depends_on=data.get("depends_on"),
             tags=data.get("tags"),
-            bundle_path=data.get("bundle_path"),
             functions=data.get("functions"),
             skills=data.get("skills"),
             title=data.get("title"),
