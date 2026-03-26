@@ -94,6 +94,22 @@ at least one pattern are included in the session.
 > [Tying It Together](#tying-it-together-functions-and-skills-in-playbooks)
 > for the rationale.
 
+### Available Function Groups
+
+| Group | Filter prefix | Functions | Source |
+| --- | --- | --- | --- |
+| `system` | `system.*` | `system_objective_fulfilled`, `system_failed_to_fulfill_objective` | `bees/functions/system.py` — overrides the built-in system group to expose only the termination functions. Uses a `FunctionGroupFactory` to late-bind against the session's controller and file system. |
+| `simple-files` | `simple-files.*` | `system_list_files`, `system_write_file`, `system_read_text_from_file` | `bees/functions/simple_files.py` — file operations split out from the built-in system group into a standalone group. Uses a `FunctionGroupFactory`. |
+| `sandbox` | `sandbox.*` | `execute_bash` | `bees/sandbox.py` — sandboxed bash execution in the ticket's working directory. |
+| `skills` | `skills.*` | _(instruction-only)_ | `bees/functions/skills.py` — mounts skill files into the agent's virtual file system at `/mnt/skills/`. |
+
+The `system` and `simple-files` groups use the **factory pattern**: they
+receive a `SessionHooks` object at session startup which provides access
+to the session's controller, file system, and task tree manager. Their
+handlers are identical to the built-in opal-backend implementations.
+
+Declarations for each group live in `bees/declarations/{name}.*`.
+
 ### Adding a New Function Group
 
 Function groups are defined in `opal-backend` as declarations (JSON

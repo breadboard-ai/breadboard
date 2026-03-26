@@ -16,7 +16,7 @@ the Loop uses to declare and dispatch function calls.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Awaitable, TypedDict
+from typing import Any, Callable, Awaitable, Protocol, TypedDict, runtime_checkable
 
 # Types matching the Gemini API function declaration format.
 FunctionDeclaration = dict[str, Any]
@@ -228,3 +228,46 @@ def assemble_function_group(
         declarations=declarations,
         instruction=instruction,
     )
+
+
+# ---------------------------------------------------------------------------
+# Late-binding factory support for extra function groups
+# ---------------------------------------------------------------------------
+
+
+@runtime_checkable
+class SessionHooks(Protocol):
+    """Protocol for session-internal objects exposed to extra group factories.
+
+    This is the boundary between the Sessions API internals and external
+    consumers. Factories receive a ``SessionHooks`` instance and use it
+    to build function groups that interact with the session's controller,
+    file system, and task tree — without importing internal types.
+
+    Properties are typed as ``Any`` for structural decoupling. Consumers
+    that want type-safe access can import the concrete types themselves.
+    """
+
+    @property
+    def controller(self) -> Any:
+        """The loop controller — call ``controller.terminate(result)`` to end the session."""
+        ...
+
+    @property
+    def file_system(self) -> Any:
+        """The agent file system — read, write, and list files."""
+        ...
+
+    @property
+    def task_tree_manager(self) -> Any:
+        """The task tree manager — create, update, and mark tasks."""
+        ...
+
+
+FunctionGroupFactory = Callable[[SessionHooks], FunctionGroup]
+"""A callable that receives session hooks and returns a FunctionGroup.
+
+Use this when a function group needs access to the session's controller,
+file system, or task tree manager — objects that don't exist until the
+session starts.
+"""

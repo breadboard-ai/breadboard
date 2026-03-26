@@ -39,6 +39,8 @@ from opal_backend.sessions.api import (
 )
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
 from bees.functions.skills import get_skills_function_group, scan_skills
+from bees.functions.simple_files import get_simple_files_function_group_factory
+from bees.functions.system import get_system_function_group_factory
 from bees.sandbox import get_sandbox_function_group
 
 # Scan skills once at import time.
@@ -360,6 +362,8 @@ async def run_session(
         flags={},
         graph={},
         extra_groups=[
+            get_system_function_group_factory(),
+            get_simple_files_function_group_factory(),
             get_skills_function_group(available_skills=session_listing),
             get_sandbox_function_group(work_dir=ticket_dir / "filesystem" if ticket_dir else None),
         ],
@@ -477,6 +481,8 @@ async def resume_session(
         flags={},
         graph={},
         extra_groups=[
+            get_system_function_group_factory(),
+            get_simple_files_function_group_factory(),
             get_skills_function_group(available_skills=_SKILLS_LISTING),
             get_sandbox_function_group(work_dir=ticket_dir / "filesystem"),
         ],

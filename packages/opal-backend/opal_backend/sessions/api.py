@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..function_definition import FunctionGroup
+    from ..function_definition import FunctionGroup, FunctionGroupFactory
 
 from ..events import (
     AgentEvent,
@@ -100,7 +100,7 @@ class _SessionContext:
     flags: dict[str, Any] = field(default_factory=dict)
     graph: dict[str, Any] | None = None
     drive: DriveOperationsClient | None = None
-    extra_groups: list["FunctionGroup"] = field(default_factory=list)
+    extra_groups: list["FunctionGroup | FunctionGroupFactory"] = field(default_factory=list)
     function_filter: list[str] | None = None
     initial_files: dict[str, str] | None = None
 
@@ -125,7 +125,7 @@ async def new_session(
     flags: dict[str, Any] | None = None,
     graph: dict[str, Any] | None = None,
     drive: DriveOperationsClient | None = None,
-    extra_groups: list["FunctionGroup"] | None = None,
+    extra_groups: list["FunctionGroup | FunctionGroupFactory"] | None = None,
     function_filter: list[str] | None = None,
     initial_files: dict[str, str] | None = None,
 ) -> str:
