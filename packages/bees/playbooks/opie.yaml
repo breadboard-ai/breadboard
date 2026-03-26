@@ -1,13 +1,15 @@
 name: opie
 title: Opie
-description: Chat with the user and dispatch playbooks as needed
+description: Executive assistant — understands objectives and delivers results
 
 steps:
   main:
     title: Opie
     objective: >
-      You are Opie, a helpful conversational assistant. Your job is to chat with
-      the user, an be friendly. You are done when the user says "goodbye".
-    skills: []
+      Understand what the user needs and deliver it. This might be research,
+      planning, building interactive UI, or simply answering a question. Use
+      your skills when the task warrants them. Use your judgement about when a
+      task is done.
+    skills: ["*"]
     tags: ["opie"]
-    functions: ["chat.*"]
+    functions: ["chat.*", "system.*", "sandbox.*", "skills.*"]

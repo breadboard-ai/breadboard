@@ -39,6 +39,7 @@ from opal_backend.sessions.api import (
 )
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
 from bees.functions.skills import get_skills_function_group, scan_skills
+from bees.sandbox import get_sandbox_function_group
 
 # Scan skills once at import time.
 _BEES_DIR = Path(__file__).resolve().parent
@@ -342,6 +343,13 @@ async def run_session(
     for k, v in _SKILLS_FILES.items():
         if any(f"skills/{s.dir_name}/" in k for s in filtered_skills):
             session_files[k] = v
+            
+            # Mirror skill tools to the real filesystem so execute_bash can use them.
+            if ticket_dir and "/tools/" in k:
+                rel_path = k[5:] if k.startswith("/mnt/") else k.lstrip("/")
+                local_path = ticket_dir / "filesystem" / rel_path
+                local_path.parent.mkdir(parents=True, exist_ok=True)
+                local_path.write_text(v, encoding="utf-8")
 
     await new_session(
         session_id=session_id,
@@ -353,6 +361,7 @@ async def run_session(
         graph={},
         extra_groups=[
             get_skills_function_group(available_skills=session_listing),
+            get_sandbox_function_group(work_dir=ticket_dir / "filesystem" if ticket_dir else None),
         ],
         initial_files=session_files,
         function_filter=function_filter,
@@ -469,6 +478,7 @@ async def resume_session(
         graph={},
         extra_groups=[
             get_skills_function_group(available_skills=_SKILLS_LISTING),
+            get_sandbox_function_group(work_dir=ticket_dir / "filesystem"),
         ],
         # initial_files not needed on resume — already in FS snapshot.
     )

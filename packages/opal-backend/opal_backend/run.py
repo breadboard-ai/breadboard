@@ -334,10 +334,16 @@ async def resume(
         function_filter=state.function_filter,
     )
 
-    # Fetch a shared singleton prefix cache (amortized across clients).
-    cached_name = await _get_singleton_cache_name(
-        flags=resolved_flags, backend=backend,
-    )
+    # Apply the same cache bypass guard as run() — if a function filter
+    # or extra groups are active, skip the singleton cache so only the
+    # filtered tools are visible to the model.
+    function_filter = state.function_filter
+    if (function_filter is None or len(function_filter) == 0) and (extra_groups is None or len(extra_groups) == 0):
+        cached_name = await _get_singleton_cache_name(
+            flags=resolved_flags, backend=backend,
+        )
+    else:
+        cached_name = None
 
     run_args = AgentRunArgs(
         objective=contents[0],

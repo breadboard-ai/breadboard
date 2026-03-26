@@ -12,8 +12,14 @@ import { BeesAPI } from "../data/api.js";
 import { BeesConnection } from "../data/connection.js";
 import { BeesState } from "../data/state.js";
 import type { TicketData, PlaybookData } from "../data/types.js";
-import { getRelativeTime, extractPrompt, extractChoices, parseTags } from "../utils.js";
+import {
+  getRelativeTime,
+  extractPrompt,
+  extractChoices,
+  parseTags,
+} from "../utils.js";
 import { APP_NAME, APP_ICON } from "../constants.js";
+import { MessageBridge } from "../host/message-bridge.js";
 import { styles } from "./app.styles.js";
 
 export { BeesApp };
@@ -274,14 +280,12 @@ class BeesApp extends SignalWatcher(LitElement) {
         ${this.editingTagsId === t.id ? this.renderTagEditor(t) : nothing}
         ${t.functions?.length
           ? html`<div class="ticket-functions">
-              functions:
-              ${t.functions.map((f) => html`<code>${f}</code> `)}
+              functions: ${t.functions.map((f) => html`<code>${f}</code> `)}
             </div>`
           : nothing}
         ${t.skills?.length
           ? html`<div class="ticket-functions">
-              skills:
-              ${t.skills.map((s) => html`<code>${s}</code> `)}
+              skills: ${t.skills.map((s) => html`<code>${s}</code> `)}
             </div>`
           : nothing}
         ${t.depends_on?.length
@@ -293,12 +297,12 @@ class BeesApp extends SignalWatcher(LitElement) {
         ${t.status === "suspended" && t.assignee === "user"
           ? this.renderRespond(t)
           : nothing}
-        ${t.events_log?.length
+        ${!t.bundle_path && t.events_log?.length
           ? html`<div class="ticket-logs">
               ${t.events_log.map((e) => this.renderLogEvent(e))}
             </div>`
           : nothing}
-        ${t.outcome
+        ${!t.bundle_path && t.outcome
           ? html`<div class="ticket-outcome">${t.outcome}</div>`
           : nothing}
         ${t.error ? html`<div class="ticket-error">${t.error}</div>` : nothing}
@@ -310,8 +314,54 @@ class BeesApp extends SignalWatcher(LitElement) {
                 : nothing}
             </div>`
           : nothing}
+        ${t.bundle_path ? this.renderApp(t) : nothing}
       </div>
     `;
+  }
+
+  private renderApp(t: TicketData) {
+    return html`
+      <div class="ticket-app-container">
+        <iframe
+          class="ticket-app-frame"
+          src="/iframe.html"
+          @load=${(e: Event) =>
+            this.initApp(t.id, e.target as HTMLIFrameElement)}
+        ></iframe>
+      </div>
+    `;
+  }
+
+  private async initApp(ticketId: string, iframe: HTMLIFrameElement) {
+    try {
+      const [jsRes, cssRes] = await Promise.all([
+        fetch(`/tickets/${ticketId}/files/bundle.js`),
+        fetch(`/tickets/${ticketId}/files/bundle.css`),
+      ]);
+      const code = jsRes.ok ? await jsRes.text() : "";
+      let css = cssRes.ok ? await cssRes.text() : undefined;
+      if (!cssRes.ok) css = undefined;
+
+      const bridge = new MessageBridge(iframe);
+      bridge.onMessage((msg) => {
+        if (msg.type === "emit") {
+          console.log("App emitted:", msg.event, msg.payload);
+        }
+        if (msg.type === "error") {
+          console.error("App error:", msg.message, msg.stack);
+        }
+      });
+
+      await bridge.send({
+        type: "render",
+        code,
+        css,
+        props: {},
+        assets: {},
+      });
+    } catch (err) {
+      console.error("Failed to init app:", err);
+    }
   }
 
   private renderTagEditor(t: TicketData) {
@@ -477,7 +527,10 @@ class BeesApp extends SignalWatcher(LitElement) {
         };
       }
     } else {
-      this.selectedChoices = { ...this.selectedChoices, [ticketId]: [choiceId] };
+      this.selectedChoices = {
+        ...this.selectedChoices,
+        [ticketId]: [choiceId],
+      };
     }
   }
 
