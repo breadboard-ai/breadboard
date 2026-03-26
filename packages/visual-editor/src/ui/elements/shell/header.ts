@@ -225,6 +225,12 @@ export class VEHeader extends SignalWatcher(LitElement) {
             }
           }
 
+          & #account-switcher-placeholder {
+            width: var(--bb-grid-size-7);
+            height: var(--bb-grid-size-7);
+            margin: 0 0 0 var(--bb-grid-size-4);
+          }
+
           & #share-button {
             display: none;
             align-items: center;
@@ -903,6 +909,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
       this.signinAdapter.stateSignal?.status !== "signedin"
     ) {
       return nothing;
+    }
+    if (this.sca.env.guestConfig.hostRendersAccountSwitcher) {
+      return html`<div id="account-switcher-placeholder"></div>`;
     }
     const name = this.signinAdapter.nameSignal;
     const picture = this.signinAdapter.pictureSignal;

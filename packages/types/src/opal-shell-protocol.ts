@@ -194,4 +194,10 @@ export declare type GuestConfiguration = {
    * performed will be removed.
    */
   shareSurfaceUrlTemplates: Record<string, string> | undefined;
+
+  /**
+   * True if the host is responsible for rendering the account switcher. This
+   * causes the guest to render empty space instead of its own account switcher.
+   */
+  hostRendersAccountSwitcher?: boolean;
 };
