@@ -209,6 +209,7 @@ def _trigger_drain() -> None:
 class AddTicketRequest(BaseModel):
     objective: str
     tags: list[str] | None = None
+    functions: list[str] | None = None
 
 
 class RespondRequest(BaseModel):
@@ -297,7 +298,7 @@ async def get_ticket(ticket_id: str) -> dict[str, Any]:
 @app.post("/tickets")
 async def add_ticket(req: AddTicketRequest) -> dict[str, Any]:
     """Create a new ticket and trigger auto-drain."""
-    ticket = create_ticket(req.objective, tags=req.tags)
+    ticket = create_ticket(req.objective, tags=req.tags, functions=req.functions)
 
     await broadcaster.broadcast({
         "type": "ticket_added",

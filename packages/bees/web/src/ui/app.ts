@@ -29,6 +29,9 @@ class BeesApp extends SignalWatcher(LitElement) {
   private tagsText = "";
 
   @state()
+  private functionsText = "";
+
+  @state()
   private filterTag = "";
 
   @state()
@@ -108,6 +111,15 @@ class BeesApp extends SignalWatcher(LitElement) {
             (this.tagsText = (e.target as HTMLInputElement).value)}
           @keydown=${this.onKeyDown}
         />
+        <input
+          class="functions-input"
+          type="text"
+          placeholder="Functions (comma separated)..."
+          .value=${this.functionsText}
+          @input=${(e: Event) =>
+            (this.functionsText = (e.target as HTMLInputElement).value)}
+          @keydown=${this.onKeyDown}
+        />
         <button @click=${this.addTicket} ?disabled=${!this.objective.trim()}>
           Add Ticket
         </button>
@@ -171,6 +183,12 @@ class BeesApp extends SignalWatcher(LitElement) {
         </div>
 
         ${this.editingTagsId === t.id ? this.renderTagEditor(t) : nothing}
+        ${t.functions?.length
+          ? html`<div class="ticket-functions">
+              functions:
+              ${t.functions.map((f) => html`<code>${f}</code> `)}
+            </div>`
+          : nothing}
         ${t.depends_on?.length
           ? html`<div class="ticket-deps">
               depends on:
@@ -315,11 +333,13 @@ class BeesApp extends SignalWatcher(LitElement) {
     const text = this.objective.trim();
     if (!text) return;
     const tags = parseTags(this.tagsText);
+    const apiFunctions = parseTags(this.functionsText);
 
     this.objective = "";
     this.tagsText = "";
+    this.functionsText = "";
 
-    await this.api.addTicket(text, tags);
+    await this.api.addTicket(text, tags, apiFunctions);
   }
 
   private async saveEditedTags(ticketId: string) {

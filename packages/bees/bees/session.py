@@ -302,6 +302,7 @@ async def run_session(
     label: str = "",
     ticket_dir: Path | None = None,
     on_event: Any | None = None,
+    function_filter: list[str] | None = None,
 ) -> SessionResult:
     """Run a single agent session and return the result.
 
@@ -331,6 +332,7 @@ async def run_session(
             get_skills_function_group(available_skills=_SKILLS_LISTING),
         ],
         initial_files=_SKILLS_FILES,
+        function_filter=function_filter,
     )
 
     queue = subscribers.subscribe(session_id)
