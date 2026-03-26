@@ -28,7 +28,7 @@ from bees.session import load_gemini_key, run_session
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
 
-async def _run(text: str, functions: list[str] | None = None) -> dict:
+async def _run(text: str, functions: list[str] | None = None, skills: list[str] | None = None) -> dict:
     gemini_key = load_gemini_key()
 
     async with httpx.AsyncClient(timeout=httpx.Timeout(300.0)) as http:
@@ -39,7 +39,7 @@ async def _run(text: str, functions: list[str] | None = None) -> dict:
             gemini_key=gemini_key,
         )
 
-        result = await run_session(text, http=http, backend=backend, function_filter=functions)
+        result = await run_session(text, http=http, backend=backend, function_filter=functions, allowed_skills=skills)
 
     return {
         "session_id": result.session_id,
@@ -65,6 +65,11 @@ def main() -> None:
         type=str,
         help="Comma-separated list of functions.",
     )
+    parser.add_argument(
+        "--skills",
+        type=str,
+        help="Comma-separated list of skills.",
+    )
 
     args = parser.parse_args()
 
@@ -78,11 +83,17 @@ def main() -> None:
     if args.functions:
         functions = [f.strip() for f in args.functions.split(",") if f.strip()]
 
+    skills = None
+    if args.skills:
+        skills = [f.strip() for f in args.skills.split(",") if f.strip()]
+
     print(f"Starting session with: {text!r}", file=sys.stderr)
     if functions:
         print(f"  functions filter: {functions}", file=sys.stderr)
+    if skills:
+        print(f"  skills filter: {skills}", file=sys.stderr)
 
-    result = asyncio.run(_run(text, functions=functions))
+    result = asyncio.run(_run(text, functions=functions, skills=skills))
 
     print(json.dumps(result, indent=2))
 

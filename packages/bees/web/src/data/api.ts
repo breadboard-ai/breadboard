@@ -10,7 +10,7 @@ export { BeesAPI };
  * Thin wrapper around the Bees REST endpoints.
  */
 class BeesAPI {
-  async addTicket(objective: string, tags?: string[], functions?: string[]) {
+  async addTicket(objective: string, tags?: string[], functions?: string[], skills?: string[]) {
     await fetch("/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -18,6 +18,7 @@ class BeesAPI {
         objective,
         tags: tags?.length ? tags : undefined,
         functions: functions?.length ? functions : undefined,
+        skills: skills?.length ? skills : undefined,
       }),
     });
   }

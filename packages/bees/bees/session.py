@@ -42,7 +42,7 @@ from bees.functions.skills import get_skills_function_group, scan_skills
 
 # Scan skills once at import time.
 _BEES_DIR = Path(__file__).resolve().parent
-_SKILLS_LISTING, _SKILLS_FILES = scan_skills(_BEES_DIR)
+_SKILLS_LISTING, _SKILLS_FILES, _SKILLS_LIST = scan_skills(_BEES_DIR)
 
 PACKAGE_DIR = Path(__file__).resolve().parent.parent
 OUT_DIR = PACKAGE_DIR / "out"
@@ -303,6 +303,7 @@ async def run_session(
     ticket_dir: Path | None = None,
     on_event: Any | None = None,
     function_filter: list[str] | None = None,
+    allowed_skills: list[str] | None = None,
 ) -> SessionResult:
     """Run a single agent session and return the result.
 
@@ -320,6 +321,28 @@ async def run_session(
     if segments is None:
         segments = [{"type": "text", "text": text}]
 
+    # Filter skills based on ticket. Defaults to none unless "*" is specified.
+    skills_to_use = allowed_skills if allowed_skills is not None else []
+    
+    if "*" in skills_to_use:
+        filtered_skills = _SKILLS_LIST
+    else:
+        filtered_skills = [s for s in _SKILLS_LIST if s.name in skills_to_use]
+
+    # Re-render listing for the session
+    lines = []
+    for s in filtered_skills:
+        lines.append(f"- [{s.title}]({s.vfs_path})")
+        if s.description:
+            lines.append(f"  {s.description}")
+    session_listing = "\n".join(lines)
+
+    # Filter initial files using dir_name
+    session_files = {}
+    for k, v in _SKILLS_FILES.items():
+        if any(f"skills/{s.dir_name}/" in k for s in filtered_skills):
+            session_files[k] = v
+
     await new_session(
         session_id=session_id,
         segments=segments,
@@ -329,9 +352,9 @@ async def run_session(
         flags={},
         graph={},
         extra_groups=[
-            get_skills_function_group(available_skills=_SKILLS_LISTING),
+            get_skills_function_group(available_skills=session_listing),
         ],
-        initial_files=_SKILLS_FILES,
+        initial_files=session_files,
         function_filter=function_filter,
     )
 

@@ -38,6 +38,11 @@ def main() -> None:
         type=str,
         help="Comma-separated list of functions (dot-notation).",
     )
+    parser.add_argument(
+        "--skills",
+        type=str,
+        help="Comma-separated list of skills.",
+    )
     
     args = parser.parse_args()
 
@@ -55,7 +60,11 @@ def main() -> None:
     if args.functions:
         functions = [f.strip() for f in args.functions.split(",") if f.strip()]
 
-    ticket = create_ticket(objective, tags=tags, functions=functions)
+    skills = None
+    if args.skills:
+        skills = [f.strip() for f in args.skills.split(",") if f.strip()]
+
+    ticket = create_ticket(objective, tags=tags, functions=functions, skills=skills)
 
     print(f"Created ticket {ticket.id}", file=sys.stderr)
     print(f"  objective: {objective!r}", file=sys.stderr)
