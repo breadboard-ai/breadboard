@@ -41,7 +41,7 @@ from opal_backend.sessions.in_memory_store import InMemorySessionStore
 from bees.functions.skills import get_skills_function_group, scan_skills
 from bees.functions.simple_files import get_simple_files_function_group_factory
 from bees.functions.system import get_system_function_group_factory
-from bees.sandbox import get_sandbox_function_group
+from bees.functions.sandbox import get_sandbox_function_group
 
 # Scan skills once at import time.
 _BEES_DIR = Path(__file__).resolve().parent

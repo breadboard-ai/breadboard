@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_TIMEOUT_SEC = 30
 MAX_OUTPUT_BYTES = 64 * 1024  # 64 KB
 
-_DECLARATIONS_DIR = Path(__file__).resolve().parent / "declarations"
+_DECLARATIONS_DIR = Path(__file__).resolve().parent.parent / "declarations"
 
 _SANDBOX_PROFILE = """\
 ;; Establishes the strict "deny-by-default" posture. 
