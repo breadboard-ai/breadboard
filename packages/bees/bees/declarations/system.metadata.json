@@ -1,0 +1,12 @@
+[
+  {
+    "name": "system_objective_fulfilled",
+    "icon": "check_circle",
+    "title": "Returning final outcome"
+  },
+  {
+    "name": "system_failed_to_fulfill_objective",
+    "icon": "cancel",
+    "title": "Unable to proceed"
+  }
+]

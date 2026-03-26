@@ -1,0 +1,13 @@
+name: test
+title: Test
+description:
+  Testing various capabilities of the system. Do not use this playbook for
+  production.
+
+steps:
+  main:
+    title: Test
+    objective: >
+      Write a thorough critique of bees and write it to a file, then return that
+      file.
+    functions: ["system.*", "simple-files.*"]

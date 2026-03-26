@@ -1,0 +1,105 @@
+[
+  {
+    "name": "system_list_files",
+    "description": "Lists all files",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called.\n  \n  For example, \"Creating random values\", \"Writing the memo\", \"Generating videos\", \"Making music\", etc."
+        }
+      },
+      "required": [
+        "status_update"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "string",
+          "description": "List of all files as file paths"
+        }
+      },
+      "required": [
+        "list"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "system_write_file",
+    "description": "Writes the provided text to a file",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "file_name": {
+          "type": "string",
+          "description": "The name of the file with the extension.\nThis is the name that will come after the \"/mnt/\" prefix in the file path.\nUse snake_case for naming. If the file does not exist, it will be created. If the file already exists, its content will be overwritten.\nExamples: \"report.md\", \"data.csv\", \"notes.txt\", \"config.json\", \"index.html\""
+        },
+        "content": {
+          "type": "string",
+          "description": "The content to write into a file"
+        }
+      },
+      "required": [
+        "file_name",
+        "content"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "The VS path to the file containing the provided text"
+        },
+        "error": {
+          "type": "string",
+          "description": "The error message if the file could not be written"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "system_read_text_from_file",
+    "description": "Reads text from a file and return text as string. If the file does not contain text or is not supported, an error will be returned. Google Drive files may contain images and other non-textual content. Please use \"generate_text\" to read them at full fidelity.",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "The file path of the file to read the text from."
+        }
+      },
+      "required": [
+        "file_path"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "The text contents of a file as a string."
+        },
+        "error": {
+          "type": "string",
+          "description": "If an error has occurred, will contain a description of the error"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+]

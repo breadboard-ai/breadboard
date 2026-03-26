@@ -680,6 +680,108 @@ class TestBuildFunctionGroups:
         assert "system_custom_tool" in all_names
         assert "system_objective_fulfilled" not in all_names
 
+    def test_factory_receives_session_hooks(self):
+        """A FunctionGroupFactory receives a SessionHooks with all three properties."""
+        from opal_backend.agent_file_system import AgentFileSystem
+        from opal_backend.task_tree_manager import TaskTreeManager
+        from opal_backend.function_definition import FunctionGroup, FunctionDefinition, SessionHooks
+
+        controller = LoopController()
+        fs = AgentFileSystem()
+        ttm = TaskTreeManager(fs)
+        backend = make_mock_backend()
+
+        received_hooks = None
+
+        def my_factory(hooks):
+            nonlocal received_hooks
+            received_hooks = hooks
+            custom_def = FunctionDefinition(
+                name="factory_tool",
+                description="from factory",
+                handler=AsyncMock(),
+            )
+            return FunctionGroup(
+                name="factory_group",
+                definitions=[("factory_tool", custom_def)],
+                declarations=[{"name": "factory_tool"}],
+            )
+
+        groups = _build_function_groups(
+            controller=controller,
+            file_system=fs,
+            task_tree_manager=ttm,
+            backend=backend,
+            flags={},
+            extra_groups=[my_factory],
+        )
+
+        # Factory was called with a SessionHooks instance.
+        assert received_hooks is not None
+        assert isinstance(received_hooks, SessionHooks)
+        assert received_hooks.controller is controller
+        assert received_hooks.file_system is fs
+        assert received_hooks.task_tree_manager is ttm
+
+        # The factory's group appears in the result.
+        all_names = set()
+        for group in groups:
+            for name, _ in group.definitions:
+                all_names.add(name)
+        assert "factory_tool" in all_names
+
+    def test_mixed_groups_and_factories(self):
+        """A mix of FunctionGroup and FunctionGroupFactory items all resolve."""
+        from opal_backend.agent_file_system import AgentFileSystem
+        from opal_backend.task_tree_manager import TaskTreeManager
+        from opal_backend.function_definition import FunctionGroup, FunctionDefinition
+
+        controller = LoopController()
+        fs = AgentFileSystem()
+        ttm = TaskTreeManager(fs)
+        backend = make_mock_backend()
+
+        # A plain FunctionGroup.
+        plain_def = FunctionDefinition(
+            name="plain_tool",
+            description="plain",
+            handler=AsyncMock(),
+        )
+        plain_group = FunctionGroup(
+            name="plain",
+            definitions=[("plain_tool", plain_def)],
+            declarations=[{"name": "plain_tool"}],
+        )
+
+        # A factory.
+        def my_factory(hooks):
+            factory_def = FunctionDefinition(
+                name="factory_tool",
+                description="from factory",
+                handler=AsyncMock(),
+            )
+            return FunctionGroup(
+                name="from_factory",
+                definitions=[("factory_tool", factory_def)],
+                declarations=[{"name": "factory_tool"}],
+            )
+
+        groups = _build_function_groups(
+            controller=controller,
+            file_system=fs,
+            task_tree_manager=ttm,
+            backend=backend,
+            flags={},
+            extra_groups=[plain_group, my_factory],
+        )
+
+        all_names = set()
+        for group in groups:
+            for name, _ in group.definitions:
+                all_names.add(name)
+        assert "plain_tool" in all_names
+        assert "factory_tool" in all_names
+
 
 # =============================================================================
 # _apply_function_filter tests

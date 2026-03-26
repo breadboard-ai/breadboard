@@ -1,0 +1,16 @@
+[
+  {
+    "name": "system_list_files",
+    "icon": "folder"
+  },
+  {
+    "name": "system_write_file",
+    "icon": "edit",
+    "title": "Writing to file"
+  },
+  {
+    "name": "system_read_text_from_file",
+    "icon": "description",
+    "title": "Reading from file"
+  }
+]

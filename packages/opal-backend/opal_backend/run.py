@@ -31,6 +31,7 @@ import asyncio
 import logging
 import uuid
 from datetime import datetime
+from dataclasses import dataclass
 from typing import Any, AsyncIterator, TypedDict, cast
 
 from .agent_events import AgentEventSink, build_hooks_from_sink
@@ -57,7 +58,7 @@ from .functions.generate import (
 from .functions.memory import get_memory_function_group
 from .functions.system import get_system_function_group
 from .function_caller import FunctionCaller
-from .function_definition import FunctionDefinition
+from .function_definition import FunctionDefinition, FunctionGroup, FunctionGroupFactory
 from .interaction_store import InteractionState, InteractionStore
 from .loop import AgentRunArgs, Loop, LoopController
 from .sheet_manager import SheetManager
@@ -68,6 +69,15 @@ from .task_tree_manager import TaskTreeManager
 __all__ = ["run", "resume", "GraphInfo", "DriveOperationsClient"]
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class _SessionHooksImpl:
+    """Concrete implementation of the SessionHooks protocol."""
+
+    controller: LoopController
+    file_system: AgentFileSystem
+    task_tree_manager: TaskTreeManager
 
 
 class GraphInfo(TypedDict, total=False):
@@ -94,7 +104,7 @@ async def run(
     graph: GraphInfo,
     flags: dict[str, Any] | None = None,
     drive: DriveOperationsClient | None = None,
-    extra_groups: list | None = None,
+    extra_groups: list[FunctionGroup | FunctionGroupFactory] | None = None,
     function_filter: list[str] | None = None,
     initial_files: dict[str, str] | None = None,
 ) -> AsyncIterator[AgentEvent]:
@@ -115,6 +125,10 @@ async def run(
         flags: Optional feature flags (e.g. ``{"googleOne": True}``).
         graph: Graph identity (url, title).
         drive: Optional Drive/Sheets operations client for memory.
+        extra_groups: Additional function groups or factories.
+            Factories are called with a ``SessionHooks`` instance
+            that provides access to the session's controller,
+            file system, and task tree manager.
 
     Yields:
         Typed ``AgentEvent`` instances.
@@ -225,7 +239,7 @@ async def resume(
     backend: BackendClient,
     store: InteractionStore,
     drive: DriveOperationsClient | None = None,
-    extra_groups: list | None = None,
+    extra_groups: list[FunctionGroup | FunctionGroupFactory] | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Resume a suspended agent run.
 
@@ -527,13 +541,15 @@ def _build_function_groups(
     on_chat_entry: Any = None,
     consents_granted: set[str] | None = None,
     graph_url: str = "",
-    extra_groups: list | None = None,
+    extra_groups: list[FunctionGroup | FunctionGroupFactory] | None = None,
     function_filter: list[str] | None = None,
 ) -> list:
     """Build the standard set of function groups.
 
     Args:
-        extra_groups: Additional FunctionGroups to append.
+        extra_groups: Additional ``FunctionGroup`` instances or
+            ``FunctionGroupFactory`` callables. Factories are resolved
+            by calling them with a ``SessionHooks`` instance.
         function_filter: Dot-notation patterns selecting which functions
             to include (e.g. ``["system.*", "chat.request_user_input"]``).
             ``None`` means no filtering (all functions available).
@@ -588,10 +604,22 @@ def _build_function_groups(
         )
 
     if extra_groups:
+        # Resolve any factories into concrete FunctionGroup instances.
+        hooks = _SessionHooksImpl(
+            controller=controller,
+            file_system=file_system,
+            task_tree_manager=task_tree_manager,
+        )
+        resolved: list[FunctionGroup] = []
+        for item in extra_groups:
+            if callable(item) and not isinstance(item, FunctionGroup):
+                resolved.append(item(hooks))
+            else:
+                resolved.append(item)
         # Extra groups with the same name as a built-in replace it.
-        override_names = {g.name for g in extra_groups if g.name is not None}
+        override_names = {g.name for g in resolved if g.name is not None}
         groups = [g for g in groups if g.name not in override_names]
-        groups.extend(extra_groups)
+        groups.extend(resolved)
 
     if function_filter is not None and function_filter:
         groups = _apply_function_filter(groups, function_filter)
