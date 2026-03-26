@@ -4,6 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "dependencies": {
-    "esbuild": "^0.24.0"
+    "esbuild": "^0.25.0"
   }
 }
