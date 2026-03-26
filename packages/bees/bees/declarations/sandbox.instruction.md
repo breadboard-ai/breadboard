@@ -1,8 +1,8 @@
-You have access to a bash shell via `execute_bash`.
+# Sandbox and File System
 
-Your working directory is `$HOME`. Files you create there persist across
-calls. Use this when a skill's instructions require running shell commands,
-installing tools, or building output.
+You have access to a bash shell via `execute_bash`. You will not be able to
+write to any files outside of your working directory, because you are running in
+a sandbox.
 
-Keep commands focused — one logical step per call. Read the output before
-proceeding.
+Read `$HOME` to read the location of your working directory. Do not assume its
+location.

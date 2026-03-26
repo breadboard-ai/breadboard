@@ -8,6 +8,6 @@ steps:
   main:
     title: Test
     objective: >
-      Write a thorough critique of bees and write it to a file, then return that
-      file.
-    functions: ["system.*", "simple-files.*"]
+      Write a short story about a robot and save it to a file. Return "OK" when
+      done.
+    functions: ["system.*", "sandbox.*"]
