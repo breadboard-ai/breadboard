@@ -49,6 +49,9 @@ class TicketMetadata:
     bundle_path: str | None = None
     functions: list[str] | None = None
     skills: list[str] | None = None
+    title: str | None = None
+    playbook_id: str | None = None
+    playbook_run_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -74,6 +77,9 @@ class TicketMetadata:
             bundle_path=data.get("bundle_path"),
             functions=data.get("functions"),
             skills=data.get("skills"),
+            title=data.get("title"),
+            playbook_id=data.get("playbook_id"),
+            playbook_run_id=data.get("playbook_run_id"),
         )
 
 
@@ -114,7 +120,17 @@ class Ticket:
         )
 
 
-def create_ticket(objective: str, tags: list[str] | None = None, functions: list[str] | None = None, skills: list[str] | None = None) -> Ticket:
+def create_ticket(
+    objective: str,
+    *,
+    tags: list[str] | None = None,
+    functions: list[str] | None = None,
+    skills: list[str] | None = None,
+    title: str | None = None,
+    assignee: str | None = None,
+    playbook_id: str | None = None,
+    playbook_run_id: str | None = None,
+) -> Ticket:
     """Create a new ticket.
 
     Scans the objective for ``{{id}}`` references. If any are found,
@@ -151,6 +167,10 @@ def create_ticket(objective: str, tags: list[str] | None = None, functions: list
             tags=tags,
             functions=functions,
             skills=skills,
+            title=title,
+            assignee=assignee,
+            playbook_id=playbook_id,
+            playbook_run_id=playbook_run_id,
         ),
     )
     ticket.save()

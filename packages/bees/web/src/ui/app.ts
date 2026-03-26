@@ -11,7 +11,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { BeesAPI } from "../data/api.js";
 import { BeesConnection } from "../data/connection.js";
 import { BeesState } from "../data/state.js";
-import type { TicketData } from "../data/types.js";
+import type { TicketData, PlaybookData } from "../data/types.js";
 import { getRelativeTime, extractPrompt, extractChoices, parseTags } from "../utils.js";
 import { APP_NAME, APP_ICON } from "../constants.js";
 import { styles } from "./app.styles.js";
@@ -20,8 +20,13 @@ export { BeesApp };
 
 const appState = new BeesState();
 
+type ActiveTab = "playbooks" | "tickets";
+
 @customElement("bees-app")
 class BeesApp extends SignalWatcher(LitElement) {
+  @state()
+  private activeTab: ActiveTab = "playbooks";
+
   @state()
   private objective = "";
 
@@ -49,6 +54,12 @@ class BeesApp extends SignalWatcher(LitElement) {
   @state()
   private selectedChoices: Record<string, string[]> = {};
 
+  @state()
+  private playbooks: PlaybookData[] = [];
+
+  @state()
+  private loadingPlaybooks = false;
+
   private connection = new BeesConnection(appState);
   private api = new BeesAPI();
 
@@ -57,6 +68,7 @@ class BeesApp extends SignalWatcher(LitElement) {
   connectedCallback() {
     super.connectedCallback();
     this.connection.connect();
+    this.loadPlaybooks();
   }
 
   disconnectedCallback() {
@@ -66,7 +78,8 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   render() {
     return html`
-      ${this.renderHeader()} ${this.renderAddForm()} ${this.renderTicketList()}
+      ${this.renderHeader()} ${this.renderTabs()} ${this.renderFilter()}
+      ${this.renderTicketList()}
     `;
   }
 
@@ -79,63 +92,127 @@ class BeesApp extends SignalWatcher(LitElement) {
           ></div>
           <h1>${APP_ICON} <span>${APP_NAME}</span></h1>
         </div>
-        <div class="header-right">
-          <input
-            class="filter-input"
-            type="text"
-            placeholder="Filter by tag..."
-            .value=${this.filterTag}
-            @input=${(e: Event) =>
-              (this.filterTag = (e.target as HTMLInputElement).value)}
-          />
-        </div>
       </header>
+    `;
+  }
+
+  private renderTabs() {
+    return html`
+      <div class="tab-container">
+        <div class="tab-bar">
+          <button
+            class="tab ${this.activeTab === "playbooks" ? "active" : ""}"
+            @click=${() => (this.activeTab = "playbooks")}
+          >
+            Run Playbooks
+          </button>
+          <button
+            class="tab ${this.activeTab === "tickets" ? "active" : ""}"
+            @click=${() => (this.activeTab = "tickets")}
+          >
+            Create Tickets
+          </button>
+        </div>
+        <div class="tab-content">
+          ${this.activeTab === "playbooks"
+            ? this.renderPlaybooksTab()
+            : this.renderAddForm()}
+        </div>
+      </div>
+    `;
+  }
+
+  private renderPlaybooksTab() {
+    if (this.loadingPlaybooks) {
+      return html`<div class="playbooks-loading">Loading playbooks…</div>`;
+    }
+
+    if (this.playbooks.length === 0) {
+      return html`<div class="playbooks-empty">
+        No playbooks found. Add YAML files to <code>playbooks/</code>.
+      </div>`;
+    }
+
+    return html`
+      <div class="playbooks-list">
+        ${this.playbooks.map(
+          (p) => html`
+            <div class="playbook-card">
+              <div class="playbook-info">
+                <span class="playbook-title">${p.title}</span>
+                <span class="playbook-desc">${p.description}</span>
+              </div>
+              <button
+                class="playbook-run-btn"
+                @click=${() => this.runPlaybook(p.name)}
+              >
+                Run
+              </button>
+            </div>
+          `
+        )}
+      </div>
     `;
   }
 
   private renderAddForm() {
     return html`
       <div class="add-form">
-        <input
+        <textarea
           class="objective-input"
-          type="text"
           placeholder="Enter objective... (use {{id}} for deps)"
           .value=${this.objective}
           @input=${(e: Event) =>
-            (this.objective = (e.target as HTMLInputElement).value)}
-          @keydown=${this.onKeyDown}
-        />
-        <input
-          class="tags-input"
-          type="text"
-          placeholder="Tags (comma separated)..."
-          .value=${this.tagsText}
-          @input=${(e: Event) =>
-            (this.tagsText = (e.target as HTMLInputElement).value)}
-          @keydown=${this.onKeyDown}
-        />
-        <input
-          class="functions-input"
-          type="text"
-          placeholder="Functions (comma separated)..."
-          .value=${this.functionsText}
-          @input=${(e: Event) =>
-            (this.functionsText = (e.target as HTMLInputElement).value)}
-          @keydown=${this.onKeyDown}
-        />
-        <input
-          class="skills-input"
-          type="text"
-          placeholder="Skills (comma separated or * for all)..."
-          .value=${this.skillsText}
-          @input=${(e: Event) =>
-            (this.skillsText = (e.target as HTMLInputElement).value)}
-          @keydown=${this.onKeyDown}
-        />
-        <button @click=${this.addTicket} ?disabled=${!this.objective.trim()}>
-          Add Ticket
-        </button>
+            (this.objective = (e.target as HTMLTextAreaElement).value)}
+          @keydown=${this.onTextareaKeyDown}
+          rows="2"
+        ></textarea>
+        <div class="add-form-row">
+          <input
+            class="meta-input"
+            type="text"
+            placeholder="Tags"
+            .value=${this.tagsText}
+            @input=${(e: Event) =>
+              (this.tagsText = (e.target as HTMLInputElement).value)}
+            @keydown=${this.onKeyDown}
+          />
+          <input
+            class="meta-input"
+            type="text"
+            placeholder="Functions"
+            .value=${this.functionsText}
+            @input=${(e: Event) =>
+              (this.functionsText = (e.target as HTMLInputElement).value)}
+            @keydown=${this.onKeyDown}
+          />
+          <input
+            class="meta-input"
+            type="text"
+            placeholder="Skills"
+            .value=${this.skillsText}
+            @input=${(e: Event) =>
+              (this.skillsText = (e.target as HTMLInputElement).value)}
+            @keydown=${this.onKeyDown}
+          />
+          <button @click=${this.addTicket} ?disabled=${!this.objective.trim()}>
+            Add Ticket
+          </button>
+        </div>
       </div>
+    `;
+  }
+
+  private renderFilter() {
+    return html`
+      <input
+        class="filter-input"
+        type="text"
+        placeholder="Filter by tag..."
+        .value=${this.filterTag}
+        @input=${(e: Event) =>
+          (this.filterTag = (e.target as HTMLInputElement).value)}
+      />
     `;
   }
 
@@ -347,6 +424,16 @@ class BeesApp extends SignalWatcher(LitElement) {
     return nothing;
   }
 
+  private async loadPlaybooks() {
+    this.loadingPlaybooks = true;
+    this.playbooks = await this.api.listPlaybooks();
+    this.loadingPlaybooks = false;
+  }
+
+  private async runPlaybook(name: string) {
+    await this.api.runPlaybook(name);
+  }
+
   private async addTicket() {
     const text = this.objective.trim();
     if (!text) return;
@@ -412,6 +499,14 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   private onKeyDown(e: KeyboardEvent) {
     if (e.key === "Enter") this.addTicket();
+  }
+
+  private onTextareaKeyDown(e: KeyboardEvent) {
+    // Cmd/Ctrl+Enter submits, plain Enter adds newline.
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      this.addTicket();
+    }
   }
 
   private onRespondKeyDown(e: KeyboardEvent, ticketId: string) {

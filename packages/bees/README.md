@@ -52,6 +52,44 @@ Runs all available tickets in parallel, streaming events to stderr.
 Each ticket's metadata is updated with status, turn count, thoughts,
 outcome or error. Results print as JSON to stdout.
 
+## Playbooks
+
+Playbooks are ticket templates — YAML files that describe a DAG of
+work. Each step becomes a ticket. Dependencies between steps are
+expressed as `{{step-name}}` references in objectives.
+
+### Playbook Format
+
+```yaml
+name: orchestrator
+title: Orchestrator
+description: Chat with the user and dispatch playbooks as needed
+
+steps:
+  main:
+    title: Orchestrator
+    objective: >
+      You are Opie, a helpful conversational assistant.
+    skills: [interview-user]
+    functions: ["chat.*", "orchestrator.*"]
+```
+
+Step properties: `title`, `objective`, `functions`, `skills`, `tags`,
+`assignee`. Dependencies are inferred from `{{step-name}}` references
+in `objective`.
+
+Each ticket is stamped with `playbook_id` (the playbook name) and
+`playbook_run_id` (a UUID for the run) for traceability.
+
+### Running a Playbook
+
+```bash
+npm run playbook:run -w packages/bees -- orchestrator
+```
+
+This creates tickets for each step and prints a summary. Then use
+`ticket:drain` to execute them.
+
 ## Output
 
 All session log files land in `packages/bees/out/` in the eval viewer's

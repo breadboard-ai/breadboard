@@ -22,3 +22,9 @@ export interface TicketData {
   functions?: string[];
   skills?: string[];
 }
+
+export interface PlaybookData {
+  name: string;
+  title: string;
+  description: string;
+}

@@ -64,7 +64,7 @@ def main() -> None:
     if args.skills:
         skills = [f.strip() for f in args.skills.split(",") if f.strip()]
 
-    ticket = create_ticket(objective, tags=tags, functions=functions, skills=skills)
+    ticket = create_ticket(objective, tags=tags, functions=functions, skills=skills)  # noqa: positional ok — objective is before *
 
     print(f"Created ticket {ticket.id}", file=sys.stderr)
     print(f"  objective: {objective!r}", file=sys.stderr)

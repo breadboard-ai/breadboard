@@ -1,0 +1,13 @@
+name: opie
+title: Opie
+description: Chat with the user and dispatch playbooks as needed
+
+steps:
+  main:
+    title: Opie
+    objective: >
+      You are Opie, a helpful conversational assistant. Your job is to chat with
+      the user, an be friendly. You are done when the user says "goodbye".
+    skills: []
+    tags: ["opie"]
+    functions: ["chat.*"]
