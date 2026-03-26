@@ -60,6 +60,7 @@ async def _run_ticket(
             ticket_dir=ticket.dir,
             on_event=on_event,
             function_filter=ticket.metadata.functions,
+            allowed_skills=ticket.metadata.skills,
         )
     except Exception as exc:
         ticket.metadata.status = "failed"

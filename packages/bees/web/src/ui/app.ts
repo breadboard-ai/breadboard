@@ -32,6 +32,9 @@ class BeesApp extends SignalWatcher(LitElement) {
   private functionsText = "";
 
   @state()
+  private skillsText = "";
+
+  @state()
   private filterTag = "";
 
   @state()
@@ -120,6 +123,15 @@ class BeesApp extends SignalWatcher(LitElement) {
             (this.functionsText = (e.target as HTMLInputElement).value)}
           @keydown=${this.onKeyDown}
         />
+        <input
+          class="skills-input"
+          type="text"
+          placeholder="Skills (comma separated or * for all)..."
+          .value=${this.skillsText}
+          @input=${(e: Event) =>
+            (this.skillsText = (e.target as HTMLInputElement).value)}
+          @keydown=${this.onKeyDown}
+        />
         <button @click=${this.addTicket} ?disabled=${!this.objective.trim()}>
           Add Ticket
         </button>
@@ -187,6 +199,12 @@ class BeesApp extends SignalWatcher(LitElement) {
           ? html`<div class="ticket-functions">
               functions:
               ${t.functions.map((f) => html`<code>${f}</code> `)}
+            </div>`
+          : nothing}
+        ${t.skills?.length
+          ? html`<div class="ticket-functions">
+              skills:
+              ${t.skills.map((s) => html`<code>${s}</code> `)}
             </div>`
           : nothing}
         ${t.depends_on?.length
@@ -334,12 +352,14 @@ class BeesApp extends SignalWatcher(LitElement) {
     if (!text) return;
     const tags = parseTags(this.tagsText);
     const apiFunctions = parseTags(this.functionsText);
+    const skills = parseTags(this.skillsText);
 
     this.objective = "";
     this.tagsText = "";
     this.functionsText = "";
+    this.skillsText = "";
 
-    await this.api.addTicket(text, tags, apiFunctions);
+    await this.api.addTicket(text, tags, apiFunctions, skills);
   }
 
   private async saveEditedTags(ticketId: string) {

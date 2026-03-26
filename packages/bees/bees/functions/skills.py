@@ -47,6 +47,7 @@ class SkillInfo:
     description: str
     vfs_path: str
     content: str
+    dir_name: str
 
 
 def _parse_frontmatter(text: str) -> dict[str, str]:
@@ -64,7 +65,7 @@ def scan_skills(
     base_dir: Path,
     *,
     vfs_prefix: str = "skills",
-) -> tuple[str, dict[str, str]]:
+) -> tuple[str, dict[str, str], list[SkillInfo]]:
     """Scan a directory for SKILL.md files and build the listing + files dict.
 
     Looks for skill folders in ``base_dir / "skills"``. Each immediate
@@ -110,6 +111,7 @@ def scan_skills(
             description=meta.get("description", ""),
             vfs_path=vfs_path,
             content=content,
+            dir_name=dir_name,
         )
         skills.append(skill)
         initial_files[vfs_name] = content
@@ -122,7 +124,7 @@ def scan_skills(
             lines.append(f"  {skill.description}")
     listing = "\n".join(lines)
 
-    return listing, initial_files
+    return listing, initial_files, skills
 
 
 def get_skills_function_group(

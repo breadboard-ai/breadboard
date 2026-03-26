@@ -48,6 +48,7 @@ class TicketMetadata:
     tags: list[str] | None = None
     bundle_path: str | None = None
     functions: list[str] | None = None
+    skills: list[str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -72,6 +73,7 @@ class TicketMetadata:
             tags=data.get("tags"),
             bundle_path=data.get("bundle_path"),
             functions=data.get("functions"),
+            skills=data.get("skills"),
         )
 
 
@@ -112,7 +114,7 @@ class Ticket:
         )
 
 
-def create_ticket(objective: str, tags: list[str] | None = None, functions: list[str] | None = None) -> Ticket:
+def create_ticket(objective: str, tags: list[str] | None = None, functions: list[str] | None = None, skills: list[str] | None = None) -> Ticket:
     """Create a new ticket.
 
     Scans the objective for ``{{id}}`` references. If any are found,
@@ -148,6 +150,7 @@ def create_ticket(objective: str, tags: list[str] | None = None, functions: list
             depends_on=resolved_deps,
             tags=tags,
             functions=functions,
+            skills=skills,
         ),
     )
     ticket.save()

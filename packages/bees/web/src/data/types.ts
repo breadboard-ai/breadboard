@@ -20,4 +20,5 @@ export interface TicketData {
   events_log?: Array<Record<string, unknown>>;
   tags?: string[];
   functions?: string[];
+  skills?: string[];
 }
