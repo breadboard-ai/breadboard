@@ -25,6 +25,7 @@ from typing import Any, AsyncIterator
 
 import httpx
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
@@ -295,6 +296,26 @@ async def get_ticket(ticket_id: str) -> dict[str, Any]:
     if not ticket:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
     return _ticket_to_dict(ticket)
+
+
+@app.get("/tickets/{ticket_id}/files/{path:path}")
+async def get_ticket_file(ticket_id: str, path: str) -> FileResponse:
+    """Serve files from the ticket's filesystem."""
+    ticket = load_ticket(ticket_id)
+    if not ticket:
+        raise HTTPException(404, f"Ticket {ticket_id} not found")
+        
+    file_path = ticket.dir / "filesystem" / path
+    if not file_path.is_file():
+        raise HTTPException(404, f"File {path} not found")
+        
+    try:
+        file_path.resolve().relative_to((ticket.dir / "filesystem").resolve())
+    except ValueError:
+        raise HTTPException(403, "Access denied")
+        
+    return FileResponse(file_path)
+
 
 
 @app.post("/tickets")

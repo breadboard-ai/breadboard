@@ -116,7 +116,9 @@ export const styles = css`
     border: none;
     border-bottom: 2px solid transparent;
     cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
+    transition:
+      color 0.15s,
+      border-color 0.15s;
   }
 
   .tab:hover {
@@ -547,7 +549,9 @@ export const styles = css`
     border-radius: var(--sys-shape-corner-medium);
     cursor: pointer;
     font-size: 0.8rem;
-    transition: background-color 0.15s, border-color 0.15s;
+    transition:
+      background-color 0.15s,
+      border-color 0.15s;
     user-select: none;
   }
 
@@ -644,5 +648,44 @@ export const styles = css`
     flex: 1;
     color: var(--sys-color-outline);
     font-size: 0.9rem;
+  }
+
+  /* ---- Iframe App ---- */
+
+  .ticket-app-actions {
+    margin-top: 12px;
+  }
+
+  .ticket-app-actions .btn-primary {
+    padding: 8px 16px;
+    font-family: var(--sys-typescale-body-font);
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--sys-color-primary);
+    color: var(--sys-color-on-primary);
+    border: none;
+    border-radius: var(--sys-shape-corner-small);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .ticket-app-actions .btn-primary:hover {
+    opacity: 0.85;
+  }
+
+  .ticket-app-container {
+    margin-top: 16px;
+    border: 1px solid var(--sys-color-outline-variant);
+    border-radius: var(--sys-shape-corner-medium);
+    overflow: hidden;
+    height: 600px;
+    background: var(--sys-color-surface-container-highest);
+  }
+
+  .ticket-app-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
   }
 `;

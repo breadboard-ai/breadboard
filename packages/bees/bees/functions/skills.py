@@ -114,9 +114,20 @@ def scan_skills(
             dir_name=dir_name,
         )
         skills.append(skill)
-        initial_files[vfs_name] = content
 
-    # Build the listing.
+        for file_path in child.rglob("*"):
+            if not file_path.is_file():
+                continue
+            if file_path.name == ".DS_Store":
+                continue
+
+            rel_path = file_path.relative_to(child)
+            file_vfs_name = f"{vfs_prefix}/{dir_name}/{str(rel_path)}"
+            try:
+                initial_files[file_vfs_name] = file_path.read_text()
+            except UnicodeDecodeError:
+                pass
+
     lines: list[str] = []
     for skill in skills:
         lines.append(f"- [{skill.title}]({skill.vfs_path})")
