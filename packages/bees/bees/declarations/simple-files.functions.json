@@ -40,7 +40,7 @@
       "properties": {
         "file_name": {
           "type": "string",
-          "description": "The name of the file with the extension.\nThis is the name that will come after the \"/mnt/\" prefix in the file path.\nUse snake_case for naming. If the file does not exist, it will be created. If the file already exists, its content will be overwritten.\nExamples: \"report.md\", \"data.csv\", \"notes.txt\", \"config.json\", \"index.html\""
+          "description": "The name of the file with the extension. Use snake_case for naming. If the file does not exist, it will be created. If the file already exists, its content will be overwritten. Examples: \"report.md\", \"data.csv\", \"notes.txt\", \"config.json\", \"index.html\""
         },
         "content": {
           "type": "string",
@@ -59,7 +59,7 @@
       "properties": {
         "file_path": {
           "type": "string",
-          "description": "The VS path to the file containing the provided text"
+          "description": "The filename of the written file"
         },
         "error": {
           "type": "string",

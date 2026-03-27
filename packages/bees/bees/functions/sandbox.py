@@ -112,7 +112,10 @@ def _content_hash(data: str) -> str:
 def _sync_agent_fs_to_disk(agent_fs: "AgentFileSystem", work_dir: Path) -> None:
     """Write AgentFileSystem text files to disk before bash runs.
 
-    Each ``/mnt/<name>`` AgentFS entry is written to ``work_dir/mnt/<name>``.
+    Each ``/mnt/<name>`` AgentFS entry is written to ``work_dir/<name>``
+    (the ``/mnt/`` prefix is stripped), placing files directly in the bash
+    working directory so the agent can access them as bare filenames.
+
     Only text files (``type == "text"``) are written — binary inlineData
     cannot be meaningfully executed by bash.
 
@@ -126,8 +129,8 @@ def _sync_agent_fs_to_disk(agent_fs: "AgentFileSystem", work_dir: Path) -> None:
         if descriptor.type != "text":
             continue
 
-        # /mnt/foo.md → work_dir/mnt/foo.md
-        rel = path.lstrip("/")
+        # /mnt/foo.md → work_dir/foo.md  (strip /mnt/ prefix)
+        rel = path[len("/mnt/"):]
         disk_path = work_dir / rel
         disk_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -149,27 +152,33 @@ def _sync_agent_fs_to_disk(agent_fs: "AgentFileSystem", work_dir: Path) -> None:
 def _sync_disk_to_agent_fs(agent_fs: "AgentFileSystem", work_dir: Path) -> None:
     """Read files created/modified by bash back into AgentFileSystem.
 
-    Walks ``work_dir/mnt/`` recursively. For each file found:
-    - Derives the ``/mnt/<name>`` AgentFS path.
-    - Skips ``/mnt/system/`` (virtual only).
+    Walks ``work_dir/`` recursively. For each file found:
+    - Derives the ``/mnt/<name>`` AgentFS key (internal representation).
+    - Skips ``/mnt/system/`` (virtual only), ``node_modules/``, and
+      any hidden directories (names starting with ``.``).
     - For text files: calls ``agent_fs.overwrite()`` if absent or changed.
     - For binary files: calls ``agent_fs.add_part({inlineData: ...})`` only
       if the path is not yet known to AgentFS (binaries are write-once from
       the agent's perspective).
-    """
-    mnt_dir = work_dir / "mnt"
-    if not mnt_dir.is_dir():
-        return
 
+    Internal AgentFS keys remain ``/mnt/``-prefixed; the presentation layer
+    (``simple_files.py``) strips the prefix before returning paths to the agent.
+    """
     known_files = agent_fs.files
 
-    for disk_path in mnt_dir.rglob("*"):
+    _SKIP_DIRS = {"node_modules"}
+
+    for disk_path in work_dir.rglob("*"):
         if not disk_path.is_file():
             continue
 
-        # Derive the /mnt-prefixed AgentFS path.
-        rel = disk_path.relative_to(work_dir)  # e.g. mnt/build/index.js
-        agent_path = f"/{rel}"  # /mnt/build/index.js
+        # Skip hidden dirs and node_modules anywhere in the path.
+        rel = disk_path.relative_to(work_dir)  # e.g. foo.md, build/index.js
+        if any(part.startswith(".") or part in _SKIP_DIRS for part in rel.parts):
+            continue
+
+        # Internal AgentFS key: /mnt/foo.md, /mnt/build/index.js
+        agent_path = f"/mnt/{rel}"
 
         if agent_path.startswith("/mnt/system/"):
             continue
@@ -200,12 +209,12 @@ def _sync_disk_to_agent_fs(agent_fs: "AgentFileSystem", work_dir: Path) -> None:
 
             existing = known_files.get(agent_path)
             if existing is None:
-                # New file created by bash — use the file name relative to /mnt/.
-                name = str(rel)[len("mnt/"):]  # strip leading "mnt/"
+                # New file created by bash — name is relative to work_dir.
+                name = str(rel)  # e.g. "foo.md" or "build/index.js"
                 agent_fs.overwrite(name, content)
             elif existing.type == "text" and existing.data != content:
                 # Bash modified an existing text file — update AgentFS.
-                name = str(rel)[len("mnt/"):]
+                name = str(rel)
                 agent_fs.overwrite(name, content)
 
 
