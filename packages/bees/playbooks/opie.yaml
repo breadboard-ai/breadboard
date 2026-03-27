@@ -1,6 +1,7 @@
 name: opie
 title: Opie
 description: Executive assistant — understands objectives and delivers results
+hidden: true
 
 steps:
   main:
@@ -12,4 +13,4 @@ steps:
       task is done.
     skills: ["*"]
     tags: ["opie"]
-    functions: ["chat.*", "system.*", "sandbox.*", "skills.*"]
+    functions: ["chat.*", "system.*", "sandbox.*", "skills.*", "playbooks.*"]

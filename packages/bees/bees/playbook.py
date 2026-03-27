@@ -87,7 +87,7 @@ def topological_sort(steps: dict[str, dict]) -> list[str]:
     return order
 
 
-def run_playbook(name: str) -> list[Ticket]:
+def run_playbook(name: str, *, context: str | None = None) -> list[Ticket]:
     """Create tickets for each step of a playbook.
 
     Steps are created in topological order so that ``{{step-name}}``
@@ -115,6 +115,11 @@ def run_playbook(name: str) -> list[Ticket]:
         for ref_name, ticket_id in step_ticket_ids.items():
             objective = objective.replace(f"{{{{{ref_name}}}}}", f"{{{{{ticket_id}}}}}")
 
+        # Only attach context to root tickets (those with no step deps).
+        objective_refs = set(_DEP_PATTERN.findall(step.get("objective", "")))
+        step_refs = objective_refs & set(steps.keys())
+        is_root = len(step_refs) == 0
+
         ticket = create_ticket(
             objective,
             title=step.get("title"),
@@ -125,6 +130,7 @@ def run_playbook(name: str) -> list[Ticket]:
             model=step.get("model"),
             playbook_id=playbook_id,
             playbook_run_id=playbook_run_id,
+            context=context if is_root else None,
         )
 
         step_ticket_ids[step_name] = ticket.id

@@ -1,0 +1,92 @@
+[
+  {
+    "name": "playbooks_list",
+    "description": "List all available playbooks. Returns name, title, and description for each playbook.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "responseJsonSchema": {
+      "type": "object",
+      "properties": {
+        "playbooks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The playbook identifier (filename without .yaml)."
+              },
+              "title": {
+                "type": "string",
+                "description": "Human-readable title."
+              },
+              "description": {
+                "type": "string",
+                "description": "Short description of what the playbook does."
+              }
+            }
+          },
+          "description": "Available playbooks."
+        },
+        "error": {
+          "type": "string",
+          "description": "Error message if the listing failed."
+        }
+      }
+    }
+  },
+  {
+    "name": "playbooks_run_playbook",
+    "description": "Run a playbook by name. Creates tickets for each step of the playbook in dependency order and returns the created ticket IDs. Use the context parameter to brief the initial tickets with any information they need to do the right work.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The playbook identifier (filename without .yaml)."
+        },
+        "context": {
+          "type": "string",
+          "description": "Free-form briefing text for the playbook. Describe what the user wants, any relevant details, preferences, or constraints. This context is attached to the initial tickets so the workers know what to do."
+        }
+      },
+      "required": ["name"]
+    },
+    "responseJsonSchema": {
+      "type": "object",
+      "properties": {
+        "playbook": {
+          "type": "string",
+          "description": "Name of the playbook that was run."
+        },
+        "tickets_created": {
+          "type": "integer",
+          "description": "Number of tickets created."
+        },
+        "tickets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The ticket ID."
+              },
+              "title": {
+                "type": "string",
+                "description": "Title of the ticket."
+              }
+            }
+          },
+          "description": "The created tickets."
+        },
+        "error": {
+          "type": "string",
+          "description": "Error message if the run failed."
+        }
+      }
+    }
+  }
+]

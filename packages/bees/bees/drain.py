@@ -42,6 +42,7 @@ async def _run_ticket(
     http: httpx.AsyncClient,
     backend: HttpBackendClient,
     on_event: Any | None = None,
+    on_playbook_run: Any | None = None,
 ) -> SessionResult:
     """Run a single ticket's session and update its metadata."""
     ticket.metadata.status = "running"
@@ -62,6 +63,7 @@ async def _run_ticket(
             function_filter=ticket.metadata.functions,
             allowed_skills=ticket.metadata.skills,
             model=ticket.metadata.model,
+            on_playbook_run=on_playbook_run,
         )
     except Exception as exc:
         ticket.metadata.status = "failed"
@@ -118,6 +120,7 @@ async def _resume_ticket(
     http: httpx.AsyncClient,
     backend: HttpBackendClient,
     on_event: Any | None = None,
+    on_playbook_run: Any | None = None,
 ) -> SessionResult:
     """Resume a suspended ticket with the user's response."""
     label = ticket.id[:8]
@@ -151,6 +154,7 @@ async def _resume_ticket(
             backend=backend,
             label=label,
             on_event=on_event,
+            on_playbook_run=on_playbook_run,
         )
     except Exception as exc:
         ticket.metadata.status = "failed"
@@ -340,6 +344,9 @@ def resolve_segments(ticket: Ticket) -> list[dict[str, Any]]:
 
     Text around ``{{id}}`` becomes text segments. Each ``{{id}}`` becomes
     an ``input`` segment carrying the dependency's outcome as LLMContent.
+
+    If the ticket has ``context`` (a playbook briefing), it is prepended
+    as a text segment so the agent sees the context before the objective.
     """
     objective = ticket.objective
     deps = ticket.metadata.depends_on or []
@@ -354,6 +361,17 @@ def resolve_segments(ticket: Ticket) -> list[dict[str, Any]]:
     # Split objective on {{...}} boundaries.
     parts = _DEP_PATTERN.split(objective)
     segments: list[dict[str, Any]] = []
+
+    # Prepend playbook context as a briefing segment.
+    if ticket.metadata.context:
+        segments.append({
+            "type": "text",
+            "text": (
+                "--- Playbook Context ---\n"
+                f"{ticket.metadata.context}\n"
+                "--- End Context ---\n\n"
+            ),
+        })
 
     for i, part in enumerate(parts):
         if i % 2 == 0:
