@@ -46,6 +46,24 @@ const styles = css`
     letter-spacing: -0.02em;
   }
 
+  .back-button {
+    background: transparent;
+    border: none;
+    color: var(--cg-color-primary, #a8c7fa);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin-left: -8px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+  }
+
+  .back-button:hover {
+    background: var(--cg-color-surface-bright, #2a2b30);
+  }
+
   .actions a {
     font-size: 13px;
     color: var(--cg-color-on-surface-muted, #9a969e);
@@ -251,7 +269,6 @@ const styles = css`
     padding: 12px;
     border-radius: 12px;
     max-width: 90%;
-    white-space: pre-wrap;
   }
 
   .chat-msg.agent {

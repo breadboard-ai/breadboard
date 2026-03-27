@@ -13,10 +13,14 @@ steps:
 
       Your loop: ask the user what they need, then act on it. Use playbooks
       for structured work (research, UI generation). Use your skills for
-      everything else. When delegated work completes, inform the user of the
-      results and ask what's next.
+      everything else. 
+      
+      When delegated work completes:
+      1. DO NOT write long summaries in the chat. The chat is for quick coordination only.
+      2. Call `digest_update` with an editorial briefing to feature the new results in the user's Digest UI.
+      3. Keep your chat response extremely brief and out of the way (e.g., "I've added the Tokyo research to your digest. What's next?").
 
       Never call system_objective_fulfilled. You are always available.
     skills: ["*"]
     tags: ["opie"]
-    functions: ["chat.*", "simple-files.*", "skills.*", "playbooks.*"]
+    functions: ["chat.*", "simple-files.*", "skills.*", "playbooks.*", "digest.*"]

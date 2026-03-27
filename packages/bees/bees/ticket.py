@@ -53,6 +53,7 @@ class TicketMetadata:
     playbook_run_id: str | None = None
     model: str | None = None
     context: str | None = None
+    pending_notifications: list[str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -82,6 +83,7 @@ class TicketMetadata:
             playbook_run_id=data.get("playbook_run_id"),
             model=data.get("model"),
             context=data.get("context"),
+            pending_notifications=data.get("pending_notifications"),
         )
 
 

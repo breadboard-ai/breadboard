@@ -101,11 +101,23 @@ async def _run_ticket(
     if file_manifest:
         ticket.metadata.files = file_manifest
 
-    # Handle suspend: hand off to user.
+    # Handle suspend: hand off to user or process queued notifications.
     if result.suspended:
-        ticket.metadata.status = "suspended"
-        ticket.metadata.assignee = "user"
-        ticket.metadata.suspend_event = result.suspend_event
+        if getattr(ticket.metadata, "pending_notifications", None):
+            notification = ticket.metadata.pending_notifications.pop(0)
+            response_path = ticket.dir / "response.json"
+            response_path.write_text(
+                json.dumps({"text": notification}, indent=2, ensure_ascii=False) + "\n"
+            )
+            ticket.metadata.status = "suspended"
+            ticket.metadata.assignee = "agent"
+            ticket.metadata.suspend_event = result.suspend_event
+            # Log we are draining a queued notification
+            print(f"  [{ticket.id[:8]}] 📩 auto-resume with queued notification", file=sys.stderr)
+        else:
+            ticket.metadata.status = "suspended"
+            ticket.metadata.assignee = "user"
+            ticket.metadata.suspend_event = result.suspend_event
     else:
         ticket.metadata.assignee = None
         ticket.metadata.suspend_event = None
@@ -198,11 +210,23 @@ async def _resume_ticket(
         ticket.metadata.files = file_manifest
 
 
-    # Handle re-suspend.
+    # Handle re-suspend: hand off to user or process queued notifications.
     if result.suspended:
-        ticket.metadata.status = "suspended"
-        ticket.metadata.assignee = "user"
-        ticket.metadata.suspend_event = result.suspend_event
+        if getattr(ticket.metadata, "pending_notifications", None):
+            notification = ticket.metadata.pending_notifications.pop(0)
+            response_path = ticket.dir / "response.json"
+            response_path.write_text(
+                json.dumps({"text": notification}, indent=2, ensure_ascii=False) + "\n"
+            )
+            ticket.metadata.status = "suspended"
+            ticket.metadata.assignee = "agent"
+            ticket.metadata.suspend_event = result.suspend_event
+            # Log we are draining a queued notification
+            print(f"  [{ticket.id[:8]}] 📩 auto-resume with queued notification", file=sys.stderr)
+        else:
+            ticket.metadata.status = "suspended"
+            ticket.metadata.assignee = "user"
+            ticket.metadata.suspend_event = result.suspend_event
     else:
         ticket.metadata.assignee = None
         ticket.metadata.suspend_event = None

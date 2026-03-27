@@ -43,16 +43,33 @@ pipeline.
 
 You MUST save all generated files to the real filesystem in your working directory (`$HOME`) by using the `execute_bash` tool. **Do NOT use `system_write_file`**, because it writes to a virtual filesystem that the bundler cannot access.
 
+**CRITICAL STYLING RULES: NO TAILWIND!**
+- You MUST NOT use Tailwind CSS utility classes (e.g., `flex`, `min-h-screen`, `p-4`, `bg-red-500`). Tailwind is NOT INSTALLED.
+- You MUST use standard semantic CSS class names (e.g., `className="hero-container"`).
+- You MUST write a separate `styles.css` file using **Vanilla CSS**.
+- You MUST include `import "./styles.css";` at the top of your `App.jsx`. If you don't write and import a CSS file, your design will be completely unstyled.
+
 Use bash heredocs to write files. Example:
 ```bash
+cat << 'EOF' > styles.css
+.hero-container {
+  display: flex;
+  padding: var(--cg-sp-4);
+}
+EOF
+
 cat << 'EOF' > App.jsx
 import React from "react";
+import "./styles.css";
 export default function App() { ... }
 EOF
 ```
 
+**CRITICAL: BUNDLE YOUR CODE**
 After safely writing all files using `execute_bash`, you MUST build the bundle by running the following command via `execute_bash`: 
 `node $HOME/skills/ui-generator/tools/bundler.mjs`
+
+If you do not run this exact command, the user will see a blank screen.
 
 Once bundling is successful, simply return a short text confirmation
 acknowledging that the UI was generated and bundled. **Do NOT output raw source
@@ -183,13 +200,15 @@ spacing, type, radii, shadows — MUST use `--cg-` tokens. No exceptions.
 
 ### Icons
 
-Google Material Symbols Outlined is available:
+Google Material Symbols Outlined is available via a web font:
 
 ```jsx
 <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
   search
 </span>
 ```
+
+**CRITICAL: DO NOT import third-party icon packages.** You do not have `lucide-react`, `heroicons`, or `react-icons` installed. Using them will break the build. ONLY use the `material-symbols-outlined` span.
 
 ### Interactivity
 
