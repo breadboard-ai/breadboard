@@ -43,6 +43,7 @@ from bees.functions.simple_files import get_simple_files_function_group_factory
 from bees.functions.system import get_system_function_group_factory
 from bees.functions.sandbox import get_sandbox_function_group_factory
 from bees.functions.playbooks import get_playbooks_function_group
+from bees.functions.digest import get_digest_function_group
 
 # Scan skills once at import time.
 _BEES_DIR = Path(__file__).resolve().parent
@@ -374,6 +375,7 @@ async def run_session(
                 work_dir=ticket_dir / "filesystem" if ticket_dir else None,
             ),
             get_playbooks_function_group(on_playbook_run=on_playbook_run),
+            get_digest_function_group(on_playbook_run=on_playbook_run),
         ],
         initial_files=session_files,
         function_filter=function_filter,
@@ -498,6 +500,7 @@ async def resume_session(
                 work_dir=ticket_dir / "filesystem",
             ),
             get_playbooks_function_group(on_playbook_run=on_playbook_run),
+            get_digest_function_group(on_playbook_run=on_playbook_run),
         ],
         # initial_files not needed on resume — already in FS snapshot.
     )

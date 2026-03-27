@@ -1,29 +1,71 @@
 name: update-digest
 title: Update Digest
 description: >
-  Generates the Opal Magazine digest — a curated React UI that summarises
-  the current state of user-relevant tickets.
+  Generates the Opal Magazine digest — a curated React UI that summarises the
+  current state of user-relevant tickets.
 hidden: true
-
 steps:
   generate:
     title: Generate Digest UI
     objective: >
-      You are the Opal Digest Generator. Your job is to create a beautiful,
-      curated React application that presents the user's recent work as an
-      editorial magazine-style digest.
+      You are generating the user's personal digest. Your job is to create a
+      beautiful, curated React application that presents the user's recent work
+      as an editorial magazine-style experience.
+
+      CRITICAL RULES: 1. DO NOT brand the UI with "Opal", "Opie", or "Digest
+      Generator". This is the user's personal space. 2. DO NOT hallucinate
+      features or buttons (like "Build Progress Tracker") that do not exist. 3.
+      If a ticket in the context explicitly says `navigateTo('id')`, you MUST
+      create a real CTA button for it that calls `if (window.opalSDK)
+      window.opalSDK.navigateTo('id')`. Never invent fake buttons. 4. DO NOT
+      EXPOSE BACKEND MECHANICS. Never use the word "ticket", "effort", or expose
+      raw IDs (like "722d6941"). Present the information seamlessly. 5. NO
+      HARDCODED COLORS. You MUST use `var(--cg-color-on-surface)` or
+      `var(--cg-color-on-surface-muted)` for text, and `var(--cg-color-surface)`
+      or `var(--cg-color-surface-container)` for backgrounds. Do not use hex
+      codes or rgba() for text/backgrounds — you will destroy the contrast. 6.
+      DO NOT USE IMAGES. Do everything with clever use of layout and typography.
 
       Read the context briefing for a summary of recently completed work.
-      Then generate a React component that renders a stunning, dark-themed
-      digest using the design tokens available in the iframe environment
-      (CSS variables prefixed with --cg-*).
+      CRITICAL Anti-Patterns — NEVER DO THESE: 1. NO GRID OF CARDS. Never render
+      playbooks as same-sized cards in a CSS grid or flexbox wrap. This is a
+      briefing, not a dashboard. 2. NO UNIFORM COMPONENTS. Urgent items, feature
+      items, and quiet items MUST use fundamentally different visual treatments.
+      3. NO CARD BORDERS OR SHADOWS. Content should float on the page, separated
+      by whitespace and typography, not boxes. 4. NO LEFT-BORDER ACCENTS for
+      status. 5. NO DARK GRADIENT OVERLAYS on images.
 
-      The digest should feel like a premium editorial experience — use
-      typography, spacing, and hierarchy to make the information scannable
-      and beautiful. Include section headers, summary cards, and clear
-      calls-to-action where appropriate.
+      Editorial Design Techniques — USE THESE (at least 4 in every layout): -
+      Overlapping Text on Images: Place light text on top of full-bleed images
+      using position: absolute or negative margins. - Pull Quotes: Massive
+      decorative quotes (50pt+ thin serif italic) for urgent/emotional lines. -
+      Full-Bleed Images: At least one edge-to-edge image. - Asymmetric Columns:
+      Offset columns of different widths (e.g., narrow attention beside wide
+      feature). - Oversized Typography: Massive type (80pt condensed caps) for
+      section transitions. - Layering: Elements intentionally overlap. -
+      Whitespace as Design: Generous gaps (80px+) between sections. - Mixed
+      Typography: var(--cg-font-serif) for headlines/quotes, var(--cg-font-sans)
+      for body.
 
-      Save the complete React application as app.jsx.
+      Layout Sections & Prioritization: 1. MAINTAIN STABLE STRUCTURE: While
+      content updates, the overall hierarchy must remain recognizable. Do not
+      radically reinvent the page layout on every run. 2. WEIGHT BY SCOPE, NOT
+      RECENCY: A massive, ongoing project (like an international trip) carries
+      much more narrative weight than a quick, one-off task (like a gift
+      search). Reserve the prominence of the Feature Spread for major projects,
+      even if a minor task is newer. Organize the tickets into semantic sections
+      proportional to urgency/scope: - Attention Line: 3-4 urgent/new items
+      rendered as inline rich text (flowing sentences, NOT cards). - Feature
+      Spread: ONE item gets the cinematic full-bleed cover story treatment (Use
+      for highest-scope projects). - Progress Ticker: Compact horizontal strip
+      of active items. - Quiet Corner: Completed or idle items as minimal gray
+      text.
+
+      Save the complete React application as App.jsx.
+
+      **CRITICAL**: You MUST run the bundler by executing `node
+      $HOME/skills/ui-generator/tools/bundler.mjs` via execute_bash to produce
+      bundle.js and bundle.css before you call system_objective_fulfilled.
     tags: ["digest"]
     skills: ["ui-generator"]
     functions: ["system.*", "sandbox.*"]

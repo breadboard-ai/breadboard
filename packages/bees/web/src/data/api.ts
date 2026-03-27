@@ -12,7 +12,12 @@ export { BeesAPI };
  * Thin wrapper around the Bees REST endpoints.
  */
 class BeesAPI {
-  async addTicket(objective: string, tags?: string[], functions?: string[], skills?: string[]) {
+  async addTicket(
+    objective: string,
+    tags?: string[],
+    functions?: string[],
+    skills?: string[]
+  ) {
     await fetch("/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -56,5 +61,16 @@ class BeesAPI {
   async runPlaybook(name: string): Promise<boolean> {
     const resp = await fetch(`/playbooks/${name}/run`, { method: "POST" });
     return resp.ok;
+  }
+
+  async getFile(ticketId: string, path: string): Promise<string | null> {
+    try {
+      const resp = await fetch(`/tickets/${ticketId}/files/${path}`);
+      if (!resp.ok) return null;
+      return resp.text();
+    } catch (e) {
+      console.error(`Error fetching file ${path} for ticket ${ticketId}:`, e);
+      return null;
+    }
   }
 }

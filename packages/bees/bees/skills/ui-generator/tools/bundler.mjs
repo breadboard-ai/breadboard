@@ -50,8 +50,10 @@ function collectFiles(dir, base = dir) {
 
 const files = collectFiles(cwd);
 
-if (!files["App.jsx"]) {
-  console.error("Error: No App.jsx found in", cwd);
+const entryFile = files["App.jsx"] ? "App.jsx" : files["app.jsx"] ? "app.jsx" : null;
+
+if (!entryFile) {
+  console.error("Error: No App.jsx or app.jsx found in", cwd);
   process.exit(1);
 }
 
@@ -95,7 +97,7 @@ function findFileKey(path, extensions) {
 try {
   const result = await build({
     stdin: {
-      contents: autoExport(files["App.jsx"]),
+      contents: autoExport(files[entryFile]),
       loader: "jsx",
       resolveDir: "/",
     },

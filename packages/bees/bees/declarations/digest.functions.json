@@ -1,0 +1,33 @@
+[
+  {
+    "name": "digest_update",
+    "description": "Update the user's digest view. The digest is the user's curated home screen — a beautifully designed editorial magazine showing the most important and relevant items right now. Call this after synthesizing completed work, user context, and your editorial judgement about what matters. The digest will be regenerated from scratch each time you call this.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {
+        "editorial_briefing": {
+          "type": "string",
+          "description": "Your editorial instructions for the digest. Describe which items to feature, how to frame them, what tone to strike, and any contextual notes (e.g. 'Paul is at a party Saturday so skip Saturday meal planning'). Be specific about what cards to show and what data to highlight. The UI generator will follow these instructions to create the magazine layout."
+        }
+      },
+      "required": ["editorial_briefing"]
+    },
+    "responseJsonSchema": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "Whether the digest update was successfully queued."
+        },
+        "ticket_id": {
+          "type": "string",
+          "description": "The ticket ID for the digest generation task."
+        },
+        "error": {
+          "type": "string",
+          "description": "Error message if the update failed."
+        }
+      }
+    }
+  }
+]

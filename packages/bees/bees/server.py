@@ -183,6 +183,28 @@ async def _run_drain_wave() -> None:
                         "ticket": _ticket_to_dict(updated),
                     })
                     await _check_playbook_completion(updated)
+
+                    # Automatically build the bundle if this ticket generates UI.
+                    if updated.metadata.status == "completed" and updated.metadata.skills and "ui-generator" in updated.metadata.skills:
+                        app_path = updated.dir / "filesystem" / "App.jsx"
+                        app_lower = updated.dir / "filesystem" / "app.jsx"
+                        if app_path.exists() or app_lower.exists():
+                            bundler_path = updated.dir / "filesystem" / "skills" / "ui-generator" / "tools" / "bundler.mjs"
+                            if bundler_path.exists():
+                                logger.info(f"Auto-building UI bundle for ticket {updated.id}...")
+                                import subprocess
+                                try:
+                                    subprocess.run(
+                                        ["node", str(bundler_path)],
+                                        cwd=str(updated.dir / "filesystem"),
+                                        check=True,
+                                        capture_output=True,
+                                        text=True
+                                    )
+                                    logger.info(f"Successfully auto-built bundle for {updated.id}")
+                                except subprocess.CalledProcessError as e:
+                                    logger.error(f"Auto-bundle failed for {updated.id}:\n{e.stderr}")
+
                     _trigger_drain()
 
             asyncio.create_task(wrap_run())
@@ -203,6 +225,28 @@ async def _run_drain_wave() -> None:
                         "ticket": _ticket_to_dict(updated),
                     })
                     await _check_playbook_completion(updated)
+
+                    # Automatically build the bundle if this ticket generates UI.
+                    if updated.metadata.status == "completed" and updated.metadata.skills and "ui-generator" in updated.metadata.skills:
+                        app_path = updated.dir / "filesystem" / "App.jsx"
+                        app_lower = updated.dir / "filesystem" / "app.jsx"
+                        if app_path.exists() or app_lower.exists():
+                            bundler_path = updated.dir / "filesystem" / "skills" / "ui-generator" / "tools" / "bundler.mjs"
+                            if bundler_path.exists():
+                                logger.info(f"Auto-building UI bundle for ticket {updated.id}...")
+                                import subprocess
+                                try:
+                                    subprocess.run(
+                                        ["node", str(bundler_path)],
+                                        cwd=str(updated.dir / "filesystem"),
+                                        check=True,
+                                        capture_output=True,
+                                        text=True
+                                    )
+                                    logger.info(f"Successfully auto-built bundle for {updated.id}")
+                                except subprocess.CalledProcessError as e:
+                                    logger.error(f"Auto-bundle failed for {updated.id}:\n{e.stderr}")
+
                     _trigger_drain()
 
             asyncio.create_task(wrap_resume())
@@ -231,6 +275,10 @@ async def _check_playbook_completion(ticket: Ticket) -> None:
 
     # Skip if *this* ticket is the opie ticket (don't self-notify).
     if ticket.metadata.tags and "opie" in ticket.metadata.tags:
+        return
+
+    # Skip digest tickets — Opie triggers these, not the other way around.
+    if ticket.metadata.tags and "digest" in ticket.metadata.tags:
         return
 
     # Gather all tickets in this playbook run.
@@ -271,35 +319,43 @@ async def _check_playbook_completion(ticket: Ticket) -> None:
         summaries.append(f"- **{title}**: {outcome}")
     summary_text = "\n".join(summaries)
 
-    # Wake Opie with a system notification.
+    # Wake Opie with a system notification (or queue it if busy).
     opie = next(
-        (t for t in list_tickets()
-         if t.metadata.tags and "opie" in t.metadata.tags
-         and t.metadata.status == "suspended"
-         and t.metadata.assignee == "user"),
+        (t for t in list_tickets() if t.metadata.tags and "opie" in t.metadata.tags),
         None,
     )
     if opie:
         notification = (
             f'[System Notification] Playbook "{playbook_name}" has completed.\n'
             f"Results:\n{summary_text}\n\n"
-            f"Please summarise these results for the user and ask what they'd like to do next."
+            f"Please review these results. Your primary presentation surface is the Digest UI, but do NOT update it for minor intermediate steps.\n"
+            f"1. Evaluate if this completes a major milestone or uncovers significant findings. If so, call `digest_update` with an editorial briefing.\n"
+            f"2. Send a very brief chat message acknowledging the work. If you updated the digest, mention it. Do NOT output a long summary to the chat."
         )
-        response_path = opie.dir / "response.json"
-        response_path.write_text(
-            json.dumps({"text": notification}, indent=2, ensure_ascii=False)
-            + "\n"
-        )
-        opie.metadata.assignee = "agent"
-        opie.save_metadata()
 
-        await broadcaster.broadcast({
-            "type": "ticket_update",
-            "ticket": _ticket_to_dict(opie),
-        })
+        if opie.metadata.status == "suspended" and opie.metadata.assignee == "user":
+            # Opie is idle. Deliver immediately.
+            response_path = opie.dir / "response.json"
+            response_path.write_text(
+                json.dumps({"text": notification}, indent=2, ensure_ascii=False)
+                + "\n"
+            )
+            opie.metadata.assignee = "agent"
+            opie.save_metadata()
 
-        logger.info("Notified Opie of playbook completion: %s", playbook_name)
-        _trigger_drain()
+            await broadcaster.broadcast({
+                "type": "ticket_update",
+                "ticket": _ticket_to_dict(opie),
+            })
+            logger.info("Notified Opie immediately of playbook completion: %s", playbook_name)
+            _trigger_drain()
+        else:
+            # Opie is busy. Queue the notification.
+            if not opie.metadata.pending_notifications:
+                opie.metadata.pending_notifications = []
+            opie.metadata.pending_notifications.append(notification)
+            opie.save_metadata()
+            logger.info("Queued Opie notification for playbook completion: %s", playbook_name)
 
 
 # ---------------------------------------------------------------------------
@@ -342,8 +398,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
     drain_task = asyncio.create_task(_drain_loop())
 
-    # Auto-boot Opie if no opie-tagged ticket exists yet.
+    # Recover any stuck "running" tickets from an ungraceful shutdown.
     existing = list_tickets()
+    for t in existing:
+        if t.metadata.status == "running":
+            t.metadata.status = "available"
+            t.save_metadata()
+            logger.info("Recovered stuck running ticket: %s", t.id)
+
+    # Auto-boot Opie if no opie-tagged ticket exists yet.
     has_opie = any(
         t.metadata.tags and "opie" in t.metadata.tags
         for t in existing

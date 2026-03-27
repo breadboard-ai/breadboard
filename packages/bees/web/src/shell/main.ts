@@ -13,7 +13,7 @@
  * - An unobtrusive status toast for background activity
  */
 
-import { LitElement, html, nothing } from "lit";
+import { LitElement, html } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
@@ -43,6 +43,7 @@ class OpalShell extends SignalWatcher(LitElement) {
   @state() private statusText = "";
   @state() private statusVisible = false;
   @state() private currentView: string | null = null;
+  @state() private digestTicketId: string | null = null;
 
   private connection = new BeesConnection(appState);
   private api = new BeesAPI();
@@ -79,11 +80,20 @@ class OpalShell extends SignalWatcher(LitElement) {
   // ── Render sections ──────────────────────────────────────────────
 
   #renderHeader() {
+    const showBack =
+      this.currentView !== null && this.currentView !== this.digestTicketId;
     return html`
       <header>
         <div class="brand">
-          <span class="brand-icon">◇</span>
-          Opal
+          ${showBack
+            ? html`<button
+                class="back-button"
+                @click=${this.#navigateToDigest}
+                aria-label="Back to Digest"
+              >
+                ← Digest
+              </button>`
+            : html`<span class="brand-icon">◇</span> Opal`}
         </div>
         <div class="actions">
           <a href="/devtools.html">DevTools</a>
@@ -106,7 +116,13 @@ class OpalShell extends SignalWatcher(LitElement) {
                 </p>
               </div>
             `
-          : nothing}
+          : html`
+              <iframe
+                src="/iframe.html"
+                title="Digest View"
+                sandbox="allow-scripts allow-same-origin allow-popups"
+              ></iframe>
+            `}
         <div class="status-toast ${this.statusVisible ? "visible" : ""}">
           <div class="spinner"></div>
           <span>${this.statusText}</span>
@@ -250,6 +266,65 @@ class OpalShell extends SignalWatcher(LitElement) {
     return appState.tickets.get().find((t) => t.tags?.includes("opie"));
   }
 
+  async #loadBundle(ticketId: string) {
+    const [code, css] = await Promise.all([
+      this.api.getFile(ticketId, "bundle.js"),
+      this.api.getFile(ticketId, "bundle.css"),
+    ]);
+
+    if (!code) {
+      console.error(`[opal-shell] Missing bundle.js for ticket ${ticketId}`);
+      return;
+    }
+
+    // Wait for the iframe DOM element to be rendered
+    this.requestUpdate();
+    await this.updateComplete;
+
+    const iframe = this.renderRoot.querySelector("iframe");
+    if (!iframe) return;
+
+    if (this.bridge) {
+      this.bridge.dispose();
+    }
+
+    this.bridge = new MessageBridge(iframe);
+    this.bridge.onMessage((msg) => {
+      if (msg.type === "navigate") {
+        this.#navigateToTicket(msg.viewId);
+      } else if (msg.type === "emit") {
+        console.log("[opal-shell] iframe emitted", msg.event, msg.payload);
+      }
+    });
+
+    await this.bridge.send({
+      type: "render",
+      code,
+      css: css || undefined,
+      props: {},
+      assets: {},
+    });
+  }
+
+  async #navigateToTicket(ticketId: string) {
+    if (ticketId === "digest" && this.digestTicketId) {
+      this.currentView = this.digestTicketId;
+      await this.#loadBundle(this.digestTicketId);
+      return;
+    }
+    this.currentView = ticketId;
+    this.statusText = "Loading...";
+    this.statusVisible = true;
+    await this.#loadBundle(ticketId);
+    this.statusVisible = false;
+  }
+
+  #navigateToDigest() {
+    if (this.digestTicketId) {
+      this.#navigateToTicket("digest");
+    }
+  }
+
   /**
    * Watch the reactive state for Opie-relevant transitions.
    * Runs on a 1s interval (will migrate to Signal.effect / SCA triggers
@@ -294,8 +369,29 @@ class OpalShell extends SignalWatcher(LitElement) {
     if (digestRunning && !this.statusVisible) {
       this.statusText = "Updating based on recent work...";
       this.statusVisible = true;
-    } else if (!digestRunning && this.statusVisible) {
+    } else if (!digestRunning && this.statusVisible && this.currentView) {
       this.statusVisible = false;
+    }
+
+    // Load digest logic
+    const digestComplete = tickets
+      .slice()
+      .sort((a, b) =>
+        (b.completed_at ?? "").localeCompare(a.completed_at ?? "")
+      )
+      .find((t) => t.tags?.includes("digest") && t.status === "completed");
+
+    if (digestComplete && digestComplete.id !== this.currentView) {
+      this.currentView = digestComplete.id;
+      this.digestTicketId = digestComplete.id;
+      // Also show loading immediately while fetching code
+      if (!this.statusVisible) {
+        this.statusText = "Loading digest...";
+        this.statusVisible = true;
+      }
+      this.#loadBundle(digestComplete.id).then(() => {
+        this.statusVisible = false;
+      });
     }
   }
 }
