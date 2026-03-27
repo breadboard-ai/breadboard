@@ -1,18 +1,17 @@
 ## Using Files
 
-The system you're working in has a virtual file system. The file paths you have
-access to are always prefixed with the "/mnt/". Every file path will be of the
-form "/mnt/[name]". Use snake_case to name files.
+You have access to a working-directory file system. Use bare filenames —
+no path prefix is needed. Use snake_case. Examples: `robot_poem.txt`,
+`report.md`, `build/index.js`.
 
-You can use the <file src="/mnt/path" /> syntax to embed them in text.
+You can embed files in your output using the `<file src="filename.ext" />` syntax.
 
-Only reference files that you know to exist. If you aren't sure, call the
-"system_list_files" function to confirm their existence. Do NOT make
-hypothetical file tags: they will cause processing errors.
+Only reference files that you know to exist. Call `system_list_files`
+to confirm their existence. Do NOT make hypothetical file tags — they
+will cause processing errors.
 
-NOTE: The post-processing parser that reads your generated output and replaces
-the <file src="/mnt/path" /> with the contents of the file. Make sure that your
-output still makes sense after the replacement.
+The post-processing parser replaces each `<file>` tag with the file's
+contents. Make sure your output reads well after the replacement.
 
 ### Good example
 
@@ -20,16 +19,16 @@ Evaluate the proposal below according to the provided rubric:
 
 Proposal:
 
-<file src="/mnt/proposal.md" />
+<file src="proposal.md" />
 
 Rubric:
 
-<file src="/mnt/rubric.md" />
+<file src="rubric.md" />
 
 ### Bad example
 
-Evaluate proposal <file src="/mnt/proposal.md" /> according to the rubric
-<file src="/mnt/rubric.md" />
+Evaluate proposal <file src="proposal.md" /> according to the rubric
+<file src="rubric.md" />
 
 In the good example above, the replaced texts fit neatly under each heading. In
 the bad example, the replaced text is stuffed into the sentence.

@@ -144,14 +144,31 @@ class AgentFileSystem:
                 }
         return "\n".join(texts)
 
+    def _resolve_path(self, path: str) -> str:
+        """Normalise an incoming file path to a canonical ``/mnt/`` form.
+
+        Applies two fixups in order:
+
+        1. ``mnt/foo``  → ``/mnt/foo``  (existing Gemini quirk: missing leading slash)
+        2. ``foo.md``   → ``/mnt/foo.md`` (new: bare relative names, e.g. in bees context)
+
+        Rule 2 triggers when the path contains no leading ``/`` *and* does not
+        start with ``mnt/``. Subdirectory-relative paths like ``build/index.js``
+        are also normalised to ``/mnt/build/index.js``.
+        Absolute ``/mnt/...`` paths pass through unchanged.
+        """
+        if path.startswith("mnt/"):
+            return f"/{path}"
+        if not path.startswith("/"):
+            return f"/mnt/{path}"
+        return path
+
     async def get(self, path: str) -> list[dict[str, Any]] | dict[str, str]:
         """Get the data parts for a file path.
 
         Returns a list of data parts, or an error dict.
         """
-        # Path fix-up: sometimes Gemini uses "mnt/" instead of "/mnt/"
-        if path.startswith("mnt/"):
-            path = f"/{path}"
+        path = self._resolve_path(path)
 
         if path.startswith("/mnt/system/"):
             res = self._get_system_file(path)

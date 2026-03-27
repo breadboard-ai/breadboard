@@ -232,7 +232,7 @@ def extract_files(
     """Extract agent file system files to disk.
 
     Writes each file from ``CompleteEvent.result.intermediate`` into
-    ``output_dir``, preserving the ``/mnt/`` path structure. Skips
+    ``output_dir`` as bare filenames (``/mnt/`` prefix stripped). Skips
     system files (``/mnt/system/*``).
 
     Returns a manifest of ``[{path, mimeType, localPath}]``.
@@ -250,10 +250,11 @@ def extract_files(
         if path.startswith("/mnt/system/"):
             continue
 
-        # Build local path preserving /mnt/ structure.
-        # e.g. /mnt/poem.md → output_dir/mnt/poem.md
-        local_rel = path.lstrip("/")
-        local_path = output_dir / local_rel
+        # Strip /mnt/ prefix so files land at output_dir/foo.md, not
+        # output_dir/mnt/foo.md — consistent with what the sandbox sees.
+        _MNT = "/mnt/"
+        rel = path[len(_MNT):] if path.startswith(_MNT) else path.lstrip("/")
+        local_path = output_dir / rel
         local_path.parent.mkdir(parents=True, exist_ok=True)
 
         if "text" in content:
@@ -348,7 +349,8 @@ async def run_session(
             
             # Mirror skill tools to the real filesystem so execute_bash can use them.
             if ticket_dir and "/tools/" in k:
-                rel_path = k[5:] if k.startswith("/mnt/") else k.lstrip("/")
+                _MNT = "/mnt/"
+                rel_path = k[len(_MNT):] if k.startswith(_MNT) else k.lstrip("/")
                 local_path = ticket_dir / "filesystem" / rel_path
                 local_path.parent.mkdir(parents=True, exist_ok=True)
                 local_path.write_text(v, encoding="utf-8")
