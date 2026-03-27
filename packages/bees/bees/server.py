@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-Bees HTTP server — REST API + auto-drain + SSE event stream.
+Bees HTTP server — REST API + scheduler + SSE event stream.
 
 Provides the same functionality as the CLI tools (ticket:add,
-ticket:drain, ticket:respond) via HTTP, plus auto-draining and
+ticket:drain, ticket:respond) via HTTP, plus auto-scheduling and
 real-time status updates via Server-Sent Events.
 
 Usage::
@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import subprocess
 import sys
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -30,13 +31,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from bees.drain import (
-    _promote_blocked_tickets,
-    _resume_ticket,
-    _run_ticket,
-    resolve_segments,
-)
 from bees.playbook import PLAYBOOKS_DIR, load_playbook, run_playbook
+from bees.scheduler import Scheduler, SchedulerHooks
 from bees.session import load_gemini_key
 from bees.ticket import (
     Ticket,
@@ -75,190 +71,78 @@ class Broadcaster:
 
 
 broadcaster = Broadcaster()
+scheduler: Scheduler | None = None
 
 
 # ---------------------------------------------------------------------------
-# Auto-drain loop
+# Lifecycle hooks — application-specific behaviour wired to SSE
 # ---------------------------------------------------------------------------
 
-_drain_trigger = asyncio.Event()
-_drain_running = False
-_http_client: httpx.AsyncClient | None = None
-_backend: HttpBackendClient | None = None
-_tool_files: dict[str, str] = {}
 
-
-async def _drain_loop() -> None:
-    """Background loop that drains whenever triggered."""
-    global _drain_running
-    while True:
-        await _drain_trigger.wait()
-        _drain_trigger.clear()
-
-        if _drain_running:
-            continue
-
-        _drain_running = True
+async def _on_startup(tickets: list[Ticket]) -> None:
+    """Boot Opie if no opie-tagged ticket exists."""
+    has_opie = any(
+        t.metadata.tags and "opie" in t.metadata.tags
+        for t in tickets
+    )
+    if not has_opie:
         try:
-            await _run_drain_wave()
+            opie_tickets = run_playbook("opie")
+            for ticket in opie_tickets:
+                await broadcaster.broadcast({
+                    "type": "ticket_added",
+                    "ticket": _ticket_to_dict(ticket),
+                })
+            logger.info("Auto-booted Opie (%d tickets)", len(opie_tickets))
         except Exception as exc:
-            logger.exception("Drain error: %s", exc)
-            await broadcaster.broadcast({
-                "type": "drain_error", "error": str(exc),
-            })
-        finally:
-            _drain_running = False
+            logger.warning("Failed to auto-boot Opie: %s", exc)
 
 
-_running_tickets: set[str] = set()
+async def _on_cycle_start(cycle: int, new: int, resumable: int) -> None:
+    await broadcaster.broadcast({
+        "type": "drain_start",
+        "wave": cycle,
+        "new": new,
+        "resumable": resumable,
+    })
 
 
-async def _run_drain_wave() -> None:
-    """Run drain waves until no more work is available."""
-    assert _http_client and _backend
-    wave = 0
-
-    def _make_on_event(t_id: str):
-        async def on_event(event: dict[str, Any]):
-            await broadcaster.broadcast({
-                "type": "session_event",
-                "ticket_id": t_id,
-                "event": event,
-            })
-        return on_event
-
-    def _on_playbook_run(tickets: list[Ticket]) -> None:
-        for ticket in tickets:
-            asyncio.create_task(broadcaster.broadcast({
-                "type": "ticket_added",
-                "ticket": _ticket_to_dict(ticket),
-            }))
-        _trigger_drain()
-
-    while True:
-        # Promote blocked tickets.
-        promoted = _promote_blocked_tickets()
-        if promoted:
-            await broadcaster.broadcast({
-                "type": "promoted", "count": promoted,
-            })
-            # Broadcast updated blocked tickets.
-            for t in list_tickets():
-                if t.metadata.status == "available" or t.metadata.status == "failed":
-                    await broadcaster.broadcast({
-                        "type": "ticket_update",
-                        "ticket": _ticket_to_dict(t),
-                    })
-
-        tickets = list_tickets(status="available")
-        resumable = [
-            t for t in list_tickets(status="suspended")
-            if t.metadata.assignee == "agent"
-        ]
-
-        if not tickets and not resumable:
-            break
-
-        wave += 1
-        await broadcaster.broadcast({
-            "type": "drain_start",
-            "wave": wave,
-            "new": len(tickets),
-            "resumable": len(resumable),
-        })
-
-        for ticket in tickets:
-            if ticket.id in _running_tickets:
-                continue
-            _running_tickets.add(ticket.id)
-
-            async def wrap_run(t=ticket):
-                try:
-                    await _run_ticket(t, http=_http_client, backend=_backend, on_event=_make_on_event(t.id), on_playbook_run=_on_playbook_run)
-                finally:
-                    _running_tickets.remove(t.id)
-                    updated = load_ticket(t.id) or t
-                    await broadcaster.broadcast({
-                        "type": "ticket_update",
-                        "ticket": _ticket_to_dict(updated),
-                    })
-                    await _check_playbook_completion(updated)
-
-                    # Automatically build the bundle if this ticket generates UI.
-                    if updated.metadata.status == "completed" and updated.metadata.skills and "ui-generator" in updated.metadata.skills:
-                        app_path = updated.dir / "filesystem" / "App.jsx"
-                        app_lower = updated.dir / "filesystem" / "app.jsx"
-                        if app_path.exists() or app_lower.exists():
-                            bundler_path = updated.dir / "filesystem" / "skills" / "ui-generator" / "tools" / "bundler.mjs"
-                            if bundler_path.exists():
-                                logger.info(f"Auto-building UI bundle for ticket {updated.id}...")
-                                import subprocess
-                                try:
-                                    subprocess.run(
-                                        ["node", str(bundler_path)],
-                                        cwd=str(updated.dir / "filesystem"),
-                                        check=True,
-                                        capture_output=True,
-                                        text=True
-                                    )
-                                    logger.info(f"Successfully auto-built bundle for {updated.id}")
-                                except subprocess.CalledProcessError as e:
-                                    logger.error(f"Auto-bundle failed for {updated.id}:\n{e.stderr}")
-
-                    _trigger_drain()
-
-            asyncio.create_task(wrap_run())
-
-        for ticket in resumable:
-            if ticket.id in _running_tickets:
-                continue
-            _running_tickets.add(ticket.id)
-
-            async def wrap_resume(t=ticket):
-                try:
-                    await _resume_ticket(t, http=_http_client, backend=_backend, on_event=_make_on_event(t.id), on_playbook_run=_on_playbook_run)
-                finally:
-                    _running_tickets.remove(t.id)
-                    updated = load_ticket(t.id) or t
-                    await broadcaster.broadcast({
-                        "type": "ticket_update",
-                        "ticket": _ticket_to_dict(updated),
-                    })
-                    await _check_playbook_completion(updated)
-
-                    # Automatically build the bundle if this ticket generates UI.
-                    if updated.metadata.status == "completed" and updated.metadata.skills and "ui-generator" in updated.metadata.skills:
-                        app_path = updated.dir / "filesystem" / "App.jsx"
-                        app_lower = updated.dir / "filesystem" / "app.jsx"
-                        if app_path.exists() or app_lower.exists():
-                            bundler_path = updated.dir / "filesystem" / "skills" / "ui-generator" / "tools" / "bundler.mjs"
-                            if bundler_path.exists():
-                                logger.info(f"Auto-building UI bundle for ticket {updated.id}...")
-                                import subprocess
-                                try:
-                                    subprocess.run(
-                                        ["node", str(bundler_path)],
-                                        cwd=str(updated.dir / "filesystem"),
-                                        check=True,
-                                        capture_output=True,
-                                        text=True
-                                    )
-                                    logger.info(f"Successfully auto-built bundle for {updated.id}")
-                                except subprocess.CalledProcessError as e:
-                                    logger.error(f"Auto-bundle failed for {updated.id}:\n{e.stderr}")
-
-                    _trigger_drain()
-
-            asyncio.create_task(wrap_resume())
-
-        await asyncio.sleep(1)
-
-    await broadcaster.broadcast({"type": "drain_complete", "waves": wave})
+async def _on_ticket_event(ticket_id: str, event: dict[str, Any]) -> None:
+    await broadcaster.broadcast({
+        "type": "session_event",
+        "ticket_id": ticket_id,
+        "event": event,
+    })
 
 
-def _trigger_drain() -> None:
-    """Wake the drain loop."""
-    _drain_trigger.set()
+async def _on_ticket_done(ticket: Ticket) -> None:
+    """Post-completion hook: broadcast, check playbook, auto-bundle."""
+    await broadcaster.broadcast({
+        "type": "ticket_update",
+        "ticket": _ticket_to_dict(ticket),
+    })
+    await _check_playbook_completion(ticket)
+    await _auto_build_bundle(ticket)
+
+
+def _on_playbook_run(tickets: list[Ticket]) -> None:
+    """When a running agent invokes a playbook mid-session."""
+    for ticket in tickets:
+        asyncio.create_task(broadcaster.broadcast({
+            "type": "ticket_added",
+            "ticket": _ticket_to_dict(ticket),
+        }))
+    if scheduler:
+        scheduler.trigger()
+
+
+async def _on_cycle_complete(cycles: int) -> None:
+    await broadcaster.broadcast({"type": "drain_complete", "waves": cycles})
+
+
+# ---------------------------------------------------------------------------
+# Application-layer helpers (not scheduler concerns)
+# ---------------------------------------------------------------------------
 
 
 async def _check_playbook_completion(ticket: Ticket) -> None:
@@ -348,7 +232,8 @@ async def _check_playbook_completion(ticket: Ticket) -> None:
                 "ticket": _ticket_to_dict(opie),
             })
             logger.info("Notified Opie immediately of playbook completion: %s", playbook_name)
-            _trigger_drain()
+            if scheduler:
+                scheduler.trigger()
         else:
             # Opie is busy. Queue the notification.
             if not opie.metadata.pending_notifications:
@@ -356,6 +241,36 @@ async def _check_playbook_completion(ticket: Ticket) -> None:
             opie.metadata.pending_notifications.append(notification)
             opie.save_metadata()
             logger.info("Queued Opie notification for playbook completion: %s", playbook_name)
+
+
+async def _auto_build_bundle(ticket: Ticket) -> None:
+    """Automatically build the UI bundle if this ticket generates UI."""
+    if ticket.metadata.status != "completed":
+        return
+    if not ticket.metadata.skills or "ui-generator" not in ticket.metadata.skills:
+        return
+
+    app_path = ticket.dir / "filesystem" / "App.jsx"
+    app_lower = ticket.dir / "filesystem" / "app.jsx"
+    if not (app_path.exists() or app_lower.exists()):
+        return
+
+    bundler_path = ticket.dir / "filesystem" / "skills" / "ui-generator" / "tools" / "bundler.mjs"
+    if not bundler_path.exists():
+        return
+
+    logger.info(f"Auto-building UI bundle for ticket {ticket.id}...")
+    try:
+        subprocess.run(
+            ["node", str(bundler_path)],
+            cwd=str(ticket.dir / "filesystem"),
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        logger.info(f"Successfully auto-built bundle for {ticket.id}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Auto-bundle failed for {ticket.id}:\n{e.stderr}")
 
 
 # ---------------------------------------------------------------------------
@@ -386,50 +301,41 @@ class UpdateTagsRequest(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    global _http_client, _backend
+    global scheduler
 
     gemini_key = load_gemini_key()
-    _http_client = httpx.AsyncClient(timeout=httpx.Timeout(300.0))
-    _backend = HttpBackendClient(
+    http_client = httpx.AsyncClient(timeout=httpx.Timeout(300.0))
+    backend = HttpBackendClient(
         upstream_base="",
-        httpx_client=_http_client,
+        httpx_client=http_client,
         access_token="",
         gemini_key=gemini_key,
     )
-    drain_task = asyncio.create_task(_drain_loop())
 
-    # Recover any stuck "running" tickets from an ungraceful shutdown.
-    existing = list_tickets()
-    for t in existing:
-        if t.metadata.status == "running":
-            t.metadata.status = "available"
-            t.save_metadata()
-            logger.info("Recovered stuck running ticket: %s", t.id)
-
-    # Auto-boot Opie if no opie-tagged ticket exists yet.
-    has_opie = any(
-        t.metadata.tags and "opie" in t.metadata.tags
-        for t in existing
+    hooks = SchedulerHooks(
+        on_startup=_on_startup,
+        on_cycle_start=_on_cycle_start,
+        on_ticket_event=_on_ticket_event,
+        on_ticket_done=_on_ticket_done,
+        on_playbook_run=_on_playbook_run,
+        on_cycle_complete=_on_cycle_complete,
     )
-    if not has_opie:
-        try:
-            opie_tickets = run_playbook("opie")
-            for ticket in opie_tickets:
-                await broadcaster.broadcast({
-                    "type": "ticket_added",
-                    "ticket": _ticket_to_dict(ticket),
-                })
-            logger.info("Auto-booted Opie (%d tickets)", len(opie_tickets))
-        except Exception as exc:
-            logger.warning("Failed to auto-boot Opie: %s", exc)
+    scheduler = Scheduler(http=http_client, backend=backend, hooks=hooks)
 
-    # Auto-drain any existing available tickets on startup.
-    _trigger_drain()
+    # Recover stuck tickets and fire startup hook.
+    tickets = await scheduler.recover_stuck_tickets()
+    if hooks.on_startup:
+        await hooks.on_startup(tickets)
+
+    loop_task = asyncio.create_task(scheduler.start_loop())
+
+    # Auto-schedule any existing available tickets on startup.
+    scheduler.trigger()
 
     yield
 
-    drain_task.cancel()
-    await _http_client.aclose()
+    loop_task.cancel()
+    await http_client.aclose()
 
 
 app = FastAPI(title="Bees", lifespan=lifespan)
@@ -500,7 +406,7 @@ async def get_ticket_file(ticket_id: str, path: str) -> FileResponse:
 
 @app.post("/tickets")
 async def add_ticket(req: AddTicketRequest) -> dict[str, Any]:
-    """Create a new ticket and trigger auto-drain."""
+    """Create a new ticket and trigger scheduling."""
     ticket = create_ticket(req.objective, tags=req.tags, functions=req.functions, skills=req.skills)
 
     await broadcaster.broadcast({
@@ -508,7 +414,8 @@ async def add_ticket(req: AddTicketRequest) -> dict[str, Any]:
         "ticket": _ticket_to_dict(ticket),
     })
 
-    _trigger_drain()
+    if scheduler:
+        scheduler.trigger()
     return _ticket_to_dict(ticket)
 
 
@@ -516,7 +423,7 @@ async def add_ticket(req: AddTicketRequest) -> dict[str, Any]:
 async def respond_to_ticket(
     ticket_id: str, req: RespondRequest,
 ) -> dict[str, Any]:
-    """Submit a response to a suspended ticket and trigger drain."""
+    """Submit a response to a suspended ticket and trigger scheduling."""
     ticket = load_ticket(ticket_id)
     if not ticket:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
@@ -545,7 +452,8 @@ async def respond_to_ticket(
         "ticket": _ticket_to_dict(ticket),
     })
 
-    _trigger_drain()
+    if scheduler:
+        scheduler.trigger()
     return _ticket_to_dict(ticket)
 
 
@@ -610,7 +518,8 @@ async def run_playbook_endpoint(name: str) -> dict[str, Any]:
             "ticket": _ticket_to_dict(ticket),
         })
 
-    _trigger_drain()
+    if scheduler:
+        scheduler.trigger()
 
     return {
         "playbook": name,
