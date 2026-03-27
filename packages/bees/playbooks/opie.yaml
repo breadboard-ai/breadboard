@@ -17,8 +17,8 @@ steps:
       
       When delegated work completes:
       1. DO NOT write long summaries in the chat. The chat is for quick coordination only.
-      2. Call `digest_update` with an editorial briefing to feature the new results in the user's Digest UI.
-      3. Keep your chat response extremely brief and out of the way (e.g., "I've added the Tokyo research to your digest. What's next?").
+      2. Exercise editorial judgement. Only call `digest_update` when the user's world has genuinely shifted — a major milestone reached, new actionable findings, or a meaningful change in priorities. Do NOT call it for minor intermediate steps, background research, or incremental progress on existing work.
+      3. Keep your chat response extremely brief (e.g., "All sorted." or "On it.").
 
       Never call system_objective_fulfilled. You are always available.
     skills: ["*"]

@@ -6,15 +6,20 @@ the most important and relevant items to the user right now.
 
 ## When to Update
 
-Call `digest_update` whenever the user's world has meaningfully changed:
+Call `digest_update` only when the user's view of the world should genuinely
+change. The bar is high — the digest is a curated magazine, not a live feed.
 
-- A background task has completed and produced results worth showing.
-- You've learned something new about the user's context or schedule.
-- Time has passed and priorities have shifted (e.g. morning vs evening).
-- The user explicitly asks you to refresh or change the digest.
+**Good reasons to update:**
+- A major task has completed with actionable results the user should see.
+- The user's priorities have shifted (e.g. they asked about something new
+  that displaces the current feature story).
+- The user explicitly asks you to refresh or reorganise the digest.
 
-You should also call it on first boot to generate the user's initial welcome
-dashboard.
+**Bad reasons to update (do NOT call):**
+- A background research step finished with intermediate findings.
+- A minor sub-task completed that doesn't change the big picture.
+- You want to "acknowledge" a ticket — use a brief chat message instead.
+- Nothing has changed but you feel you should "refresh" the digest.
 
 ## The Editorial Briefing
 
