@@ -73,6 +73,7 @@ class AgentRunArgs:
     hooks: LoopHooks | None = None
     contents: list[LLMContent] | None = None
     singleton_cached_content_name: str | None = None
+    model: str | None = None
 
 
 @dataclass
@@ -164,6 +165,7 @@ class Loop:
         """
         hooks = args.hooks or LoopHooks()
         contents = args.contents or [args.objective]
+        model = args.model or AGENT_MODEL
 
         # Only fire on_start for fresh runs. Resume runs (args.contents
         # is pre-populated) are continuations — firing start would reset
@@ -240,7 +242,7 @@ class Loop:
                         }
 
                 if hooks.on_send_request:
-                    hooks.on_send_request(AGENT_MODEL, body)
+                    hooks.on_send_request(model, body)
 
                 # Resolve storedData/fileData/json parts before calling Gemini
                 if self._backend:
@@ -257,7 +259,7 @@ class Loop:
 
                 try:
                     chunks_iter = stream_generate_content(
-                        AGENT_MODEL,
+                        model,
                         body,
                         backend=self._backend,
                     )

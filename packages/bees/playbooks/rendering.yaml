@@ -8,5 +8,6 @@ steps:
     objective: >
       Create a super-fancy shopping list web app.
     skills: ["*"]
+    model: gemini-3.1-pro-preview
     tags: ["ui", "bundle"]
     functions: ["system.*", "sandbox.*", "skills.*"]

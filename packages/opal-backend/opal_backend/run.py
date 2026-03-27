@@ -107,6 +107,7 @@ async def run(
     extra_groups: list[FunctionGroup | FunctionGroupFactory] | None = None,
     function_filter: list[str] | None = None,
     initial_files: dict[str, str] | None = None,
+    model: str | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Start a new agent run.
 
@@ -215,6 +216,7 @@ async def run(
         objective=objective,
         function_groups=function_groups,
         singleton_cached_content_name=cached_name,
+        model=model,
     )
 
     async for event in _stream_loop(
@@ -228,6 +230,7 @@ async def run(
         graph=graph,
         session_id=session_id,
         function_filter=function_filter,
+        model=model,
     ):
         yield event
 
@@ -240,6 +243,7 @@ async def resume(
     store: InteractionStore,
     drive: DriveOperationsClient | None = None,
     extra_groups: list[FunctionGroup | FunctionGroupFactory] | None = None,
+    model: str | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Resume a suspended agent run.
 
@@ -278,6 +282,7 @@ async def resume(
 
     # Restore flags and graph from saved state.
     resolved_flags = state.flags
+    model_override = model or state.model
 
     # Rebuild SheetManager if memory was active and drive is available.
     sheet_manager: SheetManager | None = None
@@ -364,6 +369,7 @@ async def resume(
         function_groups=function_groups,
         contents=contents,
         singleton_cached_content_name=cached_name,
+        model=model_override,
     )
 
     async for event in _stream_loop(
@@ -378,6 +384,7 @@ async def resume(
         session_id=state.session_id,
         consents_granted=state.consents_granted,
         function_filter=state.function_filter,
+        model=model_override,
     ):
         yield event
 
@@ -703,6 +710,7 @@ async def _stream_loop(
     session_id: str = "",
     consents_granted: set[str] | None = None,
     function_filter: list[str] | None = None,
+    model: str | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Run the loop and yield events.
 
@@ -739,6 +747,7 @@ async def _stream_loop(
                             consents_granted or set()
                         ),
                         function_filter=function_filter,
+                        model=model,
                     ),
                 )
                 result.suspend_event.interaction_id = (

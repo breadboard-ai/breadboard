@@ -51,6 +51,7 @@ class TicketMetadata:
     title: str | None = None
     playbook_id: str | None = None
     playbook_run_id: str | None = None
+    model: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -78,6 +79,7 @@ class TicketMetadata:
             title=data.get("title"),
             playbook_id=data.get("playbook_id"),
             playbook_run_id=data.get("playbook_run_id"),
+            model=data.get("model"),
         )
 
 
@@ -128,6 +130,7 @@ def create_ticket(
     assignee: str | None = None,
     playbook_id: str | None = None,
     playbook_run_id: str | None = None,
+    model: str | None = None,
 ) -> Ticket:
     """Create a new ticket.
 
@@ -169,6 +172,7 @@ def create_ticket(
             assignee=assignee,
             playbook_id=playbook_id,
             playbook_run_id=playbook_run_id,
+            model=model,
         ),
     )
     ticket.save()
