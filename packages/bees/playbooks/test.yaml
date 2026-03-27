@@ -10,4 +10,5 @@ steps:
     objective: >
       Write a short story about a robot and save it to a file. Return the file
       reference.
+    tags: ["testing"]
     functions: ["system.*", "sandbox.*"]

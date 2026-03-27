@@ -39,7 +39,7 @@
   },
   {
     "name": "playbooks_run_playbook",
-    "description": "Run a playbook by name. Creates tickets for each step of the playbook in dependency order and returns the created ticket IDs. Use the context parameter to brief the initial tickets with any information they need to do the right work.",
+    "description": "Run a playbook by name. Use the context parameter to brief the agent who will be executing the playbook with any information they need to do the right work.",
     "parametersJsonSchema": {
       "type": "object",
       "properties": {
@@ -49,7 +49,7 @@
         },
         "context": {
           "type": "string",
-          "description": "Free-form briefing text for the playbook. Describe what the user wants, any relevant details, preferences, or constraints. This context is attached to the initial tickets so the workers know what to do."
+          "description": "Free-form briefing text for the playbook. Describe what the user wants, any relevant details, preferences, or constraints."
         }
       },
       "required": ["name"]
@@ -76,11 +76,11 @@
               },
               "title": {
                 "type": "string",
-                "description": "Title of the ticket."
+                "description": "Title of the ticket assigned to the agents to do their work."
               }
             }
           },
-          "description": "The created tickets."
+          "description": "The created work tickets for the agent."
         },
         "error": {
           "type": "string",

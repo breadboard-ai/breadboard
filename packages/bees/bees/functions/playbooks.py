@@ -52,6 +52,12 @@ def _make_handlers(on_playbook_run: Any | None = None) -> dict[str, Any]:
                     data = load_playbook(name)
                     if data.get("hidden"):
                         continue
+                    steps = data.get("steps", {})
+                    if any(
+                        "testing" in (s.get("tags") or [])
+                        for s in steps.values()
+                    ):
+                        continue
                     playbooks.append({
                         "name": data.get("name", name),
                         "title": data.get("title", name),
