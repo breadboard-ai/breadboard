@@ -25,6 +25,11 @@ steps:
       or `var(--cg-color-surface-container)` for backgrounds. Do not use hex
       codes or rgba() for text/backgrounds — you will destroy the contrast. 6.
       DO NOT USE IMAGES. Do everything with clever use of layout and typography.
+      7. DARK THEME ONLY. The iframe renders on a dark background. You MUST NOT
+      set `background: white`, `background: #fff`, `color: #333`, or any
+      light-theme values. All backgrounds must use `var(--cg-color-surface*)` tokens
+      and all text must use `var(--cg-color-on-surface*)` tokens. If a previous
+      digest is provided, preserve its color scheme exactly.
 
       Read the context briefing for a summary of recently completed work.
       CRITICAL Anti-Patterns — NEVER DO THESE: 1. NO GRID OF CARDS. Never render

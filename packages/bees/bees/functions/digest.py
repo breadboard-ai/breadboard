@@ -64,19 +64,19 @@ def _get_previous_digest_ui() -> str | None:
     digests = [t for t in list_tickets(status="completed") if t.metadata.tags and "digest" in t.metadata.tags]
     if not digests:
         return None
-    
+
     # Sort by ISO string created_at descending
     digests.sort(key=lambda t: t.metadata.created_at or "", reverse=True)
-    
+
     latest = digests[0]
     app_jsx = latest.dir / "filesystem" / "App.jsx"
     app_lower = latest.dir / "filesystem" / "app.jsx"
-    
+
     if app_jsx.exists():
         return app_jsx.read_text(encoding="utf-8", errors="replace")
     if app_lower.exists():
         return app_lower.read_text(encoding="utf-8", errors="replace")
-    
+
     return None
 
 
@@ -106,10 +106,13 @@ def _make_handlers(on_playbook_run: Any | None = None) -> dict[str, Any]:
         prev_context = ""
         if prev_app:
             prev_context = (
-                f"## Previous Digest UI\n"
-                f"Here is the React code (`App.jsx`) from your previous digest run. "
-                f"Use this as your structural baseline. Update the content to reflect the new tickets below, "
-                f"but do NOT radically redesign the page. Maintain the existing layout hierarchy and CSS tokens.\n\n"
+                f"## Previous Digest UI (Your Starting Point)\n"
+                f"Here is the EXACT React code (`App.jsx`) from your previous digest.\n"
+                f"**You MUST use this as your starting point.** Edit the content, add/remove sections, "
+                f"and update copy to reflect the new tickets below — but:\n"
+                f"- Do NOT change the color scheme. The app uses `var(--cg-color-*)` CSS tokens for a dark theme. Keep it.\n"
+                f"- Do NOT radically redesign the layout structure. Evolve it, don't replace it.\n"
+                f"- Do NOT switch between light and dark themes.\n\n"
                 f"```jsx\n{prev_app}\n```\n\n"
             )
 
