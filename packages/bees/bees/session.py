@@ -308,6 +308,7 @@ async def run_session(
     on_event: Any | None = None,
     function_filter: list[str] | None = None,
     allowed_skills: list[str] | None = None,
+    model: str | None = None,
 ) -> SessionResult:
     """Run a single agent session and return the result.
 
@@ -373,6 +374,7 @@ async def run_session(
         ],
         initial_files=session_files,
         function_filter=function_filter,
+        model=model,
     )
 
     queue = subscribers.subscribe(session_id)

@@ -85,6 +85,10 @@ class InteractionState:
     # filter applies after suspend/resume.
     function_filter: list[str] | None = None
 
+    # Optional model override. When set, the agent loop uses this
+    # model instead of the default AGENT_MODEL constant.
+    model: str | None = None
+
     # ---- Serialization ----
 
     def to_dict(self) -> dict[str, Any]:
@@ -109,6 +113,7 @@ class InteractionState:
             "is_precondition_check": self.is_precondition_check,
             "consents_granted": sorted(self.consents_granted),
             "function_filter": self.function_filter,
+            "model": self.model,
         }
 
     @classmethod
@@ -135,6 +140,7 @@ class InteractionState:
             is_precondition_check=data.get("is_precondition_check", False),
             consents_granted=set(data.get("consents_granted", [])),
             function_filter=data.get("function_filter"),
+            model=data.get("model"),
         )
 
 

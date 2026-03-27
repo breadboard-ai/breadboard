@@ -325,3 +325,52 @@ async def test_resume_session_no_context(store, subscribers):
     )
     assert await store.get_status("sess-no-ctx") == SessionStatus.FAILED
 
+
+# ── model override ──
+
+
+@pytest.mark.asyncio
+async def test_new_session_stashes_model(store):
+    """new_session stashes the model override in the context."""
+    await new_session(
+        session_id="sess-model",
+        segments=[{"type": "text", "text": "hi"}],
+        store=store,
+        backend=None,  # type: ignore
+        interaction_store=None,  # type: ignore
+        model="gemini-2.5-pro",
+    )
+    ctx = _contexts.get("sess-model")
+    assert ctx is not None
+    assert ctx.model == "gemini-2.5-pro"
+    _contexts.pop("sess-model", None)
+
+
+@pytest.mark.asyncio
+async def test_start_session_passes_model_to_run(store, subscribers, monkeypatch):
+    """start_session forwards model from context to run_agent."""
+    captured_kwargs = {}
+
+    async def fake_run(**kwargs):
+        captured_kwargs.update(kwargs)
+        yield CompleteEvent(result=AgentResult(success=True))
+
+    monkeypatch.setattr("opal_backend.sessions.api.run_agent", fake_run)
+
+    from opal_backend.sessions.api import _SessionContext
+    _contexts["sess-model-run"] = _SessionContext(
+        segments=[{"type": "text", "text": "hi"}],
+        backend=None,  # type: ignore
+        interaction_store=None,  # type: ignore
+        model="gemini-2.5-pro",
+    )
+    await store.create("sess-model-run")
+
+    await start_session(
+        session_id="sess-model-run",
+        store=store,
+        subscribers=subscribers,
+    )
+
+    assert captured_kwargs.get("model") == "gemini-2.5-pro"
+

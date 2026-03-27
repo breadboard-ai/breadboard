@@ -103,6 +103,7 @@ class _SessionContext:
     extra_groups: list["FunctionGroup | FunctionGroupFactory"] = field(default_factory=list)
     function_filter: list[str] | None = None
     initial_files: dict[str, str] | None = None
+    model: str | None = None
 
 
 # Module-level registries.
@@ -128,6 +129,7 @@ async def new_session(
     extra_groups: list["FunctionGroup | FunctionGroupFactory"] | None = None,
     function_filter: list[str] | None = None,
     initial_files: dict[str, str] | None = None,
+    model: str | None = None,
 ) -> str:
     """Create a session and stash its context for start_session().
 
@@ -155,6 +157,7 @@ async def new_session(
         extra_groups=extra_groups or [],
         function_filter=function_filter,
         initial_files=initial_files,
+        model=model,
     )
     return session_id
 
@@ -225,6 +228,7 @@ async def start_session(
             extra_groups=ctx.extra_groups or None,
             function_filter=ctx.function_filter,
             initial_files=ctx.initial_files,
+            model=ctx.model,
         ),
         store=store,
         subscribers=subscribers,
@@ -265,6 +269,7 @@ async def resume_session(
             store=ctx.interaction_store,
             drive=ctx.drive,
             extra_groups=ctx.extra_groups or None,
+            model=ctx.model,
         ),
         store=store,
         subscribers=subscribers,

@@ -211,3 +211,18 @@ class TestRunPlaybook:
         write_playbook("bad", {"name": "bad"})
         with pytest.raises(ValueError, match="steps"):
             run_playbook("bad")
+
+    def test_model_propagates(self, write_playbook):
+        write_playbook("with-model", {
+            "name": "with-model",
+            "steps": {
+                "main": {
+                    "objective": "Do the thing.",
+                    "model": "gemini-2.5-pro",
+                },
+            },
+        })
+
+        tickets = run_playbook("with-model")
+        assert len(tickets) == 1
+        assert tickets[0].metadata.model == "gemini-2.5-pro"
