@@ -177,10 +177,12 @@ async def _run_drain_wave() -> None:
                     await _run_ticket(t, http=_http_client, backend=_backend, on_event=_make_on_event(t.id), on_playbook_run=_on_playbook_run)
                 finally:
                     _running_tickets.remove(t.id)
+                    updated = load_ticket(t.id) or t
                     await broadcaster.broadcast({
                         "type": "ticket_update",
-                        "ticket": _ticket_to_dict(load_ticket(t.id) or t),
+                        "ticket": _ticket_to_dict(updated),
                     })
+                    await _check_playbook_completion(updated)
                     _trigger_drain()
 
             asyncio.create_task(wrap_run())
@@ -195,10 +197,12 @@ async def _run_drain_wave() -> None:
                     await _resume_ticket(t, http=_http_client, backend=_backend, on_event=_make_on_event(t.id), on_playbook_run=_on_playbook_run)
                 finally:
                     _running_tickets.remove(t.id)
+                    updated = load_ticket(t.id) or t
                     await broadcaster.broadcast({
                         "type": "ticket_update",
-                        "ticket": _ticket_to_dict(load_ticket(t.id) or t),
+                        "ticket": _ticket_to_dict(updated),
                     })
+                    await _check_playbook_completion(updated)
                     _trigger_drain()
 
             asyncio.create_task(wrap_resume())
@@ -211,6 +215,91 @@ async def _run_drain_wave() -> None:
 def _trigger_drain() -> None:
     """Wake the drain loop."""
     _drain_trigger.set()
+
+
+async def _check_playbook_completion(ticket: Ticket) -> None:
+    """Check if a ticket's playbook run is fully complete.
+
+    When all tickets sharing a ``playbook_run_id`` have reached a
+    terminal state (completed or failed), we:
+    1. Broadcast a ``playbook_complete`` SSE event.
+    2. Wake Opie with a system notification so it can inform the user.
+    """
+    run_id = ticket.metadata.playbook_run_id
+    if not run_id:
+        return
+
+    # Skip if *this* ticket is the opie ticket (don't self-notify).
+    if ticket.metadata.tags and "opie" in ticket.metadata.tags:
+        return
+
+    # Gather all tickets in this playbook run.
+    siblings = [
+        t for t in list_tickets()
+        if t.metadata.playbook_run_id == run_id
+    ]
+    if not siblings:
+        return
+
+    terminal = {"completed", "failed"}
+    all_done = all(t.metadata.status in terminal for t in siblings)
+    if not all_done:
+        return
+
+    playbook_name = ticket.metadata.playbook_id or "(unknown)"
+    succeeded = sum(1 for t in siblings if t.metadata.status == "completed")
+    failed = sum(1 for t in siblings if t.metadata.status == "failed")
+
+    logger.info(
+        "Playbook run %s (%s) complete: %d succeeded, %d failed",
+        run_id, playbook_name, succeeded, failed,
+    )
+
+    await broadcaster.broadcast({
+        "type": "playbook_complete",
+        "playbook_run_id": run_id,
+        "playbook_id": playbook_name,
+        "succeeded": succeeded,
+        "failed": failed,
+    })
+
+    # Build a summary of completed ticket outcomes.
+    summaries: list[str] = []
+    for t in siblings:
+        title = t.metadata.title or t.id[:8]
+        outcome = t.metadata.outcome or "(no outcome)"
+        summaries.append(f"- **{title}**: {outcome}")
+    summary_text = "\n".join(summaries)
+
+    # Wake Opie with a system notification.
+    opie = next(
+        (t for t in list_tickets()
+         if t.metadata.tags and "opie" in t.metadata.tags
+         and t.metadata.status == "suspended"
+         and t.metadata.assignee == "user"),
+        None,
+    )
+    if opie:
+        notification = (
+            f'[System Notification] Playbook "{playbook_name}" has completed.\n'
+            f"Results:\n{summary_text}\n\n"
+            f"Please summarise these results for the user and ask what they'd like to do next."
+        )
+        response_path = opie.dir / "response.json"
+        response_path.write_text(
+            json.dumps({"text": notification}, indent=2, ensure_ascii=False)
+            + "\n"
+        )
+        opie.metadata.assignee = "agent"
+        opie.save_metadata()
+
+        await broadcaster.broadcast({
+            "type": "ticket_update",
+            "ticket": _ticket_to_dict(opie),
+        })
+
+        logger.info("Notified Opie of playbook completion: %s", playbook_name)
+        _trigger_drain()
 
 
 # ---------------------------------------------------------------------------
@@ -252,6 +341,24 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         gemini_key=gemini_key,
     )
     drain_task = asyncio.create_task(_drain_loop())
+
+    # Auto-boot Opie if no opie-tagged ticket exists yet.
+    existing = list_tickets()
+    has_opie = any(
+        t.metadata.tags and "opie" in t.metadata.tags
+        for t in existing
+    )
+    if not has_opie:
+        try:
+            opie_tickets = run_playbook("opie")
+            for ticket in opie_tickets:
+                await broadcaster.broadcast({
+                    "type": "ticket_added",
+                    "ticket": _ticket_to_dict(ticket),
+                })
+            logger.info("Auto-booted Opie (%d tickets)", len(opie_tickets))
+        except Exception as exc:
+            logger.warning("Failed to auto-boot Opie: %s", exc)
 
     # Auto-drain any existing available tickets on startup.
     _trigger_drain()
