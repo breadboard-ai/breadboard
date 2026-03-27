@@ -51,7 +51,6 @@ class TicketMetadata:
     title: str | None = None
     playbook_id: str | None = None
     playbook_run_id: str | None = None
-    bundle_path: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -79,7 +78,6 @@ class TicketMetadata:
             title=data.get("title"),
             playbook_id=data.get("playbook_id"),
             playbook_run_id=data.get("playbook_run_id"),
-            bundle_path=data.get("bundle_path"),
         )
 
 

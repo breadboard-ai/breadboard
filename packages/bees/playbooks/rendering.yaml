@@ -1,0 +1,12 @@
+name: rendering
+title: Testing Rendering Pipeline
+description: A playbook to test a rendering pipeline.
+
+steps:
+  main:
+    title: Rendering
+    objective: >
+      Create a super-fancy shopping list web app.
+    skills: ["*"]
+    tags: ["ui", "bundle"]
+    functions: ["system.*", "sandbox.*", "skills.*"]
