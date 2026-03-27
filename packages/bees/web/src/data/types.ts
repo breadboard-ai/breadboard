@@ -19,7 +19,6 @@ export interface TicketData {
   depends_on?: string[];
   events_log?: Array<Record<string, unknown>>;
   tags?: string[];
-  bundle_path?: string;
   functions?: string[];
   skills?: string[];
 }

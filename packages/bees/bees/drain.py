@@ -192,8 +192,6 @@ async def _resume_ticket(
     if file_manifest:
         ticket.metadata.files = file_manifest
 
-    if (ticket.dir / "filesystem" / "bundle.js").is_file():
-        ticket.metadata.bundle_path = "bundle.js"
 
     # Handle re-suspend.
     if result.suspended:
