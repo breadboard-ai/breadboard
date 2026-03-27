@@ -7,6 +7,32 @@ Scheduler — unified ticket lifecycle and orchestration.
 Owns the decisions of *what runs when* and the metadata bookkeeping
 around each ticket's execution.  Consumers (server, CLI) plug in
 behaviour via ``SchedulerHooks``.
+
+The Concept of a Cycle
+----------------------
+
+A **Cycle** is a single wave of dependency-aware ticket execution. The
+system operates by repeatedly evaluating ticket dependencies and firing all
+unblocked work simultaneously:
+
+1. **Promote**: The scheduler checks all ``blocked`` tickets. If their
+   dependencies are resolved (``completed``), it promotes them to ``available``.
+2. **Collect**: It gathers all runnable work:
+   - New ``available`` tickets.
+   - ``suspended`` tickets that have been responded to by a user and are
+     ready for the agent to resume.
+3. **Execute (Wave)**: All collected tickets are fired concurrently (either
+   gathered in batch mode, or spawned as tasks in server mode).
+4. **Settle**: Active tickets run until they reach a resting state:
+   - ``completed`` or ``failed`` (resolved).
+   - ``suspended`` (waiting for user input).
+5. **Trigger**: When work settles, the scheduler wakes up to evaluate the
+   next cycle. If previous tickets unblocked new ones, the loop continues.
+   If no work remains, it goes idle (server) or finishes (CLI).
+
+This "wave orchestration" ensures that independent tickets (e.g., three
+separate search queries for children of a root task) can execute in parallel,
+while sequential dependencies are strictly preserved without blocking the system.
 """
 
 from __future__ import annotations
@@ -48,17 +74,19 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SchedulerHooks:
     """Optional callbacks that consumers register to react to scheduler events.
-
-    Every hook is optional.  The Scheduler never imports consumer-layer
-    code — all application-specific behaviour (SSE broadcasts, Opie
-    management, auto-bundling, …) lives in the hook implementations.
     """
 
     on_startup: Callable[[list[Ticket]], Awaitable[None]] | None = None
     """Called once after recovery, with the full ticket list."""
 
     on_cycle_start: Callable[[int, int, int], Awaitable[None]] | None = None
-    """Called at the start of each cycle (cycle_number, new_count, resumable_count)."""
+    """Called at the start of each cycle.
+
+    Arguments passed to the callback:
+    - cycle_number: The sequence number of the current cycle (1-based).
+    - available_count: The number of new ('available') tickets being processed.
+    - resumable_count: The number of suspended tickets being resumed.
+    """
 
     on_ticket_event: Callable[[str, dict], Awaitable[None]] | None = None
     """Called when a running session emits an event (ticket_id, event_dict)."""
@@ -68,6 +96,9 @@ class SchedulerHooks:
 
     on_playbook_run: Callable[[list[Ticket]], None] | None = None
     """Called when an agent invokes the playbook function mid-session."""
+
+    on_playbook_complete: Callable[[str, list[Ticket], Ticket], Awaitable[None]] | None = None
+    """Called when all tickets in a playbook run are complete. (run_id, siblings, triggering_ticket)"""
 
     on_cycle_complete: Callable[[int], Awaitable[None]] | None = None
     """Called when there is no more work (total_cycles)."""
@@ -515,6 +546,27 @@ class Scheduler:
 
         return on_event
 
+    async def _check_playbook_completion_internal(self, ticket: Ticket) -> None:
+        """Check if all tickets in a playbook run are done, and fire hook if so."""
+        run_id = ticket.metadata.playbook_run_id
+        if not run_id:
+            return
+
+        siblings = [
+            t for t in list_tickets()
+            if t.metadata.playbook_run_id == run_id
+        ]
+        if not siblings:
+            return
+
+        terminal = {"completed", "failed"}
+        all_done = all(t.metadata.status in terminal for t in siblings)
+        if not all_done:
+            return
+
+        if self._hooks.on_playbook_complete:
+            await self._hooks.on_playbook_complete(run_id, siblings, ticket)
+
     async def _run_cycles(self) -> None:
         """Run cycles until no more work is available (server mode).
 
@@ -555,6 +607,7 @@ class Scheduler:
                         updated = load_ticket(t.id) or t
                         if self._hooks.on_ticket_done:
                             await self._hooks.on_ticket_done(updated)
+                        await self._check_playbook_completion_internal(updated)
                         self.trigger()
 
                 asyncio.create_task(wrap_run())
@@ -572,6 +625,7 @@ class Scheduler:
                         updated = load_ticket(t.id) or t
                         if self._hooks.on_ticket_done:
                             await self._hooks.on_ticket_done(updated)
+                        await self._check_playbook_completion_internal(updated)
                         self.trigger()
 
                 asyncio.create_task(wrap_resume())

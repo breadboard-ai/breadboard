@@ -116,12 +116,11 @@ async def _on_ticket_event(ticket_id: str, event: dict[str, Any]) -> None:
 
 
 async def _on_ticket_done(ticket: Ticket) -> None:
-    """Post-completion hook: broadcast, check playbook, auto-bundle."""
+    """Post-completion hook: broadcast, auto-bundle."""
     await broadcaster.broadcast({
         "type": "ticket_update",
         "ticket": _ticket_to_dict(ticket),
     })
-    await _check_playbook_completion(ticket)
     await _auto_build_bundle(ticket)
 
 
@@ -145,40 +144,16 @@ async def _on_cycle_complete(cycles: int) -> None:
 # ---------------------------------------------------------------------------
 
 
-async def _check_playbook_completion(ticket: Ticket) -> None:
-    """Check if a ticket's playbook run is fully complete.
-
-    When all tickets sharing a ``playbook_run_id`` have reached a
-    terminal state (completed or failed), we:
-    1. Broadcast a ``playbook_complete`` SSE event.
-    2. Wake Opie with a system notification so it can inform the user.
-    """
-    run_id = ticket.metadata.playbook_run_id
-    if not run_id:
+async def _on_playbook_complete(run_id: str, siblings: list[Ticket], triggering_ticket: Ticket) -> None:
+    """Handle playbook completion: broadcast and notify Opie."""
+    
+    # Skip if triggering ticket is opie or digest (application logic)
+    if triggering_ticket.metadata.tags and "opie" in triggering_ticket.metadata.tags:
+        return
+    if triggering_ticket.metadata.tags and "digest" in triggering_ticket.metadata.tags:
         return
 
-    # Skip if *this* ticket is the opie ticket (don't self-notify).
-    if ticket.metadata.tags and "opie" in ticket.metadata.tags:
-        return
-
-    # Skip digest tickets — Opie triggers these, not the other way around.
-    if ticket.metadata.tags and "digest" in ticket.metadata.tags:
-        return
-
-    # Gather all tickets in this playbook run.
-    siblings = [
-        t for t in list_tickets()
-        if t.metadata.playbook_run_id == run_id
-    ]
-    if not siblings:
-        return
-
-    terminal = {"completed", "failed"}
-    all_done = all(t.metadata.status in terminal for t in siblings)
-    if not all_done:
-        return
-
-    playbook_name = ticket.metadata.playbook_id or "(unknown)"
+    playbook_name = triggering_ticket.metadata.playbook_id or "(unknown)"
     succeeded = sum(1 for t in siblings if t.metadata.status == "completed")
     failed = sum(1 for t in siblings if t.metadata.status == "failed")
 
@@ -232,6 +207,9 @@ async def _check_playbook_completion(ticket: Ticket) -> None:
                 "ticket": _ticket_to_dict(opie),
             })
             logger.info("Notified Opie immediately of playbook completion: %s", playbook_name)
+            
+            # scheduler is available in lifespan, let's make sure it's accessible.
+            # In the old code it was accessible via 'scheduler' global.
             if scheduler:
                 scheduler.trigger()
         else:
@@ -318,6 +296,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         on_ticket_event=_on_ticket_event,
         on_ticket_done=_on_ticket_done,
         on_playbook_run=_on_playbook_run,
+        on_playbook_complete=_on_playbook_complete,
         on_cycle_complete=_on_cycle_complete,
     )
     scheduler = Scheduler(http=http_client, backend=backend, hooks=hooks)
