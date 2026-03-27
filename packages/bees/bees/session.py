@@ -42,6 +42,7 @@ from bees.functions.skills import get_skills_function_group, scan_skills
 from bees.functions.simple_files import get_simple_files_function_group_factory
 from bees.functions.system import get_system_function_group_factory
 from bees.functions.sandbox import get_sandbox_function_group_factory
+from bees.functions.playbooks import get_playbooks_function_group
 
 # Scan skills once at import time.
 _BEES_DIR = Path(__file__).resolve().parent
@@ -309,6 +310,7 @@ async def run_session(
     function_filter: list[str] | None = None,
     allowed_skills: list[str] | None = None,
     model: str | None = None,
+    on_playbook_run: Any | None = None,
 ) -> SessionResult:
     """Run a single agent session and return the result.
 
@@ -328,7 +330,7 @@ async def run_session(
 
     # Filter skills based on ticket. Defaults to none unless "*" is specified.
     skills_to_use = allowed_skills if allowed_skills is not None else []
-    
+
     if "*" in skills_to_use:
         filtered_skills = _SKILLS_LIST
     else:
@@ -347,7 +349,7 @@ async def run_session(
     for k, v in _SKILLS_FILES.items():
         if any(f"skills/{s.dir_name}/" in k for s in filtered_skills):
             session_files[k] = v
-            
+
             # Mirror skill tools to the real filesystem so execute_bash can use them.
             if ticket_dir and "/tools/" in k:
                 _MNT = "/mnt/"
@@ -371,6 +373,7 @@ async def run_session(
             get_sandbox_function_group_factory(
                 work_dir=ticket_dir / "filesystem" if ticket_dir else None,
             ),
+            get_playbooks_function_group(on_playbook_run=on_playbook_run),
         ],
         initial_files=session_files,
         function_filter=function_filter,
@@ -451,6 +454,7 @@ async def resume_session(
     backend: HttpBackendClient,
     label: str = "",
     on_event: Any | None = None,
+    on_playbook_run: Any | None = None,
 ) -> SessionResult:
     """Resume a suspended session from saved state on disk.
 
@@ -493,6 +497,7 @@ async def resume_session(
             get_sandbox_function_group_factory(
                 work_dir=ticket_dir / "filesystem",
             ),
+            get_playbooks_function_group(on_playbook_run=on_playbook_run),
         ],
         # initial_files not needed on resume — already in FS snapshot.
     )
@@ -669,12 +674,12 @@ def _print_event_summary(
         call = event["functionCall"]
         name = call.get("name", "?")
         args = call.get("args", {})
-        
+
         # Format condensed preview of arguments
         import json
         args_json = json.dumps(args, ensure_ascii=False)
         args_preview = args_json[:60] + ("..." if len(args_json) > 60 else "")
-        
+
         print(f"  {prefix}🔧 {name} {args_preview}", file=sys.stderr)
     elif "error" in event:
         msg = event["error"].get("message", "?")

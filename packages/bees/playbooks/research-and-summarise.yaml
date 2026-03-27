@@ -1,0 +1,20 @@
+name: research-and-summarise
+title: Research and Summarise
+description: >
+  A two-step playbook that researches a topic and then produces a summary.
+
+steps:
+  research:
+    title: Research
+    objective: >
+      Conduct thorough research on the topic specified in the briefing context.
+      Gather key details, facts, and relevant information. Save your findings
+      to a file called research-notes.txt.
+    functions: ["system.*", "sandbox.*"]
+
+  summarise:
+    title: Summarise
+    objective: >
+      Read the research from {{research}} and produce a concise, well-structured
+      summary. Save it to a file called summary.txt.
+    functions: ["system.*", "sandbox.*"]

@@ -1,0 +1,4 @@
+[
+  {"name": "playbooks_list", "icon": "list", "title": "List Playbooks"},
+  {"name": "playbooks_run_playbook", "icon": "play_arrow", "title": "Run Playbook"}
+]

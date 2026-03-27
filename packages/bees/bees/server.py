@@ -127,6 +127,14 @@ async def _run_drain_wave() -> None:
             })
         return on_event
 
+    def _on_playbook_run(tickets: list[Ticket]) -> None:
+        for ticket in tickets:
+            asyncio.create_task(broadcaster.broadcast({
+                "type": "ticket_added",
+                "ticket": _ticket_to_dict(ticket),
+            }))
+        _trigger_drain()
+
     while True:
         # Promote blocked tickets.
         promoted = _promote_blocked_tickets()
@@ -166,13 +174,14 @@ async def _run_drain_wave() -> None:
 
             async def wrap_run(t=ticket):
                 try:
-                    await _run_ticket(t, http=_http_client, backend=_backend, on_event=_make_on_event(t.id))
+                    await _run_ticket(t, http=_http_client, backend=_backend, on_event=_make_on_event(t.id), on_playbook_run=_on_playbook_run)
                 finally:
                     _running_tickets.remove(t.id)
                     await broadcaster.broadcast({
                         "type": "ticket_update",
                         "ticket": _ticket_to_dict(load_ticket(t.id) or t),
                     })
+                    _trigger_drain()
 
             asyncio.create_task(wrap_run())
 
@@ -183,13 +192,14 @@ async def _run_drain_wave() -> None:
 
             async def wrap_resume(t=ticket):
                 try:
-                    await _resume_ticket(t, http=_http_client, backend=_backend, on_event=_make_on_event(t.id))
+                    await _resume_ticket(t, http=_http_client, backend=_backend, on_event=_make_on_event(t.id), on_playbook_run=_on_playbook_run)
                 finally:
                     _running_tickets.remove(t.id)
                     await broadcaster.broadcast({
                         "type": "ticket_update",
                         "ticket": _ticket_to_dict(load_ticket(t.id) or t),
                     })
+                    _trigger_drain()
 
             asyncio.create_task(wrap_resume())
 
@@ -486,6 +496,7 @@ def main() -> None:
         port=3200,
         reload=True,
         reload_dirs=[str(__import__("pathlib").Path(__file__).parent)],
+        reload_includes=["*.md", "*.json", "*.yaml"],
     )
 
 

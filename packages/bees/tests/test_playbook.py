@@ -226,3 +226,40 @@ class TestRunPlaybook:
         tickets = run_playbook("with-model")
         assert len(tickets) == 1
         assert tickets[0].metadata.model == "gemini-2.5-pro"
+
+    def test_context_attached_to_root_only(self, write_playbook):
+        """Context briefing is only attached to root tickets."""
+        write_playbook("briefed", {
+            "name": "briefed",
+            "steps": {
+                "research": {
+                    "title": "Research",
+                    "objective": "Research the topic.",
+                },
+                "summarise": {
+                    "title": "Summarise",
+                    "objective": "Summarise {{research}}.",
+                },
+            },
+        })
+
+        tickets = run_playbook("briefed", context="All about dinosaurs")
+        assert len(tickets) == 2
+
+        research = next(t for t in tickets if t.metadata.title == "Research")
+        summarise = next(t for t in tickets if t.metadata.title == "Summarise")
+
+        assert research.metadata.context == "All about dinosaurs"
+        assert summarise.metadata.context is None
+
+    def test_context_none_when_not_provided(self, write_playbook):
+        """No context field created when not supplied."""
+        write_playbook("plain", {
+            "name": "plain",
+            "steps": {
+                "step": {"objective": "Do it."},
+            },
+        })
+
+        tickets = run_playbook("plain")
+        assert tickets[0].metadata.context is None
