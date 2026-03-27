@@ -294,6 +294,31 @@ def load_gemini_key() -> str:
     return gemini_key
 
 
+
+def _filter_skills(allowed_skills: list[str] | None) -> tuple[str, dict[str, str]]:
+    """Filter skills based on allowed_skills and return listing + files."""
+    skills_to_use = allowed_skills if allowed_skills is not None else []
+
+    if "*" in skills_to_use:
+        filtered_skills = _SKILLS_LIST
+    else:
+        filtered_skills = [s for s in _SKILLS_LIST if s.name in skills_to_use]
+
+    lines = []
+    for s in filtered_skills:
+        lines.append(f"- [{s.title}]({s.vfs_path})")
+        if s.description:
+            lines.append(f"  {s.description}")
+    session_listing = "\n".join(lines)
+
+    session_files = {}
+    for k, v in _SKILLS_FILES.items():
+        if any(f"skills/{s.dir_name}/" in k for s in filtered_skills):
+            session_files[k] = v
+
+    return session_listing, session_files
+
+
 # ---------------------------------------------------------------------------
 # Core session runner
 # ---------------------------------------------------------------------------
@@ -329,30 +354,12 @@ async def run_session(
     if segments is None:
         segments = [{"type": "text", "text": text}]
 
-    # Filter skills based on ticket. Defaults to none unless "*" is specified.
-    skills_to_use = allowed_skills if allowed_skills is not None else []
+    session_listing, session_files = _filter_skills(allowed_skills)
 
-    if "*" in skills_to_use:
-        filtered_skills = _SKILLS_LIST
-    else:
-        filtered_skills = [s for s in _SKILLS_LIST if s.name in skills_to_use]
-
-    # Re-render listing for the session
-    lines = []
-    for s in filtered_skills:
-        lines.append(f"- [{s.title}]({s.vfs_path})")
-        if s.description:
-            lines.append(f"  {s.description}")
-    session_listing = "\n".join(lines)
-
-    # Filter initial files using dir_name
-    session_files = {}
-    for k, v in _SKILLS_FILES.items():
-        if any(f"skills/{s.dir_name}/" in k for s in filtered_skills):
-            session_files[k] = v
-
-            # Mirror skill tools to the real filesystem so execute_bash can use them.
-            if ticket_dir and "/tools/" in k:
+    # Mirror skill tools to the real filesystem so execute_bash can use them.
+    if ticket_dir:
+        for k, v in session_files.items():
+            if "/tools/" in k:
                 _MNT = "/mnt/"
                 rel_path = k[len(_MNT):] if k.startswith(_MNT) else k.lstrip("/")
                 local_path = ticket_dir / "filesystem" / rel_path
@@ -481,6 +488,18 @@ async def resume_session(
     interaction_store = InMemoryInteractionStore()
     subscribers = Subscribers()
 
+    # Load allowed skills from ticket metadata
+    metadata_path = ticket_dir / "metadata.json"
+    allowed_skills = None
+    if metadata_path.exists():
+        try:
+            meta = json.loads(metadata_path.read_text())
+            allowed_skills = meta.get("skills")
+        except Exception:
+            pass
+
+    session_listing, _ = _filter_skills(allowed_skills)
+
     # new_session creates the _SessionContext entry and a fresh session.
     # We must set resume_id/status AFTER this call because create()
     # replaces any existing session state.
@@ -495,7 +514,7 @@ async def resume_session(
         extra_groups=[
             get_system_function_group_factory(),
             get_simple_files_function_group_factory(),
-            get_skills_function_group(available_skills=_SKILLS_LISTING),
+            get_skills_function_group(available_skills=session_listing),
             get_sandbox_function_group_factory(
                 work_dir=ticket_dir / "filesystem",
             ),

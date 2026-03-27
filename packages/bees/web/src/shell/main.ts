@@ -21,7 +21,8 @@ import { BeesAPI } from "../data/api.js";
 import { BeesConnection } from "../data/connection.js";
 import { BeesState } from "../data/state.js";
 import type { TicketData } from "../data/types.js";
-import { extractPrompt } from "../utils.js";
+import { extractPrompt, extractChoices } from "../utils.js";
+import type { Choice } from "../utils.js";
 import { markdown } from "../directives/markdown.js";
 import { MessageBridge } from "../host/message-bridge.js";
 import { styles } from "./shell.styles.js";
@@ -44,6 +45,9 @@ class OpalShell extends SignalWatcher(LitElement) {
   @state() private statusVisible = false;
   @state() private currentView: string | null = null;
   @state() private digestTicketId: string | null = null;
+  @state() private pendingChoices: Choice[] = [];
+  @state() private pendingSelectionMode: "single" | "multiple" = "single";
+  @state() private selectedChoiceIds: string[] = [];
 
   private connection = new BeesConnection(appState);
   private api = new BeesAPI();
@@ -164,18 +168,56 @@ class OpalShell extends SignalWatcher(LitElement) {
               </div>`
           )}
         </div>
-        <div class="chat-input-area">
-          <input
-            type="text"
-            placeholder="Ask Opie anything..."
-            autocomplete="off"
-            .value=${this.chatInput}
-            @input=${(e: Event) =>
-              (this.chatInput = (e.target as HTMLInputElement).value)}
-            @keydown=${this.#onChatKeyDown}
-          />
-          <button @click=${this.#sendChat}>Send</button>
+        ${this.pendingChoices.length > 0
+          ? this.#renderChoiceInput()
+          : this.#renderTextInput()}
+      </div>
+    `;
+  }
+
+  #renderTextInput() {
+    return html`
+      <div class="chat-input-area">
+        <input
+          type="text"
+          placeholder="Ask Opie anything..."
+          autocomplete="off"
+          .value=${this.chatInput}
+          @input=${(e: Event) =>
+            (this.chatInput = (e.target as HTMLInputElement).value)}
+          @keydown=${this.#onChatKeyDown}
+        />
+        <button @click=${this.#sendChat}>Send</button>
+      </div>
+    `;
+  }
+
+  #renderChoiceInput() {
+    const isMultiple = this.pendingSelectionMode === "multiple";
+    return html`
+      <div class="chat-choices-area">
+        <div class="chat-chips">
+          ${this.pendingChoices.map((c) => {
+            const selected = this.selectedChoiceIds.includes(c.id);
+            return html`
+              <button
+                class="chat-chip ${selected ? "selected" : ""}"
+                @click=${() => this.#onChipClick(c.id, isMultiple)}
+              >
+                ${c.text}
+              </button>
+            `;
+          })}
         </div>
+        ${isMultiple
+          ? html`<button
+              class="chat-chip-send"
+              ?disabled=${this.selectedChoiceIds.length === 0}
+              @click=${this.#sendChoices}
+            >
+              Send Selection
+            </button>`
+          : null}
       </div>
     `;
   }
@@ -209,6 +251,43 @@ class OpalShell extends SignalWatcher(LitElement) {
     this.#scrollChatToBottom();
 
     await this.api.respond(opie.id, text);
+  }
+
+  #onChipClick(choiceId: string, isMultiple: boolean) {
+    if (isMultiple) {
+      // Toggle in the selection set.
+      if (this.selectedChoiceIds.includes(choiceId)) {
+        this.selectedChoiceIds = this.selectedChoiceIds.filter(
+          (id) => id !== choiceId
+        );
+      } else {
+        this.selectedChoiceIds = [...this.selectedChoiceIds, choiceId];
+      }
+    } else {
+      // Single-select: tap sends immediately.
+      this.#sendChoiceIds([choiceId]);
+    }
+  }
+
+  async #sendChoices() {
+    if (this.selectedChoiceIds.length === 0) return;
+    this.#sendChoiceIds(this.selectedChoiceIds);
+  }
+
+  async #sendChoiceIds(ids: string[]) {
+    const opie = this.#findOpieTicket();
+    if (!opie) return;
+
+    // Show what was selected as a user message.
+    const labels = ids
+      .map((id) => this.pendingChoices.find((c) => c.id === id)?.text ?? id)
+      .join(", ");
+    this.#addChatMessage(labels, "user");
+
+    this.pendingChoices = [];
+    this.selectedChoiceIds = [];
+
+    await this.api.respond(opie.id, undefined, ids);
   }
 
   #addChatMessage(text: string, role: ChatMessage["role"]) {
@@ -356,6 +435,21 @@ class OpalShell extends SignalWatcher(LitElement) {
       if (opie.status === "suspended" && opie.assignee === "user") {
         const prompt = extractPrompt(opie);
         this.#addChatMessage(prompt, "agent");
+
+        // Present choices if the suspend is a waitForChoice.
+        const choices = extractChoices(opie);
+        if (choices.length > 0) {
+          const selectionMode =
+            ((opie.suspend_event?.waitForChoice as Record<string, unknown>)
+              ?.selectionMode as string) ?? "single";
+          this.pendingChoices = choices;
+          this.pendingSelectionMode =
+            selectionMode === "multiple" ? "multiple" : "single";
+          this.selectedChoiceIds = [];
+        } else {
+          this.pendingChoices = [];
+        }
+
         if (!this.chatOpen) this.#toggleChat();
       }
     }

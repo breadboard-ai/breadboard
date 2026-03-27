@@ -406,6 +406,70 @@ const styles = css`
     opacity: 0.9;
   }
 
+  /* ── Chat Choices ────────────────────────────────────────────────── */
+  .chat-choices-area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--cg-color-outline-variant, #49454e);
+    flex-shrink: 0;
+  }
+
+  .chat-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chat-chip {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--cg-color-outline-variant, #49454e);
+    background: var(--cg-color-surface-container-high, #2b2c31);
+    color: var(--cg-color-on-surface, #e5e1e6);
+    cursor: pointer;
+    transition: all 150ms cubic-bezier(0.2, 0, 0, 1);
+    white-space: nowrap;
+  }
+
+  .chat-chip:hover {
+    border-color: var(--cg-color-primary, #a8c7fa);
+    background: var(--cg-color-surface-container, #232429);
+  }
+
+  .chat-chip.selected {
+    background: var(--cg-color-primary-container, #1b3a5c);
+    border-color: var(--cg-color-primary, #a8c7fa);
+    color: var(--cg-color-on-primary-container, #c3deff);
+  }
+
+  .chat-chip-send {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    background: var(--cg-color-primary, #a8c7fa);
+    color: #1a1b1e;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    align-self: flex-end;
+    transition: opacity 150ms;
+  }
+
+  .chat-chip-send:hover {
+    opacity: 0.9;
+  }
+
+  .chat-chip-send:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
   /* ── Scrollbar ─────────────────────────────────────────────────── */
   ::-webkit-scrollbar {
     width: 6px;
