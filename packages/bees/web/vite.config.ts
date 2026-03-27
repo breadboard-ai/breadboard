@@ -6,6 +6,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
+        devtools: resolve(__dirname, "devtools.html"),
         iframe: resolve(__dirname, "iframe.html"),
       },
     },

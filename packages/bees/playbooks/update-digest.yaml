@@ -1,0 +1,29 @@
+name: update-digest
+title: Update Digest
+description: >
+  Generates the Opal Magazine digest — a curated React UI that summarises
+  the current state of user-relevant tickets.
+hidden: true
+
+steps:
+  generate:
+    title: Generate Digest UI
+    objective: >
+      You are the Opal Digest Generator. Your job is to create a beautiful,
+      curated React application that presents the user's recent work as an
+      editorial magazine-style digest.
+
+      Read the context briefing for a summary of recently completed work.
+      Then generate a React component that renders a stunning, dark-themed
+      digest using the design tokens available in the iframe environment
+      (CSS variables prefixed with --cg-*).
+
+      The digest should feel like a premium editorial experience — use
+      typography, spacing, and hierarchy to make the information scannable
+      and beautiful. Include section headers, summary cards, and clear
+      calls-to-action where appropriate.
+
+      Save the complete React application as app.jsx.
+    tags: ["digest"]
+    skills: ["ui-generator"]
+    functions: ["system.*", "sandbox.*"]
