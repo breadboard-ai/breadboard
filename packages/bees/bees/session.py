@@ -331,6 +331,7 @@ async def run_session(
     http: httpx.AsyncClient,
     backend: HttpBackendClient,
     label: str = "",
+    ticket_id: str | None = None,
     ticket_dir: Path | None = None,
     on_event: Any | None = None,
     function_filter: list[str] | None = None,
@@ -421,7 +422,8 @@ async def run_session(
     # Write EvalFileData output.
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    out_path = OUT_DIR / f"bees-session-{date_stamp}.log.json"
+    prefix = f"bees-{ticket_id[:8]}" if ticket_id else "bees-session"
+    out_path = OUT_DIR / f"{prefix}-{date_stamp}.log.json"
     eval_data = collector.to_eval_file_data()
     with open(out_path, "w") as f:
         json.dump(eval_data, f, indent=2, ensure_ascii=False)
@@ -457,6 +459,7 @@ async def run_session(
 
 async def resume_session(
     *,
+    ticket_id: str | None = None,
     ticket_dir: Path,
     response: dict[str, Any],
     http: httpx.AsyncClient,
@@ -561,7 +564,8 @@ async def resume_session(
         # Write EvalFileData output.
         OUT_DIR.mkdir(parents=True, exist_ok=True)
         date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        out_path = OUT_DIR / f"bees-session-{date_stamp}.log.json"
+        prefix = f"bees-{ticket_id[:8]}" if ticket_id else "bees-session"
+        out_path = OUT_DIR / f"{prefix}-{date_stamp}.log.json"
         eval_data = collector.to_eval_file_data()
         with open(out_path, "w") as f:
             json.dump(eval_data, f, indent=2, ensure_ascii=False)

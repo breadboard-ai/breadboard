@@ -58,6 +58,7 @@ async def _run_ticket(
             http=http,
             backend=backend,
             label=label,
+            ticket_id=ticket.id,
             ticket_dir=ticket.dir,
             on_event=on_event,
             function_filter=ticket.metadata.functions,
@@ -160,6 +161,7 @@ async def _resume_ticket(
 
     try:
         result = await resume_session(
+            ticket_id=ticket.id,
             ticket_dir=ticket.dir,
             response=response,
             http=http,
