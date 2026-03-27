@@ -41,7 +41,7 @@ from opal_backend.sessions.in_memory_store import InMemorySessionStore
 from bees.functions.skills import get_skills_function_group, scan_skills
 from bees.functions.simple_files import get_simple_files_function_group_factory
 from bees.functions.system import get_system_function_group_factory
-from bees.functions.sandbox import get_sandbox_function_group
+from bees.functions.sandbox import get_sandbox_function_group_factory
 
 # Scan skills once at import time.
 _BEES_DIR = Path(__file__).resolve().parent
@@ -365,7 +365,9 @@ async def run_session(
             get_system_function_group_factory(),
             get_simple_files_function_group_factory(),
             get_skills_function_group(available_skills=session_listing),
-            get_sandbox_function_group(work_dir=ticket_dir / "filesystem" if ticket_dir else None),
+            get_sandbox_function_group_factory(
+                work_dir=ticket_dir / "filesystem" if ticket_dir else None,
+            ),
         ],
         initial_files=session_files,
         function_filter=function_filter,
@@ -484,7 +486,9 @@ async def resume_session(
             get_system_function_group_factory(),
             get_simple_files_function_group_factory(),
             get_skills_function_group(available_skills=_SKILLS_LISTING),
-            get_sandbox_function_group(work_dir=ticket_dir / "filesystem"),
+            get_sandbox_function_group_factory(
+                work_dir=ticket_dir / "filesystem",
+            ),
         ],
         # initial_files not needed on resume — already in FS snapshot.
     )
