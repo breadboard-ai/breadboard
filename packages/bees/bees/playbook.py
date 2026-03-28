@@ -4,7 +4,10 @@
 """
 Playbook loader and runner.
 
-A playbook is a YAML file that declares a DAG of ticket steps.
+A playbook is a directory under ``playbooks/{name}/`` containing:
+- ``PLAYBOOK.yaml`` — step declarations (a DAG of ticket steps)
+- ``hooks.py`` (optional) — Python lifecycle hooks
+
 Running a playbook creates tickets in topological order so that
 each ticket's ``{{step-name}}`` references resolve to already-created
 ticket IDs.
@@ -12,14 +15,19 @@ ticket IDs.
 
 from __future__ import annotations
 
+import importlib.util
+import logging
 import re
 import uuid
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 import yaml
 
 from bees.ticket import Ticket, _DEP_PATTERN, create_ticket
+
+logger = logging.getLogger(__name__)
 
 PLAYBOOKS_DIR = Path(__file__).resolve().parent.parent / "playbooks"
 
@@ -27,12 +35,37 @@ PLAYBOOKS_DIR = Path(__file__).resolve().parent.parent / "playbooks"
 _STEP_KEYS = {"title", "objective", "functions", "skills", "tags", "assignee", "model", "watch_events"}
 
 
+class PlaybookAborted(Exception):
+    """Raised when a playbook's on_prepare hook declines to run."""
+
+
+# ---------------------------------------------------------------------------
+# Discovery and loading
+# ---------------------------------------------------------------------------
+
+
+def list_playbooks() -> list[str]:
+    """Return the names of all available playbooks.
+
+    Scans for directories under ``PLAYBOOKS_DIR`` that contain a
+    ``PLAYBOOK.yaml`` file.
+    """
+    if not PLAYBOOKS_DIR.is_dir():
+        return []
+    return sorted(
+        d.name
+        for d in PLAYBOOKS_DIR.iterdir()
+        if d.is_dir() and (d / "PLAYBOOK.yaml").exists()
+    )
+
+
 def load_playbook(name: str) -> dict[str, Any]:
     """Load a playbook YAML by name.
 
-    Looks for ``playbooks/{name}.yaml`` relative to the package root.
+    Looks for ``playbooks/{name}/PLAYBOOK.yaml`` relative to the
+    package root.
     """
-    path = PLAYBOOKS_DIR / f"{name}.yaml"
+    path = PLAYBOOKS_DIR / name / "PLAYBOOK.yaml"
     if not path.exists():
         raise FileNotFoundError(f"Playbook not found: {path}")
 
@@ -43,6 +76,23 @@ def load_playbook(name: str) -> dict[str, Any]:
         raise ValueError(f"Playbook {name} must contain a 'steps' mapping.")
 
     return data
+
+
+def _load_hooks(name: str) -> ModuleType | None:
+    """Import a playbook's hooks.py if it exists."""
+    hooks_path = PLAYBOOKS_DIR / name / "hooks.py"
+    if not hooks_path.exists():
+        return None
+
+    spec = importlib.util.spec_from_file_location(
+        f"playbook_hooks.{name}", hooks_path,
+    )
+    if spec is None or spec.loader is None:
+        return None
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def topological_sort(steps: dict[str, dict]) -> list[str]:
@@ -87,6 +137,11 @@ def topological_sort(steps: dict[str, dict]) -> list[str]:
     return order
 
 
+# ---------------------------------------------------------------------------
+# Runner
+# ---------------------------------------------------------------------------
+
+
 def run_playbook(name: str, *, context: str | None = None) -> list[Ticket]:
     """Create tickets for each step of a playbook.
 
@@ -94,9 +149,24 @@ def run_playbook(name: str, *, context: str | None = None) -> list[Ticket]:
     references in objectives are replaced with the concrete ticket ID
     of the already-created step.
 
+    If the playbook has a ``hooks.py`` with an ``on_prepare`` function,
+    it is called before ticket creation. The hook receives the
+    caller-supplied context and may return enriched context, or ``None``
+    to abort the run (raises ``PlaybookAborted``).
+
     Returns the list of created tickets.
     """
     data = load_playbook(name)
+
+    # Run on_prepare hook if present.
+    hooks = _load_hooks(name)
+    if hooks and hasattr(hooks, "on_prepare"):
+        context = hooks.on_prepare(context)
+        if context is None:
+            raise PlaybookAborted(
+                f"Playbook '{name}' declined to run (on_prepare returned None)."
+            )
+
     steps = data["steps"]
     playbook_id = data.get("name", name)
     playbook_run_id = str(uuid.uuid4())
@@ -138,3 +208,4 @@ def run_playbook(name: str, *, context: str | None = None) -> list[Ticket]:
         created_tickets.append(ticket)
 
     return created_tickets
+

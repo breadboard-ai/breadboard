@@ -19,7 +19,7 @@ from opal_backend.function_definition import (
     load_declarations,
 )
 
-from bees.playbook import PLAYBOOKS_DIR, load_playbook, run_playbook
+from bees.playbook import PlaybookAborted, list_playbooks, load_playbook, run_playbook
 
 __all__ = ["get_playbooks_function_group"]
 
@@ -43,11 +43,7 @@ def _make_handlers(on_playbook_run: Any | None = None) -> dict[str, Any]:
 
         playbooks: list[dict[str, str]] = []
         try:
-            if not PLAYBOOKS_DIR.is_dir():
-                return {"playbooks": []}
-
-            for path in sorted(PLAYBOOKS_DIR.glob("*.yaml")):
-                name = path.stem
+            for name in list_playbooks():
                 try:
                     data = load_playbook(name)
                     if data.get("hidden"):
@@ -88,6 +84,8 @@ def _make_handlers(on_playbook_run: Any | None = None) -> dict[str, Any]:
 
         try:
             tickets = run_playbook(name, context=context)
+        except PlaybookAborted as e:
+            return {"status": "skipped", "message": str(e)}
         except FileNotFoundError:
             return {"error": f"Playbook not found: {name}"}
         except ValueError as e:

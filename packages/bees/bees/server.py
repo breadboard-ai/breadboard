@@ -31,7 +31,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from bees.playbook import PLAYBOOKS_DIR, load_playbook, run_playbook
+from bees.playbook import PlaybookAborted, list_playbooks, load_playbook, run_playbook
 from bees.scheduler import Scheduler, SchedulerHooks
 from bees.session import load_gemini_key
 from bees.ticket import (
@@ -415,16 +415,15 @@ async def update_ticket_tags(
 @app.get("/playbooks")
 async def get_playbooks() -> list[dict[str, str]]:
     """List available playbooks."""
-    if not PLAYBOOKS_DIR.exists():
-        return []
-
     playbooks = []
-    for path in sorted(PLAYBOOKS_DIR.glob("*.yaml")):
+    for name in list_playbooks():
         try:
-            data = load_playbook(path.stem)
+            data = load_playbook(name)
+            if data.get("hidden"):
+                continue
             playbooks.append({
-                "name": path.stem,
-                "title": data.get("title", path.stem),
+                "name": data.get("name", name),
+                "title": data.get("title", name),
                 "description": data.get("description", ""),
             })
         except Exception:
@@ -439,6 +438,8 @@ async def run_playbook_endpoint(name: str) -> dict[str, Any]:
         tickets = run_playbook(name)
     except FileNotFoundError:
         raise HTTPException(404, f"Playbook '{name}' not found")
+    except PlaybookAborted as exc:
+        return {"playbook": name, "status": "skipped", "message": str(exc)}
     except ValueError as exc:
         raise HTTPException(400, str(exc))
 
