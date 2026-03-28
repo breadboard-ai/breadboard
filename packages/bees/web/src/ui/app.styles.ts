@@ -601,6 +601,71 @@ export const styles = css`
     cursor: pointer;
   }
 
+  /* ---- Context updates disclosure ---- */
+
+  .context-updates {
+    margin-top: 4px;
+  }
+
+  .context-toggle {
+    padding: 0;
+    font-family: var(--sys-typescale-mono-font);
+    font-size: 0.65rem;
+    color: var(--sys-color-outline);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+  }
+
+  .context-toggle:hover {
+    opacity: 1;
+  }
+
+  .context-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 10px;
+    background: var(--sys-color-surface-variant);
+    border: 1px solid var(--sys-color-outline-variant);
+    border-radius: var(--sys-shape-corner-small);
+  }
+
+  .context-fields input {
+    padding: 6px 10px;
+    font-family: var(--sys-typescale-mono-font);
+    font-size: 0.8rem;
+    background: var(--sys-color-surface);
+    border: 1px solid var(--sys-color-outline-variant);
+    border-radius: var(--sys-shape-corner-extra-small);
+    color: var(--sys-color-on-surface);
+  }
+
+  .context-fields input:focus {
+    border-color: var(--sys-color-primary);
+    outline: none;
+  }
+
+  .context-fields textarea {
+    padding: 6px 10px;
+    font-family: var(--sys-typescale-mono-font);
+    font-size: 0.8rem;
+    background: var(--sys-color-surface);
+    border: 1px solid var(--sys-color-outline-variant);
+    border-radius: var(--sys-shape-corner-extra-small);
+    color: var(--sys-color-on-surface);
+    resize: vertical;
+    min-height: 3em;
+  }
+
+  .context-fields textarea:focus {
+    border-color: var(--sys-color-primary);
+    outline: none;
+  }
+
   /* ---- Event logs ---- */
 
   .ticket-logs {

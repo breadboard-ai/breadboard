@@ -44,11 +44,16 @@ class BeesAPI {
     }
   }
 
-  async respond(ticketId: string, text?: string, selectedIds?: string[]) {
+  async respond(
+    ticketId: string,
+    text?: string,
+    selectedIds?: string[],
+    contextUpdates?: string[]
+  ) {
     await fetch(`/tickets/${ticketId}/respond`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, selectedIds }),
+      body: JSON.stringify({ text, selectedIds, contextUpdates }),
     });
   }
 

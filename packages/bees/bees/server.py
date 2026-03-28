@@ -196,7 +196,7 @@ async def _on_playbook_complete(run_id: str, siblings: list[Ticket], triggering_
             # Opie is idle. Deliver immediately.
             response_path = opie.dir / "response.json"
             response_path.write_text(
-                json.dumps({"text": notification}, indent=2, ensure_ascii=False)
+                json.dumps({"context_updates": [notification]}, indent=2, ensure_ascii=False)
                 + "\n"
             )
             opie.metadata.assignee = "agent"
@@ -266,6 +266,7 @@ class AddTicketRequest(BaseModel):
 class RespondRequest(BaseModel):
     text: str | None = None
     selectedIds: list[str] | None = None
+    contextUpdates: list[str] | None = None
 
 
 class UpdateTagsRequest(BaseModel):
@@ -419,6 +420,8 @@ async def respond_to_ticket(
         response["selectedIds"] = req.selectedIds
     elif req.text is not None:
         response["text"] = req.text
+    if req.contextUpdates:
+        response["context_updates"] = req.contextUpdates
         
     response_path.write_text(
         json.dumps(response, indent=2, ensure_ascii=False) + "\n"

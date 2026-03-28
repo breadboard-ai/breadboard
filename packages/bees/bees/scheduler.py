@@ -522,7 +522,7 @@ class Scheduler:
                 notification = ticket.metadata.pending_notifications.pop(0)
                 response_path = ticket.dir / "response.json"
                 response_path.write_text(
-                    json.dumps({"text": notification}, indent=2, ensure_ascii=False) + "\n"
+                    json.dumps({"context_updates": [notification]}, indent=2, ensure_ascii=False) + "\n"
                 )
                 ticket.metadata.status = "suspended"
                 ticket.metadata.assignee = "agent"
