@@ -24,7 +24,7 @@ from bees.ticket import Ticket, _DEP_PATTERN, create_ticket
 PLAYBOOKS_DIR = Path(__file__).resolve().parent.parent / "playbooks"
 
 # Step properties that map directly to ticket metadata fields.
-_STEP_KEYS = {"title", "objective", "functions", "skills", "tags", "assignee", "model"}
+_STEP_KEYS = {"title", "objective", "functions", "skills", "tags", "assignee", "model", "watch_events"}
 
 
 def load_playbook(name: str) -> dict[str, Any]:
@@ -128,6 +128,7 @@ def run_playbook(name: str, *, context: str | None = None) -> list[Ticket]:
             tags=step.get("tags"),
             assignee=step.get("assignee"),
             model=step.get("model"),
+            watch_events=step.get("watch_events"),
             playbook_id=playbook_id,
             playbook_run_id=playbook_run_id,
             context=context if is_root else None,

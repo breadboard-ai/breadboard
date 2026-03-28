@@ -175,6 +175,32 @@ def _find_dep_id(ref: str, dep_ids: list[str]) -> str | None:
             return dep_id
     return None
 
+# ---------------------------------------------------------------------------
+# Event formatting (structured data → text for agent consumption)
+# ---------------------------------------------------------------------------
+
+
+def _format_playbook_complete(playbook_id: str, siblings: list[Ticket]) -> str:
+    """Format a playbook-completion event as a context_update string."""
+    summaries: list[str] = []
+    succeeded = 0
+    failed = 0
+    for t in siblings:
+        title = t.metadata.title or t.id[:8]
+        outcome = t.metadata.outcome or "(no outcome)"
+        summaries.append(f"- **{title}**: {outcome}")
+        if t.metadata.status == "completed":
+            succeeded += 1
+        elif t.metadata.status == "failed":
+            failed += 1
+
+    summary_text = "\n".join(summaries)
+    return (
+        f'[Playbook Completed] "{playbook_id}"\n'
+        f"Results ({succeeded} succeeded, {failed} failed):\n"
+        f"{summary_text}"
+    )
+
 
 # ---------------------------------------------------------------------------
 # Dependency promotion
@@ -516,18 +542,18 @@ class Scheduler:
             ticket.metadata.files = file_manifest
 
     def _handle_suspend(self, ticket: Ticket, result: SessionResult) -> None:
-        """Handle suspend state, including pending-notification auto-resume."""
+        """Handle suspend state, including queued-update auto-resume."""
         if result.suspended:
-            if getattr(ticket.metadata, "pending_notifications", None):
-                notification = ticket.metadata.pending_notifications.pop(0)
+            if getattr(ticket.metadata, "queued_updates", None):
+                update = ticket.metadata.queued_updates.pop(0)
                 response_path = ticket.dir / "response.json"
                 response_path.write_text(
-                    json.dumps({"context_updates": [notification]}, indent=2, ensure_ascii=False) + "\n"
+                    json.dumps({"context_updates": [update]}, indent=2, ensure_ascii=False) + "\n"
                 )
                 ticket.metadata.status = "suspended"
                 ticket.metadata.assignee = "agent"
                 ticket.metadata.suspend_event = result.suspend_event
-                print(f"  [{ticket.id[:8]}] 📩 auto-resume with queued notification", file=sys.stderr)
+                print(f"  [{ticket.id[:8]}] 📩 auto-resume with queued update", file=sys.stderr)
             else:
                 ticket.metadata.status = "suspended"
                 ticket.metadata.assignee = "user"
@@ -566,6 +592,82 @@ class Scheduler:
 
         if self._hooks.on_playbook_complete:
             await self._hooks.on_playbook_complete(run_id, siblings, ticket)
+
+        await self._deliver_to_watchers(siblings, ticket)
+
+    async def _deliver_to_watchers(
+        self,
+        siblings: list[Ticket],
+        triggering_ticket: Ticket,
+    ) -> None:
+        """Find tickets with matching watch_events and deliver a summary.
+
+        Delivery uses the existing context_updates channel:
+        - If the watcher is idle (suspended, assignee=user), deliver immediately
+          by writing response.json and flipping assignee to agent.
+        - If the watcher is busy, append to queued_updates for later delivery
+          when the ticket next suspends.
+        """
+        playbook_id = triggering_ticket.metadata.playbook_id or "(unknown)"
+        triggering_tags = set(triggering_ticket.metadata.tags or [])
+
+        notification = _format_playbook_complete(playbook_id, siblings)
+
+        # Find all tickets with matching watch_events.
+        for ticket in list_tickets():
+            if not ticket.metadata.watch_events:
+                continue
+
+            for watch in ticket.metadata.watch_events:
+                if watch.get("type") != "playbook_complete":
+                    continue
+
+                # Parse tag filters: "!tag" excludes, "tag" requires.
+                tag_filters = watch.get("tags", [])
+                exclude = {f[1:] for f in tag_filters if f.startswith("!")}
+                require = {f for f in tag_filters if not f.startswith("!")}
+
+                if triggering_tags & exclude:
+                    continue
+                if require and not (triggering_tags & require):
+                    continue
+
+                # Match found — deliver.
+                self._deliver_context_update(ticket, notification)
+                break  # One delivery per watcher ticket per event.
+
+    def _deliver_context_update(self, ticket: Ticket, update: str) -> None:
+        """Deliver a context_update to a ticket, immediately or queued."""
+        if (
+            ticket.metadata.status == "suspended"
+            and ticket.metadata.assignee == "user"
+            and ticket.id not in self._running_tickets
+        ):
+            # Idle — deliver immediately.
+            response_path = ticket.dir / "response.json"
+            response_path.write_text(
+                json.dumps(
+                    {"context_updates": [update]},
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+            ticket.metadata.assignee = "agent"
+            ticket.save_metadata()
+            logger.info(
+                "Delivered watcher update to %s immediately", ticket.id[:8]
+            )
+            self.trigger()
+        else:
+            # Busy — queue for later.
+            if not ticket.metadata.queued_updates:
+                ticket.metadata.queued_updates = []
+            ticket.metadata.queued_updates.append(update)
+            ticket.save_metadata()
+            logger.info(
+                "Queued watcher update for %s", ticket.id[:8]
+            )
 
     async def _run_cycles(self) -> None:
         """Run cycles until no more work is available (server mode).
