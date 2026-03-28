@@ -64,6 +64,15 @@ class BeesApp extends SignalWatcher(LitElement) {
   private playbooks: PlaybookData[] = [];
 
   @state()
+  private contextExpanded: Record<string, boolean> = {};
+
+  @state()
+  private contextPlaybookId: Record<string, string> = {};
+
+  @state()
+  private contextUpdate: Record<string, string> = {};
+
+  @state()
   private loadingPlaybooks = false;
 
   private connection = new BeesConnection(appState);
@@ -433,6 +442,7 @@ class BeesApp extends SignalWatcher(LitElement) {
             Send Selection
           </button>
         </div>
+        ${this.renderContextUpdates(t.id)}
       `;
     }
 
@@ -453,6 +463,7 @@ class BeesApp extends SignalWatcher(LitElement) {
         />
         <button @click=${() => this.respond(t.id)}>Send</button>
       </div>
+      ${this.renderContextUpdates(t.id)}
     `;
   }
 
@@ -540,18 +551,26 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   private async respondWithChoices(ticketId: string) {
     const selectedIds = this.selectedChoices[ticketId] ?? [];
-    if (selectedIds.length === 0) return;
+    const contextUpdates = this.buildContextUpdates(ticketId);
+    if (selectedIds.length === 0 && !contextUpdates) return;
 
     this.selectedChoices = { ...this.selectedChoices, [ticketId]: [] };
-    await this.api.respond(ticketId, undefined, selectedIds);
+    await this.api.respond(
+      ticketId, undefined,
+      selectedIds.length > 0 ? selectedIds : undefined,
+      contextUpdates,
+    );
+    this.clearContextFields(ticketId);
   }
 
   private async respond(ticketId: string) {
     const text = this.responses[ticketId]?.trim();
-    if (!text) return;
+    const contextUpdates = this.buildContextUpdates(ticketId);
+    if (!text && !contextUpdates) return;
 
     this.responses = { ...this.responses, [ticketId]: "" };
-    await this.api.respond(ticketId, text);
+    await this.api.respond(ticketId, text || undefined, undefined, contextUpdates);
+    this.clearContextFields(ticketId);
   }
 
   private onKeyDown(e: KeyboardEvent) {
@@ -568,6 +587,70 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   private onRespondKeyDown(e: KeyboardEvent, ticketId: string) {
     if (e.key === "Enter") this.respond(ticketId);
+  }
+
+  private renderContextUpdates(ticketId: string) {
+    const expanded = this.contextExpanded[ticketId] ?? false;
+
+    return html`
+      <div class="context-updates">
+        <button
+          class="context-toggle"
+          @click=${() => {
+            this.contextExpanded = {
+              ...this.contextExpanded,
+              [ticketId]: !expanded,
+            };
+          }}
+        >
+          ${expanded ? "▾" : "▸"} Context Updates
+        </button>
+        ${expanded
+          ? html`
+              <div class="context-fields">
+                <input
+                  type="text"
+                  placeholder="Playbook ID"
+                  .value=${this.contextPlaybookId[ticketId] ?? ""}
+                  @input=${(e: Event) => {
+                    this.contextPlaybookId = {
+                      ...this.contextPlaybookId,
+                      [ticketId]: (e.target as HTMLInputElement).value,
+                    };
+                  }}
+                />
+                <textarea
+                  placeholder="Update text..."
+                  rows="3"
+                  .value=${this.contextUpdate[ticketId] ?? ""}
+                  @input=${(e: Event) => {
+                    this.contextUpdate = {
+                      ...this.contextUpdate,
+                      [ticketId]: (e.target as HTMLTextAreaElement).value,
+                    };
+                  }}
+                ></textarea>
+              </div>
+            `
+          : nothing}
+      </div>
+    `;
+  }
+
+  private buildContextUpdates(ticketId: string): string[] | undefined {
+    const playbookId = this.contextPlaybookId[ticketId]?.trim();
+    const update = this.contextUpdate[ticketId]?.trim();
+    if (!playbookId && !update) return undefined;
+
+    const notification =
+      `[System Notification] Playbook "${playbookId || "unknown"}" update:\n${update || "(no details)"}`;
+    return [notification];
+  }
+
+  private clearContextFields(ticketId: string) {
+    this.contextExpanded = { ...this.contextExpanded, [ticketId]: false };
+    this.contextPlaybookId = { ...this.contextPlaybookId, [ticketId]: "" };
+    this.contextUpdate = { ...this.contextUpdate, [ticketId]: "" };
   }
 }
 

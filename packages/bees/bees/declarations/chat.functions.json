@@ -46,6 +46,11 @@
           "type": "boolean",
           "description": "True when the user tapped the skip button instead of providing input."
         },
+        "context_updates": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional system notifications that accumulated while waiting for input. These are informational updates about background activity (e.g. tasks completing, state changes). Process them as context — they do not require immediate action."
+        },
         "error": {
           "type": "string",
           "description": "If an error has occurred, will contain a description of the error"
@@ -131,6 +136,11 @@
             "type": "string"
           },
           "description": "Array of selected choice IDs. For \"single\" mode, this will have exactly one element."
+        },
+        "context_updates": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional system notifications that accumulated while waiting for input. These are informational updates about background activity (e.g. tasks completing, state changes). Process them as context — they do not require immediate action."
         },
         "error": {
           "type": "string",
