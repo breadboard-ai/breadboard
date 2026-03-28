@@ -3,7 +3,6 @@ title: Update Digest
 description: >
   Generates the Opal Magazine digest — a curated React UI that summarises the
   current state of user-relevant tickets.
-hidden: true
 steps:
   generate:
     title: Generate Digest UI
