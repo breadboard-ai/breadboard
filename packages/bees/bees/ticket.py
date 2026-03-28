@@ -53,7 +53,8 @@ class TicketMetadata:
     playbook_run_id: str | None = None
     model: str | None = None
     context: str | None = None
-    pending_notifications: list[str] | None = None
+    watch_events: list[dict[str, Any]] | None = None
+    queued_updates: list[str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -83,7 +84,8 @@ class TicketMetadata:
             playbook_run_id=data.get("playbook_run_id"),
             model=data.get("model"),
             context=data.get("context"),
-            pending_notifications=data.get("pending_notifications"),
+            watch_events=data.get("watch_events"),
+            queued_updates=data.get("queued_updates"),
         )
 
 
@@ -136,6 +138,7 @@ def create_ticket(
     playbook_run_id: str | None = None,
     model: str | None = None,
     context: str | None = None,
+    watch_events: list[dict[str, Any]] | None = None,
 ) -> Ticket:
     """Create a new ticket.
 
@@ -179,6 +182,7 @@ def create_ticket(
             playbook_run_id=playbook_run_id,
             model=model,
             context=context,
+            watch_events=watch_events,
         ),
     )
     ticket.save()

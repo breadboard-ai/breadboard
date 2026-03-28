@@ -145,14 +145,12 @@ async def _on_cycle_complete(cycles: int) -> None:
 
 
 async def _on_playbook_complete(run_id: str, siblings: list[Ticket], triggering_ticket: Ticket) -> None:
-    """Handle playbook completion: broadcast and notify Opie."""
-    
-    # Skip if triggering ticket is opie or digest (application logic)
-    if triggering_ticket.metadata.tags and "opie" in triggering_ticket.metadata.tags:
-        return
-    if triggering_ticket.metadata.tags and "digest" in triggering_ticket.metadata.tags:
-        return
+    """Broadcast playbook completion via SSE.
 
+    Watcher delivery (notifying interested tickets) is handled by the
+    scheduler's ``_deliver_to_watchers`` — this hook is only for the
+    SSE event stream so the frontend can react to completion.
+    """
     playbook_name = triggering_ticket.metadata.playbook_id or "(unknown)"
     succeeded = sum(1 for t in siblings if t.metadata.status == "completed")
     failed = sum(1 for t in siblings if t.metadata.status == "failed")
@@ -169,56 +167,6 @@ async def _on_playbook_complete(run_id: str, siblings: list[Ticket], triggering_
         "succeeded": succeeded,
         "failed": failed,
     })
-
-    # Build a summary of completed ticket outcomes.
-    summaries: list[str] = []
-    for t in siblings:
-        title = t.metadata.title or t.id[:8]
-        outcome = t.metadata.outcome or "(no outcome)"
-        summaries.append(f"- **{title}**: {outcome}")
-    summary_text = "\n".join(summaries)
-
-    # Wake Opie with a system notification (or queue it if busy).
-    opie = next(
-        (t for t in list_tickets() if t.metadata.tags and "opie" in t.metadata.tags),
-        None,
-    )
-    if opie:
-        notification = (
-            f'[System Notification] Playbook "{playbook_name}" has completed.\n'
-            f"Results:\n{summary_text}\n\n"
-            f"Please review these results. Your primary presentation surface is the Digest UI, but do NOT update it for minor intermediate steps.\n"
-            f"1. Evaluate if this completes a major milestone or uncovers significant findings. If so, call `digest_update` with an editorial briefing.\n"
-            f"2. Send a very brief chat message acknowledging the work. If you updated the digest, mention it. Do NOT output a long summary to the chat."
-        )
-
-        if opie.metadata.status == "suspended" and opie.metadata.assignee == "user":
-            # Opie is idle. Deliver immediately.
-            response_path = opie.dir / "response.json"
-            response_path.write_text(
-                json.dumps({"context_updates": [notification]}, indent=2, ensure_ascii=False)
-                + "\n"
-            )
-            opie.metadata.assignee = "agent"
-            opie.save_metadata()
-
-            await broadcaster.broadcast({
-                "type": "ticket_update",
-                "ticket": _ticket_to_dict(opie),
-            })
-            logger.info("Notified Opie immediately of playbook completion: %s", playbook_name)
-            
-            # scheduler is available in lifespan, let's make sure it's accessible.
-            # In the old code it was accessible via 'scheduler' global.
-            if scheduler:
-                scheduler.trigger()
-        else:
-            # Opie is busy. Queue the notification.
-            if not opie.metadata.pending_notifications:
-                opie.metadata.pending_notifications = []
-            opie.metadata.pending_notifications.append(notification)
-            opie.save_metadata()
-            logger.info("Queued Opie notification for playbook completion: %s", playbook_name)
 
 
 async def _auto_build_bundle(ticket: Ticket) -> None:
