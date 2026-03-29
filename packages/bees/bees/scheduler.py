@@ -117,17 +117,19 @@ class SchedulerHooks:
 
 
 def resolve_segments(ticket: Ticket) -> list[dict[str, Any]]:
-    """Build segments from a ticket's objective, resolving {{id}} references.
+    """Build segments from a ticket's objective, resolving ``{{…}}`` references.
 
-    Text around ``{{id}}`` becomes text segments.  Each ``{{id}}``
-    becomes an ``input`` segment carrying the dependency's outcome as
-    LLMContent.
+    References are resolved by namespace:
 
-    If the ticket has ``context`` (a playbook briefing), it is prepended
-    as a text segment so the agent sees the context before the objective.
+    - ``{{system.context}}`` — replaced with the ticket's context string.
+    - ``{{ticket-id}}`` — replaced with the dependency's outcome as an
+      ``input`` segment carrying LLMContent.
+
+    Plain text around references becomes text segments.
     """
     objective = ticket.objective
     deps = ticket.metadata.depends_on or []
+    context = ticket.metadata.context or ""
 
     # Build a lookup from dep ID to resolved outcome.
     dep_outcomes: dict[str, dict[str, Any]] = {}
@@ -140,37 +142,31 @@ def resolve_segments(ticket: Ticket) -> list[dict[str, Any]]:
     parts = _DEP_PATTERN.split(objective)
     segments: list[dict[str, Any]] = []
 
-    # Prepend playbook context as a briefing segment.
-    if ticket.metadata.context:
-        segments.append({
-            "type": "text",
-            "text": (
-                "--- Playbook Context ---\n"
-                f"{ticket.metadata.context}\n"
-                "--- End Context ---\n\n"
-            ),
-        })
-
     for i, part in enumerate(parts):
         if i % 2 == 0:
             # Text between refs.
             if part:
                 segments.append({"type": "text", "text": part})
         else:
-            # This is a captured ref — resolve to input segment.
-            resolved_id = _find_dep_id(part, deps)
-            if resolved_id and resolved_id in dep_outcomes:
-                segments.append({
-                    "type": "input",
-                    "title": f"ticket-{resolved_id[:8]}",
-                    "content": dep_outcomes[resolved_id],
-                })
+            # Resolve by namespace.
+            if part == "system.context":
+                if context:
+                    segments.append({"type": "text", "text": context})
             else:
-                # Fallback: just include as text.
-                segments.append({
-                    "type": "text",
-                    "text": f"(output of ticket {part})",
-                })
+                # Dependency ref — resolve to input segment.
+                resolved_id = _find_dep_id(part, deps)
+                if resolved_id and resolved_id in dep_outcomes:
+                    segments.append({
+                        "type": "input",
+                        "title": f"ticket-{resolved_id[:8]}",
+                        "content": dep_outcomes[resolved_id],
+                    })
+                else:
+                    # Fallback: just include as text.
+                    segments.append({
+                        "type": "text",
+                        "text": f"(output of ticket {part})",
+                    })
 
     return segments
 

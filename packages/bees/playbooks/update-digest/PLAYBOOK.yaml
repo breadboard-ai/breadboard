@@ -11,6 +11,10 @@ steps:
       beautiful, curated React application that presents the user's recent work
       as an editorial magazine-style experience.
 
+      Here is the context briefing with ticket data and editorial direction:
+
+      {{system.context}}
+
       CRITICAL RULES: 1. DO NOT brand the UI with "Opal", "Opie", or "Digest
       Generator". This is the user's personal space. 2. DO NOT hallucinate
       features or buttons (like "Build Progress Tracker") that do not exist. 3.

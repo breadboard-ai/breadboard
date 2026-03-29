@@ -95,11 +95,26 @@ def _load_hooks(name: str) -> ModuleType | None:
     return module
 
 
+def _normalize_step_ref(ref: str, step_names: set[str]) -> str | None:
+    """Extract the step name from a template ref, or None if not a step ref.
+
+    Recognises both ``{{step-name}}`` (shorthand) and
+    ``{{playbook.step-name}}`` (explicit).  Returns ``None`` for
+    system parameters (``system.*``) or unknown refs.
+    """
+    if ref.startswith("system."):
+        return None
+    bare = ref.removeprefix("playbook.")
+    return bare if bare in step_names else None
+
+
 def topological_sort(steps: dict[str, dict]) -> list[str]:
     """Return step names in dependency order.
 
-    Dependencies are inferred from ``{{step-name}}`` references in
-    each step's objective. Raises ``ValueError`` on cycles.
+    Dependencies are inferred from ``{{step-name}}`` (or
+    ``{{playbook.step-name}}``) references in each step's objective.
+    System parameters like ``{{system.context}}`` are ignored.
+    Raises ``ValueError`` on cycles.
     """
     step_names = set(steps.keys())
 
@@ -107,9 +122,12 @@ def topological_sort(steps: dict[str, dict]) -> list[str]:
     deps: dict[str, set[str]] = {}
     for name, step in steps.items():
         objective = step.get("objective", "")
-        refs = set(_DEP_PATTERN.findall(objective))
-        # Only keep refs that point to other steps in this playbook.
-        deps[name] = refs & step_names
+        raw_refs = _DEP_PATTERN.findall(objective)
+        resolved = {
+            _normalize_step_ref(r, step_names)
+            for r in raw_refs
+        }
+        deps[name] = resolved - {None}
 
     # Kahn's algorithm.
     in_degree = {name: len(deps[name]) for name in step_names}
@@ -181,13 +199,17 @@ def run_playbook(name: str, *, context: str | None = None) -> list[Ticket]:
         step = steps[step_name]
         objective = step.get("objective", "")
 
-        # Replace {{step-name}} with {{ticket-id}} for already-created steps.
+        # Replace {{step-name}} and {{playbook.step-name}} with {{ticket-id}}.
         for ref_name, ticket_id in step_ticket_ids.items():
             objective = objective.replace(f"{{{{{ref_name}}}}}", f"{{{{{ticket_id}}}}}")
+            objective = objective.replace(f"{{{{playbook.{ref_name}}}}}", f"{{{{{ticket_id}}}}}")
 
         # Only attach context to root tickets (those with no step deps).
-        objective_refs = set(_DEP_PATTERN.findall(step.get("objective", "")))
-        step_refs = objective_refs & set(steps.keys())
+        raw_refs = _DEP_PATTERN.findall(step.get("objective", ""))
+        step_refs = {
+            _normalize_step_ref(r, set(steps.keys()))
+            for r in raw_refs
+        } - {None}
         is_root = len(step_refs) == 0
 
         ticket = create_ticket(
