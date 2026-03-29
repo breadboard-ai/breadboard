@@ -97,6 +97,9 @@ class SchedulerHooks:
     on_playbook_run: Callable[[list[Ticket]], None] | None = None
     """Called when an agent invokes the playbook function mid-session."""
 
+    on_coordination_emit: Callable[[Ticket], None] | None = None
+    """Called when an agent emits a coordination signal mid-session."""
+
     on_playbook_complete: Callable[[str, list[Ticket], Ticket], Awaitable[None]] | None = None
     """Called when all tickets in a playbook run are complete. (run_id, siblings, triggering_ticket)"""
 
@@ -326,7 +329,20 @@ class Scheduler:
         while True:
             promote_blocked_tickets()
 
-            tickets = list_tickets(status="available")
+            all_available = list_tickets(status="available")
+
+            # Route coordination tickets before processing work tickets.
+            coordination = [
+                t for t in all_available
+                if t.metadata.kind == "coordination"
+            ]
+            for t in coordination:
+                await self._route_coordination_ticket(t)
+
+            tickets = [
+                t for t in all_available
+                if t.metadata.kind != "coordination"
+            ]
             resumable = [
                 t for t in list_tickets(status="suspended")
                 if t.metadata.assignee == "agent"
@@ -417,6 +433,7 @@ class Scheduler:
                 allowed_skills=ticket.metadata.skills,
                 model=ticket.metadata.model,
                 on_playbook_run=self._hooks.on_playbook_run,
+                on_coordination_emit=self._hooks.on_coordination_emit,
             )
         except Exception as exc:
             ticket.metadata.status = "failed"
@@ -475,6 +492,7 @@ class Scheduler:
                 label=label,
                 on_event=self._make_on_event(ticket.id),
                 on_playbook_run=self._hooks.on_playbook_run,
+                on_coordination_emit=self._hooks.on_coordination_emit,
             )
         except Exception as exc:
             ticket.metadata.status = "failed"
@@ -544,6 +562,13 @@ class Scheduler:
     def _handle_suspend(self, ticket: Ticket, result: SessionResult) -> None:
         """Handle suspend state, including queued-update auto-resume."""
         if result.suspended:
+            # Reload queued_updates from disk — they may have been written
+            # by _deliver_context_update while the session was running,
+            # and the in-memory ticket object wouldn't know about them.
+            fresh = load_ticket(ticket.id)
+            if fresh and fresh.metadata.queued_updates:
+                ticket.metadata.queued_updates = fresh.metadata.queued_updates
+
             if getattr(ticket.metadata, "queued_updates", None):
                 update = ticket.metadata.queued_updates.pop(0)
                 response_path = ticket.dir / "response.json"
@@ -595,12 +620,17 @@ class Scheduler:
 
         await self._deliver_to_watchers(siblings, ticket)
 
-    async def _deliver_to_watchers(
+    async def _deliver_signal(
         self,
-        siblings: list[Ticket],
-        triggering_ticket: Ticket,
+        signal_type: str,
+        payload: str,
+        source_tags: set[str],
     ) -> None:
-        """Find tickets with matching watch_events and deliver a summary.
+        """Route a signal to all tickets with matching watch_events.
+
+        Scans every ticket for a ``watch_events`` entry whose ``type``
+        matches ``signal_type``. Optional tag filters on the watcher
+        narrow by the source's tags.
 
         Delivery uses the existing context_updates channel:
         - If the watcher is idle (suspended, assignee=user), deliver immediately
@@ -608,18 +638,12 @@ class Scheduler:
         - If the watcher is busy, append to queued_updates for later delivery
           when the ticket next suspends.
         """
-        playbook_id = triggering_ticket.metadata.playbook_id or "(unknown)"
-        triggering_tags = set(triggering_ticket.metadata.tags or [])
-
-        notification = _format_playbook_complete(playbook_id, siblings)
-
-        # Find all tickets with matching watch_events.
         for ticket in list_tickets():
             if not ticket.metadata.watch_events:
                 continue
 
             for watch in ticket.metadata.watch_events:
-                if watch.get("type") != "playbook_complete":
+                if watch.get("type") != signal_type:
                     continue
 
                 # Parse tag filters: "!tag" excludes, "tag" requires.
@@ -627,14 +651,115 @@ class Scheduler:
                 exclude = {f[1:] for f in tag_filters if f.startswith("!")}
                 require = {f for f in tag_filters if not f.startswith("!")}
 
-                if triggering_tags & exclude:
+                if source_tags & exclude:
                     continue
-                if require and not (triggering_tags & require):
+                if require and not (source_tags & require):
                     continue
 
                 # Match found — deliver.
-                self._deliver_context_update(ticket, notification)
+                self._deliver_context_update(ticket, payload)
                 break  # One delivery per watcher ticket per event.
+
+    async def _deliver_to_watchers(
+        self,
+        siblings: list[Ticket],
+        triggering_ticket: Ticket,
+    ) -> None:
+        """Deliver a playbook-completion signal to matching watchers."""
+        playbook_id = triggering_ticket.metadata.playbook_id or "(unknown)"
+        notification = _format_playbook_complete(playbook_id, siblings)
+        await self._deliver_signal(
+            "playbook_complete",
+            notification,
+            set(triggering_ticket.metadata.tags or []),
+        )
+
+    async def _route_coordination_ticket(self, ticket: Ticket) -> None:
+        """Route a coordination ticket's signal to matching subscribers.
+
+        Delivery is durable: the coordination ticket stays ``available``
+        until every matching subscriber has been delivered to. Subscribers
+        that are busy (running or not idle) are skipped and retried in the
+        next scheduler cycle.
+
+        This design survives server restarts — undelivered coordination
+        tickets remain ``available`` on disk and are re-routed on startup.
+        """
+        signal_type = ticket.metadata.signal_type or ""
+        payload = ticket.metadata.context or ""
+        source_tags = set(ticket.metadata.tags or [])
+        delivered = set(ticket.metadata.delivered_to or [])
+
+        # Find all matching subscribers.
+        subscribers: list[Ticket] = []
+        for candidate in list_tickets():
+            if candidate.id == ticket.id:
+                continue
+            if not candidate.metadata.watch_events:
+                continue
+            for watch in candidate.metadata.watch_events:
+                if watch.get("type") != signal_type:
+                    continue
+                # Tag filtering.
+                tag_filters = watch.get("tags", [])
+                exclude = {f[1:] for f in tag_filters if f.startswith("!")}
+                require = {f for f in tag_filters if not f.startswith("!")}
+                if source_tags & exclude:
+                    continue
+                if require and not (source_tags & require):
+                    continue
+                subscribers.append(candidate)
+                break
+
+        # Try to deliver to each subscriber not yet delivered.
+        all_delivered = True
+        for sub in subscribers:
+            if sub.id in delivered:
+                continue
+            if (
+                sub.metadata.status == "suspended"
+                and sub.metadata.assignee == "user"
+                and sub.id not in self._running_tickets
+            ):
+                # Idle — deliver immediately.
+                response_path = sub.dir / "response.json"
+                response_path.write_text(
+                    json.dumps(
+                        {"context_updates": [payload]},
+                        indent=2,
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
+                sub.metadata.assignee = "agent"
+                sub.save_metadata()
+                delivered.add(sub.id)
+                logger.info(
+                    "Coordination %s delivered to %s",
+                    ticket.id[:8],
+                    sub.id[:8],
+                )
+            else:
+                # Busy — skip, will retry next cycle.
+                all_delivered = False
+
+        # Update delivery tracking.
+        ticket.metadata.delivered_to = list(delivered)
+
+        if all_delivered:
+            ticket.metadata.status = "completed"
+            ticket.metadata.completed_at = datetime.now(timezone.utc).isoformat()
+            logger.info(
+                "Coordination ticket %s fully delivered (signal_type=%s)",
+                ticket.id[:8],
+                signal_type,
+            )
+
+        ticket.save_metadata()
+
+        # Broadcast the updated coordination ticket to the UI.
+        if self._hooks.on_ticket_done:
+            await self._hooks.on_ticket_done(ticket)
 
     def _deliver_context_update(self, ticket: Ticket, update: str) -> None:
         """Deliver a context_update to a ticket, immediately or queued."""
@@ -680,7 +805,20 @@ class Scheduler:
         while True:
             promote_blocked_tickets()
 
-            tickets = list_tickets(status="available")
+            all_available = list_tickets(status="available")
+
+            # Route coordination tickets before processing work tickets.
+            coordination = [
+                t for t in all_available
+                if t.metadata.kind == "coordination"
+            ]
+            for t in coordination:
+                await self._route_coordination_ticket(t)
+
+            tickets = [
+                t for t in all_available
+                if t.metadata.kind != "coordination"
+            ]
             resumable = [
                 t for t in list_tickets(status="suspended")
                 if t.metadata.assignee == "agent"

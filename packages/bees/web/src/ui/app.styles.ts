@@ -338,6 +338,31 @@ export const styles = css`
     font-family: var(--sys-typescale-mono-font);
   }
 
+  .ticket-signal {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    padding-bottom: 4px;
+  }
+
+  .signal-type {
+    font-family: var(--sys-typescale-mono-font);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    background: var(--sys-color-secondary-container);
+    color: var(--sys-color-secondary);
+    border-radius: var(--sys-shape-corner-full);
+    white-space: nowrap;
+  }
+
+  .signal-context {
+    color: var(--sys-color-on-surface);
+    font-family: var(--sys-typescale-mono-font);
+  }
+
   /* ---- Badges ---- */
 
   .badge {
@@ -377,6 +402,11 @@ export const styles = css`
   .badge.muted {
     background: var(--sys-color-surface-variant);
     color: var(--sys-color-on-surface-variant);
+  }
+
+  .badge.coordination {
+    background: var(--sys-color-secondary-container);
+    color: var(--sys-color-secondary);
   }
 
   /* ---- Tags row ---- */

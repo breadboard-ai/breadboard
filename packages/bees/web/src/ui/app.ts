@@ -257,13 +257,25 @@ class BeesApp extends SignalWatcher(LitElement) {
         <div class="ticket-header">
           <span class="ticket-id">${t.id.slice(0, 8)}</span>
           <span class="badge ${t.status}">${t.status}</span>
+          ${t.kind === "coordination"
+            ? html`<span class="badge coordination">coordination</span>`
+            : nothing}
           ${t.assignee
             ? html`<span class="badge muted">→ ${t.assignee}</span>`
             : nothing}
           <span class="ticket-time"> ${getRelativeTime(t.created_at)} </span>
         </div>
 
-        <div class="ticket-objective">${t.objective}</div>
+        ${t.kind === "coordination"
+          ? html`
+              <div class="ticket-signal">
+                <code class="signal-type">${t.signal_type}</code>
+                ${t.context
+                  ? html`<span class="signal-context">${t.context}</span>`
+                  : nothing}
+              </div>
+            `
+          : html`<div class="ticket-objective">${t.objective}</div>`}
 
         <div class="ticket-tags">
           ${t.tags && t.tags.length > 0

@@ -1,13 +1,18 @@
 name: rendering
-title: Testing Rendering Pipeline
-description: A playbook to test a rendering pipeline.
+title: Testing Updates
+description: A playbook to test updates.
 
 steps:
   main:
-    title: Rendering
+    title: Infinite chat that listens for updates.
     objective: >
-      Create a super-fancy shopping list web app.
-    skills: ["*"]
-    model: gemini-3.1-pro-preview
-    tags: ["ui", "bundle", "testing"]
-    functions: ["system.*", "sandbox.*", "skills.*"]
+      As soon as you start, call the chat_request_user_input function with an
+      empty prompt and wait for the context_update. You are using this function
+      to receive context updates, not to ask the user questions.
+
+      Once the context update is received, write a poem about it, and then call
+      chat_request_user_input again. Repeat forever.
+    tags: ["testing"]
+    functions: ["chat.*"]
+    watch_events:
+      - type: test_update

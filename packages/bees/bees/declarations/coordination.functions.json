@@ -1,0 +1,20 @@
+[
+  {
+    "name": "coordination_emit",
+    "description": "Emit a coordination signal to notify other agents. The signal is routed to all agents that have subscribed to this signal type via watch_events. Use this to share status updates, trigger digest regeneration, or notify collaborating agents about completed work.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {
+        "signal_type": {
+          "type": "string",
+          "description": "The type of signal to emit. Subscribers match on this value (e.g., 'digest_update', 'status_change'). Choose descriptive, stable names."
+        },
+        "context": {
+          "type": "string",
+          "description": "Text payload delivered to subscribers. Include a concise summary of what happened and any relevant details the subscriber needs to act on."
+        }
+      },
+      "required": ["signal_type", "context"]
+    }
+  }
+]
