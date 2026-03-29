@@ -92,6 +92,9 @@ class SchedulerHooks:
     on_ticket_event: Callable[[str, dict], Awaitable[None]] | None = None
     """Called when a running session emits an event (ticket_id, event_dict)."""
 
+    on_ticket_start: Callable[[Ticket], Awaitable[None]] | None = None
+    """Called when a ticket transitions to running (for UI updates)."""
+
     on_ticket_done: Callable[[Ticket], Awaitable[None]] | None = None
     """Called when a ticket reaches a resting state (completed/failed/suspended)."""
 
@@ -416,6 +419,8 @@ class Scheduler:
         """Run a single ticket's session and update its metadata."""
         ticket.metadata.status = "running"
         ticket.save_metadata()
+        if self._hooks.on_ticket_start:
+            await self._hooks.on_ticket_start(ticket)
 
         label = ticket.id[:8]
         print(f"▶ [{label}] {ticket.objective!r}", file=sys.stderr)
@@ -482,6 +487,8 @@ class Scheduler:
         ticket.metadata.status = "running"
         ticket.metadata.assignee = "agent"
         ticket.save_metadata()
+        if self._hooks.on_ticket_start:
+            await self._hooks.on_ticket_start(ticket)
 
         try:
             result = await resume_session(

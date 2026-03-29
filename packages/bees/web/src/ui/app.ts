@@ -318,13 +318,13 @@ class BeesApp extends SignalWatcher(LitElement) {
         ${t.status === "suspended" && t.assignee === "user"
           ? this.renderRespond(t)
           : nothing}
-        ${!(t.status === "completed" && t.tags && t.tags.includes("bundle")) &&
+        ${!((t.status === "completed" || t.status === "suspended") && t.tags && t.tags.includes("bundle")) &&
         t.events_log?.length
           ? html`<div class="ticket-logs">
               ${t.events_log.map((e) => this.renderLogEvent(e))}
             </div>`
           : nothing}
-        ${!(t.status === "completed" && t.tags && t.tags.includes("bundle")) &&
+        ${!((t.status === "completed" || t.status === "suspended") && t.tags && t.tags.includes("bundle")) &&
         t.outcome
           ? html`<div class="ticket-outcome">${t.outcome}</div>`
           : nothing}
@@ -337,7 +337,7 @@ class BeesApp extends SignalWatcher(LitElement) {
                 : nothing}
             </div>`
           : nothing}
-        ${t.status === "completed" && t.tags && t.tags.includes("bundle")
+        ${(t.status === "completed" || t.status === "suspended") && t.tags && t.tags.includes("bundle")
           ? this.renderApp(t)
           : nothing}
       </div>

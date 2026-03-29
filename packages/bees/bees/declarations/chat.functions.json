@@ -8,16 +8,12 @@
       "properties": {
         "user_message": {
           "type": "string",
-          "description": "Message to display to the user when requesting input. The content may include references to files using <file src=\"/mnt/name.ext\" /> tags."
+          "description": "Message to display to the user when requesting input. The content may include references to files using <file src=\"name.ext\" /> tags."
         },
         "input_type": {
           "default": "any",
           "type": "string",
-          "enum": [
-            "any",
-            "text",
-            "file-upload"
-          ],
+          "enum": ["any", "text", "file-upload"],
           "description": "Input type hint, which allows to better present the chat user interface. If not specified, all kinds of inputs are accepted. When \"text\" is specified, the chat input is constrained to accept text only. If \"file-upload\" is specified, the input only allows uploading files.\n\nUnless the objective explicitly asks for a particular type of input, use the \"any\" value for \"input_type\" parameter, which does not constrain the input."
         },
         "skip_label": {
@@ -28,10 +24,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "user_message",
-        "input_type"
-      ],
+      "required": ["user_message", "input_type"],
       "additionalProperties": false
     },
     "responseJsonSchema": {
@@ -68,7 +61,7 @@
       "properties": {
         "user_message": {
           "type": "string",
-          "description": "Message explaining what the user should choose. The content may include references to files using <file src=\"/mnt/name.ext\" /> tags."
+          "description": "Message explaining what the user should choose. The content may include references to files using <file src=\"name.ext\" /> tags."
         },
         "choices": {
           "type": "array",
@@ -81,34 +74,24 @@
               },
               "label": {
                 "type": "string",
-                "description": "Display text for the choice. The content may include references to files using <file src=\"/mnt/name.ext\" /> tags."
+                "description": "Display text for the choice. The content may include references to files using <file src=\"name.ext\" /> tags."
               }
             },
-            "required": [
-              "id",
-              "label"
-            ],
+            "required": ["id", "label"],
             "additionalProperties": false
           },
           "description": "The choices to present to the user"
         },
         "selection_mode": {
           "type": "string",
-          "enum": [
-            "single",
-            "multiple"
-          ],
+          "enum": ["single", "multiple"],
           "description": "\"single\" for choose-one (radio buttons), \"multiple\" for any-of (checkboxes)."
         },
         "layout": {
           "default": "list",
           "description": "Layout hint for displaying choices:\n- \"list\" (default): Vertical stack, best for longer choice labels\n- \"row\": Horizontal inline, best for short choices like \"Yes/No\" or side-by-side comparisons (e.g. images)\n- \"grid\": Wrapping grid that adapts to available space",
           "type": "string",
-          "enum": [
-            "list",
-            "row",
-            "grid"
-          ]
+          "enum": ["list", "row", "grid"]
         },
         "none_of_the_above_label": {
           "description": "If provided, adds a visually distinct \"none of the above\" escape option with this label (e.g., \"Exit\", \"Skip\", \"Try Again\"). Rendered below a separator with secondary styling. When selected, returns ID \"__none_of_the_above__\". Best suited for single selection mode; in multiple mode it behaves as a regular checkbox.",
@@ -118,12 +101,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "user_message",
-        "choices",
-        "selection_mode",
-        "layout"
-      ],
+      "required": ["user_message", "choices", "selection_mode", "layout"],
       "additionalProperties": false
     },
     "responseJsonSchema": {

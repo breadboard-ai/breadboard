@@ -445,6 +445,7 @@ class OpalShell extends SignalWatcher(LitElement) {
     // Digest status toast.
     const digestRunning = tickets.find(
       (t) =>
+        t.kind !== "coordination" &&
         t.tags?.includes("digest") &&
         (t.status === "running" || t.status === "available")
     );
@@ -461,7 +462,12 @@ class OpalShell extends SignalWatcher(LitElement) {
       .sort((a, b) =>
         (b.completed_at ?? "").localeCompare(a.completed_at ?? "")
       )
-      .find((t) => t.tags?.includes("digest") && t.status === "completed");
+      .find(
+        (t) =>
+          t.kind !== "coordination" &&
+          t.tags?.includes("digest") &&
+          t.status === "completed"
+      );
 
     if (digestComplete && digestComplete.id !== this.currentView) {
       this.currentView = digestComplete.id;

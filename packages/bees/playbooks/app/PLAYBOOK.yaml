@@ -1,0 +1,48 @@
+name: app
+title: App Builder
+description: >
+  Builds a custom app: interviews the user, then generates and iterates on a
+  React UI.
+
+steps:
+  interview:
+    title: Interviewer
+    objective: >
+      You are conducting an intake interview to understand what the user wants
+      to build. 
+
+      1. Read the "interview-user" skill
+
+      2. Read the context briefing for the initial request.
+
+      3. Ask focused, clarifying questions to gather enough detail for a UI
+      generator to create a React application.
+
+      Keep the interview concise — 3-5 questions at most. Don't ask about
+      implementation details; focus on what the user wants the app to *do* and
+      *feel like*.
+
+      4. When you have enough information, return a clear, structured
+      specification summarising: what the app does, key features, visual style
+      preferences, and any constraints the user mentioned.
+    functions: ["chat.*", "system.*", "simple-files.*", "skills.*"]
+    skills: ["interview-user"]
+
+  ui-gen:
+    title: UI Generator
+    objective: >
+      You are building a React application based on the specification from
+      {{interview}}.
+
+      Generate the UI, then run the bundler to produce bundle.js and bundle.css.
+      After each generation or update, emit a coordination signal by calling
+      coordination_emit with signal_type "app_update" and a brief summary of the
+      current state of the app.
+
+      Then ask the user if they'd like any changes. Iterate on their feedback —
+      update the code, re-bundle, emit another "app_update", and ask again.
+      Repeat this cycle indefinitely.
+    functions: ["chat.*", "sandbox.*", "coordination.*", "skills.*"]
+    skills: ["ui-generator"]
+    tags: ["bundle"]
+    model: gemini-3.1-pro-preview

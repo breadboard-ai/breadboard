@@ -105,6 +105,14 @@ async def _on_ticket_event(ticket_id: str, event: dict[str, Any]) -> None:
     })
 
 
+async def _on_ticket_start(ticket: Ticket) -> None:
+    """Broadcast when a ticket transitions to running."""
+    await broadcaster.broadcast({
+        "type": "ticket_update",
+        "ticket": _ticket_to_dict(ticket),
+    })
+
+
 async def _on_ticket_done(ticket: Ticket) -> None:
     """Post-completion hook: broadcast and run playbook hooks."""
     await broadcaster.broadcast({
@@ -208,6 +216,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         on_startup=_on_startup,
         on_cycle_start=_on_cycle_start,
         on_ticket_event=_on_ticket_event,
+        on_ticket_start=_on_ticket_start,
         on_ticket_done=_on_ticket_done,
         on_playbook_run=_on_playbook_run,
         on_coordination_emit=_on_coordination_emit,
