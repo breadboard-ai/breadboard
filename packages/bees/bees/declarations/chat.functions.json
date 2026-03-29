@@ -127,5 +127,31 @@
       },
       "additionalProperties": false
     }
+  },
+  {
+    "name": "chat_await_context_update",
+    "description": "Suspends the agent until an external context update arrives. Use this only when your objective explicitly instructs you to wait for context updates. Do not call this function on your own initiative.",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "context_updates": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Context updates that arrived while suspended. Process these as your new instructions or information."
+        },
+        "error": {
+          "type": "string",
+          "description": "If an error has occurred, will contain a description of the error"
+        }
+      },
+      "additionalProperties": false
+    }
   }
 ]

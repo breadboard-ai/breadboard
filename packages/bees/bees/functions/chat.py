@@ -49,6 +49,29 @@ def get_chat_function_group_factory() -> "FunctionGroupFactory":
             task_tree_manager=hooks.task_tree_manager,
             file_system=hooks.file_system,
         )
+        # chat_await_context_update reuses the same suspend/resume
+        # mechanism as chat_request_user_input — it just presents a
+        # cleaner semantic surface for "wait for external signals".
+        # We wrap rather than alias because the upstream handler
+        # hardcodes the function name in its SuspendError payload.
+        _inner = handlers["chat_request_user_input"]
+
+        async def chat_await_context_update(
+            args: dict[str, Any], status_cb: Any,
+        ) -> dict[str, Any]:
+            from opal_backend.functions.chat import SuspendError
+
+            try:
+                return await _inner(
+                    {"user_message": "", "input_type": "any"}, status_cb,
+                )
+            except SuspendError as e:
+                e.function_call_part["functionCall"]["name"] = (
+                    "chat_await_context_update"
+                )
+                raise
+
+        handlers["chat_await_context_update"] = chat_await_context_update
         return assemble_function_group(_LOADED, handlers)
 
     return factory

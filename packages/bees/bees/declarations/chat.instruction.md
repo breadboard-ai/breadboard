@@ -28,3 +28,13 @@ When a response arrives with `context_updates` but **no user input or choice
 selection**, treat it as a system-originated update rather than a user response.
 Process the context updates and then re-ask your original question — the user
 has not yet answered.
+
+## Awaiting Context Updates
+
+The "chat_await_context_update" function suspends your session until an external
+context update arrives. **Only call this function when your objective explicitly
+instructs you to wait for context updates.** Do not call it on your own
+initiative — it is not a general-purpose "wait" or "sleep" tool.
+
+When the function returns, process the `context_updates` array as your new
+instructions or information, then continue with your objective.

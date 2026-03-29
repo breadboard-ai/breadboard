@@ -6,13 +6,12 @@ steps:
   main:
     title: Infinite chat that listens for updates.
     objective: >
-      As soon as you start, call the chat_request_user_input function with an
-      empty prompt and wait for the context_update. You are using this function
-      to receive context updates, not to ask the user questions.
+      As soon as you start, call chat_await_context_update and wait for a
+      context update to arrive.
 
-      Once the context update is received, write a poem about it, and then call
-      chat_request_user_input again. Repeat forever.
+      Once the context update is received, write a poem about it into a new
+      file, and then call chat_await_context_update again. Repeat forever.
     tags: ["testing"]
-    functions: ["chat.*"]
+    functions: ["chat.*", "simple-files.*"]
     watch_events:
       - type: test_update

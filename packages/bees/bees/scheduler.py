@@ -52,6 +52,7 @@ from bees.session import (
     clear_session_state,
     extract_files,
     load_gemini_key,
+    load_session_state,
     resume_session,
     run_session,
 )
@@ -573,6 +574,17 @@ class Scheduler:
             if fresh and fresh.metadata.queued_updates:
                 ticket.metadata.queued_updates = fresh.metadata.queued_updates
 
+            # Annotate suspend_event with the triggering function name
+            # so the UI can differentiate (e.g., await_context_update
+            # vs. request_user_input). Read from saved session state.
+            suspend_event = dict(result.suspend_event) if result.suspend_event else {}
+            state = load_session_state(ticket.dir)
+            if state:
+                fcp = state.get("interaction_state", {}).get("function_call_part", {})
+                fn_name = fcp.get("functionCall", {}).get("name")
+                if fn_name:
+                    suspend_event["function_name"] = fn_name
+
             if getattr(ticket.metadata, "queued_updates", None):
                 update = ticket.metadata.queued_updates.pop(0)
                 response_path = ticket.dir / "response.json"
@@ -581,12 +593,12 @@ class Scheduler:
                 )
                 ticket.metadata.status = "suspended"
                 ticket.metadata.assignee = "agent"
-                ticket.metadata.suspend_event = result.suspend_event
+                ticket.metadata.suspend_event = suspend_event
                 print(f"  [{ticket.id[:8]}] 📩 auto-resume with queued update", file=sys.stderr)
             else:
                 ticket.metadata.status = "suspended"
                 ticket.metadata.assignee = "user"
-                ticket.metadata.suspend_event = result.suspend_event
+                ticket.metadata.suspend_event = suspend_event
         else:
             ticket.metadata.assignee = None
             ticket.metadata.suspend_event = None
