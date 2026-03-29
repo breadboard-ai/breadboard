@@ -32,7 +32,9 @@ def _temp_tickets(tmp_path, monkeypatch):
 def write_playbook(tmp_path):
     """Helper to write a playbook YAML to the temp playbooks dir."""
     def _write(name: str, data: dict) -> Path:
-        path = tmp_path / "playbooks" / f"{name}.yaml"
+        pb_dir = tmp_path / "playbooks" / name
+        pb_dir.mkdir(parents=True, exist_ok=True)
+        path = pb_dir / "PLAYBOOK.yaml"
         path.write_text(yaml.dump(data, default_flow_style=False))
         return path
     return _write

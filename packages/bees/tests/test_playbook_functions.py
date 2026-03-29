@@ -20,7 +20,6 @@ def playbooks_and_tickets_dir(tmp_path, monkeypatch):
     pb_dir = tmp_path / "playbooks"
     pb_dir.mkdir()
     monkeypatch.setattr("bees.playbook.PLAYBOOKS_DIR", pb_dir)
-    monkeypatch.setattr("bees.functions.playbooks.PLAYBOOKS_DIR", pb_dir)
     
     tickets_dir = tmp_path / "tickets"
     tickets_dir.mkdir()
@@ -31,7 +30,9 @@ def playbooks_and_tickets_dir(tmp_path, monkeypatch):
 
 def write_playbook(pb_dir, name, data):
     """Helper to write a playbook YAML."""
-    path = pb_dir / f"{name}.yaml"
+    playbook_dir = pb_dir / name
+    playbook_dir.mkdir(parents=True, exist_ok=True)
+    path = playbook_dir / "PLAYBOOK.yaml"
     path.write_text(yaml.dump(data, default_flow_style=False))
 
 
@@ -115,7 +116,7 @@ class TestPlaybooksList:
 
     def test_missing_dir(self, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "bees.functions.playbooks.PLAYBOOKS_DIR",
+            "bees.playbook.PLAYBOOKS_DIR",
             tmp_path / "nonexistent",
         )
         handlers = _make_handlers()
