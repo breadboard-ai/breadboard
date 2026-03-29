@@ -6,9 +6,10 @@ description:
 
 steps:
   main:
-    title: Test
+    title: Send Updates
     objective: >
-      Write a short story about a robot and save it to a file. Return the file
-      reference.
+      Call the coordination_emit function to send a "test_update" four times,
+      once for each season. Send the season name as the payload of the update.
+      Return "OK" when done.
     tags: ["testing"]
-    functions: ["system.*", "sandbox.*"]
+    functions: ["coordination.*", "system.*"]

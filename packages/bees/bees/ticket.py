@@ -25,6 +25,8 @@ TicketStatus = Literal[
     "available", "blocked", "running", "suspended", "completed", "failed"
 ]
 
+TicketKind = Literal["work", "coordination"]
+
 # Matches {{ticket-id-prefix}} references in objectives.
 _DEP_PATTERN = re.compile(r"\{\{([^}]+)\}\}")
 
@@ -55,6 +57,9 @@ class TicketMetadata:
     context: str | None = None
     watch_events: list[dict[str, Any]] | None = None
     queued_updates: list[str] | None = None
+    kind: TicketKind = "work"
+    signal_type: str | None = None
+    delivered_to: list[str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -86,6 +91,9 @@ class TicketMetadata:
             context=data.get("context"),
             watch_events=data.get("watch_events"),
             queued_updates=data.get("queued_updates"),
+            kind=data.get("kind", "work"),
+            signal_type=data.get("signal_type"),
+            delivered_to=data.get("delivered_to"),
         )
 
 
@@ -139,6 +147,8 @@ def create_ticket(
     model: str | None = None,
     context: str | None = None,
     watch_events: list[dict[str, Any]] | None = None,
+    kind: TicketKind = "work",
+    signal_type: str | None = None,
 ) -> Ticket:
     """Create a new ticket.
 
@@ -183,6 +193,8 @@ def create_ticket(
             model=model,
             context=context,
             watch_events=watch_events,
+            kind=kind,
+            signal_type=signal_type,
         ),
     )
     ticket.save()
