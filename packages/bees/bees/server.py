@@ -18,7 +18,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import subprocess
 import sys
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -31,7 +30,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from bees.playbook import PlaybookAborted, list_playbooks, load_playbook, run_playbook
+from bees.playbook import PlaybookAborted, list_playbooks, load_playbook, run_playbook, run_startup_hooks, run_ticket_done_hooks
 from bees.scheduler import Scheduler, SchedulerHooks
 from bees.session import load_gemini_key
 from bees.ticket import (
@@ -80,22 +79,13 @@ scheduler: Scheduler | None = None
 
 
 async def _on_startup(tickets: list[Ticket]) -> None:
-    """Boot Opie if no opie-tagged ticket exists."""
-    has_opie = any(
-        t.metadata.tags and "opie" in t.metadata.tags
-        for t in tickets
-    )
-    if not has_opie:
-        try:
-            opie_tickets = run_playbook("opie")
-            for ticket in opie_tickets:
-                await broadcaster.broadcast({
-                    "type": "ticket_added",
-                    "ticket": _ticket_to_dict(ticket),
-                })
-            logger.info("Auto-booted Opie (%d tickets)", len(opie_tickets))
-        except Exception as exc:
-            logger.warning("Failed to auto-boot Opie: %s", exc)
+    """Run playbook startup hooks and broadcast any created tickets."""
+    new_tickets = run_startup_hooks(tickets)
+    for ticket in new_tickets:
+        await broadcaster.broadcast({
+            "type": "ticket_added",
+            "ticket": _ticket_to_dict(ticket),
+        })
 
 
 async def _on_cycle_start(cycle: int, new: int, resumable: int) -> None:
@@ -116,12 +106,12 @@ async def _on_ticket_event(ticket_id: str, event: dict[str, Any]) -> None:
 
 
 async def _on_ticket_done(ticket: Ticket) -> None:
-    """Post-completion hook: broadcast, auto-bundle."""
+    """Post-completion hook: broadcast and run playbook hooks."""
     await broadcaster.broadcast({
         "type": "ticket_update",
         "ticket": _ticket_to_dict(ticket),
     })
-    await _auto_build_bundle(ticket)
+    run_ticket_done_hooks(ticket)
 
 
 def _on_playbook_run(tickets: list[Ticket]) -> None:
@@ -149,11 +139,6 @@ def _on_coordination_emit(ticket: Ticket) -> None:
         scheduler.trigger()
 
 
-# ---------------------------------------------------------------------------
-# Application-layer helpers (not scheduler concerns)
-# ---------------------------------------------------------------------------
-
-
 async def _on_playbook_complete(run_id: str, siblings: list[Ticket], triggering_ticket: Ticket) -> None:
     """Broadcast playbook completion via SSE.
 
@@ -177,36 +162,6 @@ async def _on_playbook_complete(run_id: str, siblings: list[Ticket], triggering_
         "succeeded": succeeded,
         "failed": failed,
     })
-
-
-async def _auto_build_bundle(ticket: Ticket) -> None:
-    """Automatically build the UI bundle if this ticket generates UI."""
-    if ticket.metadata.status != "completed":
-        return
-    if not ticket.metadata.skills or "ui-generator" not in ticket.metadata.skills:
-        return
-
-    app_path = ticket.dir / "filesystem" / "App.jsx"
-    app_lower = ticket.dir / "filesystem" / "app.jsx"
-    if not (app_path.exists() or app_lower.exists()):
-        return
-
-    bundler_path = ticket.dir / "filesystem" / "skills" / "ui-generator" / "tools" / "bundler.mjs"
-    if not bundler_path.exists():
-        return
-
-    logger.info(f"Auto-building UI bundle for ticket {ticket.id}...")
-    try:
-        subprocess.run(
-            ["node", str(bundler_path)],
-            cwd=str(ticket.dir / "filesystem"),
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        logger.info(f"Successfully auto-built bundle for {ticket.id}")
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Auto-bundle failed for {ticket.id}:\n{e.stderr}")
 
 
 # ---------------------------------------------------------------------------

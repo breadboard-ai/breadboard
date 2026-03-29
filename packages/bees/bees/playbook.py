@@ -36,7 +36,7 @@ _STEP_KEYS = {"title", "objective", "functions", "skills", "tags", "assignee", "
 
 
 class PlaybookAborted(Exception):
-    """Raised when a playbook's on_prepare hook declines to run."""
+    """Raised when a playbook's on_run_playbook hook declines to run."""
 
 
 # ---------------------------------------------------------------------------
@@ -149,7 +149,7 @@ def run_playbook(name: str, *, context: str | None = None) -> list[Ticket]:
     references in objectives are replaced with the concrete ticket ID
     of the already-created step.
 
-    If the playbook has a ``hooks.py`` with an ``on_prepare`` function,
+    If the playbook has a ``hooks.py`` with an ``on_run_playbook`` function,
     it is called before ticket creation. The hook receives the
     caller-supplied context and may return enriched context, or ``None``
     to abort the run (raises ``PlaybookAborted``).
@@ -158,13 +158,13 @@ def run_playbook(name: str, *, context: str | None = None) -> list[Ticket]:
     """
     data = load_playbook(name)
 
-    # Run on_prepare hook if present.
+    # Run on_run_playbook hook if present.
     hooks = _load_hooks(name)
-    if hooks and hasattr(hooks, "on_prepare"):
-        context = hooks.on_prepare(context)
+    if hooks and hasattr(hooks, "on_run_playbook"):
+        context = hooks.on_run_playbook(context)
         if context is None:
             raise PlaybookAborted(
-                f"Playbook '{name}' declined to run (on_prepare returned None)."
+                f"Playbook '{name}' declined to run (on_run_playbook returned None)."
             )
 
     steps = data["steps"]
@@ -209,3 +209,48 @@ def run_playbook(name: str, *, context: str | None = None) -> list[Ticket]:
 
     return created_tickets
 
+
+def run_startup_hooks(tickets: list[Ticket]) -> list[Ticket]:
+    """Run ``on_startup`` hooks for all playbooks.
+
+    Iterates every playbook that defines an ``on_startup(tickets)`` hook
+    in its ``hooks.py``.  Each hook receives the current ticket list and
+    returns any tickets it created.  All created tickets are collected
+    and returned so the caller can broadcast them.
+    """
+    created: list[Ticket] = []
+    for name in list_playbooks():
+        hooks = _load_hooks(name)
+        if hooks and hasattr(hooks, "on_startup"):
+            try:
+                new_tickets = hooks.on_startup(tickets)
+                created.extend(new_tickets)
+                if new_tickets:
+                    logger.info(
+                        "Startup hook for '%s' created %d ticket(s)",
+                        name, len(new_tickets),
+                    )
+            except Exception as exc:
+                logger.warning("Startup hook for '%s' failed: %s", name, exc)
+    return created
+
+
+def run_ticket_done_hooks(ticket: Ticket) -> None:
+    """Run ``on_ticket_done`` for the playbook that owns this ticket.
+
+    Looks up the ticket's ``playbook_id`` and, if the corresponding
+    playbook defines an ``on_ticket_done(ticket)`` hook, calls it.
+    Tickets not created by a playbook are silently skipped.
+    """
+    playbook_id = ticket.metadata.playbook_id
+    if not playbook_id:
+        return
+
+    hooks = _load_hooks(playbook_id)
+    if hooks and hasattr(hooks, "on_ticket_done"):
+        try:
+            hooks.on_ticket_done(ticket)
+        except Exception as exc:
+            logger.warning(
+                "on_ticket_done hook for '%s' failed: %s", playbook_id, exc,
+            )

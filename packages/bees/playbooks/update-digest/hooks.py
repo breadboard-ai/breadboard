@@ -12,6 +12,7 @@ needed by the digest generator.
 from __future__ import annotations
 
 import logging
+import subprocess
 from typing import Any
 
 from bees.ticket import Ticket, list_tickets
@@ -19,7 +20,44 @@ from bees.ticket import Ticket, list_tickets
 logger = logging.getLogger(__name__)
 
 
-def on_prepare(context: str | None) -> str | None:
+def on_ticket_done(ticket: Ticket) -> None:
+    """Auto-build the UI bundle if the agent didn't.
+
+    The digest playbook uses the ``ui-generator`` skill which produces
+    an ``App.jsx``.  This hook ensures it gets bundled even if the agent
+    skips the bundler step.
+    """
+    if ticket.metadata.status != "completed":
+        return
+    if not ticket.metadata.skills or "ui-generator" not in ticket.metadata.skills:
+        return
+
+    app_path = ticket.dir / "filesystem" / "App.jsx"
+    app_lower = ticket.dir / "filesystem" / "app.jsx"
+    if not (app_path.exists() or app_lower.exists()):
+        return
+
+    bundler_path = (
+        ticket.dir / "filesystem" / "skills" / "ui-generator" / "tools" / "bundler.mjs"
+    )
+    if not bundler_path.exists():
+        return
+
+    logger.info("Auto-building UI bundle for ticket %s...", ticket.id)
+    try:
+        subprocess.run(
+            ["node", str(bundler_path)],
+            cwd=str(ticket.dir / "filesystem"),
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        logger.info("Successfully auto-built bundle for %s", ticket.id)
+    except subprocess.CalledProcessError as e:
+        logger.error("Auto-bundle failed for %s:\n%s", ticket.id, e.stderr)
+
+
+def on_run_playbook(context: str | None) -> str | None:
     """Enrich the editorial briefing with ticket data and previous UI.
 
     Returns the full context string, or None if there are no tickets
