@@ -55,7 +55,6 @@ class OpalShell extends SignalWatcher(LitElement) {
   private bridge: MessageBridge | null = null;
   private previousOpieStatus: string | null = null;
   private stateWatchInterval: ReturnType<typeof setInterval> | null = null;
-  private opieBootAttempted = false;
 
   static styles = [styles];
 
@@ -412,17 +411,6 @@ class OpalShell extends SignalWatcher(LitElement) {
   #watchState() {
     const tickets = appState.tickets.get();
     const opie = tickets.find((t) => t.tags?.includes("opie"));
-
-    // Auto-boot Opie if no ticket is found — belt-and-suspenders with
-    // the server-side auto-boot in lifespan. Only attempt once.
-    if (!opie && !this.opieBootAttempted && tickets.length > 0) {
-      // tickets.length > 0 means we've received the initial state,
-      // so the absence of an opie ticket is real, not just latency.
-      this.opieBootAttempted = true;
-      console.log("[opal-shell] No Opie ticket found, auto-booting...");
-      this.api.runPlaybook("opie");
-      return;
-    }
 
     if (!opie) return;
 
