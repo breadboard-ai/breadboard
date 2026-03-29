@@ -156,7 +156,9 @@ def create_ticket(
     the ticket is created with status ``blocked`` and a ``depends_on``
     list of the referenced ticket IDs (resolved by prefix match).
     """
-    deps = _DEP_PATTERN.findall(objective)
+    # Filter out namespaced parameter refs (e.g. system.context) —
+    # only bare refs (ticket IDs / prefixes) are real dependencies.
+    deps = [d for d in _DEP_PATTERN.findall(objective) if "." not in d]
 
     # Resolve dependency prefixes to full ticket IDs.
     resolved_deps: list[str] | None = None

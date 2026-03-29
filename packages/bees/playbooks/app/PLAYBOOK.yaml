@@ -13,7 +13,9 @@ steps:
 
       1. Read the "interview-user" skill
 
-      2. Read the context briefing for the initial request.
+      2. Here is the initial request from the user:
+
+      {{system.context}}
 
       3. Ask focused, clarifying questions to gather enough detail for a UI
       generator to create a React application.
