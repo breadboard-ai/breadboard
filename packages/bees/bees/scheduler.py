@@ -58,6 +58,7 @@ from bees.session import (
 from bees.ticket import (
     Ticket,
     _DEP_PATTERN,
+    create_ticket,
     list_tickets,
     load_ticket,
 )
@@ -618,61 +619,19 @@ class Scheduler:
         if self._hooks.on_playbook_complete:
             await self._hooks.on_playbook_complete(run_id, siblings, ticket)
 
-        await self._deliver_to_watchers(siblings, ticket)
-
-    async def _deliver_signal(
-        self,
-        signal_type: str,
-        payload: str,
-        source_tags: set[str],
-    ) -> None:
-        """Route a signal to all tickets with matching watch_events.
-
-        Scans every ticket for a ``watch_events`` entry whose ``type``
-        matches ``signal_type``. Optional tag filters on the watcher
-        narrow by the source's tags.
-
-        Delivery uses the existing context_updates channel:
-        - If the watcher is idle (suspended, assignee=user), deliver immediately
-          by writing response.json and flipping assignee to agent.
-        - If the watcher is busy, append to queued_updates for later delivery
-          when the ticket next suspends.
-        """
-        for ticket in list_tickets():
-            if not ticket.metadata.watch_events:
-                continue
-
-            for watch in ticket.metadata.watch_events:
-                if watch.get("type") != signal_type:
-                    continue
-
-                # Parse tag filters: "!tag" excludes, "tag" requires.
-                tag_filters = watch.get("tags", [])
-                exclude = {f[1:] for f in tag_filters if f.startswith("!")}
-                require = {f for f in tag_filters if not f.startswith("!")}
-
-                if source_tags & exclude:
-                    continue
-                if require and not (source_tags & require):
-                    continue
-
-                # Match found — deliver.
-                self._deliver_context_update(ticket, payload)
-                break  # One delivery per watcher ticket per event.
-
-    async def _deliver_to_watchers(
-        self,
-        siblings: list[Ticket],
-        triggering_ticket: Ticket,
-    ) -> None:
-        """Deliver a playbook-completion signal to matching watchers."""
-        playbook_id = triggering_ticket.metadata.playbook_id or "(unknown)"
+        # Emit a durable coordination signal for playbook completion.
+        # This flows through _route_coordination_ticket on the next cycle,
+        # which handles tag filtering, durable delivery, and retry.
+        playbook_id = ticket.metadata.playbook_id or "(unknown)"
         notification = _format_playbook_complete(playbook_id, siblings)
-        await self._deliver_signal(
-            "playbook_complete",
-            notification,
-            set(triggering_ticket.metadata.tags or []),
+        create_ticket(
+            "",
+            kind="coordination",
+            signal_type="playbook_complete",
+            context=notification,
+            tags=list(ticket.metadata.tags or []),
         )
+        self.trigger()
 
     async def _route_coordination_ticket(self, ticket: Ticket) -> None:
         """Route a coordination ticket's signal to matching subscribers.
@@ -761,38 +720,6 @@ class Scheduler:
         if self._hooks.on_ticket_done:
             await self._hooks.on_ticket_done(ticket)
 
-    def _deliver_context_update(self, ticket: Ticket, update: str) -> None:
-        """Deliver a context_update to a ticket, immediately or queued."""
-        if (
-            ticket.metadata.status == "suspended"
-            and ticket.metadata.assignee == "user"
-            and ticket.id not in self._running_tickets
-        ):
-            # Idle — deliver immediately.
-            response_path = ticket.dir / "response.json"
-            response_path.write_text(
-                json.dumps(
-                    {"context_updates": [update]},
-                    indent=2,
-                    ensure_ascii=False,
-                )
-                + "\n"
-            )
-            ticket.metadata.assignee = "agent"
-            ticket.save_metadata()
-            logger.info(
-                "Delivered watcher update to %s immediately", ticket.id[:8]
-            )
-            self.trigger()
-        else:
-            # Busy — queue for later.
-            if not ticket.metadata.queued_updates:
-                ticket.metadata.queued_updates = []
-            ticket.metadata.queued_updates.append(update)
-            ticket.save_metadata()
-            logger.info(
-                "Queued watcher update for %s", ticket.id[:8]
-            )
 
     async def _run_cycles(self) -> None:
         """Run cycles until no more work is available (server mode).
