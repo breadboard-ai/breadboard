@@ -458,6 +458,20 @@ class BeesApp extends SignalWatcher(LitElement) {
       `;
     }
 
+    // Await context update: no text input, context updates always visible.
+    const functionName = t.suspend_event?.function_name as string | undefined;
+    if (functionName === "chat_await_context_update") {
+      return html`
+        <div class="respond-prompt">⏳ Awaiting context update…</div>
+        ${this.renderContextFields(t.id)}
+        <div class="respond-form">
+          <button @click=${() => this.respondContextOnly(t.id)}>
+            Send Context Update
+          </button>
+        </div>
+      `;
+    }
+
     return html`
       <div class="respond-prompt">🤖 ${prompt}</div>
       <div class="respond-form">
@@ -617,36 +631,45 @@ class BeesApp extends SignalWatcher(LitElement) {
         >
           ${expanded ? "▾" : "▸"} Context Updates
         </button>
-        ${expanded
-          ? html`
-              <div class="context-fields">
-                <input
-                  type="text"
-                  placeholder="Playbook ID"
-                  .value=${this.contextPlaybookId[ticketId] ?? ""}
-                  @input=${(e: Event) => {
-                    this.contextPlaybookId = {
-                      ...this.contextPlaybookId,
-                      [ticketId]: (e.target as HTMLInputElement).value,
-                    };
-                  }}
-                />
-                <textarea
-                  placeholder="Update text..."
-                  rows="3"
-                  .value=${this.contextUpdate[ticketId] ?? ""}
-                  @input=${(e: Event) => {
-                    this.contextUpdate = {
-                      ...this.contextUpdate,
-                      [ticketId]: (e.target as HTMLTextAreaElement).value,
-                    };
-                  }}
-                ></textarea>
-              </div>
-            `
-          : nothing}
+        ${expanded ? this.renderContextFields(ticketId) : nothing}
       </div>
     `;
+  }
+
+  private renderContextFields(ticketId: string) {
+    return html`
+      <div class="context-fields">
+        <input
+          type="text"
+          placeholder="Playbook ID"
+          .value=${this.contextPlaybookId[ticketId] ?? ""}
+          @input=${(e: Event) => {
+            this.contextPlaybookId = {
+              ...this.contextPlaybookId,
+              [ticketId]: (e.target as HTMLInputElement).value,
+            };
+          }}
+        />
+        <textarea
+          placeholder="Update text..."
+          rows="3"
+          .value=${this.contextUpdate[ticketId] ?? ""}
+          @input=${(e: Event) => {
+            this.contextUpdate = {
+              ...this.contextUpdate,
+              [ticketId]: (e.target as HTMLTextAreaElement).value,
+            };
+          }}
+        ></textarea>
+      </div>
+    `;
+  }
+
+  private async respondContextOnly(ticketId: string) {
+    const contextUpdates = this.buildContextUpdates(ticketId);
+    if (!contextUpdates) return;
+    await this.api.respond(ticketId, undefined, undefined, contextUpdates);
+    this.clearContextFields(ticketId);
   }
 
   private buildContextUpdates(ticketId: string): string[] | undefined {
