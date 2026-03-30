@@ -1,6 +1,9 @@
 name: opie
 title: Opie
 description: Executive assistant — understands objectives and delivers results
+
+# Hidden from playbooks_list — Opie has playbooks.* functions and would see
+# itself in the listing, creating a circular delegation loop.
 hidden: true
 
 steps:
@@ -42,8 +45,16 @@ steps:
       update you, ...", etc.).
 
     skills: ["persona"]
+    # "opie" — hooks.py on_startup checks for this tag to avoid double-booting.
+    # "chat" — enables persistent chat history across page reloads.
     tags: ["opie", "chat"]
+    # No system.* — Opie never terminates. It lives as an infinite chat agent,
+    # suspending on chat_request_user_input between turns.
+    # playbooks.* — the delegation mechanism: discover and launch playbooks.
     functions: ["chat.*", "simple-files.*", "skills.*", "playbooks.*"]
+    # Signals arrive as context_updates inside chat_request_user_input responses
+    # (not via chat_await_context_update) because Opie is always suspended
+    # waiting for the *user*, not for system signals.
     watch_events:
       - type: app_update
       - type: digest_update
@@ -150,8 +161,15 @@ steps:
           treatment (Use for highest-scope projects).
         - Progress Ticker: Compact horizontal strip of active items.
         - Quiet Corner: Completed or idle items as minimal gray text.
+    # No "chat" tag — the digest generator doesn't converse with the user.
+    # It suspends on chat_await_context_update, not chat_request_user_input.
+    # "bundle" — triggers on_ticket_done in hooks.py for auto-bundling App.jsx.
     tags: ["digest", "bundle"]
     skills: ["ui-generator"]
+    # sandbox.* for bash (running the bundler). No simple-files.* — all file
+    # I/O goes through the sandbox, which auto-syncs with the agent's file system.
     functions: ["chat.*", "sandbox.*", "coordination.*", "skills.*"]
+    # Only watches app_update, NOT digest_update — watching its own signal type
+    # would create an infinite loop (emit → receive → process → emit → ...).
     watch_events:
       - type: app_update

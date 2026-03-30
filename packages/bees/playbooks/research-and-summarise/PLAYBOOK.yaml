@@ -1,3 +1,5 @@
+# Pure finite pipeline — no chat, no coordination, no user interaction.
+# Both steps work autonomously and terminate via system_objective_fulfilled.
 name: research-and-summarise
 title: Research and Summarise
 description: >
@@ -6,6 +8,8 @@ description: >
 steps:
   research:
     title: Research
+    # {{system.context}} is only injected into root steps (no dependencies).
+    # The caller's context param becomes the topic to research.
     objective: >
       Conduct thorough research on the following topic:
 
@@ -17,7 +21,10 @@ steps:
 
   summarise:
     title: Summarise
+    # {{research}} creates the DAG edge. The engine blocks this ticket until
+    # "research" completes, then injects its outcome as structured input.
     objective: >
       Read the research from {{research}} and produce a concise, well-structured
       summary. Save it to a file called summary.txt.
     functions: ["system.*", "sandbox.*"]
+

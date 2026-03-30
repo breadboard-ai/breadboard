@@ -42,12 +42,20 @@ steps:
       - system.*
       - simple-files.*
       - skills.*
+      # coordination.* on a finite step: emits an early "coming soon" signal
+      # to Opie *before* the step completes, so the user gets progress feedback
+      # while the interview is still wrapping up.
       - coordination.*
     skills: ["interview-user"]
+    # "chat" — enables persistent chat history (the interview is conversational).
+    # "app-builder" — groups this ticket with the ui-gen step for UI filtering.
     tags: ["chat", "app-builder"]
 
   ui-gen:
     title: UI Generator
+    # {{interview}} creates the dependency edge. The engine replaces it with
+    # the interview ticket's ID at creation time. At runtime, the scheduler
+    # resolves it to the interview's outcome (the spec) as structured input.
     objective: >
       You are building a React application based on the specification from
       {{interview}}.
@@ -66,7 +74,13 @@ steps:
       Then ask the user if they'd like any changes. Iterate on their feedback —
       update the code, re-bundle, emit another "app_update", and ask again.
       Repeat this cycle indefinitely.
+    # No system.* — this step never terminates. It loops forever: generate →
+    # ask for feedback → iterate. Session stays alive via chat_request_user_input
+    # suspension between iterations.
     functions: ["chat.*", "sandbox.*", "coordination.*", "skills.*"]
     skills: ["ui-generator"]
+    # "bundle" — hooks.py on_ticket_done triggers auto-bundling for this tag.
     tags: ["bundle", "app-builder", "chat"]
+    # Override model — code generation benefits from a more capable model.
     model: gemini-3.1-pro-preview
+
