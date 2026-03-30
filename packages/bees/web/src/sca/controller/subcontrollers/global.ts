@@ -16,7 +16,9 @@ export class GlobalController extends RootController {
   }
 
   @field() accessor pulseText = "";
-  @field() accessor pulseActive = false;
+  get pulseActive() {
+    return this.pulseTasks.some((t) => t.status === "running");
+  }
   @field({ deep: true }) accessor pulseTasks: PulseTask[] = [];
   @field({ deep: true }) accessor toasts: ToastMessage[] = [];
   @field({ deep: true }) accessor previousTicketStatuses = new Map<

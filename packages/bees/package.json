@@ -13,7 +13,7 @@
     "dev": "npm run dev:server & npm run dev:web",
     "dev:server": ".venv/bin/python -m bees.server",
     "dev:web": "cd web && npm run dev",
-    "test:python": ".venv/bin/python -m pytest ../opal-backend/tests/ -v"
+    "test:python": ".venv/bin/python -m pytest tests/ -v"
   },
   "wireit": {
     "setup": {
