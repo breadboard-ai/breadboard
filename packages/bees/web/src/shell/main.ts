@@ -57,6 +57,7 @@ class OpalShell extends SignalWatcher(LitElement) {
   private stateWatchInterval: ReturnType<typeof setInterval> | null = null;
   private lastDigestUpdateId: string | null = null;
   private digestLoading = false;
+  private chatRestored = false;
 
   static styles = [styles];
 
@@ -162,12 +163,27 @@ class OpalShell extends SignalWatcher(LitElement) {
           </button>
         </div>
         <div class="chat-messages" id="chat-messages">
-          ${this.chatMessages.map(
-            (m) =>
-              html`<div class="chat-msg ${m.role}">
+          ${this.#groupedMessages().map((group) => {
+            if (group.length === 1) {
+              const m = group[0];
+              return html`<div class="chat-msg ${m.role}">
                 ${m.role === "agent" ? markdown(m.text) : m.text}
-              </div>`
-          )}
+              </div>`;
+            }
+            // Multiple consecutive agent messages — first is the primary,
+            // rest are status updates that fold into the bubble.
+            const [primary, ...updates] = group;
+            return html`<div class="chat-msg agent">
+              ${markdown(primary.text)}
+              ${updates.map(
+                (u) =>
+                  html`<div class="chat-status-update">
+                    <span class="status-arrow">↳</span>
+                    ${markdown(u.text)}
+                  </div>`
+              )}
+            </div>`;
+          })}
         </div>
         ${this.pendingChoices.length > 0
           ? this.#renderChoiceInput()
@@ -224,6 +240,32 @@ class OpalShell extends SignalWatcher(LitElement) {
   }
 
   // ── Chat logic ───────────────────────────────────────────────────
+
+  /**
+   * Group consecutive agent messages so status updates render inside
+   * the previous agent bubble rather than as separate bubbles.
+   *
+   * Returns an array of arrays — each inner array is a "group":
+   * - Single-element group: a user/thought/tool message
+   * - Multi-element group: consecutive agent messages (first is the
+   *   primary bubble, rest are status updates)
+   */
+  #groupedMessages(): ChatMessage[][] {
+    const groups: ChatMessage[][] = [];
+    for (const m of this.chatMessages) {
+      if (
+        m.role === "agent" &&
+        groups.length > 0 &&
+        groups[groups.length - 1][0].role === "agent"
+      ) {
+        // Append to the current agent group.
+        groups[groups.length - 1].push(m);
+      } else {
+        groups.push([m]);
+      }
+    }
+    return groups;
+  }
 
   #toggleChat() {
     this.chatOpen = !this.chatOpen;
@@ -416,6 +458,17 @@ class OpalShell extends SignalWatcher(LitElement) {
 
     if (!opie) return;
 
+    // Restore chat history from the ticket on first discovery
+    // (handles page reload / server restart).
+    if (!this.chatRestored && opie.chat_history?.length) {
+      this.chatRestored = true;
+      this.chatMessages = opie.chat_history.map((m) => ({
+        text: m.text,
+        role: m.role as ChatMessage["role"],
+      }));
+      this.#scrollChatToBottom();
+    }
+
     // Detect state transitions.
     const currentStatus = `${opie.status}:${opie.assignee ?? ""}`;
     if (currentStatus !== this.previousOpieStatus) {
@@ -461,16 +514,25 @@ class OpalShell extends SignalWatcher(LitElement) {
         this.currentView = digestTicket.id;
       }
 
-      // Check for fresh digest_update coordination signals.
-      const digestUpdate = tickets.find(
+      // Find the latest digest_update coordination ticket (skip over older
+      // ones so we don't reload once per stale ticket).
+      const allDigestUpdates = tickets.filter(
         (t) =>
           t.kind === "coordination" &&
-          t.signal_type === "digest_update" &&
-          t.id !== this.lastDigestUpdateId
+          t.signal_type === "digest_update"
       );
+      const latest = allDigestUpdates[allDigestUpdates.length - 1];
+      const hasNewUpdate =
+        latest != null && latest.id !== this.lastDigestUpdateId;
 
-      if (isNew || digestUpdate) {
-        if (digestUpdate) this.lastDigestUpdateId = digestUpdate.id;
+      // Always track the latest so we don't re-process it later.
+      if (hasNewUpdate) this.lastDigestUpdateId = latest.id;
+
+      // Only load the bundle when the digest is the active view.
+      // If the user is viewing an app, the digest reload will happen
+      // when they navigate back.
+      const digestIsActive = this.currentView === this.digestTicketId;
+      if ((isNew || hasNewUpdate) && digestIsActive) {
         this.digestLoading = true;
         this.statusText = isNew ? "Loading digest..." : "Refreshing digest...";
         this.statusVisible = true;

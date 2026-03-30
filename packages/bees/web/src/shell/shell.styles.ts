@@ -277,6 +277,26 @@ const styles = css`
     white-space: normal;
   }
 
+  .chat-status-update {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 6px;
+    padding-left: 4px;
+    font-size: 12px;
+    color: var(--cg-color-on-surface-muted, #9a969e);
+  }
+
+  .chat-status-update p {
+    margin: 0;
+  }
+
+  .status-arrow {
+    flex-shrink: 0;
+    color: var(--cg-color-outline-variant, #49454e);
+    font-size: 11px;
+  }
+
   /* Markdown rendered content inside agent messages */
   .chat-msg.agent p {
     margin: 0 0 8px;

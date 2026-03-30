@@ -24,6 +24,7 @@ from opal_backend.function_definition import (
     load_declarations,
 )
 from opal_backend.functions.chat import _make_handlers
+from opal_backend.functions.chat import ChatEntryCallback
 
 __all__ = ["get_chat_function_group_factory"]
 
@@ -33,7 +34,9 @@ _DECLARATIONS_DIR = Path(__file__).resolve().parent.parent / "declarations"
 _LOADED = load_declarations("chat", declarations_dir=_DECLARATIONS_DIR)
 
 
-def get_chat_function_group_factory() -> "FunctionGroupFactory":
+def get_chat_function_group_factory(
+    on_chat_entry: "ChatEntryCallback" = None,
+) -> "FunctionGroupFactory":
     """Return a factory that builds the bees chat function group.
 
     The returned callable accepts ``SessionHooks`` and produces a
@@ -41,6 +44,10 @@ def get_chat_function_group_factory() -> "FunctionGroupFactory":
     chat group entirely. The handlers are identical to the built-in
     versions, but the declarations include bees-specific
     ``context_updates`` fields in the response schemas.
+
+    Args:
+        on_chat_entry: Optional callback ``(role, content) -> None``
+            invoked when the agent sends a user-facing message.
     """
     from opal_backend.function_definition import FunctionGroupFactory
 
@@ -48,6 +55,7 @@ def get_chat_function_group_factory() -> "FunctionGroupFactory":
         handlers = _make_handlers(
             task_tree_manager=hooks.task_tree_manager,
             file_system=hooks.file_system,
+            on_chat_entry=on_chat_entry,
         )
         # chat_await_context_update reuses the same suspend/resume
         # mechanism as chat_request_user_input — it just presents a

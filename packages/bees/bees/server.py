@@ -257,11 +257,30 @@ app.add_middleware(
 
 def _ticket_to_dict(ticket: Ticket) -> dict[str, Any]:
     """Serialize a ticket for JSON response."""
-    return {
+    d = {
         "id": ticket.id,
         "objective": ticket.objective,
         **ticket.metadata.to_dict(),
     }
+    # Include chat history for opie-tagged tickets so the shell can
+    # restore conversation after page reload / server restart.
+    if ticket.metadata.tags and "opie" in ticket.metadata.tags:
+        d["chat_history"] = _read_chat_log(ticket)
+    return d
+
+
+def _read_chat_log(ticket: Ticket) -> list[dict[str, str]]:
+    """Read the ticket's chat log written by the chat function.
+
+    Returns a list of ``{"role": "agent"|"user", "text": "..."}`` entries.
+    """
+    log_path = ticket.dir / "chat_log.json"
+    if not log_path.exists():
+        return []
+    try:
+        return json.loads(log_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return []
 
 
 @app.get("/tickets")

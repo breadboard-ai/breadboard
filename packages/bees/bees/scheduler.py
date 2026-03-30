@@ -49,6 +49,7 @@ import httpx
 
 from bees.session import (
     SessionResult,
+    append_chat_log,
     clear_session_state,
     extract_files,
     load_gemini_key,
@@ -483,6 +484,12 @@ class Scheduler:
             )
 
         response = json.loads(response_path.read_text())
+
+        # Log user's reply to the chat log (only actual user text,
+        # not context-update-only responses).
+        user_text = response.get("text", "")
+        if user_text:
+            append_chat_log(ticket.dir, "user", user_text)
 
         ticket.metadata.status = "running"
         ticket.metadata.assignee = "agent"
