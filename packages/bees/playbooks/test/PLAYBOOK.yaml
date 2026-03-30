@@ -1,3 +1,6 @@
+# Signal emitter — the counterpart to the "rendering" playbook.
+# Emits coordination signals then terminates. Use this pair to test
+# the watch_events / coordination_emit / chat_await_context_update pipeline.
 name: test
 title: Test
 description:
@@ -11,5 +14,10 @@ steps:
       Call the coordination_emit function to send a "test_update" four times,
       once for each season. Send the season name as the payload of the update.
       Return "OK" when done.
+    # "testing" — excluded from playbooks_list, invisible to agents.
     tags: ["testing"]
+    # system.* included because this step terminates (calls
+    # system_objective_fulfilled). Contrast with the "rendering" step
+    # which omits system.* to loop forever.
     functions: ["coordination.*", "system.*"]
+
