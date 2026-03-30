@@ -42,7 +42,7 @@ steps:
       update you, ...", etc.).
 
     skills: ["persona"]
-    tags: ["opie"]
+    tags: ["opie", "chat"]
     functions: ["chat.*", "simple-files.*", "skills.*", "playbooks.*"]
     watch_events:
       - type: app_update

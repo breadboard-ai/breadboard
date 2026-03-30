@@ -8,9 +8,13 @@
  * `<opal-shell>` — the Opal 2.0 magazine view.
  *
  * A Lit + SignalWatcher custom element that provides:
- * - A persistent chat overlay connected to the Opie agent
+ * - A threaded chat overlay supporting multiple agent conversations
  * - A main stage iframe for digest / mini-app rendering
  * - An unobtrusive status toast for background activity
+ *
+ * Chat threads are derived from tickets: each unique combination of
+ * "chat" tag + playbook_run_id forms a thread. Opie is the default
+ * thread. A side rail appears when multiple threads are active.
  */
 
 import { LitElement, html } from "lit";
@@ -34,13 +38,23 @@ interface ChatMessage {
   role: "agent" | "user" | "thought" | "tool";
 }
 
+interface ChatThread {
+  id: string;
+  title: string;
+  ticketIds: string[];
+  activeTicketId: string | null;
+  hasUnread: boolean;
+}
+
 const appState = new BeesState();
 
 @customElement("opal-shell")
 class OpalShell extends SignalWatcher(LitElement) {
   @state() private chatOpen = false;
   @state() private chatInput = "";
-  @state() private chatMessages: ChatMessage[] = [];
+  @state() private threads: ChatThread[] = [];
+  @state() private activeThreadId = "opie";
+  @state() private threadMessages = new Map<string, ChatMessage[]>();
   @state() private statusText = "";
   @state() private statusVisible = false;
   @state() private currentView: string | null = null;
@@ -53,11 +67,12 @@ class OpalShell extends SignalWatcher(LitElement) {
   private api = new BeesAPI();
   private eventSource: EventSource | null = null;
   private bridge: MessageBridge | null = null;
-  private previousOpieStatus: string | null = null;
+  private previousTicketStatuses = new Map<string, string>();
   private stateWatchInterval: ReturnType<typeof setInterval> | null = null;
   private lastDigestUpdateId: string | null = null;
   private digestLoading = false;
-  private chatRestored = false;
+  private restoredThreadIds = new Set<string>();
+  private visitedThreadIds = new Set<string>(["opie"]);
 
   static styles = [styles];
 
@@ -150,10 +165,14 @@ class OpalShell extends SignalWatcher(LitElement) {
   }
 
   #renderChatOverlay() {
+    const thread = this.#activeThread;
+    const messages = this.threadMessages.get(this.activeThreadId) ?? [];
+    const showRail = this.threads.length > 1;
+
     return html`
       <div class="chat-overlay ${this.chatOpen ? "open" : ""}">
         <div class="chat-header">
-          <span class="chat-title">Opie</span>
+          <span class="chat-title">${thread?.title ?? "Chat"}</span>
           <button
             class="chat-close"
             @click=${this.#toggleChat}
@@ -162,32 +181,53 @@ class OpalShell extends SignalWatcher(LitElement) {
             ✕
           </button>
         </div>
-        <div class="chat-messages" id="chat-messages">
-          ${this.#groupedMessages().map((group) => {
-            if (group.length === 1) {
-              const m = group[0];
-              return html`<div class="chat-msg ${m.role}">
-                ${m.role === "agent" ? markdown(m.text) : m.text}
+        <div class="chat-body">
+          ${showRail ? this.#renderThreadRail() : null}
+          <div class="chat-messages" id="chat-messages">
+            ${this.#groupedMessages(messages).map((group) => {
+              if (group.length === 1) {
+                const m = group[0];
+                return html`<div class="chat-msg ${m.role}">
+                  ${m.role === "agent" ? markdown(m.text) : m.text}
+                </div>`;
+              }
+              const [primary, ...updates] = group;
+              return html`<div class="chat-msg agent">
+                ${markdown(primary.text)}
+                ${updates.map(
+                  (u) =>
+                    html`<div class="chat-status-update">
+                      <span class="status-arrow">↳</span>
+                      ${markdown(u.text)}
+                    </div>`
+                )}
               </div>`;
-            }
-            // Multiple consecutive agent messages — first is the primary,
-            // rest are status updates that fold into the bubble.
-            const [primary, ...updates] = group;
-            return html`<div class="chat-msg agent">
-              ${markdown(primary.text)}
-              ${updates.map(
-                (u) =>
-                  html`<div class="chat-status-update">
-                    <span class="status-arrow">↳</span>
-                    ${markdown(u.text)}
-                  </div>`
-              )}
-            </div>`;
-          })}
+            })}
+          </div>
         </div>
         ${this.pendingChoices.length > 0
           ? this.#renderChoiceInput()
           : this.#renderTextInput()}
+      </div>
+    `;
+  }
+
+  #renderThreadRail() {
+    return html`
+      <div class="thread-rail">
+        ${this.threads.map(
+          (t) => html`
+            <button
+              class="thread-item ${t.id === this.activeThreadId ? "active" : ""}"
+              @click=${() => this.#switchThread(t.id)}
+            >
+              <span class="thread-item-title">${t.title}</span>
+              ${t.hasUnread
+                ? html`<span class="thread-unread"></span>`
+                : null}
+            </button>
+          `
+        )}
       </div>
     `;
   }
@@ -197,7 +237,7 @@ class OpalShell extends SignalWatcher(LitElement) {
       <div class="chat-input-area">
         <input
           type="text"
-          placeholder="Ask Opie anything..."
+          placeholder="Type a message..."
           autocomplete="off"
           .value=${this.chatInput}
           @input=${(e: Event) =>
@@ -250,15 +290,14 @@ class OpalShell extends SignalWatcher(LitElement) {
    * - Multi-element group: consecutive agent messages (first is the
    *   primary bubble, rest are status updates)
    */
-  #groupedMessages(): ChatMessage[][] {
+  #groupedMessages(messages: ChatMessage[]): ChatMessage[][] {
     const groups: ChatMessage[][] = [];
-    for (const m of this.chatMessages) {
+    for (const m of messages) {
       if (
         m.role === "agent" &&
         groups.length > 0 &&
         groups[groups.length - 1][0].role === "agent"
       ) {
-        // Append to the current agent group.
         groups[groups.length - 1].push(m);
       } else {
         groups.push([m]);
@@ -286,14 +325,14 @@ class OpalShell extends SignalWatcher(LitElement) {
     const text = this.chatInput.trim();
     if (!text) return;
 
-    const opie = this.#findOpieTicket();
-    if (!opie) return;
+    const thread = this.#activeThread;
+    if (!thread?.activeTicketId) return;
 
-    this.chatMessages = [...this.chatMessages, { text, role: "user" }];
+    this.#addChatMessage(text, "user");
     this.chatInput = "";
     this.#scrollChatToBottom();
 
-    await this.api.respond(opie.id, text);
+    await this.api.respond(thread.activeTicketId, text);
   }
 
   #onChipClick(choiceId: string, isMultiple: boolean) {
@@ -318,10 +357,9 @@ class OpalShell extends SignalWatcher(LitElement) {
   }
 
   async #sendChoiceIds(ids: string[]) {
-    const opie = this.#findOpieTicket();
-    if (!opie) return;
+    const thread = this.#activeThread;
+    if (!thread?.activeTicketId) return;
 
-    // Show what was selected as a user message.
     const labels = ids
       .map((id) => this.pendingChoices.find((c) => c.id === id)?.text ?? id)
       .join(", ");
@@ -330,11 +368,15 @@ class OpalShell extends SignalWatcher(LitElement) {
     this.pendingChoices = [];
     this.selectedChoiceIds = [];
 
-    await this.api.respond(opie.id, undefined, ids);
+    await this.api.respond(thread.activeTicketId, labels, ids);
   }
 
   #addChatMessage(text: string, role: ChatMessage["role"]) {
-    this.chatMessages = [...this.chatMessages, { text, role }];
+    const id = this.activeThreadId;
+    const current = this.threadMessages.get(id) ?? [];
+    const updated = new Map(this.threadMessages);
+    updated.set(id, [...current, { text, role }]);
+    this.threadMessages = updated;
     this.#scrollChatToBottom();
   }
 
@@ -360,8 +402,9 @@ class OpalShell extends SignalWatcher(LitElement) {
       const ticketId = data.ticket_id;
       const event = data.event;
 
-      const opie = this.#findOpieTicket();
-      if (!opie || ticketId !== opie.id) return;
+      // Only show live events for tickets in the active thread.
+      const thread = this.#activeThread;
+      if (!thread || !thread.ticketIds.includes(ticketId)) return;
 
       if ("thought" in event) {
         const thought = event.thought as Record<string, unknown>;
@@ -384,8 +427,171 @@ class OpalShell extends SignalWatcher(LitElement) {
 
   // ── State watching ───────────────────────────────────────────────
 
-  #findOpieTicket(): TicketData | undefined {
-    return appState.tickets.get().find((t) => t.tags?.includes("opie"));
+  get #activeThread(): ChatThread | undefined {
+    return this.threads.find((t) => t.id === this.activeThreadId);
+  }
+
+  #switchThread(threadId: string) {
+    if (this.activeThreadId === threadId) return;
+    this.activeThreadId = threadId;
+    this.visitedThreadIds.add(threadId);
+
+    // Clear ephemeral state from the previous thread.
+    this.pendingChoices = [];
+    this.selectedChoiceIds = [];
+
+    // Mark the thread as read.
+    const thread = this.#activeThread;
+    if (thread?.hasUnread) {
+      this.threads = this.threads.map((t) =>
+        t.id === threadId ? { ...t, hasUnread: false } : t
+      );
+    }
+
+    // Re-derive prompt state for the new thread's active ticket.
+    this.#applyPromptState();
+    this.#scrollChatToBottom();
+  }
+
+  /**
+   * Derive chat threads from the current ticket state.
+   *
+   * A thread groups all "chat"-tagged tickets that share an identity:
+   * - Opie: tickets also tagged "opie" → thread id "opie"
+   * - Others: grouped by playbook_run_id
+   *
+   * Within a thread, tickets are ordered by creation time. The "active"
+   * ticket is the latest one suspended for user input, or the latest
+   * one running.
+   */
+  #deriveThreads(): ChatThread[] {
+    const tickets = appState.tickets.get();
+    const chatTickets = tickets.filter((t) => t.tags?.includes("chat"));
+
+    const groups = new Map<string, TicketData[]>();
+
+    for (const t of chatTickets) {
+      const threadId = t.tags?.includes("opie")
+        ? "opie"
+        : t.playbook_run_id;
+      if (!threadId) continue;
+      const list = groups.get(threadId) ?? [];
+      list.push(t);
+      groups.set(threadId, list);
+    }
+
+    const threads: ChatThread[] = [];
+
+    for (const [threadId, group] of groups) {
+      // Sort by creation time (oldest first).
+      group.sort(
+        (a, b) => (a.created_at ?? "").localeCompare(b.created_at ?? "")
+      );
+
+      // Active ticket: prefer suspended-for-user, then running.
+      const suspendedForUser = group.findLast(
+        (t) => t.status === "suspended" && t.assignee === "user"
+      );
+      const running = group.findLast((t) => t.status === "running");
+      const activeTicketId =
+        suspendedForUser?.id ?? running?.id ?? null;
+
+      // Thread title: Opie is always "Opie". Others use the active
+      // ticket's title so it reflects who the user is talking to.
+      let title: string;
+      if (threadId === "opie") {
+        title = "Opie";
+      } else {
+        const activeTicket = activeTicketId
+          ? group.find((t) => t.id === activeTicketId)
+          : null;
+        title =
+          activeTicket?.title ??
+          group[group.length - 1]?.title ??
+          threadId.slice(0, 8);
+      }
+
+      // Unread: a non-active thread has a ticket waiting for user.
+      const hasUnread =
+        threadId !== this.activeThreadId && suspendedForUser != null;
+
+      threads.push({
+        id: threadId,
+        title,
+        ticketIds: group.map((t) => t.id),
+        activeTicketId,
+        hasUnread,
+      });
+    }
+
+    return threads;
+  }
+
+  /**
+   * Restore chat history for a thread from its tickets' chat_history fields.
+   * Concatenates histories in ticket-creation order for seamless handoff.
+   */
+  #restoreThreadHistory(thread: ChatThread) {
+    const tickets = appState.tickets.get();
+    const messages: ChatMessage[] = [];
+
+    for (const ticketId of thread.ticketIds) {
+      const ticket = tickets.find((t) => t.id === ticketId);
+      if (!ticket) continue;
+
+      // Seed the status tracker so #watchState() doesn't re-fire for
+      // the current state — the prompt is already in the chat log.
+      this.previousTicketStatuses.set(
+        ticketId,
+        `${ticket.status}:${ticket.assignee ?? ""}`
+      );
+
+      if (!ticket.chat_history?.length) continue;
+      for (const m of ticket.chat_history) {
+        messages.push({
+          text: m.text,
+          role: m.role as ChatMessage["role"],
+        });
+      }
+    }
+
+    if (messages.length > 0) {
+      const updated = new Map(this.threadMessages);
+      updated.set(thread.id, messages);
+      this.threadMessages = updated;
+    }
+  }
+
+  /**
+   * Apply prompt / choices state from the active thread's active ticket.
+   * Called on thread switch and on state transitions.
+   */
+  #applyPromptState() {
+    const thread = this.#activeThread;
+    if (!thread?.activeTicketId) {
+      this.pendingChoices = [];
+      return;
+    }
+
+    const tickets = appState.tickets.get();
+    const ticket = tickets.find((t) => t.id === thread.activeTicketId);
+    if (!ticket || ticket.status !== "suspended" || ticket.assignee !== "user") {
+      this.pendingChoices = [];
+      return;
+    }
+
+    const choices = extractChoices(ticket);
+    if (choices.length > 0) {
+      const selectionMode =
+        ((ticket.suspend_event?.waitForChoice as Record<string, unknown>)
+          ?.selectionMode as string) ?? "single";
+      this.pendingChoices = choices;
+      this.pendingSelectionMode =
+        selectionMode === "multiple" ? "multiple" : "single";
+      this.selectedChoiceIds = [];
+    } else {
+      this.pendingChoices = [];
+    }
   }
 
   async #loadBundle(ticketId: string) {
@@ -399,7 +605,6 @@ class OpalShell extends SignalWatcher(LitElement) {
       return;
     }
 
-    // Wait for the iframe DOM element to be rendered
     this.requestUpdate();
     await this.updateComplete;
 
@@ -448,52 +653,66 @@ class OpalShell extends SignalWatcher(LitElement) {
   }
 
   /**
-   * Watch the reactive state for Opie-relevant transitions.
-   * Runs on a 1s interval (will migrate to Signal.effect / SCA triggers
-   * once the full SCA architecture is in place).
+   * Watch the reactive state for thread transitions.
+   * Runs on a 1s interval.
    */
   #watchState() {
-    const tickets = appState.tickets.get();
-    const opie = tickets.find((t) => t.tags?.includes("opie"));
+    // Derive threads from current ticket state.
+    this.threads = this.#deriveThreads();
 
-    if (!opie) return;
-
-    // Restore chat history from the ticket on first discovery
-    // (handles page reload / server restart).
-    if (!this.chatRestored && opie.chat_history?.length) {
-      this.chatRestored = true;
-      this.chatMessages = opie.chat_history.map((m) => ({
-        text: m.text,
-        role: m.role as ChatMessage["role"],
-      }));
-      this.#scrollChatToBottom();
+    // Restore chat history for any thread not yet restored.
+    for (const thread of this.threads) {
+      if (!this.restoredThreadIds.has(thread.id)) {
+        this.restoredThreadIds.add(thread.id);
+        this.#restoreThreadHistory(thread);
+        if (thread.id === this.activeThreadId) {
+          this.#scrollChatToBottom();
+        }
+      }
     }
 
-    // Detect state transitions.
-    const currentStatus = `${opie.status}:${opie.assignee ?? ""}`;
-    if (currentStatus !== this.previousOpieStatus) {
-      this.previousOpieStatus = currentStatus;
+    // Detect state transitions for all chat tickets across all threads.
+    const tickets = appState.tickets.get();
+    for (const thread of this.threads) {
+      for (const ticketId of thread.ticketIds) {
+        const ticket = tickets.find((t) => t.id === ticketId);
+        if (!ticket) continue;
 
-      // When Opie suspends waiting for user input, show the prompt.
-      if (opie.status === "suspended" && opie.assignee === "user") {
-        const prompt = extractPrompt(opie);
-        this.#addChatMessage(prompt, "agent");
+        const currentStatus = `${ticket.status}:${ticket.assignee ?? ""}`;
+        const previousStatus = this.previousTicketStatuses.get(ticketId);
 
-        // Present choices if the suspend is a waitForChoice.
-        const choices = extractChoices(opie);
-        if (choices.length > 0) {
-          const selectionMode =
-            ((opie.suspend_event?.waitForChoice as Record<string, unknown>)
-              ?.selectionMode as string) ?? "single";
-          this.pendingChoices = choices;
-          this.pendingSelectionMode =
-            selectionMode === "multiple" ? "multiple" : "single";
-          this.selectedChoiceIds = [];
-        } else {
-          this.pendingChoices = [];
+        if (currentStatus !== previousStatus) {
+          this.previousTicketStatuses.set(ticketId, currentStatus);
+
+          // When a chat ticket suspends waiting for user input, show prompt.
+          if (ticket.status === "suspended" && ticket.assignee === "user") {
+            // Add the agent prompt to this thread's messages.
+            const prompt = extractPrompt(ticket);
+            const threadMessages =
+              this.threadMessages.get(thread.id) ?? [];
+            const updated = new Map(this.threadMessages);
+            updated.set(thread.id, [
+              ...threadMessages,
+              { text: prompt, role: "agent" as const },
+            ]);
+            this.threadMessages = updated;
+
+            if (thread.id === this.activeThreadId) {
+              // Active thread — just update prompt state.
+              this.#applyPromptState();
+              this.#scrollChatToBottom();
+              if (!this.chatOpen) this.#toggleChat();
+            } else if (!this.visitedThreadIds.has(thread.id)
+                       && !this.chatInput.trim()) {
+              // First contact with this thread and user isn't
+              // composing — auto-switch to it.
+              this.#switchThread(thread.id);
+              this.#applyPromptState();
+              this.#scrollChatToBottom();
+              if (!this.chatOpen) this.#toggleChat();
+            }
+          }
         }
-
-        if (!this.chatOpen) this.#toggleChat();
       }
     }
 
