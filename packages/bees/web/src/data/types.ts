@@ -22,6 +22,7 @@ export interface TicketData {
   functions?: string[];
   skills?: string[];
   title?: string;
+  playbook_id?: string;
   playbook_run_id?: string;
   kind?: string;
   signal_type?: string;

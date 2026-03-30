@@ -25,6 +25,34 @@ component bundles from natural language descriptions.
    `IndexedDB`, or any Web Storage APIs. The iframe environment may not have
    storage access due to origin restrictions. All state lives in React component
    state or is passed via props and the SDK.
+4. **Respect the host theme.** The iframe renders on a dark background. Do not
+   set `background: white`, `background: #fff`, `color: #333`, or any
+   light-theme values. All backgrounds must use `var(--cg-color-surface*)`
+   tokens and all text must use `var(--cg-color-on-surface*)` tokens.
+
+## Responsive Layout
+
+Your UI MUST work from 320px to 1200px+. This is not optional.
+
+### Forbidden Patterns
+
+- **No fixed pixel widths** on containers or layout elements. Never write
+  `width: 800px`, `width: 600px`, or similar. Use `max-width` with a percentage
+  or `min()` instead: `max-width: min(100%, 800px)`.
+- **No `min-width` exceeding 320px** on any layout container. This prevents
+  rendering on small screens.
+- **No horizontal overflow.** If your layout causes a horizontal scrollbar at
+  any viewport width ≥ 320px, it is broken.
+
+### Required Patterns
+
+- **Use `flex-wrap: wrap`** on any flex container with multiple children that
+  should stack on narrow screens.
+- **Use CSS Grid with `auto-fit` / `minmax`** for multi-column layouts:
+  `grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr))`.
+- **Use `clamp()` for font sizes** that should scale with viewport:
+  `font-size: clamp(1rem, 2vw + 0.5rem, 2rem)`.
+- **Test your mental model** at 375px, 768px, and 1200px before finishing.
 
 ## What You're Building
 
