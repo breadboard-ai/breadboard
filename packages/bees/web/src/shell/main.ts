@@ -44,15 +44,19 @@ class OpalShell extends SignalWatcher(LitElement) {
 
   async #pollPulseLoop() {
     await this.#pollPulse();
-    this.pulseTimeout = setTimeout(() => this.#pollPulseLoop(), 15_000);
+    this.pulseTimeout = setTimeout(() => this.#pollPulseLoop(), 5_000);
   }
 
   async #pollPulse() {
-    const pulse = await this.sca.services.api.getPulse();
-    const global = this.sca.controller.global;
-    global.pulseText = pulse.text;
-    global.pulseActive = pulse.active;
-    global.pulseTasks = pulse.tasks || [];
+    try {
+      const pulse = await this.sca.services.api.getPulse();
+      const global = this.sca.controller.global;
+      global.pulseText = pulse.text;
+      global.pulseActive = pulse.active;
+      global.pulseTasks = pulse.tasks || [];
+    } catch (e) {
+      console.error("[opal-shell] Pulse poll failed:", e);
+    }
   }
 
   render() {
