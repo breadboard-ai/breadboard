@@ -477,31 +477,79 @@ async def run_playbook_endpoint(name: str) -> dict[str, Any]:
 # System Pulse — Flash-powered status summary
 # ---------------------------------------------------------------------------
 
+
+def should_include_ticket(
+    ticket: Ticket,
+    status: str | None = None,
+    tags: str | None = None,
+    kind: str | None = None,
+) -> bool:
+    """Evaluate if a ticket matches the query parameters."""
+    
+    # 1. Kind filter
+    if kind:
+        is_neg = kind.startswith("!")
+        val = kind[1:] if is_neg else kind
+        match = ticket.metadata.kind == val
+        if is_neg and match:
+            return False
+        if not is_neg and not match:
+            return False
+
+    # 2. Status filter
+    if status:
+        is_neg = status.startswith("!")
+        val = status[1:] if is_neg else status
+        allowed_statuses = set(val.split(","))
+        match = ticket.metadata.status in allowed_statuses
+        if is_neg and match:
+            return False
+        if not is_neg and not match:
+            return False
+
+    # 3. Tags filter
+    if tags:
+        tag_list = tags.split(",")
+        ticket_tags = set(ticket.metadata.tags or [])
+        
+        positive_reqs = []
+        negative_reqs = []
+        for t in tag_list:
+            if t.startswith("!"):
+                negative_reqs.append(t[1:])
+            else:
+                positive_reqs.append(t)
+                
+        for nt in negative_reqs:
+            if nt in ticket_tags:
+                return False
+                
+        if positive_reqs:
+            if not any(pt in ticket_tags for pt in positive_reqs):
+                return False
+
+    return True
+
+
 _pulse_cache: dict[str, Any] = {"hash": "", "text": "", "active": False}
 
 
-@app.get("/pulse")
-async def get_pulse() -> dict[str, Any]:
-    """Return a single pulse response containing both the summary text and structured tasks."""
+@app.get("/status")
+async def get_status(
+    status: str | None = None,
+    tags: str | None = None,
+    kind: str | None = None,
+) -> dict[str, Any]:
+    """Return a status response containing both the summary text and structured tasks."""
     tickets = list_tickets()
 
-    # Group ALL tickets by run_id (or standalone ticket ID)
-    # Ignore background daemon tickets like Opie and the Digest Generator.
     by_run: dict[str, list[Ticket]] = {}
     active_running = []
 
     for t in tickets:
-        tags = t.metadata.tags or []
-        if (
-            t.metadata.kind == "coordination" or
-            "opie" in tags
-        ):
+        if not should_include_ticket(t, status=status, tags=tags, kind=kind):
             continue
-        # The digest ticket loops forever (suspended ↔ running).  Only
-        # surface it in the pulse while it is actively generating.
-        if "digest" in tags:
-            if t.metadata.status != "running":
-                continue
+
         run_id = t.metadata.playbook_run_id or f"standalone-{t.id}"
         by_run.setdefault(run_id, []).append(t)
 
@@ -549,7 +597,8 @@ async def get_pulse() -> dict[str, Any]:
             "status": current_ticket.metadata.status,
             "completed_steps": completed_steps,
             "total_steps": total_steps,
-            "created_at": first_ticket.metadata.created_at
+            "created_at": first_ticket.metadata.created_at,
+            "tags": list(set(first_ticket.metadata.tags or []))
         })
 
     tasks.sort(key=lambda x: x["created_at"] or "", reverse=True)

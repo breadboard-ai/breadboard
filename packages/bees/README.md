@@ -54,6 +54,29 @@ outcome or error. Results print as JSON to stdout.
 
 ---
 
+## Status Query Syntax
+
+The `/status` endpoint (replacing `/pulse`) provides a summary of active work. It supports query parameters for filtering tickets before they are aggregated into task summaries.
+
+### Parameters
+
+*   `kind`: Filter by ticket kind (e.g., `work`, `coordination`).
+    *   Negation: `kind=!coordination`
+*   `status`: Filter by status (comma-separated list).
+    *   Example: `status=available,running,blocked,suspended`
+    *   Negation: `status=!completed,!failed`
+*   `tags`: Filter by tags (comma-separated list).
+    *   Example: `tags=foo,bar`
+    *   Negation: `tags=!opie,!digest`
+
+### Filtering Logic
+
+*   **Negation (`!`)**: Excludes the ticket if the value matches (e.g., `tags=!opie` hides opie tickets).
+*   **Multiple Values (Comma-separated)**: Treated as `OR` (e.g., `status=running,suspended` shows either running or suspended tickets).
+*   **Multiple Parameters**: All parameters must be satisfied (`AND`).
+
+---
+
 ## Functions
 
 Functions are the tools an agent can call during a session. They are

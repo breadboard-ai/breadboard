@@ -97,9 +97,17 @@ class BeesAPI {
     tasks: PulseTask[];
   }> {
     try {
-      const resp = await fetch("/pulse");
+      const resp = await fetch("/status?kind=!coordination&tags=!opie&status=available,running,blocked,suspended");
       if (!resp.ok) return { text: "", active: false, tasks: [] };
-      return resp.json();
+      const data = await resp.json();
+      
+      data.tasks = (data.tasks || []).filter((task: import("../types.js").PulseTask) => {
+        if (task.tags && task.tags.includes("digest") && task.status !== "running") {
+          return false;
+        }
+        return true;
+      });
+      return data;
     } catch (e) {
       console.error("Error fetching pulse:", e);
       return { text: "", active: false, tasks: [] };

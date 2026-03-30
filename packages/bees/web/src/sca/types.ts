@@ -65,6 +65,7 @@ export interface PulseTask {
   completed_steps: number;
   total_steps: number;
   created_at: string | null;
+  tags: string[];
 }
 
 import { BeesAPI } from "./services/api.js";

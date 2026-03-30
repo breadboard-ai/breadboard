@@ -52,7 +52,6 @@ class OpalShell extends SignalWatcher(LitElement) {
       const pulse = await this.sca.services.api.getPulse();
       const global = this.sca.controller.global;
       global.pulseText = pulse.text;
-      global.pulseActive = pulse.active;
       global.pulseTasks = pulse.tasks || [];
     } catch (e) {
       console.error("[opal-shell] Pulse poll failed:", e);
