@@ -265,3 +265,99 @@ class TestRunPlaybook:
 
         tickets = run_playbook("plain")
         assert tickets[0].metadata.context is None
+
+
+# --- run_event_hooks ---
+
+
+from bees.playbook import run_event_hooks
+
+
+class TestRunEventHooks:
+
+    def test_no_playbook_passes_through(self, tmp_path):
+        """Tickets without a playbook_id get the signal unmodified."""
+        from bees.ticket import create_ticket
+        ticket = create_ticket("standalone objective")
+        result = run_event_hooks("some_signal", "payload", ticket)
+        assert result == "payload"
+
+    def test_no_hook_passes_through(self, write_playbook):
+        """Playbook exists but hooks.py has no on_event — pass through."""
+        write_playbook("no-hook", {
+            "name": "no-hook",
+            "steps": {"main": {"objective": "Do it."}},
+        })
+        tickets = run_playbook("no-hook")
+        ticket = tickets[0]
+        result = run_event_hooks("some_signal", "payload", ticket)
+        assert result == "payload"
+
+    def test_hook_eats_event(self, tmp_path, write_playbook):
+        """Hook returns None — signal is eaten."""
+        write_playbook("eater", {
+            "name": "eater",
+            "steps": {"main": {"objective": "Do it."}},
+        })
+        hooks_path = tmp_path / "playbooks" / "eater" / "hooks.py"
+        hooks_path.write_text(
+            "def on_event(signal_type, payload, ticket):\n"
+            "    return None\n"
+        )
+        tickets = run_playbook("eater")
+        result = run_event_hooks("any_signal", "payload", tickets[0])
+        assert result is None
+
+    def test_hook_transforms_payload(self, tmp_path, write_playbook):
+        """Hook returns a modified payload string."""
+        write_playbook("transformer", {
+            "name": "transformer",
+            "steps": {"main": {"objective": "Do it."}},
+        })
+        hooks_path = tmp_path / "playbooks" / "transformer" / "hooks.py"
+        hooks_path.write_text(
+            "def on_event(signal_type, payload, ticket):\n"
+            "    return payload.upper()\n"
+        )
+        tickets = run_playbook("transformer")
+        result = run_event_hooks("any_signal", "hello", tickets[0])
+        assert result == "HELLO"
+
+    def test_hook_raises_fails_open(self, tmp_path, write_playbook):
+        """Hook crash delivers the signal as-is (fail-open)."""
+        write_playbook("crasher", {
+            "name": "crasher",
+            "steps": {"main": {"objective": "Do it."}},
+        })
+        hooks_path = tmp_path / "playbooks" / "crasher" / "hooks.py"
+        hooks_path.write_text(
+            "def on_event(signal_type, payload, ticket):\n"
+            "    raise RuntimeError('boom')\n"
+        )
+        tickets = run_playbook("crasher")
+        result = run_event_hooks("any_signal", "payload", tickets[0])
+        assert result == "payload"
+
+    def test_hook_mutates_ticket_metadata(self, tmp_path, write_playbook):
+        """Hook can mutate ticket metadata (e.g., rename title)."""
+        write_playbook("renamer", {
+            "name": "renamer",
+            "steps": {"main": {"title": "Original Title", "objective": "Do it."}},
+        })
+        hooks_path = tmp_path / "playbooks" / "renamer" / "hooks.py"
+        hooks_path.write_text(
+            "def on_event(signal_type, payload, ticket):\n"
+            "    if signal_type == 'update_title':\n"
+            "        ticket.metadata.title = payload\n"
+            "        ticket.save_metadata()\n"
+            "        return None\n"
+            "    return payload\n"
+        )
+        tickets = run_playbook("renamer")
+        ticket = tickets[0]
+        assert ticket.metadata.title == "Original Title"
+
+        result = run_event_hooks("update_title", "New Title", ticket)
+        assert result is None
+        assert ticket.metadata.title == "New Title"
+

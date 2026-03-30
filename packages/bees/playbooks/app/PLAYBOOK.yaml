@@ -50,6 +50,9 @@ steps:
     # "chat" — enables persistent chat history (the interview is conversational).
     # "app-builder" — groups this ticket with the ui-gen step for UI filtering.
     tags: ["chat", "app-builder"]
+    # update_app_title — hooks.py renames the ticket and eats the signal.
+    watch_events:
+      - type: update_app_title
 
   ui-gen:
     title: UI Generator
@@ -81,6 +84,9 @@ steps:
     skills: ["ui-generator"]
     # "bundle" — hooks.py on_ticket_done triggers auto-bundling for this tag.
     tags: ["bundle", "app-builder", "chat"]
+    # update_app_title — hooks.py renames the ticket and eats the signal.
+    watch_events:
+      - type: update_app_title
     # Override model — code generation benefits from a more capable model.
     model: gemini-3.1-pro-preview
 

@@ -37,17 +37,17 @@ steps:
       doing (e.g., "I'll pull together weather forecasts for SF and Mountain
       View for that week.") — not a generic "On it."
 
-      4. When you receive context updates, your response depends on the
-      signal type:
+      4. When you receive context updates, your response depends on the signal
+      type:
 
       a) **playbook_complete** — The work is done, but the user's digest is
-      STILL BEING REGENERATED. Say something like "The weather research is
-      done — your digest is updating now." NEVER say "I've added it" or
-      "It's ready" at this stage — the user cannot see it yet.
+      STILL BEING REGENERATED. Say something like "The weather research is done
+      — your digest is updating now." NEVER say "I've added it" or "It's ready"
+      at this stage — the user cannot see it yet.
 
-      b) **digest_update** — The digest has finished regenerating. NOW you
-      can confirm delivery: "Your digest has been refreshed with the new
-      weather section." This is the safe moment to tell the user to look.
+      b) **digest_update** — The digest has finished regenerating. NOW you can
+      confirm delivery: "Your digest has been refreshed with the new weather
+      section." This is the safe moment to tell the user to look.
 
       c) **app_update** — A mini app was created or changed. Give a brief
       one-sentence status update only.
@@ -55,8 +55,14 @@ steps:
       5. If there's no user input text in the update (context update only),
       provide the status update but do NOT re-ask the previous question.
 
-      6. If there's user input text in the update, include the status update
-      as an aside ("By the way, ...", "Just to update you, ...", etc.).
+      6. If there's user input text in the update, include the status update as
+      an aside ("By the way, ...", "Just to update you, ...", etc.).
+
+      7. When you run the "app" playbook, also emit an "update_app_title"
+      coordination signal. Derive a concise app title from the user's request
+      (in [Purpose Noun] + [How/Action Noun] format, like "Weather Forecaster"
+      or "Trip Planner") and pass it as the payload. This renames the app's
+      tickets so the user sees a meaningful title instead of generic step names.
 
     skills: ["persona"]
     # "opie" — hooks.py on_startup checks for this tag to avoid double-booting.
@@ -64,8 +70,10 @@ steps:
     tags: ["opie", "chat"]
     # No system.* — Opie never terminates. It lives as an infinite chat agent,
     # suspending on chat_request_user_input between turns.
+    # coordination.* — for emitting title-update signals when running playbooks.
     # playbooks.* — the delegation mechanism: discover and launch playbooks.
-    functions: ["chat.*", "simple-files.*", "skills.*", "playbooks.*"]
+    functions:
+      ["chat.*", "simple-files.*", "skills.*", "playbooks.*", "coordination.*"]
     # Signals arrive as context_updates inside chat_request_user_input responses
     # (not via chat_await_context_update) because Opie is always suspended
     # waiting for the *user*, not for system signals.
@@ -100,19 +108,20 @@ steps:
 
       1. IMMEDIATELY emit a coordination signal by calling coordination_emit
       with signal_type "digest_building" and a one-sentence summary of what
-      you're about to do (e.g. "Drafting your trip plan..."). This lets the
-      user know you're working before the heavy generation starts.
+      you're about to do (e.g. "Drafting your trip plan..."). This lets the user
+      know you're working before the heavy generation starts.
 
       2. Then decide whether the update warrants a digest change — minor tweaks
       may not need a refresh, but a new app or major result does.
 
-      **When creating the digest for the first time** (after receiving your first
-      real update): Generate the initial digest UI from scratch. Save the
+      **When creating the digest for the first time** (after receiving your
+      first real update): Generate the initial digest UI from scratch. Save the
       React application as App.jsx, and write all styling to a separate
       styles.css file.
 
-      **Subsequent updates**: If warranted, edit App.jsx and styles.css to reflect
-      the new state. If not, skip generation but still emit the completion signal.
+      **Subsequent updates**: If warranted, edit App.jsx and styles.css to
+      reflect the new state. If not, skip generation but still emit the
+      completion signal.
 
       **After each generation or update**: Run the bundler by executing `node
       $HOME/skills/ui-generator/tools/bundler.mjs` via execute_bash to produce
