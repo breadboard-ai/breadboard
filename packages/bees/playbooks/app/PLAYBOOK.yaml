@@ -24,10 +24,22 @@ steps:
       implementation details; focus on what the user wants the app to *do* and
       *feel like*.
 
-      4. When you have enough information, return a clear, structured
+      4. When you have enough information, create a clear, structured
       specification summarising: what the app does, key features, visual style
-      preferences, and any constraints the user mentioned.
-    functions: ["chat.*", "system.*", "simple-files.*", "skills.*"]
+      preferences, and any constraints the user mentioned
+
+      a) emit a coordination signal with signal_type "app_update" and the
+      specification as payload, adding that this is coming soon, and is the work
+      started on this app.
+
+      b) return the specification as outcome
+
+    functions:
+      - chat.*
+      - system.*
+      - simple-files.*
+      - skills.*
+      - coordination.*
     skills: ["interview-user"]
 
   ui-gen:
@@ -38,8 +50,14 @@ steps:
 
       Generate the UI, then run the bundler to produce bundle.js and bundle.css.
       After each generation or update, emit a coordination signal by calling
-      coordination_emit with signal_type "app_update" and a brief summary of the
-      current state of the app.
+      coordination_emit with signal_type "app_update". 
+
+      The payload should multiple paragraphs of text, rich enough for another
+      agent to understand what changed. Include: 
+        - what the app does
+        - its key features
+        - what changed in this update
+        - a navigateTo link: `navigateTo('{{system.ticket_id}}')`
 
       Then ask the user if they'd like any changes. Iterate on their feedback —
       update the code, re-bundle, emit another "app_update", and ask again.

@@ -55,6 +55,8 @@ class OpalShell extends SignalWatcher(LitElement) {
   private bridge: MessageBridge | null = null;
   private previousOpieStatus: string | null = null;
   private stateWatchInterval: ReturnType<typeof setInterval> | null = null;
+  private lastDigestUpdateId: string | null = null;
+  private digestLoading = false;
 
   static styles = [styles];
 
@@ -442,44 +444,41 @@ class OpalShell extends SignalWatcher(LitElement) {
       }
     }
 
-    // Digest status toast.
-    const digestRunning = tickets.find(
+    // Digest: find the digest-tagged ticket (any non-coordination ticket
+    // that is suspended or completed — the infinite digest agent stays
+    // suspended between update cycles).
+    const digestTicket = tickets.find(
       (t) =>
         t.kind !== "coordination" &&
         t.tags?.includes("digest") &&
-        (t.status === "running" || t.status === "available")
+        (t.status === "suspended" || t.status === "completed")
     );
-    if (digestRunning && !this.statusVisible) {
-      this.statusText = "Updating based on recent work...";
-      this.statusVisible = true;
-    } else if (!digestRunning && this.statusVisible && this.currentView) {
-      this.statusVisible = false;
-    }
 
-    // Load digest logic
-    const digestComplete = tickets
-      .slice()
-      .sort((a, b) =>
-        (b.completed_at ?? "").localeCompare(a.completed_at ?? "")
-      )
-      .find(
+    if (digestTicket && !this.digestLoading) {
+      const isNew = !this.digestTicketId;
+      if (isNew) {
+        this.digestTicketId = digestTicket.id;
+        this.currentView = digestTicket.id;
+      }
+
+      // Check for fresh digest_update coordination signals.
+      const digestUpdate = tickets.find(
         (t) =>
-          t.kind !== "coordination" &&
-          t.tags?.includes("digest") &&
-          t.status === "completed"
+          t.kind === "coordination" &&
+          t.signal_type === "digest_update" &&
+          t.id !== this.lastDigestUpdateId
       );
 
-    if (digestComplete && digestComplete.id !== this.currentView) {
-      this.currentView = digestComplete.id;
-      this.digestTicketId = digestComplete.id;
-      // Also show loading immediately while fetching code
-      if (!this.statusVisible) {
-        this.statusText = "Loading digest...";
+      if (isNew || digestUpdate) {
+        if (digestUpdate) this.lastDigestUpdateId = digestUpdate.id;
+        this.digestLoading = true;
+        this.statusText = isNew ? "Loading digest..." : "Refreshing digest...";
         this.statusVisible = true;
+        this.#loadBundle(this.digestTicketId!).then(() => {
+          this.statusVisible = false;
+          this.digestLoading = false;
+        });
       }
-      this.#loadBundle(digestComplete.id).then(() => {
-        this.statusVisible = false;
-      });
     }
   }
 }
