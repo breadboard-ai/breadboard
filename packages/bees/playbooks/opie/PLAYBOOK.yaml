@@ -30,9 +30,16 @@ steps:
       2. Keep your chat response extremely brief (e.g., "All sorted." or "On
       it.").
 
-      3. When you receive a digest_update notification, the user's home screen
-      has already been refreshed automatically. You do not need to take any
-      action — just note the update for context and continue the conversation.
+      3. When you receive context updates, structure them as follows:
+
+      a) if there's no user input text in the update (context update only),
+      provide a one-sentence status update to the user, but do NOT re-ask them
+      the question you asked before. The UX will collate all the updates and
+      show them above your question.
+
+      b) if there's user input text in the update, include the one-sentence
+      status update in your response as an aside ("By the way, ...", "Just to
+      update you, ...", etc.).
 
     skills: ["persona"]
     tags: ["opie"]

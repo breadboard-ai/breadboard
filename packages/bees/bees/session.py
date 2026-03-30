@@ -20,7 +20,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from dotenv import load_dotenv
 import httpx
@@ -52,6 +52,34 @@ _SKILLS_LISTING, _SKILLS_FILES, _SKILLS_LIST = scan_skills(_BEES_DIR)
 
 PACKAGE_DIR = Path(__file__).resolve().parent.parent
 OUT_DIR = PACKAGE_DIR / "out"
+
+CHAT_LOG_FILENAME = "chat_log.json"
+
+
+def _make_chat_log_writer(ticket_dir: Path) -> Callable[[str, str], None]:
+    """Create a callback that appends entries to ``chat_log.json``.
+
+    Each entry is ``{"role": "agent"|"user", "text": "..."}``."""
+
+    def writer(role: str, content: str) -> None:
+        log_path = ticket_dir / CHAT_LOG_FILENAME
+        entries: list[dict[str, str]] = []
+        if log_path.exists():
+            try:
+                entries = json.loads(log_path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                pass
+        entries.append({"role": role, "text": content})
+        log_path.write_text(
+            json.dumps(entries, indent=2, ensure_ascii=False) + "\n"
+        )
+
+    return writer
+
+
+def append_chat_log(ticket_dir: Path, role: str, text: str) -> None:
+    """Append a message to the ticket's chat log (public API for scheduler)."""
+    _make_chat_log_writer(ticket_dir)(role, text)
 
 
 # ---------------------------------------------------------------------------
@@ -386,7 +414,9 @@ async def run_session(
             ),
             get_playbooks_function_group(on_playbook_run=on_playbook_run),
             get_coordination_function_group(on_coordination_emit=on_coordination_emit),
-            get_chat_function_group_factory(),
+            get_chat_function_group_factory(
+                on_chat_entry=_make_chat_log_writer(ticket_dir) if ticket_dir else None,
+            ),
         ],
         initial_files=session_files,
         function_filter=function_filter,
@@ -527,7 +557,9 @@ async def resume_session(
             ),
             get_playbooks_function_group(on_playbook_run=on_playbook_run),
             get_coordination_function_group(on_coordination_emit=on_coordination_emit),
-            get_chat_function_group_factory(),
+            get_chat_function_group_factory(
+                on_chat_entry=_make_chat_log_writer(ticket_dir),
+            ),
         ],
         # initial_files not needed on resume — already in FS snapshot.
     )
