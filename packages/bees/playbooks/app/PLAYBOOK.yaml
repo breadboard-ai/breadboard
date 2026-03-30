@@ -11,20 +11,23 @@ steps:
       You are conducting an intake interview to understand what the user wants
       to build. 
 
-      1. Read the "interview-user" skill
-
-      2. Here is the initial request from the user:
+      Here is the initial request from the user:
 
       {{system.context}}
 
-      3. Ask focused, clarifying questions to gather enough detail for a UI
+      Follow these steps to conduct the interview.
+
+      1. Read the "interview-user" skill <-- IMPORTANT. This will help you get
+      better at interviewing the user.
+
+      2. Ask focused, clarifying questions to gather enough detail for a UI
       generator to create a React application.
 
       Keep the interview concise — 3-5 questions at most. Don't ask about
       implementation details; focus on what the user wants the app to *do* and
       *feel like*.
 
-      4. When you have enough information, create a clear, structured
+      3. When you have enough information, create a clear, structured
       specification summarising: what the app does, key features, visual style
       preferences, and any constraints the user mentioned
 
@@ -41,6 +44,7 @@ steps:
       - skills.*
       - coordination.*
     skills: ["interview-user"]
+    tags: ["chat", "app-builder"]
 
   ui-gen:
     title: UI Generator
@@ -64,5 +68,5 @@ steps:
       Repeat this cycle indefinitely.
     functions: ["chat.*", "sandbox.*", "coordination.*", "skills.*"]
     skills: ["ui-generator"]
-    tags: ["bundle"]
+    tags: ["bundle", "app-builder", "chat"]
     model: gemini-3.1-pro-preview

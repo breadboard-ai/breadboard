@@ -253,6 +253,70 @@ const styles = css`
     padding: 4px;
   }
 
+  /* ── Chat Body (rail + messages) ──────────────────────────────── */
+  .chat-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    min-height: 200px;
+  }
+
+  /* ── Thread Rail ──────────────────────────────────────────────── */
+  .thread-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 4px;
+    width: 100px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--cg-color-outline-variant, #49454e);
+    overflow-y: auto;
+  }
+
+  .thread-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--cg-color-on-surface-muted, #9a969e);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: all 150ms cubic-bezier(0.2, 0, 0, 1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .thread-item:hover {
+    background: var(--cg-color-surface-container, #232429);
+    color: var(--cg-color-on-surface, #e5e1e6);
+  }
+
+  .thread-item.active {
+    background: var(--cg-color-surface-container-high, #2b2c31);
+    color: var(--cg-color-on-surface, #e5e1e6);
+    font-weight: 600;
+  }
+
+  .thread-item-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .thread-unread {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cg-color-primary, #a8c7fa);
+    flex-shrink: 0;
+  }
+
   .chat-messages {
     flex: 1;
     overflow-y: auto;

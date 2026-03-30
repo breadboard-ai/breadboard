@@ -262,9 +262,9 @@ def _ticket_to_dict(ticket: Ticket) -> dict[str, Any]:
         "objective": ticket.objective,
         **ticket.metadata.to_dict(),
     }
-    # Include chat history for opie-tagged tickets so the shell can
+    # Include chat history for chat-tagged tickets so the shell can
     # restore conversation after page reload / server restart.
-    if ticket.metadata.tags and "opie" in ticket.metadata.tags:
+    if ticket.metadata.tags and "chat" in ticket.metadata.tags:
         d["chat_history"] = _read_chat_log(ticket)
     return d
 
@@ -360,7 +360,7 @@ async def respond_to_ticket(
     response: dict[str, Any] = {}
     if req.selectedIds is not None:
         response["selectedIds"] = req.selectedIds
-    elif req.text is not None:
+    if req.text is not None:
         response["text"] = req.text
     if req.contextUpdates:
         response["context_updates"] = req.contextUpdates
