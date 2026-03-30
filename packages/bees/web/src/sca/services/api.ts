@@ -80,6 +80,17 @@ class BeesAPI {
     }
   }
 
+  async listFiles(ticketId: string): Promise<string[]> {
+    try {
+      const resp = await fetch(`/tickets/${ticketId}/files`);
+      if (!resp.ok) return [];
+      return resp.json();
+    } catch (e) {
+      console.error(`Error listing files for ticket ${ticketId}:`, e);
+      return [];
+    }
+  }
+
   async getPulse(): Promise<{
     text: string;
     active: boolean;

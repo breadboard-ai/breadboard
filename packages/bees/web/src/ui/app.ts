@@ -8,8 +8,7 @@ import { LitElement, html, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
-import { services } from "../sca/services/services.js";
-import { appController } from "../sca/controller/controller.js";
+import { sca } from "../sca/sca.js";
 import type { TicketData, PlaybookData } from "../data/types.js";
 import { getRelativeTime, extractPrompt } from "../utils.js";
 import { APP_NAME, APP_ICON } from "../constants.js";
@@ -32,8 +31,17 @@ class BeesApp extends SignalWatcher(LitElement) {
   @state() accessor playbooks: PlaybookData[] = [];
   @state() accessor loadingPlaybooks = false;
 
-  private sse = services().sse;
-  private api = services().api;
+  private get scaInst() {
+    return sca();
+  }
+
+  private get sse() {
+    return this.scaInst.services.sse;
+  }
+
+  private get api() {
+    return this.scaInst.services.api;
+  }
 
   static styles = [styles];
 
@@ -49,7 +57,7 @@ class BeesApp extends SignalWatcher(LitElement) {
   }
 
   private deriveJobs(): JobGroup[] {
-    const tickets = appController().global.tickets;
+    const tickets = this.scaInst.controller.global.tickets;
     const map = new Map<string, TicketData[]>();
 
     for (const t of tickets) {

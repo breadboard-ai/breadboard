@@ -52,6 +52,11 @@ export class SSEClient {
     });
 
     this.source.onerror = () => {
+      this.bus.dispatchEvent(
+        new CustomEvent("connection_error", {
+          detail: { message: "Connection to server lost. Reconnecting…" },
+        })
+      );
       this.close();
       setTimeout(() => this.connect(), 2000);
     };

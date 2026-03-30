@@ -15,6 +15,7 @@ import {
   onDrainStart,
   onDrainComplete,
   onDrainError,
+  onConnectionError,
 } from "./sync-triggers.js";
 
 export const bind = makeAction();
@@ -139,5 +140,28 @@ export const setDrainingStopError = asAction(
   },
   async () => {
     await doSetDrainingStop();
+  }
+);
+
+export const surfaceConnectionError = asAction(
+  "Surface Connection Error",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onConnectionError(bind),
+  },
+  async (evt?: Event) => {
+    const { controller } = bind;
+    const detail = (evt as CustomEvent<{ message: string }>)?.detail;
+    const message = detail?.message ?? "Server connection error";
+
+    controller.global.toasts = [
+      ...controller.global.toasts,
+      {
+        id: `conn-${Date.now()}`,
+        message,
+        type: "error",
+        timeoutMs: 8000,
+      },
+    ];
   }
 );

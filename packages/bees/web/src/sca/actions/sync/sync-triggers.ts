@@ -47,3 +47,12 @@ export function onDrainError(bind: ActionBind): EventTrigger {
   const { services } = bind;
   return eventTrigger("Drain Error", services.stateEventBus, "drain_error");
 }
+
+export function onConnectionError(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return eventTrigger(
+    "Connection Error",
+    services.stateEventBus,
+    "connection_error"
+  );
+}

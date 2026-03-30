@@ -17,12 +17,24 @@ let digestLoading = false;
 
 async function loadBundleAsync(ticketId: string) {
   const { services } = bind;
-  const code = await services.api.getFile(ticketId, "bundle.js");
-  if (!code) {
-    console.error(`[opal-shell] Missing bundle.js for ticket ${ticketId}`);
+  const files = await services.api.listFiles(ticketId);
+
+  const jsFile = files.find((f) => f.endsWith(".js"));
+  if (!jsFile) {
+    console.error(`[opal-shell] No JS file found for ticket ${ticketId}`);
     return;
   }
-  const css = await services.api.getFile(ticketId, "bundle.css");
+
+  const code = await services.api.getFile(ticketId, jsFile);
+  if (!code) {
+    console.error(
+      `[opal-shell] Failed to load ${jsFile} for ticket ${ticketId}`
+    );
+    return;
+  }
+
+  const cssFile = files.find((f) => f.endsWith(".css"));
+  const css = cssFile ? await services.api.getFile(ticketId, cssFile) : null;
 
   await services.hostCommunication.send({
     type: "render",

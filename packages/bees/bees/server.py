@@ -307,6 +307,24 @@ async def get_ticket(ticket_id: str) -> dict[str, Any]:
     return _ticket_to_dict(ticket)
 
 
+@app.get("/tickets/{ticket_id}/files")
+async def list_ticket_files(ticket_id: str) -> list[str]:
+    """List files in the ticket's filesystem directory."""
+    ticket = load_ticket(ticket_id)
+    if not ticket:
+        raise HTTPException(404, f"Ticket {ticket_id} not found")
+
+    fs_dir = ticket.dir / "filesystem"
+    if not fs_dir.is_dir():
+        return []
+
+    return [
+        str(p.relative_to(fs_dir))
+        for p in fs_dir.rglob("*")
+        if p.is_file()
+    ]
+
+
 @app.get("/tickets/{ticket_id}/files/{path:path}")
 async def get_ticket_file(ticket_id: str, path: str) -> FileResponse:
     """Serve files from the ticket's filesystem."""
@@ -475,8 +493,7 @@ async def get_pulse() -> dict[str, Any]:
     for t in tickets:
         if (
             t.metadata.kind == "coordination" or
-            "opie" in (t.metadata.tags or []) or
-            "digest" in (t.metadata.tags or [])
+            "opie" in (t.metadata.tags or [])
         ):
             continue
         run_id = t.metadata.playbook_run_id or f"standalone-{t.id}"
