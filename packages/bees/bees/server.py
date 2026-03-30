@@ -31,7 +31,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from bees.playbook import PlaybookAborted, list_playbooks, load_playbook, run_playbook, run_startup_hooks, run_ticket_done_hooks
+from bees.playbook import PlaybookAborted, list_playbooks, load_playbook, run_playbook, run_startup_hooks
 from bees.scheduler import Scheduler, SchedulerHooks
 from bees.session import load_gemini_key
 from bees.ticket import (
@@ -120,7 +120,6 @@ async def _on_ticket_done(ticket: Ticket) -> None:
         "type": "ticket_update",
         "ticket": _ticket_to_dict(ticket),
     })
-    run_ticket_done_hooks(ticket)
 
 
 def _on_playbook_run(tickets: list[Ticket]) -> None:
@@ -130,8 +129,6 @@ def _on_playbook_run(tickets: list[Ticket]) -> None:
             "type": "ticket_added",
             "ticket": _ticket_to_dict(ticket),
         }))
-    if scheduler:
-        scheduler.trigger()
 
 
 async def _on_cycle_complete(cycles: int) -> None:
@@ -144,8 +141,6 @@ def _on_coordination_emit(ticket: Ticket) -> None:
         "type": "ticket_added",
         "ticket": _ticket_to_dict(ticket),
     }))
-    if scheduler:
-        scheduler.trigger()
 
 
 async def _on_playbook_complete(run_id: str, siblings: list[Ticket], triggering_ticket: Ticket) -> None:
