@@ -47,6 +47,7 @@ from typing import Any, Awaitable, Callable
 
 import httpx
 
+from bees.playbook import run_ticket_done_hooks
 from bees.session import (
     SessionResult,
     append_chat_log,
@@ -439,8 +440,8 @@ class Scheduler:
                 function_filter=ticket.metadata.functions,
                 allowed_skills=ticket.metadata.skills,
                 model=ticket.metadata.model,
-                on_playbook_run=self._hooks.on_playbook_run,
-                on_coordination_emit=self._hooks.on_coordination_emit,
+                on_playbook_run=self._on_playbook_run_internal,
+                on_coordination_emit=self._on_coordination_emit_internal,
             )
         except Exception as exc:
             ticket.metadata.status = "failed"
@@ -506,8 +507,8 @@ class Scheduler:
                 backend=self._backend,
                 label=label,
                 on_event=self._make_on_event(ticket.id),
-                on_playbook_run=self._hooks.on_playbook_run,
-                on_coordination_emit=self._hooks.on_coordination_emit,
+                on_playbook_run=self._on_playbook_run_internal,
+                on_coordination_emit=self._on_coordination_emit_internal,
             )
         except Exception as exc:
             ticket.metadata.status = "failed"
@@ -612,6 +613,16 @@ class Scheduler:
         else:
             ticket.metadata.assignee = None
             ticket.metadata.suspend_event = None
+
+    def _on_playbook_run_internal(self, tickets: list[Ticket]) -> None:
+        if self._hooks.on_playbook_run:
+            self._hooks.on_playbook_run(tickets)
+        self.trigger()
+
+    def _on_coordination_emit_internal(self, ticket: Ticket) -> None:
+        if self._hooks.on_coordination_emit:
+            self._hooks.on_coordination_emit(ticket)
+        self.trigger()
 
     def _make_on_event(self, ticket_id: str):
         """Create an event callback wired to the ticket-event hook."""
@@ -797,6 +808,7 @@ class Scheduler:
                     finally:
                         self._running_tickets.discard(t.id)
                         updated = load_ticket(t.id) or t
+                        run_ticket_done_hooks(updated)
                         if self._hooks.on_ticket_done:
                             await self._hooks.on_ticket_done(updated)
                         await self._check_playbook_completion_internal(updated)
@@ -815,6 +827,7 @@ class Scheduler:
                     finally:
                         self._running_tickets.discard(t.id)
                         updated = load_ticket(t.id) or t
+                        run_ticket_done_hooks(updated)
                         if self._hooks.on_ticket_done:
                             await self._hooks.on_ticket_done(updated)
                         await self._check_playbook_completion_internal(updated)
