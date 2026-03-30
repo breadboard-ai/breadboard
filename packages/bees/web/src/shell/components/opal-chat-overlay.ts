@@ -107,11 +107,22 @@ export class OpalChatOverlay extends SignalWatcher(LitElement) {
     const chat = this.sca.controller.chat;
     const activeThreadId = chat.activeThreadId;
 
-    // The main "opie" thread is always available for free-form chat.
-    if (activeThreadId === "opie") return false;
+    const thread = chat.threads.find((t) => t.id === activeThreadId);
+
+    // The main "opie" thread is always available for free-form chat, UNLESS it
+    // is actively generating a response (running) or queued to run (available).
+    if (activeThreadId === "opie") {
+      if (!thread?.activeTicketId) return false;
+      const opieTicket = this.sca.controller.global.tickets.find(
+        (t) => t.id === thread.activeTicketId
+      );
+      if (!opieTicket) return false;
+      return (
+        opieTicket.status === "running" || opieTicket.status === "available"
+      );
+    }
 
     // For ticket-specific threads, only enable when suspended for user input.
-    const thread = chat.threads.find((t) => t.id === activeThreadId);
     if (!thread?.activeTicketId) return true;
     const ticket = this.sca.controller.global.tickets.find(
       (t) => t.id === thread.activeTicketId

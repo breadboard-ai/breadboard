@@ -491,11 +491,17 @@ async def get_pulse() -> dict[str, Any]:
     active_running = []
 
     for t in tickets:
+        tags = t.metadata.tags or []
         if (
             t.metadata.kind == "coordination" or
-            "opie" in (t.metadata.tags or [])
+            "opie" in tags
         ):
             continue
+        # The digest ticket loops forever (suspended ↔ running).  Only
+        # surface it in the pulse while it is actively generating.
+        if "digest" in tags:
+            if t.metadata.status != "running":
+                continue
         run_id = t.metadata.playbook_run_id or f"standalone-{t.id}"
         by_run.setdefault(run_id, []).append(t)
 

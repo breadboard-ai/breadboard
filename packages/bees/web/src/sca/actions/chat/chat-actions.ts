@@ -43,8 +43,11 @@ export const deriveThreads = asAction(
       const suspendedForUser = group.findLast(
         (t) => t.status === "suspended" && t.assignee === "user"
       );
-      const running = group.findLast((t) => t.status === "running");
-      const activeTicketId = suspendedForUser?.id ?? running?.id ?? null;
+      const runningOrQueued = group.findLast(
+        (t) => t.status === "running" || t.status === "available"
+      );
+      const activeTicketId =
+        suspendedForUser?.id ?? runningOrQueued?.id ?? null;
 
       let title: string;
       if (threadId === "opie") {
@@ -53,10 +56,20 @@ export const deriveThreads = asAction(
         const activeTicket = activeTicketId
           ? group.find((t) => t.id === activeTicketId)
           : null;
-        title =
-          activeTicket?.title ??
-          group[group.length - 1]?.title ??
-          threadId.slice(0, 8);
+
+        const playbookId = activeTicket?.playbook_id ?? group[0]?.playbook_id;
+        if (playbookId) {
+          title = playbookId
+            .replace(/-/g, " ")
+            .split(" ")
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" ");
+        } else {
+          title =
+            activeTicket?.title ??
+            group[group.length - 1]?.title ??
+            threadId.slice(0, 8);
+        }
       }
 
       const hasUnread =
