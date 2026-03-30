@@ -447,6 +447,52 @@ def on_ticket_done(ticket: Ticket) -> None:
     # ... check for App.jsx, run bundler ...
 ```
 
+### `on_event(signal_type: str, payload: str, ticket: Ticket) → str | None`
+
+Called when a coordination signal is about to be delivered to a ticket owned by
+this playbook. The hook can inspect the signal, apply side effects, and decide
+whether the signal reaches the agent.
+
+**Return values**:
+- Return a `str` — the (possibly transformed) payload is delivered to the agent.
+- Return `None` — the signal is **eaten**: marked as delivered, but the agent
+  never sees it.
+
+**Timing**: The hook fires **before the idle check** — it runs for all matching
+subscribers regardless of their current state (running, blocked, or suspended).
+This ensures side-effect-only hooks (like title renames) take effect immediately,
+even while the agent is busy.
+
+**Error handling**: If the hook raises an exception, the signal is delivered
+as-is (fail-open). A crashing hook should not silently drop signals.
+
+**Use case**: Renaming tickets when the app's purpose is determined:
+
+```python
+def on_event(signal_type: str, payload: str, ticket: Ticket) -> str | None:
+    """Rename tickets when the app title is determined."""
+    if signal_type == "update_app_title":
+        ticket.metadata.title = payload
+        ticket.save_metadata()
+        return None  # Eaten — agent doesn't need to know.
+    return payload
+```
+
+The corresponding PLAYBOOK.yaml subscribes to the signal:
+
+```yaml
+steps:
+  ui-gen:
+    title: UI Generator
+    watch_events:
+      - type: update_app_title
+```
+
+When another agent emits `coordination_emit(signal_type="update_app_title",
+context="Grocery Tracker")`, the hook renames the ticket from "UI Generator"
+to "Grocery Tracker" and eats the signal — the agent continues working
+without interruption.
+
 ### `on_run_playbook(context: str | None) → str | None`
 
 Called before ticket creation when someone invokes this playbook. It receives the

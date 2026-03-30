@@ -47,7 +47,7 @@ from typing import Any, Awaitable, Callable
 
 import httpx
 
-from bees.playbook import run_ticket_done_hooks
+from bees.playbook import run_event_hooks, run_ticket_done_hooks
 from bees.session import (
     SessionResult,
     append_chat_log,
@@ -578,12 +578,16 @@ class Scheduler:
     def _handle_suspend(self, ticket: Ticket, result: SessionResult) -> None:
         """Handle suspend state, including queued-update auto-resume."""
         if result.suspended:
-            # Reload queued_updates from disk — they may have been written
-            # by _deliver_context_update while the session was running,
-            # and the in-memory ticket object wouldn't know about them.
+            # Reload fields that may have been modified externally while
+            # the session was running (e.g., by on_event hooks or
+            # coordination delivery).  The in-memory ticket object is
+            # stale for these fields.
             fresh = load_ticket(ticket.id)
-            if fresh and fresh.metadata.queued_updates:
-                ticket.metadata.queued_updates = fresh.metadata.queued_updates
+            if fresh:
+                if fresh.metadata.queued_updates:
+                    ticket.metadata.queued_updates = fresh.metadata.queued_updates
+                if fresh.metadata.title != ticket.metadata.title:
+                    ticket.metadata.title = fresh.metadata.title
 
             # Annotate suspend_event with the triggering function name
             # so the UI can differentiate (e.g., await_context_update
@@ -711,6 +715,20 @@ class Scheduler:
         for sub in subscribers:
             if sub.id in delivered:
                 continue
+
+            # Let the playbook hook intercept before delivery.
+            result = run_event_hooks(signal_type, payload, sub)
+            if result is None:
+                # Hook ate the event — mark delivered, skip agent.
+                delivered.add(sub.id)
+                sub.save_metadata()
+                logger.info(
+                    "Coordination %s eaten by hook for %s",
+                    ticket.id[:8],
+                    sub.id[:8],
+                )
+                continue
+
             if (
                 sub.metadata.status == "suspended"
                 and sub.metadata.assignee == "user"
@@ -720,7 +738,7 @@ class Scheduler:
                 response_path = sub.dir / "response.json"
                 response_path.write_text(
                     json.dumps(
-                        {"context_updates": [payload]},
+                        {"context_updates": [result]},
                         indent=2,
                         ensure_ascii=False,
                     )

@@ -276,3 +276,35 @@ def run_ticket_done_hooks(ticket: Ticket) -> None:
             logger.warning(
                 "on_ticket_done hook for '%s' failed: %s", playbook_id, exc,
             )
+
+
+def run_event_hooks(
+    signal_type: str, payload: str, ticket: Ticket,
+) -> str | None:
+    """Run ``on_event`` for the playbook that owns this ticket.
+
+    Called by the scheduler before delivering a coordination signal.
+    The hook can inspect the signal, apply side effects (e.g., rename
+    the ticket), and decide whether to pass the signal through or eat it.
+
+    Returns the (possibly transformed) payload to deliver, or ``None``
+    to suppress delivery (eat the signal).
+
+    Fail-open: if the hook raises, the signal is delivered as-is.
+    """
+    playbook_id = ticket.metadata.playbook_id
+    if not playbook_id:
+        return payload
+
+    hooks = _load_hooks(playbook_id)
+    if not hooks or not hasattr(hooks, "on_event"):
+        return payload
+
+    try:
+        return hooks.on_event(signal_type, payload, ticket)
+    except Exception as exc:
+        logger.warning(
+            "on_event hook for '%s' failed: %s", playbook_id, exc,
+        )
+        return payload
+

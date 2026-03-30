@@ -57,18 +57,23 @@ export const deriveThreads = asAction(
           ? group.find((t) => t.id === activeTicketId)
           : null;
 
-        const playbookId = activeTicket?.playbook_id ?? group[0]?.playbook_id;
-        if (playbookId) {
-          title = playbookId
-            .replace(/-/g, " ")
-            .split(" ")
-            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(" ");
+        // Prefer the ticket's own title (dynamically renamed by on_event
+        // hooks) over the generic playbook ID.
+        if (activeTicket?.title) {
+          title = activeTicket.title;
         } else {
-          title =
-            activeTicket?.title ??
-            group[group.length - 1]?.title ??
-            threadId.slice(0, 8);
+          const playbookId =
+            activeTicket?.playbook_id ?? group[0]?.playbook_id;
+          if (playbookId) {
+            title = playbookId
+              .replace(/-/g, " ")
+              .split(" ")
+              .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+              .join(" ");
+          } else {
+            title =
+              group[group.length - 1]?.title ?? threadId.slice(0, 8);
+          }
         }
       }
 
