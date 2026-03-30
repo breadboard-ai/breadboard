@@ -21,7 +21,7 @@ import { LitElement, html } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
-import { BeesAPI } from "../data/api.js";
+import { BeesAPI, type PulseTask } from "../data/api.js";
 import { BeesConnection } from "../data/connection.js";
 import { BeesState } from "../data/state.js";
 import type { TicketData } from "../data/types.js";
@@ -35,8 +35,22 @@ export { OpalShell };
 
 interface ChatMessage {
   text: string;
-  role: "agent" | "user" | "thought" | "tool";
+  role: "agent" | "user" | "thought" | "tool" | "error";
 }
+
+/**
+ * Internal plumbing tools that should never appear in the user-facing chat.
+ * These are structural coordination calls, not meaningful agent actions.
+ */
+const HIDDEN_TOOLS = new Set([
+  "playbooks_run_playbook",
+  "chat_request_user_input",
+  "chat_await_context_update",
+  "coordination_emit",
+  "system_read_text_from_file",
+  "playbooks_list",
+  "system_list_files",
+]);
 
 interface ChatThread {
   id: string;
@@ -50,26 +64,54 @@ const appState = new BeesState();
 
 @customElement("opal-shell")
 class OpalShell extends SignalWatcher(LitElement) {
-  @state() private chatOpen = false;
-  @state() private chatInput = "";
-  @state() private threads: ChatThread[] = [];
-  @state() private activeThreadId = "opie";
-  @state() private threadMessages = new Map<string, ChatMessage[]>();
-  @state() private statusText = "";
-  @state() private statusVisible = false;
-  @state() private currentView: string | null = null;
-  @state() private digestTicketId: string | null = null;
-  @state() private pendingChoices: Choice[] = [];
-  @state() private pendingSelectionMode: "single" | "multiple" = "single";
-  @state() private selectedChoiceIds: string[] = [];
+  @state()
+  private chatOpen = false;
+
+  @state()
+  private chatInput = "";
+
+  @state()
+  private threads: ChatThread[] = [];
+
+  @state()
+  private activeThreadId = "opie";
+
+  @state()
+  private threadMessages = new Map<string, ChatMessage[]>();
+
+  @state()
+  private currentView: string | null = null;
+
+  @state()
+  private digestTicketId: string | null = null;
+
+  @state()
+  private pendingChoices: Choice[] = [];
+
+  @state()
+  private pendingSelectionMode: "single" | "multiple" = "single";
+
+  @state()
+  private selectedChoiceIds: string[] = [];
+
+  @state()
+  private pulseText = "";
+
+  @state()
+  private pulseActive = false;
+
+  @state()
+  private pulseTasks: PulseTask[] = [];
 
   private connection = new BeesConnection(appState);
   private api = new BeesAPI();
   private eventSource: EventSource | null = null;
   private bridge: MessageBridge | null = null;
   private previousTicketStatuses = new Map<string, string>();
-  private stateWatchInterval: ReturnType<typeof setInterval> | null = null;
+  private stateWatchTimeout: ReturnType<typeof setTimeout> | null = null;
+  private pulseTimeout: ReturnType<typeof setTimeout> | null = null;
   private lastDigestUpdateId: string | null = null;
+  private lastDigestBuildingId: string | null = null;
   private digestLoading = false;
   private restoredThreadIds = new Set<string>();
   private visitedThreadIds = new Set<string>(["opie"]);
@@ -80,7 +122,8 @@ class OpalShell extends SignalWatcher(LitElement) {
     super.connectedCallback();
     this.connection.connect();
     this.#connectChatSSE();
-    this.stateWatchInterval = setInterval(() => this.#watchState(), 1000);
+    this.#watchStateLoop();
+    this.#pollPulseLoop();
   }
 
   disconnectedCallback() {
@@ -88,12 +131,23 @@ class OpalShell extends SignalWatcher(LitElement) {
     this.connection.close();
     this.eventSource?.close();
     this.bridge?.dispose();
-    if (this.stateWatchInterval) clearInterval(this.stateWatchInterval);
+    if (this.stateWatchTimeout) clearTimeout(this.stateWatchTimeout);
+    if (this.pulseTimeout) clearTimeout(this.pulseTimeout);
+  }
+
+  async #watchStateLoop() {
+    this.#watchState();
+    this.stateWatchTimeout = setTimeout(() => this.#watchStateLoop(), 1000);
+  }
+
+  async #pollPulseLoop() {
+    await this.#pollPulse();
+    this.pulseTimeout = setTimeout(() => this.#pollPulseLoop(), 15_000);
   }
 
   render() {
     return html`
-      ${this.#renderHeader()} ${this.#renderStage()} ${this.#renderChatFab()}
+      ${this.#renderHeader()} ${this.#renderStage()} ${this.#renderPulseBar()}
       ${this.#renderChatOverlay()}
     `;
   }
@@ -129,12 +183,34 @@ class OpalShell extends SignalWatcher(LitElement) {
         ${this.currentView === null
           ? html`
               <div class="empty">
-                <span class="empty-icon">✦</span>
-                <h2>Good morning</h2>
-                <p>
-                  Opie is setting things up. Chat with me using the button
-                  below, or wait for the digest to appear.
-                </p>
+                ${this.pulseTasks.length > 0
+                  ? html`
+                      <div class="status-view">
+                        ${this.pulseTasks.map(
+                          (task) => html`
+                            <div class="status-row">
+                              <span class="status-title">${task.title}</span>
+                              <span class="status-badge ${task.status}">
+                                ${task.status === "success"
+                                  ? "✓"
+                                  : task.status === "error"
+                                    ? "✕"
+                                    : "◇"}
+                                ${task.current_step}
+                              </span>
+                            </div>
+                          `
+                        )}
+                      </div>
+                    `
+                  : html`
+                      <span class="empty-icon">✦</span>
+                      <h2>Good morning</h2>
+                      <p>
+                        Chat with Opie using the bar below, or wait for your
+                        digest to appear.
+                      </p>
+                    `}
               </div>
             `
           : html`
@@ -144,23 +220,29 @@ class OpalShell extends SignalWatcher(LitElement) {
                 sandbox="allow-scripts allow-same-origin allow-popups"
               ></iframe>
             `}
-        <div class="status-toast ${this.statusVisible ? "visible" : ""}">
-          <div class="spinner"></div>
-          <span>${this.statusText}</span>
-        </div>
       </div>
     `;
   }
 
-  #renderChatFab() {
+  #renderPulseBar() {
     return html`
-      <button
-        class="chat-fab ${this.chatOpen ? "hidden" : ""}"
-        @click=${this.#toggleChat}
-        aria-label="Chat with Opie"
-      >
-        💬
-      </button>
+      <div class="pulse-bar">
+        <div class="pulse-content">
+          ${this.pulseActive
+            ? html`<div class="spinner pulse-bar-spinner"></div>
+                <span class="pulse-text">${this.pulseText}</span>`
+            : html`<span class="pulse-text pulse-idle"
+                >Nothing in progress</span
+              >`}
+        </div>
+        <button
+          class="pulse-opie-trigger"
+          @click=${this.#toggleChat}
+          aria-label="Chat with Opie"
+        >
+          <span class="pulse-opie-icon">◇</span> Opie
+        </button>
+      </div>
     `;
   }
 
@@ -188,7 +270,7 @@ class OpalShell extends SignalWatcher(LitElement) {
               if (group.length === 1) {
                 const m = group[0];
                 return html`<div class="chat-msg ${m.role}">
-                  ${m.role === "agent" ? markdown(m.text) : m.text}
+                  ${markdown(m.text)}
                 </div>`;
               }
               const [primary, ...updates] = group;
@@ -218,18 +300,25 @@ class OpalShell extends SignalWatcher(LitElement) {
         ${this.threads.map(
           (t) => html`
             <button
-              class="thread-item ${t.id === this.activeThreadId ? "active" : ""}"
+              class="thread-item ${t.id === this.activeThreadId
+                ? "active"
+                : ""}"
               @click=${() => this.#switchThread(t.id)}
             >
               <span class="thread-item-title">${t.title}</span>
-              ${t.hasUnread
-                ? html`<span class="thread-unread"></span>`
-                : null}
+              ${t.hasUnread ? html`<span class="thread-unread"></span>` : null}
             </button>
           `
         )}
       </div>
     `;
+  }
+  get #isInputDisabled(): boolean {
+    const thread = this.#activeThread;
+    if (!thread?.activeTicketId) return true;
+    const tickets = appState.tickets.get();
+    const ticket = tickets.find((t) => t.id === thread.activeTicketId);
+    return !(ticket?.status === "suspended" && ticket?.assignee === "user");
   }
 
   #renderTextInput() {
@@ -239,12 +328,15 @@ class OpalShell extends SignalWatcher(LitElement) {
           type="text"
           placeholder="Type a message..."
           autocomplete="off"
+          ?disabled=${this.#isInputDisabled}
           .value=${this.chatInput}
           @input=${(e: Event) =>
             (this.chatInput = (e.target as HTMLInputElement).value)}
           @keydown=${this.#onChatKeyDown}
         />
-        <button @click=${this.#sendChat}>Send</button>
+        <button ?disabled=${this.#isInputDisabled} @click=${this.#sendChat}>
+          Send
+        </button>
       </div>
     `;
   }
@@ -415,7 +507,9 @@ class OpalShell extends SignalWatcher(LitElement) {
       if ("functionCall" in event) {
         const fc = event.functionCall as Record<string, unknown>;
         const name = fc.name as string;
-        if (name) this.#addChatMessage(`🔧 ${name}`, "tool");
+        if (name && !HIDDEN_TOOLS.has(name)) {
+          this.#addChatMessage(`🔧 ${name}`, "tool");
+        }
       }
     });
 
@@ -471,9 +565,7 @@ class OpalShell extends SignalWatcher(LitElement) {
     const groups = new Map<string, TicketData[]>();
 
     for (const t of chatTickets) {
-      const threadId = t.tags?.includes("opie")
-        ? "opie"
-        : t.playbook_run_id;
+      const threadId = t.tags?.includes("opie") ? "opie" : t.playbook_run_id;
       if (!threadId) continue;
       const list = groups.get(threadId) ?? [];
       list.push(t);
@@ -484,8 +576,8 @@ class OpalShell extends SignalWatcher(LitElement) {
 
     for (const [threadId, group] of groups) {
       // Sort by creation time (oldest first).
-      group.sort(
-        (a, b) => (a.created_at ?? "").localeCompare(b.created_at ?? "")
+      group.sort((a, b) =>
+        (a.created_at ?? "").localeCompare(b.created_at ?? "")
       );
 
       // Active ticket: prefer suspended-for-user, then running.
@@ -493,8 +585,7 @@ class OpalShell extends SignalWatcher(LitElement) {
         (t) => t.status === "suspended" && t.assignee === "user"
       );
       const running = group.findLast((t) => t.status === "running");
-      const activeTicketId =
-        suspendedForUser?.id ?? running?.id ?? null;
+      const activeTicketId = suspendedForUser?.id ?? running?.id ?? null;
 
       // Thread title: Opie is always "Opie". Others use the active
       // ticket's title so it reflects who the user is talking to.
@@ -575,7 +666,11 @@ class OpalShell extends SignalWatcher(LitElement) {
 
     const tickets = appState.tickets.get();
     const ticket = tickets.find((t) => t.id === thread.activeTicketId);
-    if (!ticket || ticket.status !== "suspended" || ticket.assignee !== "user") {
+    if (
+      !ticket ||
+      ticket.status !== "suspended" ||
+      ticket.assignee !== "user"
+    ) {
       this.pendingChoices = [];
       return;
     }
@@ -595,15 +690,15 @@ class OpalShell extends SignalWatcher(LitElement) {
   }
 
   async #loadBundle(ticketId: string) {
-    const [code, css] = await Promise.all([
-      this.api.getFile(ticketId, "bundle.js"),
-      this.api.getFile(ticketId, "bundle.css"),
-    ]);
+    const code = await this.api.getFile(ticketId, "bundle.js");
 
     if (!code) {
       console.error(`[opal-shell] Missing bundle.js for ticket ${ticketId}`);
       return;
     }
+
+    // CSS is optional — many bundles don't produce one.
+    const css = await this.api.getFile(ticketId, "bundle.css");
 
     this.requestUpdate();
     await this.updateComplete;
@@ -640,16 +735,24 @@ class OpalShell extends SignalWatcher(LitElement) {
       return;
     }
     this.currentView = ticketId;
-    this.statusText = "Loading...";
-    this.statusVisible = true;
     await this.#loadBundle(ticketId);
-    this.statusVisible = false;
   }
 
   #navigateToDigest() {
     if (this.digestTicketId) {
       this.#navigateToTicket("digest");
     }
+  }
+
+  /**
+   * Poll the /pulse endpoint for a Flash-synthesized status summary.
+   * Runs every 15s.
+   */
+  async #pollPulse() {
+    const pulse = await this.api.getPulse();
+    this.pulseText = pulse.text;
+    this.pulseActive = pulse.active;
+    this.pulseTasks = pulse.tasks || [];
   }
 
   /**
@@ -688,8 +791,7 @@ class OpalShell extends SignalWatcher(LitElement) {
           if (ticket.status === "suspended" && ticket.assignee === "user") {
             // Add the agent prompt to this thread's messages.
             const prompt = extractPrompt(ticket);
-            const threadMessages =
-              this.threadMessages.get(thread.id) ?? [];
+            const threadMessages = this.threadMessages.get(thread.id) ?? [];
             const updated = new Map(this.threadMessages);
             updated.set(thread.id, [
               ...threadMessages,
@@ -702,8 +804,10 @@ class OpalShell extends SignalWatcher(LitElement) {
               this.#applyPromptState();
               this.#scrollChatToBottom();
               if (!this.chatOpen) this.#toggleChat();
-            } else if (!this.visitedThreadIds.has(thread.id)
-                       && !this.chatInput.trim()) {
+            } else if (
+              !this.visitedThreadIds.has(thread.id) &&
+              !this.chatInput.trim()
+            ) {
               // First contact with this thread and user isn't
               // composing — auto-switch to it.
               this.#switchThread(thread.id);
@@ -711,6 +815,28 @@ class OpalShell extends SignalWatcher(LitElement) {
               this.#scrollChatToBottom();
               if (!this.chatOpen) this.#toggleChat();
             }
+          }
+
+          // When a ticket fails, surface the error in the chat.
+          if (ticket.status === "failed" && ticket.error) {
+            // Extract a human-readable summary from the error.
+            const raw = ticket.error as string;
+            const match = raw.match(/"message":\s*"([^"]+)"/);
+            const summary = match?.[1] ?? raw.slice(0, 200);
+
+            const threadMessages = this.threadMessages.get(thread.id) ?? [];
+            const updated = new Map(this.threadMessages);
+            updated.set(thread.id, [
+              ...threadMessages,
+              {
+                text: `Something went wrong: ${summary}`,
+                role: "error" as const,
+              },
+            ]);
+            this.threadMessages = updated;
+            this.#scrollChatToBottom();
+
+            if (!this.chatOpen) this.#toggleChat();
           }
         }
       }
@@ -727,19 +853,36 @@ class OpalShell extends SignalWatcher(LitElement) {
     );
 
     if (digestTicket && !this.digestLoading) {
-      const isNew = !this.digestTicketId;
-      if (isNew) {
+      // Record the ticket ID so we know where to fetch the bundle from,
+      // but don't set currentView yet — there may be no bundle on disk.
+      if (!this.digestTicketId) {
         this.digestTicketId = digestTicket.id;
-        this.currentView = digestTicket.id;
+      }
+
+      // Track `digest_building` signals — the digest agent emits these
+      // immediately after waking up, before the expensive generation starts.
+      const allBuildingSignals = tickets
+        .filter(
+          (t) =>
+            t.kind === "coordination" && t.signal_type === "digest_building"
+        )
+        .sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""));
+      const latestBuilding = allBuildingSignals[allBuildingSignals.length - 1];
+      const hasNewBuilding =
+        latestBuilding != null &&
+        latestBuilding.id !== this.lastDigestBuildingId;
+
+      if (hasNewBuilding) {
+        this.lastDigestBuildingId = latestBuilding.id;
       }
 
       // Find the latest digest_update coordination ticket (skip over older
       // ones so we don't reload once per stale ticket).
-      const allDigestUpdates = tickets.filter(
-        (t) =>
-          t.kind === "coordination" &&
-          t.signal_type === "digest_update"
-      );
+      const allDigestUpdates = tickets
+        .filter(
+          (t) => t.kind === "coordination" && t.signal_type === "digest_update"
+        )
+        .sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""));
       const latest = allDigestUpdates[allDigestUpdates.length - 1];
       const hasNewUpdate =
         latest != null && latest.id !== this.lastDigestUpdateId;
@@ -747,18 +890,20 @@ class OpalShell extends SignalWatcher(LitElement) {
       // Always track the latest so we don't re-process it later.
       if (hasNewUpdate) this.lastDigestUpdateId = latest.id;
 
-      // Only load the bundle when the digest is the active view.
-      // If the user is viewing an app, the digest reload will happen
-      // when they navigate back.
-      const digestIsActive = this.currentView === this.digestTicketId;
-      if ((isNew || hasNewUpdate) && digestIsActive) {
-        this.digestLoading = true;
-        this.statusText = isNew ? "Loading digest..." : "Refreshing digest...";
-        this.statusVisible = true;
-        this.#loadBundle(this.digestTicketId!).then(() => {
-          this.statusVisible = false;
-          this.digestLoading = false;
-        });
+      if (hasNewUpdate) {
+        // First signal: transition from "Good morning" to the iframe.
+        // Subsequent signals: reload while already showing the iframe.
+        if (this.currentView === null) {
+          this.currentView = this.digestTicketId;
+        }
+
+        const digestIsActive = this.currentView === this.digestTicketId;
+        if (digestIsActive) {
+          this.digestLoading = true;
+          this.#loadBundle(this.digestTicketId!).then(() => {
+            this.digestLoading = false;
+          });
+        }
       }
     }
   }

@@ -41,15 +41,23 @@ pipeline.
 
 ## Output Format
 
-You MUST save all generated files to the real filesystem in your working directory (`$HOME`) by using the `execute_bash` tool. **Do NOT use `system_write_file`**, because it writes to a virtual filesystem that the bundler cannot access.
+You MUST save all generated files to the real filesystem in your working
+directory (`$HOME`) by using the `execute_bash` tool. **Do NOT use
+`system_write_file`**, because it writes to a virtual filesystem that the
+bundler cannot access.
 
 **CRITICAL STYLING RULES: NO TAILWIND!**
-- You MUST NOT use Tailwind CSS utility classes (e.g., `flex`, `min-h-screen`, `p-4`, `bg-red-500`). Tailwind is NOT INSTALLED.
-- You MUST use standard semantic CSS class names (e.g., `className="hero-container"`).
+
+- You MUST NOT use Tailwind CSS utility classes (e.g., `flex`, `min-h-screen`,
+  `p-4`, `bg-red-500`). Tailwind is NOT INSTALLED.
+- You MUST use standard semantic CSS class names (e.g.,
+  `className="hero-container"`).
 - You MUST write a separate `styles.css` file using **Vanilla CSS**.
-- You MUST include `import "./styles.css";` at the top of your `App.jsx`. If you don't write and import a CSS file, your design will be completely unstyled.
+- You MUST include `import "./styles.css";` at the top of your `App.jsx`. If you
+  don't write and import a CSS file, your design will be completely unstyled.
 
 Use bash heredocs to write files. Example:
+
 ```bash
 cat << 'EOF' > styles.css
 .hero-container {
@@ -65,9 +73,9 @@ export default function App() { ... }
 EOF
 ```
 
-**CRITICAL: BUNDLE YOUR CODE**
-After safely writing all files using `execute_bash`, you MUST build the bundle by running the following command via `execute_bash`: 
-`node $HOME/skills/ui-generator/tools/bundler.mjs`
+**CRITICAL: BUNDLE YOUR CODE** After safely writing all files using
+`execute_bash`, you MUST build the bundle by running the following command via
+`execute_bash`: `node $HOME/skills/ui-generator/tools/bundler.mjs`
 
 If you do not run this exact command, the user will see a blank screen.
 
@@ -208,7 +216,9 @@ Google Material Symbols Outlined is available via a web font:
 </span>
 ```
 
-**CRITICAL: DO NOT import third-party icon packages.** You do not have `lucide-react`, `heroicons`, or `react-icons` installed. Using them will break the build. ONLY use the `material-symbols-outlined` span.
+**CRITICAL: DO NOT import third-party icon packages.** You do not have
+`lucide-react`, `heroicons`, or `react-icons` installed. Using them will break
+the build. ONLY use the `material-symbols-outlined` span.
 
 ### Interactivity
 
@@ -308,13 +318,23 @@ export default function SelectModels({ data = {}, onTransition }) {
 5. **Final view emits.** The last view must include a CTA that calls
    `window.opalSDK.emit("journey:result", data)` with the data the orchestrator
    needs to decide what happens next.
+6. **Responsive.** The user may view this UI on a mobile device, so ensure that
+   you make every component and the app itself responsive.
 
 ## Building Your Output
 
-- **You MUST ALWAYS write your source files (e.g. `App.jsx`, `styles.css`) to disk using `execute_bash` (e.g. `cat << 'EOF' > ...`) BEFORE running the bundler.**
-- **You MUST ALWAYS build the bundle using the `execute_bash` tool** after writing your code to disk.
-- Specifically, use the `execute_bash` tool with the `command` argument set to `node $HOME/skills/ui-generator/tools/bundler.mjs`. This generates an optimized `bundle.js` and `bundle.css` in your working directory, ready for the iframe to render.
-- Do NOT use hallucinated tools like `generate_and_execute_code` or `system_write_file`. Ensure all operations happen on the real filesystem via `execute_bash`.
+- **You MUST ALWAYS write your source files (e.g. `App.jsx`, `styles.css`) to
+  disk using `execute_bash` (e.g. `cat << 'EOF' > ...`) BEFORE running the
+  bundler.**
+- **You MUST ALWAYS build the bundle using the `execute_bash` tool** after
+  writing your code to disk.
+- Specifically, use the `execute_bash` tool with the `command` argument set to
+  `node $HOME/skills/ui-generator/tools/bundler.mjs`. This generates an
+  optimized `bundle.js` and `bundle.css` in your working directory, ready for
+  the iframe to render.
+- Do NOT use hallucinated tools like `generate_and_execute_code` or
+  `system_write_file`. Ensure all operations happen on the real filesystem via
+  `execute_bash`.
 
 ## Available Globals
 
