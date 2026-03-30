@@ -7,6 +7,7 @@
 import { asAction, ActionMode } from "../../coordination.js";
 import { makeAction } from "../binder.js";
 import { onTicketsUpdate } from "../chat/chat-triggers.js";
+import { onIframeNavigate } from "./stage-triggers.js";
 
 export const bind = makeAction();
 
@@ -111,10 +112,16 @@ export const processDigestUpdates = asAction(
 
 export const navigateToTicket = asAction(
   "Navigate To Ticket",
-  { mode: ActionMode.Immediate },
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onIframeNavigate(bind),
+  },
   async (evt?: Event) => {
     if (!evt) return;
-    const ticketId = (evt as CustomEvent<string>).detail;
+    const detail = (evt as CustomEvent).detail;
+    // Handle both IframeMessage and direct string payloads
+    const ticketId = typeof detail === "string" ? detail : detail?.viewId;
+    if (!ticketId) return;
     const { controller } = bind;
 
     if (ticketId === "digest" && controller.stage.digestTicketId) {
