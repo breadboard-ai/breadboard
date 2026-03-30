@@ -12,12 +12,7 @@ import { BeesAPI } from "../data/api.js";
 import { BeesConnection } from "../data/connection.js";
 import { BeesState } from "../data/state.js";
 import type { TicketData, PlaybookData } from "../data/types.js";
-import {
-  getRelativeTime,
-  extractPrompt,
-  extractChoices,
-  parseTags,
-} from "../utils.js";
+import { getRelativeTime, extractPrompt } from "../utils.js";
 import { APP_NAME, APP_ICON } from "../constants.js";
 import { styles } from "./app.styles.js";
 
@@ -25,54 +20,20 @@ export { BeesApp };
 
 const appState = new BeesState();
 
-type ActiveTab = "playbooks" | "tickets";
+interface JobGroup {
+  id: string;
+  title: string;
+  tickets: TicketData[];
+  createdAt: string;
+  status: "running" | "completed" | "failed" | "suspended" | "pending";
+}
 
 @customElement("bees-app")
 class BeesApp extends SignalWatcher(LitElement) {
-  @state()
-  private activeTab: ActiveTab = "playbooks";
-
-  @state()
-  private objective = "";
-
-  @state()
-  private tagsText = "";
-
-  @state()
-  private functionsText = "";
-
-  @state()
-  private skillsText = "";
-
-  @state()
-  private filterTag = "";
-
-  @state()
-  private editingTagsId = "";
-
-  @state()
-  private editedTagsText = "";
-
-  @state()
-  private responses: Record<string, string> = {};
-
-  @state()
-  private selectedChoices: Record<string, string[]> = {};
-
-  @state()
-  private playbooks: PlaybookData[] = [];
-
-  @state()
-  private contextExpanded: Record<string, boolean> = {};
-
-  @state()
-  private contextPlaybookId: Record<string, string> = {};
-
-  @state()
-  private contextUpdate: Record<string, string> = {};
-
-  @state()
-  private loadingPlaybooks = false;
+  @state() private activeTab: "jobs" | "playbooks" = "jobs";
+  @state() private selectedJobId: string | null = null;
+  @state() private playbooks: PlaybookData[] = [];
+  @state() private loadingPlaybooks = false;
 
   private connection = new BeesConnection(appState);
   private api = new BeesAPI();
@@ -90,379 +51,100 @@ class BeesApp extends SignalWatcher(LitElement) {
     this.connection.close();
   }
 
+  private deriveJobs(): JobGroup[] {
+    const tickets = appState.tickets.get();
+    const map = new Map<string, TicketData[]>();
+
+    for (const t of tickets) {
+      const jobId = t.playbook_run_id || t.id;
+      const list = map.get(jobId) || [];
+      list.push(t);
+      map.set(jobId, list);
+    }
+
+    const jobs: JobGroup[] = [];
+    for (const [id, group] of map) {
+      group.sort((a, b) =>
+        (a.created_at ?? "").localeCompare(b.created_at ?? "")
+      );
+
+      const first = group[0];
+
+      let status: JobGroup["status"] = "pending";
+      if (group.some((t) => t.status === "running")) {
+        status = "running";
+      } else if (
+        group.some((t) => t.status === "suspended" && t.assignee === "user")
+      ) {
+        status = "suspended";
+      } else if (group.some((t) => t.status === "failed")) {
+        status = "failed";
+      } else if (group.every((t) => t.status === "completed")) {
+        status = "completed";
+      }
+
+      let title = first.playbook_run_id
+        ? `Run: ${first.playbook_run_id.slice(0, 8)}`
+        : first.title || "Ad-hoc Ticket";
+      if (first.tags?.includes("opie")) title = "Opie Coordinator";
+
+      jobs.push({
+        id,
+        title,
+        tickets: group,
+        createdAt: first.created_at || new Date().toISOString(),
+        status,
+      });
+    }
+
+    jobs.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return jobs;
+  }
+
   render() {
-    return html`
-      ${this.renderHeader()} ${this.renderTabs()} ${this.renderFilter()}
-      ${this.renderTicketList()}
-    `;
-  }
+    const jobs = this.deriveJobs();
 
-  private renderHeader() {
+    // Auto-select first job
+    if (!this.selectedJobId && jobs.length > 0 && this.activeTab === "jobs") {
+      this.selectedJobId = jobs[0].id;
+    }
+
     return html`
-      <header class="header">
-        <div class="header-left">
-          <div
-            class="status-dot ${appState.draining.get() ? "draining" : ""}"
-          ></div>
-          <h1>${APP_ICON} <span>${APP_NAME}</span></h1>
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h1>${APP_ICON} ${APP_NAME} DevTools</h1>
         </div>
-      </header>
-    `;
-  }
-
-  private renderTabs() {
-    return html`
-      <div class="tab-container">
-        <div class="tab-bar">
-          <button
-            class="tab ${this.activeTab === "playbooks" ? "active" : ""}"
+        <div class="sidebar-tabs">
+          <div
+            class="sidebar-tab ${this.activeTab === "jobs" ? "active" : ""}"
+            @click=${() => (this.activeTab = "jobs")}
+          >
+            Jobs
+          </div>
+          <div
+            class="sidebar-tab ${this.activeTab === "playbooks"
+              ? "active"
+              : ""}"
             @click=${() => (this.activeTab = "playbooks")}
           >
-            Run Playbooks
-          </button>
-          <button
-            class="tab ${this.activeTab === "tickets" ? "active" : ""}"
-            @click=${() => (this.activeTab = "tickets")}
-          >
-            Create Tickets
-          </button>
-        </div>
-        <div class="tab-content">
-          ${this.activeTab === "playbooks"
-            ? this.renderPlaybooksTab()
-            : this.renderAddForm()}
-        </div>
-      </div>
-    `;
-  }
-
-  private renderPlaybooksTab() {
-    if (this.loadingPlaybooks) {
-      return html`<div class="playbooks-loading">Loading playbooks…</div>`;
-    }
-
-    if (this.playbooks.length === 0) {
-      return html`<div class="playbooks-empty">
-        No playbooks found. Add YAML files to <code>playbooks/</code>.
-      </div>`;
-    }
-
-    return html`
-      <div class="playbooks-list">
-        ${this.playbooks.map(
-          (p) => html`
-            <div class="playbook-card">
-              <div class="playbook-info">
-                <span class="playbook-title">${p.title}</span>
-                <span class="playbook-desc">${p.description}</span>
-              </div>
-              <button
-                class="playbook-run-btn"
-                @click=${() => this.runPlaybook(p.name)}
-              >
-                Run
-              </button>
-            </div>
-          `
-        )}
-      </div>
-    `;
-  }
-
-  private renderAddForm() {
-    return html`
-      <div class="add-form">
-        <textarea
-          class="objective-input"
-          placeholder="Enter objective... (use {{id}} for deps)"
-          .value=${this.objective}
-          @input=${(e: Event) =>
-            (this.objective = (e.target as HTMLTextAreaElement).value)}
-          @keydown=${this.onTextareaKeyDown}
-          rows="2"
-        ></textarea>
-        <div class="add-form-row">
-          <input
-            class="meta-input"
-            type="text"
-            placeholder="Tags"
-            .value=${this.tagsText}
-            @input=${(e: Event) =>
-              (this.tagsText = (e.target as HTMLInputElement).value)}
-            @keydown=${this.onKeyDown}
-          />
-          <input
-            class="meta-input"
-            type="text"
-            placeholder="Functions"
-            .value=${this.functionsText}
-            @input=${(e: Event) =>
-              (this.functionsText = (e.target as HTMLInputElement).value)}
-            @keydown=${this.onKeyDown}
-          />
-          <input
-            class="meta-input"
-            type="text"
-            placeholder="Skills"
-            .value=${this.skillsText}
-            @input=${(e: Event) =>
-              (this.skillsText = (e.target as HTMLInputElement).value)}
-            @keydown=${this.onKeyDown}
-          />
-          <button @click=${this.addTicket} ?disabled=${!this.objective.trim()}>
-            Add Ticket
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  private renderFilter() {
-    return html`
-      <input
-        class="filter-input"
-        type="text"
-        placeholder="Filter by tag..."
-        .value=${this.filterTag}
-        @input=${(e: Event) =>
-          (this.filterTag = (e.target as HTMLInputElement).value)}
-      />
-    `;
-  }
-
-  private renderTicketList() {
-    if (appState.tickets.get().length === 0) {
-      return html`<div class="empty">No tickets yet. Add one above.</div>`;
-    }
-
-    const filter = this.filterTag.trim().toLowerCase();
-    const visible = filter
-      ? appState.tickets
-          .get()
-          .filter(
-            (t) =>
-              t.tags && t.tags.some((tag) => tag.toLowerCase().includes(filter))
-          )
-      : appState.tickets.get();
-
-    return html`
-      <div class="tickets">${visible.map((t) => this.renderTicket(t))}</div>
-    `;
-  }
-
-  private renderTicket(t: TicketData) {
-    return html`
-      <div class="ticket">
-        <div class="ticket-header">
-          <span class="ticket-id">${t.id.slice(0, 8)}</span>
-          <span class="badge ${t.status}">${t.status}</span>
-          ${t.kind === "coordination"
-            ? html`<span class="badge coordination">coordination</span>`
-            : nothing}
-          ${t.assignee
-            ? html`<span class="badge muted">→ ${t.assignee}</span>`
-            : nothing}
-          <span class="ticket-time"> ${getRelativeTime(t.created_at)} </span>
-        </div>
-
-        ${t.kind === "coordination"
-          ? html`
-              <div class="ticket-signal">
-                <code class="signal-type">${t.signal_type}</code>
-                ${t.context
-                  ? html`<span class="signal-context">${t.context}</span>`
-                  : nothing}
-              </div>
-            `
-          : html`<div class="ticket-objective">${t.objective}</div>`}
-
-        <div class="ticket-tags">
-          ${t.tags && t.tags.length > 0
-            ? html`
-                <div class="tags-list">
-                  ${t.tags.map(
-                    (tag) => html`<span class="badge muted">#${tag}</span>`
-                  )}
-                </div>
-              `
-            : html`<span class="no-tags">(no tags)</span>`}
-          <button
-            class="btn-edit"
-            @click=${() => {
-              this.editingTagsId = t.id;
-              this.editedTagsText = t.tags ? t.tags.join(", ") : "";
-            }}
-          >
-            Edit
-          </button>
-        </div>
-
-        ${this.editingTagsId === t.id ? this.renderTagEditor(t) : nothing}
-        ${t.functions?.length
-          ? html`<div class="ticket-functions">
-              functions: ${t.functions.map((f) => html`<code>${f}</code> `)}
-            </div>`
-          : nothing}
-        ${t.skills?.length
-          ? html`<div class="ticket-functions">
-              skills: ${t.skills.map((s) => html`<code>${s}</code> `)}
-            </div>`
-          : nothing}
-        ${t.depends_on?.length
-          ? html`<div class="ticket-deps">
-              depends on:
-              ${t.depends_on.map((d) => html`<code>${d.slice(0, 8)}</code> `)}
-            </div>`
-          : nothing}
-        ${t.status === "suspended" && t.assignee === "user"
-          ? this.renderRespond(t)
-          : nothing}
-        ${t.events_log?.length
-          ? html`<div class="ticket-logs">
-              ${t.events_log.map((e) => this.renderLogEvent(e))}
-            </div>`
-          : nothing}
-        ${t.outcome
-          ? html`<div class="ticket-outcome">${t.outcome}</div>`
-          : nothing}
-        ${t.error ? html`<div class="ticket-error">${t.error}</div>` : nothing}
-        ${t.turns || t.thoughts
-          ? html`<div class="metrics">
-              ${t.turns ? html`<span>${t.turns} turns</span>` : nothing}
-              ${t.thoughts
-                ? html`<span>${t.thoughts} thoughts</span>`
-                : nothing}
-            </div>`
-          : nothing}
-      </div>
-    `;
-  }
-
-  private renderTagEditor(t: TicketData) {
-    return html`
-      <div class="tag-editor">
-        <input
-          type="text"
-          placeholder="Tags (comma separated)..."
-          .value=${this.editedTagsText}
-          @input=${(e: Event) =>
-            (this.editedTagsText = (e.target as HTMLInputElement).value)}
-        />
-        <div class="tag-editor-actions">
-          <button class="btn-cancel" @click=${() => (this.editingTagsId = "")}>
-            Cancel
-          </button>
-          <button class="btn-save" @click=${() => this.saveEditedTags(t.id)}>
-            Save
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  private renderRespond(t: TicketData) {
-    const prompt = extractPrompt(t);
-    const choices = extractChoices(t);
-    const selectionMode =
-      ((t.suspend_event?.waitForChoice as Record<string, unknown>)
-        ?.selectionMode as string) ?? "single";
-
-    if (choices.length > 0) {
-      return html`
-        <div class="respond-prompt">🤖 ${prompt}</div>
-        <div
-          class="respond-form choices ${selectionMode === "multiple"
-            ? "multiple"
-            : "single"}"
-        >
-          <div class="choices-list">
-            ${choices.map(
-              (c) => html`
-                <label class="choice-label">
-                  <input
-                    type="${selectionMode === "multiple"
-                      ? "checkbox"
-                      : "radio"}"
-                    name="choice-${t.id}"
-                    .checked=${this.selectedChoices[t.id]?.includes(c.id) ??
-                    false}
-                    @change=${(e: Event) =>
-                      this.handleChoiceChange(
-                        t.id,
-                        c.id,
-                        selectionMode === "multiple",
-                        (e.target as HTMLInputElement).checked
-                      )}
-                  />
-                  <span>${c.text}</span>
-                </label>
-              `
-            )}
+            Playbooks
           </div>
-          <button @click=${() => this.respondWithChoices(t.id)}>
-            Send Selection
-          </button>
         </div>
-        ${this.renderContextUpdates(t.id)}
-      `;
-    }
 
-    // Await context update: no text input, context updates always visible.
-    const functionName = t.suspend_event?.function_name as string | undefined;
-    if (functionName === "chat_await_context_update") {
-      return html`
-        <div class="respond-prompt">⏳ Awaiting context update…</div>
-        ${this.renderContextFields(t.id)}
-        <div class="respond-form">
-          <button @click=${() => this.respondContextOnly(t.id)}>
-            Send Context Update
-          </button>
-        </div>
-      `;
-    }
-
-    return html`
-      <div class="respond-prompt">🤖 ${prompt}</div>
-      <div class="respond-form">
-        <input
-          type="text"
-          placeholder="Your response..."
-          .value=${this.responses[t.id] ?? ""}
-          @input=${(e: Event) => {
-            this.responses = {
-              ...this.responses,
-              [t.id]: (e.target as HTMLInputElement).value,
-            };
-          }}
-          @keydown=${(e: KeyboardEvent) => this.onRespondKeyDown(e, t.id)}
-        />
-        <button @click=${() => this.respond(t.id)}>Send</button>
+        ${this.activeTab === "jobs"
+          ? this.renderJobsList(jobs)
+          : this.renderPlaybooksList()}
       </div>
-      ${this.renderContextUpdates(t.id)}
+
+      <div class="main">
+        ${this.activeTab === "jobs"
+          ? this.renderJobDetail(jobs)
+          : this.renderEmptyMain("Select a playbook to run on the left.")}
+      </div>
     `;
   }
 
-  private renderLogEvent(e: Record<string, unknown>) {
-    if ("thought" in e) {
-      const thought = e.thought as Record<string, unknown>;
-      return html`<span class="log-thought">💭 ${thought.text}</span>`;
-    }
-    if ("functionCall" in e) {
-      const fc = e.functionCall as Record<string, unknown>;
-      return html`<span class="log-tool">🔧 ${fc.name}</span>`;
-    }
-    if ("error" in e) {
-      const err = e.error as Record<string, unknown>;
-      return html`<span class="log-error">❌ ${err.message}</span>`;
-    }
-    if ("complete" in e) {
-      const complete = e.complete as Record<string, unknown>;
-      const result = complete.result as Record<string, unknown>;
-      const success = result?.success;
-      return html`<span>${success ? "✅" : "❌"} complete</span>`;
-    }
-    return nothing;
-  }
+  // --- Playbooks ---
 
   private async loadPlaybooks() {
     this.loadingPlaybooks = true;
@@ -470,176 +152,246 @@ class BeesApp extends SignalWatcher(LitElement) {
     this.loadingPlaybooks = false;
   }
 
-  private async runPlaybook(name: string) {
-    await this.api.runPlaybook(name);
+  private renderPlaybooksList() {
+    if (this.loadingPlaybooks)
+      return html`<div class="empty-state">Loading...</div>`;
+    return html`
+      <div class="jobs-list">
+        <div style="padding: 12px; font-size: 0.8rem; color: #94a3b8;">
+          Click a playbook to spawn a new run.
+        </div>
+        ${this.playbooks.map(
+          (p) => html`
+            <div
+              class="job-item"
+              @click=${() =>
+                this.api
+                  .runPlaybook(p.name)
+                  .then(() => (this.activeTab = "jobs"))}
+            >
+              <div class="job-title">${p.title}</div>
+              <div
+                class="job-meta"
+                style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+              >
+                ${p.description}
+              </div>
+            </div>
+          `
+        )}
+      </div>
+    `;
   }
 
-  private async addTicket() {
-    const text = this.objective.trim();
-    if (!text) return;
-    const tags = parseTags(this.tagsText);
-    const apiFunctions = parseTags(this.functionsText);
-    const skills = parseTags(this.skillsText);
+  // --- Jobs List ---
 
-    this.objective = "";
-    this.tagsText = "";
-    this.functionsText = "";
-    this.skillsText = "";
-
-    await this.api.addTicket(text, tags, apiFunctions, skills);
+  private renderJobsList(jobs: JobGroup[]) {
+    if (jobs.length === 0)
+      return html`<div class="empty-state">No jobs yet.</div>`;
+    return html`
+      <div class="jobs-list">
+        ${jobs.map(
+          (job) => html`
+            <div
+              class="job-item ${this.selectedJobId === job.id
+                ? "selected"
+                : ""}"
+              @click=${() => (this.selectedJobId = job.id)}
+            >
+              <div class="job-header">
+                <div class="job-title">${job.title}</div>
+                <div class="job-status ${job.status}"></div>
+              </div>
+              <div class="job-meta">
+                <span
+                  >${job.tickets.length}
+                  step${job.tickets.length === 1 ? "" : "s"}</span
+                >
+                <span>${getRelativeTime(job.createdAt)}</span>
+              </div>
+            </div>
+          `
+        )}
+      </div>
+    `;
   }
 
-  private async saveEditedTags(ticketId: string) {
-    const tags = parseTags(this.editedTagsText);
-    const ok = await this.api.updateTags(ticketId, tags);
-    if (ok) {
-      this.editingTagsId = "";
+  private renderEmptyMain(text: string) {
+    return html`<div class="empty-state">${text}</div>`;
+  }
+
+  // --- Job Detail ---
+
+  private renderJobDetail(jobs: JobGroup[]) {
+    const job = jobs.find((j) => j.id === this.selectedJobId);
+    if (!job) return this.renderEmptyMain("Select a job to view details");
+
+    return html`
+      <div class="job-detail">
+        <div class="job-detail-header">
+          <div class="job-detail-header-top">
+            <h2 class="job-detail-title">${job.title}</h2>
+            <div class="job-detail-badge ${job.status}">${job.status}</div>
+          </div>
+          <div class="job-detail-meta">
+            <span>ID: <code class="mono">${job.id.slice(0, 13)}...</code></span>
+            <span>Started: ${new Date(job.createdAt).toLocaleString()}</span>
+          </div>
+        </div>
+
+        <div class="timeline">
+          ${job.tickets.map((t) => this.renderStep(t))}
+        </div>
+      </div>
+    `;
+  }
+
+  private renderStep(t: TicketData) {
+    return html`
+      <div class="step ${t.status}">
+        <div class="step-node"></div>
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-title">
+              ${t.title || "Task"}
+              <span class="step-id">${t.id.slice(0, 8)}</span>
+            </div>
+            <div class="step-time">${getRelativeTime(t.created_at)}</div>
+          </div>
+          <div class="step-body">
+            ${t.kind === "coordination"
+              ? html`
+                  <div class="tool-row">
+                    <span class="tool-badge">signal:${t.signal_type}</span>
+                    ${t.context
+                      ? html`<span style="font-size:0.85rem;color:#cbd5e1"
+                          >${t.context}</span
+                        >`
+                      : nothing}
+                  </div>
+                `
+              : html`
+                  <div class="step-objective">${t.objective || t.context}</div>
+                `}
+            ${t.error
+              ? html`
+                  <div class="block error">
+                    <div class="block-header">Error</div>
+                    <div class="block-content">${t.error}</div>
+                  </div>
+                `
+              : nothing}
+            ${t.outcome
+              ? html`
+                  <div class="block">
+                    <div class="block-header">Outcome</div>
+                    <div class="block-content mono">${t.outcome}</div>
+                  </div>
+                `
+              : nothing}
+            ${t.events_log?.length
+              ? html`
+                  <div class="block">
+                    <div class="block-header">Trace Log</div>
+                    <div class="block-content trace-list mono">
+                      ${t.events_log.map((e) => this.renderTraceEvent(e))}
+                    </div>
+                  </div>
+                `
+              : nothing}
+
+            <div class="metrics">
+              ${t.depends_on && t.depends_on.length > 0
+                ? html`<span
+                    >Deps:
+                    ${t.depends_on.map((d) => d.slice(0, 8)).join(", ")}</span
+                  >`
+                : nothing}
+              ${t.turns ? html`<span>${t.turns} turns</span>` : nothing}
+              ${t.thoughts
+                ? html`<span>${t.thoughts} thoughts</span>`
+                : nothing}
+              <span
+                style="margin-left:auto;text-transform:uppercase;font-weight:600;color:${this.getStatusColor(
+                  t.status
+                )}"
+                >${t.status}</span
+              >
+            </div>
+
+            ${t.status === "suspended" && t.assignee === "user"
+              ? this.renderRespond(t)
+              : nothing}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private getStatusColor(status: string) {
+    switch (status) {
+      case "running":
+        return "#60a5fa";
+      case "completed":
+        return "#34d399";
+      case "failed":
+        return "#f87171";
+      case "suspended":
+        return "#fbbf24";
+      default:
+        return "#94a3b8";
     }
   }
 
-  private handleChoiceChange(
-    ticketId: string,
-    choiceId: string,
-    isMultiple: boolean,
-    checked: boolean
-  ) {
-    const current = this.selectedChoices[ticketId] ?? [];
-    if (isMultiple) {
-      if (checked) {
-        this.selectedChoices = {
-          ...this.selectedChoices,
-          [ticketId]: [...current, choiceId],
-        };
-      } else {
-        this.selectedChoices = {
-          ...this.selectedChoices,
-          [ticketId]: current.filter((id) => id !== choiceId),
-        };
-      }
-    } else {
-      this.selectedChoices = {
-        ...this.selectedChoices,
-        [ticketId]: [choiceId],
-      };
+  private renderTraceEvent(e: Record<string, unknown>) {
+    if ("thought" in e) {
+      const thought = e.thought as Record<string, unknown>;
+      return html`<div class="trace-item thought">💭 ${thought.text}</div>`;
     }
+    if ("functionCall" in e) {
+      const fc = e.functionCall as Record<string, unknown>;
+      return html`<div class="trace-item tool">🔧 ${fc.name}(...)</div>`;
+    }
+    if ("error" in e) {
+      const err = e.error as Record<string, unknown>;
+      return html`<div class="trace-item error">❌ ${err.message}</div>`;
+    }
+    return nothing;
   }
 
-  private async respondWithChoices(ticketId: string) {
-    const selectedIds = this.selectedChoices[ticketId] ?? [];
-    const contextUpdates = this.buildContextUpdates(ticketId);
-    if (selectedIds.length === 0 && !contextUpdates) return;
+  // --- Respond Actions ---
 
-    this.selectedChoices = { ...this.selectedChoices, [ticketId]: [] };
-    await this.api.respond(
-      ticketId,
-      undefined,
-      selectedIds.length > 0 ? selectedIds : undefined,
-      contextUpdates
-    );
-    this.clearContextFields(ticketId);
+  @state() private responses: Record<string, string> = {};
+
+  private renderRespond(t: TicketData) {
+    const prompt = extractPrompt(t);
+    return html`
+      <div class="action-bar">
+        <input
+          style="flex: 1"
+          type="text"
+          placeholder=${prompt || "Provide input..."}
+          .value=${this.responses[t.id] ?? ""}
+          @input=${(e: Event) =>
+            (this.responses = {
+              ...this.responses,
+              [t.id]: (e.target as HTMLInputElement).value,
+            })}
+          @keydown=${(e: KeyboardEvent) => {
+            if (e.key === "Enter") this.respond(t.id);
+          }}
+        />
+        <button @click=${() => this.respond(t.id)}>Send</button>
+      </div>
+    `;
   }
 
   private async respond(ticketId: string) {
     const text = this.responses[ticketId]?.trim();
-    const contextUpdates = this.buildContextUpdates(ticketId);
-    if (!text && !contextUpdates) return;
+    if (!text) return;
 
     this.responses = { ...this.responses, [ticketId]: "" };
-    await this.api.respond(
-      ticketId,
-      text || undefined,
-      undefined,
-      contextUpdates
-    );
-    this.clearContextFields(ticketId);
-  }
-
-  private onKeyDown(e: KeyboardEvent) {
-    if (e.key === "Enter") this.addTicket();
-  }
-
-  private onTextareaKeyDown(e: KeyboardEvent) {
-    // Cmd/Ctrl+Enter submits, plain Enter adds newline.
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      this.addTicket();
-    }
-  }
-
-  private onRespondKeyDown(e: KeyboardEvent, ticketId: string) {
-    if (e.key === "Enter") this.respond(ticketId);
-  }
-
-  private renderContextUpdates(ticketId: string) {
-    const expanded = this.contextExpanded[ticketId] ?? false;
-
-    return html`
-      <div class="context-updates">
-        <button
-          class="context-toggle"
-          @click=${() => {
-            this.contextExpanded = {
-              ...this.contextExpanded,
-              [ticketId]: !expanded,
-            };
-          }}
-        >
-          ${expanded ? "▾" : "▸"} Context Updates
-        </button>
-        ${expanded ? this.renderContextFields(ticketId) : nothing}
-      </div>
-    `;
-  }
-
-  private renderContextFields(ticketId: string) {
-    return html`
-      <div class="context-fields">
-        <input
-          type="text"
-          placeholder="Playbook ID"
-          .value=${this.contextPlaybookId[ticketId] ?? ""}
-          @input=${(e: Event) => {
-            this.contextPlaybookId = {
-              ...this.contextPlaybookId,
-              [ticketId]: (e.target as HTMLInputElement).value,
-            };
-          }}
-        />
-        <textarea
-          placeholder="Update text..."
-          rows="3"
-          .value=${this.contextUpdate[ticketId] ?? ""}
-          @input=${(e: Event) => {
-            this.contextUpdate = {
-              ...this.contextUpdate,
-              [ticketId]: (e.target as HTMLTextAreaElement).value,
-            };
-          }}
-        ></textarea>
-      </div>
-    `;
-  }
-
-  private async respondContextOnly(ticketId: string) {
-    const contextUpdates = this.buildContextUpdates(ticketId);
-    if (!contextUpdates) return;
-    await this.api.respond(ticketId, undefined, undefined, contextUpdates);
-    this.clearContextFields(ticketId);
-  }
-
-  private buildContextUpdates(ticketId: string): string[] | undefined {
-    const playbookId = this.contextPlaybookId[ticketId]?.trim();
-    const update = this.contextUpdate[ticketId]?.trim();
-    if (!playbookId && !update) return undefined;
-
-    const notification = `[System Notification] Playbook "${playbookId || "unknown"}" update:\n${update || "(no details)"}`;
-    return [notification];
-  }
-
-  private clearContextFields(ticketId: string) {
-    this.contextExpanded = { ...this.contextExpanded, [ticketId]: false };
-    this.contextPlaybookId = { ...this.contextPlaybookId, [ticketId]: "" };
-    this.contextUpdate = { ...this.contextUpdate, [ticketId]: "" };
+    await this.api.respond(ticketId, text);
   }
 }
 

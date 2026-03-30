@@ -38,20 +38,6 @@ interface ChatMessage {
   role: "agent" | "user" | "thought" | "tool" | "error";
 }
 
-/**
- * Internal plumbing tools that should never appear in the user-facing chat.
- * These are structural coordination calls, not meaningful agent actions.
- */
-const HIDDEN_TOOLS = new Set([
-  "playbooks_run_playbook",
-  "chat_request_user_input",
-  "chat_await_context_update",
-  "coordination_emit",
-  "system_read_text_from_file",
-  "playbooks_list",
-  "system_list_files",
-]);
-
 interface ChatThread {
   id: string;
   title: string;
@@ -507,7 +493,7 @@ class OpalShell extends SignalWatcher(LitElement) {
       if ("functionCall" in event) {
         const fc = event.functionCall as Record<string, unknown>;
         const name = fc.name as string;
-        if (name && !HIDDEN_TOOLS.has(name)) {
+        if (name) {
           this.#addChatMessage(`🔧 ${name}`, "tool");
         }
       }
