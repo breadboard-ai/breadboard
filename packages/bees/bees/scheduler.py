@@ -123,6 +123,7 @@ def resolve_segments(ticket: Ticket) -> list[dict[str, Any]]:
     References are resolved by namespace:
 
     - ``{{system.context}}`` — replaced with the ticket's context string.
+    - ``{{system.ticket_id}}`` — replaced with the ticket's own ID.
     - ``{{ticket-id}}`` — replaced with the dependency's outcome as an
       ``input`` segment carrying LLMContent.
 
@@ -153,6 +154,8 @@ def resolve_segments(ticket: Ticket) -> list[dict[str, Any]]:
             if part == "system.context":
                 if context:
                     segments.append({"type": "text", "text": context})
+            elif part == "system.ticket_id":
+                segments.append({"type": "text", "text": ticket.id})
             else:
                 # Dependency ref — resolve to input segment.
                 resolved_id = _find_dep_id(part, deps)
