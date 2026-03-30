@@ -16,6 +16,7 @@ Usage::
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import sys
@@ -287,13 +288,13 @@ def _read_chat_log(ticket: Ticket) -> list[dict[str, str]]:
 async def get_tickets(tag: str | None = None) -> list[dict[str, Any]]:
     """List all tickets, sorted by created_at latest first, optionally filtered by tag."""
     tickets = list_tickets()
-    
+
     if tag:
         tickets = [t for t in tickets if t.metadata.tags and tag in t.metadata.tags]
-        
+
     # Sort by created_at latest first (ISO string sorting works for chronological order).
     tickets.sort(key=lambda t: t.metadata.created_at or "", reverse=True)
-    
+
     return [_ticket_to_dict(t) for t in tickets]
 
 
@@ -312,16 +313,16 @@ async def get_ticket_file(ticket_id: str, path: str) -> FileResponse:
     ticket = load_ticket(ticket_id)
     if not ticket:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
-        
+
     file_path = ticket.dir / "filesystem" / path
     if not file_path.is_file():
         raise HTTPException(404, f"File {path} not found")
-        
+
     try:
         file_path.resolve().relative_to((ticket.dir / "filesystem").resolve())
     except ValueError:
         raise HTTPException(403, "Access denied")
-        
+
     return FileResponse(file_path)
 
 
@@ -356,7 +357,7 @@ async def respond_to_ticket(
 
     # Write response and flip assignee.
     response_path = ticket.dir / "response.json"
-    
+
     response: dict[str, Any] = {}
     if req.selectedIds is not None:
         response["selectedIds"] = req.selectedIds
@@ -364,7 +365,7 @@ async def respond_to_ticket(
         response["text"] = req.text
     if req.contextUpdates:
         response["context_updates"] = req.contextUpdates
-        
+
     response_path.write_text(
         json.dumps(response, indent=2, ensure_ascii=False) + "\n"
     )
@@ -452,6 +453,84 @@ async def run_playbook_endpoint(name: str) -> dict[str, Any]:
     }
 
 
+
+
+# ---------------------------------------------------------------------------
+# System Pulse — Flash-powered status summary
+# ---------------------------------------------------------------------------
+
+_pulse_cache: dict[str, Any] = {"hash": "", "text": "", "active": False}
+
+
+@app.get("/pulse")
+async def get_pulse() -> dict[str, Any]:
+    """Return a single pulse response containing both the summary text and structured tasks."""
+    tickets = list_tickets()
+
+    # Group ALL tickets by run_id (or standalone ticket ID)
+    # Ignore background daemon tickets like Opie and the Digest Generator.
+    by_run: dict[str, list[Ticket]] = {}
+    active_running = []
+
+    for t in tickets:
+        if (
+            t.metadata.kind == "coordination" or
+            "opie" in (t.metadata.tags or []) or
+            "digest" in (t.metadata.tags or [])
+        ):
+            continue
+        run_id = t.metadata.playbook_run_id or f"standalone-{t.id}"
+        by_run.setdefault(run_id, []).append(t)
+
+        if t.metadata.status in ("available", "running", "blocked", "suspended"):
+            active_running.append(t)
+
+    # 1. Generate text
+    if not active_running:
+        text = ""
+    else:
+        first_ticket = active_running[0]
+        title = first_ticket.metadata.title or "a task"
+        if len(active_running) == 1:
+            text = f"Working on {title}…"
+        elif len(active_running) == 2:
+            text = f"Working on {title} and 1 other task…"
+        else:
+            text = f"Working on {title} and {len(active_running) - 1} other tasks…"
+
+    # 2. Build task objects
+    active_statuses = {"available", "running", "blocked", "suspended"}
+    tasks = []
+    for run_id, group in by_run.items():
+        if not any(t.metadata.status in active_statuses for t in group):
+            continue
+
+        group.sort(key=lambda t: t.metadata.created_at or "")
+        first_ticket = group[0]
+        title = "Task"
+        if first_ticket.metadata.playbook_id:
+            title = first_ticket.metadata.playbook_id.replace("-", " ").title()
+        elif first_ticket.metadata.title:
+            title = first_ticket.metadata.title
+
+        completed_steps = sum(1 for t in group if t.metadata.status in ("success", "error"))
+        total_steps = len(group)
+        active_tickets = [t for t in group if t.metadata.status in active_statuses]
+        current_ticket = active_tickets[0] if active_tickets else group[-1]
+
+        tasks.append({
+            "id": run_id,
+            "title": title,
+            "context": first_ticket.metadata.context or "",
+            "current_step": current_ticket.metadata.title or "Working...",
+            "status": current_ticket.metadata.status,
+            "completed_steps": completed_steps,
+            "total_steps": total_steps,
+            "created_at": first_ticket.metadata.created_at
+        })
+
+    tasks.sort(key=lambda x: x["created_at"] or "", reverse=True)
+    return {"text": text, "active": bool(active_running), "tasks": tasks}
 
 
 # ---------------------------------------------------------------------------

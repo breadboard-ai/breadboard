@@ -6,7 +6,18 @@
 
 import type { PlaybookData } from "./types.js";
 
-export { BeesAPI };
+export { BeesAPI, type PulseTask };
+
+interface PulseTask {
+  id: string;
+  title: string;
+  context: string;
+  current_step: string;
+  status: string;
+  completed_steps: number;
+  total_steps: number;
+  created_at: string | null;
+}
 
 /**
  * Thin wrapper around the Bees REST endpoints.
@@ -76,6 +87,21 @@ class BeesAPI {
     } catch (e) {
       console.error(`Error fetching file ${path} for ticket ${ticketId}:`, e);
       return null;
+    }
+  }
+
+  async getPulse(): Promise<{
+    text: string;
+    active: boolean;
+    tasks: PulseTask[];
+  }> {
+    try {
+      const resp = await fetch("/pulse");
+      if (!resp.ok) return { text: "", active: false, tasks: [] };
+      return resp.json();
+    } catch (e) {
+      console.error("Error fetching pulse:", e);
+      return { text: "", active: false, tasks: [] };
     }
   }
 }
