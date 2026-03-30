@@ -4,20 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { PlaybookData } from "./types.js";
+import type { PlaybookData } from "../../data/types.js";
+import type { PulseTask } from "../types.js";
 
-export { BeesAPI, type PulseTask };
-
-interface PulseTask {
-  id: string;
-  title: string;
-  context: string;
-  current_step: string;
-  status: string;
-  completed_steps: number;
-  total_steps: number;
-  created_at: string | null;
-}
+export { BeesAPI };
 
 /**
  * Thin wrapper around the Bees REST endpoints.
