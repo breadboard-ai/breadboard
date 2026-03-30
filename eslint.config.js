@@ -106,7 +106,10 @@ export default tseslint.config(
 
   // Visual Editor specific rules (SCA + expect-type)
   {
-    files: ["packages/visual-editor/src/**/*.ts"],
+    files: [
+      "packages/visual-editor/src/**/*.ts",
+      "packages/bees/web/src/sca/**/*.ts"
+    ],
     plugins: {
       "expect-type": expectType,
       "local-rules": localRulesPlugin,

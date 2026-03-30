@@ -8,17 +8,14 @@ import { LitElement, html, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
-import { BeesAPI } from "../data/api.js";
-import { BeesConnection } from "../data/connection.js";
-import { BeesState } from "../data/state.js";
+import { services } from "../sca/services/services.js";
+import { appController } from "../sca/controller/controller.js";
 import type { TicketData, PlaybookData } from "../data/types.js";
 import { getRelativeTime, extractPrompt } from "../utils.js";
 import { APP_NAME, APP_ICON } from "../constants.js";
 import { styles } from "./app.styles.js";
 
 export { BeesApp };
-
-const appState = new BeesState();
 
 interface JobGroup {
   id: string;
@@ -30,29 +27,29 @@ interface JobGroup {
 
 @customElement("bees-app")
 class BeesApp extends SignalWatcher(LitElement) {
-  @state() private activeTab: "jobs" | "playbooks" = "jobs";
-  @state() private selectedJobId: string | null = null;
-  @state() private playbooks: PlaybookData[] = [];
-  @state() private loadingPlaybooks = false;
+  @state() accessor activeTab: "jobs" | "playbooks" = "jobs";
+  @state() accessor selectedJobId: string | null = null;
+  @state() accessor playbooks: PlaybookData[] = [];
+  @state() accessor loadingPlaybooks = false;
 
-  private connection = new BeesConnection(appState);
-  private api = new BeesAPI();
+  private sse = services().sse;
+  private api = services().api;
 
   static styles = [styles];
 
   connectedCallback() {
     super.connectedCallback();
-    this.connection.connect();
+    this.sse.connect();
     this.loadPlaybooks();
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this.connection.close();
+    this.sse.close();
   }
 
   private deriveJobs(): JobGroup[] {
-    const tickets = appState.tickets.get();
+    const tickets = appController().global.tickets;
     const map = new Map<string, TicketData[]>();
 
     for (const t of tickets) {
@@ -361,7 +358,7 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   // --- Respond Actions ---
 
-  @state() private responses: Record<string, string> = {};
+  @state() accessor responses: Record<string, string> = {};
 
   private renderRespond(t: TicketData) {
     const prompt = extractPrompt(t);

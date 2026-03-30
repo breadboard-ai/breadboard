@@ -27,7 +27,8 @@ export type HostMessage =
       props: Record<string, unknown>;
       assets: Record<string, string>;
     }
-  | { type: "update-props"; props: Record<string, unknown> };
+  | { type: "update-props"; props: Record<string, unknown> }
+  | { type: "host.chat.switch"; payload: { ticket_id: string; role: string } };
 
 /** Messages the iframe sends TO the host. */
 export type IframeMessage =
