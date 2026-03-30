@@ -29,6 +29,10 @@ describe("Stage Actions", () => {
 
   describe("navigateToTicket", () => {
     it("sets the current view to the requested ticket and loads the bundle", async () => {
+      mock.method(services.api, "listFiles", async (_ticketId: string) => {
+        return ["bundle.js", "bundle.css"];
+      });
+
       mock.method(
         services.api,
         "getFile",
@@ -57,6 +61,29 @@ describe("Stage Actions", () => {
         props: {},
         assets: {},
       });
+    });
+
+    it("sets the current view from an IframeMessage payload detail object", async () => {
+      mock.method(services.api, "listFiles", async (_ticketId: string) => {
+        return ["bundle.js", "bundle.css"];
+      });
+
+      mock.method(
+        services.api,
+        "getFile",
+        async (_ticketId: string, filename: string) => {
+          if (filename === "bundle.js") return "console.log('js')";
+          return null;
+        }
+      );
+
+      await StageActions.navigateToTicket(
+        new CustomEvent("navigate", {
+          detail: { type: "navigate", viewId: "t-456" },
+        })
+      );
+
+      assert.equal(controller.stage.currentView, "t-456");
     });
   });
 });
