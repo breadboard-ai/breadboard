@@ -412,7 +412,10 @@ async def run_session(
             get_sandbox_function_group_factory(
                 work_dir=ticket_dir / "filesystem" if ticket_dir else None,
             ),
-            get_playbooks_function_group(on_playbook_run=on_playbook_run),
+            get_playbooks_function_group(
+                on_playbook_run=on_playbook_run,
+                on_coordination_emit=on_coordination_emit,
+            ),
             get_coordination_function_group(on_coordination_emit=on_coordination_emit),
             get_chat_function_group_factory(
                 on_chat_entry=_make_chat_log_writer(ticket_dir) if ticket_dir else None,
@@ -555,7 +558,10 @@ async def resume_session(
             get_sandbox_function_group_factory(
                 work_dir=ticket_dir / "filesystem",
             ),
-            get_playbooks_function_group(on_playbook_run=on_playbook_run),
+            get_playbooks_function_group(
+                on_playbook_run=on_playbook_run,
+                on_coordination_emit=on_coordination_emit,
+            ),
             get_coordination_function_group(on_coordination_emit=on_coordination_emit),
             get_chat_function_group_factory(
                 on_chat_entry=_make_chat_log_writer(ticket_dir),

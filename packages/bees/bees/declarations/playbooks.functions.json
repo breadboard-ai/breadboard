@@ -50,6 +50,24 @@
         "context": {
           "type": "string",
           "description": "Free-form briefing text for the playbook. Describe what the user wants, any relevant details, preferences, or constraints."
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Signal type to emit (e.g. update_app_title)."
+              },
+              "payload": {
+                "type": "string",
+                "description": "Signal payload (e.g. the new title)."
+              }
+            },
+            "required": ["type"]
+          },
+          "description": "Starting events emitted atomically with the playbook run, scoped to this run's tickets only."
         }
       },
       "required": ["name"]

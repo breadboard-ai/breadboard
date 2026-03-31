@@ -419,6 +419,13 @@ class Scheduler:
         ticket: Ticket,
     ) -> SessionResult:
         """Run a single ticket's session and update its metadata."""
+        # Reload title from disk — it may have been renamed by an on_event
+        # hook during coordination routing earlier in this cycle, while the
+        # in-memory ticket object (from list_tickets) still has the old value.
+        fresh = load_ticket(ticket.id)
+        if fresh and fresh.metadata.title != ticket.metadata.title:
+            ticket.metadata.title = fresh.metadata.title
+
         ticket.metadata.status = "running"
         ticket.save_metadata()
         if self._hooks.on_ticket_start:
@@ -690,11 +697,16 @@ class Scheduler:
         delivered = set(ticket.metadata.delivered_to or [])
 
         # Find all matching subscribers.
+        source_run_id = ticket.metadata.playbook_run_id
         subscribers: list[Ticket] = []
         for candidate in list_tickets():
             if candidate.id == ticket.id:
                 continue
             if not candidate.metadata.watch_events:
+                continue
+            # Run-ID scoping: if the signal is scoped to a run,
+            # only deliver to subscribers in that same run.
+            if source_run_id and candidate.metadata.playbook_run_id != source_run_id:
                 continue
             for watch in candidate.metadata.watch_events:
                 if watch.get("type") != signal_type:
