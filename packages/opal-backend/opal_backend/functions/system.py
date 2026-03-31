@@ -28,7 +28,7 @@ from ..function_definition import (
     assemble_function_group,
 )
 from ..loop import AgentResult, FileData, LoopController
-from ..agent_file_system import AgentFileSystem
+from ..file_system_protocol import FileSystem
 from ..task_tree_manager import TaskTreeManager, TASK_TREE_SCHEMA
 from ..pidgin import from_pidgin_string
 
@@ -58,7 +58,7 @@ _LOADED = load_declarations("system")
 def _make_handlers(
     controller: LoopController,
     *,
-    file_system: AgentFileSystem | None = None,
+    file_system: FileSystem | None = None,
     task_tree_manager: TaskTreeManager | None = None,
     success_callback: Callable[[str, str], Any] | None = None,
     failure_callback: Callable[[str], None] | None = None,
@@ -238,7 +238,7 @@ def _make_handlers(
 def get_system_function_group(
     controller: LoopController,
     *,
-    file_system: AgentFileSystem | None = None,
+    file_system: FileSystem | None = None,
     task_tree_manager: TaskTreeManager | None = None,
     success_callback: Callable[[str, str], Any] | None = None,
     failure_callback: Callable[[str], None] | None = None,
@@ -250,7 +250,7 @@ def get_system_function_group(
 
     Args:
         controller: The LoopController for termination functions.
-        file_system: The AgentFileSystem for file operations. When
+        file_system: The file system for file operations. When
             ``None``, file functions are omitted.
         task_tree_manager: The TaskTreeManager for task tree operations.
             When ``None``, task tree functions are omitted.

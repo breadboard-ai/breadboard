@@ -11,7 +11,7 @@ the production code path. Changes to the TS source may need to be ported here.
 
 Manages a
 hierarchical task tree that the agent uses to plan and track execution.
-The tree is persisted as ``task_tree.json`` in the ``AgentFileSystem``.
+The tree is persisted as ``task_tree.json`` in the file system.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from .agent_file_system import AgentFileSystem
+from .file_system_protocol import FileSystem
 
 # JSON Schema for structured output — used by Gemini to generate the task tree.
 TASK_TREE_SCHEMA: dict[str, Any] = {
@@ -98,7 +98,7 @@ class TaskTreeManager:
     ``/mnt/task_tree.json`` after every mutation.
     """
 
-    def __init__(self, file_system: AgentFileSystem) -> None:
+    def __init__(self, file_system: FileSystem) -> None:
         self._file_system = file_system
         self._tree: dict[str, Any] | None = None
         self._task_map: dict[str, dict[str, Any]] = {}
@@ -113,7 +113,7 @@ class TaskTreeManager:
 
     @classmethod
     def from_snapshot(
-        cls, snap: TaskTreeSnapshot, file_system: AgentFileSystem
+        cls, snap: TaskTreeSnapshot, file_system: FileSystem
     ) -> "TaskTreeManager":
         """Construct a live instance from a snapshot."""
         mgr = cls(file_system)

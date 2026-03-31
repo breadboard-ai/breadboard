@@ -217,7 +217,7 @@ async def run_skilled_agent(
         extra_groups: Deprecated. Use function_groups instead.
         function_groups: Optional factory that receives a LoopController
             and returns the complete list of FunctionGroups. When
-            provided, built-in environment assembly (AgentFileSystem,
+            provided, built-in environment assembly (file system,
             TaskTreeManager, built-in groups) is skipped.
         system_instruction: Optional override for the system instruction.
             When provided, replaces the default skill-aware instruction.

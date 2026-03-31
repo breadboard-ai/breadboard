@@ -29,7 +29,7 @@ import re
 import uuid
 from typing import Any
 
-from ..agent_file_system import AgentFileSystem
+from ..file_system_protocol import FileSystem
 from ..conform_body import conform_body
 from ..backend_client import BackendClient
 from ..error_classifier import to_error_or_response
@@ -214,7 +214,7 @@ def expand_veo_error(error_message: str, model: str) -> dict[str, Any]:
 
 def _make_text_handlers(
     *,
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     task_tree_manager: TaskTreeManager,
     backend: BackendClient | None = None,
     graph_url: str = "",
@@ -451,7 +451,7 @@ _IMAGE_API_NAME = "ai_image_tool"
 
 def _make_image_handler(
     *,
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     task_tree_manager: TaskTreeManager | None = None,
     backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
@@ -570,7 +570,7 @@ def _make_image_handler(
 
 def _make_audio_handlers(
     *,
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     task_tree_manager: TaskTreeManager | None = None,
     backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
@@ -718,7 +718,7 @@ ASPECT_RATIOS = ["16:9", "9:16"]
 
 def _make_video_handler(
     *,
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     task_tree_manager: TaskTreeManager | None = None,
     backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
@@ -830,7 +830,7 @@ def _make_video_handler(
 
 def get_generate_function_group(
     *,
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     task_tree_manager: TaskTreeManager,
     backend: BackendClient | None = None,
     graph_url: str = "",
@@ -852,7 +852,7 @@ def get_generate_function_group(
 
 def get_image_function_group(
     *,
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     task_tree_manager: TaskTreeManager | None = None,
     backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
@@ -871,7 +871,7 @@ def get_image_function_group(
 
 def get_audio_function_group(
     *,
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     task_tree_manager: TaskTreeManager | None = None,
     backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
@@ -891,7 +891,7 @@ def get_audio_function_group(
 
 def get_video_function_group(
     *,
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     task_tree_manager: TaskTreeManager | None = None,
     backend: BackendClient | None = None,
     enable_g1_quota: bool = False,

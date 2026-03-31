@@ -18,6 +18,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Awaitable, Protocol, TypedDict, runtime_checkable
 
+from .file_system_protocol import FileSystem
+
 # Types matching the Gemini API function declaration format.
 FunctionDeclaration = dict[str, Any]
 
@@ -254,7 +256,7 @@ class SessionHooks(Protocol):
         ...
 
     @property
-    def file_system(self) -> Any:
+    def file_system(self) -> FileSystem:
         """The agent file system — read, write, and list files."""
         ...
 

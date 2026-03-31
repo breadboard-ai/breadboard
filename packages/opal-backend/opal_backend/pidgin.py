@@ -15,10 +15,10 @@ vocabulary — the set of XML-like tags (``<objective>``, ``<asset>``,
 Do not duplicate pidgin logic elsewhere in the Python code.
 
 **to_pidgin**: Converts structured segments (from the wire protocol) into
-pidgin text. Registers data parts in ``AgentFileSystem`` and emits tags.
+pidgin text. Registers data parts in the file system and emits tags.
 
 **from_pidgin_string**: Resolves ``<file>`` tags in agent output back to
-data parts from the ``AgentFileSystem``.
+data parts from the file system.
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, cast
 
-from .agent_file_system import AgentFileSystem
+from .file_system_protocol import FileSystem
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -85,7 +85,7 @@ def _normalize_segment(segment: dict[str, Any]) -> dict[str, Any]:
 
 def to_pidgin(
     segments: list[dict[str, Any]],
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     *,
     use_notebooklm_flag: bool = False,
 ) -> ToPidginResult | dict[str, str]:
@@ -180,7 +180,7 @@ def to_pidgin(
 
 def content_to_pidgin_string(
     content: dict[str, Any],
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     *,
     text_as_files: bool = True,
 ) -> str:
@@ -242,7 +242,7 @@ _LINK_PARSE_REGEX = re.compile(r'<a\s+href\s*=\s*"([^"]*)"\s*>\s*([^<]*)\s*</a>'
 
 
 async def from_pidgin_string(
-    content: str, file_system: AgentFileSystem
+    content: str, file_system: FileSystem
 ) -> dict[str, Any] | list[dict[str, Any]]:
     """Resolve pidgin markup in a string to data parts.
 
