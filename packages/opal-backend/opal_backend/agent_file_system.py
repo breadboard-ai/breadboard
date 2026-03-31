@@ -23,48 +23,29 @@ from __future__ import annotations
 import json
 import logging
 import mimetypes
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, cast
+from typing import TYPE_CHECKING, Any, cast
+
+from .file_system_protocol import (
+    FileDescriptor,
+    FileSystemSnapshot,
+    SystemFileGetter,
+    file_descriptor_to_part,
+    DEFAULT_EXTENSION,
+    DEFAULT_MIME_TYPE,
+    KNOWN_TYPES,
+)
 
 if TYPE_CHECKING:
     from .sheet_manager import SheetManager
 
-# Ensure common MIME types are registered
-mimetypes.add_type("text/markdown", ".md")
-mimetypes.add_type("text/csv", ".csv")
-
-KNOWN_TYPES = ["audio", "video", "image", "text"]
-DEFAULT_EXTENSION = "txt"
-DEFAULT_MIME_TYPE = "text/plain"
-
-
-@dataclass
-class FileDescriptor:
-    """Describes a file stored in the agent file system."""
-
-    data: str
-    mime_type: str
-    type: str  # "text", "inlineData", "fileData", "storedData"
-    title: str | None = None
-    resource_key: str | None = None
-
-
-@dataclass
-class FileSystemSnapshot:
-    """Serializable snapshot of AgentFileSystem state.
-
-    Contains everything needed to reconstruct an ``AgentFileSystem``.
-    Transient state (system file getters, sheet manager) is re-attached
-    by the caller after reconstruction.
-    """
-
-    files: dict[str, FileDescriptor]
-    routes: dict[str, str]
-    file_count: int
-
-
-SystemFileGetter = Callable[[], str | dict[str, str]]
-"""A callable that returns file content or an error dict."""
+# Re-export for backward compatibility — existing code imports these
+# from agent_file_system.
+__all__ = [
+    "AgentFileSystem",
+    "FileDescriptor",
+    "FileSystemSnapshot",
+    "SystemFileGetter",
+]
 
 
 class AgentFileSystem:
@@ -443,40 +424,7 @@ class AgentFileSystem:
 
     def _file_to_part(self, file: FileDescriptor) -> dict[str, Any]:
         """Convert a FileDescriptor to a Gemini data part dict."""
-        if file.type == "fileData":
-            return {
-                "fileData": {
-                    "fileUri": file.data,
-                    "mimeType": file.mime_type,
-                    **(
-                        {"resourceKey": file.resource_key}
-                        if file.resource_key
-                        else {}
-                    ),
-                }
-            }
-        if file.type == "inlineData":
-            return {
-                "inlineData": {
-                    "data": file.data,
-                    "mimeType": file.mime_type,
-                    **({"title": file.title} if file.title else {}),
-                }
-            }
-        if file.type == "storedData":
-            return {
-                "storedData": {
-                    "handle": file.data,
-                    "mimeType": file.mime_type,
-                    **(
-                        {"resourceKey": file.resource_key}
-                        if file.resource_key
-                        else {}
-                    ),
-                }
-            }
-        # Default: text
-        return {"text": file.data}
+        return file_descriptor_to_part(file)
 
     def _find_existing_by_handle(self, data: str) -> str | None:
         """Find an existing path with the same data handle/URI."""
