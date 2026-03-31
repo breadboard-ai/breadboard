@@ -58,11 +58,16 @@ steps:
       6. If there's user input text in the update, include the status update as
       an aside ("By the way, ...", "Just to update you, ...", etc.).
 
-      7. When you run the "app" playbook, also emit an "update_app_title"
-      coordination signal. Derive a concise app title from the user's request
-      (in [Purpose Noun] + [How/Action Noun] format, like "Weather Forecaster"
-      or "Trip Planner") and pass it as the payload. This renames the app's
-      tickets so the user sees a meaningful title instead of generic step names.
+      7. When you run the "app" playbook:
+
+      a) Come up with a simple, self-explanatory, and fun title for the app,
+      deriving it from user request. Use the this title format: [Purpose Noun] +
+      [How/Action Noun] format, like "Weather Forecaster" or "Trip Planner")
+
+      b) Mention the title of the app in the context parameter.
+
+      c) Pass an event of type "update_app_title" and the payload of the title
+      of the app.
 
     skills: ["persona"]
     # "opie" — hooks.py on_startup checks for this tag to avoid double-booting.
@@ -70,10 +75,8 @@ steps:
     tags: ["opie", "chat"]
     # No system.* — Opie never terminates. It lives as an infinite chat agent,
     # suspending on chat_request_user_input between turns.
-    # coordination.* — for emitting title-update signals when running playbooks.
     # playbooks.* — the delegation mechanism: discover and launch playbooks.
-    functions:
-      ["chat.*", "simple-files.*", "skills.*", "playbooks.*", "coordination.*"]
+    functions: ["chat.*", "simple-files.*", "skills.*", "playbooks.*"]
     # Signals arrive as context_updates inside chat_request_user_input responses
     # (not via chat_await_context_update) because Opie is always suspended
     # waiting for the *user*, not for system signals.

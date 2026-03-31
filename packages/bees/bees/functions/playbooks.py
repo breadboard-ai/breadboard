@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from opal_backend.function_definition import (
     FunctionGroup,
@@ -20,6 +20,7 @@ from opal_backend.function_definition import (
 )
 
 from bees.playbook import PlaybookAborted, list_playbooks, load_playbook, run_playbook
+from bees.ticket import Ticket, create_ticket
 
 __all__ = ["get_playbooks_function_group"]
 
@@ -31,7 +32,10 @@ _DECLARATIONS_DIR = Path(__file__).resolve().parent.parent / "declarations"
 _LOADED = load_declarations("playbooks", declarations_dir=_DECLARATIONS_DIR)
 
 
-def _make_handlers(on_playbook_run: Any | None = None) -> dict[str, Any]:
+def _make_handlers(
+    on_playbook_run: Any | None = None,
+    on_coordination_emit: Callable[[Ticket], None] | None = None,
+) -> dict[str, Any]:
     """Build the handler map for the playbooks function group."""
 
     async def playbooks_list(
@@ -100,6 +104,22 @@ def _make_handlers(on_playbook_run: Any | None = None) -> dict[str, Any]:
         if on_playbook_run:
             on_playbook_run(tickets)
 
+        # Emit starting events as run-scoped coordination tickets.
+        run_id = tickets[0].metadata.playbook_run_id if tickets else None
+        for event in args.get("events", []):
+            signal_type = event.get("type", "")
+            if not signal_type:
+                continue
+            coord = create_ticket(
+                "",
+                kind="coordination",
+                signal_type=signal_type,
+                context=event.get("payload", ""),
+                playbook_run_id=run_id,
+            )
+            if on_coordination_emit:
+                on_coordination_emit(coord)
+
         return {
             "playbook": name,
             "tickets_created": len(tickets),
@@ -119,8 +139,9 @@ def _make_handlers(on_playbook_run: Any | None = None) -> dict[str, Any]:
 
 
 def get_playbooks_function_group(
-    on_playbook_run: Any | None = None
+    on_playbook_run: Any | None = None,
+    on_coordination_emit: Callable[[Ticket], None] | None = None,
 ) -> FunctionGroup:
     """Build a FunctionGroup with playbooks_list and playbooks_run_playbook."""
-    handlers = _make_handlers(on_playbook_run)
+    handlers = _make_handlers(on_playbook_run, on_coordination_emit)
     return assemble_function_group(_LOADED, handlers)

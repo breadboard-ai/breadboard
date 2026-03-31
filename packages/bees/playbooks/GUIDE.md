@@ -488,10 +488,21 @@ steps:
       - type: update_app_title
 ```
 
-When another agent emits `coordination_emit(signal_type="update_app_title",
-context="Grocery Tracker")`, the hook renames the ticket from "UI Generator"
-to "Grocery Tracker" and eats the signal — the agent continues working
-without interruption.
+When the caller uses the `events` parameter on `playbooks_run_playbook`, each
+event is emitted as a coordination ticket scoped to the new run. Only tickets
+in that specific run receive the signal:
+
+```
+playbooks_run_playbook(
+  name="app",
+  context="Build a grocery list tracker",
+  events=[{type: "update_app_title", payload: "Grocery Tracker"}]
+)
+```
+
+The hook renames the run's tickets from "UI Generator" to "Grocery Tracker"
+and eats the signal — the agent continues working without interruption.
+If a second app playbook is running concurrently, its tickets are unaffected.
 
 ### `on_run_playbook(context: str | None) → str | None`
 
