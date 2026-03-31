@@ -25,7 +25,7 @@ import json
 import logging
 from typing import Any, cast
 
-from ..agent_file_system import AgentFileSystem
+from ..file_system_protocol import FileSystem
 from ..function_definition import (
     FunctionGroup,
     StatusUpdateCallback,
@@ -58,7 +58,7 @@ _LOADED = load_declarations("memory")
 def _make_handlers(
     *,
     sheet_manager: SheetManager,
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     task_tree_manager: TaskTreeManager | None = None,
 ) -> dict[str, Any]:
     """Build handler map for memory functions."""
@@ -199,7 +199,7 @@ def _make_handlers(
 def get_memory_function_group(
     *,
     sheet_manager: SheetManager,
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     task_tree_manager: TaskTreeManager | None = None,
 ) -> FunctionGroup:
     """Build a FunctionGroup with all memory functions.

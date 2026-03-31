@@ -135,6 +135,7 @@ async def run(
         file_system: Optional pre-built file system.  When provided,
             used instead of creating a new ``AgentFileSystem``.  This
             is the injection point for disk-backed implementations.
+            Defaults to ``AgentFileSystem()`` when ``None``.
 
     Yields:
         Typed ``AgentEvent`` instances.
@@ -415,7 +416,7 @@ async def _resume_precondition(
     backend: BackendClient,
     resolved_flags: dict[str, Any],
     sheet_manager: "SheetManager | None",
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     task_tree_manager: TaskTreeManager,
 ) -> list[dict[str, Any]]:
     """Handle resume from a precondition suspend (e.g. consent).
@@ -493,7 +494,7 @@ async def _resume_precondition(
 
 async def _process_chat_response(
     func_name: str, response: dict[str, Any],
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
 ) -> dict[str, Any]:
     """Process a chat function response before injecting into contents.
 
@@ -503,7 +504,7 @@ async def _process_chat_response(
     This mirrors the TS handler logic (chat.ts L121-131):
     1. Check for the skip sentinel (``__skipped__``).
     2. Run LLMContent through ``content_to_pidgin_string`` to register
-       binary parts (images, file uploads) in the AgentFileSystem and
+       binary parts (images, file uploads) in the file system and
        produce pidgin text with ``<file>`` tags.
     3. Return ``{"user_input": pidgin_text}`` for the model.
 
@@ -552,7 +553,7 @@ async def _get_singleton_cache_name(
 def _build_function_groups(
     *,
     controller: LoopController,
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     task_tree_manager: TaskTreeManager,
     backend: BackendClient,
     flags: dict[str, Any],

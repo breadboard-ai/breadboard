@@ -32,7 +32,7 @@ from ..function_definition import (
 from ..events import WaitForInputEvent, WaitForChoiceEvent, ChoiceItem
 from ..suspend import SuspendError
 from ..task_tree_manager import TaskTreeManager
-from ..agent_file_system import AgentFileSystem
+from ..file_system_protocol import FileSystem
 from ..pidgin import from_pidgin_string
 
 
@@ -70,7 +70,7 @@ _LOADED = load_declarations("chat")
 def _make_handlers(
     *,
     task_tree_manager: TaskTreeManager,
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     on_chat_entry: ChatEntryCallback = None,
 ) -> dict[str, Any]:
     """Build handler map for chat functions."""
@@ -186,7 +186,7 @@ def _make_handlers(
 def get_chat_function_group(
     *,
     task_tree_manager: TaskTreeManager,
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     on_chat_entry: ChatEntryCallback = None,
 ) -> FunctionGroup:
     """Build a FunctionGroup with all chat functions.

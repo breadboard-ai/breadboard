@@ -358,7 +358,7 @@ class SheetManager:
     async def read_sheet_as_text(self, sheet_name: str) -> str | None:
         """Read an entire sheet and return as JSON text.
 
-        Used by ``AgentFileSystem`` to serve ``/mnt/memory/{name}`` paths.
+        Used by the file system to serve ``memory/{name}`` paths.
         Returns ``None`` if no spreadsheet exists.
         """
         sid = await self._check_spreadsheet_id()
