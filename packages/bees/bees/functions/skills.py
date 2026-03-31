@@ -75,7 +75,7 @@ def scan_skills(
     Args:
         base_dir: Disk path to the bees directory.
         vfs_prefix: VFS path prefix (default ``"skills"``). Files are
-            written to ``/mnt/{vfs_prefix}/{skill_dir_name}/SKILL.md``.
+            written to ``{vfs_prefix}/{skill_dir_name}/SKILL.md``.
 
     Returns:
         A ``(listing, initial_files)`` tuple:
@@ -103,7 +103,7 @@ def scan_skills(
 
         dir_name = child.name
         vfs_name = f"{vfs_prefix}/{dir_name}/SKILL.md"
-        vfs_path = f"/mnt/{vfs_name}"
+        vfs_path = vfs_name
 
         skill = SkillInfo(
             name=meta.get("name", dir_name),

@@ -113,13 +113,13 @@ code in your response.**
 
 ## Component Library
 
-Before generating sub-components, check `/mnt/library/` for existing components
+Before generating sub-components, check `library/` for existing components
 from previous runs. Each subdirectory is a previous run, containing its
 `App.jsx` and `components/*.jsx`.
 
 **Reuse workflow:**
 
-1. Use `system_read_text_from_file` to list `/mnt/library/` and browse available
+1. Use `system_read_text_from_file` to list `library/` and browse available
    components.
 2. If a component matches what you need (e.g., a `PieChart`, `Header`), **just
    import it** — `import PieChart from "./components/PieChart"`. You do NOT need

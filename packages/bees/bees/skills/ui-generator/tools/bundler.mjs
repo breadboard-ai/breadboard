@@ -12,7 +12,7 @@
  * `bundle.js` + `bundle.css` to the same directory.
  *
  * Usage (via execute_bash):
- *   node /mnt/skills/ui-generator/tools/bundler.mjs
+ *   node skills/ui-generator/tools/bundler.mjs
  *
  * Entry point: App.jsx in the current directory.
  * React is provided by the iframe runtime — not bundled here.
