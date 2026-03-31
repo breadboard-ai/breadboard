@@ -60,18 +60,22 @@ sync hacks.
 
 ---
 
-### Phase 3 — Wire Bees + Delete Hacks
+### Phase 3 — Wire Bees + Delete Hacks ✅
 
 🎯 **Objective**: `npm run test -w packages/bees` passes with
 `DiskFileSystem` as the default, sandbox sync is deleted, and a
 full ticket drain round-trip works end-to-end.
 
-- [ ] Wire `DiskFileSystem` in `session.py` (`run_session` / `resume_session`)
-- [ ] Delete `_sync_agent_fs_to_disk` / `_sync_disk_to_agent_fs` from `sandbox.py`
-- [ ] Delete `/mnt/` path translation from `simple_files.py`
-- [ ] Delete skill file mirroring hack from `session.py`
-- [ ] Delete or simplify `extract_files()` in `session.py`
-- [ ] Update `test_sandbox_sync.py` to use disk FS directly
+- [x] Wire `DiskFileSystem` in `session.py` (`run_session` / `resume_session`)
+- [x] Seed skills directly to disk via `disk_fs.write()` (replaces `initial_files`)
+- [x] Delete `_sync_agent_fs_to_disk` / `_sync_disk_to_agent_fs` from `sandbox.py`
+- [x] Delete `_is_binary` / `_content_hash` helpers from `sandbox.py`
+- [x] Delete `/mnt/` path translation wrappers from `simple_files.py`
+- [x] Delete skill file mirroring hack from `session.py`
+- [x] Simplify `extract_files()` to handle both bare and legacy paths
+- [x] Delete `test_sandbox_sync.py` (tested deleted sync code)
+- [x] Update skill SKILL.md files to use bare paths (no `/mnt/`)
+- [x] All tests pass: 620 total (537 opal-backend + 36 disk FS + 47 bees)
 
 ---
 

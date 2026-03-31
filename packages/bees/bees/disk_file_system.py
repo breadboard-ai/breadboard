@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 _BINARY_SNIFF_BYTES = 8 * 1024  # scan first 8 KB for null bytes
 _SKIP_DIRS = {"node_modules", "__pycache__"}
+_MNT_PREFIX = "/mnt/"
 
 
 def _is_binary(path: Path) -> bool:
@@ -46,6 +47,17 @@ def _is_binary(path: Path) -> bool:
         return b"\x00" in chunk
     except OSError:
         return False
+
+
+def _strip_mnt(path: str) -> str:
+    """Strip the ``/mnt/`` prefix from a path if present.
+
+    Callers in opal-backend use ``/mnt/system/…`` constants.
+    DiskFileSystem stores everything with bare relative paths.
+    """
+    if path.startswith(_MNT_PREFIX):
+        return path[len(_MNT_PREFIX):]
+    return path
 
 
 class DiskFileSystem:
@@ -70,8 +82,13 @@ class DiskFileSystem:
     # ---- Public API ----
 
     def add_system_file(self, path: str, getter: SystemFileGetter) -> None:
-        """Register a virtual system file backed by a getter function."""
-        self._system_files[path] = getter
+        """Register a virtual system file backed by a getter function.
+
+        Normalizes ``/mnt/``-prefixed paths to bare relative paths so
+        callers in opal-backend (which use the legacy path constant)
+        work transparently.
+        """
+        self._system_files[_strip_mnt(path)] = getter
 
     def overwrite(self, name: str, data: str) -> str:
         """Write (or overwrite) a named text file.  Returns the path."""
@@ -133,15 +150,13 @@ class DiskFileSystem:
 
         Returns a list of Gemini data parts, or an error dict.
         """
+        normalized = _strip_mnt(path)
+
         # Check system files first.
-        if path in self._system_files:
-            return self._get_system_file(path)
+        if normalized in self._system_files:
+            return self._get_system_file(normalized)
 
-        # Check for system/ prefix pattern.
-        if path.startswith("system/") and path in self._system_files:
-            return self._get_system_file(path)
-
-        disk_path = self._work_dir / path
+        disk_path = self._work_dir / normalized
         if not disk_path.is_file():
             return {"$error": f'file "{path}" not found'}
 

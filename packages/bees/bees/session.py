@@ -15,6 +15,7 @@ import base64
 import json
 import os
 import sys
+import tempfile
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -45,6 +46,7 @@ from bees.functions.sandbox import get_sandbox_function_group_factory
 from bees.functions.playbooks import get_playbooks_function_group
 from bees.functions.chat import get_chat_function_group_factory
 from bees.functions.coordination import get_coordination_function_group
+from bees.disk_file_system import DiskFileSystem
 
 # Scan skills once at import time.
 _BEES_DIR = Path(__file__).resolve().parent
@@ -263,8 +265,8 @@ def extract_files(
     """Extract agent file system files to disk.
 
     Writes each file from ``CompleteEvent.result.intermediate`` into
-    ``output_dir`` as bare filenames (``/mnt/`` prefix stripped). Skips
-    system files (``/mnt/system/*``).
+    ``output_dir``. Skips system files (``system/*`` or legacy
+    ``/mnt/system/*``).
 
     Returns a manifest of ``[{path, mimeType, localPath}]``.
     """
@@ -278,11 +280,10 @@ def extract_files(
         content = file_data.get("content", {})
 
         # Skip system files — they are virtual getters, not real files.
-        if path.startswith("/mnt/system/"):
+        if path.startswith("system/") or path.startswith("/mnt/system/"):
             continue
 
-        # Strip /mnt/ prefix so files land at output_dir/foo.md, not
-        # output_dir/mnt/foo.md — consistent with what the sandbox sees.
+        # Handle both bare paths (DiskFileSystem) and legacy /mnt/ paths.
         _MNT = "/mnt/"
         rel = path[len(_MNT):] if path.startswith(_MNT) else path.lstrip("/")
         local_path = output_dir / rel
@@ -387,15 +388,13 @@ async def run_session(
 
     session_listing, session_files = _filter_skills(allowed_skills)
 
-    # Mirror skill tools to the real filesystem so execute_bash can use them.
-    if ticket_dir:
-        for k, v in session_files.items():
-            if "/tools/" in k:
-                _MNT = "/mnt/"
-                rel_path = k[len(_MNT):] if k.startswith(_MNT) else k.lstrip("/")
-                local_path = ticket_dir / "filesystem" / rel_path
-                local_path.parent.mkdir(parents=True, exist_ok=True)
-                local_path.write_text(v, encoding="utf-8")
+    # Create disk-backed file system.
+    work_dir = ticket_dir / "filesystem" if ticket_dir else Path(tempfile.mkdtemp(prefix="bees-fs-"))
+    disk_fs = DiskFileSystem(work_dir)
+
+    # Seed initial files (skills) directly to disk.
+    for name, content in session_files.items():
+        disk_fs.write(name, content)
 
     await new_session(
         session_id=session_id,
@@ -410,7 +409,7 @@ async def run_session(
             get_simple_files_function_group_factory(),
             get_skills_function_group(available_skills=session_listing),
             get_sandbox_function_group_factory(
-                work_dir=ticket_dir / "filesystem" if ticket_dir else None,
+                work_dir=work_dir,
             ),
             get_playbooks_function_group(on_playbook_run=on_playbook_run),
             get_coordination_function_group(on_coordination_emit=on_coordination_emit),
@@ -418,9 +417,9 @@ async def run_session(
                 on_chat_entry=_make_chat_log_writer(ticket_dir) if ticket_dir else None,
             ),
         ],
-        initial_files=session_files,
         function_filter=function_filter,
         model=model,
+        file_system=disk_fs,
     )
 
     queue = subscribers.subscribe(session_id)
@@ -537,6 +536,11 @@ async def resume_session(
 
     session_listing, _ = _filter_skills(allowed_skills)
 
+    # Create disk-backed file system — files are already on disk from
+    # the previous run, so no seeding needed.
+    work_dir = ticket_dir / "filesystem"
+    disk_fs = DiskFileSystem(work_dir)
+
     # new_session creates the _SessionContext entry and a fresh session.
     # We must set resume_id/status AFTER this call because create()
     # replaces any existing session state.
@@ -553,7 +557,7 @@ async def resume_session(
             get_simple_files_function_group_factory(),
             get_skills_function_group(available_skills=session_listing),
             get_sandbox_function_group_factory(
-                work_dir=ticket_dir / "filesystem",
+                work_dir=work_dir,
             ),
             get_playbooks_function_group(on_playbook_run=on_playbook_run),
             get_coordination_function_group(on_coordination_emit=on_coordination_emit),
@@ -561,7 +565,7 @@ async def resume_session(
                 on_chat_entry=_make_chat_log_writer(ticket_dir),
             ),
         ],
-        # initial_files not needed on resume — already in FS snapshot.
+        file_system=disk_fs,
     )
 
     # Now set up the session as if it had been suspended.
