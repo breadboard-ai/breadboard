@@ -50,11 +50,12 @@ class InteractionState:
     # the client's response is wrapped as a functionResponse for this call.
     function_call_part: dict[str, Any]
 
-    # Snapshot of the agent file system at suspend time.
-    file_system: FileSystemSnapshot
-
     # Snapshot of the task tree at suspend time.
     task_tree: TaskTreeSnapshot
+
+    # Snapshot of the agent file system at suspend time.
+    # ``None`` when the file system is disk-backed (the disk is the state).
+    file_system: FileSystemSnapshot | None = None
 
     # Feature flags active at the time of suspend. Restored on resume
     # so the agent continues with the same configuration.
@@ -93,17 +94,20 @@ class InteractionState:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to a JSON-serializable dict."""
-        return {
-            "contents": self.contents,
-            "function_call_part": self.function_call_part,
-            "file_system": {
+        fs_dict: dict[str, Any] | None = None
+        if self.file_system is not None:
+            fs_dict = {
                 "files": {
                     path: asdict(fd)
                     for path, fd in self.file_system.files.items()
                 },
                 "routes": self.file_system.routes,
                 "file_count": self.file_system.file_count,
-            },
+            }
+        return {
+            "contents": self.contents,
+            "function_call_part": self.function_call_part,
+            "file_system": fs_dict,
             "task_tree": {
                 "tree": self.task_tree.tree,
             },
@@ -119,18 +123,21 @@ class InteractionState:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "InteractionState":
         """Reconstruct from a dict produced by ``to_dict()``."""
-        fs_data = data["file_system"]
-        return cls(
-            contents=data["contents"],
-            function_call_part=data["function_call_part"],
-            file_system=FileSystemSnapshot(
+        fs_data = data.get("file_system")
+        fs_snapshot: FileSystemSnapshot | None = None
+        if fs_data is not None:
+            fs_snapshot = FileSystemSnapshot(
                 files={
                     path: FileDescriptor(**fd)
                     for path, fd in fs_data["files"].items()
                 },
                 routes=fs_data["routes"],
                 file_count=fs_data["file_count"],
-            ),
+            )
+        return cls(
+            contents=data["contents"],
+            function_call_part=data["function_call_part"],
+            file_system=fs_snapshot,
             task_tree=TaskTreeSnapshot(
                 tree=data["task_tree"]["tree"],
             ),

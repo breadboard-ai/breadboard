@@ -36,6 +36,7 @@ from typing import Any, AsyncIterator, TypedDict, cast
 
 from .agent_events import AgentEventSink, build_hooks_from_sink
 from .agent_file_system import AgentFileSystem
+from .file_system_protocol import FileSystem, file_descriptor_to_part
 from .backend_client import BackendClient
 from .drive_operations_client import DriveOperationsClient
 from .events import (
@@ -76,7 +77,7 @@ class _SessionHooksImpl:
     """Concrete implementation of the SessionHooks protocol."""
 
     controller: LoopController
-    file_system: AgentFileSystem
+    file_system: FileSystem
     task_tree_manager: TaskTreeManager
 
 
@@ -108,6 +109,7 @@ async def run(
     function_filter: list[str] | None = None,
     initial_files: dict[str, str] | None = None,
     model: str | None = None,
+    file_system: FileSystem | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Start a new agent run.
 
@@ -117,7 +119,7 @@ async def run(
     The caller provides structured ``segments`` (text, asset, input, tool).
     ``run()`` owns the full pipeline: segments → ``to_pidgin`` →
     objective → loop. Data parts from asset/input segments are registered
-    in the same ``AgentFileSystem`` that the loop uses.
+    in the same file system that the loop uses.
 
     Args:
         segments: Structured segments from the wire protocol.
@@ -130,13 +132,17 @@ async def run(
             Factories are called with a ``SessionHooks`` instance
             that provides access to the session's controller,
             file system, and task tree manager.
+        file_system: Optional pre-built file system.  When provided,
+            used instead of creating a new ``AgentFileSystem``.  This
+            is the injection point for disk-backed implementations.
 
     Yields:
         Typed ``AgentEvent`` instances.
     """
     resolved_flags = flags or {}
 
-    file_system = AgentFileSystem()
+    if file_system is None:
+        file_system = AgentFileSystem()
 
     # Seed the file system with any initial files provided by the caller
     # (e.g. skill definitions placed at /mnt/skills/*).
@@ -244,6 +250,7 @@ async def resume(
     drive: DriveOperationsClient | None = None,
     extra_groups: list[FunctionGroup | FunctionGroupFactory] | None = None,
     model: str | None = None,
+    file_system: FileSystem | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Resume a suspended agent run.
 
@@ -263,6 +270,9 @@ async def resume(
         backend: Backend client for all API calls.
         store: Interaction store for suspend/resume state.
         drive: Optional Drive/Sheets operations client. Reserved for future use.
+        file_system: Optional pre-built file system.  When provided,
+            used instead of reconstructing from the snapshot.  This
+            is the injection point for disk-backed implementations.
 
     Yields:
         Typed ``AgentEvent`` instances.
@@ -274,8 +284,10 @@ async def resume(
         yield ErrorEvent(message=f"Unknown interaction ID: {interaction_id}")
         return
 
-    # Hydrate live objects from snapshots.
-    file_system = AgentFileSystem.from_snapshot(state.file_system)
+    # Hydrate live objects from snapshots, unless a file system was
+    # injected (e.g. disk-backed FS where the disk is the state).
+    if file_system is None:
+        file_system = AgentFileSystem.from_snapshot(state.file_system)
     task_tree_manager = TaskTreeManager.from_snapshot(
         state.task_tree, file_system,
     )
@@ -701,7 +713,7 @@ async def _stream_loop(
     *,
     run_args: AgentRunArgs,
     controller: LoopController,
-    file_system: AgentFileSystem,
+    file_system: FileSystem,
     task_tree_manager: TaskTreeManager,
     backend: BackendClient,
     store: InteractionStore,
@@ -767,7 +779,7 @@ async def _stream_loop(
                     intermediate = [
                         FileData(
                             path=path,
-                            content=file_system._file_to_part(desc),
+                            content=file_descriptor_to_part(desc),
                         )
                         for path, desc in file_system.files.items()
                     ]

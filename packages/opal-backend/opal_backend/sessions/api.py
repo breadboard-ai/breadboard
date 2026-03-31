@@ -18,6 +18,7 @@ from typing import Any, AsyncIterator, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..function_definition import FunctionGroup, FunctionGroupFactory
+    from ..file_system_protocol import FileSystem
 
 from ..events import (
     AgentEvent,
@@ -104,6 +105,7 @@ class _SessionContext:
     function_filter: list[str] | None = None
     initial_files: dict[str, str] | None = None
     model: str | None = None
+    file_system: "FileSystem | None" = None
 
 
 # Module-level registries.
@@ -130,6 +132,7 @@ async def new_session(
     function_filter: list[str] | None = None,
     initial_files: dict[str, str] | None = None,
     model: str | None = None,
+    file_system: "FileSystem | None" = None,
 ) -> str:
     """Create a session and stash its context for start_session().
 
@@ -158,6 +161,7 @@ async def new_session(
         function_filter=function_filter,
         initial_files=initial_files,
         model=model,
+        file_system=file_system,
     )
     return session_id
 
@@ -229,6 +233,7 @@ async def start_session(
             function_filter=ctx.function_filter,
             initial_files=ctx.initial_files,
             model=ctx.model,
+            file_system=ctx.file_system,
         ),
         store=store,
         subscribers=subscribers,
@@ -270,6 +275,7 @@ async def resume_session(
             drive=ctx.drive,
             extra_groups=ctx.extra_groups or None,
             model=ctx.model,
+            file_system=ctx.file_system,
         ),
         store=store,
         subscribers=subscribers,
