@@ -492,6 +492,30 @@ export const styles = css`
     font-size: 0.75rem;
   }
 
+  .delivered-to {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .delivered-to-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .delivered-to-id {
+    padding: 2px 6px;
+    background: #1e293b;
+    color: #94a3b8;
+    border-radius: 4px;
+    font-family: "Google Mono", monospace;
+    font-size: 0.7rem;
+  }
+
   @keyframes pulse {
     0% {
       opacity: 1;

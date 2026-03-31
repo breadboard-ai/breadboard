@@ -27,6 +27,7 @@ export interface TicketData {
   kind?: string;
   signal_type?: string;
   context?: string;
+  delivered_to?: string[];
   chat_history?: Array<{ role: string; text: string }>;
 }
 
