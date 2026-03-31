@@ -59,8 +59,13 @@ class BeesApp extends SignalWatcher(LitElement) {
   private deriveJobs(): JobGroup[] {
     const tickets = this.scaInst.controller.global.tickets;
     const map = new Map<string, TicketData[]>();
+    const coordinationTickets: TicketData[] = [];
 
     for (const t of tickets) {
+      if (t.kind === "coordination") {
+        coordinationTickets.push(t);
+        continue;
+      }
       const jobId = t.playbook_run_id || t.id;
       const list = map.get(jobId) || [];
       list.push(t);
@@ -99,6 +104,29 @@ class BeesApp extends SignalWatcher(LitElement) {
         tickets: group,
         createdAt: first.created_at || new Date().toISOString(),
         status,
+      });
+    }
+
+    // Group all coordination tickets into a single "Event Bus" entry.
+    if (coordinationTickets.length > 0) {
+      coordinationTickets.sort((a, b) =>
+        (a.created_at ?? "").localeCompare(b.created_at ?? "")
+      );
+
+      let busStatus: JobGroup["status"] = "completed";
+      if (coordinationTickets.some((t) => t.status === "available")) {
+        busStatus = "running";
+      } else if (coordinationTickets.some((t) => t.status === "failed")) {
+        busStatus = "failed";
+      }
+
+      jobs.push({
+        id: "__event_bus__",
+        title: "Event Bus",
+        tickets: coordinationTickets,
+        createdAt:
+          coordinationTickets[0].created_at || new Date().toISOString(),
+        status: busStatus,
       });
     }
 
@@ -239,7 +267,9 @@ class BeesApp extends SignalWatcher(LitElement) {
             <div class="job-detail-badge ${job.status}">${job.status}</div>
           </div>
           <div class="job-detail-meta">
-            <span>ID: <code class="mono">${job.id.slice(0, 13)}...</code></span>
+            ${job.id === "__event_bus__"
+              ? html`<span>${job.tickets.length} event${job.tickets.length === 1 ? "" : "s"}</span>`
+              : html`<span>ID: <code class="mono">${job.id.slice(0, 13)}...</code></span>`}
             <span>Started: ${new Date(job.createdAt).toLocaleString()}</span>
           </div>
         </div>
@@ -274,6 +304,19 @@ class BeesApp extends SignalWatcher(LitElement) {
                         >`
                       : nothing}
                   </div>
+                  ${t.delivered_to && t.delivered_to.length > 0
+                    ? html`
+                        <div class="delivered-to">
+                          <span class="delivered-to-label">Delivered to</span>
+                          ${t.delivered_to.map(
+                            (id) =>
+                              html`<span class="delivered-to-id"
+                                >${id.slice(0, 8)}</span
+                              >`
+                          )}
+                        </div>
+                      `
+                    : nothing}
                 `
               : html`
                   <div class="step-objective">${t.objective || t.context}</div>
