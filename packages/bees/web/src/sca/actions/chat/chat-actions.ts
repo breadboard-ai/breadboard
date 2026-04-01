@@ -138,6 +138,8 @@ async function processTicketTransitions(
   tickets: TicketData[]
 ) {
   const { controller } = bind;
+  const activeThreadId = controller.chat.activeThreadId;
+  let activeThreadCompleted = false;
 
   for (const thread of threads) {
     for (const ticketId of thread.ticketIds) {
@@ -150,6 +152,14 @@ async function processTicketTransitions(
 
       if (currentStatus !== previousStatus) {
         controller.chat.previousTicketStatuses.set(ticketId, currentStatus);
+
+        // Track completion transitions on the active thread.
+        if (
+          thread.id === activeThreadId &&
+          (ticket.status === "completed" || ticket.status === "failed")
+        ) {
+          activeThreadCompleted = true;
+        }
 
         // Suspended for User transition
         if (ticket.status === "suspended" && ticket.assignee === "user") {
@@ -211,6 +221,19 @@ async function processTicketTransitions(
           ];
         }
       }
+    }
+  }
+
+  // Auto-switch to Opie when the active non-Opie thread's run completes —
+  // keeps the user on a chat window where they can type.
+  if (
+    activeThreadCompleted &&
+    activeThreadId !== "opie"
+  ) {
+    const activeThread = threads.find((t) => t.id === activeThreadId);
+    if (activeThread && !activeThread.activeTicketId) {
+      await switchThreadSync("opie");
+      applyPromptState();
     }
   }
 }
