@@ -82,6 +82,7 @@ _session_deps = SessionDeps(
         httpx_client=httpx.AsyncClient(timeout=120.0),
         access_token=token,
         origin=origin,
+        gemini_key=GEMINI_KEY,
     ),
     drive_factory=lambda token: HttpDriveOperationsClient(
         httpx_client=httpx.AsyncClient(timeout=120.0),
@@ -210,6 +211,7 @@ class DevAgentBackend:
             httpx_client=httpx.AsyncClient(timeout=120.0),
             access_token=access_token,
             origin=origin,
+            gemini_key=GEMINI_KEY,
         )
         drive = HttpDriveOperationsClient(
             httpx_client=httpx.AsyncClient(timeout=120.0),
@@ -265,6 +267,7 @@ class DevAgentBackend:
                     httpx_client=httpx.AsyncClient(timeout=120.0),
                     access_token=access_token,
                     origin=origin,
+                    gemini_key=GEMINI_KEY,
                 ),
                 drive=HttpDriveOperationsClient(
                     httpx_client=httpx.AsyncClient(timeout=120.0),
