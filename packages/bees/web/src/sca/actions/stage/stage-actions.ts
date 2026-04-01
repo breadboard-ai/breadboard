@@ -8,6 +8,7 @@ import { asAction, ActionMode } from "../../coordination.js";
 import { makeAction } from "../binder.js";
 import { onTicketsUpdate } from "../chat/chat-triggers.js";
 import { onIframeNavigate } from "./stage-triggers.js";
+import { loadBundleAsync } from "../../utils/load-bundle.js";
 
 export const bind = makeAction();
 
@@ -16,35 +17,7 @@ let lastDigestUpdateId: string | null = null;
 let lastDigestBuildingId: string | null = null;
 let digestLoading = false;
 
-async function loadBundleAsync(ticketId: string) {
-  const { services } = bind;
-  const files = await services.api.listFiles(ticketId);
 
-  const jsFile = files.find((f) => f.endsWith(".js"));
-  if (!jsFile) {
-    console.error(`[opal-shell] No JS file found for ticket ${ticketId}`);
-    return;
-  }
-
-  const code = await services.api.getFile(ticketId, jsFile);
-  if (!code) {
-    console.error(
-      `[opal-shell] Failed to load ${jsFile} for ticket ${ticketId}`
-    );
-    return;
-  }
-
-  const cssFile = files.find((f) => f.endsWith(".css"));
-  const css = cssFile ? await services.api.getFile(ticketId, cssFile) : null;
-
-  await services.hostCommunication.send({
-    type: "render",
-    code,
-    css: css || undefined,
-    props: {},
-    assets: {},
-  });
-}
 
 export const processDigestUpdates = asAction(
   "Process Digest Updates",
@@ -53,7 +26,7 @@ export const processDigestUpdates = asAction(
     triggeredBy: () => onTicketsUpdate(bind),
   },
   async () => {
-    const { controller } = bind;
+    const { controller, services } = bind;
     const tickets = controller.global.tickets;
 
     const digestTicket = tickets.find(
@@ -102,7 +75,7 @@ export const processDigestUpdates = asAction(
           // For safety, we rely on the component firing a `load_bundle` action
           // when its iframe connects, OR we just await a small macro-task.
           await new Promise((r) => setTimeout(r, 100));
-          await loadBundleAsync(controller.stage.digestTicketId!);
+          await loadBundleAsync(controller.stage.digestTicketId!, services);
           digestLoading = false;
         }
       }
@@ -122,20 +95,68 @@ export const navigateToTicket = asAction(
     // Handle both IframeMessage and direct string payloads
     const ticketId = typeof detail === "string" ? detail : detail?.viewId;
     if (!ticketId) return;
-    const { controller } = bind;
+    const { controller, services } = bind;
 
     if (ticketId === "digest" && controller.stage.digestTicketId) {
       controller.stage.currentView = controller.stage.digestTicketId;
       await new Promise((r) => setTimeout(r, 100)); // wait for iframe mount
-      await loadBundleAsync(controller.stage.digestTicketId);
+      await loadBundleAsync(controller.stage.digestTicketId, services);
+      syncChatToStage(ticketId);
       return;
     }
 
     controller.stage.currentView = ticketId;
     await new Promise((r) => setTimeout(r, 100)); // wait for iframe mount
-    await loadBundleAsync(ticketId);
+    await loadBundleAsync(ticketId, services);
+    syncChatToStage(ticketId);
   }
 );
+
+/**
+ * When the stage navigates to a ticket, silently switch the chat
+ * thread to the one containing that ticket.
+ */
+function syncChatToStage(ticketId: string) {
+  const { controller, services } = bind;
+  const chat = controller.chat;
+
+  // "digest" navigation maps to the Opie thread.
+  if (ticketId === "digest") {
+    if (chat.activeThreadId !== "opie") {
+      chat.activeThreadId = "opie";
+      chat.visitedThreadIds.add("opie");
+      chat.pendingChoices = [];
+      chat.selectedChoiceIds = [];
+    }
+    return;
+  }
+
+  const matchingThread = chat.threads.find((t) =>
+    t.ticketIds.includes(ticketId)
+  );
+  if (!matchingThread || matchingThread.id === chat.activeThreadId) return;
+
+  chat.activeThreadId = matchingThread.id;
+  chat.visitedThreadIds.add(matchingThread.id);
+  chat.pendingChoices = [];
+  chat.selectedChoiceIds = [];
+
+  if (matchingThread.hasUnread) {
+    chat.threads = chat.threads.map((t) =>
+      t.id === matchingThread.id ? { ...t, hasUnread: false } : t
+    );
+  }
+
+  if (matchingThread.activeTicketId) {
+    services.hostCommunication.send({
+      type: "host.chat.switch",
+      payload: {
+        ticket_id: matchingThread.activeTicketId,
+        role: "user",
+      },
+    });
+  }
+}
 
 export const navigateToDigest = asAction(
   "Navigate To Digest",

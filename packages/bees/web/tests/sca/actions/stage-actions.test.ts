@@ -86,4 +86,96 @@ describe("Stage Actions", () => {
       assert.equal(controller.stage.currentView, "t-456");
     });
   });
+
+  describe("stage → chat sync", () => {
+    it("switches chat thread when navigating to a ticket belonging to a thread", async () => {
+      controller.chat.threads = [
+        {
+          id: "opie",
+          title: "Opie",
+          ticketIds: [],
+          activeTicketId: null,
+          hasUnread: false,
+        },
+        {
+          id: "run-1",
+          title: "My App",
+          ticketIds: ["t-123"],
+          activeTicketId: "t-123",
+          hasUnread: true,
+        },
+      ];
+      controller.chat.activeThreadId = "opie";
+
+      mock.method(services.api, "listFiles", async () => ["bundle.js"]);
+      mock.method(services.api, "getFile", async () => "console.log('js')");
+
+      await StageActions.navigateToTicket(
+        new CustomEvent("navigate", { detail: "t-123" })
+      );
+
+      assert.equal(controller.chat.activeThreadId, "run-1");
+      assert.ok(controller.chat.visitedThreadIds.has("run-1"));
+      // Unread flag should be cleared.
+      const thread = controller.chat.threads.find((t) => t.id === "run-1");
+      assert.equal(thread?.hasUnread, false);
+    });
+
+    it("does not change chat thread when no matching thread exists", async () => {
+      controller.chat.threads = [
+        {
+          id: "opie",
+          title: "Opie",
+          ticketIds: [],
+          activeTicketId: null,
+          hasUnread: false,
+        },
+      ];
+      controller.chat.activeThreadId = "opie";
+
+      mock.method(services.api, "listFiles", async () => ["bundle.js"]);
+      mock.method(services.api, "getFile", async () => "console.log('js')");
+
+      await StageActions.navigateToTicket(
+        new CustomEvent("navigate", { detail: "t-unknown" })
+      );
+
+      assert.equal(controller.chat.activeThreadId, "opie");
+    });
+
+    it("switches chat to Opie when navigating to digest", async () => {
+      controller.stage.digestTicketId = "t-digest";
+      controller.chat.threads = [
+        {
+          id: "opie",
+          title: "Opie",
+          ticketIds: [],
+          activeTicketId: null,
+          hasUnread: false,
+        },
+        {
+          id: "run-1",
+          title: "My App",
+          ticketIds: ["t-app"],
+          activeTicketId: "t-app",
+          hasUnread: false,
+        },
+      ];
+      controller.chat.activeThreadId = "run-1";
+
+      mock.method(services.api, "listFiles", async () => ["digest.js"]);
+      mock.method(
+        services.api,
+        "getFile",
+        async () => "console.log('digest')"
+      );
+
+      await StageActions.navigateToTicket(
+        new CustomEvent("navigate", { detail: "digest" })
+      );
+
+      assert.equal(controller.chat.activeThreadId, "opie");
+      assert.equal(controller.stage.currentView, "t-digest");
+    });
+  });
 });
