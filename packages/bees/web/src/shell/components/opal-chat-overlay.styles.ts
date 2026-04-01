@@ -229,6 +229,16 @@ export const styles = css`
     border-top: 1px solid var(--cg-color-outline-variant, #49454e);
     flex-shrink: 0;
   }
+  .chat-working-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--cg-color-on-surface-muted, #9a969e);
+    font-style: italic;
+  }
   .chat-input-area input {
     flex: 1;
     font-family: inherit;

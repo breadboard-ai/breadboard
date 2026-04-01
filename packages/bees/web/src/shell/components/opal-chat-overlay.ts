@@ -132,24 +132,36 @@ export class OpalChatOverlay extends SignalWatcher(LitElement) {
 
   #renderTextInput() {
     const chat = this.sca.controller.chat;
+    const disabled = this.#isInputDisabled;
+
+    if (disabled) {
+      const thread = chat.threads.find((t) => t.id === chat.activeThreadId);
+      const label =
+        chat.activeThreadId === "opie"
+          ? "Opie is thinking…"
+          : `Working on ${thread?.title ?? "a task"}…`;
+      return html`
+        <div class="chat-input-area">
+          <div class="chat-working-indicator">
+            <div class="spinner"></div>
+            <span>${label}</span>
+          </div>
+        </div>
+      `;
+    }
+
     return html`
       <div class="chat-input-area">
         <input
           type="text"
           placeholder="Type a message..."
           autocomplete="off"
-          ?disabled=${this.#isInputDisabled}
           .value=${chat.input}
           @input=${(e: Event) =>
             (chat.input = (e.target as HTMLInputElement).value)}
           @keydown=${this.#onChatKeyDown}
         />
-        <button
-          ?disabled=${this.#isInputDisabled}
-          @click=${() => this.#sendChat()}
-        >
-          Send
-        </button>
+        <button @click=${() => this.#sendChat()}>Send</button>
       </div>
     `;
   }
