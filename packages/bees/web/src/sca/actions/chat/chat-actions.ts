@@ -10,6 +10,7 @@ import type { TicketData } from "../../../data/types.js";
 import type { ChatThread, ChatMessage } from "../../types.js";
 import { onTicketsUpdate } from "./chat-triggers.js";
 import { extractPrompt, extractChoices } from "../../../utils.js";
+import { loadBundleAsync } from "../../utils/load-bundle.js";
 
 export const bind = makeAction();
 
@@ -99,7 +100,7 @@ export const deriveThreads = asAction(
       }
     }
 
-    processTicketTransitions(threads, tickets);
+    await processTicketTransitions(threads, tickets);
   }
 );
 
@@ -132,7 +133,7 @@ function restoreThreadHistory(thread: ChatThread, tickets: TicketData[]) {
   }
 }
 
-function processTicketTransitions(
+async function processTicketTransitions(
   threads: ChatThread[],
   tickets: TicketData[]
 ) {
@@ -168,7 +169,7 @@ function processTicketTransitions(
             !controller.chat.visitedThreadIds.has(thread.id)
             // Note: chatInput check removed, needs handling via action params if necessary
           ) {
-            switchThreadSync(thread.id);
+            await switchThreadSync(thread.id);
             applyPromptState();
           }
 
@@ -245,7 +246,7 @@ function applyPromptState() {
   }
 }
 
-function switchThreadSync(threadId: string) {
+async function switchThreadSync(threadId: string) {
   const { controller, services } = bind;
   if (controller.chat.activeThreadId === threadId) return;
 
@@ -268,6 +269,43 @@ function switchThreadSync(threadId: string) {
       payload: { ticket_id: thread.activeTicketId, role: "user" },
     });
   }
+
+  // Sync the stage canvas to match the active thread.
+  await syncStageToChat(threadId);
+}
+
+/**
+ * When the chat thread changes, update the stage canvas to show the
+ * corresponding app (or the digest for the Opie thread).
+ */
+async function syncStageToChat(threadId: string) {
+  const { controller, services } = bind;
+  const stage = controller.stage;
+
+  // Opie thread → show the digest.
+  if (threadId === "opie") {
+    if (stage.digestTicketId && stage.currentView !== stage.digestTicketId) {
+      stage.currentView = stage.digestTicketId;
+      await new Promise((r) => setTimeout(r, 100)); // wait for iframe mount
+      await loadBundleAsync(stage.digestTicketId, services);
+    }
+    return;
+  }
+
+  // App thread → show the app's bundle if the ticket has one.
+  const thread = controller.chat.threads.find((t) => t.id === threadId);
+  if (!thread?.activeTicketId) return;
+
+  const ticket = controller.global.tickets.find(
+    (t) => t.id === thread.activeTicketId
+  );
+  if (!ticket?.tags?.includes("bundle")) return;
+
+  if (stage.currentView !== thread.activeTicketId) {
+    stage.currentView = thread.activeTicketId;
+    await new Promise((r) => setTimeout(r, 100)); // wait for iframe mount
+    await loadBundleAsync(thread.activeTicketId, services);
+  }
 }
 
 // ── Manual Triggers (Bound to UI Elements) ──────────────────
@@ -278,7 +316,7 @@ export const switchThread = asAction(
   async (evt?: Event) => {
     if (!evt) return;
     const threadId = (evt as CustomEvent<string>).detail;
-    switchThreadSync(threadId);
+    await switchThreadSync(threadId);
     applyPromptState();
   }
 );
