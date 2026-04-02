@@ -17,8 +17,6 @@ let lastDigestUpdateId: string | null = null;
 let lastDigestBuildingId: string | null = null;
 let digestLoading = false;
 
-
-
 export const processDigestUpdates = asAction(
   "Process Digest Updates",
   {
@@ -105,6 +103,13 @@ export const navigateToTicket = asAction(
       return;
     }
 
+    // Ignore internal iframe navigation events (e.g. "selection_step") that
+    // don't correspond to a real ticket ID.
+    const targetTicket = controller.global.tickets.find(
+      (t) => t.id === ticketId
+    );
+    if (!targetTicket) return;
+
     controller.stage.currentView = ticketId;
     await new Promise((r) => setTimeout(r, 100)); // wait for iframe mount
     await loadBundleAsync(ticketId, services);
@@ -165,6 +170,9 @@ export const navigateToDigest = asAction(
     const { controller } = bind;
     if (controller.stage.digestTicketId) {
       await navigateToTicket(new CustomEvent("navigate", { detail: "digest" }));
+    } else {
+      controller.stage.currentView = "digest";
+      syncChatToStage("digest");
     }
   }
 );

@@ -89,63 +89,24 @@ steps:
       - type: playbook_complete
       - type: journey_update
 
-  digest:
-    title: Digest Generator
+  digest_manager:
+    title: Digest Manager
     objective: >
-      You maintain the user's personal digest — a curated React application that
-      presents their active apps as an editorial magazine-style experience.
+      You are the Digest Orchestrator. 
+      Your job is to listen for completed Map stages (`digest_tile_ready` signals) and trigger the synthesis and UI compilation pipeline.
 
-      Read the "editorial-designer" skill for layout rules and visual
-      constraints. Read the "ui-generator" skill for technical output format and
-      design token discipline.
-
-      Narrative style: curate the digest in terms of the user's life and goals,
-      not in terms of apps and features. Interpret app updates as reflections of
-      the user's current focus and priorities.
-
-      **Lifecycle**: Your very first action MUST be to call
-      chat_await_context_update and suspend. Do NOT generate any UI on your
-      initial boot.
-
-      Each time you wake up with a context update, it describes work that was
-      just completed or changed. Process it, then call chat_await_context_update
-      again. Repeat forever.
-
+      **Lifecycle**: Your very first action MUST be to call chat_await_context_update and suspend. 
+      
       **When you wake up with a context update**:
-
-      1. IMMEDIATELY emit a coordination signal by calling coordination_emit
-      with signal_type "digest_building" and a one-sentence summary of what
-      you're about to do (e.g. "Drafting your trip plan..."). This lets the user
-      know you're working before the heavy generation starts.
-
-      2. Then decide whether the update warrants a digest change — minor tweaks
-      may not need a refresh, but a new app or major result does.
-
-      **When creating the digest for the first time** (after receiving your
-      first real update): Generate the initial digest UI from scratch. Save the
-      React application as App.jsx, and write all styling to a separate
-      styles.css file.
-
-      **Subsequent updates**: If warranted, edit App.jsx and styles.css to
-      reflect the new state. If not, skip generation but still emit the
-      completion signal.
-
-      **After each generation or update**: Run the bundler by executing `node
-      $HOME/skills/ui-generator/tools/bundler.mjs` via execute_bash to produce
-      bundle.js and bundle.css. Then emit a coordination signal by calling
-      coordination_emit with signal_type "digest_update" and a brief summary of
-      what changed in the digest.
-    # No "chat" tag — the digest generator doesn't converse with the user.
-    # It suspends on chat_await_context_update, not chat_request_user_input.
-    # "bundle" — triggers on_ticket_done in hooks.py for auto-bundling App.jsx.
+      It means a new `digest_tile_ready` signal arrived.
+      
+      1. Use `coordination_emit` to emit `digest_building` with a summary (e.g. "Synthesizing your latest journey...").
+      2. Run the `atomic-analysis` playbook with `share_workspace: true`. Wait for it to complete. This worker will perform cross-journey analysis and write `analysis.json` to your shared workspace.
+      3. Run the `atomic-digest-ui-gen` playbook with `share_workspace: true`. Wait for it to complete. This worker will read the analytical insights and the digest tiles, render the final `App.jsx` and `styles.css`, and bundle them.
+      4. Emit a `digest_update` coordination signal.
+      5. Suspend via `chat_await_context_update`. Repeat forever.
+    
     tags: ["digest", "bundle"]
-    skills: ["ui-generator", "editorial-designer"]
-    # sandbox.* for bash (running the bundler). No simple-files.* — all file
-    # I/O goes through the sandbox, which auto-syncs with the agent's file system.
-    functions: ["chat.*", "sandbox.*", "coordination.*", "skills.*"]
-    # Only watches app_update, NOT digest_update — watching its own signal type
-    # would create an infinite loop (emit → receive → process → emit → ...).
-    # playbook_complete — so it wakes up when non-app playbooks finish too.
     watch_events:
-      - type: app_update
-      - type: playbook_complete
+      - type: digest_tile_ready
+    functions: ["chat.*", "coordination.*", "playbooks.*", "sandbox.*"]

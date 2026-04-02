@@ -31,4 +31,5 @@ export class ChatController extends RootController {
     string,
     string
   >();
+  @field() accessor awaitingNewThread = false;
 }

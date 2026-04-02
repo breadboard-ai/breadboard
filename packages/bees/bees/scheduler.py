@@ -450,7 +450,7 @@ class Scheduler:
                 model=ticket.metadata.model,
                 on_playbook_run=self._on_playbook_run_internal,
                 on_coordination_emit=self._on_coordination_emit_internal,
-                current_playbook_run_id=ticket.metadata.parent_run_id or ticket.metadata.playbook_run_id,
+                current_playbook_run_id=ticket.metadata.playbook_run_id,
             )
         except Exception as exc:
             ticket.metadata.status = "failed"
@@ -519,7 +519,7 @@ class Scheduler:
                 on_event=self._make_on_event(ticket.id),
                 on_playbook_run=self._on_playbook_run_internal,
                 on_coordination_emit=self._on_coordination_emit_internal,
-                current_playbook_run_id=ticket.metadata.parent_run_id or ticket.metadata.playbook_run_id,
+                current_playbook_run_id=ticket.metadata.playbook_run_id,
             )
         except Exception as exc:
             ticket.metadata.status = "failed"

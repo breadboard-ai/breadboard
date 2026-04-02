@@ -61,9 +61,7 @@ steps:
       data files from the shared workspace.
       Then call chat_await_context_update and wait for the UI to be built.
 
-      6. When a worker completes, you'll receive a context update. Emit a
-      coordination signal with signal_type "journey_update" summarising what
-      just happened, so that Opie and the Digest can stay informed.
+      6. **Milestone Moments:** Whenever a major action finishes (e.g. you finished research, generated a new blueprint, or generated the UI), you MUST push a digest update. To do this, run the "atomic-digest-writer" playbook. Pass share_workspace: true. Ensure you pass your own ticket ID `{{system.ticket_id}}` in the context so the writer can use it as the `link_id`. Also pass a clear summary of the milestone reached. Do not emit coordination signals manually for digest updates — the digest writer will handle it. Wait for the writer to complete via chat_await_context_update.
 
       7. After the UI is live, ask the user for feedback via
       chat_request_user_input. Based on their response:
@@ -102,3 +100,4 @@ steps:
     watch_events:
       - type: playbook_complete
       - type: app_update
+      - type: update_journey_title

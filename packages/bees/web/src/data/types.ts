@@ -24,6 +24,7 @@ export interface TicketData {
   title?: string;
   playbook_id?: string;
   playbook_run_id?: string;
+  parent_run_id?: string;
   kind?: string;
   signal_type?: string;
   context?: string;

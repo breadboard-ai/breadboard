@@ -15,9 +15,9 @@ import { styles } from "./opal-shell.styles.js";
 
 import "./components/opal-header.js";
 import "./components/opal-stage.js";
-import "./components/opal-pulse-bar.js";
 import "./components/opal-toasts.js";
-import "./components/opal-chat-overlay.js";
+import "./components/opal-sidebar.js";
+import "./components/opal-prompt-bar.js";
 
 export { OpalShell };
 
@@ -61,9 +61,13 @@ class OpalShell extends SignalWatcher(LitElement) {
   render() {
     return html`
       <opal-header></opal-header>
-      <opal-stage></opal-stage>
-      <opal-chat-overlay></opal-chat-overlay>
-      <opal-pulse-bar></opal-pulse-bar>
+      <div class="shell-workspace">
+        <opal-sidebar></opal-sidebar>
+        <div class="shell-main-area">
+          <opal-stage></opal-stage>
+          <opal-prompt-bar></opal-prompt-bar>
+        </div>
+      </div>
       <opal-toasts></opal-toasts>
     `;
   }
