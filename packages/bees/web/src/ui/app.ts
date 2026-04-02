@@ -16,6 +16,9 @@ import { styles } from "./app.styles.js";
 
 export { BeesApp };
 
+/** Tags that identify long-running daemon agents. */
+const DAEMON_TAGS = ["opie", "journey", "digest"];
+
 interface JobGroup {
   id: string;
   title: string;
@@ -24,12 +27,19 @@ interface JobGroup {
   status: "running" | "completed" | "failed" | "suspended" | "pending";
 }
 
+interface DaemonInfo {
+  ticket: TicketData;
+  label: string;
+  daemonTag: string;
+}
+
 @customElement("bees-app")
 class BeesApp extends SignalWatcher(LitElement) {
-  @state() accessor activeTab: "jobs" | "playbooks" = "jobs";
+  @state() accessor activeTab: "jobs" | "playbooks" | "daemons" = "jobs";
   @state() accessor selectedJobId: string | null = null;
   @state() accessor playbooks: PlaybookData[] = [];
   @state() accessor loadingPlaybooks = false;
+  @state() accessor selectedDaemonId: string | null = null;
 
   private get scaInst() {
     return sca();
@@ -134,12 +144,53 @@ class BeesApp extends SignalWatcher(LitElement) {
     return jobs;
   }
 
+  private deriveDaemons(): DaemonInfo[] {
+    const tickets = this.scaInst.controller.global.tickets;
+    const daemons: DaemonInfo[] = [];
+
+    for (const t of tickets) {
+      if (t.kind === "coordination") continue;
+      const tags = t.tags ?? [];
+      const matchedTag = tags.find((tag) => DAEMON_TAGS.includes(tag));
+      if (!matchedTag) continue;
+
+      let label = t.title || "Daemon";
+      if (matchedTag === "opie") label = `☕ ${label}`;
+      else if (matchedTag === "journey") label = `🧭 ${label}`;
+      else if (matchedTag === "digest") label = `📰 ${label}`;
+
+      daemons.push({ ticket: t, label, daemonTag: matchedTag });
+    }
+
+    // Active daemons first, then by creation time.
+    daemons.sort((a, b) => {
+      const aActive =
+        a.ticket.status !== "completed" && a.ticket.status !== "failed";
+      const bActive =
+        b.ticket.status !== "completed" && b.ticket.status !== "failed";
+      if (aActive !== bActive) return aActive ? -1 : 1;
+      return (b.ticket.created_at ?? "").localeCompare(
+        a.ticket.created_at ?? ""
+      );
+    });
+
+    return daemons;
+  }
+
   render() {
     const jobs = this.deriveJobs();
+    const daemons = this.deriveDaemons();
 
     // Auto-select first job
     if (!this.selectedJobId && jobs.length > 0 && this.activeTab === "jobs") {
       this.selectedJobId = jobs[0].id;
+    }
+    if (
+      !this.selectedDaemonId &&
+      daemons.length > 0 &&
+      this.activeTab === "daemons"
+    ) {
+      this.selectedDaemonId = daemons[0].ticket.id;
     }
 
     return html`
@@ -155,6 +206,24 @@ class BeesApp extends SignalWatcher(LitElement) {
             Jobs
           </div>
           <div
+            class="sidebar-tab ${this.activeTab === "daemons" ? "active" : ""}"
+            @click=${() => (this.activeTab = "daemons")}
+          >
+            Daemons
+            ${daemons.filter(
+              (d) =>
+                d.ticket.status !== "completed" && d.ticket.status !== "failed"
+            ).length > 0
+              ? html`<span class="daemon-count"
+                  >${daemons.filter(
+                    (d) =>
+                      d.ticket.status !== "completed" &&
+                      d.ticket.status !== "failed"
+                  ).length}</span
+                >`
+              : nothing}
+          </div>
+          <div
             class="sidebar-tab ${this.activeTab === "playbooks"
               ? "active"
               : ""}"
@@ -166,13 +235,17 @@ class BeesApp extends SignalWatcher(LitElement) {
 
         ${this.activeTab === "jobs"
           ? this.renderJobsList(jobs)
-          : this.renderPlaybooksList()}
+          : this.activeTab === "daemons"
+            ? this.renderDaemonsList(daemons)
+            : this.renderPlaybooksList()}
       </div>
 
       <div class="main">
         ${this.activeTab === "jobs"
           ? this.renderJobDetail(jobs)
-          : this.renderEmptyMain("Select a playbook to run on the left.")}
+          : this.activeTab === "daemons"
+            ? this.renderDaemonDetail(daemons)
+            : this.renderEmptyMain("Select a playbook to run on the left.")}
       </div>
     `;
   }
@@ -249,6 +322,115 @@ class BeesApp extends SignalWatcher(LitElement) {
     `;
   }
 
+  // --- Daemons ---
+
+  private renderDaemonsList(daemons: DaemonInfo[]) {
+    if (daemons.length === 0)
+      return html`<div class="empty-state">No daemons running.</div>`;
+    return html`
+      <div class="jobs-list">
+        ${daemons.map(
+          (d) => html`
+            <div
+              class="job-item ${this.selectedDaemonId === d.ticket.id
+                ? "selected"
+                : ""}"
+              @click=${() => (this.selectedDaemonId = d.ticket.id)}
+            >
+              <div class="job-header">
+                <div class="job-title">${d.label}</div>
+                <div class="job-status ${d.ticket.status}"></div>
+              </div>
+              <div class="job-meta">
+                <span>${d.daemonTag}</span>
+                <span>${getRelativeTime(d.ticket.created_at)}</span>
+              </div>
+            </div>
+          `
+        )}
+      </div>
+    `;
+  }
+
+  private renderDaemonDetail(daemons: DaemonInfo[]) {
+    const daemon = daemons.find((d) => d.ticket.id === this.selectedDaemonId);
+    if (!daemon) return this.renderEmptyMain("Select a daemon to inspect");
+
+    const t = daemon.ticket;
+    const statusLabel =
+      t.status === "suspended" && t.assignee === "user"
+        ? "waiting for user"
+        : t.status === "suspended"
+          ? "waiting for signal"
+          : t.status;
+
+    return html`
+      <div class="job-detail">
+        <div class="job-detail-header">
+          <div class="job-detail-header-top">
+            <h2 class="job-detail-title">${daemon.label}</h2>
+            <div class="job-detail-badge ${t.status}">${statusLabel}</div>
+          </div>
+          <div class="job-detail-meta">
+            <span>ID: <code class="mono">${t.id.slice(0, 13)}...</code></span>
+            <span
+              >Started: ${new Date(t.created_at ?? "").toLocaleString()}</span
+            >
+            ${t.turns ? html`<span>${t.turns} turns</span>` : nothing}
+            ${t.thoughts ? html`<span>${t.thoughts} thoughts</span>` : nothing}
+          </div>
+        </div>
+
+        <div class="timeline">
+          ${t.tags && t.tags.length > 0
+            ? html`
+                <div class="block">
+                  <div class="block-header">Tags</div>
+                  <div class="block-content">
+                    ${t.tags.map(
+                      (tag) =>
+                        html`<span class="tool-badge" style="margin-right:6px"
+                          >${tag}</span
+                        >`
+                    )}
+                  </div>
+                </div>
+              `
+            : nothing}
+          ${t.events_log?.length
+            ? html`
+                <div class="block">
+                  <div class="block-header">Trace Log</div>
+                  <div class="block-content trace-list mono">
+                    ${t.events_log.map((e) => this.renderTraceEvent(e))}
+                  </div>
+                </div>
+              `
+            : nothing}
+          ${t.outcome
+            ? html`
+                <div class="block">
+                  <div class="block-header">Last Outcome</div>
+                  <div class="block-content mono">${t.outcome}</div>
+                </div>
+              `
+            : nothing}
+          ${t.error
+            ? html`
+                <div class="block error">
+                  <div class="block-header">Error</div>
+                  <div class="block-content">${t.error}</div>
+                </div>
+              `
+            : nothing}
+          ${t.status === "suspended" && t.assignee === "user"
+            ? this.renderRespond(t)
+            : nothing}
+        </div>
+      </div>
+    `;
+  }
+
   private renderEmptyMain(text: string) {
     return html`<div class="empty-state">${text}</div>`;
   }
@@ -268,8 +450,13 @@ class BeesApp extends SignalWatcher(LitElement) {
           </div>
           <div class="job-detail-meta">
             ${job.id === "__event_bus__"
-              ? html`<span>${job.tickets.length} event${job.tickets.length === 1 ? "" : "s"}</span>`
-              : html`<span>ID: <code class="mono">${job.id.slice(0, 13)}...</code></span>`}
+              ? html`<span
+                  >${job.tickets.length}
+                  event${job.tickets.length === 1 ? "" : "s"}</span
+                >`
+              : html`<span
+                  >ID: <code class="mono">${job.id.slice(0, 13)}...</code></span
+                >`}
             <span>Started: ${new Date(job.createdAt).toLocaleString()}</span>
           </div>
         </div>

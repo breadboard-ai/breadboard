@@ -278,7 +278,7 @@ system at `$HOME/skills/{skill-name}/SKILL.md`. The agent reads them using
 | Function | Description |
 |----------|-------------|
 | `playbooks_list` | List available playbooks (name, title, description). Hidden playbooks and those tagged `"testing"` are excluded. |
-| `playbooks_run_playbook` | Launch a playbook. The `context` parameter briefs the agents about what to do. Returns immediately — running a playbook is delegation, not blocking. |
+| `playbooks_run_playbook` | Launch a playbook. The `context` parameter briefs the agents about what to do. Set `share_workspace: true` to give child tickets access to your filesystem — see [Shared Workspaces](#shared-workspaces). Returns immediately — running a playbook is delegation, not blocking. |
 
 #### `coordination.*` — Signal Emission
 
@@ -732,6 +732,45 @@ steps:
   for code generation.
 - `ui-gen` uses `sandbox.*` for bash execution (running the bundler) and
   `chat.*` for iterating with the user.
+
+---
+
+### Pattern 6: Shared Workspaces {#shared-workspaces}
+
+When an orchestrator dispatches multiple child playbooks that need to share
+files, use the `share_workspace` parameter on `playbooks_run_playbook`.
+
+```
+playbooks_run_playbook(
+  name="atomic-research",
+  context="Research MacBook Pro specs for video editing",
+  share_workspace=true
+)
+```
+
+When `share_workspace` is `true`, child tickets inherit the caller's
+`playbook_run_id` as their `parent_run_id`. This redirects their filesystem
+from the per-ticket `tickets/{id}/filesystem/` to a shared directory at
+`tickets/_runs/{parent_run_id}/filesystem/`.
+
+All child tickets dispatched with `share_workspace: true` by the same
+orchestrator share the same directory. Files written by one worker are
+immediately visible to subsequent workers.
+
+**Use case**: The Journey Manager dispatches research, journey design, and UI
+generation as separate atomic workers. The research worker writes
+`research-data.json`, the journey designer reads it and writes `journey.json`,
+and the UI generator reads both — all without any data flowing through LLM
+context.
+
+**Key points**:
+- The orchestrator itself does **not** share the workspace — it uses its own
+  ticket directory. Only child playbooks launched with `share_workspace: true`
+  share the `_runs/` directory.
+- The `context` parameter should still describe **what** the worker needs to do.
+  The shared workspace handles **data** — filenames to read, formats to expect.
+- Workers are still contextually independent (clean LLM context). They share
+  **files**, not **memory**.
 
 ---
 

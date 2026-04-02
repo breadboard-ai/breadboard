@@ -107,8 +107,8 @@ EOF
 
 If you do not run this exact command, the user will see a blank screen.
 
-Once bundling is successful, simply return a short text confirmation
-acknowledging that the UI was generated and bundled. **Do NOT output raw source
+Once bundling is successful, call `system_objective_fulfilled` with a short
+confirmation that the UI was generated and bundled. **Do NOT output raw source
 code in your response.**
 
 ## Component Library

@@ -443,12 +443,14 @@ class Scheduler:
                 label=label,
                 ticket_id=ticket.id,
                 ticket_dir=ticket.dir,
+                fs_dir=ticket.fs_dir,
                 on_event=self._make_on_event(ticket.id),
                 function_filter=ticket.metadata.functions,
                 allowed_skills=ticket.metadata.skills,
                 model=ticket.metadata.model,
                 on_playbook_run=self._on_playbook_run_internal,
                 on_coordination_emit=self._on_coordination_emit_internal,
+                current_playbook_run_id=ticket.metadata.parent_run_id or ticket.metadata.playbook_run_id,
             )
         except Exception as exc:
             ticket.metadata.status = "failed"
@@ -509,6 +511,7 @@ class Scheduler:
             result = await resume_session(
                 ticket_id=ticket.id,
                 ticket_dir=ticket.dir,
+                fs_dir=ticket.fs_dir,
                 response=response,
                 http=self._http,
                 backend=self._backend,
@@ -516,6 +519,7 @@ class Scheduler:
                 on_event=self._make_on_event(ticket.id),
                 on_playbook_run=self._on_playbook_run_internal,
                 on_coordination_emit=self._on_coordination_emit_internal,
+                current_playbook_run_id=ticket.metadata.parent_run_id or ticket.metadata.playbook_run_id,
             )
         except Exception as exc:
             ticket.metadata.status = "failed"
@@ -577,7 +581,7 @@ class Scheduler:
 
         # Extract agent file system to ticket directory.
         file_manifest = extract_files(
-            result.intermediate, ticket.dir / "filesystem",
+            result.intermediate, ticket.fs_dir,
         )
         if file_manifest:
             ticket.metadata.files = file_manifest

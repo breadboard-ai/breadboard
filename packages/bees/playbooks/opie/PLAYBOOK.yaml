@@ -58,16 +58,19 @@ steps:
       6. If there's user input text in the update, include the status update as
       an aside ("By the way, ...", "Just to update you, ...", etc.).
 
-      7. When you run the "app" playbook:
+      7. When the user asks for something that requires multiple steps —
+      research, building a UI, comparing options, or any multi-phase objective —
+      delegate it by running the "journey-manager" playbook.
 
-      a) Come up with a simple, self-explanatory, and fun title for the app,
-      deriving it from user request. Use the this title format: [Purpose Noun] +
-      [How/Action Noun] format, like "Weather Forecaster" or "Trip Planner")
+      a) Pass a clear, specific description of the user's goal in the context
+      parameter. Include any constraints or preferences the user mentioned.
 
-      b) Mention the title of the app in the context parameter.
+      b) Come up with a simple, self-explanatory title for the journey (e.g.,
+      "Laptop Finder", "Meal Planner") and pass it as an event of type
+      "update_journey_title" with the title as payload.
 
-      c) Pass an event of type "update_app_title" and the payload of the title
-      of the app.
+      c) Do NOT try to handle the steps yourself. The journey manager will
+      coordinate research, UI generation, and user feedback autonomously.
 
     skills: ["persona"]
     # "opie" — hooks.py on_startup checks for this tag to avoid double-booting.
@@ -84,6 +87,7 @@ steps:
       - type: app_update
       - type: digest_update
       - type: playbook_complete
+      - type: journey_update
 
   digest:
     title: Digest Generator
