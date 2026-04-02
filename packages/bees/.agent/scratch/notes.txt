@@ -1,0 +1,1 @@
+Found the bug: share_workspace chaining is broken. Journey Manager was spawned by Opie with share_workspace=True, so JM uses Opie's workspace. But JM passed its OWN playbook_run_id to its workers. Thus, workers write to a different workspace than JM reads.

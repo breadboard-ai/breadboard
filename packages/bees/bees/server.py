@@ -309,7 +309,7 @@ async def list_ticket_files(ticket_id: str) -> list[str]:
     if not ticket:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
 
-    fs_dir = ticket.dir / "filesystem"
+    fs_dir = ticket.fs_dir
     if not fs_dir.is_dir():
         return []
 
@@ -327,12 +327,12 @@ async def get_ticket_file(ticket_id: str, path: str) -> FileResponse:
     if not ticket:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
 
-    file_path = ticket.dir / "filesystem" / path
+    file_path = ticket.fs_dir / path
     if not file_path.is_file():
         raise HTTPException(404, f"File {path} not found")
 
     try:
-        file_path.resolve().relative_to((ticket.dir / "filesystem").resolve())
+        file_path.resolve().relative_to(ticket.fs_dir.resolve())
     except ValueError:
         raise HTTPException(403, "Access denied")
 

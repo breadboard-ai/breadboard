@@ -16,5 +16,13 @@
       },
       "required": ["signal_type", "context"]
     }
+  },
+  {
+    "name": "coordination_pull_digest_tiles",
+    "description": "Pulls all generated digest_tile.json artifacts from across the entire system. Use this to gather the latest state of all milestones across runs to compile the Master Digest.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {}
+    }
   }
 ]

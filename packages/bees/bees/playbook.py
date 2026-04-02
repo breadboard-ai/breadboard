@@ -160,12 +160,20 @@ def topological_sort(steps: dict[str, dict]) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def run_playbook(name: str, *, context: str | None = None) -> list[Ticket]:
+def run_playbook(
+    name: str,
+    *,
+    context: str | None = None,
+    parent_run_id: str | None = None,
+) -> list[Ticket]:
     """Create tickets for each step of a playbook.
 
     Steps are created in topological order so that ``{{step-name}}``
     references in objectives are replaced with the concrete ticket ID
     of the already-created step.
+
+    If ``parent_run_id`` is provided, all created tickets will share
+    the parent run's workspace directory instead of getting their own.
 
     If the playbook has a ``hooks.py`` with an ``on_run_playbook`` function,
     it is called before ticket creation. The hook receives the
@@ -223,6 +231,7 @@ def run_playbook(name: str, *, context: str | None = None) -> list[Ticket]:
             watch_events=step.get("watch_events"),
             playbook_id=playbook_id,
             playbook_run_id=playbook_run_id,
+            parent_run_id=parent_run_id,
             context=context if is_root else None,
         )
 

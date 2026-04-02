@@ -63,8 +63,7 @@ export const deriveThreads = asAction(
         if (activeTicket?.title) {
           title = activeTicket.title;
         } else {
-          const playbookId =
-            activeTicket?.playbook_id ?? group[0]?.playbook_id;
+          const playbookId = activeTicket?.playbook_id ?? group[0]?.playbook_id;
           if (playbookId) {
             title = playbookId
               .replace(/-/g, " ")
@@ -72,8 +71,7 @@ export const deriveThreads = asAction(
               .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
               .join(" ");
           } else {
-            title =
-              group[group.length - 1]?.title ?? threadId.slice(0, 8);
+            title = group[group.length - 1]?.title ?? threadId.slice(0, 8);
           }
         }
       }
@@ -90,7 +88,24 @@ export const deriveThreads = asAction(
       });
     }
 
+    const oldThreads = controller.chat.threads;
     controller.chat.threads = threads;
+
+    // Auto-switch to newly created journey only when the user explicitly
+    // initiated a new journey from this browser tab.
+    if (
+      controller.chat.activeThreadId === "opie" &&
+      controller.chat.awaitingNewThread
+    ) {
+      const newThread = threads.find(
+        (t) => t.id !== "opie" && !oldThreads.some((old) => old.id === t.id)
+      );
+      if (newThread) {
+        controller.chat.awaitingNewThread = false;
+        await switchThreadSync(newThread.id);
+        applyPromptState();
+      }
+    }
 
     // Restore chat history for any thread not yet restored
     for (const thread of threads) {
@@ -164,14 +179,19 @@ async function processTicketTransitions(
         // Suspended for User transition
         if (ticket.status === "suspended" && ticket.assignee === "user") {
           const prompt = extractPrompt(ticket);
-          const threadMessages =
-            controller.chat.threadMessages.get(thread.id) ?? [];
-          const updated = new Map(controller.chat.threadMessages);
-          updated.set(thread.id, [
-            ...threadMessages,
-            { text: prompt, role: "agent" },
-          ]);
-          controller.chat.threadMessages = updated;
+
+          // Skip the useless fallback — real conversation text is already
+          // in chat_history and gets restored by restoreThreadHistory.
+          if (prompt !== "(no prompt)") {
+            const threadMessages =
+              controller.chat.threadMessages.get(thread.id) ?? [];
+            const updated = new Map(controller.chat.threadMessages);
+            updated.set(thread.id, [
+              ...threadMessages,
+              { text: prompt, role: "agent" },
+            ]);
+            controller.chat.threadMessages = updated;
+          }
 
           if (thread.id === controller.chat.activeThreadId) {
             applyPromptState();
@@ -226,10 +246,7 @@ async function processTicketTransitions(
 
   // Auto-switch to Opie when the active non-Opie thread's run completes —
   // keeps the user on a chat window where they can type.
-  if (
-    activeThreadCompleted &&
-    activeThreadId !== "opie"
-  ) {
+  if (activeThreadCompleted && activeThreadId !== "opie") {
     const activeThread = threads.find((t) => t.id === activeThreadId);
     if (activeThread && !activeThread.activeTicketId) {
       await switchThreadSync("opie");
@@ -311,23 +328,31 @@ async function syncStageToChat(threadId: string) {
       stage.currentView = stage.digestTicketId;
       await new Promise((r) => setTimeout(r, 100)); // wait for iframe mount
       await loadBundleAsync(stage.digestTicketId, services);
+    } else if (
+      !stage.digestTicketId &&
+      stage.currentView !== null &&
+      stage.currentView !== "digest"
+    ) {
+      stage.currentView = null;
     }
     return;
   }
 
-  // App thread → show the app's bundle if the ticket has one.
+  // App thread → sync view.
   const thread = controller.chat.threads.find((t) => t.id === threadId);
   if (!thread?.activeTicketId) return;
 
   const ticket = controller.global.tickets.find(
     (t) => t.id === thread.activeTicketId
   );
-  if (!ticket?.tags?.includes("bundle")) return;
 
   if (stage.currentView !== thread.activeTicketId) {
     stage.currentView = thread.activeTicketId;
-    await new Promise((r) => setTimeout(r, 100)); // wait for iframe mount
-    await loadBundleAsync(thread.activeTicketId, services);
+
+    if (ticket?.tags?.includes("bundle")) {
+      await new Promise((r) => setTimeout(r, 100)); // wait for iframe mount
+      await loadBundleAsync(thread.activeTicketId, services);
+    }
   }
 }
 
@@ -368,6 +393,7 @@ export const sendChat = asAction(
       await services.api.respond(thread.activeTicketId, text);
     } else {
       // No active ticket — create a new one (e.g. cold-start Opie chat).
+      controller.chat.awaitingNewThread = true;
       await services.api.addTicket(text, ["chat", "opie"]);
     }
   }

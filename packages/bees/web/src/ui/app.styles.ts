@@ -85,6 +85,22 @@ export const styles = css`
     color: #cbd5e1;
   }
 
+  .daemon-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    margin-left: 6px;
+    background: #3b82f6;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
   .jobs-list {
     flex: 1;
     overflow-y: auto;

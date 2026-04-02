@@ -73,8 +73,38 @@ def _make_handlers(
             "emitted": True,
         }
 
+    async def coordination_pull_digest_tiles(
+        args: dict[str, Any], status_cb: Any,
+    ) -> dict[str, Any]:
+        """Pull all digest tiles from standard playbook runs."""
+        from bees.ticket import TICKETS_DIR
+        import json
+
+        if status_cb:
+            status_cb("Pulling latest digest tiles...")
+
+        tiles = []
+        runs_dir = TICKETS_DIR / "_runs"
+        if runs_dir.exists():
+            for run_dir in runs_dir.iterdir():
+                if not run_dir.is_dir():
+                    continue
+                tile_path = run_dir / "filesystem" / "digest_tile.json"
+                if tile_path.exists():
+                    try:
+                        content = json.loads(tile_path.read_text(encoding="utf-8"))
+                        tiles.append({"run_id": run_dir.name, "tile": content})
+                    except Exception as e:
+                        logger.warning("Failed to read digest tile %s: %s", tile_path, e)
+
+        if status_cb:
+            status_cb(None, None)
+
+        return {"tiles": tiles}
+
     return {
         "coordination_emit": coordination_emit,
+        "coordination_pull_digest_tiles": coordination_pull_digest_tiles,
     }
 
 

@@ -13,6 +13,8 @@ import { type SCA } from "../../sca/sca.js";
 import { sharedStyles } from "./shared.styles.js";
 import { styles } from "./opal-stage.styles.js";
 
+import "./opal-timeline.js";
+
 @customElement("opal-stage")
 export class OpalStage extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
@@ -30,50 +32,46 @@ export class OpalStage extends SignalWatcher(LitElement) {
 
   render() {
     const currentView = this.sca.controller.stage.currentView;
-    const pulseTasks = this.sca.controller.global.pulseTasks;
+    const isBundle =
+      currentView !== null &&
+      this.sca.controller.global.tickets
+        .find((t) => t.id === currentView)
+        ?.tags?.includes("bundle");
 
     return html`
       <div class="stage" id="stage">
         ${currentView === null
           ? html`
               <div class="empty">
-                ${pulseTasks.length > 0
-                  ? html`
-                      <div class="status-view">
-                        ${pulseTasks.map(
-                          (task) => html`
-                            <div class="status-row">
-                              <span class="status-title">${task.title}</span>
-                              <span class="status-badge ${task.status}">
-                                ${task.status === "success"
-                                  ? "✓"
-                                  : task.status === "error"
-                                    ? "✕"
-                                    : "◇"}
-                                ${task.current_step}
-                              </span>
-                            </div>
-                          `
-                        )}
-                      </div>
-                    `
-                  : html`
-                      <span class="empty-icon">✦</span>
-                      <h2>Good morning</h2>
-                      <p>
-                        Chat with Opie using the bar below, or wait for your
-                        digest to appear.
-                      </p>
-                    `}
+                <span class="empty-icon">✦</span>
+                <h2>Clean Slate</h2>
+                <p>Start a new journey below.</p>
               </div>
             `
-          : html`
-              <iframe
-                src="/iframe.html"
-                title="Digest View"
-                sandbox="allow-scripts allow-same-origin allow-popups"
-              ></iframe>
-            `}
+          : currentView === "digest" ||
+              (currentView === this.sca.controller.stage.digestTicketId &&
+                !isBundle)
+            ? html`
+                <div class="empty">
+                  <span class="empty-icon">⏳</span>
+                  <h2>Curating Your Digest</h2>
+                  <p>
+                    Opie is gathering observations from your active journeys. It
+                    will appear here soon.
+                  </p>
+                </div>
+              `
+            : isBundle
+              ? html`
+                  <iframe
+                    src="/iframe.html"
+                    title="Digest View"
+                    sandbox="allow-scripts allow-same-origin allow-popups"
+                  ></iframe>
+                `
+              : html`
+                  <opal-timeline .ticketId=${currentView}></opal-timeline>
+                `}
       </div>
     `;
   }

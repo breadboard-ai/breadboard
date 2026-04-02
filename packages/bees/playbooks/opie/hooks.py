@@ -42,13 +42,13 @@ def on_ticket_done(ticket: Ticket) -> None:
     if not ticket.metadata.skills or "ui-generator" not in ticket.metadata.skills:
         return
 
-    app_path = ticket.dir / "filesystem" / "App.jsx"
-    app_lower = ticket.dir / "filesystem" / "app.jsx"
+    app_path = ticket.fs_dir / "App.jsx"
+    app_lower = ticket.fs_dir / "app.jsx"
     if not (app_path.exists() or app_lower.exists()):
         return
 
     bundler_path = (
-        ticket.dir / "filesystem" / "skills" / "ui-generator" / "tools" / "bundler.mjs"
+        ticket.fs_dir / "skills" / "ui-generator" / "tools" / "bundler.mjs"
     )
     if not bundler_path.exists():
         return
@@ -57,7 +57,7 @@ def on_ticket_done(ticket: Ticket) -> None:
     try:
         subprocess.run(
             ["node", str(bundler_path)],
-            cwd=str(ticket.dir / "filesystem"),
+            cwd=str(ticket.fs_dir),
             check=True,
             capture_output=True,
             text=True,

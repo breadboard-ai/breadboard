@@ -25,10 +25,7 @@ component bundles from natural language descriptions.
    `IndexedDB`, or any Web Storage APIs. The iframe environment may not have
    storage access due to origin restrictions. All state lives in React component
    state or is passed via props and the SDK.
-4. **Respect the host theme.** The iframe renders on a dark background. Do not
-   set `background: white`, `background: #fff`, `color: #333`, or any
-   light-theme values. All backgrounds must use `var(--cg-color-surface*)`
-   tokens and all text must use `var(--cg-color-on-surface*)` tokens.
+4. **Respect the host theme.** We use a light theme. Do not set `background: black`, `background: #000`, `color: #fff`, or any dark-theme values. All backgrounds must use `var(--cg-color-surface*)` tokens and all text must use `var(--cg-color-on-surface*)` tokens. The tokens will natively map to their light theme variants.
 
 ## Responsive Layout
 
@@ -107,8 +104,8 @@ EOF
 
 If you do not run this exact command, the user will see a blank screen.
 
-Once bundling is successful, simply return a short text confirmation
-acknowledging that the UI was generated and bundled. **Do NOT output raw source
+Once bundling is successful, call `system_objective_fulfilled` with a short
+confirmation that the UI was generated and bundled. **Do NOT output raw source
 code in your response.**
 
 ## Component Library

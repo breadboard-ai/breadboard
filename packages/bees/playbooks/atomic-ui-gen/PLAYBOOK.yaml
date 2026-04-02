@@ -1,0 +1,44 @@
+name: atomic-ui-gen
+title: UI Generator
+description: >
+  A single-step UI generation worker. Builds a React app from a specification
+  and terminates.
+
+steps:
+  build:
+    title: UI Generator
+    objective: >
+      You are a UI generation worker. Your job is to build a React application
+      based on the specification provided.
+
+      {{system.context}}
+
+      1. Read the "ui-generator" skill for the technical output format, design
+      token discipline, and component architecture rules.
+
+      2. List files in your working directory. If a journey.json file exists,
+      read it — it contains an XState machine definition that describes the
+      views and transitions for this UI segment. Follow it precisely — each
+      state becomes a view component, each transition becomes a navigation
+      action. If research data files exist (e.g. research-data.json,
+      research-notes.md), read those too for content to populate the UI.
+
+      3. Generate the React application (App.jsx, components, styles.css).
+
+      4. Run the bundler: execute `node $HOME/skills/ui-generator/tools/bundler.mjs`
+      via execute_bash to produce bundle.js and bundle.css.
+
+      5. After a successful bundle, emit a coordination signal by calling
+      coordination_emit with signal_type "app_update". The payload should
+      describe what the app does, its key features, and include a navigateTo
+      link: `navigateTo('{{system.ticket_id}}')`.
+
+      6. Call system_objective_fulfilled with a brief confirmation.
+
+      Do NOT ask the user for feedback. Do NOT loop. Build, bundle, signal,
+      and terminate.
+    functions: ["system.*", "sandbox.*", "simple-files.*", "coordination.*", "skills.*"]
+    skills: ["ui-generator"]
+    tags: ["bundle"]
+    # Use a more capable model for code generation.
+    model: gemini-3.1-pro-preview

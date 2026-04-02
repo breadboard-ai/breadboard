@@ -68,6 +68,10 @@
             "required": ["type"]
           },
           "description": "Starting events emitted atomically with the playbook run, scoped to this run's tickets only."
+        },
+        "share_workspace": {
+          "type": "boolean",
+          "description": "If true, child tickets will share your filesystem workspace. Files you write are visible to them and vice versa. Use this when the child playbook needs access to files you have produced. DO NOT use this when delegating full independent projects or standalone applications (like a journey); those should be allowed to run in their own pristine isolated workspace (i.e. set this to false)."
         }
       },
       "required": ["name"]
