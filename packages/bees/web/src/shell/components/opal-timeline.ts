@@ -233,24 +233,21 @@ export class OpalTimeline extends SignalWatcher(LitElement) {
     }
 
     // Gather worker tickets that share this journey's workspace.
-    // Child workers get parent_run_id = the caller's playbook_run_id,
-    // so we match against this ticket's playbook_run_id.
-    const runId = ticket.playbook_run_id;
-    const workerTickets = runId
-      ? this.sca.controller.global.tickets
-          .filter(
-            (t) =>
-              t.parent_run_id === runId &&
-              t.kind !== "coordination" &&
-              t.playbook_id &&
-              t.id !== this.ticketId &&
-              !t.tags?.includes("chat") &&
-              !t.tags?.includes("digest")
-          )
-          .sort((a, b) =>
-            (a.created_at || "").localeCompare(b.created_at || "")
-          )
-      : [];
+    // Child workers get parent_ticket_id = the root ticket's ID,
+    // so match directly against this ticket's ID.
+    const workerTickets = this.sca.controller.global.tickets
+      .filter(
+        (t) =>
+          t.parent_ticket_id === ticket.id &&
+          t.kind !== "coordination" &&
+          t.playbook_id &&
+          t.id !== this.ticketId &&
+          !t.tags?.includes("chat") &&
+          !t.tags?.includes("digest")
+      )
+      .sort((a, b) =>
+        (a.created_at || "").localeCompare(b.created_at || "")
+      );
 
     // Try finding the latest question to display big on the timeline
     let latestQuestion = null;

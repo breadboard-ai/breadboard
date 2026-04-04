@@ -35,7 +35,7 @@ _LOADED = load_declarations("playbooks", declarations_dir=_DECLARATIONS_DIR)
 def _make_handlers(
     on_playbook_run: Any | None = None,
     on_coordination_emit: Callable[[Ticket], None] | None = None,
-    current_playbook_run_id: str | None = None,
+    workspace_root_id: str | None = None,
 ) -> dict[str, Any]:
     """Build the handler map for the playbooks function group."""
 
@@ -86,8 +86,8 @@ def _make_handlers(
         share_workspace = args.get("share_workspace", False)
 
         # When share_workspace is requested, child tickets use the
-        # caller's playbook_run_id as their parent_run_id.
-        parent_run_id = current_playbook_run_id if share_workspace else None
+        # caller's workspace root as their parent_ticket_id.
+        parent_ticket_id = workspace_root_id if share_workspace else None
 
         if status_cb:
             status_cb(f"Running playbook: {name}")
@@ -96,7 +96,7 @@ def _make_handlers(
             tickets = run_playbook(
                 name,
                 context=context,
-                parent_run_id=parent_run_id,
+                parent_ticket_id=parent_ticket_id,
             )
         except PlaybookAborted as e:
             return {"status": "skipped", "message": str(e)}
@@ -151,12 +151,12 @@ def _make_handlers(
 def get_playbooks_function_group(
     on_playbook_run: Any | None = None,
     on_coordination_emit: Callable[[Ticket], None] | None = None,
-    current_playbook_run_id: str | None = None,
+    workspace_root_id: str | None = None,
 ) -> FunctionGroup:
     """Build a FunctionGroup with playbooks_list and playbooks_run_playbook."""
     handlers = _make_handlers(
         on_playbook_run,
         on_coordination_emit,
-        current_playbook_run_id=current_playbook_run_id,
+        workspace_root_id=workspace_root_id,
     )
     return assemble_function_group(_LOADED, handlers)
