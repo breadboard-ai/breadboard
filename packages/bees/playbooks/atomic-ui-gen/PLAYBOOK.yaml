@@ -25,8 +25,9 @@ steps:
 
       3. Generate the React application (App.jsx, components, styles.css).
 
-      4. Run the bundler: execute `node $HOME/skills/ui-generator/tools/bundler.mjs`
-      via execute_bash to produce bundle.js and bundle.css.
+      4. Run the bundler: execute `node
+      $HOME/skills/ui-generator/tools/bundler.mjs` via execute_bash to produce
+      bundle.js and bundle.css.
 
       5. After a successful bundle, emit a coordination signal by calling
       coordination_emit with signal_type "app_update". The payload should
@@ -34,10 +35,8 @@ steps:
       link: `navigateTo('{{system.ticket_id}}')`.
 
       6. Call system_objective_fulfilled with a brief confirmation.
-
-      Do NOT ask the user for feedback. Do NOT loop. Build, bundle, signal,
-      and terminate.
-    functions: ["system.*", "sandbox.*", "simple-files.*", "coordination.*", "skills.*"]
+    functions:
+      ["system.*", "sandbox.*", "simple-files.*", "coordination.*", "skills.*"]
     skills: ["ui-generator"]
     tags: ["bundle"]
     # Use a more capable model for code generation.

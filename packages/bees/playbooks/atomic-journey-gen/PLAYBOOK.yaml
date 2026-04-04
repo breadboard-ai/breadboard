@@ -18,15 +18,12 @@ steps:
       1. Read the "app-architect" skill for the full specification of the
       journey.json format, segment model, and quality criteria.
 
-      2. Design the journey: decompose the objective into segments, define
-      the XState machine for each segment, and specify the data contracts.
+      2. Design the journey: decompose the objective into segments, define the
+      XState machine for each segment, and specify the data contracts.
 
       3. Save the result as journey.json.
 
       4. Call system_objective_fulfilled with a brief summary of the journey
       structure (segments, states, and expected outcome).
-
-      Do NOT generate any UI code. Do NOT ask the user any questions.
-      Do NOT loop. Design, save, and terminate.
     functions: ["system.*", "simple-files.*", "skills.*"]
     skills: ["app-architect"]

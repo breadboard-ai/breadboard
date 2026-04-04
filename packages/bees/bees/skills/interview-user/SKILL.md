@@ -2,8 +2,7 @@
 name: interview-user
 title: Interview User
 description:
-  Use it whenever the user asks an open ended question to fully understand their
-  needs.
+  Read it to understand the style and workflow for interviewing a user.
 ---
 
 Conversation style:
