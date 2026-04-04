@@ -361,3 +361,82 @@ class TestRunEventHooks:
         assert result is None
         assert ticket.metadata.title == "New Title"
 
+
+# --- Ticket path resolution ---
+
+
+class TestTicketPaths:
+    """Tests for Ticket.dir and Ticket.fs_dir path resolution."""
+
+    def test_dir_always_top_level(self, _temp_tickets):
+        """Ticket.dir is always tickets/{id}/, regardless of run metadata."""
+        from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
+
+        t = Ticket(
+            id="abc-123",
+            objective="test",
+            metadata=TicketMetadata(
+                playbook_run_id="run-456",
+                parent_run_id="run-789",
+            ),
+        )
+        assert t.dir == TICKETS_DIR / "abc-123"
+
+    def test_fs_dir_with_parent_run_id(self, _temp_tickets):
+        """fs_dir resolves to tickets/{parent_run_id}/filesystem/."""
+        from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
+
+        t = Ticket(
+            id="abc-123",
+            objective="test",
+            metadata=TicketMetadata(parent_run_id="parent-run"),
+        )
+        assert t.fs_dir == TICKETS_DIR / "parent-run" / "filesystem"
+
+    def test_fs_dir_with_playbook_run_id(self, _temp_tickets):
+        """fs_dir resolves to tickets/{playbook_run_id}/filesystem/."""
+        from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
+
+        t = Ticket(
+            id="abc-123",
+            objective="test",
+            metadata=TicketMetadata(playbook_run_id="pb-run"),
+        )
+        assert t.fs_dir == TICKETS_DIR / "pb-run" / "filesystem"
+
+    def test_fs_dir_plain_ticket(self, _temp_tickets):
+        """Plain tickets get fs_dir at tickets/{id}/filesystem/."""
+        from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
+
+        t = Ticket(id="abc-123", objective="test", metadata=TicketMetadata())
+        assert t.fs_dir == TICKETS_DIR / "abc-123" / "filesystem"
+
+    def test_fs_dir_parent_takes_precedence(self, _temp_tickets):
+        """parent_run_id takes precedence over playbook_run_id for fs_dir."""
+        from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
+
+        t = Ticket(
+            id="abc-123",
+            objective="test",
+            metadata=TicketMetadata(
+                playbook_run_id="pb-run",
+                parent_run_id="parent-run",
+            ),
+        )
+        assert t.fs_dir == TICKETS_DIR / "parent-run" / "filesystem"
+
+    def test_list_tickets_skips_run_dirs(self, _temp_tickets):
+        """list_tickets skips directories that only contain filesystem/."""
+        from bees.ticket import create_ticket, list_tickets, TICKETS_DIR
+
+        # Create a real ticket.
+        ticket = create_ticket("real work")
+
+        # Create a run directory with only a filesystem/ subdirectory.
+        run_dir = TICKETS_DIR / "fake-run-id"
+        (run_dir / "filesystem").mkdir(parents=True)
+
+        tickets = list_tickets()
+        ids = [t.id for t in tickets]
+        assert ticket.id in ids
+        assert "fake-run-id" not in ids
