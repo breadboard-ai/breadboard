@@ -109,14 +109,6 @@ class Ticket:
 
     @property
     def dir(self) -> Path:
-        parent = getattr(self.metadata, "parent_run_id", None)
-        if parent:
-            return TICKETS_DIR / "_runs" / parent / self.id
-            
-        playbook_run = getattr(self.metadata, "playbook_run_id", None)
-        if playbook_run:
-            return TICKETS_DIR / "_runs" / playbook_run / self.id
-            
         return TICKETS_DIR / self.id
 
     @property
@@ -129,11 +121,11 @@ class Ticket:
         """
         parent = self.metadata.parent_run_id
         if parent:
-            return TICKETS_DIR / "_runs" / parent / "filesystem"
-            
+            return TICKETS_DIR / parent / "filesystem"
+
         playbook_run = self.metadata.playbook_run_id
         if playbook_run:
-            return TICKETS_DIR / "_runs" / playbook_run / "filesystem"
+            return TICKETS_DIR / playbook_run / "filesystem"
             
         return self.dir / "filesystem"
 
@@ -247,12 +239,6 @@ def load_ticket(ticket_id: str, ticket_dir: Path | None = None) -> Ticket | None
     """Load a ticket from disk by ID. If ticket_dir is provided, skips path lookup."""
     if ticket_dir is None:
         ticket_dir = TICKETS_DIR / ticket_id
-        if not ticket_dir.exists():
-            runs_dir = TICKETS_DIR / "_runs"
-            if runs_dir.exists():
-                matches = list(runs_dir.glob(f"*/{ticket_id}"))
-                if matches:
-                    ticket_dir = matches[0]
         
     if not ticket_dir.exists():
         return None
@@ -279,7 +265,7 @@ def list_tickets(*, status: TicketStatus | None = None) -> list[Ticket]:
 
     tickets: list[Ticket] = []
     for ticket_dir in sorted(TICKETS_DIR.iterdir()):
-        if not ticket_dir.is_dir() or ticket_dir.name == "_runs":
+        if not ticket_dir.is_dir():
             continue
         ticket = load_ticket(ticket_dir.name, ticket_dir=ticket_dir)
         if ticket is None:
@@ -287,22 +273,6 @@ def list_tickets(*, status: TicketStatus | None = None) -> list[Ticket]:
         if status is not None and ticket.metadata.status != status:
             continue
         tickets.append(ticket)
-
-    # Load nested run tickets
-    runs_dir = TICKETS_DIR / "_runs"
-    if runs_dir.exists():
-        for run_dir in sorted(runs_dir.iterdir()):
-            if not run_dir.is_dir():
-                continue
-            for ticket_dir in sorted(run_dir.iterdir()):
-                if not ticket_dir.is_dir() or ticket_dir.name == "filesystem":
-                    continue
-                ticket = load_ticket(ticket_dir.name, ticket_dir=ticket_dir)
-                if ticket is None:
-                    continue
-                if status is not None and ticket.metadata.status != status:
-                    continue
-                tickets.append(ticket)
 
     # Sort by created_at latest first
     tickets.sort(key=lambda t: t.metadata.created_at or "", reverse=True)

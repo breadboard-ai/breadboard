@@ -84,16 +84,15 @@ def _make_handlers(
             status_cb("Pulling latest digest tiles...")
 
         tiles = []
-        runs_dir = TICKETS_DIR / "_runs"
-        if runs_dir.exists():
-            for run_dir in runs_dir.iterdir():
-                if not run_dir.is_dir():
+        if TICKETS_DIR.exists():
+            for entry in TICKETS_DIR.iterdir():
+                if not entry.is_dir():
                     continue
-                tile_path = run_dir / "filesystem" / "digest_tile.json"
+                tile_path = entry / "filesystem" / "digest_tile.json"
                 if tile_path.exists():
                     try:
                         content = json.loads(tile_path.read_text(encoding="utf-8"))
-                        tiles.append({"run_id": run_dir.name, "tile": content})
+                        tiles.append({"run_id": entry.name, "tile": content})
                     except Exception as e:
                         logger.warning("Failed to read digest tile %s: %s", tile_path, e)
 
