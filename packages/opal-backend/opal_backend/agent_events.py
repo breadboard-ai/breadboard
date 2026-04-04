@@ -39,6 +39,7 @@ from .events import (
     SubagentFinishEvent,
     ThoughtEvent,
     TurnCompleteEvent,
+    UsageMetadataEvent,
 )
 from .loop import LoopHooks
 
@@ -110,6 +111,9 @@ def build_hooks_from_sink(sink: AgentEventSink) -> LoopHooks:
         on_turn_complete=lambda: sink.emit(TurnCompleteEvent()),
         on_send_request=lambda model, body: sink.emit(
             SendRequestEvent(model=model, body=body)
+        ),
+        on_usage_metadata=lambda metadata: sink.emit(
+            UsageMetadataEvent(metadata=metadata)
         ),
     )
 
