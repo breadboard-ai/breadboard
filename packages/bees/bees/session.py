@@ -370,7 +370,7 @@ async def run_session(
     model: str | None = None,
     on_playbook_run: Any | None = None,
     on_coordination_emit: Any | None = None,
-    current_playbook_run_id: str | None = None,
+    workspace_root_id: str | None = None,
 ) -> SessionResult:
     """Run a single agent session and return the result.
 
@@ -416,7 +416,7 @@ async def run_session(
             get_playbooks_function_group(
                 on_playbook_run=on_playbook_run,
                 on_coordination_emit=on_coordination_emit,
-                current_playbook_run_id=current_playbook_run_id,
+                workspace_root_id=workspace_root_id,
             ),
             get_coordination_function_group(on_coordination_emit=on_coordination_emit),
             get_chat_function_group_factory(
@@ -507,7 +507,7 @@ async def resume_session(
     on_event: Any | None = None,
     on_playbook_run: Any | None = None,
     on_coordination_emit: Any | None = None,
-    current_playbook_run_id: str | None = None,
+    workspace_root_id: str | None = None,
 ) -> SessionResult:
     """Resume a suspended session from saved state on disk.
 
@@ -570,7 +570,7 @@ async def resume_session(
             get_playbooks_function_group(
                 on_playbook_run=on_playbook_run,
                 on_coordination_emit=on_coordination_emit,
-                current_playbook_run_id=current_playbook_run_id,
+                workspace_root_id=workspace_root_id,
             ),
             get_coordination_function_group(on_coordination_emit=on_coordination_emit),
             get_chat_function_group_factory(

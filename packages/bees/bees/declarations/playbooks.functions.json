@@ -71,10 +71,12 @@
         },
         "share_workspace": {
           "type": "boolean",
-          "description": "If true, child tickets will share your filesystem workspace. Files you write are visible to them and vice versa. Use this when the child playbook needs access to files you have produced. DO NOT use this when delegating full independent projects or standalone applications (like a journey); those should be allowed to run in their own pristine isolated workspace (i.e. set this to false)."
+          "description": "If true, the playbook will share your filesystem workspace. Use this when the playbook to run needs access to files you have produced. Most of the time, leave it as false. Only set to true when the objective calls for a shared filesystem",
+          "default": false
         }
       },
-      "required": ["name"]
+      "required": ["name"],
+      "additionalProperties": false
     },
     "responseJsonSchema": {
       "type": "object",

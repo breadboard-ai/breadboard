@@ -164,7 +164,7 @@ def run_playbook(
     name: str,
     *,
     context: str | None = None,
-    parent_run_id: str | None = None,
+    parent_ticket_id: str | None = None,
 ) -> list[Ticket]:
     """Create tickets for each step of a playbook.
 
@@ -172,8 +172,8 @@ def run_playbook(
     references in objectives are replaced with the concrete ticket ID
     of the already-created step.
 
-    If ``parent_run_id`` is provided, all created tickets will share
-    the parent run's workspace directory instead of getting their own.
+    If ``parent_ticket_id`` is provided, all created tickets will share
+    the parent ticket's workspace directory instead of getting their own.
 
     If the playbook has a ``hooks.py`` with an ``on_run_playbook`` function,
     it is called before ticket creation. The hook receives the
@@ -203,6 +203,10 @@ def run_playbook(
     step_ticket_ids: dict[str, str] = {}
     created_tickets: list[Ticket] = []
 
+    # Workspace root: inherited from a parent playbook, or determined
+    # by the first ticket created in this run (topological root).
+    workspace_root = parent_ticket_id
+
     for step_name in order:
         step = steps[step_name]
         objective = step.get("objective", "")
@@ -231,9 +235,14 @@ def run_playbook(
             watch_events=step.get("watch_events"),
             playbook_id=playbook_id,
             playbook_run_id=playbook_run_id,
-            parent_run_id=parent_run_id,
+            parent_ticket_id=workspace_root,
             context=context if is_root else None,
         )
+
+        # First ticket in topological order becomes the workspace root
+        # for all subsequent siblings.
+        if workspace_root is None:
+            workspace_root = ticket.id
 
         step_ticket_ids[step_name] = ticket.id
         created_tickets.append(ticket)

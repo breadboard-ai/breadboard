@@ -377,32 +377,21 @@ class TestTicketPaths:
             objective="test",
             metadata=TicketMetadata(
                 playbook_run_id="run-456",
-                parent_run_id="run-789",
+                parent_ticket_id="run-789",
             ),
         )
         assert t.dir == TICKETS_DIR / "abc-123"
 
-    def test_fs_dir_with_parent_run_id(self, _temp_tickets):
-        """fs_dir resolves to tickets/{parent_run_id}/filesystem/."""
+    def test_fs_dir_with_parent_ticket_id(self, _temp_tickets):
+        """fs_dir resolves to tickets/{parent_ticket_id}/filesystem/."""
         from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
 
         t = Ticket(
             id="abc-123",
             objective="test",
-            metadata=TicketMetadata(parent_run_id="parent-run"),
+            metadata=TicketMetadata(parent_ticket_id="parent-ticket"),
         )
-        assert t.fs_dir == TICKETS_DIR / "parent-run" / "filesystem"
-
-    def test_fs_dir_with_playbook_run_id(self, _temp_tickets):
-        """fs_dir resolves to tickets/{playbook_run_id}/filesystem/."""
-        from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
-
-        t = Ticket(
-            id="abc-123",
-            objective="test",
-            metadata=TicketMetadata(playbook_run_id="pb-run"),
-        )
-        assert t.fs_dir == TICKETS_DIR / "pb-run" / "filesystem"
+        assert t.fs_dir == TICKETS_DIR / "parent-ticket" / "filesystem"
 
     def test_fs_dir_plain_ticket(self, _temp_tickets):
         """Plain tickets get fs_dir at tickets/{id}/filesystem/."""
@@ -411,8 +400,20 @@ class TestTicketPaths:
         t = Ticket(id="abc-123", objective="test", metadata=TicketMetadata())
         assert t.fs_dir == TICKETS_DIR / "abc-123" / "filesystem"
 
+    def test_fs_dir_playbook_run_id_alone_uses_own_dir(self, _temp_tickets):
+        """playbook_run_id alone does NOT create a shared workspace dir."""
+        from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
+
+        t = Ticket(
+            id="abc-123",
+            objective="test",
+            metadata=TicketMetadata(playbook_run_id="pb-run"),
+        )
+        # Without parent_ticket_id, falls through to own directory.
+        assert t.fs_dir == TICKETS_DIR / "abc-123" / "filesystem"
+
     def test_fs_dir_parent_takes_precedence(self, _temp_tickets):
-        """parent_run_id takes precedence over playbook_run_id for fs_dir."""
+        """parent_ticket_id determines fs_dir regardless of playbook_run_id."""
         from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
 
         t = Ticket(
@@ -420,23 +421,46 @@ class TestTicketPaths:
             objective="test",
             metadata=TicketMetadata(
                 playbook_run_id="pb-run",
-                parent_run_id="parent-run",
+                parent_ticket_id="parent-ticket",
             ),
         )
-        assert t.fs_dir == TICKETS_DIR / "parent-run" / "filesystem"
+        assert t.fs_dir == TICKETS_DIR / "parent-ticket" / "filesystem"
 
-    def test_list_tickets_skips_run_dirs(self, _temp_tickets):
-        """list_tickets skips directories that only contain filesystem/."""
-        from bees.ticket import create_ticket, list_tickets, TICKETS_DIR
+    def test_sibling_tickets_get_parent_ticket_id(self, _temp_tickets, write_playbook):
+        """Non-root tickets in a playbook get parent_ticket_id = root ticket ID."""
+        write_playbook("siblings", {
+            "name": "siblings",
+            "steps": {
+                "root": {"objective": "I am root"},
+                "child": {"objective": "I depend on {{root}}"},
+            },
+        })
 
-        # Create a real ticket.
-        ticket = create_ticket("real work")
+        tickets = run_playbook("siblings")
+        assert len(tickets) == 2
 
-        # Create a run directory with only a filesystem/ subdirectory.
-        run_dir = TICKETS_DIR / "fake-run-id"
-        (run_dir / "filesystem").mkdir(parents=True)
+        root = next(t for t in tickets if t.metadata.parent_ticket_id is None)
+        child = next(t for t in tickets if t.metadata.parent_ticket_id is not None)
 
-        tickets = list_tickets()
-        ids = [t.id for t in tickets]
-        assert ticket.id in ids
-        assert "fake-run-id" not in ids
+        assert child.metadata.parent_ticket_id == root.id
+        assert root.fs_dir == child.fs_dir
+
+    def test_list_tickets_no_orphan_run_dirs(self, _temp_tickets, write_playbook):
+        """Running a playbook should not create non-ticket directories."""
+        from bees.ticket import list_tickets, TICKETS_DIR
+
+        write_playbook("clean", {
+            "name": "clean",
+            "steps": {
+                "a": {"objective": "do a"},
+                "b": {"objective": "do b with {{a}}"},
+            },
+        })
+
+        tickets = run_playbook("clean")
+        ticket_ids = {t.id for t in tickets}
+
+        # Every directory under tickets/ should be a real ticket.
+        for d in TICKETS_DIR.iterdir():
+            if d.is_dir():
+                assert d.name in ticket_ids, f"Orphan directory: {d.name}"
