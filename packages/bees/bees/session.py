@@ -224,7 +224,9 @@ class EvalCollector:
                     self.suspend_event = event
                     break
 
-    def to_eval_file_data(self) -> list[dict[str, Any]]:
+    def to_eval_file_data(
+        self, *, ticket_id: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Produce the EvalFileData array (context + outcome entries)."""
         end_time = time.time()
         total_duration_ms = (end_time - self.start_time) * 1000
@@ -243,6 +245,7 @@ class EvalCollector:
         result: list[dict[str, Any]] = [
             {
                 "type": "context",
+                "sessionId": ticket_id,
                 "startedDateTime": started,
                 "totalDurationMs": total_duration_ms,
                 "turnCount": self.turn_count,
@@ -495,7 +498,7 @@ async def run_session(
     date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     prefix = f"bees-{ticket_id[:8]}" if ticket_id else "bees-session"
     out_path = OUT_DIR / f"{prefix}-{date_stamp}.log.json"
-    eval_data = collector.to_eval_file_data()
+    eval_data = collector.to_eval_file_data(ticket_id=ticket_id)
     with open(out_path, "w") as f:
         json.dump(eval_data, f, indent=2, ensure_ascii=False)
 
@@ -652,7 +655,7 @@ async def resume_session(
         date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         prefix = f"bees-{ticket_id[:8]}" if ticket_id else "bees-session"
         out_path = OUT_DIR / f"{prefix}-{date_stamp}.log.json"
-        eval_data = collector.to_eval_file_data()
+        eval_data = collector.to_eval_file_data(ticket_id=ticket_id)
         with open(out_path, "w") as f:
             json.dump(eval_data, f, indent=2, ensure_ascii=False)
 
