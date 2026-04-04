@@ -103,6 +103,7 @@ class LoopHooks:
     ) = None
     on_turn_complete: Callable[[], None] | None = None
     on_send_request: Callable[[str, GeminiBody], None] | None = None
+    on_usage_metadata: Callable[[dict[str, Any]], None] | None = None
 
 
 class LoopController:
@@ -253,6 +254,7 @@ class Loop:
 
                 # Stream from Gemini
                 function_caller = FunctionCaller(definition_map)
+                turn_usage_metadata: dict[str, Any] | None = None
 
                 if not self._backend:
                     return err("No BackendClient provided")
@@ -284,6 +286,10 @@ class Loop:
                             )
 
                         contents.append(content)
+
+                        chunk_usage = chunk.get("usageMetadata")
+                        if chunk_usage:
+                            turn_usage_metadata = chunk_usage
 
                         parts = content.get("parts", [])
                         for part in parts:
@@ -354,6 +360,9 @@ class Loop:
                         cached_content_count = 0
                         continue
                     raise
+
+                if turn_usage_metadata and hooks.on_usage_metadata:
+                    hooks.on_usage_metadata(turn_usage_metadata)
 
                 # Get function results
                 try:

@@ -140,6 +140,14 @@ class EvalCollector:
         # Outcome
         self.outcome: dict[str, Any] | None = None
 
+        # Token usage (per-turn and aggregate)
+        self.usage_per_turn: list[dict[str, Any]] = []
+        self.total_prompt_tokens = 0
+        self.total_candidates_tokens = 0
+        self.total_thoughts_tokens = 0
+        self.total_cached_tokens = 0
+        self.total_tokens = 0
+
         # Intermediate files from the agent file system
         self.intermediate: list[dict[str, Any]] | None = None
 
@@ -186,6 +194,23 @@ class EvalCollector:
         elif "error" in event:
             self.error = event["error"].get("message", "Unknown error")
 
+        elif "usageMetadata" in event:
+            metadata = event["usageMetadata"].get("metadata", {})
+            self.usage_per_turn.append(metadata)
+            self.total_prompt_tokens += metadata.get(
+                "promptTokenCount", 0
+            )
+            self.total_candidates_tokens += metadata.get(
+                "candidatesTokenCount", 0
+            )
+            self.total_thoughts_tokens += metadata.get(
+                "thoughtsTokenCount", 0
+            )
+            self.total_cached_tokens += metadata.get(
+                "cachedContentTokenCount", 0
+            )
+            self.total_tokens += metadata.get("totalTokenCount", 0)
+
         elif "complete" in event:
             result = event["complete"].get("result", {})
             self.outcome = result
@@ -224,6 +249,14 @@ class EvalCollector:
                 "totalRequestTimeMs": total_duration_ms,
                 "totalThoughts": self.total_thoughts,
                 "totalFunctionCalls": self.total_function_calls,
+                "tokenMetadata": {
+                    "totalPromptTokens": self.total_prompt_tokens,
+                    "totalCandidatesTokens": self.total_candidates_tokens,
+                    "totalThoughtsTokens": self.total_thoughts_tokens,
+                    "totalCachedTokens": self.total_cached_tokens,
+                    "totalTokens": self.total_tokens,
+                    "perTurn": self.usage_per_turn,
+                },
                 "config": self.config,
                 "context": full_context,
             },
@@ -763,6 +796,18 @@ def _print_event_summary(
     elif "error" in event:
         msg = event["error"].get("message", "?")
         print(f"  {prefix}❌ {msg}", file=sys.stderr)
+    elif "usageMetadata" in event:
+        m = event["usageMetadata"].get("metadata", {})
+        parts = []
+        if "promptTokenCount" in m:
+            parts.append(f"prompt={m['promptTokenCount']}")
+        if "candidatesTokenCount" in m:
+            parts.append(f"candidates={m['candidatesTokenCount']}")
+        if "cachedContentTokenCount" in m:
+            parts.append(f"cached={m['cachedContentTokenCount']}")
+        if "thoughtsTokenCount" in m:
+            parts.append(f"thoughts={m['thoughtsTokenCount']}")
+        print(f"  {prefix}📊 tokens: {', '.join(parts)}", file=sys.stderr)
     elif "complete" in event:
         success = event["complete"].get("result", {}).get("success", False)
         icon = "✅" if success else "❌"
