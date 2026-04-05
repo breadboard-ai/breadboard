@@ -71,10 +71,22 @@ export const logDetailStyles = css`
 
   .token-track {
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .token-scale {
+    font-size: 0.6rem;
+    font-family: "Google Mono", "Roboto Mono", monospace;
+    color: #475569;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .token-segments {
     display: flex;
+    flex: 1;
     height: 10px;
     border-radius: 5px;
     overflow: hidden;
@@ -276,6 +288,15 @@ export const logDetailStyles = css`
     color: #a78bfa;
   }
 
+  .turn.system {
+    background: #111d1f;
+    border: 1px solid #1a3338;
+  }
+
+  .turn.system .turn-role {
+    color: #2dd4bf;
+  }
+
   .turn-parts {
     display: flex;
     flex-direction: column;
@@ -458,5 +479,48 @@ export const logDetailStyles = css`
     background: #1e3a8a33;
     color: #60a5fa;
     border: 1px solid #1e3a8a;
+  }
+
+  /* ── Turn headers (label + bar + numbers in one row) ── */
+  .turn-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0 6px;
+    padding: 0;
+  }
+
+  .turn-header-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .turn-header-bar {
+    flex: 1;
+    min-width: 60px;
+  }
+
+  .turn-header-bar .token-segments {
+    height: 6px;
+    border-radius: 3px;
+  }
+
+  .turn-header-tokens {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    font-size: 0.65rem;
+  }
+
+  .turn-header-total {
+    color: #64748b;
+    font-family: "Google Mono", "Roboto Mono", monospace;
+    font-weight: 600;
   }
 `;

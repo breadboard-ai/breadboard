@@ -13,11 +13,12 @@
 
 import { Signal } from "signal-polyfill";
 import type {
-  LogContextEntry,
+  LogRunEntry,
   LogFileInfo,
   LogSession,
   MergedSessionView,
   SessionSegment,
+  TurnGroup,
 } from "./types.js";
 
 export { LogStore };
@@ -40,7 +41,7 @@ class LogStore {
 
   #handle: FileSystemDirectoryHandle | null = null;
   #observer: { disconnect(): void } | null = null;
-  #cache = new Map<string, LogContextEntry>();
+  #cache = new Map<string, LogRunEntry>();
 
   // ── Lifecycle ──
 
@@ -120,11 +121,11 @@ class LogStore {
     for (const filename of newFiles) {
       const data = await this.#readFile(filename);
       if (!data) continue;
-      const contextEntry = (data as Array<Record<string, unknown>>).find(
-        (e) => e.type === "context"
-      ) as LogContextEntry | undefined;
-      if (contextEntry) {
-        this.#cache.set(filename, contextEntry);
+      const runEntry = (data as Array<Record<string, unknown>>).find(
+        (e) => e.type === "run"
+      ) as LogRunEntry | undefined;
+      if (runEntry) {
+        this.#cache.set(filename, runEntry);
       }
     }
 
@@ -146,7 +147,7 @@ class LogStore {
 
   #computeMergedView(sessionId: string): MergedSessionView | null {
     // Gather all cached entries for this session.
-    const entries: { filename: string; data: LogContextEntry }[] = [];
+    const entries: { filename: string; data: LogRunEntry }[] = [];
     for (const [filename, entry] of this.#cache) {
       if (entry.sessionId === sessionId) {
         entries.push({ filename, data: entry });
@@ -154,56 +155,76 @@ class LogStore {
     }
     if (entries.length === 0) return null;
 
-    // Sort oldest-first for correct diffing.
+    // Sort oldest-first.
     entries.sort((a, b) =>
       a.data.startedDateTime.localeCompare(b.data.startedDateTime)
     );
 
-    // Diff consecutive contexts to extract each segment's new turns.
-    //
-    // EvalCollector appends an accumulated "model_parts" blob as the final
-    // context entry. This blob duplicates parts already present in proper
-    // model turns earlier in the context. We detect and strip it:
-    //   - It's always the last entry with role "model"
-    //   - It has multiple heterogeneous parts (function calls + text from
-    //     different turns merged into one)
-    //
-    // For diffing, we use the "clean" context length (excluding blob) so
-    // the next segment's slice starts at the correct boundary.
     const segments: SessionSegment[] = [];
-    let previousCleanLength = 0;
 
     for (let i = 0; i < entries.length; i++) {
       const { filename, data } = entries[i];
       const ctx = data.context;
+      const turns = data.turns;
 
-      // Detect the model_parts blob: last entry, role "model", with
-      // multiple parts that mix functionCall and text/thought — a
-      // signature of accumulated cross-turn parts.
-      const lastEntry = ctx.at(-1);
-      const hasBlob =
-        lastEntry?.role === "model" &&
-        (lastEntry.parts?.length ?? 0) > 1 &&
-        data.turnCount > 0;
+      // Build per-turn groups from the structured turn boundaries.
+      // Function response entries are input to the turn whose sendRequest
+      // carries them, so scan backward to pull them into the right group.
+      const turnGroups: TurnGroup[] = [];
 
-      // Clean context = proper conversation without the blob.
-      const cleanCtx = hasBlob ? ctx.slice(0, -1) : ctx;
+      // First pass: compute adjusted starts.
+      const starts: number[] = [];
+      for (let t = 0; t < turns.length; t++) {
+        let start = turns[t].contextLengthAtStart;
+        // Pull in preceding function response entries.
+        while (start > 0) {
+          const prev = ctx[start - 1];
+          if (
+            prev?.role === "user" &&
+            prev.parts?.some((p) => "functionResponse" in p)
+          ) {
+            start--;
+          } else {
+            break;
+          }
+        }
+        // For the first turn, include the user prompt if the scan
+        // didn't already pull in a function response.
+        if (
+          t === 0 &&
+          start === turns[t].contextLengthAtStart &&
+          start > 0
+        ) {
+          start--;
+        }
+        starts.push(start);
+      }
 
-      const newTurns = cleanCtx.slice(previousCleanLength);
+      // Second pass: build groups using adjusted starts.
+      for (let t = 0; t < turns.length; t++) {
+        const start = starts[t];
+        const end =
+          t < turns.length - 1 ? starts[t + 1] : ctx.length;
+        turnGroups.push({
+          turnIndex: t,
+          entries: ctx.slice(start, end),
+          tokenMetadata: turns[t].tokenMetadata,
+        });
+      }
+
       segments.push({
         filename,
         segmentIndex: i,
         startedDateTime: data.startedDateTime,
         totalDurationMs: data.totalDurationMs,
         turnCount: data.turnCount,
-        newTurns,
+        turnGroups,
         totalThoughts: data.totalThoughts,
         totalFunctionCalls: data.totalFunctionCalls,
         totalTokens: data.tokenMetadata?.totalTokens ?? 0,
         config: data.config,
         tokenMetadata: data.tokenMetadata,
       });
-      previousCleanLength = cleanCtx.length;
     }
 
     return {
