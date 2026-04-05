@@ -53,7 +53,7 @@ _BEES_DIR = Path(__file__).resolve().parent
 _SKILLS_LISTING, _SKILLS_FILES, _SKILLS_LIST = scan_skills(_BEES_DIR)
 
 PACKAGE_DIR = Path(__file__).resolve().parent.parent
-OUT_DIR = PACKAGE_DIR / "out"
+OUT_DIR = PACKAGE_DIR / "state" / "logs"
 
 CHAT_LOG_FILENAME = "chat_log.json"
 

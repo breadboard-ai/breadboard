@@ -25,9 +25,9 @@ export { LogStore };
 
 type AccessState = "none" | "prompt" | "ready";
 
-const DB_NAME = "bees-log-handles";
+const DB_NAME = "bees-state-handles";
 const STORE_NAME = "handles";
-const HANDLE_KEY = "out-dir";
+const HANDLE_KEY = "state-dir";
 
 class LogStore {
   // ── Public reactive state (read via .get() in SignalWatcher renders) ──
@@ -39,7 +39,10 @@ class LogStore {
 
   // ── Private ──
 
+  /** The user-selected ``state/`` directory. */
   #handle: FileSystemDirectoryHandle | null = null;
+  /** The ``state/logs/`` subdirectory for log scanning. */
+  #logsHandle: FileSystemDirectoryHandle | null = null;
   #observer: { disconnect(): void } | null = null;
   #cache = new Map<string, LogRunEntry>();
 
@@ -58,12 +61,13 @@ class LogStore {
       return;
     }
     this.#handle = handle;
+    if (!(await this.#resolveLogsHandle())) return;
     this.accessState.set("ready");
     await this.scan();
     this.#startObserver();
   }
 
-  /** Prompt the user to pick a directory. */
+  /** Prompt the user to pick the ``state/`` directory. */
   async openDirectory(): Promise<void> {
     try {
       const handle = await (
@@ -77,10 +81,11 @@ class LogStore {
         mode: "read",
         // Browser remembers the last directory chosen for this ID,
         // so re-picks open to the right place automatically.
-        id: "bees-out-dir",
+        id: "bees-state-dir",
       });
       await this.#saveHandle(handle);
       this.#handle = handle;
+      if (!(await this.#resolveLogsHandle())) return;
       this.accessState.set("ready");
       await this.scan();
       this.#startObserver();
@@ -96,18 +101,19 @@ class LogStore {
     const granted = await this.#checkPermission(handle);
     if (!granted) return;
     this.#handle = handle;
+    if (!(await this.#resolveLogsHandle())) return;
     this.accessState.set("ready");
     await this.scan();
     this.#startObserver();
   }
 
-  /** Scan the directory and rebuild sessions. */
+  /** Scan the logs subdirectory and rebuild sessions. */
   async scan(): Promise<void> {
-    if (!this.#handle) return;
+    if (!this.#logsHandle) return;
 
     const filenames: string[] = [];
     for await (const [name, entry] of (
-      this.#handle as FileSystemDirectoryHandle & {
+      this.#logsHandle as FileSystemDirectoryHandle & {
         entries(): AsyncIterable<[string, FileSystemHandle]>;
       }
     ).entries()) {
@@ -292,9 +298,9 @@ class LogStore {
   }
 
   async #readFile(filename: string): Promise<unknown[] | null> {
-    if (!this.#handle) return null;
+    if (!this.#logsHandle) return null;
     try {
-      const fileHandle = await this.#handle.getFileHandle(filename);
+      const fileHandle = await this.#logsHandle.getFileHandle(filename);
       const file = await fileHandle.getFile();
       const text = await file.text();
       return JSON.parse(text);
@@ -303,8 +309,21 @@ class LogStore {
     }
   }
 
+  /** Resolve the ``logs/`` subdirectory from the state handle. */
+  async #resolveLogsHandle(): Promise<boolean> {
+    if (!this.#handle) return false;
+    try {
+      this.#logsHandle = await this.#handle.getDirectoryHandle("logs");
+      return true;
+    } catch {
+      console.warn("Could not find logs/ subdirectory in state/");
+      this.accessState.set("none");
+      return false;
+    }
+  }
+
   #startObserver(): void {
-    if (!this.#handle) return;
+    if (!this.#logsHandle) return;
     if (!("FileSystemObserver" in globalThis)) return;
     try {
       // FileSystemObserver is experimental — access via dynamic typing.
@@ -313,7 +332,7 @@ class LogStore {
       const observer = new Ctor((records: unknown[]) => {
         if (records.length > 0) this.scan();
       });
-      observer.observe(this.#handle, { recursive: false });
+      observer.observe(this.#logsHandle, { recursive: false });
       this.#observer = observer;
     } catch (e) {
       console.warn("FileSystemObserver not available:", e);
