@@ -366,9 +366,11 @@ class BeesLogDetail extends LitElement {
       role === "user" && parts.every((p) => p.functionResponse);
 
     if (hasOnlyFunctionResponses) {
-      const name = parts[0].functionResponse!.name;
-      const label = html`<span class="role-chip response">response</span> ${name}`;
-      return this.#renderCard("system", label, parts);
+      return html`${parts.map((p) => {
+        const name = p.functionResponse!.name;
+        const label = html`<span class="role-chip response">response</span> ${name}`;
+        return this.#renderCard("system", label, [p]);
+      })}`;
     }
 
     // Model turns: split thoughts and function calls into their own cards.
