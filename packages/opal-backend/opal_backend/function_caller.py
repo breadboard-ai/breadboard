@@ -146,16 +146,27 @@ class FunctionCaller:
     ) -> dict[str, Any] | None:
         """Await all queued function calls and return combined results.
 
+        All tasks run to completion — even when one raises
+        ``SuspendError``.  Completed sibling results are attached to the
+        error so the loop can include them in the saved state.
+
         Returns:
             None if no function calls were queued.
             A dict with ``combined`` (LLMContent) and ``results`` (list)
             if function calls were present, or a ``{"$error": ...}`` dict
             if any function returned a fatal error.
+
+        Raises:
+            SuspendError: When one of the tasks needs client input.
+                ``error.completed_responses`` contains results from
+                sibling tasks that finished successfully.
         """
         if not self._tasks:
             return None
 
-        raw_results = await asyncio.gather(*self._tasks)
+        raw_results = await asyncio.gather(
+            *self._tasks, return_exceptions=True,
+        )
 
         # Check for fatal ($error) outcomes — port of getResults() from TS.
         # Use the first fatal error only. Comma-joining multiple errors
@@ -165,14 +176,57 @@ class FunctionCaller:
             if isinstance(r, dict) and "$error" in r:
                 return r
 
-        results = [r for r in raw_results if r is not None]
+        # Sort results into completed and suspended.
+        suspend: SuspendError | None = None
+        completed: list[FunctionCallResult] = []
+
+        for r in raw_results:
+            if isinstance(r, SuspendError):
+                if suspend is None:
+                    suspend = r
+                else:
+                    # Multiple suspends in one turn — only the first is
+                    # honoured.  Inject an error response for extras so
+                    # the model sees a result for every function call.
+                    extra_name = (
+                        r.function_call_part
+                        .get("functionCall", {})
+                        .get("name", "unknown")
+                    )
+                    completed.append(FunctionCallResult(
+                        call_id="",
+                        response={
+                            "functionResponse": {
+                                "name": extra_name,
+                                "response": {
+                                    "error": (
+                                        "Another function in this turn "
+                                        "suspended the session"
+                                    ),
+                                },
+                            }
+                        },
+                    ))
+            elif isinstance(r, FunctionCallResult):
+                completed.append(r)
+            elif isinstance(r, BaseException):
+                # Shouldn't happen (_execute catches everything except
+                # SuspendError), but handle defensively.
+                logger.exception(
+                    "Unexpected error in function task: %s", r,
+                )
+
+        if suspend is not None:
+            suspend.completed_responses = completed
+            raise suspend
 
         combined: LLMContent = {
-            "parts": [r.response for r in results],
+            "parts": [r.response for r in completed],
             "role": "user",
         }
 
         return {
             "combined": combined,
-            "results": results,
+            "results": completed,
         }
+

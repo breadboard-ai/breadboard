@@ -327,17 +327,21 @@ async def resume(
             task_tree_manager=task_tree_manager,
         )
     else:
-        # Normal suspend (chat input, choice, etc.). Inject the client's
-        # response as the function result.
+        # Normal suspend (chat input, choice, etc.). Build a combined
+        # function response turn that includes:
+        #   1. Responses from sibling calls that completed before suspend
+        #   2. The suspend function's response from the client
+        all_response_parts = list(state.completed_function_responses)
+        all_response_parts.append({
+            "functionResponse": {
+                "name": func_name,
+                "response": await _process_chat_response(
+                    func_name, response, file_system,
+                ),
+            }
+        })
         function_response_turn = {
-            "parts": [{
-                "functionResponse": {
-                    "name": func_name,
-                    "response": await _process_chat_response(
-                        func_name, response, file_system,
-                    ),
-                }
-            }],
+            "parts": all_response_parts,
             "role": "user",
         }
         contents = state.contents + [function_response_turn]
@@ -481,7 +485,7 @@ async def _resume_precondition(
                 func_response = {"error": str(e)}
 
     function_response_turn = {
-        "parts": [{
+        "parts": list(state.completed_function_responses) + [{
             "functionResponse": {
                 "name": func_name,
                 "response": func_response,
@@ -761,6 +765,9 @@ async def _stream_loop(
                         ),
                         function_filter=function_filter,
                         model=model,
+                        completed_function_responses=(
+                            result.completed_function_responses
+                        ),
                     ),
                 )
                 result.suspend_event.interaction_id = (
