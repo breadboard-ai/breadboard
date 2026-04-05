@@ -13,7 +13,12 @@ import type { TicketData, PlaybookData } from "../data/types.js";
 import { getRelativeTime, extractPrompt } from "../utils.js";
 import { APP_NAME, APP_ICON } from "../constants.js";
 import { styles } from "./app.styles.js";
+import { jsonTreeStyles } from "./json-tree.styles.js";
+import { renderJson } from "./json-tree.js";
+import { StateAccess } from "../data/state-access.js";
 import { LogStore } from "../data/log-store.js";
+import { TicketStore } from "../data/ticket-store.js";
+import type { FileTreeNode } from "../data/ticket-store.js";
 import "./log-detail.js";
 
 export { BeesApp };
@@ -35,17 +40,22 @@ interface DaemonInfo {
   daemonTag: string;
 }
 
+type TabId = "jobs" | "playbooks" | "daemons" | "logs" | "tickets";
+
 @customElement("bees-app")
 class BeesApp extends SignalWatcher(LitElement) {
-  @state() accessor activeTab: "jobs" | "playbooks" | "daemons" | "logs" =
-    "jobs";
+  @state() accessor activeTab: TabId = "jobs";
   @state() accessor selectedJobId: string | null = null;
   @state() accessor playbooks: PlaybookData[] = [];
   @state() accessor loadingPlaybooks = false;
   @state() accessor selectedDaemonId: string | null = null;
+  @state() accessor ticketFileTree: FileTreeNode[] = [];
+  @state() accessor ticketFileContents: Record<string, string | null> = {};
 
-  private logStore = new LogStore();
-  private logStoreInitialized = false;
+  private stateAccess = new StateAccess();
+  private stateAccessInitialized = false;
+  private logStore = new LogStore(this.stateAccess);
+  private ticketStore = new TicketStore(this.stateAccess);
 
   private get scaInst() {
     return sca();
@@ -59,7 +69,7 @@ class BeesApp extends SignalWatcher(LitElement) {
     return this.scaInst.services.api;
   }
 
-  static styles = [styles];
+  static styles = [styles, jsonTreeStyles];
 
   connectedCallback() {
     super.connectedCallback();
@@ -71,6 +81,7 @@ class BeesApp extends SignalWatcher(LitElement) {
     super.disconnectedCallback();
     this.sse.close();
     this.logStore.destroy();
+    this.ticketStore.destroy();
   }
 
   private deriveJobs(): JobGroup[] {
@@ -244,6 +255,12 @@ class BeesApp extends SignalWatcher(LitElement) {
           >
             Logs
           </div>
+          <div
+            class="sidebar-tab ${this.activeTab === "tickets" ? "active" : ""}"
+            @click=${() => this.activateTicketsTab()}
+          >
+            Tickets
+          </div>
         </div>
 
         ${this.activeTab === "jobs"
@@ -252,7 +269,9 @@ class BeesApp extends SignalWatcher(LitElement) {
             ? this.renderDaemonsList(daemons)
             : this.activeTab === "logs"
               ? this.renderLogsList()
-              : this.renderPlaybooksList()}
+              : this.activeTab === "tickets"
+                ? this.renderTicketsList()
+                : this.renderPlaybooksList()}
       </div>
 
       <div class="main">
@@ -262,9 +281,78 @@ class BeesApp extends SignalWatcher(LitElement) {
             ? this.renderDaemonDetail(daemons)
             : this.activeTab === "logs"
               ? this.renderLogDetail()
-              : this.renderEmptyMain("Select a playbook to run on the left.")}
+              : this.activeTab === "tickets"
+                ? this.renderTicketDetail()
+                : this.renderEmptyMain("Select a playbook to run on the left.")}
       </div>
     `;
+  }
+
+  // --- State Access ---
+
+  /** Initialize state directory access (IDB load, permission check). */
+  private async ensureStateAccess(): Promise<void> {
+    if (this.stateAccessInitialized) return;
+    this.stateAccessInitialized = true;
+    await this.stateAccess.init();
+  }
+
+  /** Shared access-gate UI for tabs that need the state directory. */
+  private renderAccessGate() {
+    const access = this.stateAccess.accessState.get();
+
+    if (access === "none") {
+      return html`
+        <div class="jobs-list">
+          <div
+            style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center"
+          >
+            <button @click=${() => this.handleOpenDirectory()}>
+              📂 Open State Directory
+            </button>
+            <div style="font-size:0.75rem;color:#64748b">
+              Select the <code>packages/bees/state</code> directory
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    if (access === "prompt") {
+      return html`
+        <div class="jobs-list">
+          <div
+            style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center"
+          >
+            <button @click=${() => this.handleRequestAccess()}>
+              🔑 Grant Access
+            </button>
+            <div style="font-size:0.75rem;color:#64748b">
+              Permission expired — click to re-authorize
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Access is "ready" — no gate needed.
+    return null;
+  }
+
+  private async handleOpenDirectory(): Promise<void> {
+    await this.stateAccess.openDirectory();
+    this.activateCurrentStore();
+  }
+
+  private async handleRequestAccess(): Promise<void> {
+    await this.stateAccess.requestAccess();
+    this.activateCurrentStore();
+  }
+
+  /** Activate the store for whichever filesystem tab is active. */
+  private activateCurrentStore(): void {
+    if (this.activeTab === "logs") this.logStore.activate();
+    if (this.activeTab === "tickets") this.ticketStore.activate();
   }
 
   // --- Playbooks ---
@@ -640,50 +728,15 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   // --- Logs ---
 
-  private activateLogsTab() {
+  private async activateLogsTab() {
     this.activeTab = "logs";
-    if (!this.logStoreInitialized) {
-      this.logStoreInitialized = true;
-      this.logStore.init();
-    }
+    await this.ensureStateAccess();
+    this.logStore.activate();
   }
 
   private renderLogsList() {
-    const access = this.logStore.accessState.get();
-
-    if (access === "none") {
-      return html`
-        <div class="jobs-list">
-          <div
-            style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center"
-          >
-            <button @click=${() => this.logStore.openDirectory()}>
-              📂 Open State Directory
-            </button>
-            <div style="font-size:0.75rem;color:#64748b">
-              Select the <code>packages/bees/state</code> directory
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    if (access === "prompt") {
-      return html`
-        <div class="jobs-list">
-          <div
-            style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center"
-          >
-            <button @click=${() => this.logStore.requestAccess()}>
-              🔑 Grant Access
-            </button>
-            <div style="font-size:0.75rem;color:#64748b">
-              Permission expired — click to re-authorize
-            </div>
-          </div>
-        </div>
-      `;
-    }
+    const gate = this.renderAccessGate();
+    if (gate) return gate;
 
     const sessions = this.logStore.sessions.get();
     const selectedSid = this.logStore.selectedSessionId.get();
@@ -742,6 +795,298 @@ class BeesApp extends SignalWatcher(LitElement) {
   private renderLogDetail() {
     const data = this.logStore.selectedView.get();
     return html`<bees-log-detail .data=${data}></bees-log-detail>`;
+  }
+
+  // --- Tickets ---
+
+  private async activateTicketsTab() {
+    this.activeTab = "tickets";
+    await this.ensureStateAccess();
+    this.ticketStore.activate();
+  }
+
+  private renderTicketsList() {
+    const gate = this.renderAccessGate();
+    if (gate) return gate;
+
+    const tickets = this.ticketStore.tickets.get();
+    const selectedId = this.ticketStore.selectedTicketId.get();
+
+    if (tickets.length === 0) {
+      return html`<div class="empty-state">No tickets found.</div>`;
+    }
+
+    return html`
+      <div class="jobs-list">
+        ${tickets.map(
+          (t) => html`
+            <div
+              class="job-item ${selectedId === t.id ? "selected" : ""}"
+              @click=${() => {
+                this.ticketFileTree = [];
+                this.ticketFileContents = {};
+                this.ticketStore.selectTicket(t.id);
+              }}
+            >
+              <div class="job-header">
+                <div class="job-title">
+                  ${t.title || t.id.slice(0, 8)}
+                </div>
+                <div class="job-status ${t.status}"></div>
+              </div>
+              <div class="job-meta">
+                <span>${t.kind ?? "work"}</span>
+                <span>${getRelativeTime(t.created_at)}</span>
+              </div>
+              ${t.tags && t.tags.length > 0
+                ? html`
+                    <div class="job-meta">
+                      ${t.tags.map(
+                        (tag) =>
+                          html`<span
+                            class="tool-badge"
+                            style="font-size:0.65rem;padding:1px 5px"
+                            >${tag}</span
+                          >`
+                      )}
+                    </div>
+                  `
+                : nothing}
+            </div>
+          `
+        )}
+      </div>
+    `;
+  }
+
+  private renderTicketDetail() {
+    const ticket = this.ticketStore.selectedTicket.get();
+    if (!ticket)
+      return this.renderEmptyMain("Select a ticket to view details");
+
+    const statusLabel =
+      ticket.status === "suspended" && ticket.assignee === "user"
+        ? "waiting for user"
+        : ticket.status === "suspended"
+          ? "waiting for signal"
+          : ticket.status;
+
+    return html`
+      <div class="job-detail">
+        <div class="job-detail-header">
+          <div class="job-detail-header-top">
+            <h2 class="job-detail-title">
+              ${ticket.title || "Ticket"}
+            </h2>
+            <div class="job-detail-badge ${ticket.status}">
+              ${statusLabel}
+            </div>
+          </div>
+          <div class="job-detail-meta">
+            <span
+              >ID:
+              <code class="mono">${ticket.id.slice(0, 13)}...</code></span
+            >
+            <span
+              >Created:
+              ${new Date(ticket.created_at ?? "").toLocaleString()}</span
+            >
+            ${ticket.completed_at
+              ? html`<span
+                  >Completed:
+                  ${new Date(ticket.completed_at).toLocaleString()}</span
+                >`
+              : nothing}
+            ${ticket.turns
+              ? html`<span>${ticket.turns} turns</span>`
+              : nothing}
+            ${ticket.thoughts
+              ? html`<span>${ticket.thoughts} thoughts</span>`
+              : nothing}
+          </div>
+        </div>
+
+        <div class="timeline">
+          ${ticket.objective
+            ? html`
+                <div class="block">
+                  <div class="block-header">Objective</div>
+                  <div class="block-content" style="white-space:pre-wrap">${ticket.objective}</div>
+                </div>
+              `
+            : nothing}
+          ${ticket.kind
+            ? html`
+                <div class="block">
+                  <div class="block-header">Kind</div>
+                  <div class="block-content">${ticket.kind}</div>
+                </div>
+              `
+            : nothing}
+          ${ticket.playbook_id
+            ? html`
+                <div class="block">
+                  <div class="block-header">Playbook</div>
+                  <div class="block-content mono">${ticket.playbook_id}</div>
+                </div>
+              `
+            : nothing}
+          ${ticket.playbook_run_id
+            ? html`
+                <div class="block">
+                  <div class="block-header">Run ID</div>
+                  <div class="block-content mono">${ticket.playbook_run_id}</div>
+                </div>
+              `
+            : nothing}
+          ${ticket.tags && ticket.tags.length > 0
+            ? html`
+                <div class="block">
+                  <div class="block-header">Tags</div>
+                  <div class="block-content">${ticket.tags.map(
+                    (tag) =>
+                      html`<span class="tool-badge" style="margin-right:6px">${tag}</span>`
+                  )}</div>
+                </div>
+              `
+            : nothing}
+          ${ticket.functions && ticket.functions.length > 0
+            ? html`
+                <div class="block">
+                  <div class="block-header">Functions</div>
+                  <div class="block-content">${ticket.functions.map(
+                    (fn) =>
+                      html`<span class="tool-badge" style="margin-right:6px">${fn}</span>`
+                  )}</div>
+                </div>
+              `
+            : nothing}
+          ${ticket.outcome
+            ? html`
+                <div class="block">
+                  <div class="block-header">Outcome</div>
+                  <div class="block-content mono">${ticket.outcome}</div>
+                </div>
+              `
+            : nothing}
+          ${ticket.error
+            ? html`
+                <div class="block error">
+                  <div class="block-header">Error</div>
+                  <div class="block-content">${ticket.error}</div>
+                </div>
+              `
+            : nothing}
+          ${this.renderFileTree(ticket.id)}
+        </div>
+      </div>
+    `;
+  }
+
+  /** Load and render the file tree for a ticket. */
+  private renderFileTree(ticketId: string) {
+    const tree = this.ticketFileTree;
+    if (tree.length === 0) {
+      // Trigger async load on first render.
+      this.loadFileTree(ticketId);
+      return nothing;
+    }
+
+    return html`
+      <div class="block">
+        <div class="block-header">Files</div>
+        <div class="file-tree">${tree.map((node) => this.renderFileNode(node, ticketId, []))}</div>
+      </div>
+    `;
+  }
+
+  private renderFileNode(
+    node: FileTreeNode,
+    ticketId: string,
+    parentPath: string[]
+  ): unknown {
+    const currentPath = [...parentPath, node.name];
+
+    if (node.kind === "directory") {
+      return html`
+        <details class="file-dir">
+          <summary>📁 ${node.name}</summary>
+          <div class="file-children">
+            ${node.children?.map((child) =>
+              this.renderFileNode(child, ticketId, currentPath)
+            )}
+          </div>
+        </details>
+      `;
+    }
+
+    const pathKey = currentPath.join("/");
+    const icon = this.fileIcon(node.name);
+    const cachedContent = this.ticketFileContents[pathKey];
+
+    return html`
+      <details
+        class="file-leaf"
+        @toggle=${(e: Event) => {
+          const det = e.currentTarget as HTMLDetailsElement;
+          if (det.open && cachedContent === undefined) {
+            this.loadFileContent(ticketId, currentPath, pathKey);
+          }
+        }}
+      >
+        <summary>${icon} ${node.name}</summary>
+        <div class="file-content">
+          ${cachedContent === undefined
+            ? html`<div style="color:#64748b;font-size:0.75rem">Loading…</div>`
+            : cachedContent === null
+              ? html`<div style="color:#64748b;font-size:0.75rem">
+                  Unable to read file
+                </div>`
+              : this.renderFileContent(node.name, cachedContent)}
+        </div>
+      </details>
+    `;
+  }
+
+  private renderFileContent(filename: string, content: string): unknown {
+    if (filename.endsWith(".json")) {
+      try {
+        const parsed = JSON.parse(content);
+        return html`<div class="json-tree">${renderJson(parsed)}</div>`;
+      } catch {
+        // Fall through to plain text.
+      }
+    }
+    return html`<pre class="file-text">${content}</pre>`;
+  }
+
+  private fileIcon(name: string): string {
+    if (name.endsWith(".json")) return "📊";
+    if (name.endsWith(".md")) return "📝";
+    if (name.endsWith(".py")) return "🐍";
+    if (name.endsWith(".ts") || name.endsWith(".js")) return "📜";
+    if (name.endsWith(".jsx") || name.endsWith(".tsx")) return "⚛️";
+    if (name.endsWith(".css")) return "🎨";
+    if (name.endsWith(".html")) return "🌐";
+    if (name.endsWith(".mjs")) return "📦";
+    return "📄";
+  }
+
+  private async loadFileTree(ticketId: string) {
+    const tree = await this.ticketStore.readTree(ticketId);
+    this.ticketFileTree = tree;
+  }
+
+  private async loadFileContent(
+    ticketId: string,
+    path: string[],
+    pathKey: string
+  ) {
+    const content = await this.ticketStore.readFileContent(ticketId, path);
+    this.ticketFileContents = {
+      ...this.ticketFileContents,
+      [pathKey]: content,
+    };
   }
 
   private async respond(ticketId: string) {

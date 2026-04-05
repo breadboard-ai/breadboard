@@ -66,8 +66,8 @@ export const styles = css`
   }
 
   .sidebar-tab {
-    padding: 12px 16px;
-    font-size: 0.8rem;
+    padding: 12px 10px;
+    font-size: 0.75rem;
     font-weight: 600;
     color: #64748b;
     cursor: pointer;
@@ -577,5 +577,90 @@ export const styles = css`
     background: #1e293b;
     color: #e2e8f0;
     border-left: 2px solid #3b82f6;
+  }
+
+  /* ── File tree accordion ── */
+  .file-tree {
+    font-family: "Google Mono", "Roboto Mono", monospace;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    white-space: normal;
+    padding: 8px 12px;
+  }
+
+  .file-tree details {
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .file-tree summary {
+    cursor: pointer;
+    user-select: none;
+    padding: 3px 0;
+    color: #e2e8f0;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 4px;
+    padding-left: 4px;
+    transition: background 0.1s;
+  }
+
+  .file-tree summary:hover {
+    background: #1e293b;
+  }
+
+  .file-tree summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .file-dir > summary::before {
+    content: "▸";
+    color: #475569;
+    font-size: 0.6rem;
+    width: 10px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .file-dir[open] > summary::before {
+    content: "▾";
+  }
+
+  .file-leaf > summary::before {
+    content: "";
+    width: 10px;
+    flex-shrink: 0;
+  }
+
+  .file-children {
+    margin-left: 16px;
+    border-left: 1px solid #1e293b;
+    padding-left: 4px;
+  }
+
+  .file-content {
+    margin: 2px 0 6px 20px;
+    padding: 8px 12px;
+    background: #0a0b0e;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    overflow-x: auto;
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: normal;
+  }
+
+  .file-text {
+    margin: 0;
+    padding: 0;
+    font-family: "Google Mono", "Roboto Mono", monospace;
+    font-size: 0.7rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 `;

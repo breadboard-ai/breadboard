@@ -7,11 +7,12 @@
 /**
  * Signal-backed reactive store for log files.
  *
- * Manages File System Access API handles, IndexedDB persistence,
- * FileSystemObserver for live updates, and session grouping.
+ * Resolves the `state/logs/` subdirectory via a shared StateAccess,
+ * uses FileSystemObserver for live updates, and manages session grouping.
  */
 
 import { Signal } from "signal-polyfill";
+import type { StateAccess } from "./state-access.js";
 import type {
   LogRunEntry,
   LogFileInfo,
@@ -23,86 +24,38 @@ import type {
 
 export { LogStore };
 
-type AccessState = "none" | "prompt" | "ready";
-
-const DB_NAME = "bees-state-handles";
-const STORE_NAME = "handles";
-const HANDLE_KEY = "state-dir";
-
 class LogStore {
+  constructor(private access: StateAccess) {}
+
   // ── Public reactive state (read via .get() in SignalWatcher renders) ──
 
-  readonly accessState = new Signal.State<AccessState>("none");
   readonly sessions = new Signal.State<LogSession[]>([]);
   readonly selectedSessionId = new Signal.State<string | null>(null);
   readonly selectedView = new Signal.State<MergedSessionView | null>(null);
 
   // ── Private ──
 
-  /** The user-selected ``state/`` directory. */
-  #handle: FileSystemDirectoryHandle | null = null;
-  /** The ``state/logs/`` subdirectory for log scanning. */
+  /** The ``state/logs/`` subdirectory. */
   #logsHandle: FileSystemDirectoryHandle | null = null;
   #observer: { disconnect(): void } | null = null;
   #cache = new Map<string, LogRunEntry>();
+  #activated = false;
 
   // ── Lifecycle ──
 
-  /** Try loading a previously saved directory handle from IDB. */
-  async init(): Promise<void> {
-    const handle = await this.#loadHandle();
-    if (!handle) {
-      this.accessState.set("none");
+  /** Activate the store — resolves logs/ subdir, scans, observes. */
+  async activate(): Promise<void> {
+    if (this.#activated) return;
+    if (this.access.accessState.get() !== "ready") return;
+
+    const logsHandle = await this.access.getSubdirectory("logs");
+    if (!logsHandle) {
+      console.warn("Could not find logs/ subdirectory in state/");
       return;
     }
-    const granted = await this.#checkPermission(handle);
-    if (!granted) {
-      this.accessState.set("prompt");
-      return;
-    }
-    this.#handle = handle;
-    if (!(await this.#resolveLogsHandle())) return;
-    this.accessState.set("ready");
-    await this.scan();
-    this.#startObserver();
-  }
 
-  /** Prompt the user to pick the ``state/`` directory. */
-  async openDirectory(): Promise<void> {
-    try {
-      const handle = await (
-        window as unknown as {
-          showDirectoryPicker(opts: {
-            mode: string;
-            id?: string;
-          }): Promise<FileSystemDirectoryHandle>;
-        }
-      ).showDirectoryPicker({
-        mode: "read",
-        // Browser remembers the last directory chosen for this ID,
-        // so re-picks open to the right place automatically.
-        id: "bees-state-dir",
-      });
-      await this.#saveHandle(handle);
-      this.#handle = handle;
-      if (!(await this.#resolveLogsHandle())) return;
-      this.accessState.set("ready");
-      await this.scan();
-      this.#startObserver();
-    } catch {
-      // User cancelled the picker.
-    }
-  }
-
-  /** Re-request permission on a previously saved handle. */
-  async requestAccess(): Promise<void> {
-    const handle = await this.#loadHandle();
-    if (!handle) return;
-    const granted = await this.#checkPermission(handle);
-    if (!granted) return;
-    this.#handle = handle;
-    if (!(await this.#resolveLogsHandle())) return;
-    this.accessState.set("ready");
+    this.#logsHandle = logsHandle;
+    this.#activated = true;
     await this.scan();
     this.#startObserver();
   }
@@ -309,19 +262,6 @@ class LogStore {
     }
   }
 
-  /** Resolve the ``logs/`` subdirectory from the state handle. */
-  async #resolveLogsHandle(): Promise<boolean> {
-    if (!this.#handle) return false;
-    try {
-      this.#logsHandle = await this.#handle.getDirectoryHandle("logs");
-      return true;
-    } catch {
-      console.warn("Could not find logs/ subdirectory in state/");
-      this.accessState.set("none");
-      return false;
-    }
-  }
-
   #startObserver(): void {
     if (!this.#logsHandle) return;
     if (!("FileSystemObserver" in globalThis)) return;
@@ -336,78 +276,6 @@ class LogStore {
       this.#observer = observer;
     } catch (e) {
       console.warn("FileSystemObserver not available:", e);
-    }
-  }
-
-  // ── IDB (no library dependency) ──
-
-  #openDB(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, 1);
-      request.onupgradeneeded = () => {
-        request.result.createObjectStore(STORE_NAME, { keyPath: "id" });
-      };
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  async #saveHandle(handle: FileSystemDirectoryHandle): Promise<void> {
-    const db = await this.#openDB();
-    const tx = db.transaction(STORE_NAME, "readwrite");
-    tx.objectStore(STORE_NAME).put({ id: HANDLE_KEY, handle });
-    return new Promise((resolve) => {
-      tx.oncomplete = () => {
-        db.close();
-        resolve();
-      };
-    });
-  }
-
-  async #loadHandle(): Promise<FileSystemDirectoryHandle | null> {
-    try {
-      const db = await this.#openDB();
-      const tx = db.transaction(STORE_NAME, "readonly");
-      const store = tx.objectStore(STORE_NAME);
-      const request = store.get(HANDLE_KEY);
-      return new Promise((resolve) => {
-        request.onsuccess = () => {
-          const result = request.result as
-            | { handle: FileSystemDirectoryHandle }
-            | undefined;
-          db.close();
-          resolve(result?.handle ?? null);
-        };
-        request.onerror = () => {
-          db.close();
-          resolve(null);
-        };
-      });
-    } catch {
-      return null;
-    }
-  }
-
-  async #checkPermission(
-    handle: FileSystemDirectoryHandle
-  ): Promise<boolean> {
-    try {
-      const perm = await (
-        handle as FileSystemDirectoryHandle & {
-          queryPermission(opts: { mode: string }): Promise<string>;
-          requestPermission(opts: { mode: string }): Promise<string>;
-        }
-      ).queryPermission({ mode: "read" });
-      if (perm === "granted") return true;
-
-      const req = await (
-        handle as FileSystemDirectoryHandle & {
-          requestPermission(opts: { mode: string }): Promise<string>;
-        }
-      ).requestPermission({ mode: "read" });
-      return req === "granted";
-    } catch {
-      return false;
     }
   }
 }

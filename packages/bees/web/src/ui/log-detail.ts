@@ -6,6 +6,10 @@
 
 import { LitElement, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import {
+  renderJson,
+  renderExpandButton,
+} from "./json-tree.js";
 import type {
   MergedSessionView,
   SessionSegment,
@@ -414,7 +418,7 @@ class BeesLogDetail extends LitElement {
             <div class="turn thought">
               <div class="turn-role">${label}</div>
               <div class="turn-parts">
-                <div class="part-thought ${isLong ? "long" : ""}">${body}${isLong ? this.#expandButton() : nothing}</div>
+                <div class="part-thought ${isLong ? "long" : ""}">${body}${isLong ? renderExpandButton() : nothing}</div>
               </div>
             </div>
           `;
@@ -428,7 +432,7 @@ class BeesLogDetail extends LitElement {
             <div class="turn call">
               <div class="turn-role">${label}</div>
               <div class="turn-parts">
-                <div class="json-tree">${this.#renderJson(fc.args)}</div>
+                <div class="json-tree">${renderJson(fc.args)}</div>
               </div>
             </div>
           `;
@@ -477,13 +481,13 @@ class BeesLogDetail extends LitElement {
     if (p.functionResponse) {
       const fr = p.functionResponse;
       return html`<div class="part-function-response">
-        <div class="json-tree">${this.#renderJson(fr.response)}</div>
+        <div class="json-tree">${renderJson(fr.response)}</div>
       </div>`;
     }
 
     if (p.text) {
       const isLong = p.text.length > 500;
-      return html`<div class="part-text ${isLong ? "long" : ""}">${p.text}${isLong ? this.#expandButton() : nothing}</div>`;
+      return html`<div class="part-text ${isLong ? "long" : ""}">${p.text}${isLong ? renderExpandButton() : nothing}</div>`;
     }
 
     return nothing;
@@ -499,73 +503,7 @@ class BeesLogDetail extends LitElement {
     return { title, body };
   }
 
-  // ── Expand / collapse ──
-
-  #expandButton() {
-    return html`<button class="expand-toggle" @click=${this.#toggleExpand}>»</button>`;
-  }
-
-  #toggleExpand(e: Event) {
-    const btn = e.currentTarget as HTMLElement;
-    const container = btn.parentElement;
-    if (!container) return;
-    const expanded = container.classList.toggle("expanded");
-    btn.textContent = expanded ? "«" : "»";
-  }
-
-  // ── JSON tree rendering ──
-
-  #renderJson(obj: unknown, depth = 0): unknown {
-    if (obj === null || obj === undefined) {
-      return html`<span class="json-null">${String(obj)}</span>`;
-    }
-    if (typeof obj !== "object") {
-      return this.#renderJsonValue(obj);
-    }
-    const entries = Object.entries(obj as Record<string, unknown>);
-    if (entries.length === 0) {
-      return html`<span class="json-empty">${Array.isArray(obj) ? "[]" : "{}"}</span>`;
-    }
-    return html`${entries.map(([key, value]) => {
-      if (value !== null && typeof value === "object") {
-        const preview = Array.isArray(value)
-          ? value.length > 0 ? `[${value.length}]` : "[]"
-          : Object.keys(value as Record<string, unknown>).length > 0
-            ? "{…}"
-            : "{}";
-        return html`<details class="json-node" ?open=${depth < 3}>
-          <summary>
-            <span class="json-key">${key}</span>
-            <span class="json-preview">${preview}</span>
-          </summary>
-          <div class="json-children">${this.#renderJson(value, depth + 1)}</div>
-        </details>`;
-      }
-      return html`<div class="json-leaf">
-        <span class="json-key">${key}:</span>
-        ${this.#renderJsonValue(value)}
-      </div>`;
-    })}`;
-  }
-
-  #renderJsonValue(value: unknown): unknown {
-    if (value === null || value === undefined) {
-      return html`<span class="json-null">${String(value)}</span>`;
-    }
-    const type = typeof value;
-    if (type === "string") {
-      const str = value as string;
-      const isLong = str.length > 200;
-      return html`<span class="json-string ${isLong ? "long" : ""}">${JSON.stringify(str)}${isLong ? this.#expandButton() : nothing}</span>`;
-    }
-    if (type === "number") {
-      return html`<span class="json-number">${value}</span>`;
-    }
-    if (type === "boolean") {
-      return html`<span class="json-boolean">${value}</span>`;
-    }
-    return html`<span>${String(value)}</span>`;
-  }
+  // JSON tree rendering and expand/collapse: imported from json-tree.ts
 
   // ── End-state helpers ──
 
