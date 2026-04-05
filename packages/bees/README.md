@@ -39,7 +39,7 @@ npm run ticket:add -w packages/bees -- "Tell me a joke"
 npm run ticket:add -w packages/bees -- "Write a haiku about the sea"
 ```
 
-Each ticket becomes a directory under `tickets/{uuid}/` containing
+Each ticket becomes a directory under `state/tickets/{uuid}/` containing
 `objective.md` and `metadata.json`.
 
 ### Draining the Queue
@@ -321,6 +321,6 @@ CLI and web UI.
 
 ## Output
 
-All session log files land in `packages/bees/out/` in the eval viewer's
-`EvalFileData` format (`bees-session-{date}.log.json`), loadable
+All session log files land in `packages/bees/state/logs/` in the eval
+viewer's `EvalFileData` format (`bees-session-{date}.log.json`), loadable
 directly by `packages/visual-editor/eval/viewer`.

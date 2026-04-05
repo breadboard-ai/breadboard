@@ -658,10 +658,10 @@ class BeesApp extends SignalWatcher(LitElement) {
             style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center"
           >
             <button @click=${() => this.logStore.openDirectory()}>
-              📂 Open Logs Directory
+              📂 Open State Directory
             </button>
             <div style="font-size:0.75rem;color:#64748b">
-              Select the <code>packages/bees/out</code> directory
+              Select the <code>packages/bees/state</code> directory
             </div>
           </div>
         </div>

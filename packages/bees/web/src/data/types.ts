@@ -39,7 +39,7 @@ export interface PlaybookData {
 }
 
 // ---------------------------------------------------------------------------
-// Log file types (from EvalCollector output in packages/bees/out)
+// Log file types (from EvalCollector output in packages/bees/state/logs)
 // ---------------------------------------------------------------------------
 
 /** Per-turn boundary recorded by the EvalCollector. */
