@@ -18,6 +18,11 @@ import { logDetailStyles } from "./log-detail.styles.js";
 
 export { BeesLogDetail };
 
+const TERMINATION_FUNCTIONS = new Set([
+  "system_objective_fulfilled",
+  "system_failed_to_fulfill_objective",
+]);
+
 interface TokenBreakdown {
   cached: number;
   prompt: number; // new prompt (excludes cached)
@@ -242,10 +247,25 @@ class BeesLogDetail extends LitElement {
 
   private renderTimeline(d: MergedSessionView) {
     if (d.segments.length === 0) return nothing;
+
+    const lastSeg = d.segments.at(-1)!;
+    const lastEntry = lastSeg.turnGroups.at(-1)?.entries.at(-1);
+    const terminationEntry = this.#extractTerminationEntry(lastEntry);
+
+    // If terminated, clone last segment with the termination entry removed.
+    const effectiveSegments = terminationEntry
+      ? this.#withoutLastEntry(d.segments)
+      : d.segments;
+
     return html`
       <div class="conversation">
-        <div class="conversation-label">Conversation</div>
-        ${d.segments.map((seg) => this.renderSegment(seg, d.segments.length))}
+        ${effectiveSegments.map((seg) =>
+          this.renderSegment(seg, d.segments.length)
+        )}
+        ${this.#renderStatusDivider(
+          terminationEntry ? "terminated" : "suspended"
+        )}
+        ${terminationEntry ? this.renderTurn(terminationEntry) : nothing}
       </div>
     `;
   }
@@ -344,10 +364,81 @@ class BeesLogDetail extends LitElement {
     // Function responses are injected by the system, not typed by a person.
     const hasOnlyFunctionResponses =
       role === "user" && parts.every((p) => p.functionResponse);
-    const displayRole = hasOnlyFunctionResponses ? "system" : role;
 
+    if (hasOnlyFunctionResponses) {
+      const name = parts[0].functionResponse!.name;
+      const label = html`<span class="role-chip response">response</span> ${name}`;
+      return this.#renderCard("system", label, parts);
+    }
+
+    // Model turns: split thoughts and function calls into their own cards.
+    if (role === "model") {
+      return this.#renderModelTurn(parts);
+    }
+
+    return this.#renderCard(role, role, parts);
+  }
+
+  #renderModelTurn(parts: LogPart[]) {
+    // Classify each part and render as separate cards.
+    type PartKind = "thought" | "call" | "other";
+    const classify = (p: LogPart): PartKind => {
+      if (p.thought && p.text) return "thought";
+      if (p.functionCall) return "call";
+      return "other";
+    };
+
+    // Group consecutive same-kind parts (but calls are always individual).
+    const groups: { kind: PartKind; parts: LogPart[] }[] = [];
+    for (const p of parts) {
+      const kind = classify(p);
+      const last = groups.at(-1);
+      if (kind === "other" && last?.kind === "other") {
+        last.parts.push(p);
+      } else {
+        groups.push({ kind, parts: [p] });
+      }
+    }
+
+    return html`${groups.map((g) => {
+      if (g.kind === "thought") {
+        return html`${g.parts.map((p) => {
+          const { title, body } = this.#parseThought(p.text!);
+          const label = title
+            ? html`<span class="role-chip thought">thought</span> ${title}`
+            : "thought";
+          const isLong = body.length > 300;
+          return html`
+            <div class="turn thought">
+              <div class="turn-role">${label}</div>
+              <div class="turn-parts">
+                <div class="part-thought ${isLong ? "long" : ""}">${body}${isLong ? this.#expandButton() : nothing}</div>
+              </div>
+            </div>
+          `;
+        })}`;
+      }
+      if (g.kind === "call") {
+        return html`${g.parts.map((p) => {
+          const fc = p.functionCall!;
+          const label = html`<span class="role-chip call">call</span> ${fc.name}`;
+          return html`
+            <div class="turn call">
+              <div class="turn-role">${label}</div>
+              <div class="turn-parts">
+                <div class="json-tree">${this.#renderJson(fc.args)}</div>
+              </div>
+            </div>
+          `;
+        })}`;
+      }
+      return this.#renderCard("model", "model", g.parts);
+    })}`;
+  }
+
+  #renderCard(roleClass: string, displayRole: unknown, parts: LogPart[]) {
     return html`
-      <div class="turn ${displayRole}">
+      <div class="turn ${roleClass}">
         <div class="turn-role">${displayRole}</div>
         <div class="turn-parts">
           ${parts.map((p) => this.renderPart(p))}
@@ -377,43 +468,144 @@ class BeesLogDetail extends LitElement {
   }
 
   private renderPart(p: LogPart) {
-    if (p.thought && p.text) {
-      const isLong = p.text.length > 300;
-      return html`<div class="part-thought ${isLong ? "long" : ""}">
-        ${p.text}
-      </div>`;
-    }
-
-    if (p.functionCall) {
-      const fc = p.functionCall;
-      const argsStr = JSON.stringify(fc.args);
-      const argsPreview =
-        argsStr.length > 80 ? argsStr.slice(0, 80) + "…" : argsStr;
-      return html`<div class="part-function-call">
-        <span class="fn-badge">🔧 ${fc.name}</span>
-        <span class="fn-args">${argsPreview}</span>
-      </div>`;
-    }
+    // Thoughts and function calls are handled at the card level.
+    if (p.thought && p.text) return nothing;
+    if (p.functionCall) return nothing;
 
     if (p.functionResponse) {
       const fr = p.functionResponse;
-      const respStr = JSON.stringify(fr.response, null, 2);
-      const preview =
-        respStr.length > 500 ? respStr.slice(0, 500) + "\n…" : respStr;
       return html`<div class="part-function-response">
-        <div class="fn-response-name">← ${fr.name}</div>
-        ${preview}
+        <div class="json-tree">${this.#renderJson(fr.response)}</div>
       </div>`;
     }
 
     if (p.text) {
       const isLong = p.text.length > 500;
-      return html`<div class="part-text ${isLong ? "long" : ""}">
-        ${p.text}
-      </div>`;
+      return html`<div class="part-text ${isLong ? "long" : ""}">${p.text}${isLong ? this.#expandButton() : nothing}</div>`;
     }
 
     return nothing;
+  }
+
+  // ── Thought parsing ──
+
+  #parseThought(text: string): { title: string | null; body: string } {
+    const match = text.match(/\*\*(.+?)\*\*/);
+    if (!match) return { title: null, body: text };
+    const title = match[1];
+    const body = text.replace(match[0], "").trim();
+    return { title, body };
+  }
+
+  // ── Expand / collapse ──
+
+  #expandButton() {
+    return html`<button class="expand-toggle" @click=${this.#toggleExpand}>»</button>`;
+  }
+
+  #toggleExpand(e: Event) {
+    const btn = e.currentTarget as HTMLElement;
+    const container = btn.parentElement;
+    if (!container) return;
+    const expanded = container.classList.toggle("expanded");
+    btn.textContent = expanded ? "«" : "»";
+  }
+
+  // ── JSON tree rendering ──
+
+  #renderJson(obj: unknown, depth = 0): unknown {
+    if (obj === null || obj === undefined) {
+      return html`<span class="json-null">${String(obj)}</span>`;
+    }
+    if (typeof obj !== "object") {
+      return this.#renderJsonValue(obj);
+    }
+    const entries = Object.entries(obj as Record<string, unknown>);
+    if (entries.length === 0) {
+      return html`<span class="json-empty">${Array.isArray(obj) ? "[]" : "{}"}</span>`;
+    }
+    return html`${entries.map(([key, value]) => {
+      if (value !== null && typeof value === "object") {
+        const preview = Array.isArray(value)
+          ? value.length > 0 ? `[${value.length}]` : "[]"
+          : Object.keys(value as Record<string, unknown>).length > 0
+            ? "{…}"
+            : "{}";
+        return html`<details class="json-node" ?open=${depth < 3}>
+          <summary>
+            <span class="json-key">${key}</span>
+            <span class="json-preview">${preview}</span>
+          </summary>
+          <div class="json-children">${this.#renderJson(value, depth + 1)}</div>
+        </details>`;
+      }
+      return html`<div class="json-leaf">
+        <span class="json-key">${key}:</span>
+        ${this.#renderJsonValue(value)}
+      </div>`;
+    })}`;
+  }
+
+  #renderJsonValue(value: unknown): unknown {
+    if (value === null || value === undefined) {
+      return html`<span class="json-null">${String(value)}</span>`;
+    }
+    const type = typeof value;
+    if (type === "string") {
+      const str = value as string;
+      const isLong = str.length > 200;
+      return html`<span class="json-string ${isLong ? "long" : ""}">${JSON.stringify(str)}${isLong ? this.#expandButton() : nothing}</span>`;
+    }
+    if (type === "number") {
+      return html`<span class="json-number">${value}</span>`;
+    }
+    if (type === "boolean") {
+      return html`<span class="json-boolean">${value}</span>`;
+    }
+    return html`<span>${String(value)}</span>`;
+  }
+
+  // ── End-state helpers ──
+
+  #extractTerminationEntry(entry: LogTurn | undefined): LogTurn | null {
+    if (!entry) return null;
+    const parts = entry.parts || [];
+    const isAllFunctionResponses =
+      entry.role === "user" &&
+      parts.length > 0 &&
+      parts.every((p) => p.functionResponse);
+    if (!isAllFunctionResponses) return null;
+    const hasTermination = parts.some(
+      (p) =>
+        p.functionResponse && TERMINATION_FUNCTIONS.has(p.functionResponse.name)
+    );
+    return hasTermination ? entry : null;
+  }
+
+  #withoutLastEntry(segments: SessionSegment[]): SessionSegment[] {
+    const lastSeg = segments.at(-1)!;
+    const lastTg = lastSeg.turnGroups.at(-1)!;
+    const modifiedTg = { ...lastTg, entries: lastTg.entries.slice(0, -1) };
+    return [
+      ...segments.slice(0, -1),
+      {
+        ...lastSeg,
+        turnGroups: [...lastSeg.turnGroups.slice(0, -1), modifiedTg],
+      },
+    ];
+  }
+
+  #renderStatusDivider(status: "suspended" | "terminated") {
+    const label = status === "suspended" ? "Suspended" : "Terminated";
+    return html`
+      <div class="segment-block">
+        <div class="segment-divider">
+          <span class="segment-info">
+            <span class="segment-label">${label}</span>
+          </span>
+        </div>
+      </div>
+    `;
   }
 }
 
