@@ -236,15 +236,6 @@ export const logDetailStyles = css`
     width: 100%;
   }
 
-  .conversation-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 12px;
-  }
-
   .sections {
     padding: 16px 32px;
     display: flex;
@@ -328,18 +319,31 @@ export const logDetailStyles = css`
     background: linear-gradient(transparent, #111827);
   }
 
+  .turn.thought {
+    background: #1a1526;
+    border: 1px solid #2d2540;
+  }
+
+  .turn.thought .turn-role {
+    color: #a78bfa;
+  }
+
   .part-thought {
     color: #94a3b8;
     font-style: italic;
+    line-height: 1.5;
     white-space: pre-wrap;
     word-break: break-word;
+  }
+
+  .part-thought.long {
     max-height: 120px;
     overflow: hidden;
     position: relative;
   }
 
   .part-thought::before {
-    content: "💭 ";
+    content: none;
   }
 
   .part-thought.long::after {
@@ -349,35 +353,44 @@ export const logDetailStyles = css`
     left: 0;
     right: 0;
     height: 30px;
-    background: linear-gradient(transparent, #111827);
+    background: linear-gradient(transparent, #1a1526);
     pointer-events: none;
   }
 
-  .part-function-call {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
+  /* ── Function call / response cards ── */
+  .turn.call {
+    background: #111827;
+    border: 1px solid #1e3a5c;
   }
 
-  .fn-badge {
-    padding: 4px 8px;
+  .turn.call .turn-role {
+    color: #60a5fa;
+  }
+
+  .role-chip {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    vertical-align: baseline;
+  }
+
+  .role-chip.call {
     background: #1e3a8a;
-    color: #bfdbfe;
-    border-radius: 4px;
-    font-family: "Google Mono", "Roboto Mono", monospace;
-    font-size: 0.75rem;
-    white-space: nowrap;
+    color: #93c5fd;
   }
 
-  .fn-args {
-    color: #64748b;
-    font-family: "Google Mono", "Roboto Mono", monospace;
-    font-size: 0.7rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 500px;
+  .role-chip.response {
+    background: #134e4a;
+    color: #5eead4;
+  }
+
+  .role-chip.thought {
+    background: #2d2540;
+    color: #c4b5fd;
   }
 
   .part-function-response {
@@ -385,19 +398,149 @@ export const logDetailStyles = css`
     background: #0f1115;
     border: 1px solid #1e293b;
     border-radius: 6px;
-    font-family: "Google Mono", "Roboto Mono", monospace;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     color: #94a3b8;
-    max-height: 150px;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    word-break: break-word;
   }
 
-  .fn-response-name {
-    color: #60a5fa;
+  /* ── JSON tree ── */
+  .json-tree {
+    font-family: "Google Mono", "Roboto Mono", monospace;
+    font-size: 0.7rem;
+    line-height: 1.6;
+  }
+
+  .json-tree details.json-node {
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .json-tree details.json-node summary {
+    padding: 0;
+    margin: 0;
+    font-size: inherit;
+    font-weight: normal;
+    color: inherit;
+    text-transform: none;
+    letter-spacing: normal;
+    background: transparent;
+    border-bottom: none;
+    list-style: none;
+    cursor: pointer;
+    display: inline;
+  }
+
+  .json-tree details.json-node summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .json-tree details.json-node summary::before {
+    content: "▸ ";
+    color: #475569;
+  }
+
+  .json-tree details.json-node[open] > summary::before {
+    content: "▾ ";
+  }
+
+  .json-tree details.json-node[open] > summary .json-preview {
+    display: none;
+  }
+
+  .json-children {
+    margin-left: 16px;
+  }
+
+  .json-leaf {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .json-key {
+    color: #b1abda;
     font-weight: 600;
-    margin-bottom: 4px;
+  }
+
+  .json-preview {
+    color: #475569;
+    font-style: italic;
+  }
+
+  .json-string {
+    color: #9fcfa6;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+
+  .json-string.long {
+    max-height: 150px;
+    overflow: hidden;
+    display: block;
+    position: relative;
+  }
+
+  .json-string.long::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(transparent, #0f1115);
+    pointer-events: none;
+  }
+
+  /* ── Expand / collapse toggle ── */
+  .expand-toggle {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    z-index: 2;
+    padding: 2px 6px;
+    border: none;
+    border-radius: 4px;
+    background: #1e293b;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: inherit;
+    line-height: 1;
+    transform: rotate(90deg);
+    opacity: 0.85;
+    transition: opacity 0.15s, color 0.15s;
+  }
+
+  .expand-toggle:hover {
+    opacity: 1;
+    color: #e2e8f0;
+  }
+
+  .expanded {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .expanded::after {
+    display: none !important;
+  }
+
+  .json-number {
+    color: #9191ff;
+  }
+
+  .json-boolean {
+    color: #9be9ed;
+  }
+
+  .json-null {
+    color: #64748b;
+    font-style: italic;
+  }
+
+  .json-empty {
+    color: #64748b;
+    font-style: italic;
   }
 
   /* ── Tools list ── */
