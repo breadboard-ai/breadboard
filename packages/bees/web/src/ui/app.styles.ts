@@ -543,4 +543,39 @@ export const styles = css`
       opacity: 1;
     }
   }
+
+  /* --- Log sub-files (within a session group) --- */
+  .job-item-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .log-subfiles {
+    padding: 0 12px 8px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .log-subfile {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    transition: all 0.15s ease;
+  }
+
+  .log-subfile:hover {
+    background: #1e293b;
+    color: #e2e8f0;
+  }
+
+  .log-subfile.selected {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-left: 2px solid #3b82f6;
+  }
 `;

@@ -13,6 +13,8 @@ import type { TicketData, PlaybookData } from "../data/types.js";
 import { getRelativeTime, extractPrompt } from "../utils.js";
 import { APP_NAME, APP_ICON } from "../constants.js";
 import { styles } from "./app.styles.js";
+import { LogStore } from "../data/log-store.js";
+import "./log-detail.js";
 
 export { BeesApp };
 
@@ -35,11 +37,15 @@ interface DaemonInfo {
 
 @customElement("bees-app")
 class BeesApp extends SignalWatcher(LitElement) {
-  @state() accessor activeTab: "jobs" | "playbooks" | "daemons" = "jobs";
+  @state() accessor activeTab: "jobs" | "playbooks" | "daemons" | "logs" =
+    "jobs";
   @state() accessor selectedJobId: string | null = null;
   @state() accessor playbooks: PlaybookData[] = [];
   @state() accessor loadingPlaybooks = false;
   @state() accessor selectedDaemonId: string | null = null;
+
+  private logStore = new LogStore();
+  private logStoreInitialized = false;
 
   private get scaInst() {
     return sca();
@@ -64,6 +70,7 @@ class BeesApp extends SignalWatcher(LitElement) {
   disconnectedCallback() {
     super.disconnectedCallback();
     this.sse.close();
+    this.logStore.destroy();
   }
 
   private deriveJobs(): JobGroup[] {
@@ -231,13 +238,21 @@ class BeesApp extends SignalWatcher(LitElement) {
           >
             Playbooks
           </div>
+          <div
+            class="sidebar-tab ${this.activeTab === "logs" ? "active" : ""}"
+            @click=${() => this.activateLogsTab()}
+          >
+            Logs
+          </div>
         </div>
 
         ${this.activeTab === "jobs"
           ? this.renderJobsList(jobs)
           : this.activeTab === "daemons"
             ? this.renderDaemonsList(daemons)
-            : this.renderPlaybooksList()}
+            : this.activeTab === "logs"
+              ? this.renderLogsList()
+              : this.renderPlaybooksList()}
       </div>
 
       <div class="main">
@@ -245,7 +260,9 @@ class BeesApp extends SignalWatcher(LitElement) {
           ? this.renderJobDetail(jobs)
           : this.activeTab === "daemons"
             ? this.renderDaemonDetail(daemons)
-            : this.renderEmptyMain("Select a playbook to run on the left.")}
+            : this.activeTab === "logs"
+              ? this.renderLogDetail()
+              : this.renderEmptyMain("Select a playbook to run on the left.")}
       </div>
     `;
   }
@@ -619,6 +636,112 @@ class BeesApp extends SignalWatcher(LitElement) {
         <button @click=${() => this.respond(t.id)}>Send</button>
       </div>
     `;
+  }
+
+  // --- Logs ---
+
+  private activateLogsTab() {
+    this.activeTab = "logs";
+    if (!this.logStoreInitialized) {
+      this.logStoreInitialized = true;
+      this.logStore.init();
+    }
+  }
+
+  private renderLogsList() {
+    const access = this.logStore.accessState.get();
+
+    if (access === "none") {
+      return html`
+        <div class="jobs-list">
+          <div
+            style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center"
+          >
+            <button @click=${() => this.logStore.openDirectory()}>
+              📂 Open Logs Directory
+            </button>
+            <div style="font-size:0.75rem;color:#64748b">
+              Select the <code>packages/bees/out</code> directory
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    if (access === "prompt") {
+      return html`
+        <div class="jobs-list">
+          <div
+            style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center"
+          >
+            <button @click=${() => this.logStore.requestAccess()}>
+              🔑 Grant Access
+            </button>
+            <div style="font-size:0.75rem;color:#64748b">
+              Permission expired — click to re-authorize
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    const sessions = this.logStore.sessions.get();
+    const selectedSid = this.logStore.selectedSessionId.get();
+
+    if (sessions.length === 0) {
+      return html`<div class="empty-state">No log files found.</div>`;
+    }
+
+    return html`
+      <div class="jobs-list">
+        ${sessions.map(
+          (session) => html`
+            <div class="job-item-group">
+              <div
+                class="job-item ${selectedSid === session.sessionId
+                  ? "selected"
+                  : ""}"
+                @click=${() =>
+                  this.logStore.selectSession(session.sessionId)}
+              >
+                <div class="job-header">
+                  <div class="job-title mono">
+                    ${session.sessionId.slice(0, 8)}
+                  </div>
+                  <div class="job-meta" style="margin:0">
+                    <span>
+                      ${session.files.length}
+                      run${session.files.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                </div>
+                <div class="job-meta">
+                  <span>
+                    ${getRelativeTime(
+                      session.files.at(0)?.startedDateTime
+                    )}
+                  </span>
+                  <span>
+                    ${(
+                      session.files.reduce(
+                        (s, f) => s + f.totalTokens,
+                        0
+                      ) / 1000
+                    ).toFixed(1)}k
+                    tokens
+                  </span>
+                </div>
+              </div>
+            </div>
+          `
+        )}
+      </div>
+    `;
+  }
+
+  private renderLogDetail() {
+    const data = this.logStore.selectedView.get();
+    return html`<bees-log-detail .data=${data}></bees-log-detail>`;
   }
 
   private async respond(ticketId: string) {

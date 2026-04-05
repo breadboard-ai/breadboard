@@ -37,3 +37,115 @@ export interface PlaybookData {
   title: string;
   description: string;
 }
+
+// ---------------------------------------------------------------------------
+// Log file types (from EvalCollector output in packages/bees/out)
+// ---------------------------------------------------------------------------
+
+/** A single "context" entry from a log.json file. */
+export interface LogContextEntry {
+  type: "context";
+  sessionId: string;
+  startedDateTime: string;
+  totalDurationMs: number;
+  turnCount: number;
+  totalRequestTimeMs: number;
+  totalThoughts: number;
+  totalFunctionCalls: number;
+  tokenMetadata: LogTokenMetadata;
+  config: LogConfig;
+  context: LogTurn[];
+}
+
+/** A single "outcome" entry from a log.json file. */
+export interface LogOutcomeEntry {
+  type: "outcome";
+  outcome: Record<string, unknown>;
+}
+
+export interface LogTokenMetadata {
+  totalPromptTokens: number;
+  totalCandidatesTokens: number;
+  totalThoughtsTokens: number;
+  totalCachedTokens: number;
+  totalTokens: number;
+  perTurn: Array<Record<string, unknown>>;
+}
+
+export interface LogConfig {
+  generationConfig?: Record<string, unknown>;
+  toolConfig?: Record<string, unknown>;
+  tools?: Array<{
+    functionDeclarations?: Array<{ name: string; description?: string }>;
+  }>;
+  systemInstruction?: { parts: Array<{ text: string }>; role: string };
+}
+
+export interface LogTurn {
+  role: string;
+  parts: LogPart[];
+}
+
+/**
+ * A part within a conversation turn. A single object can carry multiple
+ * fields (e.g. functionCall + thoughtSignature), so this is a flat
+ * interface rather than a discriminated union.
+ */
+export interface LogPart {
+  text?: string;
+  thought?: boolean;
+  functionCall?: {
+    name: string;
+    args: Record<string, unknown>;
+    id?: string;
+  };
+  functionResponse?: {
+    name: string;
+    response: Record<string, unknown>;
+  };
+  thoughtSignature?: string;
+}
+
+/** Summary info extracted from a log file (for sidebar display). */
+export interface LogFileInfo {
+  filename: string;
+  sessionId: string;
+  startedDateTime: string;
+  totalDurationMs: number;
+  turnCount: number;
+  totalThoughts: number;
+  totalFunctionCalls: number;
+  totalTokens: number;
+}
+
+/** A group of log files sharing the same session/ticket ID. */
+export interface LogSession {
+  sessionId: string;
+  files: LogFileInfo[];
+}
+
+/** One run segment within a session — carries only the NEW turns it added. */
+export interface SessionSegment {
+  filename: string;
+  segmentIndex: number;
+  startedDateTime: string;
+  totalDurationMs: number;
+  turnCount: number;
+  newTurns: LogTurn[];
+  totalThoughts: number;
+  totalFunctionCalls: number;
+  totalTokens: number;
+  config: LogConfig;
+  tokenMetadata: LogTokenMetadata;
+}
+
+/** Unified timeline merging all runs of a session. */
+export interface MergedSessionView {
+  sessionId: string;
+  segments: SessionSegment[];
+  totalDurationMs: number;
+  totalTurns: number;
+  totalThoughts: number;
+  totalFunctionCalls: number;
+  totalTokens: number;
+}
