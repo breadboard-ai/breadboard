@@ -25,7 +25,7 @@ is injected as the function result, and the loop continues.
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from .events import LLMContent, SuspendEvent
@@ -44,6 +44,13 @@ class SuspendResult:
     contents: list[LLMContent]
     function_call_part: dict[str, Any]
     is_precondition_check: bool = False
+    # Function response parts from sibling calls that completed before
+    # the suspend.  Each entry is a ``{"functionResponse": {...}}`` dict.
+    # On resume these are combined with the suspend response into a
+    # single user turn so the model sees all responses.
+    completed_function_responses: list[dict[str, Any]] = field(
+        default_factory=list,
+    )
 
 
 class SuspendError(Exception):
@@ -70,4 +77,7 @@ class SuspendError(Exception):
         self.is_precondition_check = is_precondition_check
         # Assign a unique interaction ID for the reconnect protocol.
         self.interaction_id = str(uuid.uuid4())
+        # Populated by FunctionCaller.get_results() with results from
+        # sibling function calls that completed before this suspend.
+        self.completed_responses: list = []
         super().__init__(f"Suspend: {getattr(event, 'type', 'unknown')}")

@@ -90,6 +90,14 @@ class InteractionState:
     # model instead of the default AGENT_MODEL constant.
     model: str | None = None
 
+    # Function response parts from sibling calls that completed before
+    # the suspend.  Each entry is a ``{"functionResponse": {...}}`` dict.
+    # On resume these are combined with the suspend response into a
+    # single user turn so the model sees responses for all calls.
+    completed_function_responses: list[dict[str, Any]] = field(
+        default_factory=list,
+    )
+
     # ---- Serialization ----
 
     def to_dict(self) -> dict[str, Any]:
@@ -118,6 +126,7 @@ class InteractionState:
             "consents_granted": sorted(self.consents_granted),
             "function_filter": self.function_filter,
             "model": self.model,
+            "completed_function_responses": self.completed_function_responses,
         }
 
     @classmethod
@@ -148,6 +157,9 @@ class InteractionState:
             consents_granted=set(data.get("consents_granted", [])),
             function_filter=data.get("function_filter"),
             model=data.get("model"),
+            completed_function_responses=data.get(
+                "completed_function_responses", [],
+            ),
         )
 
 

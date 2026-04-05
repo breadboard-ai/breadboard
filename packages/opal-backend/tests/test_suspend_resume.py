@@ -524,8 +524,13 @@ class TestLoopSuspend(unittest.TestCase):
 
         asyncio.run(run())
 
-    def test_concurrent_tasks_cancelled_on_suspend(self):
-        """When one function suspends, sibling concurrent tasks are cancelled."""
+    def test_siblings_complete_on_suspend(self):
+        """When one function suspends, sibling tasks run to completion.
+
+        Suspend means "wait for external input" — it is NOT a "stop the
+        train" signal.  Sibling functions should finish and their results
+        should be captured in the SuspendResult.
+        """
         suspend_event = WaitForInputEvent(
             request_id="req-1",
             prompt={"parts": [{"text": "Name?"}]},
@@ -542,22 +547,20 @@ class TestLoopSuspend(unittest.TestCase):
         async def suspending_handler(args, status_cb):
             raise SuspendError(suspend_event, function_call_part)
 
-        async def slow_handler(args, status_cb):
+        async def fast_handler(args, status_cb):
             nonlocal sibling_completed
-            # This should be cancelled before it completes.
-            await asyncio.sleep(10)
             sibling_completed = True
-            return {"result": "should not reach here"}
+            return {"result": "done"}
 
         suspend_defn = FunctionDefinition(
             name="chat_request_user_input",
             description="Request user input",
             handler=suspending_handler,
         )
-        slow_defn = FunctionDefinition(
-            name="slow_function",
-            description="A slow function",
-            handler=slow_handler,
+        fast_defn = FunctionDefinition(
+            name="coordination_emit",
+            description="Emit signal",
+            handler=fast_handler,
         )
 
         from opal_backend.function_definition import FunctionGroup
@@ -566,11 +569,11 @@ class TestLoopSuspend(unittest.TestCase):
             instruction="",
             definitions=[
                 ("chat_request_user_input", suspend_defn),
-                ("slow_function", slow_defn),
+                ("coordination_emit", fast_defn),
             ],
             declarations=[
                 {"name": "chat_request_user_input", "description": "Input"},
-                {"name": "slow_function", "description": "Slow"},
+                {"name": "coordination_emit", "description": "Emit"},
             ],
         )
 
@@ -581,7 +584,7 @@ class TestLoopSuspend(unittest.TestCase):
                     "parts": [
                         {
                             "functionCall": {
-                                "name": "slow_function",
+                                "name": "coordination_emit",
                                 "args": {},
                             }
                         },
@@ -601,7 +604,7 @@ class TestLoopSuspend(unittest.TestCase):
             yield gemini_response
 
         objective = {
-            "parts": [{"text": "Test cancel"}],
+            "parts": [{"text": "Test siblings"}],
             "role": "user",
         }
 
@@ -618,8 +621,17 @@ class TestLoopSuspend(unittest.TestCase):
                     )
                 )
                 self.assertIsInstance(result, SuspendResult)
-                # The slow sibling must NOT have completed.
-                self.assertFalse(sibling_completed)
+                # The sibling MUST have completed (not cancelled).
+                self.assertTrue(sibling_completed)
+                # Completed sibling response must be in the result.
+                self.assertEqual(
+                    len(result.completed_function_responses), 1,
+                )
+                resp = result.completed_function_responses[0]
+                self.assertEqual(
+                    resp["functionResponse"]["name"],
+                    "coordination_emit",
+                )
 
         asyncio.run(run())
 
@@ -906,6 +918,310 @@ class TestPreconditionSuspend(unittest.TestCase):
             results = await caller.get_results()
             self.assertTrue(handler_called)
             self.assertIsNotNone(results)
+
+        asyncio.run(run())
+
+
+class TestFunctionCallerSiblingResults(unittest.TestCase):
+    """Tests that FunctionCaller preserves completed sibling results on suspend.
+
+    Suspend means "wait for external input" — sibling tasks must run to
+    completion and their results must be attached to the SuspendError so
+    the loop can include them in the saved state.
+    """
+
+    def test_completed_siblings_attached_to_suspend(self):
+        """Completed siblings appear on SuspendError.completed_responses."""
+        suspend_event = WaitForInputEvent(request_id="req-1")
+
+        async def suspending(args, status_cb):
+            raise SuspendError(
+                suspend_event,
+                {"functionCall": {"name": "chat", "args": args}},
+            )
+
+        async def fast_a(args, status_cb):
+            return {"a": True}
+
+        async def fast_b(args, status_cb):
+            return {"b": True}
+
+        defs = {
+            "chat": FunctionDefinition(
+                name="chat", description="", handler=suspending,
+            ),
+            "fn_a": FunctionDefinition(
+                name="fn_a", description="", handler=fast_a,
+            ),
+            "fn_b": FunctionDefinition(
+                name="fn_b", description="", handler=fast_b,
+            ),
+        }
+
+        async def run():
+            caller = FunctionCaller(defs)
+            caller.call("c1", {"functionCall": {"name": "fn_a", "args": {}}})
+            caller.call("c2", {"functionCall": {"name": "chat", "args": {}}})
+            caller.call("c3", {"functionCall": {"name": "fn_b", "args": {}}})
+
+            with self.assertRaises(SuspendError) as ctx:
+                await caller.get_results()
+
+            err = ctx.exception
+            # Both non-suspending siblings must have completed.
+            self.assertEqual(len(err.completed_responses), 2)
+            names = {
+                r.response["functionResponse"]["name"]
+                for r in err.completed_responses
+            }
+            self.assertEqual(names, {"fn_a", "fn_b"})
+
+        asyncio.run(run())
+
+    def test_multiple_suspends_first_wins(self):
+        """When two functions suspend, the first wins; the second gets an error response."""
+        event_a = WaitForInputEvent(request_id="req-a")
+        event_b = WaitForInputEvent(request_id="req-b")
+
+        async def suspend_a(args, status_cb):
+            raise SuspendError(
+                event_a,
+                {"functionCall": {"name": "chat_a", "args": {}}},
+            )
+
+        async def suspend_b(args, status_cb):
+            # Yield briefly so suspend_a fires first.
+            await asyncio.sleep(0)
+            raise SuspendError(
+                event_b,
+                {"functionCall": {"name": "chat_b", "args": {}}},
+            )
+
+        defs = {
+            "chat_a": FunctionDefinition(
+                name="chat_a", description="", handler=suspend_a,
+            ),
+            "chat_b": FunctionDefinition(
+                name="chat_b", description="", handler=suspend_b,
+            ),
+        }
+
+        async def run():
+            caller = FunctionCaller(defs)
+            caller.call(
+                "c1", {"functionCall": {"name": "chat_a", "args": {}}},
+            )
+            caller.call(
+                "c2", {"functionCall": {"name": "chat_b", "args": {}}},
+            )
+
+            with self.assertRaises(SuspendError) as ctx:
+                await caller.get_results()
+
+            err = ctx.exception
+            # First suspend wins.
+            self.assertEqual(err.event.request_id, "req-a")
+            # Second suspend becomes a synthetic error in completed_responses.
+            self.assertEqual(len(err.completed_responses), 1)
+            resp = err.completed_responses[0]
+            self.assertIn(
+                "error",
+                resp.response["functionResponse"]["response"],
+            )
+
+        asyncio.run(run())
+
+
+class TestCompletedResponsesSerialization(unittest.TestCase):
+    """Tests that completed_function_responses round-trips through InteractionState."""
+
+    def test_round_trip(self):
+        """to_dict → from_dict preserves completed_function_responses."""
+        sibling_responses = [
+            {
+                "functionResponse": {
+                    "name": "coordination_emit",
+                    "response": {"emitted": True},
+                }
+            },
+            {
+                "functionResponse": {
+                    "name": "playbooks_run_playbook",
+                    "response": {"playbook": "analysis", "tickets_created": 1},
+                }
+            },
+        ]
+        state = InteractionState(
+            contents=[{"parts": [{"text": "obj"}], "role": "user"}],
+            function_call_part={
+                "functionCall": {"name": "chat_await", "args": {}}
+            },
+            file_system=None,
+            task_tree=TaskTreeSnapshot(tree={}),
+            completed_function_responses=sibling_responses,
+        )
+
+        data = state.to_dict()
+        restored = InteractionState.from_dict(data)
+
+        self.assertEqual(
+            restored.completed_function_responses,
+            sibling_responses,
+        )
+
+    def test_defaults_to_empty_for_old_state(self):
+        """Old serialized state without the field gets an empty list."""
+        data = {
+            "contents": [],
+            "function_call_part": {},
+            "file_system": None,
+            "task_tree": {"tree": {}},
+        }
+        restored = InteractionState.from_dict(data)
+        self.assertEqual(restored.completed_function_responses, [])
+
+
+class TestSuspendResumeWithSiblings(unittest.TestCase):
+    """End-to-end: suspend with siblings → resume → combined user turn.
+
+    Verifies that the resumed conversation contains a single user turn
+    with ALL function responses (completed siblings + suspend response),
+    so the model sees no orphaned function calls.
+    """
+
+    def test_resume_combines_sibling_and_suspend_responses(self):
+        """Resumed contents have one user turn with all function responses."""
+        # Simulate: model issued 3 function calls, one suspended.
+        # Two siblings completed. Now we resume with the suspend response.
+        suspend_event = WaitForInputEvent(request_id="req-1")
+        function_call_part = {
+            "functionCall": {
+                "name": "chat_await_context_update",
+                "args": {},
+            }
+        }
+
+        sibling_completed = False
+
+        async def suspending(args, status_cb):
+            raise SuspendError(suspend_event, function_call_part)
+
+        async def emit_handler(args, status_cb):
+            return {"emitted": True}
+
+        async def playbook_handler(args, status_cb):
+            nonlocal sibling_completed
+            sibling_completed = True
+            return {"playbook": "analysis", "tickets_created": 1}
+
+        suspend_defn = FunctionDefinition(
+            name="chat_await_context_update",
+            description="Await context", handler=suspending,
+        )
+        emit_defn = FunctionDefinition(
+            name="coordination_emit",
+            description="Emit", handler=emit_handler,
+        )
+        playbook_defn = FunctionDefinition(
+            name="playbooks_run_playbook",
+            description="Run playbook", handler=playbook_handler,
+        )
+
+        from opal_backend.function_definition import FunctionGroup
+        from opal_backend.loop import LoopHooks
+
+        group = FunctionGroup(
+            instruction="",
+            definitions=[
+                ("chat_await_context_update", suspend_defn),
+                ("coordination_emit", emit_defn),
+                ("playbooks_run_playbook", playbook_defn),
+            ],
+            declarations=[
+                {"name": "chat_await_context_update", "description": "Await"},
+                {"name": "coordination_emit", "description": "Emit"},
+                {"name": "playbooks_run_playbook", "description": "Playbook"},
+            ],
+        )
+
+        # Model returns all three function calls.
+        gemini_response = {
+            "candidates": [{
+                "content": {
+                    "parts": [
+                        {"functionCall": {"name": "coordination_emit", "args": {"signal_type": "building"}}},
+                        {"functionCall": {"name": "playbooks_run_playbook", "args": {"name": "analysis"}}},
+                        {"functionCall": {"name": "chat_await_context_update", "args": {}}},
+                    ],
+                    "role": "model",
+                }
+            }]
+        }
+
+        async def fake_stream(*_args, **_kwargs):
+            yield gemini_response
+
+        objective = {
+            "parts": [{"text": "Orchestrate"}],
+            "role": "user",
+        }
+
+        async def run():
+            with patch(
+                "opal_backend.loop.stream_generate_content",
+                side_effect=fake_stream,
+            ):
+                loop = Loop(backend=MagicMock())
+                result = await loop.run(
+                    AgentRunArgs(
+                        objective=objective,
+                        function_groups=[group],
+                    )
+                )
+                self.assertIsInstance(result, SuspendResult)
+                self.assertTrue(sibling_completed)
+
+                # --- Verify the SuspendResult carries sibling responses ---
+                self.assertEqual(
+                    len(result.completed_function_responses), 2,
+                )
+                sibling_names = {
+                    r["functionResponse"]["name"]
+                    for r in result.completed_function_responses
+                }
+                self.assertEqual(
+                    sibling_names,
+                    {"coordination_emit", "playbooks_run_playbook"},
+                )
+
+                # --- Simulate resume: build the combined user turn ---
+                # This mirrors what run.py resume() does.
+                all_parts = list(result.completed_function_responses)
+                all_parts.append({
+                    "functionResponse": {
+                        "name": "chat_await_context_update",
+                        "response": {"context_updates": ["tile ready"]},
+                    }
+                })
+                combined_turn = {"parts": all_parts, "role": "user"}
+                resumed_contents = result.contents + [combined_turn]
+
+                # The last user turn must contain ALL three responses.
+                last_user_turn = resumed_contents[-1]
+                self.assertEqual(last_user_turn["role"], "user")
+                response_names = {
+                    p["functionResponse"]["name"]
+                    for p in last_user_turn["parts"]
+                    if "functionResponse" in p
+                }
+                self.assertEqual(
+                    response_names,
+                    {
+                        "coordination_emit",
+                        "playbooks_run_playbook",
+                        "chat_await_context_update",
+                    },
+                )
 
         asyncio.run(run())
 
