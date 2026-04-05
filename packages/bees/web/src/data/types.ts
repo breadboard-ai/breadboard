@@ -42,9 +42,24 @@ export interface PlaybookData {
 // Log file types (from EvalCollector output in packages/bees/out)
 // ---------------------------------------------------------------------------
 
-/** A single "context" entry from a log.json file. */
-export interface LogContextEntry {
-  type: "context";
+/** Per-turn boundary recorded by the EvalCollector. */
+export interface LogTurnBoundary {
+  contextLengthAtStart: number;
+  tokenMetadata: LogTurnTokenMetadata | null;
+}
+
+/** Token metadata for a single API turn. */
+export interface LogTurnTokenMetadata {
+  promptTokenCount?: number;
+  candidatesTokenCount?: number;
+  thoughtsTokenCount?: number;
+  cachedContentTokenCount?: number;
+  totalTokenCount?: number;
+}
+
+/** A single "run" entry from a log.json file. */
+export interface LogRunEntry {
+  type: "run";
   sessionId: string;
   startedDateTime: string;
   totalDurationMs: number;
@@ -53,6 +68,7 @@ export interface LogContextEntry {
   totalThoughts: number;
   totalFunctionCalls: number;
   tokenMetadata: LogTokenMetadata;
+  turns: LogTurnBoundary[];
   config: LogConfig;
   context: LogTurn[];
 }
@@ -69,7 +85,6 @@ export interface LogTokenMetadata {
   totalThoughtsTokens: number;
   totalCachedTokens: number;
   totalTokens: number;
-  perTurn: Array<Record<string, unknown>>;
 }
 
 export interface LogConfig {
@@ -124,14 +139,21 @@ export interface LogSession {
   files: LogFileInfo[];
 }
 
-/** One run segment within a session — carries only the NEW turns it added. */
+/** A single API turn within a segment — its conversation entries + token data. */
+export interface TurnGroup {
+  turnIndex: number;
+  entries: LogTurn[];
+  tokenMetadata: LogTurnTokenMetadata | null;
+}
+
+/** One run segment within a session — carries per-turn groups. */
 export interface SessionSegment {
   filename: string;
   segmentIndex: number;
   startedDateTime: string;
   totalDurationMs: number;
   turnCount: number;
-  newTurns: LogTurn[];
+  turnGroups: TurnGroup[];
   totalThoughts: number;
   totalFunctionCalls: number;
   totalTokens: number;

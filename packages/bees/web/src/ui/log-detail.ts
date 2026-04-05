@@ -11,6 +11,8 @@ import type {
   SessionSegment,
   LogPart,
   LogTurn,
+  TurnGroup,
+  LogTurnTokenMetadata,
 } from "../data/types.js";
 import { logDetailStyles } from "./log-detail.styles.js";
 
@@ -120,6 +122,19 @@ class BeesLogDetail extends LitElement {
     };
   }
 
+  private turnTokens(tm: LogTurnTokenMetadata | null): TokenBreakdown {
+    if (!tm) return { cached: 0, prompt: 0, thoughts: 0, output: 0, total: 0 };
+    const cached = tm.cachedContentTokenCount ?? 0;
+    const prompt = Math.max(0, (tm.promptTokenCount ?? 0) - cached);
+    return {
+      cached,
+      prompt,
+      thoughts: tm.thoughtsTokenCount ?? 0,
+      output: tm.candidatesTokenCount ?? 0,
+      total: tm.totalTokenCount ?? 0,
+    };
+  }
+
   private renderTokenBar(d: MergedSessionView) {
     const t = this.aggregateTokens(d);
     if (t.total === 0) return nothing;
@@ -164,6 +179,7 @@ class BeesLogDetail extends LitElement {
               `
             )}
           </div>
+          <span class="token-scale">${tier.label}</span>
           ${scale === 1_000_000
             ? html`
                 <div
@@ -239,7 +255,6 @@ class BeesLogDetail extends LitElement {
     const label =
       seg.segmentIndex === 0 ? "Run 1" : `Run ${seg.segmentIndex + 1}`;
     const resumed = seg.segmentIndex > 0 ? " (resumed)" : "";
-    const tokens = this.segmentTokens(seg);
 
     return html`
       ${totalSegments > 1
@@ -254,11 +269,70 @@ class BeesLogDetail extends LitElement {
                   </span>
                 </span>
               </div>
-              ${this.renderTokenBarVisual(tokens, true)}
             </div>
           `
         : nothing}
-      ${seg.newTurns.map((turn) => this.renderTurn(turn))}
+      ${seg.turnGroups.map((tg) => this.renderTurnGroup(tg, seg))}
+    `;
+  }
+
+  private renderTurnGroup(tg: TurnGroup, _seg: SessionSegment) {
+    const tokens = this.turnTokens(tg.tokenMetadata);
+
+    return html`
+      ${tokens.total > 0 ? this.renderTurnHeader(tokens) : nothing}
+      ${tg.entries.map((turn) => this.renderTurn(turn))}
+    `;
+  }
+
+  private renderTurnHeader(t: TokenBreakdown) {
+    const TIERS = [
+      { cap: 50_000, label: "50K" },
+      { cap: 250_000, label: "250K" },
+      { cap: 1_000_000, label: "1M" },
+    ];
+    const tier = TIERS.find((t2) => t.total <= t2.cap) ?? TIERS.at(-1)!;
+    const scale = tier.cap;
+    const pct = (n: number) =>
+      `${Math.min((n / scale) * 100, 100).toFixed(2)}%`;
+    const fmt = (n: number) =>
+      n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+
+    const segments = [
+      { cls: "cached", value: t.cached, label: "cached" },
+      { cls: "prompt", value: t.prompt, label: "prompt" },
+      { cls: "thoughts", value: t.thoughts, label: "thoughts" },
+      { cls: "output", value: t.output, label: "output" },
+    ].filter((s) => s.value > 0);
+
+    return html`
+      <div class="turn-header">
+        <span class="turn-header-label">turn</span>
+        <div class="turn-header-bar">
+          <div class="token-segments">
+            ${segments.map(
+              (s) => html`
+                <div
+                  class="token-seg ${s.cls}"
+                  style="width: ${pct(s.value)}"
+                  title="${s.label}: ${s.value.toLocaleString()}"
+                ></div>
+              `
+            )}
+          </div>
+        </div>
+        <span class="turn-header-tokens">
+          ${segments.map(
+            (s) => html`
+              <span class="token-legend-item">
+                <span class="dot ${s.cls}"></span>
+                <span class="legend-value">${fmt(s.value)}</span>
+              </span>
+            `
+          )}
+          <span class="turn-header-total">${fmt(t.total)}</span>
+        </span>
+      </div>
     `;
   }
 
@@ -267,9 +341,14 @@ class BeesLogDetail extends LitElement {
     const parts = (turn.parts || []).filter((p) => !this.isEmptyPart(p));
     if (parts.length === 0) return nothing;
 
+    // Function responses are injected by the system, not typed by a person.
+    const hasOnlyFunctionResponses =
+      role === "user" && parts.every((p) => p.functionResponse);
+    const displayRole = hasOnlyFunctionResponses ? "system" : role;
+
     return html`
-      <div class="turn ${role}">
-        <div class="turn-role">${role}</div>
+      <div class="turn ${displayRole}">
+        <div class="turn-role">${displayRole}</div>
         <div class="turn-parts">
           ${parts.map((p) => this.renderPart(p))}
         </div>

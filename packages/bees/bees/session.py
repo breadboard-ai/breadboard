@@ -114,11 +114,11 @@ class SessionResult:
 
 
 class EvalCollector:
-    """Collects agent events and produces EvalFileData output.
+    """Collects agent events and produces structured run output.
 
-    Extracts the Gemini request context from ``sendRequest`` events,
-    assembles model response parts from thought/functionCall events,
-    and uses the ``complete`` event for the outcome.
+    Tracks per-turn context boundaries from ``sendRequest`` events,
+    pairs each turn with its token usage from ``usageMetadata``,
+    and emits the result as ``type: "run"``.
     """
 
     def __init__(self) -> None:
@@ -132,6 +132,10 @@ class EvalCollector:
         # Model response parts (accumulated across events)
         self.model_parts: list[dict[str, Any]] = []
 
+        # Per-turn tracking: each entry records the context length when
+        # the sendRequest fired, giving exact turn boundaries.
+        self.turns: list[dict[str, Any]] = []
+
         # Metrics
         self.total_thoughts = 0
         self.total_function_calls = 0
@@ -140,8 +144,7 @@ class EvalCollector:
         # Outcome
         self.outcome: dict[str, Any] | None = None
 
-        # Token usage (per-turn and aggregate)
-        self.usage_per_turn: list[dict[str, Any]] = []
+        # Aggregate token usage
         self.total_prompt_tokens = 0
         self.total_candidates_tokens = 0
         self.total_thoughts_tokens = 0
@@ -165,6 +168,12 @@ class EvalCollector:
         if "sendRequest" in event:
             body = event["sendRequest"].get("body", {})
             self.context = body.get("contents", [])
+            # Record the turn boundary: the context length at this point
+            # tells the viewer exactly where this turn's input ends.
+            self.turns.append({
+                "contextLengthAtStart": len(self.context),
+                "tokenMetadata": None,
+            })
             config = {
                 k: v for k, v in body.items() if k != "contents"
             }
@@ -196,7 +205,9 @@ class EvalCollector:
 
         elif "usageMetadata" in event:
             metadata = event["usageMetadata"].get("metadata", {})
-            self.usage_per_turn.append(metadata)
+            # Attach to the current (latest) turn.
+            if self.turns:
+                self.turns[-1]["tokenMetadata"] = metadata
             self.total_prompt_tokens += metadata.get(
                 "promptTokenCount", 0
             )
@@ -227,16 +238,11 @@ class EvalCollector:
     def to_eval_file_data(
         self, *, ticket_id: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Produce the EvalFileData array (context + outcome entries)."""
+        """Produce the EvalFileData array (run + outcome entries)."""
         end_time = time.time()
         total_duration_ms = (end_time - self.start_time) * 1000
 
         full_context = list(self.context)
-        if self.model_parts:
-            full_context.append({
-                "parts": self.model_parts,
-                "role": "model",
-            })
 
         started = datetime.fromtimestamp(
             self.start_time, tz=timezone.utc,
@@ -244,7 +250,7 @@ class EvalCollector:
 
         result: list[dict[str, Any]] = [
             {
-                "type": "context",
+                "type": "run",
                 "sessionId": ticket_id,
                 "startedDateTime": started,
                 "totalDurationMs": total_duration_ms,
@@ -258,8 +264,8 @@ class EvalCollector:
                     "totalThoughtsTokens": self.total_thoughts_tokens,
                     "totalCachedTokens": self.total_cached_tokens,
                     "totalTokens": self.total_tokens,
-                    "perTurn": self.usage_per_turn,
                 },
+                "turns": self.turns,
                 "config": self.config,
                 "context": full_context,
             },
