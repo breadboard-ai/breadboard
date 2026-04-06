@@ -41,16 +41,20 @@ steps:
               -> rebuild the XState journey -> rebuild React app
               -> do more research ...
                 -> ask user for comments ...
-                
-      Rinse, repeat until
+
+      Rinse, repeat. When iterating, reuse the slug names and inform the
+      subagents that they can read the old information and write over it.
 
       ## Rules
 
       - Keep your chat responses brief. You're a coordinator, not a chatbot.
 
       - Each subagent working on a task gets a clean LLM context. Be explicit in
-      your text
-        briefings — they know nothing about prior conversation.
+      your task assignments. They know nothing about prior conversation.
+
+      - For the app to be picked up by the frontend, make sure to use the "app"
+      subagent slug for the React app. Otherwise, the app won't be seen by the
+      user.
 
     functions:
       - chat.*
