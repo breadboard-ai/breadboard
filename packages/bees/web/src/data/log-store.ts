@@ -32,6 +32,7 @@ class LogStore {
   readonly sessions = new Signal.State<LogSession[]>([]);
   readonly selectedSessionId = new Signal.State<string | null>(null);
   readonly selectedView = new Signal.State<MergedSessionView | null>(null);
+  readonly recentlyUpdatedSession = new Signal.State<{ id: string; at: number } | null>(null);
 
   // ── Private ──
 
@@ -92,6 +93,9 @@ class LogStore {
         if (runEntry) {
           this.#cache.set(filename, { data: runEntry, lastModified: file.lastModified });
           cacheUpdated = true;
+          if (this.#observer) {
+            this.recentlyUpdatedSession.set({ id: runEntry.sessionId, at: Date.now() });
+          }
         }
       }
     }

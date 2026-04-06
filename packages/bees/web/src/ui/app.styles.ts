@@ -875,4 +875,20 @@ export const styles = css`
     max-height: 400px;
     overflow-y: auto;
   }
+
+  /* ── Lightning Flash Effect ── */
+  @keyframes lightning-flash {
+    0% {
+      background-color: #60a5fa;
+      box-shadow: 0 0 20px #60a5fa;
+    }
+    100% {
+      background-color: transparent;
+      box-shadow: none;
+    }
+  }
+
+  .lightning-flash {
+    animation: lightning-flash 3s ease-out !important;
+  }
 `;
