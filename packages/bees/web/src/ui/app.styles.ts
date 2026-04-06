@@ -9,7 +9,7 @@ import { css } from "lit";
 export const styles = css`
   :host {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     height: 100vh;
     width: 100vw;
     margin: 0;
@@ -30,25 +30,22 @@ export const styles = css`
     font-family: "Google Mono", "Roboto Mono", monospace;
   }
 
-  /* --- Sidebar --- */
-  .sidebar {
-    width: 320px;
+  /* --- Top bar (header + tabs) --- */
+  .top-bar {
     background: #0f1115;
-    border-right: 1px solid #1e293b;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    border-bottom: 1px solid #1e293b;
     flex-shrink: 0;
+    z-index: 20;
   }
 
-  .sidebar-header {
-    padding: 24px 20px 12px 20px;
+  .top-bar-header {
+    padding: 16px 20px 0 20px;
     display: flex;
     align-items: center;
     gap: 12px;
   }
 
-  .sidebar-header h1 {
+  .top-bar-header h1 {
     font-size: 1.1rem;
     font-weight: 600;
     margin: 0;
@@ -58,11 +55,28 @@ export const styles = css`
     gap: 8px;
   }
 
-  .sidebar-tabs {
+  .top-bar-tabs {
     display: flex;
     padding: 0 20px;
-    border-bottom: 1px solid #1e293b;
-    margin-bottom: 8px;
+  }
+
+  /* --- Content row (sidebar + main) --- */
+  .content-row {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* --- Sidebar --- */
+  .sidebar {
+    width: 320px;
+    background: #0f1115;
+    border-right: 1px solid #1e293b;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex-shrink: 0;
   }
 
   .sidebar-tab {
@@ -260,11 +274,11 @@ export const styles = css`
 
   /* Timeline Steps */
   .timeline {
-    padding: 32px;
+    padding: 24px 32px;
     display: flex;
     flex-direction: column;
-    gap: 32px;
-    max-width: 900px;
+    gap: 12px;
+    max-width: 960px;
     margin: 0 auto;
     width: 100%;
   }
@@ -279,7 +293,7 @@ export const styles = css`
     position: absolute;
     left: 7px;
     top: 24px;
-    bottom: -40px;
+    bottom: -20px;
     width: 2px;
     background: #1e293b;
   }
@@ -377,8 +391,8 @@ export const styles = css`
 
   .block-header {
     background: #14171c;
-    padding: 6px 12px;
-    font-size: 0.75rem;
+    padding: 5px 10px;
+    font-size: 0.7rem;
     font-weight: 600;
     color: #94a3b8;
     border-bottom: 1px solid #1e293b;
@@ -387,9 +401,8 @@ export const styles = css`
   }
 
   .block-content {
-    padding: 12px;
+    padding: 8px 10px;
     color: #e2e8f0;
-    white-space: pre-wrap;
     line-height: 1.5;
     font-family: inherit;
     margin: 0;
@@ -398,6 +411,7 @@ export const styles = css`
   .block-content.mono {
     font-family: var(--sys-typescale-mono-font, monospace);
     font-size: 0.75rem;
+    white-space: pre-wrap;
   }
 
   .block.error {
@@ -662,5 +676,192 @@ export const styles = css`
     color: #cbd5e1;
     white-space: pre-wrap;
     word-break: break-word;
+  }
+
+  /* ── Identity chips row ── */
+  .identity-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .identity-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-family: "Google Mono", "Roboto Mono", monospace;
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+  }
+
+  .identity-chip.model {
+    background: #1a1526;
+    color: #c4b5fd;
+    border-color: #2d2540;
+  }
+
+  .identity-chip.playbook {
+    background: #111d1f;
+    color: #5eead4;
+    border-color: #1a3338;
+  }
+
+  .identity-chip.skill {
+    background: #1e3a8a22;
+    color: #93c5fd;
+    border-color: #1e3a5c;
+  }
+
+  .identity-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+  }
+
+  /* ── Context card ── */
+  .context-card {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+
+  .context-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #a78bfa;
+    margin-bottom: 6px;
+  }
+
+  .context-body {
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* ── Chat log ── */
+  .chat-log {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 12px;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .chat-turn {
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .chat-turn.user {
+    background: #1e293b;
+    border: 1px solid #334155;
+  }
+
+  .chat-turn.agent {
+    background: #111827;
+    border: 1px solid #1e293b;
+  }
+
+  .chat-role {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+
+  .chat-turn.user .chat-role {
+    color: #60a5fa;
+  }
+
+  .chat-turn.agent .chat-role {
+    color: #a78bfa;
+  }
+
+  .chat-text {
+    color: #e2e8f0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* ── Signal chips ── */
+  .signal-chip {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-family: "Google Mono", "Roboto Mono", monospace;
+    background: #134e4a;
+    color: #5eead4;
+  }
+
+  /* ── Outcome block (green tint) ── */
+  .block.outcome {
+    border-color: #065f46;
+  }
+
+  .block.outcome .block-header {
+    background: #022c22;
+    color: #6ee7b7;
+    border-bottom-color: #065f46;
+  }
+
+  /* ── Ticket collapsible section ── */
+  .ticket-section {
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .ticket-section summary {
+    cursor: pointer;
+    user-select: none;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: #14171c;
+    border-bottom: 1px solid #1e293b;
+    list-style: none;
+  }
+
+  .ticket-section summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .ticket-section summary::before {
+    content: "▸ ";
+  }
+
+  .ticket-section[open] summary::before {
+    content: "▾ ";
+  }
+
+  .ticket-section .section-body {
+    padding: 12px;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: #cbd5e1;
+    max-height: 400px;
+    overflow-y: auto;
   }
 `;
