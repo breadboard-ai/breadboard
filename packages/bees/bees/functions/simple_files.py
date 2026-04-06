@@ -32,7 +32,7 @@ _DECLARATIONS_DIR = Path(__file__).resolve().parent.parent / "declarations"
 _LOADED = load_declarations("simple-files", declarations_dir=_DECLARATIONS_DIR)
 
 
-def get_simple_files_function_group_factory() -> "FunctionGroupFactory":
+def get_simple_files_function_group_factory(slug: str | None = None) -> "FunctionGroupFactory":
     """Return a factory that builds the simple-files function group.
 
     The returned callable accepts ``SessionHooks`` and produces a
@@ -50,6 +50,18 @@ def get_simple_files_function_group_factory() -> "FunctionGroupFactory":
             file_system=hooks.file_system,
             task_tree_manager=hooks.task_tree_manager,
         )
+        
+        if slug:
+            original_write = handlers["system_write_file"]
+            
+            async def restricted_write_file(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
+                file_name = args.get("file_name", "")
+                if not file_name.startswith(f"{slug}/") and file_name != slug:
+                    return {"error": f"You can only write files in the directory: {slug}"}
+                return await original_write(args, status_cb)
+                
+            handlers["system_write_file"] = restricted_write_file
+            
         return assemble_function_group(_LOADED, handlers)
 
     return factory

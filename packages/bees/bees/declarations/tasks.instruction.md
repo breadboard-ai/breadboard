@@ -2,8 +2,8 @@
 
 You can delegate work to subagents using tasks.
 
-When you create a task, a scheduler will assign an agent to the task as soon as
-it is able. The availability depends on the current workload and will vary.
+When you create a task, a scheduler will assign a subagent to the task as soon
+as it is able. The availability depends on the current workload and will vary.
 
 There are several pre-defined task types that are accessible via the
 “tasks_list_types” function. Choose the right type for the new task.

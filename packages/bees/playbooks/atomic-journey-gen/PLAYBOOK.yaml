@@ -1,8 +1,8 @@
 name: atomic-journey-gen
 title: Journey Designer
+type: task-template
 description: >
-  A single-step journey design worker. Produces an XState-backed journey.json
-  blueprint and terminates.
+  Produces an XState-backed journey.json blueprint
 
 steps:
   design:
@@ -23,7 +23,6 @@ steps:
 
       3. Save the result as journey.json.
 
-      4. Call system_objective_fulfilled with a brief summary of the journey
-      structure (segments, states, and expected outcome).
+      4. Return the path to the blueprint.
     functions: ["system.*", "simple-files.*", "skills.*"]
     skills: ["app-architect"]
