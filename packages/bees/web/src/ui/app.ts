@@ -20,6 +20,7 @@ import { LogStore } from "../data/log-store.js";
 import { TicketStore } from "../data/ticket-store.js";
 import type { FileTreeNode } from "../data/ticket-store.js";
 import "./log-detail.js";
+import "./truncated-text.js";
 
 export { BeesApp };
 
@@ -40,7 +41,7 @@ interface DaemonInfo {
   daemonTag: string;
 }
 
-type TabId = "jobs" | "playbooks" | "daemons" | "logs" | "tickets";
+type TabId = "jobs" | "playbooks" | "daemons" | "logs" | "tickets" | "events";
 
 @customElement("bees-app")
 class BeesApp extends SignalWatcher(LitElement) {
@@ -49,6 +50,7 @@ class BeesApp extends SignalWatcher(LitElement) {
   @state() accessor playbooks: PlaybookData[] = [];
   @state() accessor loadingPlaybooks = false;
   @state() accessor selectedDaemonId: string | null = null;
+  @state() accessor selectedEventId: string | null = null;
   @state() accessor ticketFileTree: FileTreeNode[] = [];
   @state() accessor ticketFileContents: Record<string, string | null> = {};
 
@@ -212,11 +214,11 @@ class BeesApp extends SignalWatcher(LitElement) {
     }
 
     return html`
-      <div class="sidebar">
-        <div class="sidebar-header">
+      <div class="top-bar">
+        <div class="top-bar-header">
           <h1>${APP_ICON} ${APP_NAME} DevTools</h1>
         </div>
-        <div class="sidebar-tabs">
+        <div class="top-bar-tabs">
           <div
             class="sidebar-tab ${this.activeTab === "jobs" ? "active" : ""}"
             @click=${() => (this.activeTab = "jobs")}
@@ -261,29 +263,43 @@ class BeesApp extends SignalWatcher(LitElement) {
           >
             Tickets
           </div>
+          <div
+            class="sidebar-tab ${this.activeTab === "events" ? "active" : ""}"
+            @click=${() => this.activateEventsTab()}
+          >
+            Events
+          </div>
         </div>
-
-        ${this.activeTab === "jobs"
-          ? this.renderJobsList(jobs)
-          : this.activeTab === "daemons"
-            ? this.renderDaemonsList(daemons)
-            : this.activeTab === "logs"
-              ? this.renderLogsList()
-              : this.activeTab === "tickets"
-                ? this.renderTicketsList()
-                : this.renderPlaybooksList()}
       </div>
 
-      <div class="main">
-        ${this.activeTab === "jobs"
-          ? this.renderJobDetail(jobs)
-          : this.activeTab === "daemons"
-            ? this.renderDaemonDetail(daemons)
-            : this.activeTab === "logs"
-              ? this.renderLogDetail()
-              : this.activeTab === "tickets"
-                ? this.renderTicketDetail()
-                : this.renderEmptyMain("Select a playbook to run on the left.")}
+      <div class="content-row">
+        <div class="sidebar">
+          ${this.activeTab === "jobs"
+            ? this.renderJobsList(jobs)
+            : this.activeTab === "daemons"
+              ? this.renderDaemonsList(daemons)
+              : this.activeTab === "logs"
+                ? this.renderLogsList()
+                : this.activeTab === "tickets"
+                  ? this.renderTicketsList()
+                  : this.activeTab === "events"
+                    ? this.renderEventsList()
+                    : this.renderPlaybooksList()}
+        </div>
+
+        <div class="main">
+          ${this.activeTab === "jobs"
+            ? this.renderJobDetail(jobs)
+            : this.activeTab === "daemons"
+              ? this.renderDaemonDetail(daemons)
+              : this.activeTab === "logs"
+                ? this.renderLogDetail()
+                : this.activeTab === "tickets"
+                  ? this.renderTicketDetail()
+                  : this.activeTab === "events"
+                    ? this.renderEventDetail()
+                    : this.renderEmptyMain("Select a playbook to run on the left.")}
+        </div>
       </div>
     `;
   }
@@ -352,7 +368,8 @@ class BeesApp extends SignalWatcher(LitElement) {
   /** Activate the store for whichever filesystem tab is active. */
   private activateCurrentStore(): void {
     if (this.activeTab === "logs") this.logStore.activate();
-    if (this.activeTab === "tickets") this.ticketStore.activate();
+    if (this.activeTab === "tickets" || this.activeTab === "events")
+      this.ticketStore.activate();
   }
 
   // --- Playbooks ---
@@ -516,7 +533,7 @@ class BeesApp extends SignalWatcher(LitElement) {
             ? html`
                 <div class="block">
                   <div class="block-header">Last Outcome</div>
-                  <div class="block-content mono">${t.outcome}</div>
+                  <div class="block-content"><bees-truncated-text threshold="300" max-height="150" fadeBg="#0f1115">${t.outcome}</bees-truncated-text></div>
                 </div>
               `
             : nothing}
@@ -625,7 +642,7 @@ class BeesApp extends SignalWatcher(LitElement) {
               ? html`
                   <div class="block">
                     <div class="block-header">Outcome</div>
-                    <div class="block-content mono">${t.outcome}</div>
+                    <div class="block-content"><bees-truncated-text threshold="300" max-height="150" fadeBg="#0f1115">${t.outcome}</bees-truncated-text></div>
                   </div>
                 `
               : nothing}
@@ -805,11 +822,125 @@ class BeesApp extends SignalWatcher(LitElement) {
     this.ticketStore.activate();
   }
 
+  // --- Events ---
+
+  private async activateEventsTab() {
+    this.activeTab = "events";
+    await this.ensureStateAccess();
+    this.ticketStore.activate();
+  }
+
+  private renderEventsList() {
+    const gate = this.renderAccessGate();
+    if (gate) return gate;
+
+    const allTickets = this.ticketStore.tickets.get();
+    const events = allTickets.filter((t) => t.kind === "coordination");
+
+    if (events.length === 0) {
+      return html`<div class="empty-state">No events yet.</div>`;
+    }
+
+    return html`
+      <div class="jobs-list">
+        ${events.map(
+          (t) => html`
+            <div
+              class="job-item ${this.selectedEventId === t.id
+                ? "selected"
+                : ""}"
+              @click=${() => (this.selectedEventId = t.id)}
+            >
+              <div class="job-header">
+                <div class="job-title">
+                  <span class="signal-chip">${t.signal_type}</span>
+                </div>
+                <div class="job-status ${t.status}"></div>
+              </div>
+              <div class="job-meta">
+                <span
+                  style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px"
+                  >${t.context ?? ""}</span
+                >
+                <span>${getRelativeTime(t.created_at)}</span>
+              </div>
+            </div>
+          `
+        )}
+      </div>
+    `;
+  }
+
+  private renderEventDetail() {
+    const allTickets = this.ticketStore.tickets.get();
+    const event = allTickets.find(
+      (t) => t.id === this.selectedEventId && t.kind === "coordination"
+    );
+    if (!event) return this.renderEmptyMain("Select an event to inspect");
+
+    // Try to resolve delivered-to IDs to ticket titles.
+    const resolveTitle = (id: string): string => {
+      const t = allTickets.find((tk) => tk.id === id);
+      return t?.title ?? id.slice(0, 8);
+    };
+
+    return html`
+      <div class="job-detail">
+        <div class="job-detail-header">
+          <div class="job-detail-header-top">
+            <h2 class="job-detail-title">
+              <span class="signal-chip">${event.signal_type}</span>
+            </h2>
+          </div>
+          <div class="job-detail-meta">
+            <span
+              >ID:
+              <code class="mono">${event.id.slice(0, 13)}...</code></span
+            >
+            <span
+              >${new Date(event.created_at ?? "").toLocaleString()}</span
+            >
+          </div>
+        </div>
+
+        <div class="timeline">
+          ${event.context
+            ? html`
+                <div class="context-card">
+                  <div class="context-label">Signal Context</div>
+                  <bees-truncated-text threshold="300" max-height="150" fadeBg="#111827">${event.context}</bees-truncated-text>
+                </div>
+              `
+            : nothing}
+          ${event.delivered_to && event.delivered_to.length > 0
+            ? html`
+                <div class="block">
+                  <div class="block-header">Delivered To</div>
+                  <div class="block-content">
+                    <div class="delivered-to">
+                      ${event.delivered_to.map(
+                        (id) => html`
+                          <span class="delivered-to-id"
+                            >${resolveTitle(id)}</span
+                          >
+                        `
+                      )}
+                    </div>
+                  </div>
+                </div>
+              `
+            : nothing}
+        </div>
+      </div>
+    `;
+  }
+
   private renderTicketsList() {
     const gate = this.renderAccessGate();
     if (gate) return gate;
 
-    const tickets = this.ticketStore.tickets.get();
+    const allTickets = this.ticketStore.tickets.get();
+    const tickets = allTickets.filter((t) => t.kind !== "coordination");
     const selectedId = this.ticketStore.selectedTicketId.get();
 
     if (tickets.length === 0) {
@@ -835,7 +966,7 @@ class BeesApp extends SignalWatcher(LitElement) {
                 <div class="job-status ${t.status}"></div>
               </div>
               <div class="job-meta">
-                <span>${t.kind ?? "work"}</span>
+                <span>${t.playbook_id ?? "ad-hoc"}</span>
                 <span>${getRelativeTime(t.created_at)}</span>
               </div>
               ${t.tags && t.tags.length > 0
@@ -871,16 +1002,36 @@ class BeesApp extends SignalWatcher(LitElement) {
           ? "waiting for signal"
           : ticket.status;
 
+    // Collect identity chips.
+    const identityChips: Array<{ label: string; value: string; cls?: string }> =
+      [];
+    if (ticket.model)
+      identityChips.push({ label: "model", value: ticket.model, cls: "model" });
+    if (ticket.playbook_id)
+      identityChips.push({
+        label: "playbook",
+        value: ticket.playbook_id,
+        cls: "playbook",
+      });
+    if (ticket.parent_ticket_id)
+      identityChips.push({
+        label: "parent",
+        value: ticket.parent_ticket_id.slice(0, 8),
+      });
+    if (ticket.skills && ticket.skills.length > 0)
+      for (const s of ticket.skills)
+        identityChips.push({ label: "skill", value: s, cls: "skill" });
+
+    const chatHistory = (ticket.chat_history ?? []).filter(
+      (m) => m.text.trim() !== ""
+    );
+
     return html`
       <div class="job-detail">
         <div class="job-detail-header">
           <div class="job-detail-header-top">
-            <h2 class="job-detail-title">
-              ${ticket.title || "Ticket"}
-            </h2>
-            <div class="job-detail-badge ${ticket.status}">
-              ${statusLabel}
-            </div>
+            <h2 class="job-detail-title">${ticket.title || "Ticket"}</h2>
+            <div class="job-detail-badge ${ticket.status}">${statusLabel}</div>
           </div>
           <div class="job-detail-meta">
             <span
@@ -907,65 +1058,75 @@ class BeesApp extends SignalWatcher(LitElement) {
         </div>
 
         <div class="timeline">
-          ${ticket.objective
+          ${identityChips.length > 0
+            ? html`
+                <div class="identity-row">
+                  ${identityChips.map(
+                    (c) => html`
+                      <span class="identity-chip ${c.cls ?? ""}">
+                        <span class="identity-label">${c.label}</span>
+                        ${c.value}
+                      </span>
+                    `
+                  )}
+                  ${ticket.playbook_run_id
+                    ? html`<span class="identity-chip">
+                        <span class="identity-label">run</span>
+                        ${ticket.playbook_run_id.slice(0, 8)}
+                      </span>`
+                    : nothing}
+                </div>
+              `
+            : nothing}
+          ${ticket.context
+            ? html`
+                <div class="context-card">
+                  <div class="context-label">Context</div>
+                  <bees-truncated-text threshold="300" max-height="150" fadeBg="#111827">${ticket.context}</bees-truncated-text>
+                </div>
+              `
+            : nothing}
+          ${ticket.objective &&
+          ticket.objective.trim() !== (ticket.context ?? "").trim()
             ? html`
                 <div class="block">
                   <div class="block-header">Objective</div>
-                  <div class="block-content" style="white-space:pre-wrap">${ticket.objective}</div>
+                  <div class="block-content">
+                    <bees-truncated-text threshold="500" max-height="200" fadeBg="#0f1115">${ticket.objective}</bees-truncated-text>
+                  </div>
                 </div>
               `
             : nothing}
-          ${ticket.kind
+          ${chatHistory.length > 0
             ? html`
                 <div class="block">
-                  <div class="block-header">Kind</div>
-                  <div class="block-content">${ticket.kind}</div>
-                </div>
-              `
-            : nothing}
-          ${ticket.playbook_id
-            ? html`
-                <div class="block">
-                  <div class="block-header">Playbook</div>
-                  <div class="block-content mono">${ticket.playbook_id}</div>
-                </div>
-              `
-            : nothing}
-          ${ticket.playbook_run_id
-            ? html`
-                <div class="block">
-                  <div class="block-header">Run ID</div>
-                  <div class="block-content mono">${ticket.playbook_run_id}</div>
-                </div>
-              `
-            : nothing}
-          ${ticket.tags && ticket.tags.length > 0
-            ? html`
-                <div class="block">
-                  <div class="block-header">Tags</div>
-                  <div class="block-content">${ticket.tags.map(
-                    (tag) =>
-                      html`<span class="tool-badge" style="margin-right:6px">${tag}</span>`
-                  )}</div>
-                </div>
-              `
-            : nothing}
-          ${ticket.functions && ticket.functions.length > 0
-            ? html`
-                <div class="block">
-                  <div class="block-header">Functions</div>
-                  <div class="block-content">${ticket.functions.map(
-                    (fn) =>
-                      html`<span class="tool-badge" style="margin-right:6px">${fn}</span>`
-                  )}</div>
+                  <div class="block-header">
+                    Chat (${chatHistory.length} messages)
+                  </div>
+                  <div class="chat-log">
+                    ${chatHistory.map(
+                      (m) => html`
+                        <div
+                          class="chat-turn ${
+                            m.role === "user" ? "user" : "agent"
+                          }"
+                        >
+                          <div class="chat-role">${m.role}</div>
+                          <div class="chat-text">${m.text}</div>
+                        </div>
+                      `
+                    )}
+                  </div>
                 </div>
               `
             : nothing}
           ${ticket.outcome
             ? html`
-                <div class="block">
+                <div class="block outcome">
                   <div class="block-header">Outcome</div>
-                  <div class="block-content mono">${ticket.outcome}</div>
+                  <div class="block-content">
+                    <bees-truncated-text threshold="300" max-height="150" fadeBg="#0f1115">${ticket.outcome}</bees-truncated-text>
+                  </div>
                 </div>
               `
             : nothing}
@@ -974,6 +1135,65 @@ class BeesApp extends SignalWatcher(LitElement) {
                 <div class="block error">
                   <div class="block-header">Error</div>
                   <div class="block-content">${ticket.error}</div>
+                </div>
+              `
+            : nothing}
+          ${ticket.status === "suspended" && ticket.suspend_event
+            ? html`
+                <div class="block">
+                  <div class="block-header">Suspended</div>
+                  <div class="block-content">
+                    <div class="json-tree">
+                      ${renderJson(ticket.suspend_event)}
+                    </div>
+                  </div>
+                </div>
+              `
+            : nothing}
+          ${ticket.tags && ticket.tags.length > 0
+            ? html`
+                <div class="block">
+                  <div class="block-header">Tags</div>
+                  <div class="block-content">
+                    ${ticket.tags.map(
+                      (tag) =>
+                        html`<span class="tool-badge" style="margin-right:6px"
+                          >${tag}</span
+                        >`
+                    )}
+                  </div>
+                </div>
+              `
+            : nothing}
+          ${ticket.functions && ticket.functions.length > 0
+            ? html`
+                <div class="block">
+                  <div class="block-header">Functions</div>
+                  <div class="block-content">
+                    ${ticket.functions.map(
+                      (fn) =>
+                        html`<span class="tool-badge" style="margin-right:6px"
+                          >${fn}</span
+                        >`
+                    )}
+                  </div>
+                </div>
+              `
+            : nothing}
+          ${ticket.watch_events && ticket.watch_events.length > 0
+            ? html`
+                <div class="block">
+                  <div class="block-header">Listening For</div>
+                  <div class="block-content">
+                    ${ticket.watch_events.map(
+                      (ev) =>
+                        html`<span
+                          class="signal-chip"
+                          style="margin-right:6px"
+                          >${ev.type}</span
+                        >`
+                    )}
+                  </div>
                 </div>
               `
             : nothing}

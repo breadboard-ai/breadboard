@@ -30,6 +30,10 @@ export interface TicketData {
   context?: string;
   delivered_to?: string[];
   chat_history?: Array<{ role: string; text: string }>;
+  model?: string;
+  watch_events?: Array<{ type: string }>;
+  outcome_content?: Record<string, unknown>;
+  files?: Array<{ path: string; mimeType: string; localPath: string }>;
 }
 
 export interface PlaybookData {

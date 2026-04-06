@@ -76,11 +76,13 @@ class TicketStore {
       if (!metadata) continue;
 
       const objective = await this.#readText(ticketDir, "objective.md");
+      const chatLog = await this.#readJson(ticketDir, "chat_log.json");
 
       entries.push({
         id: name,
         objective: objective ?? "",
         ...(metadata as Omit<TicketData, "id" | "objective">),
+        ...(chatLog ? { chat_history: chatLog as TicketData["chat_history"] } : {}),
       } as TicketData);
     }
 
