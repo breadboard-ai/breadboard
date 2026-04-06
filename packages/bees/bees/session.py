@@ -46,6 +46,7 @@ from bees.functions.sandbox import get_sandbox_function_group_factory
 from bees.functions.playbooks import get_playbooks_function_group
 from bees.functions.chat import get_chat_function_group_factory
 from bees.functions.coordination import get_coordination_function_group
+from bees.functions.tasks import get_tasks_function_group_factory
 from bees.disk_file_system import DiskFileSystem
 
 # Scan skills once at import time.
@@ -413,6 +414,8 @@ async def run_session(
     on_playbook_run: Any | None = None,
     on_coordination_emit: Any | None = None,
     workspace_root_id: str | None = None,
+    scheduler: Any | None = None,
+    slug: str | None = None,
 ) -> SessionResult:
     """Run a single agent session and return the result.
 
@@ -450,10 +453,11 @@ async def run_session(
         graph={},
         extra_groups=[
             get_system_function_group_factory(),
-            get_simple_files_function_group_factory(),
+            get_simple_files_function_group_factory(slug=slug),
             get_skills_function_group(available_skills=session_listing),
             get_sandbox_function_group_factory(
                 work_dir=work_dir,
+                slug=slug,
             ),
             get_playbooks_function_group(
                 on_playbook_run=on_playbook_run,
@@ -461,6 +465,10 @@ async def run_session(
                 workspace_root_id=workspace_root_id,
             ),
             get_coordination_function_group(on_coordination_emit=on_coordination_emit),
+            get_tasks_function_group_factory(
+                workspace_root_id=workspace_root_id,
+                scheduler=scheduler,
+            ),
             get_chat_function_group_factory(
                 on_chat_entry=_make_chat_log_writer(ticket_dir) if ticket_dir else None,
                 workspace_root_id=workspace_root_id,
@@ -551,6 +559,7 @@ async def resume_session(
     on_playbook_run: Any | None = None,
     on_coordination_emit: Any | None = None,
     workspace_root_id: str | None = None,
+    scheduler: Any | None = None,
 ) -> SessionResult:
     """Resume a suspended session from saved state on disk.
 
@@ -578,10 +587,12 @@ async def resume_session(
     # Load allowed skills from ticket metadata
     metadata_path = ticket_dir / "metadata.json"
     allowed_skills = None
+    slug = None
     if metadata_path.exists():
         try:
             meta = json.loads(metadata_path.read_text())
             allowed_skills = meta.get("skills")
+            slug = meta.get("slug")
         except Exception:
             pass
 
@@ -605,10 +616,11 @@ async def resume_session(
         graph={},
         extra_groups=[
             get_system_function_group_factory(),
-            get_simple_files_function_group_factory(),
+            get_simple_files_function_group_factory(slug=slug),
             get_skills_function_group(available_skills=session_listing),
             get_sandbox_function_group_factory(
                 work_dir=work_dir,
+                slug=slug,
             ),
             get_playbooks_function_group(
                 on_playbook_run=on_playbook_run,
@@ -616,8 +628,13 @@ async def resume_session(
                 workspace_root_id=workspace_root_id,
             ),
             get_coordination_function_group(on_coordination_emit=on_coordination_emit),
+            get_tasks_function_group_factory(
+                workspace_root_id=workspace_root_id,
+                scheduler=scheduler,
+            ),
             get_chat_function_group_factory(
                 on_chat_entry=_make_chat_log_writer(ticket_dir),
+                workspace_root_id=workspace_root_id,
             ),
         ],
         file_system=disk_fs,

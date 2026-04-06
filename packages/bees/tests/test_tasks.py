@@ -168,9 +168,12 @@ async def test_tasks_create_task_async(write_playbook):
     from bees.ticket import load_ticket
     ticket = load_ticket(result["task_id"])
     assert ticket is not None
+    
     assert ticket.metadata.creator_ticket_id == "caller-id"
     assert ticket.metadata.slug == "my-slug"
     assert ticket.metadata.title == "Testing create"
+    assert "You are assigned to work in the subdirectory: ./my-slug" in ticket.objective
+    assert (ticket.fs_dir / "my-slug").exists()
 
 
 @pytest.mark.asyncio

@@ -82,6 +82,7 @@ def _make_handlers(
     *,
     work_dir: Path,
     timeout: int = DEFAULT_TIMEOUT_SEC,
+    slug: str | None = None,
 ) -> dict[str, Any]:
     """Build the handler map for the sandbox function group."""
 
@@ -101,7 +102,8 @@ def _make_handlers(
         try:
             cmd_parts = ["bash", "-c", command]
             if platform.system() == "Darwin" and shutil.which("sandbox-exec"):
-                profile = _SANDBOX_PROFILE.format(work_dir=str(work_dir))
+                writable_dir = work_dir / slug if slug else work_dir
+                profile = _SANDBOX_PROFILE.format(work_dir=str(writable_dir))
                 cmd_parts = ["sandbox-exec", "-p", profile, "--"] + cmd_parts
 
             proc = await asyncio.create_subprocess_exec(
@@ -180,7 +182,7 @@ def get_sandbox_function_group(
 
 
 def get_sandbox_function_group_factory(
-    *, work_dir: Path | None = None, timeout: int = DEFAULT_TIMEOUT_SEC,
+    *, work_dir: Path | None = None, timeout: int = DEFAULT_TIMEOUT_SEC, slug: str | None = None,
 ) -> FunctionGroupFactory:
     """Return a late-binding factory for the sandbox FunctionGroup.
 
@@ -207,6 +209,7 @@ def get_sandbox_function_group_factory(
         handlers = _make_handlers(
             work_dir=work_dir,
             timeout=timeout,
+            slug=slug,
         )
         loaded = load_declarations("sandbox", declarations_dir=_DECLARATIONS_DIR)
         return assemble_function_group(loaded, handlers)

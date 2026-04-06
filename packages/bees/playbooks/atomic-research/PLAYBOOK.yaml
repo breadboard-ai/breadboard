@@ -1,7 +1,8 @@
 name: atomic-research
 title: Research
+type: task-template
 description: >
-  A single-step research worker. Gathers data on a topic and terminates.
+  Gathers data on a given topic
 
 steps:
   research:

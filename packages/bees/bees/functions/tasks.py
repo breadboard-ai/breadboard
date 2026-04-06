@@ -96,6 +96,11 @@ def _make_handlers(workspace_root_id: str | None = None, scheduler: Any | None =
             
             ticket = tickets[0]
             
+            if slug:
+                ticket.objective = f"{ticket.objective}\n\n<sandbox_environment>\nYour current working directory is the root of the workspace.\nYou are assigned to work in the subdirectory: ./{slug}\nCRITICAL: You must prefix all file paths with {slug}/ when creating or writing files (e.g., using system_write_file or redirection in bash). Writes to the root directory or other directories will fail.\nYou can read files from anywhere in the workspace.\n</sandbox_environment>"
+                ticket.save()
+                (ticket.fs_dir / slug).mkdir(parents=True, exist_ok=True)
+                
             if title:
                 ticket.metadata.title = title
             elif summary:

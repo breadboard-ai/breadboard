@@ -1,8 +1,8 @@
 name: atomic-ui-gen
 title: UI Generator
+type: task-template
 description: >
-  A single-step UI generation worker. Builds a React app from a specification
-  and terminates.
+  Builds a React app from an XState specification
 
 steps:
   build:

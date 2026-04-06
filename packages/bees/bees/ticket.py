@@ -126,18 +126,13 @@ class Ticket:
         If ``parent_ticket_id`` is set, the ticket shares its parent's
         workspace at ``tickets/{parent_ticket_id}/filesystem``.
         Otherwise it uses its own directory.
-        If ``slug`` is set, it resolves to a subdirectory within that base.
         """
         parent = self.metadata.parent_ticket_id
-        slug = self.metadata.slug
         
         if parent:
             base = TICKETS_DIR / parent / "filesystem"
         else:
             base = self.dir / "filesystem"
-            
-        if slug:
-            return base / slug
             
         return base
 

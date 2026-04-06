@@ -362,6 +362,8 @@ class Scheduler:
                 )
                 + "\n"
             )
+            creator.metadata.assignee = "agent"
+            creator.save_metadata()
             logger.info("Context update delivered to %s via response.json", creator_id)
         else:
             # 2. Otherwise buffer in metadata
@@ -529,6 +531,8 @@ class Scheduler:
                 on_playbook_run=self._on_playbook_run_internal,
                 on_coordination_emit=self._on_coordination_emit_internal,
                 workspace_root_id=ticket.metadata.parent_ticket_id or ticket.id,
+                scheduler=self,
+                slug=ticket.metadata.slug,
             )
         except Exception as exc:
             ticket.metadata.status = "failed"
@@ -598,6 +602,7 @@ class Scheduler:
                 on_playbook_run=self._on_playbook_run_internal,
                 on_coordination_emit=self._on_coordination_emit_internal,
                 workspace_root_id=ticket.metadata.parent_ticket_id or ticket.id,
+                scheduler=self,
             )
         except Exception as exc:
             ticket.metadata.status = "failed"

@@ -116,3 +116,29 @@ async def test_wait_for_ticket_returns_early_on_fail(mock_clients):
     
     status = await wait_task
     assert status == "failed"
+
+
+@pytest.mark.asyncio
+async def test_deliver_context_update_immediate(mock_clients):
+    http, backend = mock_clients
+    scheduler = Scheduler(http=http, backend=backend)
+    
+    creator = create_ticket("Parent Objective")
+    creator.metadata.status = "suspended"
+    creator.metadata.assignee = "user"
+    creator.save_metadata()
+    
+    update = {"task_id": "sub-1", "outcome": "done"}
+    scheduler._deliver_context_update(creator.id, update)
+    
+    response_path = creator.dir / "response.json"
+    assert response_path.exists()
+    
+    import json
+    content = json.loads(response_path.read_text())
+    assert "context_updates" in content
+    assert content["context_updates"][0]["task_id"] == "sub-1"
+    
+    from bees.ticket import load_ticket
+    fresh_creator = load_ticket(creator.id)
+    assert fresh_creator.metadata.assignee == "agent"
