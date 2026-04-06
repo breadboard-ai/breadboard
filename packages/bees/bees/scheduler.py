@@ -286,12 +286,35 @@ class Scheduler:
         self._trigger = asyncio.Event()
         self._running = False
         self._running_tickets: set[str] = set()
+        self._completion_events: dict[str, asyncio.Event] = {}
 
     # -- public API --------------------------------------------------------
 
     def trigger(self) -> None:
         """Wake the scheduler loop."""
         self._trigger.set()
+
+    async def wait_for_ticket(self, ticket_id: str, timeout_ms: float) -> str:
+        """Wait for a ticket to complete, fail, or suspend.
+
+        Races an in-memory completion event against a timeout. Returns
+        the ticket's status on exit.
+        """
+        event = self._completion_events.setdefault(ticket_id, asyncio.Event())
+        
+        try:
+            await asyncio.wait_for(event.wait(), timeout=timeout_ms / 1000.0)
+        except asyncio.TimeoutError:
+            pass
+            
+        fresh = load_ticket(ticket_id)
+        return fresh.metadata.status if fresh else "unknown"
+
+    def _notify_ticket_done(self, ticket_id: str) -> None:
+        """Wake up anyone waiting for this ticket."""
+        if ticket_id in self._completion_events:
+            self._completion_events[ticket_id].set()
+            del self._completion_events[ticket_id]
 
     async def start_loop(self) -> None:
         """Background loop that runs cycles whenever triggered."""
@@ -843,6 +866,7 @@ class Scheduler:
                         self._running_tickets.discard(t.id)
                         updated = load_ticket(t.id) or t
                         run_ticket_done_hooks(updated)
+                        self._notify_ticket_done(t.id)
                         if self._hooks.on_ticket_done:
                             await self._hooks.on_ticket_done(updated)
                         await self._check_playbook_completion_internal(updated)
@@ -862,6 +886,7 @@ class Scheduler:
                         self._running_tickets.discard(t.id)
                         updated = load_ticket(t.id) or t
                         run_ticket_done_hooks(updated)
+                        self._notify_ticket_done(t.id)
                         if self._hooks.on_ticket_done:
                             await self._hooks.on_ticket_done(updated)
                         await self._check_playbook_completion_internal(updated)
