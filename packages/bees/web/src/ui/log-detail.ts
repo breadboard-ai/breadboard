@@ -75,6 +75,13 @@ class BeesLogDetail extends LitElement {
             Session
             <code class="mono">${d.sessionId.slice(0, 13)}…</code>
           </h2>
+          <span
+            class="link-chip"
+            @click=${() => this.#dispatchNavigate("ticket", d.sessionId)}
+          >
+            <span class="link-chip-label">ticket</span>
+            ${d.sessionId.slice(0, 8)}
+          </span>
           ${d.segments.length > 1
             ? html`<span class="segment-count"
                 >${d.segments.length} runs</span
@@ -546,6 +553,16 @@ class BeesLogDetail extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  #dispatchNavigate(tab: string, id: string) {
+    this.dispatchEvent(
+      new CustomEvent("navigate", {
+        detail: { tab, id },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 }
 

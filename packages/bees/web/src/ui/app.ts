@@ -822,6 +822,13 @@ class BeesApp extends SignalWatcher(LitElement) {
     this.logStore.activate();
   }
 
+  /** Navigate to a specific log session by switching to the Logs tab. */
+  private async navigateToLog(sessionId: string) {
+    await this.activateLogsTab();
+    this.logStore.selectSession(sessionId);
+    this.syncHash();
+  }
+
   private renderLogsList() {
     const gate = this.renderAccessGate();
     if (gate) return gate;
@@ -884,7 +891,13 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   private renderLogDetail() {
     const data = this.logStore.selectedView.get();
-    return html`<bees-log-detail .data=${data}></bees-log-detail>`;
+    return html`<bees-log-detail
+      .data=${data}
+      @navigate=${(e: CustomEvent) => {
+        const { tab, id } = e.detail;
+        if (tab === "ticket") this.navigateToTicket(id);
+      }}
+    ></bees-log-detail>`;
   }
 
   // --- Tickets ---
@@ -894,6 +907,15 @@ class BeesApp extends SignalWatcher(LitElement) {
     this.syncHash();
     await this.ensureStateAccess();
     this.ticketStore.activate();
+  }
+
+  /** Navigate to a specific ticket by switching to the Tickets tab. */
+  private async navigateToTicket(ticketId: string) {
+    this.ticketFileTree = [];
+    this.ticketFileContents = {};
+    await this.activateTicketsTab();
+    this.ticketStore.selectTicket(ticketId);
+    this.syncHash();
   }
 
   // --- Events ---
@@ -1079,8 +1101,12 @@ class BeesApp extends SignalWatcher(LitElement) {
           : ticket.status;
 
     // Collect identity chips.
-    const identityChips: Array<{ label: string; value: string; cls?: string }> =
-      [];
+    const identityChips: Array<{
+      label: string;
+      value: string;
+      cls?: string;
+      onclick?: () => void;
+    }> = [];
     if (ticket.model)
       identityChips.push({ label: "model", value: ticket.model, cls: "model" });
     if (ticket.playbook_id)
@@ -1093,7 +1119,13 @@ class BeesApp extends SignalWatcher(LitElement) {
       identityChips.push({
         label: "parent",
         value: ticket.parent_ticket_id.slice(0, 8),
+        onclick: () => this.navigateToTicket(ticket.parent_ticket_id!),
       });
+    identityChips.push({
+      label: "session",
+      value: ticket.id.slice(0, 8),
+      onclick: () => this.navigateToLog(ticket.id),
+    });
     if (ticket.skills && ticket.skills.length > 0)
       for (const s of ticket.skills)
         identityChips.push({ label: "skill", value: s, cls: "skill" });
@@ -1139,7 +1171,10 @@ class BeesApp extends SignalWatcher(LitElement) {
                 <div class="identity-row">
                   ${identityChips.map(
                     (c) => html`
-                      <span class="identity-chip ${c.cls ?? ""}">
+                      <span
+                        class="identity-chip ${c.cls ?? ""} ${c.onclick ? "linkable" : ""}"
+                        @click=${c.onclick ?? nothing}
+                      >
                         <span class="identity-label">${c.label}</span>
                         ${c.value}
                       </span>

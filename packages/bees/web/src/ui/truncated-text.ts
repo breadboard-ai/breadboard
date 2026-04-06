@@ -13,7 +13,7 @@
  */
 
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 
 export { BeesTruncatedText };
 
@@ -69,7 +69,9 @@ class BeesTruncatedText extends LitElement {
       line-height: 1;
       transform: rotate(90deg);
       opacity: 0.85;
-      transition: opacity 0.15s, color 0.15s;
+      transition:
+        opacity 0.15s,
+        color 0.15s;
     }
 
     .toggle:hover {
@@ -78,19 +80,19 @@ class BeesTruncatedText extends LitElement {
     }
   `;
 
-  private expanded = false;
+  @state() private accessor expanded = false;
 
   render() {
     const text = (this.textContent ?? "").trim();
     const isLong = text.length > this.threshold;
 
-    const bodyStyle = isLong && !this.expanded
-      ? `max-height: ${this.maxHeight}px`
-      : "";
+    const bodyStyle =
+      isLong && !this.expanded ? `max-height: ${this.maxHeight}px` : "";
 
-    const fadeStyle = isLong && !this.expanded
-      ? `background: linear-gradient(transparent, ${this.fadeBg})`
-      : "";
+    const fadeStyle =
+      isLong && !this.expanded
+        ? `background: linear-gradient(transparent, ${this.fadeBg})`
+        : "";
 
     return html`
       <div
@@ -102,7 +104,9 @@ class BeesTruncatedText extends LitElement {
           ? html`<button class="toggle" @click=${this.handleExpand}>»</button>`
           : nothing}
         ${isLong && this.expanded
-          ? html`<button class="toggle" @click=${this.handleCollapse}>«</button>`
+          ? html`<button class="toggle" @click=${this.handleCollapse}>
+              «
+            </button>`
           : nothing}
       </div>
       <style>
@@ -113,12 +117,10 @@ class BeesTruncatedText extends LitElement {
 
   private handleExpand() {
     this.expanded = true;
-    this.requestUpdate();
   }
 
   private handleCollapse() {
     this.expanded = false;
-    this.requestUpdate();
   }
 }
 
