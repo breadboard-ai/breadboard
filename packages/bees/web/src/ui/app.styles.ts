@@ -699,6 +699,17 @@ export const styles = css`
     border: 1px solid #334155;
   }
 
+  .identity-chip.linkable {
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  .identity-chip.linkable:hover {
+    background: #253347;
+    border-color: #3b82f6;
+    color: #93c5fd;
+  }
+
   .identity-chip.model {
     background: #1a1526;
     color: #c4b5fd;

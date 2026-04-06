@@ -486,6 +486,36 @@ const logDetailBaseStyles = css`
     border: 1px solid #1e3a8a;
   }
 
+  /* ── Linkable chip (reciprocal deep-link) ── */
+  .link-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-family: "Google Mono", "Roboto Mono", monospace;
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  .link-chip:hover {
+    background: #253347;
+    border-color: #3b82f6;
+    color: #93c5fd;
+  }
+
+  .link-chip-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+  }
+
   /* ── Turn headers (label + bar + numbers in one row) ── */
   .turn-header {
     display: flex;
