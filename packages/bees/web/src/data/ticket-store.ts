@@ -31,6 +31,7 @@ class TicketStore {
 
   readonly tickets = new Signal.State<TicketData[]>([]);
   readonly selectedTicketId = new Signal.State<string | null>(null);
+  readonly recentlyUpdatedTicket = new Signal.State<{ id: string; at: number } | null>(null);
   readonly selectedTicket = new Signal.Computed(() => {
     const id = this.selectedTicketId.get();
     if (!id) return null;
@@ -203,7 +204,33 @@ class TicketStore {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const Ctor = (globalThis as any).FileSystemObserver;
       const observer = new Ctor((records: unknown[]) => {
-        if (records.length > 0) this.scan();
+        if (records.length > 0) {
+          this.scan();
+          interface FileSystemChangeRecord {
+            relativePathComponents?: string[];
+            relativePath?: string;
+          }
+          for (const record of records) {
+            const r = record as FileSystemChangeRecord;
+            const pathSegments = r.relativePathComponents;
+            const relativePath = r.relativePath;
+            let ticketId: string | null = null;
+            
+            if (Array.isArray(pathSegments) && pathSegments.length > 0) {
+              ticketId = pathSegments[0];
+            } else if (typeof relativePath === "string") {
+              const segments = relativePath.split("/");
+              if (segments.length > 0) {
+                ticketId = segments[0];
+              }
+            }
+
+            if (ticketId) {
+              this.recentlyUpdatedTicket.set({ id: ticketId, at: Date.now() });
+              break;
+            }
+          }
+        }
       });
       // Recursive — ticket subdirectories may be added/modified.
       observer.observe(this.#ticketsHandle, { recursive: true });

@@ -35,6 +35,8 @@ class BeesApp extends SignalWatcher(LitElement) {
   private stateAccess = new StateAccess();
   private logStore = new LogStore(this.stateAccess);
   private ticketStore = new TicketStore(this.stateAccess);
+  private currentFlashTicketId: string | null = null;
+  private currentFlashLogId: string | null = null;
 
   static styles = [styles, jsonTreeStyles];
 
@@ -134,6 +136,11 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   render() {
     const access = this.stateAccess.accessState.get();
+    const recentUpdate = this.ticketStore.recentlyUpdatedTicket.get();
+    this.currentFlashTicketId = (recentUpdate && (Date.now() - recentUpdate.at < 3000)) ? recentUpdate.id : null;
+    
+    const recentLogUpdate = this.logStore.recentlyUpdatedSession.get();
+    this.currentFlashLogId = (recentLogUpdate && (Date.now() - recentLogUpdate.at < 3000)) ? recentLogUpdate.id : null;
 
     if (access !== "ready") {
       return html`
@@ -173,7 +180,7 @@ class BeesApp extends SignalWatcher(LitElement) {
         </div>
         <div class="top-bar-tabs">
           <div
-            class="sidebar-tab ${this.activeTab === "tickets" ? "active" : ""}"
+            class="sidebar-tab ${this.activeTab === "tickets" ? "active" : ""} ${this.currentFlashTicketId ? "lightning-flash" : ""}"
             @click=${() => {
               this.activeTab = "tickets";
               this.syncHash();
@@ -191,7 +198,7 @@ class BeesApp extends SignalWatcher(LitElement) {
             Events
           </div>
           <div
-            class="sidebar-tab ${this.activeTab === "logs" ? "active" : ""}"
+            class="sidebar-tab ${this.activeTab === "logs" ? "active" : ""} ${this.currentFlashLogId ? "lightning-flash" : ""}"
             @click=${() => {
               this.activeTab = "logs";
               this.syncHash();
@@ -251,7 +258,7 @@ class BeesApp extends SignalWatcher(LitElement) {
               <div
                 class="job-item ${selectedSid === session.sessionId
                   ? "selected"
-                  : ""}"
+                  : ""} ${this.currentFlashLogId === session.sessionId ? "lightning-flash" : ""}"
                 @click=${() => {
                   this.logStore.selectSession(session.sessionId);
                   this.syncHash();
@@ -324,7 +331,7 @@ class BeesApp extends SignalWatcher(LitElement) {
         ${tickets.map(
           (t) => html`
             <div
-              class="job-item ${selectedId === t.id ? "selected" : ""}"
+              class="job-item ${selectedId === t.id ? "selected" : ""} ${this.currentFlashTicketId === t.id ? "lightning-flash" : ""}"
               @click=${() => {
                 this.ticketFileTree = [];
                 this.ticketFileContents = {};
@@ -407,7 +414,7 @@ class BeesApp extends SignalWatcher(LitElement) {
     );
 
     return html`
-      <div class="job-detail">
+      <div class="job-detail ${this.currentFlashTicketId === ticket.id ? "lightning-flash" : ""}">
         <div class="job-detail-header">
           <div class="job-detail-header-top">
             <h2 class="job-detail-title">${ticket.title || "Ticket"}</h2>
