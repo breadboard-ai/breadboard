@@ -214,7 +214,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
   const pathname = guestPrefixed
     ? url.pathname.slice("/_app".length)
     : url.pathname;
-  if (pathname === "/landing/") {
+  if (pathname === "/landing/" || pathname === "/landing") {
     // See note in `makeUrl` above about redirect URLs.
     const redirectUrl = new URL(url);
     redirectUrl.pathname = "/";
