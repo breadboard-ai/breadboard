@@ -16,6 +16,7 @@ import { styles } from "./app.styles.js";
 import { jsonTreeStyles } from "./json-tree.styles.js";
 import { renderJson } from "./json-tree.js";
 import { StateAccess } from "../data/state-access.js";
+import { parseRoute, writeRoute } from "../data/router.js";
 import { LogStore } from "../data/log-store.js";
 import { TicketStore } from "../data/ticket-store.js";
 import type { FileTreeNode } from "../data/ticket-store.js";
@@ -77,6 +78,8 @@ class BeesApp extends SignalWatcher(LitElement) {
     super.connectedCallback();
     this.sse.connect();
     this.loadPlaybooks();
+    this.restoreRoute();
+    window.addEventListener("hashchange", this.onHashChange);
   }
 
   disconnectedCallback() {
@@ -84,6 +87,7 @@ class BeesApp extends SignalWatcher(LitElement) {
     this.sse.close();
     this.logStore.destroy();
     this.ticketStore.destroy();
+    window.removeEventListener("hashchange", this.onHashChange);
   }
 
   private deriveJobs(): JobGroup[] {
@@ -221,13 +225,13 @@ class BeesApp extends SignalWatcher(LitElement) {
         <div class="top-bar-tabs">
           <div
             class="sidebar-tab ${this.activeTab === "jobs" ? "active" : ""}"
-            @click=${() => (this.activeTab = "jobs")}
+            @click=${() => { this.activeTab = "jobs"; this.syncHash(); }}
           >
             Jobs
           </div>
           <div
             class="sidebar-tab ${this.activeTab === "daemons" ? "active" : ""}"
-            @click=${() => (this.activeTab = "daemons")}
+            @click=${() => { this.activeTab = "daemons"; this.syncHash(); }}
           >
             Daemons
             ${daemons.filter(
@@ -247,7 +251,7 @@ class BeesApp extends SignalWatcher(LitElement) {
             class="sidebar-tab ${this.activeTab === "playbooks"
               ? "active"
               : ""}"
-            @click=${() => (this.activeTab = "playbooks")}
+            @click=${() => { this.activeTab = "playbooks"; this.syncHash(); }}
           >
             Playbooks
           </div>
@@ -365,12 +369,78 @@ class BeesApp extends SignalWatcher(LitElement) {
     this.activateCurrentStore();
   }
 
-  /** Activate the store for whichever filesystem tab is active. */
-  private activateCurrentStore(): void {
-    if (this.activeTab === "logs") this.logStore.activate();
-    if (this.activeTab === "tickets" || this.activeTab === "events")
-      this.ticketStore.activate();
+  /** Activate the store and restore any pending selection from the URL. */
+  private async activateCurrentStore(): Promise<void> {
+    const { tab, id } = parseRoute();
+    if (this.activeTab === "logs") {
+      await this.logStore.activate();
+      if (id) this.logStore.selectSession(id);
+    }
+    if (this.activeTab === "tickets" || this.activeTab === "events") {
+      await this.ticketStore.activate();
+      if (tab === "tickets" && id) {
+        this.ticketFileTree = [];
+        this.ticketFileContents = {};
+        this.ticketStore.selectTicket(id);
+      }
+      if (tab === "events" && id) {
+        this.selectedEventId = id;
+      }
+    }
   }
+
+  // --- Routing ---
+
+  /** Write current tab + selection to the URL hash. */
+  private syncHash(): void {
+    let id: string | null | undefined;
+    switch (this.activeTab) {
+      case "jobs": id = this.selectedJobId; break;
+      case "daemons": id = this.selectedDaemonId; break;
+      case "logs": id = this.logStore.selectedSessionId.get(); break;
+      case "tickets": id = this.ticketStore.selectedTicketId.get(); break;
+      case "events": id = this.selectedEventId; break;
+    }
+    writeRoute(this.activeTab, id);
+  }
+
+  /** Restore tab and selection from the URL hash on load. */
+  private async restoreRoute(): Promise<void> {
+    const route = parseRoute();
+    if (route.tab === "jobs" && !route.id) return; // default state
+
+    this.activeTab = route.tab;
+
+    switch (route.tab) {
+      case "logs":
+        await this.ensureStateAccess();
+        await this.logStore.activate();
+        if (route.id) this.logStore.selectSession(route.id);
+        break;
+      case "tickets":
+        await this.ensureStateAccess();
+        await this.ticketStore.activate();
+        if (route.id) {
+          this.ticketFileTree = [];
+          this.ticketFileContents = {};
+          this.ticketStore.selectTicket(route.id);
+        }
+        break;
+      case "events":
+        await this.ensureStateAccess();
+        await this.ticketStore.activate();
+        if (route.id) this.selectedEventId = route.id;
+        break;
+      case "jobs":
+        if (route.id) this.selectedJobId = route.id;
+        break;
+      case "daemons":
+        if (route.id) this.selectedDaemonId = route.id;
+        break;
+    }
+  }
+
+  private onHashChange = () => this.restoreRoute();
 
   // --- Playbooks ---
 
@@ -424,7 +494,7 @@ class BeesApp extends SignalWatcher(LitElement) {
               class="job-item ${this.selectedJobId === job.id
                 ? "selected"
                 : ""}"
-              @click=${() => (this.selectedJobId = job.id)}
+              @click=${() => { this.selectedJobId = job.id; this.syncHash(); }}
             >
               <div class="job-header">
                 <div class="job-title">${job.title}</div>
@@ -457,7 +527,7 @@ class BeesApp extends SignalWatcher(LitElement) {
               class="job-item ${this.selectedDaemonId === d.ticket.id
                 ? "selected"
                 : ""}"
-              @click=${() => (this.selectedDaemonId = d.ticket.id)}
+              @click=${() => { this.selectedDaemonId = d.ticket.id; this.syncHash(); }}
             >
               <div class="job-header">
                 <div class="job-title">${d.label}</div>
@@ -747,6 +817,7 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   private async activateLogsTab() {
     this.activeTab = "logs";
+    this.syncHash();
     await this.ensureStateAccess();
     this.logStore.activate();
   }
@@ -771,8 +842,10 @@ class BeesApp extends SignalWatcher(LitElement) {
                 class="job-item ${selectedSid === session.sessionId
                   ? "selected"
                   : ""}"
-                @click=${() =>
-                  this.logStore.selectSession(session.sessionId)}
+                @click=${() => {
+                  this.logStore.selectSession(session.sessionId);
+                  this.syncHash();
+                }}
               >
                 <div class="job-header">
                   <div class="job-title mono">
@@ -818,6 +891,7 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   private async activateTicketsTab() {
     this.activeTab = "tickets";
+    this.syncHash();
     await this.ensureStateAccess();
     this.ticketStore.activate();
   }
@@ -826,6 +900,7 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   private async activateEventsTab() {
     this.activeTab = "events";
+    this.syncHash();
     await this.ensureStateAccess();
     this.ticketStore.activate();
   }
@@ -849,7 +924,7 @@ class BeesApp extends SignalWatcher(LitElement) {
               class="job-item ${this.selectedEventId === t.id
                 ? "selected"
                 : ""}"
-              @click=${() => (this.selectedEventId = t.id)}
+              @click=${() => { this.selectedEventId = t.id; this.syncHash(); }}
             >
               <div class="job-header">
                 <div class="job-title">
@@ -957,6 +1032,7 @@ class BeesApp extends SignalWatcher(LitElement) {
                 this.ticketFileTree = [];
                 this.ticketFileContents = {};
                 this.ticketStore.selectTicket(t.id);
+                this.syncHash();
               }}
             >
               <div class="job-header">
