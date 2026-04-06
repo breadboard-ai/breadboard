@@ -59,6 +59,22 @@ OUT_DIR = PACKAGE_DIR / "state" / "logs"
 CHAT_LOG_FILENAME = "chat_log.json"
 
 
+def _write_eval_log(out_path: Path, eval_data: list[dict[str, Any]]) -> None:
+    """Write evaluation log to disk and update latest symlink."""
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w") as f:
+        json.dump(eval_data, f, indent=2, ensure_ascii=False)
+
+    latest_path = out_path.parent / "bees-session-latest.log.json"
+    try:
+        if latest_path.exists() or latest_path.is_symlink():
+            latest_path.unlink()
+        latest_path.symlink_to(out_path.name)
+    except OSError:
+        pass
+
+
+
 def _make_chat_log_writer(ticket_dir: Path) -> Callable[[str, str], None]:
     """Create a callback that appends entries to ``chat_log.json``.
 
@@ -433,6 +449,11 @@ async def run_session(
     if segments is None:
         segments = [{"type": "text", "text": text}]
 
+    date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    log_prefix = f"bees-{ticket_id[:8]}" if ticket_id else "bees-session"
+    out_path = OUT_DIR / f"{log_prefix}-{date_stamp}.log.json"
+
+
     session_listing, session_files = _filter_skills(allowed_skills)
 
     # Create disk-backed file system.
@@ -501,6 +522,11 @@ async def run_session(
         collector.collect(event)
         event_count += 1
         _print_event_summary(event, prefix=prefix)
+
+        # Write log at turn boundaries
+        if "sendRequest" in event or "usageMetadata" in event or "complete" in event or "error" in event or any(k in event for k in SUSPEND_TYPES):
+            _write_eval_log(out_path, collector.to_eval_file_data(ticket_id=ticket_id))
+
         if on_event:
             await on_event(event)
 
@@ -508,14 +534,6 @@ async def run_session(
 
     status = await session_store.get_status(session_id)
 
-    # Write EvalFileData output.
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    prefix = f"bees-{ticket_id[:8]}" if ticket_id else "bees-session"
-    out_path = OUT_DIR / f"{prefix}-{date_stamp}.log.json"
-    eval_data = collector.to_eval_file_data(ticket_id=ticket_id)
-    with open(out_path, "w") as f:
-        json.dump(eval_data, f, indent=2, ensure_ascii=False)
 
     # If suspended and we have a ticket dir, persist state for resume.
     if collector.suspended and ticket_dir:
@@ -578,6 +596,11 @@ async def resume_session(
 
     session_id = context["session_id"]
     interaction_id = context["interaction_id"]
+
+    date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    log_prefix = f"bees-{ticket_id[:8]}" if ticket_id else "bees-session"
+    out_path = OUT_DIR / f"{log_prefix}-{date_stamp}.log.json"
+
     interaction_state = InteractionState.from_dict(context["interaction_state"])
 
     session_store = InMemorySessionStore()
@@ -669,28 +692,19 @@ async def resume_session(
             collector.collect(event)
             event_count += 1
             _print_event_summary(event, prefix=prefix)
+
+            # Write log at turn boundaries
+            if "sendRequest" in event or "usageMetadata" in event or "complete" in event or "error" in event or any(k in event for k in SUSPEND_TYPES):
+                _write_eval_log(out_path, collector.to_eval_file_data(ticket_id=ticket_id))
+
             if on_event:
                 await on_event(event)
 
         await task
     finally:
-        # Write EvalFileData output.
-        OUT_DIR.mkdir(parents=True, exist_ok=True)
-        date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        prefix = f"bees-{ticket_id[:8]}" if ticket_id else "bees-session"
-        out_path = OUT_DIR / f"{prefix}-{date_stamp}.log.json"
-        eval_data = collector.to_eval_file_data(ticket_id=ticket_id)
-        with open(out_path, "w") as f:
-            json.dump(eval_data, f, indent=2, ensure_ascii=False)
+        # Write final EvalFileData output.
+        _write_eval_log(out_path, collector.to_eval_file_data(ticket_id=ticket_id))
 
-        # Create bees-session-latest.log.json symlink for easy reference
-        latest_path = OUT_DIR / "bees-session-latest.log.json"
-        try:
-            if latest_path.exists() or latest_path.is_symlink():
-                 latest_path.unlink()
-            latest_path.symlink_to(out_path.name)
-        except OSError:
-            pass
 
     status = await session_store.get_status(session_id)
 

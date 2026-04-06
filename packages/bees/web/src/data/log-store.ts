@@ -38,8 +38,9 @@ class LogStore {
   /** The ``state/logs/`` subdirectory. */
   #logsHandle: FileSystemDirectoryHandle | null = null;
   #observer: { disconnect(): void } | null = null;
-  #cache = new Map<string, LogRunEntry>();
+  #cache = new Map<string, { data: LogRunEntry; lastModified: number }>();
   #activated = false;
+
 
   // ── Lifecycle ──
 
@@ -75,16 +76,23 @@ class LogStore {
       }
     }
 
-    // Read new files.
-    const newFiles = filenames.filter((f) => !this.#cache.has(f));
-    for (const filename of newFiles) {
-      const data = await this.#readFile(filename);
-      if (!data) continue;
-      const runEntry = (data as Array<Record<string, unknown>>).find(
-        (e) => e.type === "run"
-      ) as LogRunEntry | undefined;
-      if (runEntry) {
-        this.#cache.set(filename, runEntry);
+    let cacheUpdated = false;
+
+    for (const filename of filenames) {
+      const fileHandle = await this.#logsHandle.getFileHandle(filename);
+      const file = await fileHandle.getFile();
+      const cached = this.#cache.get(filename);
+
+      if (!cached || cached.lastModified < file.lastModified) {
+        const data = await this.#readFile(filename);
+        if (!data) continue;
+        const runEntry = (data as Array<Record<string, unknown>>).find(
+          (e) => e.type === "run"
+        ) as LogRunEntry | undefined;
+        if (runEntry) {
+          this.#cache.set(filename, { data: runEntry, lastModified: file.lastModified });
+          cacheUpdated = true;
+        }
       }
     }
 
@@ -92,11 +100,19 @@ class LogStore {
     for (const key of this.#cache.keys()) {
       if (!filenames.includes(key)) {
         this.#cache.delete(key);
+        cacheUpdated = true;
       }
     }
 
-    this.#rebuildSessions();
+    if (cacheUpdated) {
+      this.#rebuildSessions();
+      const selectedId = this.selectedSessionId.get();
+      if (selectedId) {
+        this.selectedView.set(this.#computeMergedView(selectedId));
+      }
+    }
   }
+
 
   /** Select a session — computes the merged timeline view. */
   selectSession(sessionId: string): void {
@@ -108,10 +124,11 @@ class LogStore {
     // Gather all cached entries for this session.
     const entries: { filename: string; data: LogRunEntry }[] = [];
     for (const [filename, entry] of this.#cache) {
-      if (entry.sessionId === sessionId) {
-        entries.push({ filename, data: entry });
+      if (entry.data.sessionId === sessionId) {
+        entries.push({ filename, data: entry.data });
       }
     }
+
     if (entries.length === 0) return null;
 
     // Sort oldest-first.
@@ -220,19 +237,20 @@ class LogStore {
   #rebuildSessions(): void {
     const sessionMap = new Map<string, LogFileInfo[]>();
     for (const [filename, entry] of this.#cache) {
-      const sid = entry.sessionId || "unknown";
+      const sid = entry.data.sessionId || "unknown";
       if (!sessionMap.has(sid)) sessionMap.set(sid, []);
       sessionMap.get(sid)!.push({
         filename,
         sessionId: sid,
-        startedDateTime: entry.startedDateTime,
-        totalDurationMs: entry.totalDurationMs,
-        turnCount: entry.turnCount,
-        totalThoughts: entry.totalThoughts,
-        totalFunctionCalls: entry.totalFunctionCalls,
-        totalTokens: entry.tokenMetadata?.totalTokens ?? 0,
+        startedDateTime: entry.data.startedDateTime,
+        totalDurationMs: entry.data.totalDurationMs,
+        turnCount: entry.data.turnCount,
+        totalThoughts: entry.data.totalThoughts,
+        totalFunctionCalls: entry.data.totalFunctionCalls,
+        totalTokens: entry.data.tokenMetadata?.totalTokens ?? 0,
       });
     }
+
 
     const sessions = Array.from(sessionMap.entries())
       .map(([sessionId, files]) => ({
