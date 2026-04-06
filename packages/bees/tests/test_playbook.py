@@ -464,3 +464,56 @@ class TestTicketPaths:
         for d in TICKETS_DIR.iterdir():
             if d.is_dir():
                 assert d.name in ticket_ids, f"Orphan directory: {d.name}"
+
+
+# --- validate_task_template ---
+
+
+from bees.playbook import validate_task_template
+
+
+class TestValidateTaskTemplate:
+
+    def test_valid_template(self):
+        playbook_data = {
+            "type": "task-template",
+            "steps": {
+                "main": {"objective": "Do it."}
+            }
+        }
+        assert validate_task_template(playbook_data) is True
+
+    def test_missing_type(self):
+        playbook_data = {
+            "steps": {
+                "main": {"objective": "Do it."}
+            }
+        }
+        assert validate_task_template(playbook_data) is False
+
+    def test_wrong_type(self):
+        playbook_data = {
+            "type": "standard",
+            "steps": {
+                "main": {"objective": "Do it."}
+            }
+        }
+        assert validate_task_template(playbook_data) is False
+
+    def test_multi_step_template_fails_and_warns(self, caplog):
+        playbook_data = {
+            "type": "task-template",
+            "steps": {
+                "step1": {"objective": "Do 1"},
+                "step2": {"objective": "Do 2"}
+            }
+        }
+        assert validate_task_template(playbook_data) is False
+        assert "marked as 'task-template' but has 2 steps" in caplog.text
+
+    def test_empty_steps(self):
+        playbook_data = {
+            "type": "task-template",
+            "steps": {}
+        }
+        assert validate_task_template(playbook_data) is False

@@ -22,7 +22,7 @@ from typing import Any, Literal
 TICKETS_DIR = Path(__file__).resolve().parent.parent / "state" / "tickets"
 
 TicketStatus = Literal[
-    "available", "blocked", "running", "suspended", "completed", "failed"
+    "available", "blocked", "running", "suspended", "completed", "failed", "cancelled"
 ]
 
 TicketKind = Literal["work", "coordination"]
@@ -61,6 +61,10 @@ class TicketMetadata:
     kind: TicketKind = "work"
     signal_type: str | None = None
     delivered_to: list[str] | None = None
+    tasks: list[str] | None = None
+    creator_ticket_id: str | None = None
+    slug: str | None = None
+    pending_context_updates: list[dict[str, Any]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -96,6 +100,10 @@ class TicketMetadata:
             kind=data.get("kind", "work"),
             signal_type=data.get("signal_type"),
             delivered_to=data.get("delivered_to"),
+            tasks=data.get("tasks"),
+            creator_ticket_id=data.get("creator_ticket_id"),
+            slug=data.get("slug"),
+            pending_context_updates=data.get("pending_context_updates"),
         )
 
 
@@ -118,12 +126,20 @@ class Ticket:
         If ``parent_ticket_id`` is set, the ticket shares its parent's
         workspace at ``tickets/{parent_ticket_id}/filesystem``.
         Otherwise it uses its own directory.
+        If ``slug`` is set, it resolves to a subdirectory within that base.
         """
         parent = self.metadata.parent_ticket_id
+        slug = self.metadata.slug
+        
         if parent:
-            return TICKETS_DIR / parent / "filesystem"
-
-        return self.dir / "filesystem"
+            base = TICKETS_DIR / parent / "filesystem"
+        else:
+            base = self.dir / "filesystem"
+            
+        if slug:
+            return base / slug
+            
+        return base
 
     @property
     def objective_path(self) -> Path:
@@ -156,6 +172,7 @@ def create_ticket(
     tags: list[str] | None = None,
     functions: list[str] | None = None,
     skills: list[str] | None = None,
+    tasks: list[str] | None = None,
     title: str | None = None,
     assignee: str | None = None,
     playbook_id: str | None = None,
@@ -166,6 +183,7 @@ def create_ticket(
     watch_events: list[dict[str, Any]] | None = None,
     kind: TicketKind = "work",
     signal_type: str | None = None,
+    slug: str | None = None,
 ) -> Ticket:
     """Create a new ticket.
 
@@ -205,6 +223,7 @@ def create_ticket(
             tags=tags,
             functions=functions,
             skills=skills,
+            tasks=tasks,
             title=title,
             assignee=assignee,
             playbook_id=playbook_id,
@@ -215,6 +234,7 @@ def create_ticket(
             watch_events=watch_events,
             kind=kind,
             signal_type=signal_type,
+            slug=slug,
         ),
     )
     ticket.save()

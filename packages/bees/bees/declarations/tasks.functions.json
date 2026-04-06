@@ -1,0 +1,66 @@
+[
+  {
+    "name": "tasks_list_types",
+    "description": "List available task types",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "tasks_create_task",
+    "description": "Create a new task.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "A friendly title of the task"
+        },
+        "type": {
+          "type": "string",
+          "description": "One of the known types of available task types. Specifies the type of task to run."
+        },
+        "summary": {
+          "type": "string",
+          "description": "A short summary for the task in the [Verb-ing] [Object] format, under four words."
+        },
+        "objective": {
+          "type": "string",
+          "description": "Specifies the objective for the task. Must include all information necessary to successfully complete the task."
+        },
+        "slug": {
+          "type": "string",
+          "description": "The directory in which the task artifacts will be created. This is the working directory for the subagent that will work on the task."
+        },
+        "wait_ms_before_async": {
+          "type": "number",
+          "description": "Specifies the number of milliseconds to wait for task completion instead of returning immediately. If the task is completed in that period of time, the outcome of the task will be returned. Otherwise, the task status will be returned. Use only when explicitly requested to wait to return."
+        }
+      },
+      "required": ["type", "summary", "objective", "slug"]
+    }
+  },
+  {
+    "name": "tasks_check_status",
+    "description": "Check status of tasks.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "tasks_cancel_task",
+    "description": "Cancel a task.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "description": "The ID of the task to cancel."
+        }
+      },
+      "required": ["task_id"]
+    }
+  }
+]

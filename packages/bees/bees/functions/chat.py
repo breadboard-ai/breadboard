@@ -36,6 +36,7 @@ _LOADED = load_declarations("chat", declarations_dir=_DECLARATIONS_DIR)
 
 def get_chat_function_group_factory(
     on_chat_entry: "ChatEntryCallback" = None,
+    workspace_root_id: str | None = None,
 ) -> "FunctionGroupFactory":
     """Return a factory that builds the bees chat function group.
 
@@ -68,6 +69,16 @@ def get_chat_function_group_factory(
             args: dict[str, Any], status_cb: Any,
         ) -> dict[str, Any]:
             from opal_backend.functions.chat import SuspendError
+            
+            # Check for pending context updates first
+            if workspace_root_id:
+                from bees.ticket import load_ticket
+                ticket = load_ticket(workspace_root_id)
+                if ticket and ticket.metadata.pending_context_updates:
+                    updates = ticket.metadata.pending_context_updates
+                    ticket.metadata.pending_context_updates = []
+                    ticket.save_metadata()
+                    return {"context_updates": updates}
 
             try:
                 return await _inner(

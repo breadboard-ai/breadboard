@@ -287,6 +287,7 @@ class Scheduler:
         self._running = False
         self._running_tickets: set[str] = set()
         self._completion_events: dict[str, asyncio.Event] = {}
+        self._active_tasks: dict[str, asyncio.Task] = {}
 
     # -- public API --------------------------------------------------------
 
@@ -315,6 +316,60 @@ class Scheduler:
         if ticket_id in self._completion_events:
             self._completion_events[ticket_id].set()
             del self._completion_events[ticket_id]
+
+    def cancel_ticket(self, ticket_id: str) -> bool:
+        """Cancel a running or pending ticket.
+        
+        Returns True if the ticket was found and cancelled, False otherwise.
+        """
+        cancelled = False
+        
+        if ticket_id in self._active_tasks:
+            self._active_tasks[ticket_id].cancel()
+            cancelled = True
+            
+        from bees.ticket import load_ticket
+        ticket = load_ticket(ticket_id)
+        if ticket:
+            ticket.metadata.status = "cancelled"
+            ticket.save_metadata()
+            cancelled = True
+            
+        return cancelled
+
+    def _deliver_context_update(self, creator_id: str, update: dict[str, Any]) -> None:
+        """Deliver or buffer context update for a creator ticket."""
+        from bees.ticket import load_ticket
+        import json
+        
+        creator = load_ticket(creator_id)
+        if not creator:
+            logger.warning("Failed to load creator ticket %s", creator_id)
+            return
+            
+        # 1. If suspended on input, deliver immediately via response.json
+        if (
+            creator.metadata.status == "suspended"
+            and creator.metadata.assignee == "user"
+            and creator_id not in self._running_tickets
+        ):
+            response_path = creator.dir / "response.json"
+            response_path.write_text(
+                json.dumps(
+                    {"context_updates": [update]},
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+            logger.info("Context update delivered to %s via response.json", creator_id)
+        else:
+            # 2. Otherwise buffer in metadata
+            if creator.metadata.pending_context_updates is None:
+                creator.metadata.pending_context_updates = []
+            creator.metadata.pending_context_updates.append(update)
+            creator.save_metadata()
+            logger.info("Context update buffered for %s", creator_id)
 
     async def start_loop(self) -> None:
         """Background loop that runs cycles whenever triggered."""
@@ -864,15 +919,23 @@ class Scheduler:
                         await self.run_ticket(t)
                     finally:
                         self._running_tickets.discard(t.id)
+                        self._active_tasks.pop(t.id, None)
                         updated = load_ticket(t.id) or t
                         run_ticket_done_hooks(updated)
                         self._notify_ticket_done(t.id)
+                        
+                        creator_id = updated.metadata.creator_ticket_id
+                        if creator_id:
+                            update = {"task_id": updated.id, "outcome": updated.metadata.outcome or "completed"}
+                            self._deliver_context_update(creator_id, update)
+                            
                         if self._hooks.on_ticket_done:
                             await self._hooks.on_ticket_done(updated)
                         await self._check_playbook_completion_internal(updated)
                         self.trigger()
 
-                asyncio.create_task(wrap_run())
+                task = asyncio.create_task(wrap_run())
+                self._active_tasks[ticket.id] = task
 
             for ticket in resumable:
                 if ticket.id in self._running_tickets:
@@ -884,15 +947,23 @@ class Scheduler:
                         await self.resume_ticket(t)
                     finally:
                         self._running_tickets.discard(t.id)
+                        self._active_tasks.pop(t.id, None)
                         updated = load_ticket(t.id) or t
                         run_ticket_done_hooks(updated)
                         self._notify_ticket_done(t.id)
+                        
+                        creator_id = updated.metadata.creator_ticket_id
+                        if creator_id:
+                            update = {"task_id": updated.id, "outcome": updated.metadata.outcome or "completed"}
+                            self._deliver_context_update(creator_id, update)
+                            
                         if self._hooks.on_ticket_done:
                             await self._hooks.on_ticket_done(updated)
                         await self._check_playbook_completion_internal(updated)
                         self.trigger()
 
-                asyncio.create_task(wrap_resume())
+                task = asyncio.create_task(wrap_resume())
+                self._active_tasks[ticket.id] = task
 
             await asyncio.sleep(1)
 

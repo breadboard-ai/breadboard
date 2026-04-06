@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 PLAYBOOKS_DIR = Path(__file__).resolve().parent.parent / "playbooks"
 
 # Step properties that map directly to ticket metadata fields.
-_STEP_KEYS = {"title", "objective", "functions", "skills", "tags", "assignee", "model", "watch_events"}
+_STEP_KEYS = {"title", "objective", "functions", "skills", "tags", "assignee", "model", "watch_events", "tasks"}
 
 
 class PlaybookAborted(Exception):
@@ -76,6 +76,27 @@ def load_playbook(name: str) -> dict[str, Any]:
         raise ValueError(f"Playbook {name} must contain a 'steps' mapping.")
 
     return data
+
+
+def validate_task_template(playbook_data: dict[str, Any]) -> bool:
+    """Validate that a task template is single-step.
+
+    Returns True if the playbook is marked as a task template and has
+    exactly one step. Issues a warning if it is marked as a task template
+    but has multiple steps.
+    """
+    if playbook_data.get("type") != "task-template":
+        return False
+
+    steps = playbook_data.get("steps", {})
+    if len(steps) != 1:
+        logger.warning(
+            "Playbook marked as 'task-template' but has %d steps (expected 1).",
+            len(steps),
+        )
+        return False
+
+    return True
 
 
 def _load_hooks(name: str) -> ModuleType | None:
@@ -165,6 +186,7 @@ def run_playbook(
     *,
     context: str | None = None,
     parent_ticket_id: str | None = None,
+    slug: str | None = None,
 ) -> list[Ticket]:
     """Create tickets for each step of a playbook.
 
@@ -233,10 +255,12 @@ def run_playbook(
             assignee=step.get("assignee"),
             model=step.get("model"),
             watch_events=step.get("watch_events"),
+            tasks=step.get("tasks"),
             playbook_id=playbook_id,
             playbook_run_id=playbook_run_id,
             parent_ticket_id=workspace_root,
             context=context if is_root else None,
+            slug=slug,
         )
 
         # First ticket in topological order becomes the workspace root

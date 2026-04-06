@@ -1,0 +1,6 @@
+[
+  {"name": "tasks_list_types", "icon": "list", "title": "List Task Types"},
+  {"name": "tasks_create_task", "icon": "add", "title": "Create Task"},
+  {"name": "tasks_check_status", "icon": "fact_check", "title": "Check Status"},
+  {"name": "tasks_cancel_task", "icon": "cancel", "title": "Cancel Task"}
+]

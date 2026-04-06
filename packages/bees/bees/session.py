@@ -463,6 +463,7 @@ async def run_session(
             get_coordination_function_group(on_coordination_emit=on_coordination_emit),
             get_chat_function_group_factory(
                 on_chat_entry=_make_chat_log_writer(ticket_dir) if ticket_dir else None,
+                workspace_root_id=workspace_root_id,
             ),
         ],
         function_filter=function_filter,
