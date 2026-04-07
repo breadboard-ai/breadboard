@@ -1,0 +1,39 @@
+{
+  "status": "suspended",
+  "created_at": "2026-04-04T03:06:05.673156+00:00",
+  "completed_at": "2026-04-04T03:06:07.787183+00:00",
+  "turns": 1,
+  "thoughts": 0,
+  "assignee": "user",
+  "suspend_event": {
+    "waitForInput": {
+      "requestId": "b7035f03-a88f-4e8c-939b-bab03cd65272",
+      "prompt": {
+        "parts": [],
+        "role": "user"
+      },
+      "inputType": "asterisk",
+      "interactionId": "ce6326aa-c3e9-4e82-a00a-9d3917b6bde8"
+    },
+    "function_name": "chat_await_context_update"
+  },
+  "tags": [
+    "digest",
+    "bundle"
+  ],
+  "functions": [
+    "chat.*",
+    "coordination.*",
+    "playbooks.*",
+    "sandbox.*"
+  ],
+  "title": "Digest Manager",
+  "playbook_id": "opie",
+  "playbook_run_id": "f79f31dc-b6c7-4cfc-bbf7-c9951b921a94",
+  "watch_events": [
+    {
+      "type": "digest_tile_ready"
+    }
+  ],
+  "kind": "work"
+}

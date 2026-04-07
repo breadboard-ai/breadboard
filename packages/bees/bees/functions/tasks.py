@@ -25,7 +25,11 @@ _DECLARATIONS_DIR = Path(__file__).resolve().parent.parent / "declarations"
 _LOADED = load_declarations("tasks", declarations_dir=_DECLARATIONS_DIR)
 
 
-def _make_handlers(workspace_root_id: str | None = None, scheduler: Any | None = None) -> dict[str, Any]:
+def _make_handlers(
+    workspace_root_id: str | None = None,
+    scheduler: Any | None = None,
+    ticket_id: str | None = None,
+) -> dict[str, Any]:
     """Build the handler map for the tasks function group."""
 
     async def _tasks_list_types(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
@@ -184,16 +188,64 @@ def _make_handlers(workspace_root_id: str | None = None, scheduler: Any | None =
         else:
             return {"error": f"Task {task_id} not found."}
 
+    async def _tasks_send_event(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
+        """Send a typed event to a child task's agent."""
+        task_id = args.get("task_id")
+        event_type = args.get("type", "")
+        message = args.get("message", "")
+
+        if not task_id:
+            return {"error": "task_id is required"}
+        if not event_type:
+            return {"error": "type is required"}
+        if not scheduler:
+            return {"error": "Scheduler not available"}
+
+        if status_cb:
+            status_cb(f"Sending event to task {task_id}: {event_type}")
+
+        try:
+            update = {
+                "type": event_type,
+                "message": message,
+                "from_ticket_id": ticket_id,
+            }
+            error = scheduler.deliver_to_ticket(
+                task_id,
+                update,
+                expected_creator=workspace_root_id,
+            )
+        except Exception as e:
+            logger.exception("tasks_send_event failed")
+            return {"error": str(e)}
+
+        if status_cb:
+            status_cb(None, None)
+
+        if error:
+            return {"error": error}
+
+        return {
+            "task_id": task_id,
+            "type": event_type,
+            "delivered": True,
+        }
+
     return {
         "tasks_list_types": _tasks_list_types,
         "tasks_create_task": _tasks_create_task,
         "tasks_check_status": _tasks_check_status,
         "tasks_cancel_task": _tasks_cancel_task,
+        "tasks_send_event": _tasks_send_event,
     }
 
 
-def get_tasks_function_group_factory(workspace_root_id: str | None = None, scheduler: Any | None = None) -> FunctionGroupFactory:
+def get_tasks_function_group_factory(
+    workspace_root_id: str | None = None,
+    scheduler: Any | None = None,
+    ticket_id: str | None = None,
+) -> FunctionGroupFactory:
     def factory(hooks: SessionHooks) -> FunctionGroup:
-        handlers = _make_handlers(workspace_root_id, scheduler)
+        handlers = _make_handlers(workspace_root_id, scheduler, ticket_id)
         return assemble_function_group(_LOADED, handlers)
     return factory
