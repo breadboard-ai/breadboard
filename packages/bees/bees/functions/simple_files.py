@@ -24,6 +24,8 @@ from opal_backend.function_definition import (
 )
 from opal_backend.functions.system import _make_handlers
 
+from bees.subagent_scope import SubagentScope
+
 __all__ = ["get_simple_files_function_group_factory"]
 
 _DECLARATIONS_DIR = Path(__file__).resolve().parent.parent / "declarations"
@@ -32,7 +34,7 @@ _DECLARATIONS_DIR = Path(__file__).resolve().parent.parent / "declarations"
 _LOADED = load_declarations("simple-files", declarations_dir=_DECLARATIONS_DIR)
 
 
-def get_simple_files_function_group_factory(slug: str | None = None) -> "FunctionGroupFactory":
+def get_simple_files_function_group_factory(scope: SubagentScope | None = None) -> "FunctionGroupFactory":
     """Return a factory that builds the simple-files function group.
 
     The returned callable accepts ``SessionHooks`` and produces a
@@ -51,13 +53,13 @@ def get_simple_files_function_group_factory(slug: str | None = None) -> "Functio
             task_tree_manager=hooks.task_tree_manager,
         )
         
-        if slug:
+        if scope and scope.slug_path:
             original_write = handlers["system_write_file"]
             
             async def restricted_write_file(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
                 file_name = args.get("file_name", "")
-                if not file_name.startswith(f"{slug}/") and file_name != slug:
-                    return {"error": f"You can only write files in the directory: {slug}"}
+                if not scope.is_writable(file_name):
+                    return {"error": f"You can only write files in the directory: {scope.slug_path}"}
                 return await original_write(args, status_cb)
                 
             handlers["system_write_file"] = restricted_write_file

@@ -10,6 +10,7 @@ import pytest
 from unittest.mock import MagicMock
 
 from bees.ticket import TICKETS_DIR
+from bees.subagent_scope import SubagentScope
 
 
 @pytest.fixture(autouse=True)
@@ -66,10 +67,11 @@ async def test_events_send_to_parent_delivers():
     from bees.functions.events import _make_handlers
 
     deliver = MagicMock()
+    scope = SubagentScope(workspace_root_id="r", slug_path="research")
     handlers = _make_handlers(
         deliver_to_parent=deliver,
         ticket_id="child-123",
-        slug="research",
+        scope=scope,
     )
 
     result = await handlers["events_send_to_parent"](

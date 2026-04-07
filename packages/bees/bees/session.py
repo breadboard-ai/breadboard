@@ -49,6 +49,7 @@ from bees.functions.events import get_events_function_group_factory
 from bees.functions.tasks import get_tasks_function_group_factory
 from bees.context_updates import updates_to_context_parts
 from bees.disk_file_system import DiskFileSystem
+from bees.subagent_scope import SubagentScope
 
 # Scan skills once at import time.
 _BEES_DIR = Path(__file__).resolve().parent
@@ -444,9 +445,8 @@ async def run_session(
     on_playbook_run: Any | None = None,
     on_events_broadcast: Any | None = None,
     deliver_to_parent: Any | None = None,
-    workspace_root_id: str | None = None,
+    scope: SubagentScope | None = None,
     scheduler: Any | None = None,
-    slug: str | None = None,
 ) -> SessionResult:
     """Run a single agent session and return the result.
 
@@ -479,6 +479,8 @@ async def run_session(
     for name, content in session_files.items():
         disk_fs.write(name, content)
 
+    workspace_root_id = scope.workspace_root_id if scope else None
+
     await new_session(
         session_id=session_id,
         segments=segments,
@@ -489,11 +491,11 @@ async def run_session(
         graph={},
         extra_groups=[
             get_system_function_group_factory(),
-            get_simple_files_function_group_factory(slug=slug),
+            get_simple_files_function_group_factory(scope=scope),
             get_skills_function_group(available_skills=session_listing),
             get_sandbox_function_group_factory(
                 work_dir=work_dir,
-                slug=slug,
+                scope=scope,
             ),
             get_playbooks_function_group(
                 on_playbook_run=on_playbook_run,
@@ -504,10 +506,11 @@ async def run_session(
                 on_events_broadcast=on_events_broadcast,
                 deliver_to_parent=deliver_to_parent,
                 ticket_id=ticket_id,
-                slug=slug,
+                scope=scope,
             ),
             get_tasks_function_group_factory(
-                workspace_root_id=workspace_root_id,
+                scope=scope,
+                caller_ticket_id=ticket_id,
                 scheduler=scheduler,
                 ticket_id=ticket_id,
             ),
@@ -613,7 +616,7 @@ async def resume_session(
     on_playbook_run: Any | None = None,
     on_events_broadcast: Any | None = None,
     deliver_to_parent: Any | None = None,
-    workspace_root_id: str | None = None,
+    scope: SubagentScope | None = None,
     scheduler: Any | None = None,
 ) -> SessionResult:
     """Resume a suspended session from saved state on disk.
@@ -647,12 +650,10 @@ async def resume_session(
     # Load allowed skills from ticket metadata
     metadata_path = ticket_dir / "metadata.json"
     allowed_skills = None
-    slug = None
     if metadata_path.exists():
         try:
             meta = json.loads(metadata_path.read_text())
             allowed_skills = meta.get("skills")
-            slug = meta.get("slug")
         except Exception:
             pass
 
@@ -666,6 +667,8 @@ async def resume_session(
     # new_session creates the _SessionContext entry and a fresh session.
     # We must set resume_id/status AFTER this call because create()
     # replaces any existing session state.
+    workspace_root_id = scope.workspace_root_id if scope else None
+
     await new_session(
         session_id=session_id,
         segments=[],  # Not used for resume.
@@ -676,11 +679,11 @@ async def resume_session(
         graph={},
         extra_groups=[
             get_system_function_group_factory(),
-            get_simple_files_function_group_factory(slug=slug),
+            get_simple_files_function_group_factory(scope=scope),
             get_skills_function_group(available_skills=session_listing),
             get_sandbox_function_group_factory(
                 work_dir=work_dir,
-                slug=slug,
+                scope=scope,
             ),
             get_playbooks_function_group(
                 on_playbook_run=on_playbook_run,
@@ -691,10 +694,11 @@ async def resume_session(
                 on_events_broadcast=on_events_broadcast,
                 deliver_to_parent=deliver_to_parent,
                 ticket_id=ticket_id,
-                slug=slug,
+                scope=scope,
             ),
             get_tasks_function_group_factory(
-                workspace_root_id=workspace_root_id,
+                scope=scope,
+                caller_ticket_id=ticket_id,
                 scheduler=scheduler,
                 ticket_id=ticket_id,
             ),
@@ -719,13 +723,13 @@ async def resume_session(
     if response_updates:
         all_updates.extend(response_updates)
 
-    if workspace_root_id:
+    if ticket_id:
         from bees.ticket import load_ticket
-        ticket = load_ticket(workspace_root_id)
-        if ticket and ticket.metadata.pending_context_updates:
-            all_updates.extend(ticket.metadata.pending_context_updates)
-            ticket.metadata.pending_context_updates = []
-            ticket.save_metadata()
+        own_ticket = load_ticket(ticket_id)
+        if own_ticket and own_ticket.metadata.pending_context_updates:
+            all_updates.extend(own_ticket.metadata.pending_context_updates)
+            own_ticket.metadata.pending_context_updates = []
+            own_ticket.save_metadata()
 
     context_parts = updates_to_context_parts(all_updates) if all_updates else None
 

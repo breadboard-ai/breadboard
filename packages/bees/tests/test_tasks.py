@@ -12,6 +12,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, AsyncMock
 
 from bees.functions.tasks import _make_handlers
+from bees.subagent_scope import SubagentScope
 from bees.ticket import create_ticket
 
 
@@ -67,7 +68,8 @@ async def test_tasks_list_types_scoped(write_playbook):
     ticket.save_metadata()
 
     # 3. Get handlers
-    handlers = _make_handlers(workspace_root_id=ticket.id)
+    scope = SubagentScope(workspace_root_id=ticket.id)
+    handlers = _make_handlers(scope=scope, caller_ticket_id=ticket.id)
     
     # 4. Call tasks_list_types
     result = await handlers["tasks_list_types"]({}, None)
@@ -97,7 +99,8 @@ async def test_tasks_list_types_filters_invalid(write_playbook):
     ticket.metadata.tasks = ["invalid-task"]
     ticket.save_metadata()
 
-    handlers = _make_handlers(workspace_root_id=ticket.id)
+    scope = SubagentScope(workspace_root_id=ticket.id)
+    handlers = _make_handlers(scope=scope, caller_ticket_id=ticket.id)
     
     result = await handlers["tasks_list_types"]({}, None)
     
@@ -119,8 +122,9 @@ async def test_tasks_check_status(write_playbook):
     other_ticket.metadata.creator_ticket_id = "other-id"
     other_ticket.save_metadata()
 
-    # 2. Get handlers with workspace_root_id = "caller-id"
-    handlers = _make_handlers(workspace_root_id="caller-id")
+    # 2. Get handlers with caller_ticket_id = "caller-id"
+    scope = SubagentScope(workspace_root_id="caller-id")
+    handlers = _make_handlers(scope=scope, caller_ticket_id="caller-id")
     
     # 3. Call tasks_check_status
     result = await handlers["tasks_check_status"]({}, None)
@@ -135,7 +139,8 @@ async def test_tasks_check_status(write_playbook):
 
 @pytest.mark.asyncio
 async def test_tasks_check_status_empty():
-    handlers = _make_handlers(workspace_root_id="caller-id")
+    scope = SubagentScope(workspace_root_id="caller-id")
+    handlers = _make_handlers(scope=scope, caller_ticket_id="caller-id")
     result = await handlers["tasks_check_status"]({}, None)
     assert "message" in result
     assert result["message"] == "There are no tasks."
@@ -152,7 +157,8 @@ async def test_tasks_create_task_async(write_playbook):
         }
     })
 
-    handlers = _make_handlers(workspace_root_id="caller-id")
+    scope = SubagentScope(workspace_root_id="caller-id")
+    handlers = _make_handlers(scope=scope, caller_ticket_id="caller-id")
     
     args = {
         "type": "my-task",
@@ -190,7 +196,8 @@ async def test_tasks_create_task_sync_wait_timeout(write_playbook, monkeypatch):
     mock_scheduler = MagicMock()
     mock_scheduler.wait_for_ticket = AsyncMock(return_value="running")
     
-    handlers = _make_handlers(workspace_root_id="caller-id", scheduler=mock_scheduler)
+    scope = SubagentScope(workspace_root_id="caller-id")
+    handlers = _make_handlers(scope=scope, caller_ticket_id="caller-id", scheduler=mock_scheduler)
     
     args = {
         "type": "my-task",
@@ -212,7 +219,8 @@ async def test_tasks_cancel_task():
     mock_scheduler = MagicMock()
     mock_scheduler.cancel_ticket = MagicMock(return_value=True)
     
-    handlers = _make_handlers(workspace_root_id="caller-id", scheduler=mock_scheduler)
+    scope = SubagentScope(workspace_root_id="caller-id")
+    handlers = _make_handlers(scope=scope, caller_ticket_id="caller-id", scheduler=mock_scheduler)
     
     args = {"task_id": "target-id"}
     result = await handlers["tasks_cancel_task"](args, None)
@@ -227,10 +235,58 @@ async def test_tasks_cancel_task_not_found():
     mock_scheduler = MagicMock()
     mock_scheduler.cancel_ticket = MagicMock(return_value=False)
     
-    handlers = _make_handlers(workspace_root_id="caller-id", scheduler=mock_scheduler)
+    scope = SubagentScope(workspace_root_id="caller-id")
+    handlers = _make_handlers(scope=scope, caller_ticket_id="caller-id", scheduler=mock_scheduler)
     
     args = {"task_id": "target-id"}
     result = await handlers["tasks_cancel_task"](args, None)
     
     assert "error" in result
     assert "not found" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_tasks_create_task_nested_slug(write_playbook):
+    """When parent has a slug, child slug is composed as parent/child."""
+    write_playbook("my-task", {
+        "name": "my-task",
+        "title": "My Task Template",
+        "type": "task-template",
+        "steps": {
+            "main": {"objective": "Do it."}
+        }
+    })
+
+    # Parent is a subagent with slug "research"
+    parent_scope = SubagentScope(
+        workspace_root_id="root-id",
+        slug_path="research",
+    )
+    handlers = _make_handlers(
+        scope=parent_scope,
+        caller_ticket_id="parent-id",
+    )
+
+    args = {
+        "type": "my-task",
+        "summary": "Deep dive",
+        "objective": "Go deeper",
+        "slug": "deep-dive",
+    }
+    result = await handlers["tasks_create_task"](args, None)
+
+    assert "task_id" in result
+
+    from bees.ticket import load_ticket
+    ticket = load_ticket(result["task_id"])
+    assert ticket is not None
+
+    # Slug should be composed: research/deep-dive
+    assert ticket.metadata.slug == "research/deep-dive"
+    # Creator should be parent, not workspace root
+    assert ticket.metadata.creator_ticket_id == "parent-id"
+    # Sandbox instructions should reference the full path
+    assert "./research/deep-dive" in ticket.objective
+    # Directory should be created at the composed path
+    assert (ticket.fs_dir / "research" / "deep-dive").exists()
+

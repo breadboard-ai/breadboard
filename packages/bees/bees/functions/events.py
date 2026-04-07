@@ -14,6 +14,8 @@ import logging
 from pathlib import Path
 from typing import Any, Callable
 
+from bees.subagent_scope import SubagentScope
+
 from opal_backend.function_definition import (
     FunctionGroup,
     SessionHooks,
@@ -39,7 +41,7 @@ def _make_handlers(
     on_events_broadcast: Callable[[Ticket], None] | None = None,
     deliver_to_parent: Callable[[dict[str, Any]], None] | None = None,
     ticket_id: str | None = None,
-    slug: str | None = None,
+    scope: SubagentScope | None = None,
 ) -> dict[str, Any]:
     """Build the handler map for the events function group."""
 
@@ -64,7 +66,7 @@ def _make_handlers(
                 "type": event_type,
                 "message": message,
                 "from_ticket_id": ticket_id,
-                "from_slug": slug,
+                "from_slug": scope.slug_path if scope else None,
             }
             deliver_to_parent(update)
         except Exception as e:
@@ -155,7 +157,7 @@ def get_events_function_group_factory(
     on_events_broadcast: Callable[[Ticket], None] | None = None,
     deliver_to_parent: Callable[[dict[str, Any]], None] | None = None,
     ticket_id: str | None = None,
-    slug: str | None = None,
+    scope: SubagentScope | None = None,
 ) -> FunctionGroupFactory:
     """Build a FunctionGroupFactory for events."""
     def factory(hooks: SessionHooks) -> FunctionGroup:
@@ -163,7 +165,7 @@ def get_events_function_group_factory(
             on_events_broadcast=on_events_broadcast,
             deliver_to_parent=deliver_to_parent,
             ticket_id=ticket_id,
-            slug=slug,
+            scope=scope,
         )
         return assemble_function_group(_LOADED, handlers)
     return factory

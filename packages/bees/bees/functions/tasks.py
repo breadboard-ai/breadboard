@@ -9,6 +9,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from bees.subagent_scope import SubagentScope
+
 from opal_backend.function_definition import (
     FunctionGroup,
     SessionHooks,
@@ -26,7 +28,8 @@ _LOADED = load_declarations("tasks", declarations_dir=_DECLARATIONS_DIR)
 
 
 def _make_handlers(
-    workspace_root_id: str | None = None,
+    scope: SubagentScope | None = None,
+    caller_ticket_id: str | None = None,
     scheduler: Any | None = None,
     ticket_id: str | None = None,
 ) -> dict[str, Any]:
@@ -37,9 +40,9 @@ def _make_handlers(
             status_cb("Listing available task types")
             
         allowed_tasks = []
-        if workspace_root_id:
+        if caller_ticket_id:
             from bees.ticket import load_ticket
-            ticket = load_ticket(workspace_root_id)
+            ticket = load_ticket(caller_ticket_id)
             if ticket and ticket.metadata.tasks:
                 allowed_tasks = ticket.metadata.tasks
                 
@@ -86,31 +89,50 @@ def _make_handlers(
                 return {"error": f"Invalid task template: {task_type}"}
         except FileNotFoundError:
             return {"error": f"Task type not found: {task_type}"}
-            
+
+        # Compose child scope from parent scope + new slug.
+        if scope:
+            child_scope = scope.child(slug)
+        else:
+            # Fallback: no parent scope (shouldn't happen in practice).
+            child_scope = SubagentScope(
+                workspace_root_id=caller_ticket_id or "",
+                slug_path=slug,
+            )
+
         from bees.playbook import run_playbook
         try:
             tickets = run_playbook(
                 task_type,
                 context=objective,
-                parent_ticket_id=workspace_root_id,
-                slug=slug,
+                parent_ticket_id=child_scope.workspace_root_id,
+                slug=child_scope.slug_path,
             )
             if not tickets:
                 return {"error": "Failed to create task ticket"}
             
             ticket = tickets[0]
             
-            if slug:
-                ticket.objective = f"{ticket.objective}\n\n<subagent_context>\nYour parent id is: {workspace_root_id}\n</subagent_context>\n<sandbox_environment>\nYour current working directory is the root of the workspace.\nYou are assigned to work in the subdirectory: ./{slug}\nCRITICAL: You must prefix all file paths with {slug}/ when creating or writing files (e.g., using system_write_file or redirection in bash). Writes to the root directory or other directories will fail.\nYou can read files from anywhere in the workspace.\n</sandbox_environment>"
+            if child_scope.slug_path:
+                sandbox_block = child_scope.sandbox_instructions()
+                ticket.objective = (
+                    f"{ticket.objective}\n\n"
+                    f"<subagent_context>\n"
+                    f"Your parent id is: {caller_ticket_id}\n"
+                    f"</subagent_context>\n"
+                    f"{sandbox_block}"
+                )
                 ticket.save()
-                (ticket.fs_dir / slug).mkdir(parents=True, exist_ok=True)
+                child_scope.writable_dir(ticket.fs_dir).mkdir(
+                    parents=True, exist_ok=True,
+                )
                 
             if title:
                 ticket.metadata.title = title
             elif summary:
                 ticket.metadata.title = summary
                 
-            ticket.metadata.creator_ticket_id = workspace_root_id
+            ticket.metadata.creator_ticket_id = caller_ticket_id
             ticket.save_metadata()
             
         except Exception as e:
@@ -141,7 +163,7 @@ def _make_handlers(
             status_cb("Checking status of tasks")
             
         tasks = []
-        if workspace_root_id:
+        if caller_ticket_id:
             from bees.ticket import TICKETS_DIR, load_ticket
             
             if TICKETS_DIR.exists():
@@ -150,7 +172,7 @@ def _make_handlers(
                         continue
                     try:
                         ticket = load_ticket(entry.name)
-                        if ticket and ticket.metadata.creator_ticket_id == workspace_root_id:
+                        if ticket and ticket.metadata.creator_ticket_id == caller_ticket_id:
                             tasks.append({
                                 "task_id": ticket.id,
                                 "summary": ticket.metadata.title or "(no title)",
@@ -213,7 +235,7 @@ def _make_handlers(
             error = scheduler.deliver_to_ticket(
                 task_id,
                 update,
-                expected_creator=workspace_root_id,
+                expected_creator=caller_ticket_id,
             )
         except Exception as e:
             logger.exception("tasks_send_event failed")
@@ -241,11 +263,12 @@ def _make_handlers(
 
 
 def get_tasks_function_group_factory(
-    workspace_root_id: str | None = None,
+    scope: SubagentScope | None = None,
+    caller_ticket_id: str | None = None,
     scheduler: Any | None = None,
     ticket_id: str | None = None,
 ) -> FunctionGroupFactory:
     def factory(hooks: SessionHooks) -> FunctionGroup:
-        handlers = _make_handlers(workspace_root_id, scheduler, ticket_id)
+        handlers = _make_handlers(scope, caller_ticket_id, scheduler, ticket_id)
         return assemble_function_group(_LOADED, handlers)
     return factory
