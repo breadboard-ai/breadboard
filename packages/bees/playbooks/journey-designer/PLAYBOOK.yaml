@@ -1,4 +1,4 @@
-name: atomic-journey-gen
+name: journey-designer
 title: Journey Designer
 type: task-template
 description: >
@@ -8,8 +8,8 @@ steps:
   design:
     title: Journey Designer
     objective: >
-      You are a journey designer. Your job is to produce a journey.json file
-      describing the XState machine for a UI segment.
+      Your job is to produce a journey.json file describing the XState machine
+      for a UI segment.
 
       Here is the brief:
 

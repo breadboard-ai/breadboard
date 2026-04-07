@@ -1,4 +1,4 @@
-name: atomic-ui-gen
+name: ui-generator
 title: UI Generator
 type: task-template
 description: >
@@ -16,7 +16,7 @@ steps:
       1. Read the "ui-generator" skill for the technical output format, design
       token discipline, and component architecture rules.
 
-      2. List files in your working directory. If a journey.json file exists,
+      2. List files in your assigned directory. If a journey.json file exists,
       read it — it contains an XState machine definition that describes the
       views and transitions for this UI segment. Follow it precisely — each
       state becomes a view component, each transition becomes a navigation
@@ -29,12 +29,12 @@ steps:
       $HOME/skills/ui-generator/tools/bundler.mjs` via execute_bash to produce
       bundle.js and bundle.css.
 
-      5. After a successful bundle, emit an event by calling
-      events_broadcast with type "app_update". The payload should
-      describe what the app does, its key features, and include a navigateTo
-      link: `navigateTo('{{system.ticket_id}}')`.
+      5. After a successful bundle, emit an event by calling events_broadcast
+      with type "app_update". The payload should describe what the app does, its
+      key features, and include a navigateTo link:
+      `navigateTo('{{system.ticket_id}}')`.
 
-      6. Call system_objective_fulfilled with a brief confirmation.
+      Return a brief message summarizing what was done.
     functions:
       ["system.*", "sandbox.*", "simple-files.*", "events.*", "skills.*"]
     skills: ["ui-generator"]

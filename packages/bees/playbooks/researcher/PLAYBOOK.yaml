@@ -1,0 +1,20 @@
+name: researcher
+title: Researcher
+type: task-template
+description: >
+  Deeply researches a given topic
+
+steps:
+  research:
+    title: Research
+    objective: >
+      Your job is to deeply research the following topic:
+
+      {{system.context}}
+
+      Compile relevant, accurate information. Save your findings to a file
+      called research-data.json (structured data) or research-notes.md (prose),
+      whichever is more appropriate for the request.
+
+      Return the relative path of the file with research.
+    functions: ["system.*", "sandbox.*", "simple-files.*", "generate.text"]
