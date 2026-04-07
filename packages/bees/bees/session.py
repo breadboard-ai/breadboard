@@ -45,7 +45,7 @@ from bees.functions.system import get_system_function_group_factory
 from bees.functions.sandbox import get_sandbox_function_group_factory
 from bees.functions.playbooks import get_playbooks_function_group
 from bees.functions.chat import get_chat_function_group_factory
-from bees.functions.coordination import get_coordination_function_group
+from bees.functions.events import get_events_function_group_factory
 from bees.functions.tasks import get_tasks_function_group_factory
 from bees.disk_file_system import DiskFileSystem
 
@@ -428,7 +428,8 @@ async def run_session(
     allowed_skills: list[str] | None = None,
     model: str | None = None,
     on_playbook_run: Any | None = None,
-    on_coordination_emit: Any | None = None,
+    on_events_broadcast: Any | None = None,
+    deliver_to_parent: Any | None = None,
     workspace_root_id: str | None = None,
     scheduler: Any | None = None,
     slug: str | None = None,
@@ -482,10 +483,15 @@ async def run_session(
             ),
             get_playbooks_function_group(
                 on_playbook_run=on_playbook_run,
-                on_coordination_emit=on_coordination_emit,
+                on_events_broadcast=on_events_broadcast,
                 workspace_root_id=workspace_root_id,
             ),
-            get_coordination_function_group(on_coordination_emit=on_coordination_emit),
+            get_events_function_group_factory(
+                on_events_broadcast=on_events_broadcast,
+                deliver_to_parent=deliver_to_parent,
+                ticket_id=ticket_id,
+                slug=slug,
+            ),
             get_tasks_function_group_factory(
                 workspace_root_id=workspace_root_id,
                 scheduler=scheduler,
@@ -575,7 +581,8 @@ async def resume_session(
     label: str = "",
     on_event: Any | None = None,
     on_playbook_run: Any | None = None,
-    on_coordination_emit: Any | None = None,
+    on_events_broadcast: Any | None = None,
+    deliver_to_parent: Any | None = None,
     workspace_root_id: str | None = None,
     scheduler: Any | None = None,
 ) -> SessionResult:
@@ -647,10 +654,15 @@ async def resume_session(
             ),
             get_playbooks_function_group(
                 on_playbook_run=on_playbook_run,
-                on_coordination_emit=on_coordination_emit,
+                on_events_broadcast=on_events_broadcast,
                 workspace_root_id=workspace_root_id,
             ),
-            get_coordination_function_group(on_coordination_emit=on_coordination_emit),
+            get_events_function_group_factory(
+                on_events_broadcast=on_events_broadcast,
+                deliver_to_parent=deliver_to_parent,
+                ticket_id=ticket_id,
+                slug=slug,
+            ),
             get_tasks_function_group_factory(
                 workspace_root_id=workspace_root_id,
                 scheduler=scheduler,

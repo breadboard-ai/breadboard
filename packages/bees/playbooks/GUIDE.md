@@ -42,7 +42,7 @@ available → running → completed | failed
 
 Each ticket runs an **independent agent session** — a separate LLM conversation
 with its own tools, files, and context. Steps don't share memory; they
-communicate through outcomes (dependency references) and coordination signals.
+communicate through outcomes (dependency references) and events.
 
 ### The Scheduler Cycle
 
@@ -105,9 +105,9 @@ dependency references. The value is a mapping with these fields:
 | `objective` | string | — | The agent's instructions. This is the core: a natural-language prompt describing what the agent should accomplish. Supports [template variables](#template-variables). Use YAML `>` for multi-line. |
 | `functions` | list[string] | `[]` (all) | [Function filter](#function-groups) globs controlling which tools the agent can use. An empty list or omitted field means all functions are available. |
 | `skills` | list[string] | `[]` (none) | Names of [skills](#skills) to load into the session. An empty list or omitted field means no skills. Use `["*"]` for all. |
-| `tags` | list[string] | — | Metadata tags. Used for UI routing (e.g., `"chat"` tags enable chat UI), lifecycle hook targeting, and coordination signal filtering. |
+| `tags` | list[string] | — | Metadata tags. Used for UI routing (e.g., `"chat"` tags enable chat UI), lifecycle hook targeting, and event filtering. |
 | `model` | string | — | Override the default model. Example: `gemini-3.1-pro-preview`. If omitted, uses the system default. |
-| `watch_events` | list[object] | — | Subscribe to [coordination signals](#inter-agent-coordination). Each entry has `type` (required) and optionally `tags` for filtering. |
+| `watch_events` | list[object] | — | Subscribe to [events](#inter-agent-events). Each entry has `type` (required) and optionally `tags` for filtering. |
 | `assignee` | string | — | Initial assignee (`"user"` or `"agent"`). Rarely needed — the scheduler manages this automatically. |
 
 ### Example: Minimal Playbook
@@ -207,7 +207,7 @@ the group prefix from the tool name:
 |---------|--------|
 | `["chat.*"]` | Only chat tools |
 | `["chat.*", "system.*"]` | Chat and termination tools |
-| `["chat.*", "sandbox.*", "coordination.*"]` | Chat, bash, and coordination |
+| `["chat.*", "sandbox.*", "events.*"]` | Chat, bash, and events |
 | not specified / `[]` | **All functions available** (permissive default) |
 
 > **Design note**: Functions default to *everything*. This is the opposite of
@@ -257,10 +257,10 @@ directory and system temp dirs.
 |----------|-------------|
 | `chat_request_user_input` | Ask the user a freeform question. Suspends the session until a response arrives. |
 | `chat_present_choices` | Present structured choices (radio buttons or checkboxes). Suspends until selection. |
-| `chat_await_context_update` | Suspend until an external [coordination signal](#inter-agent-coordination) arrives. No user prompt is shown. |
+| `chat_await_context_update` | Suspend until an external [event](#inter-agent-events) arrives. No user prompt is shown. |
 
 All three functions can return `context_updates` — system notifications from
-coordination signals that accumulated while the agent was waiting.
+events that accumulated while the agent was waiting.
 
 **The `"chat"` tag**: Tickets tagged with `"chat"` get special treatment in the
 UI — their chat history is persisted and restored across page reloads. Always
@@ -280,13 +280,14 @@ system at `$HOME/skills/{skill-name}/SKILL.md`. The agent reads them using
 | `playbooks_list` | List available playbooks (name, title, description). Hidden playbooks and those tagged `"testing"` are excluded. |
 | `playbooks_run_playbook` | Launch a playbook. The `context` parameter briefs the agents about what to do. Set `share_workspace: true` to give child tickets access to your filesystem — see [Shared Workspaces](#shared-workspaces). Returns immediately — running a playbook is delegation, not blocking. |
 
-#### `coordination.*` — Signal Emission
+#### `events.*` — Inter-Agent Events
 
 | Function | Description |
 |----------|-------------|
-| `coordination_emit` | Emit a typed signal (`signal_type` + `context` payload) that gets routed to all subscribing agents. Fire-and-forget. |
+| `events_broadcast` | Broadcast a typed event (`type` + `message` payload) that gets routed to all subscribing agents. Fire-and-forget. |
+| `events_send_to_parent` | Send a typed event directly to the parent agent that created this task. No subscription required. |
 
-See [Inter-Agent Coordination](#inter-agent-coordination) for the full picture.
+See [Inter-Agent Events](#inter-agent-events) for the full picture.
 
 ---
 
@@ -309,21 +310,21 @@ skills referenced in its objective.
 
 ---
 
-## Inter-Agent Coordination
+## Inter-Agent Events
 
-The coordination system lets agents communicate across independent sessions. It
+The events system lets agents communicate across independent sessions. It
 has three moving parts:
 
-### 1. Emitting Signals — `coordination_emit`
+### 1. Broadcasting Events — `events_broadcast`
 
-An agent calls `coordination_emit(signal_type, context)` to broadcast a typed
-signal. This creates a **coordination ticket** — a lightweight ticket that
-carries no work, only the signal payload.
+An agent calls `events_broadcast(type, message)` to broadcast a typed
+event. This creates an **event ticket** — a lightweight ticket that
+carries no work, only the event payload.
 
 ```yaml
 # In the agent's objective:
-#   "After each generation, emit a coordination signal by calling
-#    coordination_emit with signal_type 'app_update' and a summary."
+#   "After each generation, broadcast an event by calling
+#    events_broadcast with type 'app_update' and a summary."
 ```
 
 ### 2. Subscribing — `watch_events`
@@ -357,7 +358,7 @@ watch_events:
 ### 3. Receiving — `chat_await_context_update`
 
 The receiving agent calls `chat_await_context_update()` to suspend its session
-until a signal arrives. When a matching coordination ticket is routed to it, the
+until a signal arrives. When a matching event ticket is routed to it, the
 agent resumes with the signal payload in `context_updates`.
 
 ```yaml
@@ -367,15 +368,15 @@ steps:
       Call chat_await_context_update and wait. When a context update
       arrives, process it, then call chat_await_context_update again.
       Repeat forever.
-    functions: ["chat.*", "sandbox.*", "coordination.*"]
+    functions: ["chat.*", "sandbox.*", "events.*"]
     watch_events:
       - type: app_update
 ```
 
 ### How It Works End-to-End
 
-1. Agent A calls `coordination_emit(signal_type="app_update", context="New app created: ...")`.
-2. This creates a coordination ticket with `signal_type=app_update`.
+1. Agent A calls `events_broadcast(type="app_update", message="New app created: ...")`.
+2. This creates an event ticket with `type=app_update`.
 3. The scheduler wakes and routes it: scans all tickets for matching `watch_events`.
 4. Agent B's ticket has `watch_events: [{type: app_update}]` and is currently
    suspended on `chat_await_context_update`. The scheduler writes the signal
@@ -391,12 +392,12 @@ steps:
   (not suspended), the signal is queued and delivered when it next suspends.
 - **Playbook completion**: When all tickets in a playbook run reach a terminal
   state, the scheduler automatically emits a `playbook_complete` signal with a
-  summary, routed via the same coordination mechanism.
+  summary, routed via the same event mechanism.
 
 ### Context Updates on Chat Functions
 
 When an agent is suspended on `chat_request_user_input` or `chat_present_choices`
-(waiting for user input), coordination signals arrive as `context_updates` in
+(waiting for user input), events arrive as `context_updates` in
 the response. The agent receives both the user's reply and any accumulated
 signals in one response. The agent's objective should include instructions for
 handling these — typically a brief status acknowledgment woven into the reply.
@@ -449,7 +450,7 @@ def on_ticket_done(ticket: Ticket) -> None:
 
 ### `on_event(signal_type: str, payload: str, ticket: Ticket) → str | None`
 
-Called when a coordination signal is about to be delivered to a ticket owned by
+Called when an event is about to be delivered to a ticket owned by
 this playbook. The hook can inspect the signal, apply side effects, and decide
 whether the signal reaches the agent.
 
@@ -489,7 +490,7 @@ steps:
 ```
 
 When the caller uses the `events` parameter on `playbooks_run_playbook`, each
-event is emitted as a coordination ticket scoped to the new run. Only tickets
+event is emitted as an event ticket scoped to the new run. Only tickets
 in that specific run receive the signal:
 
 ```
@@ -625,7 +626,7 @@ steps:
 
 **Key points**:
 - `watch_events` subscribes to `test_update` signals. Without this, no
-  coordination signals would be routed to this ticket.
+  events would be routed to this ticket.
 - The agent calls `chat_await_context_update`, not `chat_request_user_input` —
   it's waiting for system signals, not user input.
 - The objective explicitly instructs the loop: process, then call
@@ -668,7 +669,7 @@ steps:
   circular for Opie to delegate work to itself).
 - `functions` includes `playbooks.*` so the agent can discover and run
   playbooks.
-- `watch_events` subscribes to coordination signals from delegated work. When a
+- `watch_events` subscribes to events from delegated work. When a
   child playbook's agents emit `app_update` or `digest_update`, Opie receives
   them as `context_updates` alongside user responses.
 - The `hooks.py` uses `on_startup` to auto-boot Opie if no opie-tagged ticket
@@ -677,7 +678,7 @@ steps:
 ### Pattern 5: Multi-Step App with Coordination
 
 A playbook with sequential steps that communicate back to the orchestrator via
-coordination signals. Each step has both internal work and external signaling.
+events. Each step has both internal work and external signaling.
 
 ```yaml
 name: app
@@ -698,9 +699,9 @@ steps:
       {{system.context}}
 
       Ask focused, clarifying questions (3-5 at most), then create a
-      specification. Emit a coordination signal with signal_type "app_update"
+      specification. Broadcast an event with type "app_update"
       and return the specification as outcome.
-    functions: ["chat.*", "system.*", "simple-files.*", "skills.*", "coordination.*"]
+    functions: ["chat.*", "system.*", "simple-files.*", "skills.*", "events.*"]
     skills: ["interview-user"]
     tags: ["chat", "app-builder"]
 
@@ -710,10 +711,10 @@ steps:
       You are building a React application based on the specification from
       {{interview}}.
 
-      Generate the UI, run the bundler, emit a coordination signal with
-      signal_type "app_update". Then ask the user if they'd like changes.
+      Generate the UI, run the bundler, broadcast an event with
+      type "app_update". Then ask the user if they'd like changes.
       Iterate indefinitely.
-    functions: ["chat.*", "sandbox.*", "coordination.*", "skills.*"]
+    functions: ["chat.*", "sandbox.*", "events.*", "skills.*"]
     skills: ["ui-generator"]
     tags: ["bundle", "app-builder", "chat"]
     model: gemini-3.1-pro-preview
@@ -724,9 +725,9 @@ steps:
   launched the playbook (typically Opie via `playbooks_run_playbook`).
 - `ui-gen` depends on `interview` via `{{interview}}`. It won't start until the
   interview completes.
-- Both steps emit `coordination_emit(signal_type="app_update")` — this notifies
+- Both steps call `events_broadcast(type="app_update")` — this notifies
   the parent orchestrator (Opie) about progress.
-- `interview` uses `coordination.*` even though it's a finite step — it emits a
+- `interview` uses `events.*` even though it's a finite step — it broadcasts a
   signal before finishing to provide an early update.
 - `ui-gen` specifies `model: gemini-3.1-pro-preview` to use a more capable model
   for code generation.
@@ -869,6 +870,6 @@ session to deliver to.
 
 **`chat_await_context_update` without `watch_events`**: Calling
 `chat_await_context_update` suspends the session, but without `watch_events`,
-no coordination signals will be routed to the ticket. The agent will hang
+no events will be routed to the ticket. The agent will hang
 indefinitely. The only exception is playbook-completion signals, which are routed
 by tag matching.

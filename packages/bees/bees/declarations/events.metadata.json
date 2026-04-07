@@ -1,0 +1,4 @@
+[
+  {"name": "events_send_to_parent", "icon": "call_made", "title": "Send to Parent"},
+  {"name": "events_broadcast", "icon": "send", "title": "Broadcast Event"}
+]

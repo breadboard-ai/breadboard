@@ -19,7 +19,7 @@ steps:
     # chat_await_context_update suspension/resume cycles.
     functions: ["chat.*", "simple-files.*"]
     # Must match the signal_type emitted by the source (the "test" playbook).
-    # Without this, coordination tickets of type test_update would never
+    # Without this, event tickets of type test_update would never
     # be routed here.
     watch_events:
       - type: test_update

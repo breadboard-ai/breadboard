@@ -21,7 +21,7 @@ steps:
 
       Write the `digest_tile.json` file to the workspace.
 
-      Then use coordination_emit to send a `digest_tile_ready` signal with
+      Then use events_broadcast to send a `digest_tile_ready` signal with
       payload containing your brief status.
 
       Return "OK" as outcome.
@@ -31,4 +31,4 @@ steps:
 
       {{system.context}}
 
-    functions: ["system.*", "coordination.*", "simple-files.*"]
+    functions: ["system.*", "events.*", "simple-files.*"]

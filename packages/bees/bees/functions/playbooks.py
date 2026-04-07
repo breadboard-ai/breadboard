@@ -34,7 +34,7 @@ _LOADED = load_declarations("playbooks", declarations_dir=_DECLARATIONS_DIR)
 
 def _make_handlers(
     on_playbook_run: Any | None = None,
-    on_coordination_emit: Callable[[Ticket], None] | None = None,
+    on_events_broadcast: Callable[[Ticket], None] | None = None,
     workspace_root_id: str | None = None,
 ) -> dict[str, Any]:
     """Build the handler map for the playbooks function group."""
@@ -127,8 +127,8 @@ def _make_handlers(
                 context=event.get("payload", ""),
                 playbook_run_id=run_id,
             )
-            if on_coordination_emit:
-                on_coordination_emit(coord)
+            if on_events_broadcast:
+                on_events_broadcast(coord)
 
         return {
             "playbook": name,
@@ -150,13 +150,13 @@ def _make_handlers(
 
 def get_playbooks_function_group(
     on_playbook_run: Any | None = None,
-    on_coordination_emit: Callable[[Ticket], None] | None = None,
+    on_events_broadcast: Callable[[Ticket], None] | None = None,
     workspace_root_id: str | None = None,
 ) -> FunctionGroup:
     """Build a FunctionGroup with playbooks_list and playbooks_run_playbook."""
     handlers = _make_handlers(
         on_playbook_run,
-        on_coordination_emit,
+        on_events_broadcast,
         workspace_root_id=workspace_root_id,
     )
     return assemble_function_group(_LOADED, handlers)

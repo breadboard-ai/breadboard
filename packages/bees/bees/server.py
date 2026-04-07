@@ -135,8 +135,8 @@ async def _on_cycle_complete(cycles: int) -> None:
     await broadcaster.broadcast({"type": "drain_complete", "waves": cycles})
 
 
-def _on_coordination_emit(ticket: Ticket) -> None:
-    """When a running agent emits a coordination signal."""
+def _on_events_broadcast(ticket: Ticket) -> None:
+    """When a running agent broadcasts an event."""
     asyncio.create_task(broadcaster.broadcast({
         "type": "ticket_added",
         "ticket": _ticket_to_dict(ticket),
@@ -215,7 +215,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         on_ticket_start=_on_ticket_start,
         on_ticket_done=_on_ticket_done,
         on_playbook_run=_on_playbook_run,
-        on_coordination_emit=_on_coordination_emit,
+        on_events_broadcast=_on_events_broadcast,
         on_playbook_complete=_on_playbook_complete,
         on_cycle_complete=_on_cycle_complete,
     )

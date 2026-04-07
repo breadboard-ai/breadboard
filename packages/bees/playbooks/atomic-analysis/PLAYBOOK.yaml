@@ -23,5 +23,5 @@ steps:
       3. Write your analysis to your shared workspace as `analysis.json`. It
          should be structured clearly:
          e.g. {"opportunities": [{...}], "conflicts": [{...}]}.
-      4. Emit an `analysis_ready` coordination signal. 5. Return "OK" as outcome
-    functions: ["coordination.*", "system.*", "simple-files.*"]
+      4. Emit an `analysis_ready` event via `events_broadcast`. 5. Return "OK" as outcome
+    functions: ["events.*", "system.*", "simple-files.*"]
