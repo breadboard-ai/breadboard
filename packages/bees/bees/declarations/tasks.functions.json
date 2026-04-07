@@ -62,5 +62,27 @@
       },
       "required": ["task_id"]
     }
+  },
+  {
+    "name": "tasks_send_event",
+    "description": "Send a typed event to a child task's agent. The agent receives the event as a context update. Use this to provide additional instructions, clarifications, or data to a running subagent.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "description": "The ID of the task to send the event to."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of event (e.g., 'clarification', 'additional_context'). Choose descriptive, stable names."
+        },
+        "message": {
+          "type": "string",
+          "description": "Text payload delivered to the child agent. Include all relevant details the agent needs to act on."
+        }
+      },
+      "required": ["task_id", "type", "message"]
+    }
   }
 ]

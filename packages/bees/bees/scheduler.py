@@ -337,6 +337,33 @@ class Scheduler:
             
         return cancelled
 
+    def deliver_to_ticket(
+        self,
+        ticket_id: str,
+        update: dict[str, Any],
+        *,
+        expected_creator: str | None = None,
+    ) -> str | None:
+        """Deliver a context update to a ticket.
+
+        Returns ``None`` on success, or an error string on failure.
+
+        When ``expected_creator`` is provided the target ticket's
+        ``creator_ticket_id`` must match — this prevents one agent from
+        injecting updates into another agent's tasks.
+        """
+        from bees.ticket import load_ticket
+
+        ticket = load_ticket(ticket_id)
+        if not ticket:
+            return f"Task {ticket_id} not found"
+
+        if expected_creator and ticket.metadata.creator_ticket_id != expected_creator:
+            return f"Task {ticket_id} is not owned by this agent"
+
+        self._deliver_context_update(ticket_id, update)
+        return None
+
     def _deliver_context_update(self, creator_id: str, update: dict[str, Any]) -> None:
         """Deliver or buffer context update for a creator ticket."""
         from bees.ticket import load_ticket
