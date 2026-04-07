@@ -65,6 +65,7 @@ from bees.ticket import (
     list_tickets,
     load_ticket,
 )
+from bees.subagent_scope import SubagentScope
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
 logger = logging.getLogger(__name__)
@@ -580,6 +581,7 @@ class Scheduler:
 
         try:
             segments = resolve_segments(ticket)
+            scope = SubagentScope.for_ticket(ticket)
             result = await run_session(
                 segments=segments,
                 http=self._http,
@@ -595,9 +597,8 @@ class Scheduler:
                 on_playbook_run=self._on_playbook_run_internal,
                 on_events_broadcast=self._on_events_broadcast_internal,
                 deliver_to_parent=self._make_deliver_to_parent(ticket),
-                workspace_root_id=ticket.metadata.parent_ticket_id or ticket.id,
+                scope=scope,
                 scheduler=self,
-                slug=ticket.metadata.slug,
             )
         except Exception as exc:
             ticket.metadata.status = "failed"
@@ -656,6 +657,7 @@ class Scheduler:
             await self._hooks.on_ticket_start(ticket)
 
         try:
+            scope = SubagentScope.for_ticket(ticket)
             result = await resume_session(
                 ticket_id=ticket.id,
                 ticket_dir=ticket.dir,
@@ -668,7 +670,7 @@ class Scheduler:
                 on_playbook_run=self._on_playbook_run_internal,
                 on_events_broadcast=self._on_events_broadcast_internal,
                 deliver_to_parent=self._make_deliver_to_parent(ticket),
-                workspace_root_id=ticket.metadata.parent_ticket_id or ticket.id,
+                scope=scope,
                 scheduler=self,
             )
         except Exception as exc:

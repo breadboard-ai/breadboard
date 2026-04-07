@@ -36,6 +36,8 @@ from opal_backend.function_definition import (
     load_declarations,
 )
 
+from bees.subagent_scope import SubagentScope
+
 __all__ = ["get_sandbox_function_group", "get_sandbox_function_group_factory"]
 
 logger = logging.getLogger(__name__)
@@ -82,7 +84,7 @@ def _make_handlers(
     *,
     work_dir: Path,
     timeout: int = DEFAULT_TIMEOUT_SEC,
-    slug: str | None = None,
+    scope: SubagentScope | None = None,
 ) -> dict[str, Any]:
     """Build the handler map for the sandbox function group."""
 
@@ -102,7 +104,7 @@ def _make_handlers(
         try:
             cmd_parts = ["bash", "-c", command]
             if platform.system() == "Darwin" and shutil.which("sandbox-exec"):
-                writable_dir = work_dir / slug if slug else work_dir
+                writable_dir = scope.writable_dir(work_dir) if scope else work_dir
                 profile = _SANDBOX_PROFILE.format(work_dir=str(writable_dir))
                 cmd_parts = ["sandbox-exec", "-p", profile, "--"] + cmd_parts
 
@@ -182,7 +184,7 @@ def get_sandbox_function_group(
 
 
 def get_sandbox_function_group_factory(
-    *, work_dir: Path | None = None, timeout: int = DEFAULT_TIMEOUT_SEC, slug: str | None = None,
+    *, work_dir: Path | None = None, timeout: int = DEFAULT_TIMEOUT_SEC, scope: SubagentScope | None = None,
 ) -> FunctionGroupFactory:
     """Return a late-binding factory for the sandbox FunctionGroup.
 
@@ -195,6 +197,7 @@ def get_sandbox_function_group_factory(
         work_dir: Working directory for bash commands. If None, a temporary
             directory is created.
         timeout: Default timeout in seconds per command.
+        scope: Subagent scope for write restriction.
 
     Returns:
         A ``FunctionGroupFactory`` callable.
@@ -209,7 +212,7 @@ def get_sandbox_function_group_factory(
         handlers = _make_handlers(
             work_dir=work_dir,
             timeout=timeout,
-            slug=slug,
+            scope=scope,
         )
         loaded = load_declarations("sandbox", declarations_dir=_DECLARATIONS_DIR)
         return assemble_function_group(loaded, handlers)

@@ -26,6 +26,8 @@ when each task completes. The update will contain the outcome of the completed
 task or an error message if the task failed.
 
 The subagents working on tasks have access to a sub-directory of your
-filesystem, specified by the "slug" parameter when creating a task. Example: if
-the slug is "research", the task artifacts will be found in "./research"
-directory.
+filesystem, specified by the "slug" parameter when creating a task. You provide
+a simple directory name (e.g., "research"). If you are yourself a subagent, the
+system automatically nests your slug under your own working directory. For
+example, if you work in "./app" and create a task with slug "tests", the child
+will work in "./app/tests".

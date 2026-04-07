@@ -13,6 +13,7 @@ import pytest
 from unittest.mock import MagicMock
 
 from bees.functions.sandbox import get_sandbox_function_group_factory
+from bees.subagent_scope import SubagentScope
 from bees.ticket import create_ticket
 
 
@@ -42,10 +43,10 @@ async def test_sandbox_restricts_writes_to_slug(monkeypatch):
     monkeypatch.setattr(asyncio, "create_subprocess_exec", mock_create)
     
     work_dir = Path("/tmp/fake-work")
-    slug = "my-slug"
+    scope = SubagentScope(workspace_root_id="r", slug_path="my-slug")
     
     from bees.functions.sandbox import _make_handlers
-    handlers = _make_handlers(work_dir=work_dir, slug=slug)
+    handlers = _make_handlers(work_dir=work_dir, scope=scope)
     
     execute_bash = handlers["execute_bash"]
     
@@ -60,7 +61,7 @@ async def test_sandbox_restricts_writes_to_slug(monkeypatch):
     profile = call_args[2]
     
     # Verify that the profile restricts writes to the slug directory!
-    assert f'(subpath "{work_dir / slug}")' in profile
+    assert f'(subpath "{work_dir / "my-slug"}")' in profile
     # And not the base work_dir!
     assert f'(subpath "{work_dir}")' not in profile
 
@@ -71,7 +72,8 @@ async def test_simple_files_restricts_writes_to_slug():
     from unittest.mock import MagicMock
     
     slug = "my-slug"
-    factory = get_simple_files_function_group_factory(slug=slug)
+    scope = SubagentScope(workspace_root_id="r", slug_path=slug)
+    factory = get_simple_files_function_group_factory(scope=scope)
     
     mock_hooks = MagicMock()
     mock_hooks.file_system = MagicMock()

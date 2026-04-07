@@ -31,7 +31,7 @@
         },
         "slug": {
           "type": "string",
-          "description": "The directory in which the task artifacts will be created. This is the working directory for the subagent that will work on the task."
+          "description": "A single directory name for the task's working area (e.g., 'research'). The system automatically nests this under your own working directory if you are a subagent."
         },
         "wait_ms_before_async": {
           "type": "number",
