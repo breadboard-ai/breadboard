@@ -58,6 +58,12 @@ class BeesAPI {
     });
   }
 
+  async retry(ticketId: string) {
+    await fetch(`/tickets/${ticketId}/retry`, {
+      method: "POST",
+    });
+  }
+
   async listPlaybooks(): Promise<PlaybookData[]> {
     const resp = await fetch("/playbooks");
     if (!resp.ok) return [];

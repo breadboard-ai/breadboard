@@ -13,6 +13,7 @@ import { type SCA } from "../../sca/sca.js";
 import { sharedStyles } from "./shared.styles.js";
 
 import { markdown } from "../../directives/markdown.js";
+import { retryTicket } from "../../sca/actions/chat/chat-actions.js";
 
 const styles = css`
   :host {
@@ -223,6 +224,16 @@ export class OpalTimeline extends SignalWatcher(LitElement) {
       >
         Failed
       </div>`;
+    } else if (ticket.status === "paused") {
+      badgeHtml = html`<div
+        class="status-badge"
+        style="background: #ff980022; color: #e65100; box-shadow: 0 0 0 1px #ff980066; cursor: pointer;"
+        @click=${() => {
+          retryTicket(new CustomEvent("retry", { detail: this.ticketId }));
+        }}
+      >
+        Paused — Click to Retry
+      </div>`;
     } else if (ticket.status === "suspended" || ticket.status === "available") {
       badgeHtml = html`<div
         class="status-badge"
@@ -278,9 +289,11 @@ export class OpalTimeline extends SignalWatcher(LitElement) {
                       ? "✅"
                       : wt.status === "failed"
                         ? "❌"
-                        : isWorkerRunning
-                          ? "⏳"
-                          : "📝";
+                        : wt.status === "paused"
+                          ? "⏸"
+                          : isWorkerRunning
+                            ? "⏳"
+                            : "📝";
                   return html`
                     <div
                       style="padding: var(--cg-sp-3, 12px) var(--cg-sp-4, 16px); margin-bottom: var(--cg-sp-2, 8px); background: var(--cg-color-surface-container-low, #f8f6f3); border-radius: var(--cg-radius-md, 8px); display: flex; align-items: center; gap: var(--cg-sp-3, 12px); font-size: var(--cg-text-body-sm-size, 14px);"

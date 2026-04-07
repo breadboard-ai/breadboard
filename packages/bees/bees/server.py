@@ -415,6 +415,34 @@ async def update_ticket_tags(
     return _ticket_to_dict(ticket)
 
 
+@app.post("/tickets/{ticket_id}/retry")
+async def retry_ticket(ticket_id: str) -> dict[str, Any]:
+    """Retry a paused ticket by flipping it back to available.
+
+    Paused tickets are those that hit a transient Gemini API error
+    (e.g. 503).  Retrying clears the error and re-queues the ticket
+    for the scheduler to pick up.
+    """
+    ticket = load_ticket(ticket_id)
+    if not ticket:
+        raise HTTPException(404, f"Ticket {ticket_id} not found")
+    if ticket.metadata.status != "paused":
+        raise HTTPException(400, "Ticket is not paused")
+
+    ticket.metadata.status = "available"
+    ticket.metadata.error = None
+    ticket.save_metadata()
+
+    await broadcaster.broadcast({
+        "type": "ticket_update",
+        "ticket": _ticket_to_dict(ticket),
+    })
+
+    if scheduler:
+        scheduler.trigger()
+    return _ticket_to_dict(ticket)
+
+
 # ---------------------------------------------------------------------------
 # Playbook endpoints
 # ---------------------------------------------------------------------------
