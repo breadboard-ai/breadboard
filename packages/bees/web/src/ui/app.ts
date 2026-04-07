@@ -137,10 +137,10 @@ class BeesApp extends SignalWatcher(LitElement) {
   render() {
     const access = this.stateAccess.accessState.get();
     const recentUpdate = this.ticketStore.recentlyUpdatedTicket.get();
-    this.currentFlashTicketId = (recentUpdate && (Date.now() - recentUpdate.at < 3000)) ? recentUpdate.id : null;
+    this.currentFlashTicketId = (recentUpdate && (Date.now() - recentUpdate.at < 15000)) ? recentUpdate.id : null;
     
     const recentLogUpdate = this.logStore.recentlyUpdatedSession.get();
-    this.currentFlashLogId = (recentLogUpdate && (Date.now() - recentLogUpdate.at < 3000)) ? recentLogUpdate.id : null;
+    this.currentFlashLogId = (recentLogUpdate && (Date.now() - recentLogUpdate.at < 15000)) ? recentLogUpdate.id : null;
 
     if (access !== "ready") {
       return html`
