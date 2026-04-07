@@ -101,5 +101,38 @@
       },
       "additionalProperties": false
     }
+  },
+  {
+    "name": "system_list_dir",
+    "description": "Lists the contents of a directory, showing files and subdirectories with their sizes. Text files also include a line count.",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "dir": {
+          "type": "string",
+          "description": "Relative path to a directory within the working directory. Use '.' for the root."
+        }
+      },
+      "required": [
+        "dir"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "string",
+          "description": "JSON array of directory entries. Each entry has 'name' (string), and either 'isDir' (true) for directories, or 'sizeBytes' (number) for files. Text files also include 'lineCount' (number)."
+        },
+        "error": {
+          "type": "string",
+          "description": "Error message if the directory could not be listed"
+        }
+      },
+      "additionalProperties": false
+    }
   }
 ]

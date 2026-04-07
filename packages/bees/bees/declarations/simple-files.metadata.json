@@ -12,5 +12,10 @@
     "name": "system_read_text_from_file",
     "icon": "description",
     "title": "Reading from file"
+  },
+  {
+    "name": "system_list_dir",
+    "icon": "folder_open",
+    "title": "Listing directory"
   }
 ]
