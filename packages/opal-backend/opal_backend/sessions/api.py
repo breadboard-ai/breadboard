@@ -24,6 +24,7 @@ from ..events import (
     AgentEvent,
     CompleteEvent,
     ErrorEvent,
+    PAUSE_TYPES,
     SUSPEND_TYPES,
 )
 from ..backend_client import BackendClient
@@ -329,6 +330,13 @@ async def _tee_events(
                     await store.set_resume_id(session_id, iid)
                 _contexts[session_id] = ctx
 
+            elif _is_paused_event(event):
+                terminal_status = SessionStatus.PAUSED
+                iid = getattr(event, "interaction_id", None)
+                if iid:
+                    await store.set_resume_id(session_id, iid)
+                _contexts[session_id] = ctx
+
     except asyncio.CancelledError:
         terminal_status = SessionStatus.CANCELLED
 
@@ -347,3 +355,8 @@ async def _tee_events(
 def _is_suspend_event(event: AgentEvent) -> bool:
     """Check if an event is a suspend event by its type attribute."""
     return getattr(event, "type", "") in SUSPEND_TYPES
+
+
+def _is_paused_event(event: AgentEvent) -> bool:
+    """Check if an event is a paused event by its type attribute."""
+    return getattr(event, "type", "") in PAUSE_TYPES

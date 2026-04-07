@@ -374,3 +374,67 @@ async def test_start_session_passes_model_to_run(store, subscribers, monkeypatch
 
     assert captured_kwargs.get("model") == "gemini-2.5-pro"
 
+
+# ── pause ──
+
+
+@pytest.mark.asyncio
+async def test_start_session_paused_status(store, subscribers, monkeypatch):
+    """PausedEvent → PAUSED status, context re-stashed for resume."""
+    from opal_backend.events import PausedEvent
+    from opal_backend.sessions.api import _SessionContext
+
+    async def fake_run(**kwargs):
+        yield PausedEvent(
+            message="503 Service Unavailable",
+            status_code=503,
+            interaction_id="iid-pause-1",
+        )
+
+    monkeypatch.setattr("opal_backend.sessions.api.run_agent", fake_run)
+
+    _contexts["sess-pause"] = _SessionContext(
+        segments=[], backend=None, interaction_store=None,  # type: ignore
+    )
+    await store.create("sess-pause")
+
+    await start_session(
+        session_id="sess-pause", store=store, subscribers=subscribers,
+    )
+
+    assert await store.get_status("sess-pause") == SessionStatus.PAUSED
+
+    # Context should be re-stashed for later resume.
+    assert "sess-pause" in _contexts
+    _contexts.pop("sess-pause", None)
+
+
+@pytest.mark.asyncio
+async def test_paused_event_stores_resume_id(store, subscribers, monkeypatch):
+    """PausedEvent interaction_id is stashed via set_resume_id."""
+    from opal_backend.events import PausedEvent
+    from opal_backend.sessions.api import _SessionContext
+
+    async def fake_run(**kwargs):
+        yield PausedEvent(
+            message="503 Service Unavailable",
+            status_code=503,
+            interaction_id="iid-pause-resume",
+        )
+
+    monkeypatch.setattr("opal_backend.sessions.api.run_agent", fake_run)
+
+    _contexts["sess-pause-rid"] = _SessionContext(
+        segments=[], backend=None, interaction_store=None,  # type: ignore
+    )
+    await store.create("sess-pause-rid")
+
+    await start_session(
+        session_id="sess-pause-rid", store=store, subscribers=subscribers,
+    )
+
+    # Resume ID should match the PausedEvent's interaction_id.
+    resume_id = await store.get_resume_id("sess-pause-rid")
+    assert resume_id == "iid-pause-resume"
+    _contexts.pop("sess-pause-rid", None)
+
