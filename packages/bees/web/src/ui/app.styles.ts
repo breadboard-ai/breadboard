@@ -879,8 +879,12 @@ export const styles = css`
   /* ── Lightning Flash Effect ── */
   @keyframes lightning-flash {
     0% {
-      background-color: #60a5fa;
-      box-shadow: 0 0 20px #60a5fa;
+      background-color: rgba(96, 165, 250, 0.8);
+      box-shadow: 0 0 20px rgba(96, 165, 250, 0.6);
+    }
+    2% {
+      background-color: rgba(96, 165, 250, 0.3);
+      box-shadow: 0 0 10px rgba(96, 165, 250, 0.2);
     }
     100% {
       background-color: transparent;
@@ -889,6 +893,6 @@ export const styles = css`
   }
 
   .lightning-flash {
-    animation: lightning-flash 3s ease-out !important;
+    animation: lightning-flash 15s ease-out !important;
   }
 `;
