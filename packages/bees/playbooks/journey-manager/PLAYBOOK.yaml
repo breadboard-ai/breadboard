@@ -63,6 +63,6 @@ steps:
       - tasks.*
     skills: ["interview-user"]
     tags: ["journey", "chat"]
-    tasks: ["atomic-research", "atomic-ui-gen", "atomic-journey-gen"]
+    tasks: ["researcher", "ui-generator", "journey-designer"]
     watch_events:
       - type: update_journey_title
