@@ -1,0 +1,46 @@
+[
+  {
+    "name": "events_send_to_parent",
+    "description": "Send a typed event directly to the parent agent that created this task. The parent receives the event with your agent ID and slug so it knows who sent it. Use this to report progress on delegated work or share intermediate results before completing.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of event (e.g., 'progress_update', 'needs_clarification'). Choose descriptive, stable names."
+        },
+        "message": {
+          "type": "string",
+          "description": "Text payload delivered to the parent. Include a concise summary of what happened and any relevant details."
+        }
+      },
+      "required": ["type", "message"]
+    }
+  },
+  {
+    "name": "events_broadcast",
+    "description": "Broadcast a typed event to all agents that have subscribed to this event type. The event is routed by the scheduler to matching subscribers. This is a fire-and-forget mechanism — you emit the event and continue your work. Use this to share status updates, or notify collaborating agents about completed work.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of event to broadcast. Subscribers match on this value (e.g., 'digest_update', 'status_change'). Choose descriptive, stable names."
+        },
+        "message": {
+          "type": "string",
+          "description": "Text payload delivered to subscribers. Include a concise summary of what happened and any relevant details the subscriber needs to act on."
+        }
+      },
+      "required": ["type", "message"]
+    }
+  },
+  {
+    "name": "coordination_pull_digest_tiles",
+    "description": "Pulls all generated digest_tile.json artifacts from across the entire system. Use this to gather the latest state of all milestones across runs to compile the Master Digest.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  }
+]

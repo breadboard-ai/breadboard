@@ -104,8 +104,8 @@ class SchedulerHooks:
     on_playbook_run: Callable[[list[Ticket]], None] | None = None
     """Called when an agent invokes the playbook function mid-session."""
 
-    on_coordination_emit: Callable[[Ticket], None] | None = None
-    """Called when an agent emits a coordination signal mid-session."""
+    on_events_broadcast: Callable[[Ticket], None] | None = None
+    """Called when an agent broadcasts an event mid-session."""
 
     on_playbook_complete: Callable[[str, list[Ticket], Ticket], Awaitable[None]] | None = None
     """Called when all tickets in a playbook run are complete. (run_id, siblings, triggering_ticket)"""
@@ -529,7 +529,8 @@ class Scheduler:
                 allowed_skills=ticket.metadata.skills,
                 model=ticket.metadata.model,
                 on_playbook_run=self._on_playbook_run_internal,
-                on_coordination_emit=self._on_coordination_emit_internal,
+                on_events_broadcast=self._on_events_broadcast_internal,
+                deliver_to_parent=self._make_deliver_to_parent(ticket),
                 workspace_root_id=ticket.metadata.parent_ticket_id or ticket.id,
                 scheduler=self,
                 slug=ticket.metadata.slug,
@@ -600,7 +601,8 @@ class Scheduler:
                 label=label,
                 on_event=self._make_on_event(ticket.id),
                 on_playbook_run=self._on_playbook_run_internal,
-                on_coordination_emit=self._on_coordination_emit_internal,
+                on_events_broadcast=self._on_events_broadcast_internal,
+                deliver_to_parent=self._make_deliver_to_parent(ticket),
                 workspace_root_id=ticket.metadata.parent_ticket_id or ticket.id,
                 scheduler=self,
             )
@@ -717,10 +719,21 @@ class Scheduler:
             self._hooks.on_playbook_run(tickets)
         self.trigger()
 
-    def _on_coordination_emit_internal(self, ticket: Ticket) -> None:
-        if self._hooks.on_coordination_emit:
-            self._hooks.on_coordination_emit(ticket)
+    def _on_events_broadcast_internal(self, ticket: Ticket) -> None:
+        if self._hooks.on_events_broadcast:
+            self._hooks.on_events_broadcast(ticket)
         self.trigger()
+
+    def _make_deliver_to_parent(self, ticket: Ticket) -> Callable[[dict[str, Any]], None] | None:
+        """Create a callback that delivers an update to this ticket's creator."""
+        creator_id = ticket.metadata.creator_ticket_id
+        if not creator_id:
+            return None
+
+        def deliver(update: dict[str, Any]) -> None:
+            self._deliver_context_update(creator_id, update)
+
+        return deliver
 
     def _make_on_event(self, ticket_id: str):
         """Create an event callback wired to the ticket-event hook."""

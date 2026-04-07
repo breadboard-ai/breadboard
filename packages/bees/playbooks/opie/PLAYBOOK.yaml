@@ -100,13 +100,13 @@ steps:
       **When you wake up with a context update**:
       It means a new `digest_tile_ready` signal arrived.
       
-      1. Use `coordination_emit` to emit `digest_building` with a summary (e.g. "Synthesizing your latest journey...").
+      1. Use `events_broadcast` to emit `digest_building` with a summary (e.g. "Synthesizing your latest journey...").
       2. Run the `atomic-analysis` playbook with `share_workspace: true`. Wait for it to complete. This worker will perform cross-journey analysis and write `analysis.json` to your shared workspace.
       3. Run the `atomic-digest-ui-gen` playbook with `share_workspace: true`. Wait for it to complete. This worker will read the analytical insights and the digest tiles, render the final `App.jsx` and `styles.css`, and bundle them.
-      4. Emit a `digest_update` coordination signal.
+      4. Emit a `digest_update` event via `events_broadcast`.
       5. Suspend via `chat_await_context_update`. Repeat forever.
     
     tags: ["digest", "bundle"]
     watch_events:
       - type: digest_tile_ready
-    functions: ["chat.*", "coordination.*", "playbooks.*", "sandbox.*"]
+    functions: ["chat.*", "events.*", "playbooks.*", "sandbox.*"]

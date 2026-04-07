@@ -44,6 +44,6 @@ steps:
          produce bundle.js and bundle.css.
       3. Call system_objective_fulfilled with a brief confirmation.
 
-    functions: ["coordination.*", "system.*", "sandbox.*", "skills.*"]
+    functions: ["events.*", "system.*", "sandbox.*", "skills.*"]
     skills: ["ui-generator", "editorial-designer"]
     model: gemini-3.1-pro-preview
