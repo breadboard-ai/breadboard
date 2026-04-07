@@ -22,7 +22,8 @@ from typing import Any, Literal
 TICKETS_DIR = Path(__file__).resolve().parent.parent / "state" / "tickets"
 
 TicketStatus = Literal[
-    "available", "blocked", "running", "suspended", "completed", "failed", "cancelled"
+    "available", "blocked", "running", "suspended", "paused",
+    "completed", "failed", "cancelled"
 ]
 
 TicketKind = Literal["work", "coordination"]

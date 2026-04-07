@@ -99,7 +99,7 @@ class SchedulerHooks:
     """Called when a ticket transitions to running (for UI updates)."""
 
     on_ticket_done: Callable[[Ticket], Awaitable[None]] | None = None
-    """Called when a ticket reaches a resting state (completed/failed/suspended)."""
+    """Called when a ticket reaches a resting state (completed/failed/suspended/paused)."""
 
     on_playbook_run: Callable[[list[Ticket]], None] | None = None
     """Called when an agent invokes the playbook function mid-session."""
@@ -588,6 +588,7 @@ class Scheduler:
 
         self._update_metadata(ticket, result)
         self._handle_suspend(ticket, result)
+        self._handle_pause(ticket, result)
         ticket.save_metadata()
         return result
 
@@ -659,8 +660,9 @@ class Scheduler:
 
         self._update_metadata(ticket, result, accumulate=True)
         self._handle_suspend(ticket, result)
+        self._handle_pause(ticket, result)
 
-        if not result.suspended:
+        if not result.suspended and not result.paused:
             clear_session_state(ticket.dir)
             # Clean up response file.
             response_path.unlink(missing_ok=True)
@@ -682,10 +684,16 @@ class Scheduler:
         When ``accumulate`` is True (used on resume), turns and thoughts
         are added to the existing values rather than replaced.
         """
-        ticket.metadata.status = (
-            "completed" if result.status == "completed" else "failed"
-        )
         ticket.metadata.completed_at = datetime.now(timezone.utc).isoformat()
+
+        if result.status == "completed":
+            ticket.metadata.status = "completed"
+        elif result.paused:
+            # Transient Gemini error — don't set completed_at, the ticket
+            # is not done.  Status is set by _handle_pause below.
+            ticket.metadata.completed_at = None
+        else:
+            ticket.metadata.status = "failed"
 
         if accumulate:
             ticket.metadata.turns += result.turns
@@ -750,6 +758,16 @@ class Scheduler:
         else:
             ticket.metadata.assignee = None
             ticket.metadata.suspend_event = None
+
+    def _handle_pause(self, ticket: Ticket, result: SessionResult) -> None:
+        """Handle pause state from transient Gemini API errors."""
+        if result.paused:
+            ticket.metadata.status = "paused"
+            ticket.metadata.assignee = None
+            print(
+                f"  [{ticket.id[:8]}] ⏸ paused: {result.error}",
+                file=sys.stderr,
+            )
 
     def _on_playbook_run_internal(self, tickets: list[Ticket]) -> None:
         if self._hooks.on_playbook_run:
