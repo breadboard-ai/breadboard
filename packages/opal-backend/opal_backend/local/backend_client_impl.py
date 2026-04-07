@@ -175,7 +175,8 @@ class HttpBackendClient:
                 error_text = await response.aread()
                 raise GeminiAPIError(
                     f"Gemini API error {response.status_code}: "
-                    f"{error_text.decode()}"
+                    f"{error_text.decode()}",
+                    status_code=response.status_code,
                 )
 
             async for line in response.aiter_lines():
