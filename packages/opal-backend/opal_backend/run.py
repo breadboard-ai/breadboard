@@ -45,6 +45,7 @@ from .events import (
     CompleteEvent,
     ErrorEvent,
     FileData,
+    PausedEvent,
     QueryConsentEvent,
 )
 from .chat_log_manager import ChatLogManager
@@ -64,7 +65,7 @@ from .interaction_store import InteractionState, InteractionStore
 from .loop import AgentRunArgs, Loop, LoopController
 from .sheet_manager import SheetManager
 from .singleton_cache import get_singleton_prefix_cache
-from .suspend import SuspendResult
+from .suspend import PauseResult, SuspendResult
 from .task_tree_manager import TaskTreeManager
 
 __all__ = ["run", "resume", "GraphInfo", "DriveOperationsClient"]
@@ -778,6 +779,32 @@ async def _stream_loop(
                     result.interaction_id
                 )
                 sink.emit(result.suspend_event)
+
+            elif isinstance(result, PauseResult):
+                # Transient Gemini error — save state for later resume.
+                await store.save(
+                    result.interaction_id,
+                    InteractionState(
+                        contents=result.contents,
+                        function_call_part={},
+                        file_system=file_system.snapshot,
+                        task_tree=task_tree_manager.snapshot,
+                        flags=flags or {},
+                        graph=graph,
+                        session_id=session_id,
+                        consents_granted=(
+                            consents_granted or set()
+                        ),
+                        function_filter=function_filter,
+                        model=model,
+                        completed_function_responses=[],
+                    ),
+                )
+                sink.emit(PausedEvent(
+                    message=result.error_message,
+                    status_code=result.status_code,
+                    interaction_id=result.interaction_id,
+                ))
 
             elif isinstance(result, dict) and "$error" in result:
                 sink.emit(ErrorEvent(message=result["$error"]))

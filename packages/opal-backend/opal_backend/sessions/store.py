@@ -29,6 +29,7 @@ class SessionStatus(StrEnum):
 
     RUNNING = "running"
     SUSPENDED = "suspended"
+    PAUSED = "paused"
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"

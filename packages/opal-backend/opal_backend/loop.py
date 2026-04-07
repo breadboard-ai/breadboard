@@ -35,11 +35,12 @@ from .function_caller import FunctionCallResult, FunctionCaller
 from .function_definition import FunctionGroup
 from .conform_body import conform_body
 from .gemini_client import (
+    GeminiAPIError,
     GeminiBody,
     GeminiChunk,
     stream_generate_content,
 )
-from .suspend import SuspendError, SuspendResult
+from .suspend import PauseResult, SuspendError, SuspendResult
 
 logger = logging.getLogger(__name__)
 
@@ -176,6 +177,7 @@ class Loop:
             hooks.on_start(args.objective)
 
         _suspended = False
+        _paused = False
 
         try:
             # Merge all function declarations into a single tool set
@@ -415,13 +417,38 @@ class Loop:
 
             return self.controller.result
 
+        # -----------------------------------------------------------------
+        # Pause on transient Gemini API errors (Python-only deviation)
+        #
+        # **Not present in the TypeScript port.** The TS loop treats all
+        # Gemini errors as terminal.  Here, transient errors (503/429)
+        # produce a PauseResult that snapshots the conversation for
+        # later retry, supporting long-running Bees sessions that can
+        # outlast temporary Gemini outages.
+        # -----------------------------------------------------------------
+        except GeminiAPIError as e:
+            if e.is_transient:
+                logger.warning(
+                    "Transient Gemini error after retries, pausing: %s", e,
+                )
+                _paused = True
+                return PauseResult(
+                    interaction_id=str(uuid.uuid4()),
+                    contents=contents,
+                    error_message=str(e),
+                    status_code=e.status_code,
+                )
+            error_message = str(e)
+            logger.exception("Non-transient Gemini API error")
+            return err(f"Agent error: {error_message}")
+
         except Exception as e:
             error_message = str(e)
             logger.exception("Agent error")
             return err(f"Agent error: {error_message}")
 
         finally:
-            # Don't fire on_finish when suspending — the agent is paused,
-            # not done. Firing it would close the progress UI session.
-            if hooks.on_finish and not _suspended:
+            # Don't fire on_finish when suspending or pausing — the agent
+            # is not done.  Firing it would close the progress UI session.
+            if hooks.on_finish and not _suspended and not _paused:
                 hooks.on_finish()

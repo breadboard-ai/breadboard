@@ -479,6 +479,38 @@ class ErrorEvent:
         return {"error": {"message": self.message}}
 
 
+# ---------------------------------------------------------------------------
+# Paused event (Python-only deviation)
+#
+# **Not present in the TypeScript port.** Emitted when the loop pauses
+# due to a transient Gemini API error (503/429) after exhausting retries.
+# The caller can resume the session later using the interaction_id.
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class PausedEvent:
+    """Loop paused due to transient infrastructure failure.
+
+    Fire-and-forget — no client response needed. The caller (e.g. the
+    Bees scheduler) decides when to retry.
+    """
+
+    type: str = "paused"
+    message: str = ""
+    status_code: int = 0
+    interaction_id: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "message": self.message,
+            "statusCode": self.status_code,
+        }
+        if self.interaction_id is not None:
+            payload["interactionId"] = self.interaction_id
+        return {"paused": payload}
+
+
 @dataclass
 class FinishEvent:
     """Cleanup signal."""
@@ -813,6 +845,7 @@ AgentEvent = Union[
     CompleteEvent,
     ErrorEvent,
     FinishEvent,
+    PausedEvent,
     SubagentAddJsonEvent,
     SubagentErrorEvent,
     SubagentFinishEvent,
@@ -836,3 +869,5 @@ SUSPEND_TYPES = frozenset({
     "applyEdits",
     "queryConsent",
 })
+
+PAUSE_TYPES = frozenset({"paused"})

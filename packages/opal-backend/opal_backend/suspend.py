@@ -31,6 +31,37 @@ from typing import Any
 from .events import LLMContent, SuspendEvent
 
 
+# ---------------------------------------------------------------------------
+# Pause — transient-error recovery (Python-only deviation)
+#
+# **Not present in the TypeScript port.** The TS loop treats all Gemini
+# errors as terminal.  In the Python backend, the Bees scheduler runs
+# many agents concurrently and Gemini 503/429 outages can persist for
+# extended periods.  PauseResult allows the loop to snapshot its
+# conversation state on a transient error so the caller (scheduler) can
+# retry later without losing progress.
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class PauseResult:
+    """Returned by the loop when a transient Gemini API error exhausts retries.
+
+    Structurally similar to ``SuspendResult`` but triggered by
+    infrastructure failure, not by an agent requesting user input.
+    There is no pending function call — the error occurs at the
+    streaming boundary between turns.
+
+    The caller should persist the ``contents`` via ``InteractionStore``
+    and emit a ``PausedEvent`` so the session can be resumed later.
+    """
+
+    interaction_id: str
+    contents: list[LLMContent]
+    error_message: str
+    status_code: int
+
+
 @dataclass
 class SuspendResult:
     """Returned by the loop when a function handler suspends.

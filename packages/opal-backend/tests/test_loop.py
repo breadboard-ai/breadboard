@@ -617,6 +617,138 @@ class TestLoop:
         assert result.success is True
         assert call_count == 2
 
+    @pytest.mark.asyncio
+    async def test_loop_pauses_on_transient_gemini_error(self):
+        """Transient GeminiAPIError → PauseResult with conversation snapshot."""
+        from opal_backend.gemini_client import GeminiAPIError
+        from opal_backend.suspend import PauseResult
+
+        loop = Loop(backend=MagicMock())
+
+        system_fns = make_system_functions(loop.controller)
+
+        async def work_fn(args, status_cb):
+            return {"done": True}
+
+        system_fns.append(
+            FunctionDefinition(
+                name="do_work",
+                description="Does work",
+                handler=work_fn,
+            )
+        )
+
+        mapped = map_definitions(system_fns)
+        group = FunctionGroup(
+            definitions=mapped.definitions,
+            declarations=mapped.declarations,
+        )
+
+        turn = 0
+
+        async def mock_stream(*args, **kwargs):
+            nonlocal turn
+            turn += 1
+            if turn == 1:
+                # First turn succeeds.
+                yield make_function_call_chunk("do_work", {})
+            else:
+                # Second turn: transient Gemini error.
+                raise GeminiAPIError(
+                    "503 Service Unavailable", status_code=503,
+                )
+
+        with patch(
+            "opal_backend.loop.stream_generate_content",
+            side_effect=mock_stream,
+        ):
+            result = await loop.run(
+                AgentRunArgs(
+                    objective={"parts": [{"text": "Test"}], "role": "user"},
+                    function_groups=[group],
+                )
+            )
+
+        assert isinstance(result, PauseResult)
+        assert result.status_code == 503
+        assert "503" in result.error_message
+        # Contents should include the objective + model response +
+        # function result from the successful first turn.
+        assert len(result.contents) >= 3
+
+    @pytest.mark.asyncio
+    async def test_loop_fails_on_nontransient_gemini_error(self):
+        """Non-transient GeminiAPIError (e.g. 400) → err(), not PauseResult."""
+        from opal_backend.gemini_client import GeminiAPIError
+
+        loop = Loop(backend=MagicMock())
+
+        system_fns = make_system_functions(loop.controller)
+        mapped = map_definitions(system_fns)
+        group = FunctionGroup(
+            definitions=mapped.definitions,
+            declarations=mapped.declarations,
+        )
+
+        async def mock_stream(*args, **kwargs):
+            raise GeminiAPIError("400 Bad Request", status_code=400)
+            yield  # Make this an async generator  # noqa: unreachable
+
+        with patch(
+            "opal_backend.loop.stream_generate_content",
+            side_effect=mock_stream,
+        ):
+            result = await loop.run(
+                AgentRunArgs(
+                    objective={"parts": [{"text": "Test"}], "role": "user"},
+                    function_groups=[group],
+                )
+            )
+
+        # Should be a regular error, not a PauseResult.
+        assert not ok(result)
+        assert "$error" in result
+
+    @pytest.mark.asyncio
+    async def test_loop_pause_does_not_fire_on_finish(self):
+        """on_finish must NOT be called when the loop pauses."""
+        from opal_backend.gemini_client import GeminiAPIError
+
+        loop = Loop(backend=MagicMock())
+
+        system_fns = make_system_functions(loop.controller)
+        mapped = map_definitions(system_fns)
+        group = FunctionGroup(
+            definitions=mapped.definitions,
+            declarations=mapped.declarations,
+        )
+
+        finish_called = False
+
+        def on_finish():
+            nonlocal finish_called
+            finish_called = True
+
+        hooks = LoopHooks(on_finish=on_finish)
+
+        async def mock_stream(*args, **kwargs):
+            raise GeminiAPIError("503 Service Unavailable", status_code=503)
+            yield  # Make this an async generator  # noqa: unreachable
+
+        with patch(
+            "opal_backend.loop.stream_generate_content",
+            side_effect=mock_stream,
+        ):
+            await loop.run(
+                AgentRunArgs(
+                    objective={"parts": [{"text": "Test"}], "role": "user"},
+                    function_groups=[group],
+                    hooks=hooks,
+                )
+            )
+
+        assert not finish_called
+
 
 # =============================================================================
 # Gemini Client Tests
@@ -683,4 +815,5 @@ class TestGeminiClient:
         assert has_content({"candidates": []}) is False
         assert has_content({"candidates": [{"content": {}}]}) is False
         assert has_content({"candidates": [{"content": {"parts": []}}]}) is False
+
 
