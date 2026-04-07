@@ -153,6 +153,19 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
                   pt.id === t.activeTicketId || t.ticketIds.includes(pt.id)
               );
               const isActive = activePulse !== undefined;
+              
+              const activeTicket = t.activeTicketId
+                ? global.tickets.find((tick: import("../../data/types.js").TicketData) => tick.id === t.activeTicketId)
+                : null;
+              const isPaused = activeTicket?.status === "paused";
+
+              let statusDotClass = "success";
+              if (isActive) statusDotClass = "active-running";
+              else if (isPaused) statusDotClass = "error"; // Reuse error red or add amber if needed
+
+              let statusText = "Ready";
+              if (isActive) statusText = activePulse.current_step || "Running...";
+              else if (isPaused) statusText = "Paused";
 
               return html`
                 <button
@@ -164,14 +177,8 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
                 >
                   <div class="journey-title">${t.title}</div>
                   <div class="journey-status">
-                    <span
-                      class="status-dot ${isActive
-                        ? "active-running"
-                        : "success"}"
-                    ></span>
-                    ${isActive
-                      ? activePulse.current_step || "Running..."
-                      : "Ready"}
+                    <span class="status-dot ${statusDotClass}"></span>
+                    ${statusText}
                   </div>
                 </button>
               `;

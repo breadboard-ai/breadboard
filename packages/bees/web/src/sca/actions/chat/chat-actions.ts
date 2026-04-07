@@ -369,6 +369,18 @@ export const switchThread = asAction(
   }
 );
 
+export const retryTicket = asAction(
+  "Retry Ticket",
+  { mode: ActionMode.Immediate },
+  async (evt?: Event) => {
+    if (!evt) return;
+    const { services } = bind;
+    const ticketId = (evt as CustomEvent<string>).detail;
+    if (!ticketId) return;
+    await services.api.retry(ticketId);
+  }
+);
+
 export const sendChat = asAction(
   "Send Chat",
   { mode: ActionMode.Immediate },
