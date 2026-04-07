@@ -23,7 +23,7 @@
         },
         "summary": {
           "type": "string",
-          "description": "A short summary for the task in the [Verb-ing] [Object] format, under four words."
+          "description": "A short summary for the task in the [Subject] [Action-er] format, under four words, e.g., \"Laptop Finder\", \"Meal Planner\""
         },
         "objective": {
           "type": "string",

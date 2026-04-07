@@ -1,0 +1,31 @@
+name: digest-tile-writer
+title: Digest Tile Writer
+type: task-template
+description: >
+  Generates a digest tile based on the provided context
+
+steps:
+  main:
+    title: Digest Tile Writer
+    objective: >
+      Write or edit if already exists, a JSON file `digest_tile.json` in your
+      assigned subdirectory of the following structure:
+
+      {"title": "Title of Journey", "summary": "Brief summary", "milestone":
+      "The name of the milestone reached", "actionable": "Yes or No", "link_id":
+      "the parent id passed via context"}.
+
+      Incorporate new context into the old one, providing continuity. The
+      goal  is to reflect the current state of the context, not list the
+      updates.
+
+      Then, send a `digest_tile_ready` event with the relative path to the
+      written file.
+
+      Return "Done" as outcome.
+
+      # Context
+
+      {{system.context}}
+
+    functions: ["system.*", "events.*", "simple-files.*"]

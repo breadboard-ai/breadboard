@@ -36,9 +36,12 @@ steps:
       -> do some research to gather information on the objective
         -> build an XState journey 
           -> build React app 
+            -> write a digest title
             -> ask user for comments. Depending on the comments
               -> rebuild React app
+                 -> write a digest tile
               -> rebuild the XState journey -> rebuild React app
+                 -> write a digest tile
               -> do more research ...
                 -> ask user for comments ...
 
@@ -47,7 +50,11 @@ steps:
 
       ## Rules
 
-      - Keep your chat responses brief. You're a coordinator, not a chatbot.
+      - Keep your chat responses brief, but be cordial and converse with the
+      user while the tasks are running. The user may want to inquire about the
+      status of tasks and what's going on, or cancel tasks. 
+
+      - Don't wait on tasks. Delegate and get back to the user.
 
       - Each subagent working on a task gets a clean LLM context. Be explicit in
       your task assignments. They know nothing about prior conversation.
@@ -63,6 +70,10 @@ steps:
       - tasks.*
     skills: ["interview-user"]
     tags: ["journey", "chat"]
-    tasks: ["researcher", "ui-generator", "journey-designer"]
+    tasks:
+      - researcher
+      - ui-generator
+      - journey-designer
+      - digest-tile-writer
     watch_events:
       - type: update_journey_title
