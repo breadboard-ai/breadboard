@@ -218,3 +218,97 @@ async def test_enrich_creator_tags_creator_has_no_tags(mock_clients):
     from bees.ticket import load_ticket
     fresh = load_ticket(creator.id)
     assert fresh.metadata.tags == ["a"]
+
+
+# ---------------------------------------------------------------------------
+# Pause tests
+# ---------------------------------------------------------------------------
+
+
+def test_eval_collector_detects_paused():
+    """EvalCollector sets paused=True on a paused event."""
+    from bees.session import EvalCollector
+
+    collector = EvalCollector()
+    collector.collect({"paused": {
+        "message": "503 Service Unavailable",
+        "statusCode": 503,
+        "interactionId": "iid-pause-1",
+    }})
+
+    assert collector.paused is True
+    assert collector.paused_event is not None
+    assert collector.error == "503 Service Unavailable"
+
+
+def test_update_metadata_paused(mock_clients):
+    """Paused result → ticket status 'paused', completed_at is None."""
+    from bees.session import SessionResult
+
+    http, backend = mock_clients
+    scheduler = Scheduler(http=http, backend=backend)
+
+    ticket = create_ticket("Objective")
+    result = SessionResult(
+        session_id="s1",
+        status="paused",
+        events=1,
+        output="",
+        paused=True,
+        error="503 Service Unavailable",
+    )
+
+    scheduler._update_metadata(ticket, result)
+
+    # _update_metadata sets completed_at, but for paused it should be None.
+    assert ticket.metadata.completed_at is None
+    # Status is set by _handle_pause, not _update_metadata.
+    # _update_metadata only recognizes "completed", so result.paused
+    # prevents it from setting "failed".
+
+
+def test_handle_pause_sets_status(mock_clients):
+    """_handle_pause sets ticket status to 'paused', assignee to None."""
+    from bees.session import SessionResult
+
+    http, backend = mock_clients
+    scheduler = Scheduler(http=http, backend=backend)
+
+    ticket = create_ticket("Objective")
+    ticket.metadata.status = "running"
+    ticket.metadata.assignee = "agent"
+
+    result = SessionResult(
+        session_id="s1",
+        status="paused",
+        events=1,
+        output="",
+        paused=True,
+        error="503 Service Unavailable",
+    )
+
+    scheduler._handle_pause(ticket, result)
+
+    assert ticket.metadata.status == "paused"
+    assert ticket.metadata.assignee is None
+
+
+def test_promote_does_not_cascade_paused(mock_clients):
+    """A blocked ticket with a paused dep stays blocked (no cascade)."""
+    from bees.scheduler import promote_blocked_tickets
+
+    parent = create_ticket("Parent")
+    parent.metadata.status = "paused"
+    parent.save_metadata()
+
+    child = create_ticket("Child")
+    child.metadata.status = "blocked"
+    child.metadata.depends_on = [parent.id]
+    child.save_metadata()
+
+    promote_blocked_tickets()
+
+    from bees.ticket import load_ticket
+    fresh_child = load_ticket(child.id)
+    # Should still be blocked, NOT failed.
+    assert fresh_child.metadata.status == "blocked"

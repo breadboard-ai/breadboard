@@ -28,7 +28,7 @@ import httpx
 
 from opal_backend.local.backend_client_impl import HttpBackendClient
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
-from opal_backend.events import SUSPEND_TYPES
+from opal_backend.events import PAUSE_TYPES, SUSPEND_TYPES
 from opal_backend.interaction_store import InteractionState
 from opal_backend.sessions.api import (
     Subscribers,
@@ -124,6 +124,8 @@ class SessionResult:
     suspended: bool = False
     suspend_event: dict[str, Any] | None = None
     outcome_content: dict[str, Any] | None = None
+    paused: bool = False
+    paused_event: dict[str, Any] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -175,6 +177,10 @@ class EvalCollector:
         # Suspend state
         self.suspended: bool = False
         self.suspend_event: dict[str, Any] | None = None
+
+        # Pause state (transient Gemini API error)
+        self.paused: bool = False
+        self.paused_event: dict[str, Any] | None = None
 
         # Error
         self.error: str | None = None
@@ -246,6 +252,13 @@ class EvalCollector:
             self.intermediate = result.get("intermediate")
 
         else:
+            # Check for paused events (transient Gemini API errors).
+            if "paused" in event:
+                self.paused = True
+                self.paused_event = event
+                self.error = event["paused"].get("message", "Paused")
+                return
+
             # Check for suspend events.
             for suspend_type in SUSPEND_TYPES:
                 if suspend_type in event:
@@ -531,7 +544,7 @@ async def run_session(
         _print_event_summary(event, prefix=prefix)
 
         # Write log at turn boundaries
-        if "sendRequest" in event or "usageMetadata" in event or "complete" in event or "error" in event or any(k in event for k in SUSPEND_TYPES):
+        if "sendRequest" in event or "usageMetadata" in event or "complete" in event or "error" in event or "paused" in event or any(k in event for k in SUSPEND_TYPES):
             _write_eval_log(out_path, collector.to_eval_file_data(ticket_id=ticket_id))
 
         if on_event:
@@ -542,14 +555,27 @@ async def run_session(
     status = await session_store.get_status(session_id)
 
 
-    # If suspended and we have a ticket dir, persist state for resume.
+    # If suspended or paused, persist state for later resume.
     if collector.suspended and ticket_dir:
-        await _save_suspended_state(
+        await _save_session_state(
             session_id=session_id,
             collector=collector,
             session_store=session_store,
             interaction_store=interaction_store,
             ticket_dir=ticket_dir,
+        )
+    elif collector.paused and ticket_dir:
+        paused_iid = (
+            collector.paused_event.get("paused", {}).get("interactionId")
+            if collector.paused_event else None
+        )
+        await _save_session_state(
+            session_id=session_id,
+            collector=collector,
+            session_store=session_store,
+            interaction_store=interaction_store,
+            ticket_dir=ticket_dir,
+            interaction_id=paused_iid,
         )
 
     return SessionResult(
@@ -566,6 +592,8 @@ async def run_session(
         suspended=collector.suspended,
         suspend_event=collector.suspend_event,
         outcome_content=collector.outcome_llm_content(),
+        paused=collector.paused,
+        paused_event=collector.paused_event,
     )
 
 
@@ -726,7 +754,7 @@ async def resume_session(
             _print_event_summary(event, prefix=prefix)
 
             # Write log at turn boundaries
-            if "sendRequest" in event or "usageMetadata" in event or "complete" in event or "error" in event or any(k in event for k in SUSPEND_TYPES):
+            if "sendRequest" in event or "usageMetadata" in event or "complete" in event or "error" in event or "paused" in event or any(k in event for k in SUSPEND_TYPES):
                 _write_eval_log(out_path, collector.to_eval_file_data(ticket_id=ticket_id))
 
             if on_event:
@@ -740,14 +768,27 @@ async def resume_session(
 
     status = await session_store.get_status(session_id)
 
-    # If suspended again, persist new state.
+    # If suspended or paused again, persist new state.
     if collector.suspended:
-        await _save_suspended_state(
+        await _save_session_state(
             session_id=session_id,
             collector=collector,
             session_store=session_store,
             interaction_store=interaction_store,
             ticket_dir=ticket_dir,
+        )
+    elif collector.paused:
+        paused_iid = (
+            collector.paused_event.get("paused", {}).get("interactionId")
+            if collector.paused_event else None
+        )
+        await _save_session_state(
+            session_id=session_id,
+            collector=collector,
+            session_store=session_store,
+            interaction_store=interaction_store,
+            ticket_dir=ticket_dir,
+            interaction_id=paused_iid,
         )
 
     return SessionResult(
@@ -764,6 +805,8 @@ async def resume_session(
         suspended=collector.suspended,
         suspend_event=collector.suspend_event,
         outcome_content=collector.outcome_llm_content(),
+        paused=collector.paused,
+        paused_event=collector.paused_event,
     )
 
 
@@ -803,24 +846,31 @@ def clear_session_state(ticket_dir: Path) -> None:
         state_path.unlink()
 
 
-async def _save_suspended_state(
+async def _save_session_state(
     *,
     session_id: str,
     collector: EvalCollector,
     session_store: InMemorySessionStore,
     interaction_store: InMemoryInteractionStore,
     ticket_dir: Path,
+    interaction_id: str | None = None,
 ) -> None:
-    """Extract and persist session state when a suspend is detected."""
-    # The interaction_id is embedded in the suspend event.
-    interaction_id = None
-    if collector.suspend_event:
-        for key in SUSPEND_TYPES:
-            if key in collector.suspend_event:
-                interaction_id = collector.suspend_event[key].get(
-                    "interactionId"
-                )
-                break
+    """Extract and persist session state for later resume.
+
+    Used for both suspend (agent-requested input) and pause (transient
+    Gemini API error).  When ``interaction_id`` is provided it is used
+    directly; otherwise the id is extracted from the collector's suspend
+    event or the session store.
+    """
+    if interaction_id is None:
+        # Try to extract from suspend event.
+        if collector.suspend_event:
+            for key in SUSPEND_TYPES:
+                if key in collector.suspend_event:
+                    interaction_id = collector.suspend_event[key].get(
+                        "interactionId"
+                    )
+                    break
 
     if not interaction_id:
         # Fallback: read from session store.
@@ -886,6 +936,10 @@ def _print_event_summary(
         icon = "✅" if success else "❌"
         print(f"  {prefix}{icon} complete", file=sys.stderr)
     else:
+        if "paused" in event:
+            msg = event["paused"].get("message", "?")
+            print(f"  {prefix}⏸ paused: {msg}", file=sys.stderr)
+            return
         for suspend_type in SUSPEND_TYPES:
             if suspend_type in event:
                 print(f"  {prefix}⏸️  {suspend_type}", file=sys.stderr)
