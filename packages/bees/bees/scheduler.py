@@ -428,16 +428,16 @@ class Scheduler:
                 self._running = False
 
     async def recover_stuck_tickets(self) -> list[Ticket]:
-        """Flip any ``running`` tickets back to ``available``.
+        """Flip any ``running`` or ``paused`` tickets back to ``available``.
 
         Returns the full ticket list (for ``on_startup``).
         """
         tickets = list_tickets()
         for t in tickets:
-            if t.metadata.status == "running":
+            if t.metadata.status in ("running", "paused"):
+                logger.info("Recovered stuck %s ticket: %s", t.metadata.status, t.id)
                 t.metadata.status = "available"
                 t.save_metadata()
-                logger.info("Recovered stuck running ticket: %s", t.id)
         return tickets
 
     async def run_all_waves(self) -> list[dict]:
