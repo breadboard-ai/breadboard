@@ -9,6 +9,8 @@ import pytest
 from unittest.mock import MagicMock
 from bees.functions.chat import get_chat_function_group_factory
 from bees.ticket import create_ticket, load_ticket
+from bees.context_updates import CONTEXT_UPDATE_TAG
+from opal_backend.function_caller import CONTEXT_PARTS_KEY
 
 
 @pytest.fixture(autouse=True)
@@ -39,9 +41,21 @@ async def test_chat_await_context_update_from_metadata(monkeypatch):
     # 3. Call chat_await_context_update
     result = await handlers["chat_await_context_update"]({}, None)
     
-    assert "context_updates" in result
-    assert result["context_updates"][0]["task_id"] == "sub-1"
+    # Should return resumed=True with context parts as text parts
+    assert result["resumed"] is True
+    assert CONTEXT_PARTS_KEY in result
+    context_parts = result[CONTEXT_PARTS_KEY]
+    assert len(context_parts) == 1
+    # Each part should be a text dict with the context_update tag
+    part = context_parts[0]
+    assert "text" in part
+    assert f"<{CONTEXT_UPDATE_TAG}>" in part["text"]
+    assert f"</{CONTEXT_UPDATE_TAG}>" in part["text"]
+    # The content should mention the task
+    assert "sub-1" in part["text"]
+    assert "done" in part["text"]
     
     # Verify metadata cleared
     updated_ticket = load_ticket(ticket.id)
     assert updated_ticket.metadata.pending_context_updates == []
+

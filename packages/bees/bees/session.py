@@ -47,6 +47,7 @@ from bees.functions.playbooks import get_playbooks_function_group
 from bees.functions.chat import get_chat_function_group_factory
 from bees.functions.events import get_events_function_group_factory
 from bees.functions.tasks import get_tasks_function_group_factory
+from bees.context_updates import updates_to_context_parts
 from bees.disk_file_system import DiskFileSystem
 
 # Scan skills once at import time.
@@ -680,6 +681,24 @@ async def resume_session(
     await session_store.set_resume_id(session_id, interaction_id)
     await interaction_store.save(interaction_id, interaction_state)
 
+    # Collect context updates from both sources:
+    #   1. response.json may contain context_updates (from scheduler delivery)
+    #   2. ticket metadata may have pending_context_updates (buffered while running)
+    all_updates: list = []
+    response_updates = response.pop("context_updates", None)
+    if response_updates:
+        all_updates.extend(response_updates)
+
+    if workspace_root_id:
+        from bees.ticket import load_ticket
+        ticket = load_ticket(workspace_root_id)
+        if ticket and ticket.metadata.pending_context_updates:
+            all_updates.extend(ticket.metadata.pending_context_updates)
+            ticket.metadata.pending_context_updates = []
+            ticket.save_metadata()
+
+    context_parts = updates_to_context_parts(all_updates) if all_updates else None
+
     queue = subscribers.subscribe(session_id)
 
     collector = EvalCollector()
@@ -689,6 +708,7 @@ async def resume_session(
             response=response,
             store=session_store,
             subscribers=subscribers,
+            context_parts=context_parts,
         )
     )
     register_task(session_id, task)

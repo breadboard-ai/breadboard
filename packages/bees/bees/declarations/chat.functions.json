@@ -39,11 +39,6 @@
           "type": "boolean",
           "description": "True when the user tapped the skip button instead of providing input."
         },
-        "context_updates": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Optional system notifications that accumulated while waiting for input. These are informational updates about background activity (e.g. tasks completing, state changes). Process them as context — they do not require immediate action."
-        },
         "error": {
           "type": "string",
           "description": "If an error has occurred, will contain a description of the error"
@@ -115,11 +110,6 @@
           },
           "description": "Array of selected choice IDs. For \"single\" mode, this will have exactly one element."
         },
-        "context_updates": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Optional system notifications that accumulated while waiting for input. These are informational updates about background activity (e.g. tasks completing, state changes). Process them as context — they do not require immediate action."
-        },
         "error": {
           "type": "string",
           "description": "If an error has occurred, will contain a description of the error"
@@ -141,10 +131,9 @@
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
-        "context_updates": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Context updates that arrived while suspended. Process these as your new instructions or information."
+        "resumed": {
+          "type": "boolean",
+          "description": "True when the agent has been resumed after a context update arrived."
         },
         "error": {
           "type": "string",

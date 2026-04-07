@@ -10,6 +10,7 @@ import {
   renderJson,
   renderExpandButton,
 } from "./json-tree.js";
+import "./truncated-text.js";
 import type {
   MergedSessionView,
   SessionSegment,
@@ -26,6 +27,8 @@ const TERMINATION_FUNCTIONS = new Set([
   "system_objective_fulfilled",
   "system_failed_to_fulfill_objective",
 ]);
+
+const CONTEXT_UPDATE_RE = /^<context_update>([\s\S]*)<\/context_update>$/;
 
 interface TokenBreakdown {
   cached: number;
@@ -372,12 +375,46 @@ class BeesLogDetail extends LitElement {
     const parts = (turn.parts || []).filter((p) => !this.isEmptyPart(p));
     if (parts.length === 0) return nothing;
 
+    // Separate context update text parts from everything else.
+    const contextParts: LogPart[] = [];
+    const otherParts: LogPart[] = [];
+    if (role === "user") {
+      for (const p of parts) {
+        if (p.text && CONTEXT_UPDATE_RE.test(p.text)) {
+          contextParts.push(p);
+        } else {
+          otherParts.push(p);
+        }
+      }
+    } else {
+      otherParts.push(...parts);
+    }
+
+    // Render context update cards.
+    const contextCards = contextParts.map((p) => {
+      const match = p.text!.match(CONTEXT_UPDATE_RE);
+      const content = match ? match[1].trim() : p.text!;
+      const label = html`<span class="role-chip context-update">context update</span>`;
+      return html`
+        <div class="turn context-update">
+          <div class="turn-role">${label}</div>
+          <div class="turn-parts">
+            <bees-truncated-text fadeBg="#1c1a11">${content}</bees-truncated-text>
+          </div>
+        </div>
+      `;
+    });
+
+    if (otherParts.length === 0) {
+      return html`${contextCards}`;
+    }
+
     // Function responses are injected by the system, not typed by a person.
     const hasOnlyFunctionResponses =
-      role === "user" && parts.every((p) => p.functionResponse);
+      role === "user" && otherParts.every((p) => p.functionResponse);
 
     if (hasOnlyFunctionResponses) {
-      return html`${parts.map((p) => {
+      return html`${contextCards}${otherParts.map((p) => {
         const name = p.functionResponse!.name;
         const label = html`<span class="role-chip response">response</span> ${name}`;
         return this.#renderCard("system", label, [p]);
@@ -386,10 +423,10 @@ class BeesLogDetail extends LitElement {
 
     // Model turns: split thoughts and function calls into their own cards.
     if (role === "model") {
-      return this.#renderModelTurn(parts);
+      return this.#renderModelTurn(otherParts);
     }
 
-    return this.#renderCard(role, role, parts);
+    return html`${contextCards}${this.#renderCard(role, role, otherParts)}`;
   }
 
   #renderModelTurn(parts: LogPart[]) {
@@ -517,12 +554,16 @@ class BeesLogDetail extends LitElement {
   #extractTerminationEntry(entry: LogTurn | undefined): LogTurn | null {
     if (!entry) return null;
     const parts = entry.parts || [];
+    // Ignore context update text parts when checking for termination.
+    const nonContextParts = parts.filter(
+      (p) => !(p.text && CONTEXT_UPDATE_RE.test(p.text))
+    );
     const isAllFunctionResponses =
       entry.role === "user" &&
-      parts.length > 0 &&
-      parts.every((p) => p.functionResponse);
+      nonContextParts.length > 0 &&
+      nonContextParts.every((p) => p.functionResponse);
     if (!isAllFunctionResponses) return null;
-    const hasTermination = parts.some(
+    const hasTermination = nonContextParts.some(
       (p) =>
         p.functionResponse && TERMINATION_FUNCTIONS.has(p.functionResponse.name)
     );

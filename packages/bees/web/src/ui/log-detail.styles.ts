@@ -289,6 +289,15 @@ const logDetailBaseStyles = css`
     color: #2dd4bf;
   }
 
+  .turn.context-update {
+    background: #1c1a11;
+    border: 1px solid #3d3520;
+  }
+
+  .turn.context-update .turn-role {
+    color: #f59e0b;
+  }
+
   .turn-parts {
     display: flex;
     flex-direction: column;
@@ -392,6 +401,11 @@ const logDetailBaseStyles = css`
   .role-chip.thought {
     background: #2d2540;
     color: #c4b5fd;
+  }
+
+  .role-chip.context-update {
+    background: #3d3520;
+    color: #fbbf24;
   }
 
   .part-function-response {
