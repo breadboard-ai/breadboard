@@ -247,6 +247,7 @@ async def resume_session(
     response: dict[str, Any],
     store: SessionStore,
     subscribers: Subscribers,
+    context_parts: list[dict[str, Any]] | None = None,
 ) -> None:
     """Resume a suspended session.
 
@@ -276,6 +277,7 @@ async def resume_session(
             extra_groups=ctx.extra_groups or None,
             model=ctx.model,
             file_system=ctx.file_system,
+            context_parts=context_parts,
         ),
         store=store,
         subscribers=subscribers,

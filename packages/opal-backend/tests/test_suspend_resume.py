@@ -922,6 +922,83 @@ class TestPreconditionSuspend(unittest.TestCase):
         asyncio.run(run())
 
 
+class TestFunctionCallerContextParts(unittest.TestCase):
+    """Tests that FunctionCaller extracts __context_parts__ from handler returns."""
+
+    def test_context_parts_extracted_and_included_in_turn(self):
+        """Handler returning __context_parts__ gets them as sibling parts."""
+        from opal_backend.function_caller import CONTEXT_PARTS_KEY
+
+        async def handler_with_context(args, status_cb):
+            return {
+                "resumed": True,
+                CONTEXT_PARTS_KEY: [
+                    {"text": "<context_update>task done</context_update>"},
+                ],
+            }
+
+        defn = FunctionDefinition(
+            name="chat_await_context_update",
+            description="Await",
+            handler=handler_with_context,
+        )
+
+        async def run():
+            caller = FunctionCaller({"chat_await_context_update": defn})
+            caller.call(
+                "call-1",
+                {"functionCall": {"name": "chat_await_context_update", "args": {}}},
+            )
+            results = await caller.get_results()
+
+            combined = results["combined"]
+            self.assertEqual(combined["role"], "user")
+
+            # Should have functionResponse + context_update text part.
+            parts = combined["parts"]
+            self.assertEqual(len(parts), 2)
+
+            # First part: functionResponse (without __context_parts__).
+            fr = parts[0]
+            self.assertIn("functionResponse", fr)
+            resp = fr["functionResponse"]["response"]
+            self.assertEqual(resp, {"resumed": True})
+            self.assertNotIn(CONTEXT_PARTS_KEY, resp)
+
+            # Second part: context update text.
+            self.assertEqual(
+                parts[1],
+                {"text": "<context_update>task done</context_update>"},
+            )
+
+        asyncio.run(run())
+
+    def test_no_context_parts_is_normal(self):
+        """Handler without __context_parts__ works as before."""
+
+        async def normal_handler(args, status_cb):
+            return {"result": "ok"}
+
+        defn = FunctionDefinition(
+            name="test_fn",
+            description="Test",
+            handler=normal_handler,
+        )
+
+        async def run():
+            caller = FunctionCaller({"test_fn": defn})
+            caller.call(
+                "call-1",
+                {"functionCall": {"name": "test_fn", "args": {}}},
+            )
+            results = await caller.get_results()
+            combined = results["combined"]
+            # Only the functionResponse part — no extras.
+            self.assertEqual(len(combined["parts"]), 1)
+            self.assertIn("functionResponse", combined["parts"][0])
+
+        asyncio.run(run())
+
 class TestFunctionCallerSiblingResults(unittest.TestCase):
     """Tests that FunctionCaller preserves completed sibling results on suspend.
 
@@ -1196,17 +1273,24 @@ class TestSuspendResumeWithSiblings(unittest.TestCase):
 
                 # --- Simulate resume: build the combined user turn ---
                 # This mirrors what run.py resume() does.
+                # Context updates are now separate text parts, not inside
+                # the functionResponse payload.
                 all_parts = list(result.completed_function_responses)
                 all_parts.append({
                     "functionResponse": {
                         "name": "chat_await_context_update",
-                        "response": {"context_updates": ["tile ready"]},
+                        "response": {"resumed": True},
                     }
+                })
+                # Context update as a text part sibling.
+                all_parts.append({
+                    "text": "<context_update>tile ready</context_update>",
                 })
                 combined_turn = {"parts": all_parts, "role": "user"}
                 resumed_contents = result.contents + [combined_turn]
 
-                # The last user turn must contain ALL three responses.
+                # The last user turn must contain ALL three responses
+                # plus the context update text part.
                 last_user_turn = resumed_contents[-1]
                 self.assertEqual(last_user_turn["role"], "user")
                 response_names = {
@@ -1221,6 +1305,15 @@ class TestSuspendResumeWithSiblings(unittest.TestCase):
                         "playbooks_run_playbook",
                         "chat_await_context_update",
                     },
+                )
+                # Verify context update text part is present.
+                text_parts = [
+                    p for p in last_user_turn["parts"] if "text" in p
+                ]
+                self.assertEqual(len(text_parts), 1)
+                self.assertIn(
+                    "<context_update>tile ready</context_update>",
+                    text_parts[0]["text"],
                 )
 
         asyncio.run(run())

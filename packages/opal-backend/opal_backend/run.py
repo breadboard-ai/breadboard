@@ -252,6 +252,7 @@ async def resume(
     extra_groups: list[FunctionGroup | FunctionGroupFactory] | None = None,
     model: str | None = None,
     file_system: FileSystem | None = None,
+    context_parts: list[dict[str, Any]] | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Resume a suspended agent run.
 
@@ -340,6 +341,9 @@ async def resume(
                 ),
             }
         })
+        # Include context update text parts alongside function responses.
+        if context_parts:
+            all_response_parts.extend(context_parts)
         function_response_turn = {
             "parts": all_response_parts,
             "role": "user",

@@ -32,6 +32,12 @@ LLMContent = dict[str, Any]
 FunctionCallPart = dict[str, Any]  # {"functionCall": {"name": ..., "args": ...}}
 FunctionResponsePart = dict[str, Any]  # {"functionResponse": {"name": ..., "response": ...}}
 
+# Key that handlers use to signal extra text parts alongside their response.
+# When a handler returns a dict containing this key, FunctionCaller extracts
+# the value (a list of part dicts) and includes them as sibling parts in the
+# combined user turn — separate from the functionResponse payload.
+CONTEXT_PARTS_KEY = "__context_parts__"
+
 
 @dataclass
 class FunctionCallResult:
@@ -39,6 +45,9 @@ class FunctionCallResult:
 
     call_id: str
     response: FunctionResponsePart
+    # Optional extra text parts (e.g. context updates) to include in the
+    # combined user turn alongside this function's response.
+    context_parts: list[dict[str, Any]] | None = None
 
 
 class FunctionCaller:
@@ -117,6 +126,10 @@ class FunctionCaller:
             # Port of FunctionCallerImpl.#callBuiltIn check from TS.
             if isinstance(response, dict) and "$error" in response:
                 return response
+            # Extract context parts before building the functionResponse.
+            context_parts = None
+            if isinstance(response, dict):
+                context_parts = response.pop(CONTEXT_PARTS_KEY, None)
             return FunctionCallResult(
                 call_id=call_id,
                 response={
@@ -125,6 +138,7 @@ class FunctionCaller:
                         "response": response,
                     }
                 },
+                context_parts=context_parts,
             )
         except SuspendError:
             # Let SuspendError propagate — the loop catches it to save state.
@@ -220,8 +234,13 @@ class FunctionCaller:
             suspend.completed_responses = completed
             raise suspend
 
+        # Build combined user turn: function responses + any context parts.
+        parts: list[dict[str, Any]] = [r.response for r in completed]
+        for r in completed:
+            if r.context_parts:
+                parts.extend(r.context_parts)
         combined: LLMContent = {
-            "parts": [r.response for r in completed],
+            "parts": parts,
             "role": "user",
         }
 

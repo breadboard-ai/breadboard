@@ -17,6 +17,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from opal_backend.function_caller import CONTEXT_PARTS_KEY
 from opal_backend.function_definition import (
     FunctionGroup,
     SessionHooks,
@@ -25,6 +26,7 @@ from opal_backend.function_definition import (
 )
 from opal_backend.functions.chat import _make_handlers
 from opal_backend.functions.chat import ChatEntryCallback
+from bees.context_updates import updates_to_context_parts
 
 __all__ = ["get_chat_function_group_factory"]
 
@@ -43,8 +45,7 @@ def get_chat_function_group_factory(
     The returned callable accepts ``SessionHooks`` and produces a
     ``FunctionGroup`` named ``"chat"`` — replacing the built-in
     chat group entirely. The handlers are identical to the built-in
-    versions, but the declarations include bees-specific
-    ``context_updates`` fields in the response schemas.
+    versions, but the declarations use bees-specific schemas.
 
     Args:
         on_chat_entry: Optional callback ``(role, content) -> None``
@@ -69,8 +70,11 @@ def get_chat_function_group_factory(
             args: dict[str, Any], status_cb: Any,
         ) -> dict[str, Any]:
             from opal_backend.functions.chat import SuspendError
-            
-            # Check for pending context updates first
+
+            # Check for pending context updates first.
+            # If updates are already buffered, return immediately
+            # without suspending — the updates are emitted as text
+            # parts via CONTEXT_PARTS_KEY.
             if workspace_root_id:
                 from bees.ticket import load_ticket
                 ticket = load_ticket(workspace_root_id)
@@ -78,7 +82,10 @@ def get_chat_function_group_factory(
                     updates = ticket.metadata.pending_context_updates
                     ticket.metadata.pending_context_updates = []
                     ticket.save_metadata()
-                    return {"context_updates": updates}
+                    return {
+                        "resumed": True,
+                        CONTEXT_PARTS_KEY: updates_to_context_parts(updates),
+                    }
 
             try:
                 return await _inner(
