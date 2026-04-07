@@ -142,3 +142,79 @@ async def test_deliver_context_update_immediate(mock_clients):
     from bees.ticket import load_ticket
     fresh_creator = load_ticket(creator.id)
     assert fresh_creator.metadata.assignee == "agent"
+
+
+# ---------------------------------------------------------------------------
+# Tag enrichment tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_enrich_creator_tags_merges(mock_clients):
+    """Child tags are merged (union) into the creator's existing tags."""
+    http, backend = mock_clients
+    scheduler = Scheduler(http=http, backend=backend)
+
+    creator = create_ticket("Parent", tags=["b", "c"])
+    child = create_ticket("Child", tags=["a", "b"])
+    child.metadata.creator_ticket_id = creator.id
+    child.save_metadata()
+
+    result = scheduler._enrich_creator_tags(child)
+
+    assert result is not None
+    assert result.id == creator.id
+    from bees.ticket import load_ticket
+    fresh = load_ticket(creator.id)
+    assert fresh.metadata.tags == ["a", "b", "c"]
+
+
+@pytest.mark.asyncio
+async def test_enrich_creator_tags_no_creator(mock_clients):
+    """No crash when creator_ticket_id points to a nonexistent ticket."""
+    http, backend = mock_clients
+    scheduler = Scheduler(http=http, backend=backend)
+
+    child = create_ticket("Child", tags=["a"])
+    child.metadata.creator_ticket_id = "nonexistent-id"
+    child.save_metadata()
+
+    # Should not raise, returns None.
+    assert scheduler._enrich_creator_tags(child) is None
+
+
+@pytest.mark.asyncio
+async def test_enrich_creator_tags_no_tags(mock_clients):
+    """Creator is unchanged when the child has no tags."""
+    http, backend = mock_clients
+    scheduler = Scheduler(http=http, backend=backend)
+
+    creator = create_ticket("Parent", tags=["x"])
+    child = create_ticket("Child")  # No tags.
+    child.metadata.creator_ticket_id = creator.id
+    child.save_metadata()
+
+    assert scheduler._enrich_creator_tags(child) is None
+
+    from bees.ticket import load_ticket
+    fresh = load_ticket(creator.id)
+    assert fresh.metadata.tags == ["x"]
+
+
+@pytest.mark.asyncio
+async def test_enrich_creator_tags_creator_has_no_tags(mock_clients):
+    """Creator with None tags receives the child's tags."""
+    http, backend = mock_clients
+    scheduler = Scheduler(http=http, backend=backend)
+
+    creator = create_ticket("Parent")  # tags=None
+    child = create_ticket("Child", tags=["a"])
+    child.metadata.creator_ticket_id = creator.id
+    child.save_metadata()
+
+    result = scheduler._enrich_creator_tags(child)
+
+    assert result is not None
+    from bees.ticket import load_ticket
+    fresh = load_ticket(creator.id)
+    assert fresh.metadata.tags == ["a"]

@@ -373,6 +373,43 @@ class Scheduler:
             creator.save_metadata()
             logger.info("Context update buffered for %s", creator_id)
 
+    def _enrich_creator_tags(self, ticket: Ticket) -> Ticket | None:
+        """Merge a completed ticket's tags into its creator's tags.
+
+        Called when a subagent finishes (any terminal status).  Performs
+        a deduplicated union — one level up only.
+
+        Returns the enriched creator ticket so the caller can broadcast
+        a ``ticket_update`` via SSE, or ``None`` if nothing changed.
+        """
+        creator_id = ticket.metadata.creator_ticket_id
+        child_tags = ticket.metadata.tags
+        if not creator_id or not child_tags:
+            return None
+
+        creator = load_ticket(creator_id)
+        if not creator:
+            logger.warning(
+                "Tag enrichment: creator %s not found for %s",
+                creator_id, ticket.id[:8],
+            )
+            return None
+
+        existing = set(creator.metadata.tags or [])
+        merged = existing | set(child_tags)
+        if merged == existing:
+            return None  # Nothing new.
+
+        creator.metadata.tags = sorted(merged)
+        creator.save_metadata()
+        logger.info(
+            "Tag enrichment: %s -> %s (added %s)",
+            ticket.id[:8],
+            creator_id[:8],
+            sorted(merged - existing),
+        )
+        return creator
+
     async def start_loop(self) -> None:
         """Background loop that runs cycles whenever triggered."""
         while True:
@@ -946,7 +983,9 @@ class Scheduler:
                         if creator_id:
                             update = {"task_id": updated.id, "outcome": updated.metadata.outcome or "completed"}
                             self._deliver_context_update(creator_id, update)
-                            
+                        enriched = self._enrich_creator_tags(updated)
+                        if enriched and self._hooks.on_ticket_done:
+                            await self._hooks.on_ticket_done(enriched)
                         if self._hooks.on_ticket_done:
                             await self._hooks.on_ticket_done(updated)
                         await self._check_playbook_completion_internal(updated)
@@ -974,7 +1013,9 @@ class Scheduler:
                         if creator_id:
                             update = {"task_id": updated.id, "outcome": updated.metadata.outcome or "completed"}
                             self._deliver_context_update(creator_id, update)
-                            
+                        enriched = self._enrich_creator_tags(updated)
+                        if enriched and self._hooks.on_ticket_done:
+                            await self._hooks.on_ticket_done(enriched)
                         if self._hooks.on_ticket_done:
                             await self._hooks.on_ticket_done(updated)
                         await self._check_playbook_completion_internal(updated)
