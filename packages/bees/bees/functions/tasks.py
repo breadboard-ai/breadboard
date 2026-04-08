@@ -161,32 +161,41 @@ def _make_handlers(
     async def _tasks_check_status(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
         if status_cb:
             status_cb("Checking status of tasks")
-            
-        tasks = []
+
+        tasks: list[dict[str, Any]] = []
         if caller_ticket_id:
-            from bees.ticket import TICKETS_DIR, load_ticket
-            
-            if TICKETS_DIR.exists():
-                for entry in TICKETS_DIR.iterdir():
-                    if not entry.is_dir():
-                        continue
-                    try:
-                        ticket = load_ticket(entry.name)
-                        if ticket and ticket.metadata.creator_ticket_id == caller_ticket_id:
-                            tasks.append({
-                                "task_id": ticket.id,
-                                "summary": ticket.metadata.title or "(no title)",
-                                "status": ticket.metadata.status,
-                            })
-                    except Exception as e:
-                        logger.warning("tasks_check_status: failed to read ticket %s: %s", entry.name, e)
-                        
+            from collections import defaultdict
+
+            from bees.ticket import list_tickets as _list_tickets
+
+            # Build an index: creator_ticket_id -> list of child tickets.
+            children_of: dict[str, list[Any]] = defaultdict(list)
+            for t in _list_tickets():
+                if t.metadata.creator_ticket_id:
+                    children_of[t.metadata.creator_ticket_id].append(t)
+
+            def _build_tree(parent_id: str) -> list[dict[str, Any]]:
+                result: list[dict[str, Any]] = []
+                for t in children_of.get(parent_id, []):
+                    node: dict[str, Any] = {
+                        "task_id": t.id,
+                        "summary": t.metadata.title or "(no title)",
+                        "status": t.metadata.status,
+                    }
+                    subtasks = _build_tree(t.id)
+                    if subtasks:
+                        node["subtasks"] = subtasks
+                    result.append(node)
+                return result
+
+            tasks = _build_tree(caller_ticket_id)
+
         if status_cb:
             status_cb(None, None)
-            
+
         if not tasks:
             return {"message": "There are no tasks."}
-            
+
         return {"tasks": tasks}
 
     async def _tasks_cancel_task(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
