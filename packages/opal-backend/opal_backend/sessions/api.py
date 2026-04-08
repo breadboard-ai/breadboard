@@ -107,6 +107,7 @@ class _SessionContext:
     initial_files: dict[str, str] | None = None
     model: str | None = None
     file_system: "FileSystem | None" = None
+    context_queue: asyncio.Queue | None = None
 
 
 # Module-level registries.
@@ -134,6 +135,7 @@ async def new_session(
     initial_files: dict[str, str] | None = None,
     model: str | None = None,
     file_system: "FileSystem | None" = None,
+    context_queue: asyncio.Queue | None = None,
 ) -> str:
     """Create a session and stash its context for start_session().
 
@@ -163,6 +165,7 @@ async def new_session(
         initial_files=initial_files,
         model=model,
         file_system=file_system,
+        context_queue=context_queue,
     )
     return session_id
 
@@ -235,6 +238,7 @@ async def start_session(
             initial_files=ctx.initial_files,
             model=ctx.model,
             file_system=ctx.file_system,
+            context_queue=ctx.context_queue,
         ),
         store=store,
         subscribers=subscribers,
@@ -279,6 +283,7 @@ async def resume_session(
             model=ctx.model,
             file_system=ctx.file_system,
             context_parts=context_parts,
+            context_queue=ctx.context_queue,
         ),
         store=store,
         subscribers=subscribers,
