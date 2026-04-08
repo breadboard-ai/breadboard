@@ -21,7 +21,8 @@ export { HostMessage, IframeMessage };
 
 export class MessageBridge {
   #iframe: HTMLIFrameElement;
-  #handler: ((event: MessageEvent) => void) | null = null;
+  #handler: (event: MessageEvent) => void;
+  #callback: ((msg: IframeMessage) => void) | null = null;
   #ready = false;
   #readyPromise: Promise<void>;
   #resolveReady!: () => void;
@@ -30,18 +31,28 @@ export class MessageBridge {
     this.#iframe = iframe;
     this.#readyPromise = new Promise((resolve) => {
       this.#resolveReady = resolve;
-
-      // If the iframe is already fully loaded, we likely missed the 'ready' message.
-      // Because it's on the same origin, we can check readyState safely.
-      try {
-        if (iframe.contentDocument?.readyState === "complete") {
-          this.#ready = true;
-          resolve();
-        }
-      } catch {
-        // Cross-origin fallback, though this spike is same-origin.
-      }
     });
+
+    this.#handler = (event: MessageEvent) => {
+      // Only accept messages from our iframe.
+      if (event.source !== this.#iframe.contentWindow) return;
+
+      const data = event.data as IframeMessage;
+      if (!data || typeof data !== "object" || !("type" in data)) return;
+
+      if (data.type === "ready") {
+        this.#ready = true;
+        this.#resolveReady();
+        return;
+      }
+
+      // Forward other messages to the callback if registered.
+      if (this.#callback) {
+        this.#callback(data);
+      }
+    };
+
+    window.addEventListener("message", this.#handler);
   }
 
   /** Send a message to the iframe. Waits for the iframe to signal ready. */
@@ -57,23 +68,7 @@ export class MessageBridge {
    * handled internally and not forwarded.
    */
   onMessage(callback: (msg: IframeMessage) => void): void {
-    this.#handler = (event: MessageEvent) => {
-      // Only accept messages from our iframe.
-      if (event.source !== this.#iframe.contentWindow) return;
-
-      const data = event.data as IframeMessage;
-      if (!data || typeof data !== "object" || !("type" in data)) return;
-
-      if (data.type === "ready") {
-        this.#ready = true;
-        this.#resolveReady();
-        return;
-      }
-
-      callback(data);
-    };
-
-    window.addEventListener("message", this.#handler);
+    this.#callback = callback;
   }
 
   /** Whether the iframe has signalled readiness. */
@@ -83,9 +78,7 @@ export class MessageBridge {
 
   /** Clean up the message listener. */
   dispose(): void {
-    if (this.#handler) {
-      window.removeEventListener("message", this.#handler);
-      this.#handler = null;
-    }
+    window.removeEventListener("message", this.#handler);
+    this.#callback = null;
   }
 }

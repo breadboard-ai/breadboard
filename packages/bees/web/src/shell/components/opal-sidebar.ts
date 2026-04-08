@@ -92,16 +92,20 @@ const styles = css`
   }
 
   .expand-toggle {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
     color: var(--cg-color-on-surface-muted, #79757f);
     transition: transform 0.15s ease;
     flex-shrink: 0;
     user-select: none;
+  }
+
+  .expand-toggle svg {
+    width: 12px;
+    height: 12px;
   }
 
   .expand-toggle.expanded {
@@ -203,12 +207,18 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
     node: AgentTreeNode,
     selectedId: string | null,
     allTickets: TicketData[]
-  ): TemplateResult {
+  ): TemplateResult | typeof nothing {
     const t = node.ticket;
+    const perspectives = derivePerspectives(t, allTickets);
+
+    // Hide agents with no interesting perspectives — they're noise.
+    const hasAnyPerspective =
+      perspectives.hasChat || perspectives.hasBundle || perspectives.hasSubagents;
+    if (!hasAnyPerspective) return nothing;
+
     const hasChildren = node.children.length > 0;
     const isExpanded = this.expandedIds.has(t.id);
     const isSelected = t.id === selectedId;
-    const perspectives = derivePerspectives(t, allTickets);
     const pulseTasks = this.sca.controller.global.pulseTasks;
     const isRunning = pulseTasks.some((pt) => pt.id === t.id);
     const displayStatus = isRunning ? "running" : t.status;
@@ -229,7 +239,7 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
                 this.#toggleExpand(t.id);
               }
             }}
-          >▸</span>
+          ><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 6l6 6-6 6z"/></svg></span>
           <span class="status-dot ${displayStatus}"></span>
           <span class="node-title">${title}</span>
           <span class="perspective-icons">
