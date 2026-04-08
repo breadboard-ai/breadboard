@@ -7,11 +7,12 @@
 import * as Sync from "./sync/sync-actions.js";
 import * as Chat from "./chat/chat-actions.js";
 import * as Stage from "./stage/stage-actions.js";
+import * as Tree from "./tree/tree-actions.js";
 
 import type { AppActions, AppController, AppServices } from "../types.js";
 import type { ActionWithTriggers } from "../coordination.js";
 
-export { Sync, Chat, Stage };
+export { Sync, Chat, Stage, Tree };
 
 let instance: AppActions | null = null;
 let triggerDisposers: Array<() => void> = [];
@@ -21,11 +22,13 @@ export function actions(controller: AppController, services: AppServices) {
     Sync.bind({ controller, services });
     Chat.bind({ controller, services });
     Stage.bind({ controller, services });
+    Tree.bind({ controller, services });
 
     instance = {
       sync: Sync,
       chat: Chat,
       stage: Stage,
+      tree: Tree,
     } satisfies AppActions;
   }
   return instance;
@@ -44,6 +47,7 @@ export function activateTriggers(): () => void {
     ...Object.values(Sync),
     ...Object.values(Chat),
     ...Object.values(Stage),
+    ...Object.values(Tree),
   ];
 
   const actionsWithTriggers: Array<{

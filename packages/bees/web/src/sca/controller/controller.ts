@@ -4,12 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { AgentTreeController } from "./subcontrollers/agent-tree.js";
 import { ChatController } from "./subcontrollers/chat.js";
 import { StageController } from "./subcontrollers/stage.js";
 import { GlobalController } from "./subcontrollers/global.js";
 import { AppController } from "../types.js";
 
 export class BeesController implements AppController {
+  readonly agentTree = new AgentTreeController();
   readonly chat = new ChatController();
   readonly stage = new StageController();
   readonly global = new GlobalController();
