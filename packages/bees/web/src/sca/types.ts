@@ -80,12 +80,14 @@ export interface AppServices {
 }
 
 import type { GlobalController } from "./controller/subcontrollers/global.js";
+import type { AgentTreeController } from "./controller/subcontrollers/agent-tree.js";
 import type { ChatController } from "./controller/subcontrollers/chat.js";
 import type { StageController } from "./controller/subcontrollers/stage.js";
 
 export interface AppController {
   isHydrated: Promise<number[]>;
   global: GlobalController;
+  agentTree: AgentTreeController;
   chat: ChatController;
   stage: StageController;
 }
@@ -94,4 +96,5 @@ export interface AppActions {
   sync: typeof import("./actions/sync/sync-actions.js");
   chat: typeof import("./actions/chat/chat-actions.js");
   stage: typeof import("./actions/stage/stage-actions.js");
+  tree: typeof import("./actions/tree/tree-actions.js");
 }
