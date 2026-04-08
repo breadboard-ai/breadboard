@@ -1,9 +1,10 @@
 name: journey-manager
 title: Journey Manager
+type: task-template
 description: >
-  Manages a multi-step journey: interviews the user, dispatches research,
-  journey design, and UI generation as finite workers, and iterates on feedback
-  until the objective is met.
+  Manages a multi-step user journey: interviews the user, dispatches research,
+  journey design, and UI generation, and iterates on feedback until the
+  objective is met.
 
 steps:
   main:

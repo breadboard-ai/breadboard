@@ -426,8 +426,8 @@ class TestTicketPaths:
         )
         assert t.fs_dir == TICKETS_DIR / "parent-ticket" / "filesystem"
 
-    def test_sibling_tickets_get_parent_ticket_id(self, _temp_tickets, write_playbook):
-        """Non-root tickets in a playbook get parent_ticket_id = root ticket ID."""
+    def test_sibling_steps_get_own_filesystem(self, _temp_tickets, write_playbook):
+        """Top-level playbook steps each get their own filesystem."""
         write_playbook("siblings", {
             "name": "siblings",
             "steps": {
@@ -439,11 +439,83 @@ class TestTicketPaths:
         tickets = run_playbook("siblings")
         assert len(tickets) == 2
 
-        root = next(t for t in tickets if t.metadata.parent_ticket_id is None)
-        child = next(t for t in tickets if t.metadata.parent_ticket_id is not None)
+        # Both tickets should have parent_ticket_id=None and distinct fs_dirs.
+        for t in tickets:
+            assert t.metadata.parent_ticket_id is None
+        assert tickets[0].fs_dir != tickets[1].fs_dir
 
-        assert child.metadata.parent_ticket_id == root.id
-        assert root.fs_dir == child.fs_dir
+    def test_shared_workspace_propagates_to_all_steps(self, _temp_tickets, write_playbook):
+        """When launched with parent_ticket_id, all steps inherit it."""
+        write_playbook("sub", {
+            "name": "sub",
+            "steps": {
+                "a": {"objective": "step a"},
+                "b": {"objective": "step b with {{a}}"},
+            },
+        })
+
+        tickets = run_playbook("sub", parent_ticket_id="caller-ticket")
+        assert len(tickets) == 2
+
+        for t in tickets:
+            assert t.metadata.parent_ticket_id == "caller-ticket"
+        assert tickets[0].fs_dir == tickets[1].fs_dir
+
+    def test_alphabetical_order_does_not_determine_filesystem_owner(
+        self, _temp_tickets, write_playbook,
+    ):
+        """Step sort order must not affect which ticket owns the filesystem.
+
+        Regression: alphabetical tie-breaking in topological_sort caused the
+        first-sorted step to become workspace_root for all siblings, giving
+        it the filesystem and making every later step a guest.
+        """
+        # "alpha" sorts before "main" — but neither should own the other's fs.
+        write_playbook("alpha-trap", {
+            "name": "alpha-trap",
+            "steps": {
+                "main": {"objective": "I am the primary agent."},
+                "alpha": {"objective": "I sort first alphabetically."},
+            },
+        })
+
+        tickets = run_playbook("alpha-trap")
+        by_objective = {t.objective: t for t in tickets}
+        main = by_objective["I am the primary agent."]
+        alpha = by_objective["I sort first alphabetically."]
+
+        # Each step owns its own filesystem, regardless of sort position.
+        assert main.metadata.parent_ticket_id is None
+        assert alpha.metadata.parent_ticket_id is None
+        assert main.fs_dir != alpha.fs_dir
+        assert main.fs_dir.parent == main.dir
+        assert alpha.fs_dir.parent == alpha.dir
+
+    def test_independent_steps_never_share_filesystem(
+        self, _temp_tickets, write_playbook,
+    ):
+        """Steps with no inter-step deps must get isolated filesystems.
+
+        This is the invariant: workspace sharing is opt-in (share_workspace),
+        never a side effect of being in the same playbook.
+        """
+        write_playbook("isolated", {
+            "name": "isolated",
+            "steps": {
+                "chat": {"objective": "Handle user chat."},
+                "worker": {"objective": "Background processing."},
+                "watcher": {"objective": "Watch for events."},
+            },
+        })
+
+        tickets = run_playbook("isolated")
+        fs_dirs = [t.fs_dir for t in tickets]
+
+        # All three must be distinct.
+        assert len(set(fs_dirs)) == 3
+        # And each must live under its own ticket directory.
+        for t in tickets:
+            assert t.fs_dir == t.dir / "filesystem"
 
     def test_list_tickets_no_orphan_run_dirs(self, _temp_tickets, write_playbook):
         """Running a playbook should not create non-ticket directories."""

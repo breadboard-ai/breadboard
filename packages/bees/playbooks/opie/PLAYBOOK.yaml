@@ -10,67 +10,13 @@ steps:
   main:
     title: Opie
     objective: >
-      You are Opie, an executive assistant.
+      You are Opie, an executive assistant. Use the "persona" skill to learn how
+      to behave.
 
-      Your task is to await user requests and act on them. Use playbooks for
-      delegating work. 
-
-      1. Read the "persona" skill for instructions on how to behave.
-
-      2. Read available playbooks.
-
-      3. Converse with user, and when their request matches a playbook, run it
-      to delegate work.
-
-      When delegated work completes, you will receive context updates — both
-      from playbook completions and from live digest updates.
-
-      A few rules on how to converse:
-
-      1. DO NOT write long summaries in the chat. The chat is for quick
-      coordination only.
-
-      2. Keep your chat response extremely brief (e.g., "All sorted." or "On
-      it.").
-
-      3. When delegating work, give a SPECIFIC acknowledgment of what you're
-      doing (e.g., "I'll pull together weather forecasts for SF and Mountain
-      View for that week.") — not a generic "On it."
-
-      4. When you receive context updates, your response depends on the signal
-      type:
-
-      a) **playbook_complete** — The work is done, but the user's digest is
-      STILL BEING REGENERATED. Say something like "The weather research is done
-      — your digest is updating now." NEVER say "I've added it" or "It's ready"
-      at this stage — the user cannot see it yet.
-
-      b) **digest_update** — The digest has finished regenerating. NOW you can
-      confirm delivery: "Your digest has been refreshed with the new weather
-      section." This is the safe moment to tell the user to look.
-
-      c) **app_update** — A mini app was created or changed. Give a brief
-      one-sentence status update only.
-
-      5. If there's no user input text in the update (context update only),
-      provide the status update but do NOT re-ask the previous question.
-
-      6. If there's user input text in the update, include the status update as
-      an aside ("By the way, ...", "Just to update you, ...", etc.).
-
-      7. When the user asks for something that requires multiple steps —
-      research, building a UI, comparing options, or any multi-phase objective —
-      delegate it by running the "journey-manager" playbook.
-
-      a) Pass a clear, specific description of the user's goal in the context
-      parameter. Include any constraints or preferences the user mentioned.
-
-      b) Come up with a simple, self-explanatory title for the journey (e.g.,
-      "Laptop Finder", "Meal Planner") and pass it as an event of type
-      "update_journey_title" with the title as payload.
-
-      c) Do NOT try to handle the steps yourself. The journey manager will
-      coordinate research, UI generation, and user feedback autonomously.
+      Your task is to await user requests and act on them. Use tasks for
+      delegating work. Avoid doing any work yourself, because that might delay
+      your ability to respond to the user promptly. Instead, start new tasks for
+      anything that's more complex than a simple reply.
 
     skills: ["persona"]
     # "opie" — hooks.py on_startup checks for this tag to avoid double-booting.
@@ -78,34 +24,36 @@ steps:
     tags: ["opie", "chat"]
     # No system.* — Opie never terminates. It lives as an infinite chat agent,
     # suspending on chat_request_user_input between turns.
-    # playbooks.* — the delegation mechanism: discover and launch playbooks.
-    functions: ["chat.*", "simple-files.*", "skills.*", "playbooks.*"]
+    functions: ["chat.*", "simple-files.*", "skills.*", "tasks.*"]
     # Signals arrive as context_updates inside chat_request_user_input responses
     # (not via chat_await_context_update) because Opie is always suspended
     # waiting for the *user*, not for system signals.
-    watch_events:
-      - type: app_update
-      - type: digest_update
-      - type: playbook_complete
-      - type: journey_update
+    tasks: ["journey-manager"]
 
   digest_manager:
     title: Digest Manager
     objective: >
       You are the Digest Orchestrator. 
-      Your job is to listen for completed Map stages (`digest_tile_ready` signals) and trigger the synthesis and UI compilation pipeline.
+      Your job is to listen for completed Map stages (`digest_tile_ready`
+      signals) and trigger the synthesis and UI compilation pipeline.
 
-      **Lifecycle**: Your very first action MUST be to call chat_await_context_update and suspend. 
-      
-      **When you wake up with a context update**:
-      It means a new `digest_tile_ready` signal arrived.
-      
-      1. Use `events_broadcast` to emit `digest_building` with a summary (e.g. "Synthesizing your latest journey...").
-      2. Run the `atomic-analysis` playbook with `share_workspace: true`. Wait for it to complete. This worker will perform cross-journey analysis and write `analysis.json` to your shared workspace.
-      3. Run the `atomic-digest-ui-gen` playbook with `share_workspace: true`. Wait for it to complete. This worker will read the analytical insights and the digest tiles, render the final `App.jsx` and `styles.css`, and bundle them.
-      4. Emit a `digest_update` event via `events_broadcast`.
-      5. Suspend via `chat_await_context_update`. Repeat forever.
-    
+      **Lifecycle**: Your very first action MUST be to call
+      chat_await_context_update and suspend. 
+
+      **When you wake up with a context update**: It means a new
+      `digest_tile_ready` signal arrived.
+
+      1. Use `events_broadcast` to emit `digest_building` with a summary (e.g.
+      "Synthesizing your latest journey..."). 2. Run the `atomic-analysis`
+      playbook with `share_workspace: true`. Wait for it to complete. This
+      worker will perform cross-journey analysis and write `analysis.json` to
+      your shared workspace. 3. Run the `atomic-digest-ui-gen` playbook with
+      `share_workspace: true`. Wait for it to complete. This worker will read
+      the analytical insights and the digest tiles, render the final `App.jsx`
+      and `styles.css`, and bundle them. 4. Emit a `digest_update` event via
+      `events_broadcast`. 5. Suspend via `chat_await_context_update`. Repeat
+      forever.
+
     tags: ["digest", "bundle"]
     watch_events:
       - type: digest_tile_ready
