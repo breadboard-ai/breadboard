@@ -289,6 +289,7 @@ class Scheduler:
         self._running_tickets: set[str] = set()
         self._completion_events: dict[str, asyncio.Event] = {}
         self._active_tasks: dict[str, asyncio.Task] = {}
+        self._context_queues: dict[str, asyncio.Queue] = {}
 
     # -- public API --------------------------------------------------------
 
@@ -365,23 +366,43 @@ class Scheduler:
         self._deliver_context_update(ticket_id, update)
         return None
 
-    def _deliver_context_update(self, creator_id: str, update: dict[str, Any]) -> None:
-        """Deliver or buffer context update for a creator ticket."""
+    def _deliver_context_update(self, target_id: str, update: dict[str, Any]) -> None:
+        """Deliver, inject, or buffer a context update for a ticket.
+
+        Three delivery paths, tried in order:
+        1. **Mid-stream** — ticket is running and has a live context
+           queue.  Push pre-formatted parts for injection at the next
+           turn boundary.
+        2. **Immediate resume** — ticket is suspended and idle.  Write
+           ``response.json`` and flip assignee to trigger resume.
+        3. **Buffer** — ticket is busy but has no live queue (e.g.
+           batch mode).  Append to ``pending_context_updates`` in
+           metadata for later drain.
+        """
         from bees.ticket import load_ticket
+        from bees.context_updates import updates_to_context_parts
         import json
-        
-        creator = load_ticket(creator_id)
-        if not creator:
-            logger.warning("Failed to load creator ticket %s", creator_id)
+
+        # Path 1: mid-stream injection via live queue.
+        queue = self._context_queues.get(target_id)
+        if queue is not None:
+            parts = updates_to_context_parts([update])
+            queue.put_nowait(parts)
+            logger.info("Context update injected mid-stream for %s", target_id)
             return
-            
-        # 1. If suspended on input, deliver immediately via response.json
+
+        target = load_ticket(target_id)
+        if not target:
+            logger.warning("Failed to load ticket %s for context update", target_id)
+            return
+
+        # Path 2: immediate resume via response.json.
         if (
-            creator.metadata.status == "suspended"
-            and creator.metadata.assignee == "user"
-            and creator_id not in self._running_tickets
+            target.metadata.status == "suspended"
+            and target.metadata.assignee == "user"
+            and target_id not in self._running_tickets
         ):
-            response_path = creator.dir / "response.json"
+            response_path = target.dir / "response.json"
             response_path.write_text(
                 json.dumps(
                     {"context_updates": [update]},
@@ -390,16 +411,16 @@ class Scheduler:
                 )
                 + "\n"
             )
-            creator.metadata.assignee = "agent"
-            creator.save_metadata()
-            logger.info("Context update delivered to %s via response.json", creator_id)
+            target.metadata.assignee = "agent"
+            target.save_metadata()
+            logger.info("Context update delivered to %s via response.json", target_id)
         else:
-            # 2. Otherwise buffer in metadata
-            if creator.metadata.pending_context_updates is None:
-                creator.metadata.pending_context_updates = []
-            creator.metadata.pending_context_updates.append(update)
-            creator.save_metadata()
-            logger.info("Context update buffered for %s", creator_id)
+            # Path 3: buffer in metadata.
+            if target.metadata.pending_context_updates is None:
+                target.metadata.pending_context_updates = []
+            target.metadata.pending_context_updates.append(update)
+            target.save_metadata()
+            logger.info("Context update buffered for %s", target_id)
 
     def _enrich_creator_tags(self, ticket: Ticket) -> Ticket | None:
         """Merge a completed ticket's tags into its creator's tags.
@@ -580,6 +601,8 @@ class Scheduler:
         print(f"▶ [{label}] {ticket.objective!r}", file=sys.stderr)
 
         try:
+            ctx_queue: asyncio.Queue = asyncio.Queue()
+            self._context_queues[ticket.id] = ctx_queue
             segments = resolve_segments(ticket)
             scope = SubagentScope.for_ticket(ticket)
             result = await run_session(
@@ -599,6 +622,7 @@ class Scheduler:
                 deliver_to_parent=self._make_deliver_to_parent(ticket),
                 scope=scope,
                 scheduler=self,
+                context_queue=ctx_queue,
             )
         except Exception as exc:
             ticket.metadata.status = "failed"
@@ -613,6 +637,8 @@ class Scheduler:
                 output="",
                 error=str(exc),
             )
+        finally:
+            self._context_queues.pop(ticket.id, None)
 
         self._update_metadata(ticket, result)
         self._handle_suspend(ticket, result)
@@ -658,6 +684,8 @@ class Scheduler:
 
         try:
             scope = SubagentScope.for_ticket(ticket)
+            ctx_queue: asyncio.Queue = asyncio.Queue()
+            self._context_queues[ticket.id] = ctx_queue
             result = await resume_session(
                 ticket_id=ticket.id,
                 ticket_dir=ticket.dir,
@@ -672,6 +700,7 @@ class Scheduler:
                 deliver_to_parent=self._make_deliver_to_parent(ticket),
                 scope=scope,
                 scheduler=self,
+                context_queue=ctx_queue,
             )
         except Exception as exc:
             ticket.metadata.status = "failed"
@@ -686,6 +715,8 @@ class Scheduler:
                 output="",
                 error=str(exc),
             )
+        finally:
+            self._context_queues.pop(ticket.id, None)
 
         self._update_metadata(ticket, result, accumulate=True)
         self._handle_suspend(ticket, result)

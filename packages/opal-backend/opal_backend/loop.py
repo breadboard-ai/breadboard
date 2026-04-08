@@ -75,6 +75,7 @@ class AgentRunArgs:
     contents: list[LLMContent] | None = None
     singleton_cached_content_name: str | None = None
     model: str | None = None
+    context_queue: asyncio.Queue | None = None
 
 
 @dataclass
@@ -381,6 +382,15 @@ class Loop:
                             )
                     # Package the current conversation state so the
                     # caller can save it and resume later.
+                    # Drain any pending context updates so they are
+                    # included in the saved conversation state.
+                    if args.context_queue:
+                        while True:
+                            try:
+                                parts = args.context_queue.get_nowait()
+                                contents.append({"parts": parts, "role": "user"})
+                            except asyncio.QueueEmpty:
+                                break
                     _suspended = True
                     return SuspendResult(
                         interaction_id=suspend.interaction_id,
@@ -411,6 +421,17 @@ class Loop:
                         )
 
                 contents.append(function_results["combined"])
+
+                # Drain any mid-stream context updates that arrived
+                # while function calls were executing.  Each queue
+                # item is a list of pre-formatted parts.
+                if args.context_queue:
+                    while True:
+                        try:
+                            parts = args.context_queue.get_nowait()
+                            contents.append({"parts": parts, "role": "user"})
+                        except asyncio.QueueEmpty:
+                            break
 
                 if hooks.on_turn_complete:
                     hooks.on_turn_complete()

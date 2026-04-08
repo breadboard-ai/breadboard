@@ -111,6 +111,7 @@ async def run(
     initial_files: dict[str, str] | None = None,
     model: str | None = None,
     file_system: FileSystem | None = None,
+    context_queue: asyncio.Queue | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Start a new agent run.
 
@@ -225,6 +226,7 @@ async def run(
         function_groups=function_groups,
         singleton_cached_content_name=cached_name,
         model=model,
+        context_queue=context_queue,
     )
 
     async for event in _stream_loop(
@@ -254,6 +256,7 @@ async def resume(
     model: str | None = None,
     file_system: FileSystem | None = None,
     context_parts: list[dict[str, Any]] | None = None,
+    context_queue: asyncio.Queue | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Resume a suspended agent run.
 
@@ -392,6 +395,7 @@ async def resume(
         contents=contents,
         singleton_cached_content_name=cached_name,
         model=model_override,
+        context_queue=context_queue,
     )
 
     async for event in _stream_loop(

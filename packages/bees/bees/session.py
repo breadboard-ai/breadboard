@@ -447,6 +447,7 @@ async def run_session(
     deliver_to_parent: Any | None = None,
     scope: SubagentScope | None = None,
     scheduler: Any | None = None,
+    context_queue: Any | None = None,
 ) -> SessionResult:
     """Run a single agent session and return the result.
 
@@ -522,6 +523,7 @@ async def run_session(
         function_filter=function_filter,
         model=model,
         file_system=disk_fs,
+        context_queue=context_queue,
     )
 
     queue = subscribers.subscribe(session_id)
@@ -618,6 +620,7 @@ async def resume_session(
     deliver_to_parent: Any | None = None,
     scope: SubagentScope | None = None,
     scheduler: Any | None = None,
+    context_queue: Any | None = None,
 ) -> SessionResult:
     """Resume a suspended session from saved state on disk.
 
@@ -708,6 +711,7 @@ async def resume_session(
             ),
         ],
         file_system=disk_fs,
+        context_queue=context_queue,
     )
 
     # Now set up the session as if it had been suspended.
