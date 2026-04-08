@@ -125,32 +125,31 @@ Visual indicators show each agent's status.
 - [x] Pulse-aware: running agents detected via `pulseTasks`
 
 **Follow-ups:**
-- [ ] Twisties (▸) are too small — render as dots at current size.
-      Use a proper chevron icon or increase font-size.
-- [ ] Filter out "empty" agents — tickets with no chat, no
-      subagents, and no bundle are noise. Consider hiding them
-      from the tree entirely.
-- [ ] Clicking a sidebar node sets `selectedAgentId` but nothing
-      reacts to it yet — the stage still reads from
-      `StageController.currentView`. Blocked on Phase 4.
+- [x] Twisties — replaced ▸ text char with SVG chevron at 12px
+- [x] Filter out "empty" agents — tickets with no chat, no
+      subagents, and no bundle are hidden from the tree
+- [x] Clicking a sidebar node now drives the stage via Phase 4
 
 ---
 
-### Phase 4 — Stage: Tabbed Perspectives
+### Phase 4 — Stage: Tabbed Perspectives ✅
 
 🎯 **Objective**: When an agent is selected, the stage shows its
 perspectives as tabs. "App" tab for bundle, "Subagents" tab for
 child agent status. Tabs appear only when the perspective exists.
 If neither, show a status summary for the selected agent.
 
-- [ ] Refactor `opal-stage.ts` to read from `AgentTreeController`
+- [x] Refactor `opal-stage.ts` to read from `AgentTreeController`
       instead of `StageController.currentView`
-- [ ] Tab bar: "App" (when `bundle` tag present) and "Subagents"
-      (when child agents exist). No tabs if only one/neither.
-- [ ] `opal-subagent-panel` — renders child agent status cards
-      with live status, using `creator_ticket_id`
-- [ ] Reuse existing iframe rendering for bundle/App tab
-- [ ] Fallback view: agent status summary when no tabs apply
+- [x] Tab bar: "App" (when `bundle` tag present) and "Subagents"
+      (when child agents exist). No tabs if only one perspective.
+- [x] `opal-subagent-panel` — new component: child agent status
+      cards with live status, clickable to navigate into subagent
+- [x] Reuse existing iframe rendering for bundle/App tab
+- [x] Fallback: agent summary when no perspectives apply
+- [x] Legacy stage preserved when no agent is selected
+- [x] `selectAgent` action syncs `stage.currentView` and loads
+      bundle for bundle-tagged agents
 
 ---
 

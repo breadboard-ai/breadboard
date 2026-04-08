@@ -1,0 +1,264 @@
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { LitElement, html, css } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
+import { scaContext } from "../../sca/context/context.js";
+import { type SCA } from "../../sca/sca.js";
+import { sharedStyles } from "./shared.styles.js";
+import { deriveChildAgents } from "../../sca/utils/agent-tree.js";
+import { selectAgent } from "../../sca/actions/tree/tree-actions.js";
+
+const styles = css`
+  :host {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    background: var(--cg-color-surface, #fdfcfa);
+    padding: var(--cg-sp-8, 32px) var(--cg-sp-10, 40px);
+    box-sizing: border-box;
+  }
+
+  .panel-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .panel-title {
+    font-size: var(--cg-text-headline-sm-size, 24px);
+    font-weight: 600;
+    color: var(--cg-color-on-surface, #1c1b1f);
+    margin-bottom: var(--cg-sp-6, 24px);
+  }
+
+  .agent-card {
+    display: flex;
+    align-items: center;
+    gap: var(--cg-sp-4, 16px);
+    padding: var(--cg-sp-4, 16px) var(--cg-sp-5, 20px);
+    margin-bottom: var(--cg-sp-3, 12px);
+    background: var(--cg-color-surface-container-lowest, #ffffff);
+    border: 1px solid var(--cg-color-outline-variant, #e0ddd9);
+    border-radius: var(--cg-radius-lg, 16px);
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+    font-family: inherit;
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .agent-card:hover {
+    background: var(--cg-color-surface-bright, #ffffff);
+    transform: translateY(-1px);
+    box-shadow: var(--cg-elevation-2, 0 4px 12px rgba(0, 0, 0, 0.06));
+    border-color: var(--cg-color-primary, #3b5fc0);
+  }
+
+  .agent-status-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--cg-radius-full, 999px);
+    background: var(--cg-color-surface-container-high, #eae7e3);
+  }
+
+  .agent-status-icon.running {
+    background: #ff980022;
+  }
+
+  .agent-status-icon.completed {
+    background: #4caf5022;
+  }
+
+  .agent-status-icon.failed {
+    background: rgba(186, 26, 26, 0.08);
+  }
+
+  .agent-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .agent-name {
+    font-size: var(--cg-text-body-md-size, 14px);
+    font-weight: 600;
+    color: var(--cg-color-on-surface, #1c1b1f);
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .agent-detail {
+    font-size: var(--cg-text-body-sm-size, 12px);
+    color: var(--cg-color-on-surface-muted, #79757f);
+    text-transform: capitalize;
+  }
+
+  .agent-arrow {
+    color: var(--cg-color-on-surface-muted, #79757f);
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .agent-card:hover .agent-arrow {
+    opacity: 1;
+  }
+
+  .dot-flashing {
+    position: relative;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: #ff9800;
+    color: #ff9800;
+    animation: dot-flashing 1s infinite linear alternate;
+    animation-delay: 0.5s;
+    margin-left: 8px;
+    display: inline-block;
+  }
+
+  .dot-flashing::before,
+  .dot-flashing::after {
+    content: "";
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: currentColor;
+  }
+
+  .dot-flashing::before {
+    left: -8px;
+    animation: dot-flashing 1s infinite alternate;
+    animation-delay: 0s;
+  }
+
+  .dot-flashing::after {
+    left: 8px;
+    animation: dot-flashing 1s infinite alternate;
+    animation-delay: 1s;
+  }
+
+  @keyframes dot-flashing {
+    0% {
+      opacity: 0.2;
+    }
+    50%,
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: var(--cg-sp-10, 40px) 0;
+    opacity: 0.6;
+  }
+
+  .empty-icon {
+    font-size: 32px;
+  }
+`;
+
+@customElement("opal-subagent-panel")
+export class OpalSubagentPanel extends SignalWatcher(LitElement) {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
+  @property({ type: String })
+  accessor parentTicketId: string = "";
+
+  static styles = [sharedStyles, styles];
+
+  render() {
+    if (!this.parentTicketId) {
+      return html`<div class="empty-state">
+        <span class="empty-icon">🤖</span>
+        No parent agent selected.
+      </div>`;
+    }
+
+    const tickets = this.sca.controller.global.tickets;
+    const children = deriveChildAgents(tickets, this.parentTicketId).sort(
+      (a, b) => (a.created_at ?? "").localeCompare(b.created_at ?? "")
+    );
+
+    if (children.length === 0) {
+      return html`<div class="empty-state">
+        <span class="empty-icon">🤖</span>
+        No subagents spawned yet.
+      </div>`;
+    }
+
+    const pulseTasks = this.sca.controller.global.pulseTasks;
+
+    return html`
+      <div class="panel-container">
+        <div class="panel-title">Subagents</div>
+        ${children.map((child) => {
+          const isRunning = pulseTasks.some((pt) => pt.id === child.id);
+          const pulseTask = pulseTasks.find((pt) => pt.id === child.id);
+          const displayStatus = isRunning ? "running" : child.status;
+
+          const icon =
+            displayStatus === "completed"
+              ? "✅"
+              : displayStatus === "failed"
+                ? "❌"
+                : displayStatus === "paused"
+                  ? "⏸"
+                  : isRunning
+                    ? "⏳"
+                    : "📝";
+
+          const title =
+            child.title ||
+            child.playbook_id?.replace(/-/g, " ") ||
+            child.id.slice(0, 8);
+
+          const detailText = isRunning
+            ? pulseTask?.current_step || "Working..."
+            : displayStatus;
+
+          return html`
+            <button
+              class="agent-card"
+              @click=${() =>
+                selectAgent(
+                  new CustomEvent("select", { detail: child.id })
+                )}
+            >
+              <div class="agent-status-icon ${displayStatus}">${icon}</div>
+              <div class="agent-info">
+                <div class="agent-name">${title}</div>
+                <div class="agent-detail">
+                  ${detailText}
+                  ${isRunning ? html`<span class="dot-flashing"></span>` : ""}
+                </div>
+              </div>
+              <span class="agent-arrow">→</span>
+            </button>
+          `;
+        })}
+      </div>
+    `;
+  }
+}

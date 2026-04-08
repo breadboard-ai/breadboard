@@ -16,6 +16,8 @@ export const styles = css`
   }
   .stage {
     flex: 1;
+    display: flex;
+    flex-direction: column;
     position: relative;
     overflow: hidden;
   }
