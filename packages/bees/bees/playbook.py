@@ -225,8 +225,8 @@ def run_playbook(
     step_ticket_ids: dict[str, str] = {}
     created_tickets: list[Ticket] = []
 
-    # Workspace root: inherited from a parent playbook, or determined
-    # by the first ticket created in this run (topological root).
+    # When launched as a sub-playbook with share_workspace, all steps
+    # inherit the caller's workspace. Otherwise each step gets its own.
     workspace_root = parent_ticket_id
 
     for step_name in order:
@@ -262,11 +262,6 @@ def run_playbook(
             context=context if is_root else None,
             slug=slug,
         )
-
-        # First ticket in topological order becomes the workspace root
-        # for all subsequent siblings.
-        if workspace_root is None:
-            workspace_root = ticket.id
 
         step_ticket_ids[step_name] = ticket.id
         created_tickets.append(ticket)
