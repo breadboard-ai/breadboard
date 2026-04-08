@@ -9,6 +9,7 @@ import { makeAction } from "../binder.js";
 import { onTicketsUpdate } from "../chat/chat-triggers.js";
 import { onIframeNavigate } from "./stage-triggers.js";
 import { loadBundleAsync } from "../../utils/load-bundle.js";
+import { selectAgent } from "../tree/tree-actions.js";
 
 export const bind = makeAction();
 
@@ -67,11 +68,6 @@ export const processDigestUpdates = asAction(
 
         if (controller.stage.currentView === controller.stage.digestTicketId) {
           digestLoading = true;
-          // Must wait for UI to ensure iframe is ready before loading
-          // In SCA, actions can dispatch, but we may need a small delay if the
-          // view just changed so Lit can render the generic <iframe> tag.
-          // For safety, we rely on the component firing a `load_bundle` action
-          // when its iframe connects, OR we just await a small macro-task.
           await new Promise((r) => setTimeout(r, 100));
           await loadBundleAsync(controller.stage.digestTicketId!, services);
           digestLoading = false;
@@ -81,6 +77,12 @@ export const processDigestUpdates = asAction(
   }
 );
 
+/**
+ * Navigate to a ticket from an iframe-initiated event.
+ *
+ * Delegates to `selectAgent` so the agent tree remains the single
+ * source of truth for both stage and chat state.
+ */
 export const navigateToTicket = asAction(
   "Navigate To Ticket",
   {
@@ -99,7 +101,6 @@ export const navigateToTicket = asAction(
       controller.stage.currentView = controller.stage.digestTicketId;
       await new Promise((r) => setTimeout(r, 100)); // wait for iframe mount
       await loadBundleAsync(controller.stage.digestTicketId, services);
-      syncChatToStage(ticketId);
       return;
     }
 
@@ -110,58 +111,10 @@ export const navigateToTicket = asAction(
     );
     if (!targetTicket) return;
 
-    controller.stage.currentView = ticketId;
-    await new Promise((r) => setTimeout(r, 100)); // wait for iframe mount
-    await loadBundleAsync(ticketId, services);
-    syncChatToStage(ticketId);
+    // Delegate to selectAgent — it drives both stage and chat.
+    await selectAgent(new CustomEvent("navigate", { detail: ticketId }));
   }
 );
-
-/**
- * When the stage navigates to a ticket, silently switch the chat
- * thread to the one containing that ticket.
- */
-function syncChatToStage(ticketId: string) {
-  const { controller, services } = bind;
-  const chat = controller.chat;
-
-  // "digest" navigation maps to the Opie thread.
-  if (ticketId === "digest") {
-    if (chat.activeThreadId !== "opie") {
-      chat.activeThreadId = "opie";
-      chat.visitedThreadIds.add("opie");
-      chat.pendingChoices = [];
-      chat.selectedChoiceIds = [];
-    }
-    return;
-  }
-
-  const matchingThread = chat.threads.find((t) =>
-    t.ticketIds.includes(ticketId)
-  );
-  if (!matchingThread || matchingThread.id === chat.activeThreadId) return;
-
-  chat.activeThreadId = matchingThread.id;
-  chat.visitedThreadIds.add(matchingThread.id);
-  chat.pendingChoices = [];
-  chat.selectedChoiceIds = [];
-
-  if (matchingThread.hasUnread) {
-    chat.threads = chat.threads.map((t) =>
-      t.id === matchingThread.id ? { ...t, hasUnread: false } : t
-    );
-  }
-
-  if (matchingThread.activeTicketId) {
-    services.hostCommunication.send({
-      type: "host.chat.switch",
-      payload: {
-        ticket_id: matchingThread.activeTicketId,
-        role: "user",
-      },
-    });
-  }
-}
 
 export const navigateToDigest = asAction(
   "Navigate To Digest",
@@ -172,7 +125,6 @@ export const navigateToDigest = asAction(
       await navigateToTicket(new CustomEvent("navigate", { detail: "digest" }));
     } else {
       controller.stage.currentView = "digest";
-      syncChatToStage("digest");
     }
   }
 );

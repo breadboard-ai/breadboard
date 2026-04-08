@@ -14,10 +14,9 @@ export class ChatController extends RootController {
     super("chat", "chat");
   }
 
-  @field() accessor isOpen = false;
   @field() accessor input = "";
   @field({ deep: true }) accessor threads: ChatThread[] = [];
-  @field() accessor activeThreadId = "opie";
+  @field() accessor activeThreadId: string | null = null;
   @field({ deep: true }) accessor threadMessages = new Map<
     string,
     ChatMessage[]
@@ -26,10 +25,13 @@ export class ChatController extends RootController {
   @field() accessor pendingSelectionMode: "single" | "multiple" = "single";
   @field({ deep: true }) accessor selectedChoiceIds: string[] = [];
   @field({ deep: true }) accessor restoredThreadIds = new Set<string>();
-  @field({ deep: true }) accessor visitedThreadIds = new Set<string>(["opie"]);
+  @field({ deep: true }) accessor visitedThreadIds = new Set<string>();
   @field({ deep: true }) accessor previousTicketStatuses = new Map<
     string,
     string
   >();
-  @field() accessor awaitingNewThread = false;
+  /** Whether the floating chat window is minimized to a dot. */
+  @field() accessor isMinimized = true;
+  /** Whether an unread message arrived while minimized. */
+  @field() accessor hasUnreadFloat = false;
 }

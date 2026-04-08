@@ -8,9 +8,22 @@ import { describe, it, beforeEach, afterEach, mock } from "node:test";
 import assert from "node:assert/strict";
 
 import * as StageActions from "../../../src/sca/actions/stage/stage-actions.js";
+import * as TreeActions from "../../../src/sca/actions/tree/tree-actions.js";
+import * as ChatActions from "../../../src/sca/actions/chat/chat-actions.js";
 import { makeTestController } from "../helpers/mock-controller.js";
 import { makeTestServices } from "../helpers/mock-services.js";
 import type { AppController, AppServices } from "../../../src/sca/types.js";
+import type { TicketData } from "../../../src/data/types.js";
+
+function ticket(
+  overrides: Partial<TicketData> & { id: string }
+): TicketData {
+  return {
+    objective: "",
+    status: "completed",
+    ...overrides,
+  } as TicketData;
+}
 
 describe("Stage Actions", () => {
   let controller: AppController;
@@ -20,7 +33,10 @@ describe("Stage Actions", () => {
     ({ controller } = makeTestController());
     ({ services } = makeTestServices());
 
+    // navigateToTicket → selectAgent → applyPromptState crosses all three.
     StageActions.bind({ controller, services });
+    TreeActions.bind({ controller, services });
+    ChatActions.bind({ controller, services });
   });
 
   afterEach(() => {
@@ -28,54 +44,34 @@ describe("Stage Actions", () => {
   });
 
   describe("navigateToTicket", () => {
-    it("sets the current view to the requested ticket and loads the bundle", async () => {
-      mock.method(services.api, "listFiles", async (_ticketId: string) => {
-        return ["bundle.js", "bundle.css"];
+    it("delegates to selectAgent for known tickets", async () => {
+      const t = ticket({
+        id: "t-123",
+        tags: ["chat", "bundle"],
+        status: "suspended",
+        assignee: "user",
       });
+      controller.global.tickets = [t];
 
-      mock.method(
-        services.api,
-        "getFile",
-        async (_ticketId: string, filename: string) => {
-          if (filename === "bundle.js") return "console.log('js')";
-          if (filename === "bundle.css") return "body { color: red }";
-          return null;
-        }
-      );
+      mock.method(services.api, "listFiles", async () => ["bundle.js"]);
+      mock.method(services.api, "getFile", async () => "console.log('js')");
 
       await StageActions.navigateToTicket(
         new CustomEvent("navigate", { detail: "t-123" })
       );
 
-      assert.equal(controller.stage.currentView, "t-123");
-
-      const sendMock = services.hostCommunication.send as unknown as ReturnType<
-        typeof mock.fn
-      >;
-      assert.equal(sendMock.mock.calls.length, 1);
-      const args = sendMock.mock.calls[0].arguments;
-      assert.deepEqual(args[0], {
-        type: "render",
-        code: "console.log('js')",
-        css: "body { color: red }",
-        props: {},
-        assets: {},
-      });
+      // selectAgent sets the selected agent and syncs chat.
+      assert.equal(controller.agentTree.selectedAgentId, "t-123");
+      assert.equal(controller.chat.activeThreadId, "t-123");
     });
 
-    it("sets the current view from an IframeMessage payload detail object", async () => {
-      mock.method(services.api, "listFiles", async (_ticketId: string) => {
-        return ["bundle.js", "bundle.css"];
+    it("handles IframeMessage payload detail objects", async () => {
+      const t = ticket({
+        id: "t-456",
+        tags: ["chat"],
+        status: "running",
       });
-
-      mock.method(
-        services.api,
-        "getFile",
-        async (_ticketId: string, filename: string) => {
-          if (filename === "bundle.js") return "console.log('js')";
-          return null;
-        }
-      );
+      controller.global.tickets = [t];
 
       await StageActions.navigateToTicket(
         new CustomEvent("navigate", {
@@ -83,99 +79,34 @@ describe("Stage Actions", () => {
         })
       );
 
-      assert.equal(controller.stage.currentView, "t-456");
-    });
-  });
-
-  describe("stage → chat sync", () => {
-    it("switches chat thread when navigating to a ticket belonging to a thread", async () => {
-      controller.chat.threads = [
-        {
-          id: "opie",
-          title: "Opie",
-          ticketIds: [],
-          activeTicketId: null,
-          hasUnread: false,
-        },
-        {
-          id: "run-1",
-          title: "My App",
-          ticketIds: ["t-123"],
-          activeTicketId: "t-123",
-          hasUnread: true,
-        },
-      ];
-      controller.chat.activeThreadId = "opie";
-
-      mock.method(services.api, "listFiles", async () => ["bundle.js"]);
-      mock.method(services.api, "getFile", async () => "console.log('js')");
-
-      await StageActions.navigateToTicket(
-        new CustomEvent("navigate", { detail: "t-123" })
-      );
-
-      assert.equal(controller.chat.activeThreadId, "run-1");
-      assert.ok(controller.chat.visitedThreadIds.has("run-1"));
-      // Unread flag should be cleared.
-      const thread = controller.chat.threads.find((t) => t.id === "run-1");
-      assert.equal(thread?.hasUnread, false);
+      assert.equal(controller.agentTree.selectedAgentId, "t-456");
     });
 
-    it("does not change chat thread when no matching thread exists", async () => {
-      controller.chat.threads = [
-        {
-          id: "opie",
-          title: "Opie",
-          ticketIds: [],
-          activeTicketId: null,
-          hasUnread: false,
-        },
-      ];
-      controller.chat.activeThreadId = "opie";
-
-      mock.method(services.api, "listFiles", async () => ["bundle.js"]);
-      mock.method(services.api, "getFile", async () => "console.log('js')");
+    it("ignores navigation to unknown ticket IDs", async () => {
+      controller.global.tickets = [];
 
       await StageActions.navigateToTicket(
         new CustomEvent("navigate", { detail: "t-unknown" })
       );
 
-      assert.equal(controller.chat.activeThreadId, "opie");
+      assert.equal(controller.agentTree.selectedAgentId, null);
     });
 
-    it("switches chat to Opie when navigating to digest", async () => {
+    it("navigates to digest without changing agent selection", async () => {
       controller.stage.digestTicketId = "t-digest";
-      controller.chat.threads = [
-        {
-          id: "opie",
-          title: "Opie",
-          ticketIds: [],
-          activeTicketId: null,
-          hasUnread: false,
-        },
-        {
-          id: "run-1",
-          title: "My App",
-          ticketIds: ["t-app"],
-          activeTicketId: "t-app",
-          hasUnread: false,
-        },
-      ];
-      controller.chat.activeThreadId = "run-1";
+      controller.agentTree.selectedAgentId = "t-agent";
 
       mock.method(services.api, "listFiles", async () => ["digest.js"]);
-      mock.method(
-        services.api,
-        "getFile",
-        async () => "console.log('digest')"
-      );
+      mock.method(services.api, "getFile", async () => "console.log('d')");
 
       await StageActions.navigateToTicket(
         new CustomEvent("navigate", { detail: "digest" })
       );
 
-      assert.equal(controller.chat.activeThreadId, "opie");
+      // Digest navigation sets the stage view but doesn't change the
+      // agent tree selection.
       assert.equal(controller.stage.currentView, "t-digest");
+      assert.equal(controller.agentTree.selectedAgentId, "t-agent");
     });
   });
 });

@@ -11,6 +11,17 @@ import * as ChatActions from "../../../src/sca/actions/chat/chat-actions.js";
 import { makeTestController } from "../helpers/mock-controller.js";
 import { makeTestServices } from "../helpers/mock-services.js";
 import type { AppController, AppServices } from "../../../src/sca/types.js";
+import type { TicketData } from "../../../src/data/types.js";
+
+function ticket(
+  overrides: Partial<TicketData> & { id: string }
+): TicketData {
+  return {
+    objective: "",
+    status: "completed",
+    ...overrides,
+  } as TicketData;
+}
 
 describe("Chat Actions", () => {
   let controller: AppController;
@@ -27,220 +38,288 @@ describe("Chat Actions", () => {
     mock.restoreAll();
   });
 
-  describe("switchThread", () => {
-    it("makes the requested thread active", async () => {
-      controller.chat.threads = [
-        {
-          id: "opie",
-          title: "Opie",
-          ticketIds: [],
-          activeTicketId: null,
-          hasUnread: false,
-        },
-        {
-          id: "123",
-          title: "Research",
-          ticketIds: [],
-          activeTicketId: null,
-          hasUnread: false,
-        },
+  describe("deriveThreads", () => {
+    it("creates one thread per chat-tagged ticket", async () => {
+      controller.global.tickets = [
+        ticket({ id: "t-1", tags: ["chat"], status: "running" }),
+        ticket({ id: "t-2", tags: ["chat"], status: "completed" }),
+        ticket({ id: "t-3", tags: ["bundle"] }), // not a chat ticket
       ];
-      controller.chat.activeThreadId = "opie";
 
-      await ChatActions.switchThread(
-        new CustomEvent("switch", { detail: "123" })
-      );
+      await ChatActions.deriveThreads();
 
-      assert.equal(controller.chat.activeThreadId, "123");
-      assert.ok(controller.chat.visitedThreadIds.has("123"));
+      assert.equal(controller.chat.threads.length, 2);
+      assert.equal(controller.chat.threads[0].id, "t-1");
+      assert.equal(controller.chat.threads[1].id, "t-2");
     });
 
-    it("resets pending choices and selection", async () => {
-      controller.chat.threads = [
-        {
-          id: "opie",
-          title: "Opie",
-          ticketIds: [],
-          activeTicketId: null,
-          hasUnread: false,
-        },
-        {
-          id: "123",
-          title: "Research",
-          ticketIds: [],
-          activeTicketId: null,
-          hasUnread: false,
-        },
+    it("thread ID is the ticket ID, not playbook_run_id", async () => {
+      controller.global.tickets = [
+        ticket({
+          id: "t-1",
+          tags: ["chat"],
+          playbook_run_id: "run-abc",
+          status: "running",
+        }),
       ];
-      controller.chat.activeThreadId = "opie";
-      controller.chat.pendingChoices = [{ id: "c1", text: "Choice 1" }];
-      controller.chat.selectedChoiceIds = ["c1"];
 
-      await ChatActions.switchThread(
-        new CustomEvent("switch", { detail: "123" })
-      );
+      await ChatActions.deriveThreads();
 
-      assert.deepEqual(controller.chat.pendingChoices, []);
-      assert.deepEqual(controller.chat.selectedChoiceIds, []);
+      assert.equal(controller.chat.threads[0].id, "t-1");
+    });
+
+    it("treats opie-tagged tickets the same as any other", async () => {
+      controller.global.tickets = [
+        ticket({
+          id: "t-opie",
+          tags: ["chat", "opie"],
+          status: "suspended",
+          assignee: "user",
+        }),
+        ticket({
+          id: "t-agent",
+          tags: ["chat"],
+          status: "running",
+        }),
+      ];
+
+      await ChatActions.deriveThreads();
+
+      assert.equal(controller.chat.threads.length, 2);
+      // Both threads use their ticket ID — no "opie" string constant.
+      const ids = controller.chat.threads.map((t) => t.id);
+      assert.ok(ids.includes("t-opie"));
+      assert.ok(ids.includes("t-agent"));
+    });
+
+    it("marks suspended-for-user tickets as active", async () => {
+      controller.global.tickets = [
+        ticket({
+          id: "t-1",
+          tags: ["chat"],
+          status: "suspended",
+          assignee: "user",
+        }),
+      ];
+
+      await ChatActions.deriveThreads();
+
+      assert.equal(controller.chat.threads[0].activeTicketId, "t-1");
+    });
+
+    it("marks running tickets as active", async () => {
+      controller.global.tickets = [
+        ticket({ id: "t-1", tags: ["chat"], status: "running" }),
+      ];
+
+      await ChatActions.deriveThreads();
+
+      assert.equal(controller.chat.threads[0].activeTicketId, "t-1");
+    });
+
+    it("marks completed tickets as inactive", async () => {
+      controller.global.tickets = [
+        ticket({ id: "t-1", tags: ["chat"], status: "completed" }),
+      ];
+
+      await ChatActions.deriveThreads();
+
+      assert.equal(controller.chat.threads[0].activeTicketId, null);
+    });
+
+    it("detects unread for non-active threads with suspended user", async () => {
+      controller.chat.activeThreadId = "t-1";
+      controller.global.tickets = [
+        ticket({
+          id: "t-1",
+          tags: ["chat"],
+          status: "running",
+        }),
+        ticket({
+          id: "t-2",
+          tags: ["chat"],
+          status: "suspended",
+          assignee: "user",
+        }),
+      ];
+
+      await ChatActions.deriveThreads();
+
+      const t2 = controller.chat.threads.find((t) => t.id === "t-2");
+      assert.ok(t2?.hasUnread);
+    });
+
+    it("restores chat history from ticket data", async () => {
+      controller.global.tickets = [
+        ticket({
+          id: "t-1",
+          tags: ["chat"],
+          status: "completed",
+          chat_history: [
+            { role: "user", text: "Hello" },
+            { role: "agent", text: "Hi there" },
+          ],
+        }),
+      ];
+
+      await ChatActions.deriveThreads();
+
+      const messages = controller.chat.threadMessages.get("t-1");
+      assert.ok(messages);
+      assert.equal(messages.length, 2);
+      assert.equal(messages[0].text, "Hello");
+      assert.equal(messages[1].text, "Hi there");
+    });
+
+    it("derives title from ticket title", async () => {
+      controller.global.tickets = [
+        ticket({
+          id: "t-1",
+          tags: ["chat"],
+          title: "My Research Agent",
+          status: "running",
+        }),
+      ];
+
+      await ChatActions.deriveThreads();
+
+      assert.equal(controller.chat.threads[0].title, "My Research Agent");
+    });
+
+    it("falls back to playbook_id for title", async () => {
+      controller.global.tickets = [
+        ticket({
+          id: "t-1",
+          tags: ["chat"],
+          playbook_id: "deep-research",
+          status: "running",
+        }),
+      ];
+
+      await ChatActions.deriveThreads();
+
+      assert.equal(controller.chat.threads[0].title, "Deep Research");
     });
   });
 
   describe("sendChat", () => {
-    it("sends active thread context over host communication", async () => {
-      controller.chat.activeThreadId = "123";
+    it("responds to the active thread's ticket", async () => {
+      controller.chat.activeThreadId = "t-1";
       controller.chat.threads = [
         {
-          id: "123",
-          title: "Research",
-          activeTicketId: "t-456",
-          ticketIds: [],
+          id: "t-1",
+          title: "Agent",
+          activeTicketId: "t-1",
+          ticketIds: ["t-1"],
           hasUnread: false,
         },
       ];
-
-      // We must add the ticket to the global array so the action finds it
       controller.global.tickets = [
-        {
-          id: "t-456",
+        ticket({
+          id: "t-1",
+          tags: ["chat"],
           status: "suspended",
           assignee: "user",
-        } as unknown as import("../../../src/data/types.js").TicketData,
+        }),
       ];
 
       await ChatActions.sendChat(
-        new CustomEvent("chat", { detail: "Hello Opie" })
+        new CustomEvent("chat", { detail: "Hello" })
       );
 
       const respondMock = services.api.respond as unknown as ReturnType<
         typeof mock.fn
       >;
       assert.equal(respondMock.mock.calls.length, 1);
-      const apiCallArgs = respondMock.mock.calls[0].arguments;
-      assert.equal(apiCallArgs[0], "t-456");
-      assert.equal(apiCallArgs[1], "Hello Opie");
+      assert.equal(respondMock.mock.calls[0].arguments[0], "t-1");
+      assert.equal(respondMock.mock.calls[0].arguments[1], "Hello");
+    });
+
+    it("appends user message to thread messages immediately", async () => {
+      controller.chat.activeThreadId = "t-1";
+      controller.chat.threads = [
+        {
+          id: "t-1",
+          title: "Agent",
+          activeTicketId: "t-1",
+          ticketIds: ["t-1"],
+          hasUnread: false,
+        },
+      ];
+
+      await ChatActions.sendChat(
+        new CustomEvent("chat", { detail: "Test message" })
+      );
+
+      const messages = controller.chat.threadMessages.get("t-1");
+      assert.ok(messages);
+      assert.equal(messages[messages.length - 1].text, "Test message");
+      assert.equal(messages[messages.length - 1].role, "user");
+    });
+
+    it("does nothing when no active thread", async () => {
+      controller.chat.activeThreadId = null;
+
+      await ChatActions.sendChat(
+        new CustomEvent("chat", { detail: "Hello" })
+      );
+
+      const respondMock = services.api.respond as unknown as ReturnType<
+        typeof mock.fn
+      >;
+      assert.equal(respondMock.mock.calls.length, 0);
     });
   });
 
-  describe("chat → stage sync", () => {
-    it("switches stage to app bundle when switching to an app thread", async () => {
-      const ticket = {
-        id: "t-app",
-        status: "suspended",
-        assignee: "user",
-        tags: ["chat", "bundle"],
-        playbook_run_id: "run-1",
-      } as unknown as import("../../../src/data/types.js").TicketData;
-
-      controller.global.tickets = [ticket];
+  describe("sendChoices", () => {
+    it("sends selected choice IDs to the active ticket", async () => {
+      controller.chat.activeThreadId = "t-1";
       controller.chat.threads = [
         {
-          id: "opie",
-          title: "Opie",
-          ticketIds: [],
-          activeTicketId: null,
-          hasUnread: false,
-        },
-        {
-          id: "run-1",
-          title: "My App",
-          ticketIds: ["t-app"],
-          activeTicketId: "t-app",
+          id: "t-1",
+          title: "Agent",
+          activeTicketId: "t-1",
+          ticketIds: ["t-1"],
           hasUnread: false,
         },
       ];
-      controller.chat.activeThreadId = "opie";
+      controller.chat.pendingChoices = [
+        { id: "c1", text: "Option A" },
+        { id: "c2", text: "Option B" },
+      ];
 
-      mock.method(services.api, "listFiles", async () => ["app.js"]);
-      mock.method(services.api, "getFile", async () => "console.log('app')");
-
-      await ChatActions.switchThread(
-        new CustomEvent("switch", { detail: "run-1" })
+      await ChatActions.sendChoices(
+        new CustomEvent("choices", { detail: ["c1"] })
       );
 
-      assert.equal(controller.stage.currentView, "t-app");
-
-      const sendMock = services.hostCommunication.send as unknown as ReturnType<
+      const respondMock = services.api.respond as unknown as ReturnType<
         typeof mock.fn
       >;
-      // One call for host.chat.switch, one for render
-      const renderCall = sendMock.mock.calls.find(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (c: any) => c.arguments[0].type === "render"
-      );
-      assert.ok(renderCall, "Expected a render message to be sent");
+      assert.equal(respondMock.mock.calls.length, 1);
+      assert.equal(respondMock.mock.calls[0].arguments[0], "t-1");
+      assert.equal(respondMock.mock.calls[0].arguments[1], "Option A");
+      assert.deepEqual(respondMock.mock.calls[0].arguments[2], ["c1"]);
     });
 
-    it("switches stage to digest when switching to Opie thread", async () => {
-      controller.stage.digestTicketId = "t-digest";
-      controller.stage.currentView = "t-app";
-
+    it("clears pending choices after sending", async () => {
+      controller.chat.activeThreadId = "t-1";
       controller.chat.threads = [
         {
-          id: "opie",
-          title: "Opie",
-          ticketIds: [],
-          activeTicketId: null,
-          hasUnread: false,
-        },
-        {
-          id: "run-1",
-          title: "My App",
-          ticketIds: ["t-app"],
-          activeTicketId: "t-app",
+          id: "t-1",
+          title: "Agent",
+          activeTicketId: "t-1",
+          ticketIds: ["t-1"],
           hasUnread: false,
         },
       ];
-      controller.chat.activeThreadId = "run-1";
+      controller.chat.pendingChoices = [{ id: "c1", text: "A" }];
 
-      mock.method(services.api, "listFiles", async () => ["digest.js"]);
-      mock.method(
-        services.api,
-        "getFile",
-        async () => "console.log('digest')"
+      await ChatActions.sendChoices(
+        new CustomEvent("choices", { detail: ["c1"] })
       );
 
-      await ChatActions.switchThread(
-        new CustomEvent("switch", { detail: "opie" })
-      );
-
-      assert.equal(controller.stage.currentView, "t-digest");
-    });
-
-    it("does not change stage when thread has no bundle-tagged ticket", async () => {
-      const ticket = {
-        id: "t-chat-only",
-        status: "suspended",
-        assignee: "user",
-        tags: ["chat"],
-        playbook_run_id: "run-2",
-      } as unknown as import("../../../src/data/types.js").TicketData;
-
-      controller.global.tickets = [ticket];
-      controller.stage.currentView = "t-digest";
-      controller.chat.threads = [
-        {
-          id: "opie",
-          title: "Opie",
-          ticketIds: [],
-          activeTicketId: null,
-          hasUnread: false,
-        },
-        {
-          id: "run-2",
-          title: "Chat Only",
-          ticketIds: ["t-chat-only"],
-          activeTicketId: "t-chat-only",
-          hasUnread: false,
-        },
-      ];
-      controller.chat.activeThreadId = "opie";
-
-      await ChatActions.switchThread(
-        new CustomEvent("switch", { detail: "run-2" })
-      );
-
-      // Stage should remain unchanged — ticket has no "bundle" tag.
-      assert.equal(controller.stage.currentView, "t-digest");
+      assert.deepEqual(controller.chat.pendingChoices, []);
+      assert.deepEqual(controller.chat.selectedChoiceIds, []);
     });
   });
 });
