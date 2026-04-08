@@ -445,7 +445,7 @@ export class Header extends SignalWatcher(LitElement) {
           >
         </li>
         <li>
-          <a href="/" class="w-400 round md-title-medium"
+          <a href="/" target="_blank" class="w-400 round md-title-medium"
             ><span class="g-icon filled round w-500">gallery_thumbnail</span
             >View more ${Strings.from("APP_NAME")} apps<span
               class="g-icon filled round w-500 open-in-new"
