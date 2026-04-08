@@ -1056,10 +1056,10 @@ class Scheduler:
                         updated = load_ticket(t.id) or t
                         run_ticket_done_hooks(updated)
                         self._notify_ticket_done(t.id)
-                        
+
                         creator_id = updated.metadata.creator_ticket_id
-                        if creator_id:
-                            update = {"task_id": updated.id, "outcome": updated.metadata.outcome or "completed"}
+                        if creator_id and updated.metadata.status in ("completed", "failed"):
+                            update = {"task_id": updated.id, "status": updated.metadata.status, "outcome": updated.metadata.outcome or updated.metadata.error or "(no outcome)"}
                             self._deliver_context_update(creator_id, update)
                         enriched = self._enrich_creator_tags(updated)
                         if enriched and self._hooks.on_ticket_done:
@@ -1086,10 +1086,10 @@ class Scheduler:
                         updated = load_ticket(t.id) or t
                         run_ticket_done_hooks(updated)
                         self._notify_ticket_done(t.id)
-                        
+
                         creator_id = updated.metadata.creator_ticket_id
-                        if creator_id:
-                            update = {"task_id": updated.id, "outcome": updated.metadata.outcome or "completed"}
+                        if creator_id and updated.metadata.status in ("completed", "failed"):
+                            update = {"task_id": updated.id, "status": updated.metadata.status, "outcome": updated.metadata.outcome or updated.metadata.error or "(no outcome)"}
                             self._deliver_context_update(creator_id, update)
                         enriched = self._enrich_creator_tags(updated)
                         if enriched and self._hooks.on_ticket_done:

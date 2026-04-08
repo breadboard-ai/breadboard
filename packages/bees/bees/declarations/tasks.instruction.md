@@ -31,3 +31,27 @@ a simple directory name (e.g., "research"). If you are yourself a subagent, the
 system automatically nests your slug under your own working directory. For
 example, if you work in "./app" and create a task with slug "tests", the child
 will work in "./app/tests".
+
+## Tasks and user input
+
+To successfully complete tasks, subagents may be equipped with the ability to
+chat with the user. This may result in multi-threaded conversations: you are
+talking wtih the user, as well as your subagents are talking with the user. This
+is perfectly fine and is a good pattern of separating conversations on different
+topics.
+
+## Task statuses
+
+When you check on your tasks, each task has a status. Tasks created by your
+subagents also appear as nested subtasks, giving you visibility into the full
+tree of work.
+
+- **available** — the task is queued and waiting for a subagent to pick it up.
+- **blocked** — the task has unresolved dependencies and cannot start yet.
+- **running** — a subagent is actively working on the task.
+- **suspended** — the subagent is waiting for user input.
+- **paused** — the task is temporarily paused by the scheduler.
+- **completed** — the task finished successfully. The outcome will be delivered
+  to you as a context update.
+- **failed** — the task encountered an unrecoverable error.
+- **cancelled** — the task was cancelled before completion.
