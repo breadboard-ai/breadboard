@@ -49,6 +49,9 @@ steps:
       Rinse, repeat. When iterating, reuse the slug names and inform the
       subagents that they can read the old information and write over it.
 
+      Every time there's an update to the React app, send an event to parent
+      with a brief summary of what changed. 
+
       ## Rules
 
       - Keep your chat responses brief, but be cordial and converse with the
