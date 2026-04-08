@@ -21,6 +21,7 @@ export const styles = css`
     flex-direction: column;
     flex: 1;
     overflow: hidden;
+    position: relative;
     background: var(--cg-color-surface, #fdfcfa);
   }
 `;

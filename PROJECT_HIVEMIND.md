@@ -153,22 +153,25 @@ If neither, show a status summary for the selected agent.
 
 ---
 
-### Phase 5 — Floating Chat
+### Phase 5 — Floating Chat ✅
 
 🎯 **Objective**: Chat is a floating window overlaying the stage,
 always available for the selected agent. Minimizes to a floating
 dot that glows on unread activity. Chat content follows the
 selected agent in the tree.
 
-- [ ] `opal-chat-float` component — floating, draggable/docked
+- [x] `opal-chat-float` component — floating, docked (bottom-right)
       chat window with minimize/expand toggle
-- [ ] Minimized state: glowing dot indicator for unread messages
-- [ ] Chat content derived from selected agent's chat history
+- [x] Minimized state: glowing dot indicator for unread messages
+- [x] Chat content derived from selected agent's chat history
       (replaces prompt-bar threading by `playbook_run_id`)
-- [ ] Input field for responding to suspended agents
-- [ ] Remove `playbook_run_id` threading from `ChatController`
+- [x] Input field for responding to suspended agents
+- [x] Remove `playbook_run_id` threading from `ChatController`
       and `deriveThreads` — thread identity now follows the
       agent tree selection
+- [x] Removed bidirectional chat↔stage sync — agent tree is the
+      single source of truth
+- [x] Deleted `opal-prompt-bar` — replaced by floating chat
 
 ---
 
@@ -198,3 +201,27 @@ for orientation in deep trees.
 - [ ] Breadcrumb bar above the stage showing path to selected agent
 - [ ] URL hash includes selected agent ID for deep linking
 - [ ] Handle orphan selections (selected agent deleted or completed)
+
+---
+
+### Phase 8 — Polish: Draggable Chat Float
+
+🎯 **Objective**: The floating chat window can be dragged to any
+position over the stage. Position persists across agent selections.
+
+- [ ] Pointer-capture drag handle on the float header
+- [ ] Constrain drag bounds within `.shell-main-area`
+- [ ] Persist position in `ChatController` (reset on resize)
+
+---
+
+### Phase 9 — Cleanup: `playbook_run_id` References
+
+🎯 **Objective**: Remove `playbook_run_id` usage from `ui/app.ts`
+(the debugging tool). The field stays in `TicketData` since the
+server still sends it, but frontend code no longer uses it for
+threading or display.
+
+- [ ] Replace `playbook_run_id` display in `ui/app.ts` with
+      ticket ID or agent tree path
+- [ ] Verify no other frontend code references `playbook_run_id`
