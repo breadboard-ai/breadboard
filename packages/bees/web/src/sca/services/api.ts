@@ -5,7 +5,6 @@
  */
 
 import type { PlaybookData } from "../../data/types.js";
-import type { PulseTask } from "../types.js";
 
 export { BeesAPI };
 
@@ -97,26 +96,5 @@ class BeesAPI {
     }
   }
 
-  async getPulse(): Promise<{
-    text: string;
-    active: boolean;
-    tasks: PulseTask[];
-  }> {
-    try {
-      const resp = await fetch("/status?kind=!coordination&tags=!opie&status=available,running,blocked,suspended");
-      if (!resp.ok) return { text: "", active: false, tasks: [] };
-      const data = await resp.json();
-      
-      data.tasks = (data.tasks || []).filter((task: import("../types.js").PulseTask) => {
-        if (task.tags && task.tags.includes("digest") && task.status !== "running") {
-          return false;
-        }
-        return true;
-      });
-      return data;
-    } catch (e) {
-      console.error("Error fetching pulse:", e);
-      return { text: "", active: false, tasks: [] };
-    }
-  }
 }
+

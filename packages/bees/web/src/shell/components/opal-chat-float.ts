@@ -429,9 +429,8 @@ export class OpalChatFloat extends SignalWatcher(LitElement) {
     const enabled = this.#isInputEnabled;
     const pendingChoices = chat.pendingChoices;
 
-    const pulseTasks = this.sca.controller.global.pulseTasks;
     const isRunning = ticket
-      ? pulseTasks.some((pt) => pt.id === ticket.id)
+      ? ticket.status === "running"
       : false;
 
     const title =

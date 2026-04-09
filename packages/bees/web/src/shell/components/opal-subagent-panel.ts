@@ -208,22 +208,18 @@ export class OpalSubagentPanel extends SignalWatcher(LitElement) {
       </div>`;
     }
 
-    const pulseTasks = this.sca.controller.global.pulseTasks;
-
     return html`
       <div class="panel-container">
         <div class="panel-title">Subagents</div>
         ${children.map((child) => {
-          const isRunning = pulseTasks.some((pt) => pt.id === child.id);
-          const pulseTask = pulseTasks.find((pt) => pt.id === child.id);
-          const displayStatus = isRunning ? "running" : child.status;
+          const isRunning = child.status === "running";
 
           const icon =
-            displayStatus === "completed"
+            child.status === "completed"
               ? "✅"
-              : displayStatus === "failed"
+              : child.status === "failed"
                 ? "❌"
-                : displayStatus === "paused"
+                : child.status === "paused"
                   ? "⏸"
                   : isRunning
                     ? "⏳"
@@ -235,8 +231,8 @@ export class OpalSubagentPanel extends SignalWatcher(LitElement) {
             child.id.slice(0, 8);
 
           const detailText = isRunning
-            ? pulseTask?.current_step || "Working..."
-            : displayStatus;
+            ? "Working..."
+            : child.status;
 
           return html`
             <button
@@ -245,7 +241,7 @@ export class OpalSubagentPanel extends SignalWatcher(LitElement) {
                 this.sca.controller.agentTree.selectedAgentId = child.id
               }
             >
-              <div class="agent-status-icon ${displayStatus}">${icon}</div>
+              <div class="agent-status-icon ${child.status}">${icon}</div>
               <div class="agent-info">
                 <div class="agent-name">${title}</div>
                 <div class="agent-detail">
