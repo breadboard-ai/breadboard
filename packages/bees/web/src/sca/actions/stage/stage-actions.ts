@@ -69,7 +69,8 @@ export const processDigestUpdates = asAction(
         if (controller.stage.currentView === controller.stage.digestTicketId) {
           digestLoading = true;
           await new Promise((r) => setTimeout(r, 100));
-          await loadBundleAsync(controller.stage.digestTicketId!, services);
+          const dSlug = digestTicket.slug;
+          await loadBundleAsync(controller.stage.digestTicketId!, services, dSlug);
           digestLoading = false;
         }
       }
@@ -100,7 +101,10 @@ export const navigateToTicket = asAction(
     if (ticketId === "digest" && controller.stage.digestTicketId) {
       controller.stage.currentView = controller.stage.digestTicketId;
       await new Promise((r) => setTimeout(r, 100)); // wait for iframe mount
-      await loadBundleAsync(controller.stage.digestTicketId, services);
+      const digestT = controller.global.tickets.find(
+        (t) => t.id === controller.stage.digestTicketId
+      );
+      await loadBundleAsync(controller.stage.digestTicketId, services, digestT?.slug);
       return;
     }
 

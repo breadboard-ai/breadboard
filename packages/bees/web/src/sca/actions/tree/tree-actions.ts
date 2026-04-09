@@ -67,7 +67,7 @@ export const selectAgent = asAction(
         controller.stage.currentView = agentId;
         // Small delay to let Lit render the iframe element.
         await new Promise((r) => setTimeout(r, 100));
-        await loadBundleAsync(agentId, services);
+        await loadBundleAsync(agentId, services, ticket.slug);
       }
     } else {
       controller.chat.activeThreadId = null;

@@ -11,16 +11,26 @@ export { loadBundleAsync };
 /**
  * Fetches the JS (and optional CSS) bundle for a ticket and sends it
  * to the sandboxed iframe via the host communication service.
+ *
+ * When `slug` is provided (subagent), only files under the slug
+ * subdirectory are considered. This prevents loading a sibling
+ * agent's bundle from the shared workspace.
  */
 async function loadBundleAsync(
   ticketId: string,
-  services: AppServices
+  services: AppServices,
+  slug?: string | null
 ): Promise<void> {
-  const files = await services.api.listFiles(ticketId);
+  const allFiles = await services.api.listFiles(ticketId);
+
+  // Scope to the agent's slug subdirectory when present.
+  const files = slug
+    ? allFiles.filter((f) => f.startsWith(slug + "/"))
+    : allFiles;
 
   const jsFile = files.find((f) => f.endsWith(".js"));
   if (!jsFile) {
-    console.error(`[load-bundle] No JS file found for ticket ${ticketId}`);
+    console.error(`[load-bundle] No JS file found for ticket ${ticketId} (slug: ${slug ?? "root"})`);
     return;
   }
 
