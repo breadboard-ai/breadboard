@@ -16,7 +16,7 @@ import {
   derivePerspectives,
   deriveAncestorPath,
 } from "../../sca/utils/agent-tree.js";
-import { selectAgent } from "../../sca/actions/tree/tree-actions.js";
+
 import {
   parseAgentHash,
   updateAgentHash,
@@ -308,7 +308,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
               class="breadcrumb-segment ${isCurrent ? "current" : ""}"
               @click=${() => {
                 if (!isCurrent) {
-                  selectAgent(new CustomEvent("select", { detail: id }));
+                  this.sca.controller.agentTree.selectedAgentId = id;
                 }
               }}
               ?disabled=${isCurrent}

@@ -9,7 +9,6 @@ import { makeAction } from "../binder.js";
 import { onTicketsUpdate } from "../chat/chat-triggers.js";
 import { onIframeNavigate } from "./stage-triggers.js";
 import { loadBundleAsync } from "../../utils/load-bundle.js";
-import { selectAgent } from "../tree/tree-actions.js";
 
 export const bind = makeAction();
 
@@ -81,8 +80,9 @@ export const processDigestUpdates = asAction(
 /**
  * Navigate to a ticket from an iframe-initiated event.
  *
- * Delegates to `selectAgent` so the agent tree remains the single
- * source of truth for both stage and chat state.
+ * Sets `selectedAgentId` on the controller — the `syncAgentSelection`
+ * trigger in tree-actions handles chat sync, bundle loading, and
+ * hash updates reactively.
  */
 export const navigateToTicket = asAction(
   "Navigate To Ticket",
@@ -115,8 +115,8 @@ export const navigateToTicket = asAction(
     );
     if (!targetTicket) return;
 
-    // Delegate to selectAgent — it drives both stage and chat.
-    await selectAgent(new CustomEvent("navigate", { detail: ticketId }));
+    // Set the field — syncAgentSelection handles the side effects.
+    controller.agentTree.selectedAgentId = ticketId;
   }
 );
 

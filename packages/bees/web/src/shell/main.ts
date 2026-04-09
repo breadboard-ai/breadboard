@@ -12,7 +12,7 @@ import { provide } from "@lit/context";
 import { scaContext } from "../sca/context/context.js";
 import { sca as scaInst, type SCA } from "../sca/sca.js";
 import { styles } from "./opal-shell.styles.js";
-import { selectAgent } from "../sca/actions/tree/tree-actions.js";
+
 import { parseAgentHash } from "../sca/utils/agent-hash.js";
 
 import "./components/opal-header.js";
@@ -78,9 +78,9 @@ class OpalShell extends SignalWatcher(LitElement) {
   /**
    * Restore agent selection from URL hash after init tickets arrive.
    *
-   * Defers `selectAgent` to `setTimeout(0)` so the sync action
+   * Defers the assignment to `setTimeout(0)` so the sync action
    * (`initTickets`) has time to populate `global.tickets` before
-   * selectAgent tries to look up the ticket for chat/bundle setup.
+   * `syncAgentSelection` reacts and looks up the ticket.
    */
   #restoreAgentFromHash() {
     const { agentId } = parseAgentHash();
@@ -96,7 +96,7 @@ class OpalShell extends SignalWatcher(LitElement) {
             (t) => t.id === agentId
           );
           if (exists) {
-            selectAgent(new CustomEvent("select", { detail: agentId }));
+            this.sca.controller.agentTree.selectedAgentId = agentId;
           } else {
             window.history.replaceState(null, "", window.location.pathname);
           }
