@@ -18,10 +18,18 @@ export class HostCommunicationService {
     this.eventBus = eventBus;
   }
 
+  private currentIframe: HTMLIFrameElement | null = null;
+
   connect(iframe: HTMLIFrameElement) {
+    // Same iframe element — keep the existing bridge (its readyPromise
+    // is already resolved; rebuilding would deadlock on "ready" since
+    // the iframe won't re-send it).
+    if (iframe === this.currentIframe && this.bridge) return;
+
     if (this.bridge) {
       this.bridge.dispose();
     }
+    this.currentIframe = iframe;
     this.bridge = new MessageBridge(iframe);
 
     this.bridge.onMessage((msg: IframeMessage) => {
@@ -40,5 +48,6 @@ export class HostCommunicationService {
   dispose() {
     this.bridge?.dispose();
     this.bridge = null;
+    this.currentIframe = null;
   }
 }

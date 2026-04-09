@@ -188,7 +188,10 @@ export class OpalStage extends SignalWatcher(LitElement) {
       if (changedProperties.has("activeTab") && this.activeTab === "app") {
         const selectedId = this.sca.controller.agentTree.selectedAgentId;
         if (selectedId) {
-          loadBundleAsync(selectedId, this.sca.services);
+          const ticket = this.sca.controller.global.tickets.find(
+            (t) => t.id === selectedId
+          );
+          loadBundleAsync(selectedId, this.sca.services, ticket?.slug);
         }
       }
     }
