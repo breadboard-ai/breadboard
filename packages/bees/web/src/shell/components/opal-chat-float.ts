@@ -278,6 +278,39 @@ const styles = css`
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
 
+  .choice-chip.selected {
+    border-color: var(--cg-color-primary, #3b5fc0);
+    background: var(--cg-color-primary-container, #dbe1f9);
+    color: var(--cg-color-on-primary-container, #001a41);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  .choices-submit {
+    background: var(--cg-color-primary, #3b5fc0);
+    color: #fff;
+    border: none;
+    padding: var(--cg-sp-2, 8px) var(--cg-sp-4, 16px);
+    border-radius: var(--cg-radius-full, 999px);
+    font-size: var(--cg-text-label-md-size, 14px);
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+    margin-left: auto;
+  }
+
+  .choices-submit:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+
+  .choices-submit:disabled {
+    opacity: 0.4;
+    cursor: default;
+    transform: none;
+    filter: none;
+  }
+
   /* ── Input ── */
 
   .chat-input-bar {
@@ -428,6 +461,8 @@ export class OpalChatFloat extends SignalWatcher(LitElement) {
     const ticket = this.#activeTicket;
     const enabled = this.#isInputEnabled;
     const pendingChoices = chat.pendingChoices;
+    const selectionMode = chat.pendingSelectionMode;
+    const selectedIds = chat.selectedChoiceIds;
 
     const isRunning = ticket
       ? ticket.status === "running"
@@ -484,13 +519,22 @@ export class OpalChatFloat extends SignalWatcher(LitElement) {
                 ${pendingChoices.map(
                   (choice) => html`
                     <button
-                      class="choice-chip"
-                      @click=${() => this.#sendChoice(choice.id)}
+                      class="choice-chip ${selectionMode === "multiple" && selectedIds.includes(choice.id) ? "selected" : ""}"
+                      @click=${() => this.#onChoiceClick(choice.id)}
                     >
                       ${choice.text}
                     </button>
                   `
                 )}
+                ${selectionMode === "multiple"
+                  ? html`<button
+                      class="choices-submit"
+                      ?disabled=${selectedIds.length === 0}
+                      @click=${this.#submitChoices}
+                    >
+                      Submit (${selectedIds.length})
+                    </button>`
+                  : nothing}
               </div>
             `
           : nothing}
@@ -534,7 +578,22 @@ export class OpalChatFloat extends SignalWatcher(LitElement) {
     sendChat(new CustomEvent("chat", { detail: text }));
   }
 
-  #sendChoice(choiceId: string) {
-    sendChoices(new CustomEvent("choices", { detail: [choiceId] }));
+  #onChoiceClick(choiceId: string) {
+    const chat = this.sca.controller.chat;
+    if (chat.pendingSelectionMode === "single") {
+      sendChoices(new CustomEvent("choices", { detail: [choiceId] }));
+      return;
+    }
+    // Multiple mode: toggle selection.
+    const ids = chat.selectedChoiceIds;
+    chat.selectedChoiceIds = ids.includes(choiceId)
+      ? ids.filter((id) => id !== choiceId)
+      : [...ids, choiceId];
+  }
+
+  #submitChoices() {
+    const ids = this.sca.controller.chat.selectedChoiceIds;
+    if (ids.length === 0) return;
+    sendChoices(new CustomEvent("choices", { detail: ids }));
   }
 }
