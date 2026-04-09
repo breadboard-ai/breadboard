@@ -12,7 +12,7 @@ import { scaContext } from "../../sca/context/context.js";
 import { type SCA } from "../../sca/sca.js";
 import { sharedStyles } from "./shared.styles.js";
 import { deriveChildAgents } from "../../sca/utils/agent-tree.js";
-import { selectAgent } from "../../sca/actions/tree/tree-actions.js";
+
 
 const styles = css`
   :host {
@@ -242,9 +242,8 @@ export class OpalSubagentPanel extends SignalWatcher(LitElement) {
             <button
               class="agent-card"
               @click=${() =>
-                selectAgent(
-                  new CustomEvent("select", { detail: child.id })
-                )}
+                this.sca.controller.agentTree.selectedAgentId = child.id
+              }
             >
               <div class="agent-status-icon ${displayStatus}">${icon}</div>
               <div class="agent-info">

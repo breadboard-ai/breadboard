@@ -12,7 +12,7 @@ import { scaContext } from "../../sca/context/context.js";
 import { type SCA } from "../../sca/sca.js";
 import { sharedStyles } from "./shared.styles.js";
 
-import { selectAgent } from "../../sca/actions/tree/tree-actions.js";
+
 import {
   deriveAgentTree,
   derivePerspectives,
@@ -350,6 +350,6 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
   }
 
   #selectNode(id: string) {
-    selectAgent(new CustomEvent("select", { detail: id }));
+    this.sca.controller.agentTree.selectedAgentId = id;
   }
 }

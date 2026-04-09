@@ -8,29 +8,29 @@ import { asAction, ActionMode } from "../../coordination.js";
 import { makeAction } from "../binder.js";
 import { loadBundleAsync } from "../../utils/load-bundle.js";
 import { updateAgentHash } from "../../utils/agent-hash.js";
+import { onAgentSelected } from "./tree-triggers.js";
 
 export const bind = makeAction();
 
 /**
- * Set the selected agent in the tree.
+ * Reacts to agent selection changes.
  *
- * Dispatched from the sidebar tree navigator or subagent panel
- * when the user clicks an agent node.
- *
- * Drives both the stage (bundle loading) and the chat (thread
- * selection) — the agent tree is the single source of truth.
+ * Triggered whenever `controller.agentTree.selectedAgentId` changes.
+ * Callers (UI components, other actions) set the field directly on the
+ * controller — this action handles the side effects: URL hash sync,
+ * chat thread switching, and bundle loading.
  */
-export const selectAgent = asAction(
-  "Select Agent",
-  { mode: ActionMode.Immediate },
-  async (evt?: Event) => {
-    if (!evt) return;
+export const syncAgentSelection = asAction(
+  "Sync Agent Selection",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onAgentSelected(bind),
+  },
+  async () => {
     const { controller, services } = bind;
-    const agentId = (evt as CustomEvent<string | null>).detail;
-    controller.agentTree.selectedAgentId = agentId;
+    const agentId = controller.agentTree.selectedAgentId;
 
     // Sync URL hash for deep linking.
-    // Include active view tab if available.
     if (typeof window !== "undefined") {
       updateAgentHash(agentId);
     }
