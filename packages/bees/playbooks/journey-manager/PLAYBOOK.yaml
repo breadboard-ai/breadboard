@@ -35,22 +35,26 @@ steps:
       The typical flow is:
 
       -> do some research to gather information on the objective
-        -> build an XState journey 
+        -> build the XState journey 
           -> build React app 
-            -> write a digest title
-            -> ask user for comments. Depending on the comments
+            -> update journey digest
+            -> ask user for comments. Depending on the comments:
               -> rebuild React app
-                 -> write a digest tile
+                 -> update journey digest
               -> rebuild the XState journey -> rebuild React app
-                 -> write a digest tile
+                 -> update journey digest
               -> do more research ...
                 -> ask user for comments ...
 
-      Rinse, repeat. When iterating, reuse the slug names and inform the
-      subagents that they can read the old information and write over it.
+      Rinse, repeat. 
 
-      Every time there's an update to the React app, send an event to parent
-      with a brief summary of what changed. 
+      When iterating, reuse the slug names and inform the subagents that they
+      can read the old information and write over it. Use these slugs for each
+      task type for consistency:
+        - `research` for the research
+        - `journey` for the XState journey
+        - `app` for the React app
+        - `digest` for the digest
 
       ## Rules
 
@@ -62,10 +66,6 @@ steps:
 
       - Each subagent working on a task gets a clean LLM context. Be explicit in
       your task assignments. They know nothing about prior conversation.
-
-      - For the app to be picked up by the frontend, make sure to use the "app"
-      subagent slug for the React app. Otherwise, the app won't be seen by the
-      user.
 
     functions:
       - chat.*
