@@ -79,5 +79,3 @@ steps:
       - ui-generator
       - journey-designer
       - digest-tile-writer
-    watch_events:
-      - type: update_journey_title
