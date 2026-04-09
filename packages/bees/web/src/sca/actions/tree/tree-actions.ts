@@ -7,7 +7,7 @@
 import { asAction, ActionMode } from "../../coordination.js";
 import { makeAction } from "../binder.js";
 import { loadBundleAsync } from "../../utils/load-bundle.js";
-import { applyPromptState } from "../chat/chat-actions.js";
+import { updateAgentHash } from "../../utils/agent-hash.js";
 
 export const bind = makeAction();
 
@@ -29,6 +29,12 @@ export const selectAgent = asAction(
     const agentId = (evt as CustomEvent<string | null>).detail;
     controller.agentTree.selectedAgentId = agentId;
 
+    // Sync URL hash for deep linking.
+    // Include active view tab if available.
+    if (typeof window !== "undefined") {
+      updateAgentHash(agentId);
+    }
+
     // Sync chat to the selected agent.
     if (agentId) {
       const ticket = controller.global.tickets.find((t) => t.id === agentId);
@@ -39,7 +45,6 @@ export const selectAgent = asAction(
         controller.chat.visitedThreadIds.add(agentId);
         controller.chat.pendingChoices = [];
         controller.chat.selectedChoiceIds = [];
-        applyPromptState();
 
         // Notify the host about the chat switch.
         if (

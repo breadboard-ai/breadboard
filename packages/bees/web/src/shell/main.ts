@@ -12,6 +12,8 @@ import { provide } from "@lit/context";
 import { scaContext } from "../sca/context/context.js";
 import { sca as scaInst, type SCA } from "../sca/sca.js";
 import { styles } from "./opal-shell.styles.js";
+import { selectAgent } from "../sca/actions/tree/tree-actions.js";
+import { parseAgentHash } from "../sca/utils/agent-hash.js";
 
 import "./components/opal-header.js";
 import "./components/opal-stage.js";
@@ -33,6 +35,7 @@ class OpalShell extends SignalWatcher(LitElement) {
     super.connectedCallback();
     this.sca.services.sse.connect();
     this.#pollPulseLoop();
+    this.#restoreAgentFromHash();
   }
 
   disconnectedCallback() {
@@ -70,6 +73,37 @@ class OpalShell extends SignalWatcher(LitElement) {
       </div>
       <opal-toasts></opal-toasts>
     `;
+  }
+
+  /**
+   * Restore agent selection from URL hash after init tickets arrive.
+   *
+   * Defers `selectAgent` to `setTimeout(0)` so the sync action
+   * (`initTickets`) has time to populate `global.tickets` before
+   * selectAgent tries to look up the ticket for chat/bundle setup.
+   */
+  #restoreAgentFromHash() {
+    const { agentId } = parseAgentHash();
+    if (!agentId) return;
+
+    // Wait for init_tickets, then defer to next macrotask so the
+    // sync action has populated global.tickets.
+    this.sca.services.stateEventBus.addEventListener(
+      "init_tickets",
+      () => {
+        setTimeout(() => {
+          const exists = this.sca.controller.global.tickets.some(
+            (t) => t.id === agentId
+          );
+          if (exists) {
+            selectAgent(new CustomEvent("select", { detail: agentId }));
+          } else {
+            window.history.replaceState(null, "", window.location.pathname);
+          }
+        }, 0);
+      },
+      { once: true }
+    );
   }
 }
 

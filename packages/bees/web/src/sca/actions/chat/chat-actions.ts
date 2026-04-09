@@ -8,7 +8,7 @@ import { asAction, ActionMode } from "../../coordination.js";
 import { makeAction } from "../binder.js";
 import type { TicketData } from "../../../data/types.js";
 import type { ChatThread, ChatMessage } from "../../types.js";
-import { onTicketsUpdate } from "./chat-triggers.js";
+import { onTicketsUpdate, onActiveThreadChange } from "./chat-triggers.js";
 import { extractPrompt, extractChoices } from "../../../utils.js";
 
 export const bind = makeAction();
@@ -189,41 +189,57 @@ async function processTicketTransitions(
 /**
  * Apply prompt state for the active thread — sets up pending choices
  * when the active agent is suspended for user input.
+ *
+ * Triggered by `activeThreadId` changes (e.g. when the tree action
+ * selects a new agent). This replaces the prior cross-action import.
  */
-export function applyPromptState() {
-  const { controller } = bind;
-  const activeThreadId = controller.chat.activeThreadId;
-  if (!activeThreadId) {
-    controller.chat.pendingChoices = [];
-    return;
-  }
-  const thread = controller.chat.threads.find((t) => t.id === activeThreadId);
-  if (!thread?.activeTicketId) {
-    controller.chat.pendingChoices = [];
-    return;
-  }
+export const applyPromptState = asAction(
+  "Apply Prompt State",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onActiveThreadChange(bind),
+  },
+  async () => {
+    const { controller } = bind;
+    const activeThreadId = controller.chat.activeThreadId;
+    if (!activeThreadId) {
+      controller.chat.pendingChoices = [];
+      return;
+    }
+    const thread = controller.chat.threads.find(
+      (t) => t.id === activeThreadId
+    );
+    if (!thread?.activeTicketId) {
+      controller.chat.pendingChoices = [];
+      return;
+    }
 
-  const ticket = controller.global.tickets.find(
-    (t) => t.id === thread.activeTicketId
-  );
-  if (!ticket || ticket.status !== "suspended" || ticket.assignee !== "user") {
-    controller.chat.pendingChoices = [];
-    return;
-  }
+    const ticket = controller.global.tickets.find(
+      (t) => t.id === thread.activeTicketId
+    );
+    if (
+      !ticket ||
+      ticket.status !== "suspended" ||
+      ticket.assignee !== "user"
+    ) {
+      controller.chat.pendingChoices = [];
+      return;
+    }
 
-  const choices = extractChoices(ticket);
-  if (choices.length > 0) {
-    const selectionMode =
-      ((ticket.suspend_event?.waitForChoice as Record<string, unknown>)
-        ?.selectionMode as string) ?? "single";
-    controller.chat.pendingChoices = choices;
-    controller.chat.pendingSelectionMode =
-      selectionMode === "multiple" ? "multiple" : "single";
-    controller.chat.selectedChoiceIds = [];
-  } else {
-    controller.chat.pendingChoices = [];
+    const choices = extractChoices(ticket);
+    if (choices.length > 0) {
+      const selectionMode =
+        ((ticket.suspend_event?.waitForChoice as Record<string, unknown>)
+          ?.selectionMode as string) ?? "single";
+      controller.chat.pendingChoices = choices;
+      controller.chat.pendingSelectionMode =
+        selectionMode === "multiple" ? "multiple" : "single";
+      controller.chat.selectedChoiceIds = [];
+    } else {
+      controller.chat.pendingChoices = [];
+    }
   }
-}
+);
 
 // ── Manual Triggers (Bound to UI Elements) ──────────────────
 

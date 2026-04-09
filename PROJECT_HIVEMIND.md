@@ -196,15 +196,18 @@ reflect immediately. No polling required beyond existing SSE.
 
 ---
 
-### Phase 7 — Polish: Breadcrumb + Deep Linking
+### Phase 7 — Polish: Breadcrumb + Deep Linking ✅
 
 🎯 **Objective**: Selected agent state survives page reload via URL
 hash. A breadcrumb trail shows the path from root to selected agent
 for orientation in deep trees.
 
-- [ ] Breadcrumb bar above the stage showing path to selected agent
-- [ ] URL hash includes selected agent ID for deep linking
-- [ ] Handle orphan selections (selected agent deleted or completed)
+- [x] Breadcrumb bar above the stage showing path to selected agent
+      (uses `deriveAncestorPath`, hidden for root-level agents)
+- [x] URL hash `#agent=<id>` synced via `replaceState` in
+      `selectAgent`, restored on shell startup after SSE init
+- [x] Orphan handling: stage clears selection when ticket missing,
+      shell clears stale hash when ticket not found on reload
 
 ---
 
