@@ -33,6 +33,17 @@ async function doUpsertTicket(ticket: TicketData) {
   } else {
     c.tickets = [ticket, ...current];
   }
+
+  // Glow the chat dot when a chat-tagged agent becomes suspended
+  // (waiting for user) while the float is minimized.
+  if (
+    ticket.tags?.includes("chat") &&
+    ticket.status === "suspended" &&
+    ticket.assignee === "user" &&
+    controller.chat.isMinimized
+  ) {
+    controller.chat.hasUnreadFloat = true;
+  }
 }
 
 export const upsertTicketOnAdd = asAction(

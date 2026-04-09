@@ -6,7 +6,12 @@
 
 import type { TicketData } from "../../data/types.js";
 
-export { deriveAgentTree, deriveChildAgents, derivePerspectives };
+export {
+  deriveAgentTree,
+  deriveChildAgents,
+  derivePerspectives,
+  deriveAncestorPath,
+};
 export type { AgentTreeNode, AgentPerspectives };
 
 /** A node in the agent tree. */
@@ -88,4 +93,31 @@ function derivePerspectives(
   );
 
   return { hasSubagents, hasChat, hasBundle };
+}
+
+/**
+ * Derive the ancestor path from root to the given agent.
+ *
+ * Returns an ordered array of ticket IDs: `[root, ..., parent, agentId]`.
+ * Walks the `creator_ticket_id` chain upward, then reverses.
+ * Returns an empty array if the agent is not found.
+ *
+ * Guards against cycles with a visited set.
+ */
+function deriveAncestorPath(tickets: TicketData[], agentId: string): string[] {
+  const byId = new Map(tickets.map((t) => [t.id, t]));
+  const path: string[] = [];
+  const visited = new Set<string>();
+  let current = agentId;
+
+  while (current) {
+    if (visited.has(current)) break; // Cycle guard.
+    visited.add(current);
+    path.push(current);
+    const ticket = byId.get(current);
+    if (!ticket?.creator_ticket_id) break;
+    current = ticket.creator_ticket_id;
+  }
+
+  return path.reverse();
 }

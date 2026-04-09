@@ -175,20 +175,24 @@ selected agent in the tree.
 
 ---
 
-### Phase 6 — Integration: Reactive Tree Updates
+### Phase 6 — Integration: Reactive Tree Updates ✅
 
 🎯 **Objective**: When the server broadcasts `ticket_added` or
 `ticket_update` for a ticket with `creator_ticket_id`, the tree
 automatically updates — new children appear, status changes
 reflect immediately. No polling required beyond existing SSE.
 
-- [ ] Verify SSE `ticket_added` events include `creator_ticket_id`
-      in the payload
-- [ ] `AgentTreeController.agentTree` recomputes reactively when
-      `global.tickets` changes (automatic via computed signal)
-- [ ] Visual feedback: new child agents animate in, status changes
-      pulse the tree node and the floating chat dot
-- [ ] Handle deep trees: auto-expand path to newly active agent
+- [x] Verify SSE `ticket_added` events include `creator_ticket_id`
+      in the payload (confirmed: `to_dict` uses `dataclasses.asdict`)
+- [x] Tree recomputes reactively when `global.tickets` changes
+      (automatic: `deriveAgentTree` called in sidebar's `render()`,
+      `global.tickets` is signal-backed)
+- [x] Visual feedback: entrance animation on new nodes, status pulse
+      on `.status-dot`, chat float dot glow when agent suspends
+- [x] Auto-expand path to newly active agent via
+      `deriveAncestorPath` + `<details open>` attribute
+- [x] Sidebar refactored to native `<details>/<summary>` elements
+      (replaces manual `expandedIds` state)
 
 ---
 
