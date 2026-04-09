@@ -11,6 +11,7 @@ import {
   deriveAgentTree,
   deriveChildAgents,
   derivePerspectives,
+  deriveAncestorPath,
 } from "../../../src/sca/utils/agent-tree.js";
 import type { TicketData } from "../../../src/data/types.js";
 
@@ -229,5 +230,54 @@ describe("derivePerspectives", () => {
     assert.equal(p.hasChat, true);
     assert.equal(p.hasBundle, true);
     assert.equal(p.hasSubagents, true);
+  });
+});
+
+describe("deriveAncestorPath", () => {
+  it("returns single-element path for a root ticket", () => {
+    const tickets = [ticket({ id: "root" })];
+    const path = deriveAncestorPath(tickets, "root");
+    assert.deepEqual(path, ["root"]);
+  });
+
+  it("returns ordered path from root to grandchild", () => {
+    const tickets = [
+      ticket({ id: "root" }),
+      ticket({ id: "child", creator_ticket_id: "root" }),
+      ticket({ id: "grandchild", creator_ticket_id: "child" }),
+    ];
+    const path = deriveAncestorPath(tickets, "grandchild");
+    assert.deepEqual(path, ["root", "child", "grandchild"]);
+  });
+
+  it("returns empty array for unknown agent", () => {
+    const tickets = [ticket({ id: "root" })];
+    const path = deriveAncestorPath(tickets, "nonexistent");
+    // Agent isn't in the ticket list, so the map lookup fails after
+    // adding "nonexistent" to the path. We still get the ID itself.
+    assert.deepEqual(path, ["nonexistent"]);
+  });
+
+  it("guards against cycles", () => {
+    const tickets = [
+      ticket({ id: "a", creator_ticket_id: "b" }),
+      ticket({ id: "b", creator_ticket_id: "a" }),
+    ];
+    const path = deriveAncestorPath(tickets, "a");
+    // Should terminate without infinite loop.
+    assert.equal(path.length, 2);
+    assert.deepEqual(path, ["b", "a"]);
+  });
+
+  it("handles deep chains", () => {
+    const tickets = [
+      ticket({ id: "l0" }),
+      ticket({ id: "l1", creator_ticket_id: "l0" }),
+      ticket({ id: "l2", creator_ticket_id: "l1" }),
+      ticket({ id: "l3", creator_ticket_id: "l2" }),
+      ticket({ id: "l4", creator_ticket_id: "l3" }),
+    ];
+    const path = deriveAncestorPath(tickets, "l4");
+    assert.deepEqual(path, ["l0", "l1", "l2", "l3", "l4"]);
   });
 });

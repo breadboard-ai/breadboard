@@ -5,7 +5,7 @@
  */
 
 import { LitElement, html, css, nothing, type TemplateResult } from "lit";
-import { customElement, state } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { scaContext } from "../../sca/context/context.js";
@@ -16,6 +16,7 @@ import { selectAgent } from "../../sca/actions/tree/tree-actions.js";
 import {
   deriveAgentTree,
   derivePerspectives,
+  deriveAncestorPath,
   type AgentTreeNode,
 } from "../../sca/utils/agent-tree.js";
 import type { TicketData } from "../../data/types.js";
@@ -49,6 +50,36 @@ const styles = css`
 
   .tree-node {
     margin-bottom: var(--cg-sp-1, 4px);
+  }
+
+  .tree-node.new-node {
+    animation: slideIn 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* ── <details>/<summary> reset ── */
+
+  details {
+    margin-bottom: var(--cg-sp-1, 4px);
+  }
+
+  summary {
+    list-style: none;
+  }
+
+  summary::-webkit-details-marker,
+  summary::marker {
+    display: none;
   }
 
   .node-row {
@@ -108,7 +139,7 @@ const styles = css`
     height: 12px;
   }
 
-  .expand-toggle.expanded {
+  details[open] > summary .expand-toggle {
     transform: rotate(90deg);
   }
 
@@ -146,6 +177,25 @@ const styles = css`
     background: var(--cg-color-primary, #3b5fc0);
   }
 
+  .status-dot.pulse {
+    animation: statusPulse 0.6s cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  @keyframes statusPulse {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 currentColor;
+    }
+    50% {
+      transform: scale(1.6);
+      box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: none;
+    }
+  }
+
   .node-title {
     flex: 1;
     overflow: hidden;
@@ -181,8 +231,10 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
-  /** Set of expanded node IDs. */
-  @state() accessor expandedIds: Set<string> = new Set();
+  /** Track known ticket IDs to detect new arrivals for entrance animation. */
+  #knownTicketIds = new Set<string>();
+  /** Track previous statuses for pulse animation. */
+  #previousStatuses = new Map<string, string>();
 
   static styles = [sharedStyles, styles];
 
@@ -203,6 +255,36 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
     `;
   }
 
+  updated() {
+    const tickets = this.sca.controller.global.tickets;
+    const pulseTasks = this.sca.controller.global.pulseTasks;
+
+    // Detect newly running agents and auto-expand their ancestor path.
+    for (const ticket of tickets) {
+      const wasRunning = pulseTasks.some((pt) => pt.id === ticket.id);
+      const isNew = !this.#knownTicketIds.has(ticket.id);
+
+      if ((isNew || wasRunning) && ticket.creator_ticket_id) {
+        const ancestorPath = deriveAncestorPath(tickets, ticket.id);
+        // Set `open` on all ancestor <details> elements.
+        for (const ancestorId of ancestorPath) {
+          const details = this.renderRoot.querySelector(
+            `details[data-agent-id="${ancestorId}"]`
+          );
+          if (details && !details.hasAttribute("open")) {
+            details.setAttribute("open", "");
+          }
+        }
+      }
+    }
+
+    // Update status tracking for pulse detection, and track new tickets.
+    for (const ticket of tickets) {
+      this.#previousStatuses.set(ticket.id, ticket.status);
+      this.#knownTicketIds.add(ticket.id);
+    }
+  }
+
   #renderNode(
     node: AgentTreeNode,
     selectedId: string | null,
@@ -217,61 +299,57 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
     if (!hasAnyPerspective) return nothing;
 
     const hasChildren = node.children.length > 0;
-    const isExpanded = this.expandedIds.has(t.id);
     const isSelected = t.id === selectedId;
     const pulseTasks = this.sca.controller.global.pulseTasks;
     const isRunning = pulseTasks.some((pt) => pt.id === t.id);
     const displayStatus = isRunning ? "running" : t.status;
 
+    const isNewNode = !this.#knownTicketIds.has(t.id);
+    const previousStatus = this.#previousStatuses.get(t.id);
+    const statusChanged = previousStatus !== undefined && previousStatus !== t.status;
+
     const title = t.title || t.playbook_id?.replace(/-/g, " ") || t.id.slice(0, 8);
 
-    return html`
-      <div class="tree-node">
-        <button
-          class="node-row ${isSelected ? "selected" : ""}"
-          @click=${() => this.#selectNode(t.id)}
-        >
-          <span
-            class="expand-toggle ${hasChildren ? (isExpanded ? "expanded" : "") : "leaf"}"
-            @click=${(e: Event) => {
-              if (hasChildren) {
-                e.stopPropagation();
-                this.#toggleExpand(t.id);
-              }
-            }}
+    const nodeRow = html`
+      <div
+        class="node-row ${isSelected ? "selected" : ""}"
+        @click=${() => this.#selectNode(t.id)}
+      >
+        <span class="expand-toggle ${hasChildren ? "" : "leaf"}"
           ><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 6l6 6-6 6z"/></svg></span>
-          <span class="status-dot ${displayStatus}"></span>
-          <span class="node-title">${title}</span>
-          <span class="perspective-icons">
-            ${perspectives.hasChat ? "💬" : nothing}
-            ${perspectives.hasBundle ? "🖥" : nothing}
-            ${perspectives.hasSubagents ? "👥" : nothing}
-          </span>
-        </button>
-        ${hasChildren && isExpanded
-          ? html`
-              <div class="children">
-                ${node.children.map((child) =>
-                  this.#renderNode(child, selectedId, allTickets)
-                )}
-              </div>
-            `
-          : nothing}
+        <span class="status-dot ${displayStatus} ${statusChanged ? "pulse" : ""}"></span>
+        <span class="node-title">${title}</span>
+        <span class="perspective-icons">
+          ${perspectives.hasChat ? "💬" : nothing}
+          ${perspectives.hasBundle ? "🖥" : nothing}
+          ${perspectives.hasSubagents ? "👥" : nothing}
+        </span>
       </div>
+    `;
+
+    // Leaf node — no <details> needed.
+    if (!hasChildren) {
+      return html`
+        <div class="tree-node ${isNewNode ? "new-node" : ""}">
+          ${nodeRow}
+        </div>
+      `;
+    }
+
+    // Branch node — use <details>/<summary> for native expand/collapse.
+    return html`
+      <details class="tree-node ${isNewNode ? "new-node" : ""}" data-agent-id=${t.id}>
+        <summary>${nodeRow}</summary>
+        <div class="children">
+          ${node.children.map((child) =>
+            this.#renderNode(child, selectedId, allTickets)
+          )}
+        </div>
+      </details>
     `;
   }
 
   #selectNode(id: string) {
     selectAgent(new CustomEvent("select", { detail: id }));
-  }
-
-  #toggleExpand(id: string) {
-    const next = new Set(this.expandedIds);
-    if (next.has(id)) {
-      next.delete(id);
-    } else {
-      next.add(id);
-    }
-    this.expandedIds = next;
   }
 }
