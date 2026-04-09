@@ -16,3 +16,16 @@ export function onTicketsUpdate({ controller }: ActionBind): SignalTrigger {
       : null;
   });
 }
+
+/** Fires when the active chat thread changes (e.g. agent selection). */
+export function onActiveThreadChange({ controller }: ActionBind): SignalTrigger {
+  // Version +1 to avoid sticky trigger — we care about the change,
+  // not the current value.
+  let lastSeen: string | null = undefined as unknown as string | null;
+  return signalTrigger("Active Thread Change", () => {
+    const current = controller.chat.activeThreadId;
+    if (current === lastSeen) return null;
+    lastSeen = current;
+    return current ?? "cleared";
+  });
+}

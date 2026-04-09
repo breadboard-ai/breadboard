@@ -14,14 +14,73 @@ import { sharedStyles } from "./shared.styles.js";
 import { styles as baseStyles } from "./opal-stage.styles.js";
 import {
   derivePerspectives,
-  deriveChildAgents,
+  deriveAncestorPath,
 } from "../../sca/utils/agent-tree.js";
+import { selectAgent } from "../../sca/actions/tree/tree-actions.js";
+import {
+  parseAgentHash,
+  updateAgentHash,
+} from "../../sca/utils/agent-hash.js";
 import { loadBundleAsync } from "../../sca/utils/load-bundle.js";
 
 import "./opal-timeline.js";
 import "./opal-subagent-panel.js";
 
 const stageStyles = css`
+  /* ── Breadcrumb ── */
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--cg-sp-1, 4px);
+    padding: var(--cg-sp-2, 8px) var(--cg-sp-4, 16px);
+    background: var(--cg-color-surface-dim, #f5f3f0);
+    border-bottom: 1px solid var(--cg-color-outline-variant, #e0ddd9);
+    flex-shrink: 0;
+    font-size: var(--cg-text-body-sm-size, 12px);
+    min-height: 32px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .breadcrumb::-webkit-scrollbar {
+    display: none;
+  }
+
+  .breadcrumb-segment {
+    background: none;
+    border: none;
+    padding: var(--cg-sp-1, 4px) var(--cg-sp-2, 8px);
+    border-radius: var(--cg-radius-sm, 4px);
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 500;
+    color: var(--cg-color-on-surface-muted, #79757f);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .breadcrumb-segment:hover {
+    background: var(--cg-color-surface-bright, #ffffff);
+    color: var(--cg-color-on-surface, #1c1b1f);
+  }
+
+  .breadcrumb-segment.current {
+    color: var(--cg-color-on-surface, #1c1b1f);
+    font-weight: 600;
+    cursor: default;
+  }
+
+  .breadcrumb-separator {
+    color: var(--cg-color-outline-variant, #e0ddd9);
+    font-size: 10px;
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  /* ── Tabs ── */
+
   .tab-bar {
     display: flex;
     gap: var(--cg-sp-1, 4px);
@@ -114,6 +173,9 @@ export class OpalStage extends SignalWatcher(LitElement) {
 
   @state() accessor activeTab: StageTab = "app";
 
+  /** Track which agent was last rendered so we detect switches. */
+  #lastRenderedAgentId: string | null = null;
+
   static styles = [sharedStyles, baseStyles, stageStyles];
 
   updated(changedProperties: Map<string | number | symbol, unknown>) {
@@ -137,12 +199,15 @@ export class OpalStage extends SignalWatcher(LitElement) {
 
     // No agent selected — fall back to the legacy stage behavior.
     if (!selectedId) {
+      this.#lastRenderedAgentId = null;
       return this.#renderLegacyStage();
     }
 
     const tickets = this.sca.controller.global.tickets;
     const ticket = tickets.find((t) => t.id === selectedId);
     if (!ticket) {
+      // Orphan: selected agent no longer exists — clear selection.
+      this.sca.controller.agentTree.selectedAgentId = null;
       return this.#renderLegacyStage();
     }
 
@@ -153,16 +218,28 @@ export class OpalStage extends SignalWatcher(LitElement) {
     if (perspectives.hasSubagents)
       tabs.push({ id: "subagents", label: "Subagents" });
 
-    // Auto-select first available tab if current isn't valid.
+    // On agent switch (or first render), read the hash view.
+    // Otherwise, only correct if current tab is invalid.
     const validTabIds = tabs.map((t) => t.id);
-    if (!validTabIds.includes(this.activeTab) && tabs.length > 0) {
+    const agentChanged = selectedId !== this.#lastRenderedAgentId;
+    this.#lastRenderedAgentId = selectedId;
+
+    if (agentChanged && tabs.length > 0) {
+      const { view } = parseAgentHash();
+      const hashTab = view as StageTab | null;
+      this.activeTab =
+        hashTab && validTabIds.includes(hashTab) ? hashTab : tabs[0].id;
+    } else if (!validTabIds.includes(this.activeTab) && tabs.length > 0) {
       this.activeTab = tabs[0].id;
     }
+
+    const breadcrumb = this.#renderBreadcrumb(tickets, selectedId);
 
     // No tabs at all — show agent summary.
     if (tabs.length === 0) {
       return html`
         <div class="stage" id="stage">
+          ${breadcrumb}
           ${this.#renderAgentSummary(ticket)}
         </div>
       `;
@@ -172,6 +249,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
     if (tabs.length === 1) {
       return html`
         <div class="stage" id="stage">
+          ${breadcrumb}
           <div class="tab-content">
             ${this.#renderTabContent(tabs[0].id, ticket)}
           </div>
@@ -182,6 +260,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
     // Multiple tabs — show tab bar.
     return html`
       <div class="stage" id="stage">
+        ${breadcrumb}
         <div class="tab-bar">
           ${tabs.map(
             (tab) => html`
@@ -189,6 +268,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
                 class="tab ${this.activeTab === tab.id ? "active" : ""}"
                 @click=${() => {
                   this.activeTab = tab.id;
+                  updateAgentHash(selectedId, tab.id);
                 }}
               >
                 ${tab.label}
@@ -200,6 +280,41 @@ export class OpalStage extends SignalWatcher(LitElement) {
           ${this.#renderTabContent(this.activeTab, ticket)}
         </div>
       </div>
+    `;
+  }
+
+  #renderBreadcrumb(
+    tickets: import("../../data/types.js").TicketData[],
+    selectedId: string
+  ) {
+    const path = deriveAncestorPath(tickets, selectedId);
+    if (path.length <= 1) return nothing;
+
+    return html`
+      <nav class="breadcrumb" aria-label="Agent path">
+        ${path.map((id, i) => {
+          const t = tickets.find((t) => t.id === id);
+          const label =
+            t?.title || t?.playbook_id?.replace(/-/g, " ") || id.slice(0, 8);
+          const isCurrent = i === path.length - 1;
+          return html`
+            ${i > 0
+              ? html`<span class="breadcrumb-separator">›</span>`
+              : nothing}
+            <button
+              class="breadcrumb-segment ${isCurrent ? "current" : ""}"
+              @click=${() => {
+                if (!isCurrent) {
+                  selectAgent(new CustomEvent("select", { detail: id }));
+                }
+              }}
+              ?disabled=${isCurrent}
+            >
+              ${label}
+            </button>
+          `;
+        })}
+      </nav>
     `;
   }
 
