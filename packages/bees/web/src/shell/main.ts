@@ -28,13 +28,11 @@ class OpalShell extends SignalWatcher(LitElement) {
   @provide({ context: scaContext })
   accessor sca: SCA = scaInst();
 
-  private pulseTimeout: ReturnType<typeof setTimeout> | null = null;
   static styles = [styles];
 
   connectedCallback() {
     super.connectedCallback();
     this.sca.services.sse.connect();
-    this.#pollPulseLoop();
     this.#restoreAgentFromHash();
   }
 
@@ -42,23 +40,6 @@ class OpalShell extends SignalWatcher(LitElement) {
     super.disconnectedCallback();
     this.sca.services.sse.close();
     this.sca.services.hostCommunication.dispose();
-    if (this.pulseTimeout) clearTimeout(this.pulseTimeout);
-  }
-
-  async #pollPulseLoop() {
-    await this.#pollPulse();
-    this.pulseTimeout = setTimeout(() => this.#pollPulseLoop(), 5_000);
-  }
-
-  async #pollPulse() {
-    try {
-      const pulse = await this.sca.services.api.getPulse();
-      const global = this.sca.controller.global;
-      global.pulseText = pulse.text;
-      global.pulseTasks = pulse.tasks || [];
-    } catch (e) {
-      console.error("[opal-shell] Pulse poll failed:", e);
-    }
   }
 
   render() {

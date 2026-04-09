@@ -186,10 +186,7 @@ export class OpalTimeline extends SignalWatcher(LitElement) {
     );
     if (!ticket) return null;
 
-    const pulseTask = this.sca.controller.global.pulseTasks.find(
-      (pt) => pt.id === this.ticketId
-    );
-    const isRunning = pulseTask !== undefined;
+    const isRunning = ticket.status === "running";
 
     // The thread sets the overall human-readable title (e.g. "Laptop Finder")
     const thread = this.sca.controller.chat.threads.find(
@@ -206,7 +203,7 @@ export class OpalTimeline extends SignalWatcher(LitElement) {
     if (isRunning) {
       badgeHtml = html`
         <div class="status-badge active">
-          ${pulseTask.current_step || "Running"}
+          Running
           <div class="dot-flashing"></div>
         </div>
       `;
@@ -340,8 +337,8 @@ export class OpalTimeline extends SignalWatcher(LitElement) {
                     >${isRunning ? "⏳" : isAwaitingUser ? "💬" : "📝"}</span
                   >
                   ${isRunning
-                    ? pulseTask?.title
-                      ? `Actively working on ${pulseTask.title}...`
+                    ? ticket.title
+                      ? `Actively working on ${ticket.title}...`
                       : "Actively working..."
                     : isAwaitingUser
                       ? "Awaiting your response below..."

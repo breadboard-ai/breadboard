@@ -350,8 +350,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
   }
 
   #renderAgentSummary(ticket: import("../../data/types.js").TicketData) {
-    const pulseTasks = this.sca.controller.global.pulseTasks;
-    const isRunning = pulseTasks.some((pt) => pt.id === ticket.id);
+    const isRunning = ticket.status === "running";
     const title =
       ticket.title ||
       ticket.playbook_id?.replace(/-/g, " ") ||

@@ -56,18 +56,6 @@ export interface ToastMessage {
   timeoutMs?: number;
 }
 
-export interface PulseTask {
-  id: string;
-  title: string;
-  context: string;
-  current_step: string;
-  status: string;
-  completed_steps: number;
-  total_steps: number;
-  created_at: string | null;
-  tags: string[];
-}
-
 import { BeesAPI } from "./services/api.js";
 import { SSEClient } from "./services/sse.js";
 import { HostCommunicationService } from "./services/host-communication.js";

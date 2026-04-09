@@ -257,14 +257,13 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
 
   updated() {
     const tickets = this.sca.controller.global.tickets;
-    const pulseTasks = this.sca.controller.global.pulseTasks;
 
     // Detect newly running agents and auto-expand their ancestor path.
     for (const ticket of tickets) {
-      const wasRunning = pulseTasks.some((pt) => pt.id === ticket.id);
+      const isRunning = ticket.status === "running";
       const isNew = !this.#knownTicketIds.has(ticket.id);
 
-      if ((isNew || wasRunning) && ticket.creator_ticket_id) {
+      if ((isNew || isRunning) && ticket.creator_ticket_id) {
         const ancestorPath = deriveAncestorPath(tickets, ticket.id);
         // Set `open` on all ancestor <details> elements.
         for (const ancestorId of ancestorPath) {
@@ -300,9 +299,6 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
 
     const hasChildren = node.children.length > 0;
     const isSelected = t.id === selectedId;
-    const pulseTasks = this.sca.controller.global.pulseTasks;
-    const isRunning = pulseTasks.some((pt) => pt.id === t.id);
-    const displayStatus = isRunning ? "running" : t.status;
 
     const isNewNode = !this.#knownTicketIds.has(t.id);
     const previousStatus = this.#previousStatuses.get(t.id);
@@ -317,7 +313,7 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
       >
         <span class="expand-toggle ${hasChildren ? "" : "leaf"}"
           ><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 6l6 6-6 6z"/></svg></span>
-        <span class="status-dot ${displayStatus} ${statusChanged ? "pulse" : ""}"></span>
+        <span class="status-dot ${t.status} ${statusChanged ? "pulse" : ""}"></span>
         <span class="node-title">${title}</span>
         <span class="perspective-icons">
           ${perspectives.hasChat ? "💬" : nothing}
