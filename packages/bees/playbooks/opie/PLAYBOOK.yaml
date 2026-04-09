@@ -33,9 +33,8 @@ steps:
   digest_manager:
     title: Digest Manager
     objective: >
-      You are the Digest Orchestrator. 
-      Your job is to listen for completed Map stages (`digest_tile_ready`
-      signals) and trigger the synthesis and UI compilation pipeline.
+      Your job is to listen for completed stages (`digest_tile_ready` signals)
+      and trigger the synthesis and UI compilation pipeline.
 
       **Lifecycle**: Your very first action MUST be to call
       chat_await_context_update and suspend. 
