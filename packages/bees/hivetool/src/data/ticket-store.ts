@@ -101,6 +101,17 @@ class TicketStore {
     this.selectedTicketId.set(id);
   }
 
+  /** Tear down all state so the store can be re-activated against a new hive. */
+  reset(): void {
+    this.#observer?.disconnect();
+    this.#observer = null;
+    this.#ticketsHandle = null;
+    this.#activated = false;
+    this.tickets.set([]);
+    this.selectedTicketId.set(null);
+    this.recentlyUpdatedTicket.set(null);
+  }
+
   /** Clean up the observer. */
   destroy(): void {
     this.#observer?.disconnect();

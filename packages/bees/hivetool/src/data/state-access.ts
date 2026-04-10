@@ -25,6 +25,7 @@ const HANDLE_KEY = "hive-dir";
 
 class StateAccess {
   readonly accessState = new Signal.State<AccessState>("none");
+  readonly hiveName = new Signal.State<string | null>(null);
 
   #handle: FileSystemDirectoryHandle | null = null;
 
@@ -46,6 +47,7 @@ class StateAccess {
       return;
     }
     this.#handle = handle;
+    this.hiveName.set(handle.name);
     this.accessState.set("ready");
   }
 
@@ -67,6 +69,7 @@ class StateAccess {
       });
       await this.#saveHandle(handle);
       this.#handle = handle;
+      this.hiveName.set(handle.name);
       this.accessState.set("ready");
     } catch {
       // User cancelled the picker.
@@ -80,6 +83,7 @@ class StateAccess {
     const granted = await this.#checkPermission(handle);
     if (!granted) return;
     this.#handle = handle;
+    this.hiveName.set(handle.name);
     this.accessState.set("ready");
   }
 

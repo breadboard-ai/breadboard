@@ -55,6 +55,36 @@ export const styles = css`
     gap: 8px;
   }
 
+  .hive-switcher {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hive-name {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-family: "Google Mono", "Roboto Mono", monospace;
+  }
+
+  .switch-hive-btn {
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .switch-hive-btn:hover {
+    color: #e2e8f0;
+    border-color: #3b82f6;
+    background: #1e293b;
+  }
+
   .top-bar-tabs {
     display: flex;
     padding: 0 20px;

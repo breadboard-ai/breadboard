@@ -230,6 +230,19 @@ class LogStore {
     };
   }
 
+  /** Tear down all state so the store can be re-activated against a new hive. */
+  reset(): void {
+    this.#observer?.disconnect();
+    this.#observer = null;
+    this.#logsHandle = null;
+    this.#cache.clear();
+    this.#activated = false;
+    this.sessions.set([]);
+    this.selectedSessionId.set(null);
+    this.selectedView.set(null);
+    this.recentlyUpdatedSession.set(null);
+  }
+
   /** Clean up the observer. */
   destroy(): void {
     this.#observer?.disconnect();
