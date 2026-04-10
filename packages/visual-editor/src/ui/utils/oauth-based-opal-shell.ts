@@ -663,6 +663,10 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     window.document.title = title ?? "";
   };
 
+  setOneGoogleBarVisible = (_visible: boolean): void => {
+    // No-op in OAuth mode — the 1P shell host handles OGB visibility.
+  };
+
   pickDriveFiles = async (
     options: PickDriveFilesOptions
   ): Promise<PickDriveFilesResult> => {

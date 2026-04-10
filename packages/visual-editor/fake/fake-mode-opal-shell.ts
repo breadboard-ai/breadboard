@@ -176,4 +176,8 @@ class FakeModeOpalShell implements OpalShellHostProtocol {
   setTitle = (title: string | null): void => {
     window.document.title = title ?? "";
   };
+
+  setOneGoogleBarVisible = (_visible: boolean): void => {
+    // No-op in fake mode — there is no OGB.
+  };
 }

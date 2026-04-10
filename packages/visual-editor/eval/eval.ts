@@ -368,6 +368,9 @@ class EvalRun implements EvalHarnessRuntimeArgs {
       setTitle: function (_title: string | null): void {
         throw new Error("Function not implemented.");
       },
+      setOneGoogleBarVisible: function (_visible: boolean): void {
+        // No-op in eval harness.
+      },
     } satisfies OpalShellHostProtocol,
   };
 }
