@@ -43,7 +43,7 @@ export declare interface OpalShellHostProtocol {
    */
   invokeOpalBackend(
     methodName: string,
-    options?: InvokeOpalBackendOptions
+    options: InvokeOpalBackendOptions
   ): Promise<Response>;
 
   signIn(scopes: string[]): Promise<SignInResult>;
