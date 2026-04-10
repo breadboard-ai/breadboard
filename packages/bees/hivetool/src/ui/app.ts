@@ -13,7 +13,9 @@ import { LogStore } from "../data/log-store.js";
 import { parseRoute, writeRoute } from "../data/router.js";
 import { StateAccess } from "../data/state-access.js";
 import type { FileTreeNode } from "../data/ticket-store.js";
+import type { TicketData } from "../data/types.js";
 import { TicketStore } from "../data/ticket-store.js";
+import { deriveTicketTree, type TicketTreeNode } from "../data/ticket-tree.js";
 import { getRelativeTime } from "../utils.js";
 import { styles } from "./app.styles.js";
 import { renderJson } from "./json-tree.js";
@@ -24,10 +26,15 @@ import "./truncated-text.js";
 export { BeesApp };
 
 type TabId = "logs" | "tickets" | "events";
+type TicketViewMode = "flat" | "tree";
+
+const VIEW_MODE_KEY = "bees-hivetool-ticket-view-mode";
 
 @customElement("bees-app")
 class BeesApp extends SignalWatcher(LitElement) {
   @state() accessor activeTab: TabId = "tickets";
+  @state() accessor ticketViewMode: TicketViewMode =
+    (localStorage.getItem(VIEW_MODE_KEY) as TicketViewMode) || "flat";
   @state() accessor selectedEventId: string | null = null;
   @state() accessor ticketFileTree: FileTreeNode[] = [];
   @state() accessor ticketFileContents: Record<string, string | null> = {};
@@ -341,6 +348,11 @@ class BeesApp extends SignalWatcher(LitElement) {
     this.syncHash();
   }
 
+  private toggleTicketViewMode() {
+    this.ticketViewMode = this.ticketViewMode === "flat" ? "tree" : "flat";
+    localStorage.setItem(VIEW_MODE_KEY, this.ticketViewMode);
+  }
+
   private renderTicketsList() {
     const allTickets = this.ticketStore.tickets.get();
     const tickets = allTickets.filter((t) => t.kind !== "coordination");
@@ -350,45 +362,93 @@ class BeesApp extends SignalWatcher(LitElement) {
       return html`<div class="empty-state">No tickets found.</div>`;
     }
 
+    const isTree = this.ticketViewMode === "tree";
+
     return html`
-      <div class="jobs-list">
-        ${tickets.map(
-          (t) => html`
-            <div
-              class="job-item ${selectedId === t.id ? "selected" : ""} ${this.currentFlashTicketId === t.id ? "lightning-flash" : ""}"
-              @click=${() => {
-                this.ticketFileTree = [];
-                this.ticketFileContents = {};
-                this.ticketStore.selectTicket(t.id);
-                this.syncHash();
-              }}
-            >
-              <div class="job-header">
-                <div class="job-title">${t.title || t.id.slice(0, 8)}</div>
-                <div class="job-status ${t.status}"></div>
-              </div>
-              <div class="job-meta">
-                <span>${t.playbook_id ?? "ad-hoc"}</span>
-                <span>${getRelativeTime(t.created_at)}</span>
-              </div>
-              ${t.tags && t.tags.length > 0
-                ? html`
-                    <div class="job-meta">
-                      ${t.tags.map(
-                        (tag) =>
-                          html`<span
-                            class="tool-badge"
-                            style="font-size:0.65rem;padding:1px 5px"
-                            >${tag}</span
-                          >`
-                      )}
-                    </div>
-                  `
-                : nothing}
-            </div>
-          `
-        )}
+      <div class="sidebar-toolbar">
+        <button
+          class="view-toggle ${isTree ? "active" : ""}"
+          @click=${() => this.toggleTicketViewMode()}
+          title="${isTree ? "Switch to flat list" : "Switch to tree view"}"
+        >
+          ${isTree ? "🌳" : "☰"}
+        </button>
       </div>
+      <div class="jobs-list">
+        ${isTree
+          ? this.renderTicketsTree(tickets, selectedId)
+          : tickets.map((t) => this.renderTicketItem(t, selectedId))}
+      </div>
+    `;
+  }
+
+  private renderTicketItem(
+    t: TicketData,
+    selectedId: string | null
+  ) {
+    return html`
+      <div
+        class="job-item ${selectedId === t.id ? "selected" : ""} ${this.currentFlashTicketId === t.id ? "lightning-flash" : ""}"
+        @click=${() => {
+          this.ticketFileTree = [];
+          this.ticketFileContents = {};
+          this.ticketStore.selectTicket(t.id);
+          this.syncHash();
+        }}
+      >
+        <div class="job-header">
+          <div class="job-title">${t.title || t.id.slice(0, 8)}</div>
+          <div class="job-status ${t.status}"></div>
+        </div>
+        <div class="job-meta">
+          <span>${t.playbook_id ?? "ad-hoc"}</span>
+          <span>${getRelativeTime(t.created_at)}</span>
+        </div>
+        ${t.tags && t.tags.length > 0
+          ? html`
+              <div class="job-meta">
+                ${t.tags.map(
+                  (tag) =>
+                    html`<span
+                      class="tool-badge"
+                      style="font-size:0.65rem;padding:1px 5px"
+                      >${tag}</span
+                    >`
+                )}
+              </div>
+            `
+          : nothing}
+      </div>
+    `;
+  }
+
+  private renderTicketsTree(
+    tickets: TicketData[],
+    selectedId: string | null
+  ) {
+    const tree = deriveTicketTree(tickets);
+    return tree.map((node) => this.renderTreeNode(node, selectedId));
+  }
+
+  private renderTreeNode(
+    node: TicketTreeNode,
+    selectedId: string | null
+  ): unknown {
+    const t = node.ticket;
+    const hasChildren = node.children.length > 0;
+    const item = this.renderTicketItem(t, selectedId);
+
+    if (!hasChildren) return item;
+
+    return html`
+      <details class="ticket-tree-branch" open>
+        <summary>${item}</summary>
+        <div class="ticket-tree-children">
+          ${node.children.map((child) =>
+            this.renderTreeNode(child, selectedId)
+          )}
+        </div>
+      </details>
     `;
   }
 

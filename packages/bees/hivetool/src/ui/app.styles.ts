@@ -24,6 +24,26 @@ export const styles = css`
 
   * {
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 3px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: #475569;
   }
 
   .mono {
@@ -145,6 +165,42 @@ export const styles = css`
     line-height: 1;
   }
 
+  /* ── Sidebar toolbar ── */
+  .sidebar-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 12px 0;
+    flex-shrink: 0;
+  }
+
+  .view-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font-size: 0.8rem;
+    background: transparent;
+    color: #64748b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .view-toggle:hover {
+    color: #e2e8f0;
+    border-color: #3b82f6;
+    background: #1e293b;
+  }
+
+  .view-toggle.active {
+    color: #60a5fa;
+    border-color: #3b82f6;
+    background: #1e293b33;
+  }
+
   .jobs-list {
     flex: 1;
     overflow-y: auto;
@@ -152,6 +208,27 @@ export const styles = css`
     display: flex;
     flex-direction: column;
     gap: 4px;
+  }
+
+  /* ── Ticket tree (hierarchical view) ── */
+  .ticket-tree-branch {
+    border: none;
+    margin: 0;
+  }
+
+  .ticket-tree-branch > summary {
+    list-style: none;
+    cursor: default;
+  }
+
+  .ticket-tree-branch > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .ticket-tree-children {
+    margin-left: 16px;
+    border-left: 1px solid #1e293b;
+    padding-left: 4px;
   }
 
   .job-item {
