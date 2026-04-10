@@ -19,7 +19,7 @@ import {
   deriveAncestorPath,
   type AgentTreeNode,
 } from "../../sca/utils/agent-tree.js";
-import type { TicketData } from "../../data/types.js";
+import type { TicketData } from "../../../../common/types.js";
 
 const styles = css`
   :host {

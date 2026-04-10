@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TicketData } from "../../data/types.js";
+import type { TicketData } from "../../../../common/types.js";
 
 export {
   deriveAgentTree,

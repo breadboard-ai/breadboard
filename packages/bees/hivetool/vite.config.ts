@@ -1,17 +1,8 @@
 import { defineConfig } from "vite";
-import { resolve } from "path";
 
 export default defineConfig({
-  build: {
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, "index.html"),
-        iframe: resolve(__dirname, "iframe.html"),
-      },
-    },
-  },
   server: {
-    port: 5173,
+    port: 5174,
     proxy: {
       "/tickets": "http://localhost:3200",
       "/playbooks": "http://localhost:3200",

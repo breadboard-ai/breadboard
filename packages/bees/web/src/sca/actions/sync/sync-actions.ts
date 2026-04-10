@@ -6,7 +6,7 @@
 
 import { asAction, ActionMode } from "../../coordination.js";
 import { makeAction } from "../binder.js";
-import type { TicketData } from "../../../data/types.js";
+import type { TicketData } from "../../../../../common/types.js";
 import {
   onTicketAdded,
   onTicketUpdate,

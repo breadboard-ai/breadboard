@@ -7,7 +7,7 @@
 import { RootController } from "./root-controller.js";
 import type { ChatMessage, ChatThread } from "../../types.js";
 import { field } from "../decorators/field.js";
-import type { Choice } from "../../../utils.js";
+import type { Choice } from "../../../../../common/utils.js";
 
 export class ChatController extends RootController {
   constructor() {
