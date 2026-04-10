@@ -294,7 +294,7 @@ See [Inter-Agent Events](#inter-agent-events) for the full picture.
 ## Skills
 
 Skills are instruction documents that shape agent behavior without adding new
-callable tools. They're loaded from `bees/skills/{name}/SKILL.md` files.
+callable tools. They're loaded from `hive/skills/{name}/SKILL.md` files.
 
 To load a skill, list its `name` in the step's `skills` field:
 
