@@ -390,9 +390,7 @@ steps:
   undelivered signals are retried on the next scheduler cycle.
 - **Busy subscribers are retried**: If the receiving agent is currently running
   (not suspended), the signal is queued and delivered when it next suspends.
-- **Playbook completion**: When all tickets in a playbook run reach a terminal
-  state, the scheduler automatically emits a `playbook_complete` signal with a
-  summary, routed via the same event mechanism.
+
 
 ### Context Updates on Chat Functions
 
@@ -812,8 +810,6 @@ The server runs on port 3200 with auto-reload for `.py`, `.md`, `.json`, and
 run without restarting the server.
 
 **API endpoints**:
-- `GET /playbooks` — list available playbooks
-- `POST /playbooks/{name}/run` — run a playbook
 - `GET /tickets` — list all tickets (optionally filter by `?tag=chat`)
 - `GET /tickets/{id}` — get a single ticket with metadata
 - `POST /tickets/{id}/respond` — submit a response to a suspended ticket
@@ -871,5 +867,4 @@ session to deliver to.
 **`chat_await_context_update` without `watch_events`**: Calling
 `chat_await_context_update` suspends the session, but without `watch_events`,
 no events will be routed to the ticket. The agent will hang
-indefinitely. The only exception is playbook-completion signals, which are routed
-by tag matching.
+indefinitely.

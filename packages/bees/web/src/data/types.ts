@@ -38,11 +38,7 @@ export interface TicketData {
   files?: Array<{ path: string; mimeType: string; localPath: string }>;
 }
 
-export interface PlaybookData {
-  name: string;
-  title: string;
-  description: string;
-}
+
 
 // ---------------------------------------------------------------------------
 // Log file types (from EvalCollector output in packages/bees/state/logs)

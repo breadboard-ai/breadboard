@@ -106,8 +106,7 @@ class SchedulerHooks:
     on_events_broadcast: Callable[[Ticket], None] | None = None
     """Called when an agent broadcasts an event mid-session."""
 
-    on_playbook_complete: Callable[[str, list[Ticket], Ticket], Awaitable[None]] | None = None
-    """Called when all tickets in a playbook run are complete. (run_id, siblings, triggering_ticket)"""
+
 
     on_cycle_complete: Callable[[int], Awaitable[None]] | None = None
     """Called when there is no more work (total_cycles)."""
@@ -188,26 +187,6 @@ def _find_dep_id(ref: str, dep_ids: list[str]) -> str | None:
 # ---------------------------------------------------------------------------
 
 
-def _format_playbook_complete(playbook_id: str, siblings: list[Ticket]) -> str:
-    """Format a playbook-completion event as a context_update string."""
-    summaries: list[str] = []
-    succeeded = 0
-    failed = 0
-    for t in siblings:
-        title = t.metadata.title or t.id[:8]
-        outcome = t.metadata.outcome or "(no outcome)"
-        summaries.append(f"- **{title}**: {outcome}")
-        if t.metadata.status == "completed":
-            succeeded += 1
-        elif t.metadata.status == "failed":
-            failed += 1
-
-    summary_text = "\n".join(summaries)
-    return (
-        f'[Playbook Completed] "{playbook_id}"\n'
-        f"Results ({succeeded} succeeded, {failed} failed):\n"
-        f"{summary_text}"
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -852,40 +831,6 @@ class Scheduler:
 
         return on_event
 
-    async def _check_playbook_completion_internal(self, ticket: Ticket) -> None:
-        """Check if all tickets in a playbook run are done, and fire hook if so."""
-        run_id = ticket.metadata.playbook_run_id
-        if not run_id:
-            return
-
-        siblings = [
-            t for t in list_tickets()
-            if t.metadata.playbook_run_id == run_id
-        ]
-        if not siblings:
-            return
-
-        terminal = {"completed", "failed"}
-        all_done = all(t.metadata.status in terminal for t in siblings)
-        if not all_done:
-            return
-
-        if self._hooks.on_playbook_complete:
-            await self._hooks.on_playbook_complete(run_id, siblings, ticket)
-
-        # Emit a durable coordination signal for playbook completion.
-        # This flows through _route_coordination_ticket on the next cycle,
-        # which handles tag filtering, durable delivery, and retry.
-        playbook_id = ticket.metadata.playbook_id or "(unknown)"
-        notification = _format_playbook_complete(playbook_id, siblings)
-        create_ticket(
-            "",
-            kind="coordination",
-            signal_type="playbook_complete",
-            context=notification,
-            tags=list(ticket.metadata.tags or []),
-        )
-        self.trigger()
 
     async def _route_coordination_ticket(self, ticket: Ticket) -> None:
         """Route a coordination ticket's signal to matching subscribers.
@@ -1058,7 +1003,7 @@ class Scheduler:
                             await self._hooks.on_ticket_done(enriched)
                         if self._hooks.on_ticket_done:
                             await self._hooks.on_ticket_done(updated)
-                        await self._check_playbook_completion_internal(updated)
+
                         self.trigger()
 
                 task = asyncio.create_task(wrap_run())
@@ -1088,7 +1033,7 @@ class Scheduler:
                             await self._hooks.on_ticket_done(enriched)
                         if self._hooks.on_ticket_done:
                             await self._hooks.on_ticket_done(updated)
-                        await self._check_playbook_completion_internal(updated)
+
                         self.trigger()
 
                 task = asyncio.create_task(wrap_resume())
