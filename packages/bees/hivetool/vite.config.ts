@@ -1,6 +1,8 @@
 import { defineConfig } from "vite";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // Use /breadboard/hivetool/ for production builds (GitHub Pages), / for dev.
+  base: command === "build" ? "/breadboard/hivetool/" : "/",
   server: {
     port: 5174,
     proxy: {
@@ -18,4 +20,7 @@ export default defineConfig({
       },
     },
   },
-});
+  build: {
+    target: "esnext",
+  },
+}));
