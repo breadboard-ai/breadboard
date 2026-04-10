@@ -1,3 +1,9 @@
+> ⛔ **TO BE ENTIRELY REWRITTEN** — The multi-directory playbook model described
+> below has been replaced by `hive/config/TEMPLATES.yaml`. Each playbook is now
+> a single ticket template in that file, and hooks live in `hive/config/hooks/`.
+> The concepts (functions, skills, events, lifecycle hooks) are still valid, but
+> the directory structure and multi-step DAG examples no longer apply.
+
 # Writing Playbooks
 
 A playbook is a declarative recipe that spins up one or more AI agents to
@@ -26,8 +32,8 @@ playbook runs, the engine:
 
 1. **Parses** the YAML file and discovers the steps.
 2. **Sorts** steps topologically — dependencies first.
-3. **Creates a ticket** for each step. A ticket is a work unit: an objective
-   for an agent to fulfill, persisted as a directory on disk.
+3. **Creates a ticket** for each step. A ticket is a work unit: an objective for
+   an agent to fulfill, persisted as a directory on disk.
 4. **Stamps** every ticket with:
    - `playbook_id` — the playbook's `name` field.
    - `playbook_run_id` — a unique UUID for this particular run.
@@ -48,20 +54,20 @@ communicate through outcomes (dependency references) and events.
 
 The scheduler operates in waves:
 
-1. **Promote** — check `blocked` tickets whose dependencies are now
-   `completed`; promote them to `available`.
+1. **Promote** — check `blocked` tickets whose dependencies are now `completed`;
+   promote them to `available`.
 2. **Collect** — gather all `available` tickets plus `suspended` tickets that
    have received a response.
 3. **Execute** — fire collected tickets concurrently as independent agent
    sessions.
-4. **Settle** — each session runs until it reaches a resting state
-   (`completed`, `failed`, or `suspended`).
-5. **Trigger** — if any tickets settled, wake the scheduler to evaluate the
-   next wave.
+4. **Settle** — each session runs until it reaches a resting state (`completed`,
+   `failed`, or `suspended`).
+5. **Trigger** — if any tickets settled, wake the scheduler to evaluate the next
+   wave.
 
 This means independent steps in your playbook execute in parallel automatically.
-Sequential ordering only happens when you wire explicit dependencies via template
-references.
+Sequential ordering only happens when you wire explicit dependencies via
+template references.
 
 ---
 
@@ -78,7 +84,7 @@ playbooks/
 
 The directory name is the playbook's filesystem identifier — it's what you pass
 to CLI commands and API calls to run the playbook. The `name` field inside the
-YAML is the *logical* identifier used for `playbook_id` on tickets.
+YAML is the _logical_ identifier used for `playbook_id` on tickets.
 
 ---
 
@@ -86,29 +92,29 @@ YAML is the *logical* identifier used for `playbook_id` on tickets.
 
 ### Top-Level Fields
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | yes | Logical identifier. Used as `playbook_id` on tickets and by `playbooks_run_playbook`. |
-| `title` | string | yes | Human-readable title shown in UI and listings. |
-| `description` | string | no | Short summary shown in `playbooks_list` results. Supports YAML `>` for multi-line. |
-| `hidden` | boolean | no | If `true`, excluded from `playbooks_list` results. The playbook can still be run directly. Use this for infrastructure playbooks (like Opie) that shouldn't appear as user-facing options. |
-| `steps` | mapping | yes | The step definitions (see below). |
+| Field         | Type    | Required | Description                                                                                                                                                                                |
+| ------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`        | string  | yes      | Logical identifier. Used as `playbook_id` on tickets and by `playbooks_run_playbook`.                                                                                                      |
+| `title`       | string  | yes      | Human-readable title shown in UI and listings.                                                                                                                                             |
+| `description` | string  | no       | Short summary shown in `playbooks_list` results. Supports YAML `>` for multi-line.                                                                                                         |
+| `hidden`      | boolean | no       | If `true`, excluded from `playbooks_list` results. The playbook can still be run directly. Use this for infrastructure playbooks (like Opie) that shouldn't appear as user-facing options. |
+| `steps`       | mapping | yes      | The step definitions (see below).                                                                                                                                                          |
 
 ### Step Fields
 
 Each key under `steps:` is the step name — a short identifier used for
 dependency references. The value is a mapping with these fields:
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `title` | string | — | Human-readable title for the ticket. |
-| `objective` | string | — | The agent's instructions. This is the core: a natural-language prompt describing what the agent should accomplish. Supports [template variables](#template-variables). Use YAML `>` for multi-line. |
-| `functions` | list[string] | `[]` (all) | [Function filter](#function-groups) globs controlling which tools the agent can use. An empty list or omitted field means all functions are available. |
-| `skills` | list[string] | `[]` (none) | Names of [skills](#skills) to load into the session. An empty list or omitted field means no skills. Use `["*"]` for all. |
-| `tags` | list[string] | — | Metadata tags. Used for UI routing (e.g., `"chat"` tags enable chat UI), lifecycle hook targeting, and event filtering. |
-| `model` | string | — | Override the default model. Example: `gemini-3.1-pro-preview`. If omitted, uses the system default. |
-| `watch_events` | list[object] | — | Subscribe to [events](#inter-agent-events). Each entry has `type` (required) and optionally `tags` for filtering. |
-| `assignee` | string | — | Initial assignee (`"user"` or `"agent"`). Rarely needed — the scheduler manages this automatically. |
+| Field          | Type         | Default     | Description                                                                                                                                                                                         |
+| -------------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`        | string       | —           | Human-readable title for the ticket.                                                                                                                                                                |
+| `objective`    | string       | —           | The agent's instructions. This is the core: a natural-language prompt describing what the agent should accomplish. Supports [template variables](#template-variables). Use YAML `>` for multi-line. |
+| `functions`    | list[string] | `[]` (all)  | [Function filter](#function-groups) globs controlling which tools the agent can use. An empty list or omitted field means all functions are available.                                              |
+| `skills`       | list[string] | `[]` (none) | Names of [skills](#skills) to load into the session. An empty list or omitted field means no skills. Use `["*"]` for all.                                                                           |
+| `tags`         | list[string] | —           | Metadata tags. Used for UI routing (e.g., `"chat"` tags enable chat UI), lifecycle hook targeting, and event filtering.                                                                             |
+| `model`        | string       | —           | Override the default model. Example: `gemini-3.1-pro-preview`. If omitted, uses the system default.                                                                                                 |
+| `watch_events` | list[object] | —           | Subscribe to [events](#inter-agent-events). Each entry has `type` (required) and optionally `tags` for filtering.                                                                                   |
+| `assignee`     | string       | —           | Initial assignee (`"user"` or `"agent"`). Rarely needed — the scheduler manages this automatically.                                                                                                 |
 
 ### Example: Minimal Playbook
 
@@ -121,8 +127,8 @@ steps:
   main:
     title: Greeter
     objective: >
-      Say hello to the user and ask how they're doing. When they respond,
-      wish them a great day and finish.
+      Say hello to the user and ask how they're doing. When they respond, wish
+      them a great day and finish.
     functions: ["chat.*", "system.*"]
 ```
 
@@ -147,14 +153,14 @@ structured input segment.
 steps:
   research:
     objective: >
-      Research the topic of quantum computing. Save your findings
-      to research-notes.txt.
+      Research the topic of quantum computing. Save your findings to
+      research-notes.txt.
     functions: ["system.*", "sandbox.*"]
 
   summarise:
     objective: >
-      Read the research from {{research}} and produce a concise summary.
-      Save it to summary.txt.
+      Read the research from {{research}} and produce a concise summary. Save it
+      to summary.txt.
     functions: ["system.*", "sandbox.*"]
 ```
 
@@ -203,44 +209,44 @@ into named **function groups**, each providing a set of related capabilities.
 The `functions` field accepts glob patterns in dot-notation. The dot separates
 the group prefix from the tool name:
 
-| Pattern | Effect |
-|---------|--------|
-| `["chat.*"]` | Only chat tools |
-| `["chat.*", "system.*"]` | Chat and termination tools |
-| `["chat.*", "sandbox.*", "events.*"]` | Chat, bash, and events |
-| not specified / `[]` | **All functions available** (permissive default) |
+| Pattern                               | Effect                                           |
+| ------------------------------------- | ------------------------------------------------ |
+| `["chat.*"]`                          | Only chat tools                                  |
+| `["chat.*", "system.*"]`              | Chat and termination tools                       |
+| `["chat.*", "sandbox.*", "events.*"]` | Chat, bash, and events                           |
+| not specified / `[]`                  | **All functions available** (permissive default) |
 
-> **Design note**: Functions default to *everything*. This is the opposite of
-> skills, which default to *nothing*. The rationale: most agents need the
+> **Design note**: Functions default to _everything_. This is the opposite of
+> skills, which default to _nothing_. The rationale: most agents need the
 > standard toolset; restricting tools is the exception, not the rule.
 
 ### Available Groups
 
 #### `system.*` — Termination
 
-| Function | Description |
-|----------|-------------|
-| `system_objective_fulfilled` | Signals successful completion. The `objective_outcome` parameter becomes the ticket's outcome, which downstream steps can reference. |
-| `system_failed_to_fulfill_objective` | Signals failure. The `user_message` parameter is stored as the ticket's error. |
+| Function                             | Description                                                                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `system_objective_fulfilled`         | Signals successful completion. The `objective_outcome` parameter becomes the ticket's outcome, which downstream steps can reference. |
+| `system_failed_to_fulfill_objective` | Signals failure. The `user_message` parameter is stored as the ticket's error.                                                       |
 
 Every session ends by calling one of these. If your step should report a result
 for downstream consumption, return it via `system_objective_fulfilled`.
 
 #### `simple-files.*` — File I/O
 
-| Function | Description |
-|----------|-------------|
-| `system_write_file` | Write text to a file. Use bare filenames (e.g., `report.md`). |
-| `system_list_files` | List all files in the working directory. |
-| `system_read_text_from_file` | Read a file's text content. |
+| Function                     | Description                                                   |
+| ---------------------------- | ------------------------------------------------------------- |
+| `system_write_file`          | Write text to a file. Use bare filenames (e.g., `report.md`). |
+| `system_list_files`          | List all files in the working directory.                      |
+| `system_read_text_from_file` | Read a file's text content.                                   |
 
 Files are stored in the ticket's virtual file system and persisted to
 `tickets/{uuid}/filesystem/` on disk.
 
 #### `sandbox.*` — Bash Execution
 
-| Function | Description |
-|----------|-------------|
+| Function       | Description                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------------ |
 | `execute_bash` | Run a bash command in the ticket's working directory. Sandboxed — cannot write outside the ticket dir. |
 
 The sandbox and file tools share the same working directory. A file created via
@@ -253,10 +259,10 @@ directory and system temp dirs.
 
 #### `chat.*` — User Interaction
 
-| Function | Description |
-|----------|-------------|
-| `chat_request_user_input` | Ask the user a freeform question. Suspends the session until a response arrives. |
-| `chat_present_choices` | Present structured choices (radio buttons or checkboxes). Suspends until selection. |
+| Function                    | Description                                                                              |
+| --------------------------- | ---------------------------------------------------------------------------------------- |
+| `chat_request_user_input`   | Ask the user a freeform question. Suspends the session until a response arrives.         |
+| `chat_present_choices`      | Present structured choices (radio buttons or checkboxes). Suspends until selection.      |
 | `chat_await_context_update` | Suspend until an external [event](#inter-agent-events) arrives. No user prompt is shown. |
 
 All three functions can return `context_updates` — system notifications from
@@ -275,17 +281,17 @@ system at `$HOME/skills/{skill-name}/SKILL.md`. The agent reads them using
 
 #### `playbooks.*` — Playbook Management
 
-| Function | Description |
-|----------|-------------|
-| `playbooks_list` | List available playbooks (name, title, description). Hidden playbooks and those tagged `"testing"` are excluded. |
+| Function                 | Description                                                                                                                                                                                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `playbooks_list`         | List available playbooks (name, title, description). Hidden playbooks and those tagged `"testing"` are excluded.                                                                                                                                                                |
 | `playbooks_run_playbook` | Launch a playbook. The `context` parameter briefs the agents about what to do. Set `share_workspace: true` to give child tickets access to your filesystem — see [Shared Workspaces](#shared-workspaces). Returns immediately — running a playbook is delegation, not blocking. |
 
 #### `events.*` — Inter-Agent Events
 
-| Function | Description |
-|----------|-------------|
-| `events_broadcast` | Broadcast a typed event (`type` + `message` payload) that gets routed to all subscribing agents. Fire-and-forget. |
-| `events_send_to_parent` | Send a typed event directly to the parent agent that created this task. No subscription required. |
+| Function                | Description                                                                                                       |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `events_broadcast`      | Broadcast a typed event (`type` + `message` payload) that gets routed to all subscribing agents. Fire-and-forget. |
+| `events_send_to_parent` | Send a typed event directly to the parent agent that created this task. No subscription required.                 |
 
 See [Inter-Agent Events](#inter-agent-events) for the full picture.
 
@@ -312,14 +318,14 @@ skills referenced in its objective.
 
 ## Inter-Agent Events
 
-The events system lets agents communicate across independent sessions. It
-has three moving parts:
+The events system lets agents communicate across independent sessions. It has
+three moving parts:
 
 ### 1. Broadcasting Events — `events_broadcast`
 
-An agent calls `events_broadcast(type, message)` to broadcast a typed
-event. This creates an **event ticket** — a lightweight ticket that
-carries no work, only the event payload.
+An agent calls `events_broadcast(type, message)` to broadcast a typed event.
+This creates an **event ticket** — a lightweight ticket that carries no work,
+only the event payload.
 
 ```yaml
 # In the agent's objective:
@@ -347,9 +353,9 @@ You can narrow delivery with tags:
 ```yaml
 watch_events:
   - type: app_update
-    tags: ["!testing"]          # Exclude signals from testing-tagged sources
+    tags: ["!testing"] # Exclude signals from testing-tagged sources
   - type: digest_update
-    tags: ["production"]        # Only from production-tagged sources
+    tags: ["production"] # Only from production-tagged sources
 ```
 
 - `"!tag"` — exclude: skip signals whose source ticket has this tag.
@@ -358,16 +364,15 @@ watch_events:
 ### 3. Receiving — `chat_await_context_update`
 
 The receiving agent calls `chat_await_context_update()` to suspend its session
-until a signal arrives. When a matching event ticket is routed to it, the
-agent resumes with the signal payload in `context_updates`.
+until a signal arrives. When a matching event ticket is routed to it, the agent
+resumes with the signal payload in `context_updates`.
 
 ```yaml
 steps:
   digest:
     objective: >
-      Call chat_await_context_update and wait. When a context update
-      arrives, process it, then call chat_await_context_update again.
-      Repeat forever.
+      Call chat_await_context_update and wait. When a context update arrives,
+      process it, then call chat_await_context_update again. Repeat forever.
     functions: ["chat.*", "sandbox.*", "events.*"]
     watch_events:
       - type: app_update
@@ -375,9 +380,11 @@ steps:
 
 ### How It Works End-to-End
 
-1. Agent A calls `events_broadcast(type="app_update", message="New app created: ...")`.
+1. Agent A calls
+   `events_broadcast(type="app_update", message="New app created: ...")`.
 2. This creates an event ticket with `type=app_update`.
-3. The scheduler wakes and routes it: scans all tickets for matching `watch_events`.
+3. The scheduler wakes and routes it: scans all tickets for matching
+   `watch_events`.
 4. Agent B's ticket has `watch_events: [{type: app_update}]` and is currently
    suspended on `chat_await_context_update`. The scheduler writes the signal
    payload to Agent B's `response.json` and flips its assignee to `agent`.
@@ -391,14 +398,14 @@ steps:
 - **Busy subscribers are retried**: If the receiving agent is currently running
   (not suspended), the signal is queued and delivered when it next suspends.
 
-
 ### Context Updates on Chat Functions
 
-When an agent is suspended on `chat_request_user_input` or `chat_present_choices`
-(waiting for user input), events arrive as `context_updates` in
-the response. The agent receives both the user's reply and any accumulated
-signals in one response. The agent's objective should include instructions for
-handling these — typically a brief status acknowledgment woven into the reply.
+When an agent is suspended on `chat_request_user_input` or
+`chat_present_choices` (waiting for user input), events arrive as
+`context_updates` in the response. The agent receives both the user's reply and
+any accumulated signals in one response. The agent's objective should include
+instructions for handling these — typically a brief status acknowledgment woven
+into the reply.
 
 ---
 
@@ -431,9 +438,9 @@ def on_startup(tickets: list[Ticket]) -> list[Ticket]:
 
 ### `on_ticket_done(ticket: Ticket) → None`
 
-Called when a ticket owned by this playbook reaches a terminal state (`completed`
-or `failed`). The playbook ownership is determined by matching the ticket's
-`playbook_id` to the playbook's `name`.
+Called when a ticket owned by this playbook reaches a terminal state
+(`completed` or `failed`). The playbook ownership is determined by matching the
+ticket's `playbook_id` to the playbook's `name`.
 
 **Use case**: Post-processing after an agent finishes — for example,
 auto-bundling generated UI code:
@@ -448,19 +455,20 @@ def on_ticket_done(ticket: Ticket) -> None:
 
 ### `on_event(signal_type: str, payload: str, ticket: Ticket) → str | None`
 
-Called when an event is about to be delivered to a ticket owned by
-this playbook. The hook can inspect the signal, apply side effects, and decide
+Called when an event is about to be delivered to a ticket owned by this
+playbook. The hook can inspect the signal, apply side effects, and decide
 whether the signal reaches the agent.
 
 **Return values**:
+
 - Return a `str` — the (possibly transformed) payload is delivered to the agent.
 - Return `None` — the signal is **eaten**: marked as delivered, but the agent
   never sees it.
 
 **Timing**: The hook fires **before the idle check** — it runs for all matching
 subscribers regardless of their current state (running, blocked, or suspended).
-This ensures side-effect-only hooks (like title renames) take effect immediately,
-even while the agent is busy.
+This ensures side-effect-only hooks (like title renames) take effect
+immediately, even while the agent is busy.
 
 **Error handling**: If the hook raises an exception, the signal is delivered
 as-is (fail-open). A crashing hook should not silently drop signals.
@@ -488,8 +496,8 @@ steps:
 ```
 
 When the caller uses the `events` parameter on `playbooks_run_playbook`, each
-event is emitted as an event ticket scoped to the new run. Only tickets
-in that specific run receive the signal:
+event is emitted as an event ticket scoped to the new run. Only tickets in that
+specific run receive the signal:
 
 ```
 playbooks_run_playbook(
@@ -499,14 +507,14 @@ playbooks_run_playbook(
 )
 ```
 
-The hook renames the run's tickets from "UI Generator" to "Grocery Tracker"
-and eats the signal — the agent continues working without interruption.
-If a second app playbook is running concurrently, its tickets are unaffected.
+The hook renames the run's tickets from "UI Generator" to "Grocery Tracker" and
+eats the signal — the agent continues working without interruption. If a second
+app playbook is running concurrently, its tickets are unaffected.
 
 ### `on_run_playbook(context: str | None) → str | None`
 
-Called before ticket creation when someone invokes this playbook. It receives the
-caller-supplied context and can:
+Called before ticket creation when someone invokes this playbook. It receives
+the caller-supplied context and can:
 
 - **Enrich**: Return a modified/enriched context string. Tickets will be created
   with this enriched context.
@@ -549,26 +557,27 @@ steps:
 
       {{system.context}}
 
-      Gather key details, facts, and relevant information. Save your findings
-      to a file called research-notes.txt.
+      Gather key details, facts, and relevant information. Save your findings to
+      a file called research-notes.txt.
     functions: ["system.*", "sandbox.*"]
 
   summarise:
     title: Summarise
     objective: >
-      Read the research from {{research}} and produce a concise,
-      well-structured summary. Save it to a file called summary.txt.
+      Read the research from {{research}} and produce a concise, well-structured
+      summary. Save it to a file called summary.txt.
     functions: ["system.*", "sandbox.*"]
 ```
 
 **Key points**:
+
 - `{{system.context}}` is injected into `research` (the root step) from the
   caller.
 - `{{research}}` in `summarise` creates the dependency. The summarise step
   receives the research step's outcome as structured input.
 - Neither step has `chat.*` — they work autonomously without user interaction.
-- Both steps call `system_objective_fulfilled` when done (this is inherent in the
-  agent loop — every session ends with a termination call).
+- Both steps call `system_objective_fulfilled` when done (this is inherent in
+  the agent loop — every session ends with a termination call).
 
 ### Pattern 2: Interactive Chat Agent
 
@@ -591,6 +600,7 @@ steps:
 ```
 
 **Key points**:
+
 - `tags: ["chat"]` enables chat history persistence and UI routing.
 - `functions: ["chat.*", "simple-files.*"]` — the agent can chat and manage
   files, but cannot execute code or launch playbooks.
@@ -623,8 +633,9 @@ steps:
 ```
 
 **Key points**:
-- `watch_events` subscribes to `test_update` signals. Without this, no
-  events would be routed to this ticket.
+
+- `watch_events` subscribes to `test_update` signals. Without this, no events
+  would be routed to this ticket.
 - The agent calls `chat_await_context_update`, not `chat_request_user_input` —
   it's waiting for system signals, not user input.
 - The objective explicitly instructs the loop: process, then call
@@ -650,10 +661,9 @@ steps:
       Your task is to await user requests and act on them. Use playbooks for
       delegating work.
 
-      1. Read the "persona" skill for instructions on how to behave.
-      2. Read available playbooks.
-      3. Converse with user, and when their request matches a playbook, run it
-      to delegate work.
+      1. Read the "persona" skill for instructions on how to behave. 2. Read
+      available playbooks. 3. Converse with user, and when their request matches
+      a playbook, run it to delegate work.
     skills: ["persona"]
     tags: ["opie", "chat"]
     functions: ["chat.*", "simple-files.*", "skills.*", "playbooks.*"]
@@ -663,13 +673,14 @@ steps:
 ```
 
 **Key points**:
+
 - `hidden: true` — Opie doesn't show up in the playbook listing (it would be
   circular for Opie to delegate work to itself).
 - `functions` includes `playbooks.*` so the agent can discover and run
   playbooks.
-- `watch_events` subscribes to events from delegated work. When a
-  child playbook's agents emit `app_update` or `digest_update`, Opie receives
-  them as `context_updates` alongside user responses.
+- `watch_events` subscribes to events from delegated work. When a child
+  playbook's agents emit `app_update` or `digest_update`, Opie receives them as
+  `context_updates` alongside user responses.
 - The `hooks.py` uses `on_startup` to auto-boot Opie if no opie-tagged ticket
   exists — Opie is always running.
 
@@ -697,8 +708,8 @@ steps:
       {{system.context}}
 
       Ask focused, clarifying questions (3-5 at most), then create a
-      specification. Broadcast an event with type "app_update"
-      and return the specification as outcome.
+      specification. Broadcast an event with type "app_update" and return the
+      specification as outcome.
     functions: ["chat.*", "system.*", "simple-files.*", "skills.*", "events.*"]
     skills: ["interview-user"]
     tags: ["chat", "app-builder"]
@@ -709,9 +720,9 @@ steps:
       You are building a React application based on the specification from
       {{interview}}.
 
-      Generate the UI, run the bundler, broadcast an event with
-      type "app_update". Then ask the user if they'd like changes.
-      Iterate indefinitely.
+      Generate the UI, run the bundler, broadcast an event with type
+      "app_update". Then ask the user if they'd like changes. Iterate
+      indefinitely.
     functions: ["chat.*", "sandbox.*", "events.*", "skills.*"]
     skills: ["ui-generator"]
     tags: ["bundle", "app-builder", "chat"]
@@ -719,12 +730,13 @@ steps:
 ```
 
 **Key points**:
+
 - `interview` is a root step — it receives `{{system.context}}` from whoever
   launched the playbook (typically Opie via `playbooks_run_playbook`).
 - `ui-gen` depends on `interview` via `{{interview}}`. It won't start until the
   interview completes.
-- Both steps call `events_broadcast(type="app_update")` — this notifies
-  the parent orchestrator (Opie) about progress.
+- Both steps call `events_broadcast(type="app_update")` — this notifies the
+  parent orchestrator (Opie) about progress.
 - `interview` uses `events.*` even though it's a finite step — it broadcasts a
   signal before finishing to provide an early update.
 - `ui-gen` specifies `model: gemini-3.1-pro-preview` to use a more capable model
@@ -748,8 +760,8 @@ playbooks_run_playbook(
 ```
 
 When `share_workspace` is `true`, child tickets inherit the caller's
-`playbook_run_id` as their `parent_run_id`. This redirects their filesystem
-from the per-ticket `tickets/{id}/filesystem/` to a shared directory at
+`playbook_run_id` as their `parent_run_id`. This redirects their filesystem from
+the per-ticket `tickets/{id}/filesystem/` to a shared directory at
 `tickets/{parent_run_id}/filesystem/`.
 
 All child tickets dispatched with `share_workspace: true` by the same
@@ -763,6 +775,7 @@ and the UI generator reads both — all without any data flowing through LLM
 context.
 
 **Key points**:
+
 - The orchestrator itself does **not** share the workspace — it uses its own
   ticket directory. Only child playbooks launched with `share_workspace: true`
   share the workspace directory.
@@ -810,6 +823,7 @@ The server runs on port 3200 with auto-reload for `.py`, `.md`, `.json`, and
 run without restarting the server.
 
 **API endpoints**:
+
 - `GET /tickets` — list all tickets (optionally filter by `?tag=chat`)
 - `GET /tickets/{id}` — get a single ticket with metadata
 - `POST /tickets/{id}/respond` — submit a response to a suspended ticket
@@ -825,7 +839,8 @@ bees-{ticket-id-prefix}-{timestamp}.log.json
 ```
 
 These files contain the full conversation (system instruction, user turns, model
-responses, function calls) and can be loaded into the eval viewer for inspection.
+responses, function calls) and can be loaded into the eval viewer for
+inspection.
 
 ### Tags as Debugging Handles
 
@@ -839,11 +854,11 @@ Use `tags` strategically for debugging:
 ### Common Pitfalls
 
 **Missing `system.*` in functions**: Without `system.*`, the agent can't call
-`system_objective_fulfilled` or `system_failed_to_fulfill_objective`. The session
-will eventually error out because the agent has no way to terminate. Always
-include `system.*` for steps that should complete (or the default, which adds all
-functions). Steps that intentionally loop forever (chat agents, event listeners)
-can omit it — they rely on session suspension instead.
+`system_objective_fulfilled` or `system_failed_to_fulfill_objective`. The
+session will eventually error out because the agent has no way to terminate.
+Always include `system.*` for steps that should complete (or the default, which
+adds all functions). Steps that intentionally loop forever (chat agents, event
+listeners) can omit it — they rely on session suspension instead.
 
 **Missing `chat.*` tag**: If a step uses `chat_request_user_input` but isn't
 tagged `"chat"`, the chat history won't be persisted or restored across page
@@ -859,12 +874,11 @@ original context, either thread it through the first step's outcome or design
 your first step to pass it along.
 
 **`watch_events` without `chat_await_context_update`**: Subscribing to events
-via `watch_events` only sets up the routing. The agent must actually *suspend*
+via `watch_events` only sets up the routing. The agent must actually _suspend_
 (via `chat_await_context_update` or `chat_request_user_input`) to receive the
 signals. If the agent completes without suspending, signals arrive but have no
 session to deliver to.
 
 **`chat_await_context_update` without `watch_events`**: Calling
-`chat_await_context_update` suspends the session, but without `watch_events`,
-no events will be routed to the ticket. The agent will hang
-indefinitely.
+`chat_await_context_update` suspends the session, but without `watch_events`, no
+events will be routed to the ticket. The agent will hang indefinitely.

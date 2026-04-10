@@ -88,7 +88,7 @@ def scan_skills(
 
     skills_dir = base_dir / "skills"
     if not skills_dir.is_dir():
-        return "", {}
+        return "", {}, []
 
 
     for child in sorted(skills_dir.iterdir()):

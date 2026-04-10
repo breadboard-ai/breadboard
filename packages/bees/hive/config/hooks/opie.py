@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-Lifecycle hooks for the opie playbook.
+Lifecycle hooks for the opie template.
 
 Auto-boots Opie at server startup if no opie-tagged ticket exists.
-Auto-bundles digest UI when the agent produces an App.jsx.
 """
 
 from __future__ import annotations
@@ -26,4 +25,4 @@ def on_startup(tickets: list[Ticket]) -> list[Ticket]:
     )
     if has_opie:
         return []
-    return run_playbook("opie")
+    return [run_playbook("opie")]

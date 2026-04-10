@@ -31,24 +31,19 @@ def main() -> None:
     args = parser.parse_args()
 
     try:
-        tickets = run_playbook(args.name)
+        ticket = run_playbook(args.name)
     except (FileNotFoundError, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         sys.exit(1)
 
+    label = ticket.id[:8]
+    title = ticket.metadata.title or "(untitled)"
+    status = ticket.metadata.status
     print(
-        f"Created {len(tickets)} ticket(s) from playbook '{args.name}':",
+        f"Created ticket from template '{args.name}':",
         file=sys.stderr,
     )
-    for ticket in tickets:
-        label = ticket.id[:8]
-        title = ticket.metadata.title or "(untitled)"
-        status = ticket.metadata.status
-        deps = ticket.metadata.depends_on
-        dep_str = ""
-        if deps:
-            dep_str = f" (blocked on {', '.join(d[:8] for d in deps)})"
-        print(f"  [{label}] {title} — {status}{dep_str}", file=sys.stderr)
+    print(f"  [{label}] {title} — {status}", file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -5,92 +5,60 @@
 
 from __future__ import annotations
 
-import shutil
 import tempfile
 from pathlib import Path
-from unittest import mock
 
 import pytest
 import yaml
 
-from bees.playbook import load_playbook, topological_sort, run_playbook, PLAYBOOKS_DIR
-from bees.ticket import TICKETS_DIR, list_tickets, _DEP_PATTERN
+from bees.playbook import (
+    load_playbook,
+    run_playbook,
+    run_event_hooks,
+)
+from bees.ticket import TICKETS_DIR, _DEP_PATTERN
 
 
 @pytest.fixture(autouse=True)
-def _temp_tickets(tmp_path, monkeypatch):
-    """Redirect ticket storage to a temp directory for each test."""
+def _temp_dirs(tmp_path, monkeypatch):
+    """Redirect ticket and template storage to temp directories."""
     tickets_dir = tmp_path / "tickets"
     tickets_dir.mkdir()
     monkeypatch.setattr("bees.ticket.TICKETS_DIR", tickets_dir)
-    monkeypatch.setattr("bees.playbook.PLAYBOOKS_DIR", tmp_path / "playbooks")
-    (tmp_path / "playbooks").mkdir()
-    yield tickets_dir
+
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    templates_path = config_dir / "TEMPLATES.yaml"
+    hooks_dir = config_dir / "hooks"
+    hooks_dir.mkdir()
+
+    monkeypatch.setattr("bees.playbook.CONFIG_DIR", config_dir)
+    monkeypatch.setattr("bees.playbook.TEMPLATES_PATH", templates_path)
+    monkeypatch.setattr("bees.playbook.HOOKS_DIR", hooks_dir)
+    yield
 
 
 @pytest.fixture
-def write_playbook(tmp_path):
-    """Helper to write a playbook YAML to the temp playbooks dir."""
-    def _write(name: str, data: dict) -> Path:
-        pb_dir = tmp_path / "playbooks" / name
-        pb_dir.mkdir(parents=True, exist_ok=True)
-        path = pb_dir / "PLAYBOOK.yaml"
-        path.write_text(yaml.dump(data, default_flow_style=False))
-        return path
+def write_template(tmp_path):
+    """Helper to write template entries to the temp TEMPLATES.yaml.
+
+    Accepts one or more template dicts and writes them as a YAML list.
+    """
+    templates_path = tmp_path / "config" / "TEMPLATES.yaml"
+
+    def _write(*templates: dict) -> Path:
+        templates_path.write_text(
+            yaml.dump(list(templates), default_flow_style=False)
+        )
+        return templates_path
+
     return _write
 
 
-# --- topological_sort ---
-
-
-class TestTopologicalSort:
-
-    def test_linear_chain(self):
-        steps = {
-            "a": {"objective": "do a"},
-            "b": {"objective": "do b with {{a}}"},
-            "c": {"objective": "do c with {{b}}"},
-        }
-        order = topological_sort(steps)
-        assert order.index("a") < order.index("b") < order.index("c")
-
-    def test_diamond(self):
-        steps = {
-            "root": {"objective": "root"},
-            "left": {"objective": "left from {{root}}"},
-            "right": {"objective": "right from {{root}}"},
-            "join": {"objective": "join {{left}} and {{right}}"},
-        }
-        order = topological_sort(steps)
-        assert order.index("root") < order.index("left")
-        assert order.index("root") < order.index("right")
-        assert order.index("left") < order.index("join")
-        assert order.index("right") < order.index("join")
-
-    def test_no_deps(self):
-        steps = {
-            "x": {"objective": "do x"},
-            "y": {"objective": "do y"},
-        }
-        # Both are independent — both should appear (deterministic order).
-        order = topological_sort(steps)
-        assert set(order) == {"x", "y"}
-
-    def test_cycle_raises(self):
-        steps = {
-            "a": {"objective": "{{b}}"},
-            "b": {"objective": "{{a}}"},
-        }
-        with pytest.raises(ValueError, match="Cycle"):
-            topological_sort(steps)
-
-    def test_external_refs_ignored(self):
-        """Refs that don't match a step name are not treated as deps."""
-        steps = {
-            "a": {"objective": "use {{some-external-id}} here"},
-        }
-        order = topological_sort(steps)
-        assert order == ["a"]
+@pytest.fixture
+def hooks_dir(tmp_path):
+    """Return the temp hooks directory for writing hook modules."""
+    return tmp_path / "config" / "hooks"
 
 
 # --- run_playbook ---
@@ -98,254 +66,171 @@ class TestTopologicalSort:
 
 class TestRunPlaybook:
 
-    def test_single_step_no_deps(self, write_playbook):
-        write_playbook("simple", {
+    def test_single_template(self, write_template):
+        write_template({
             "name": "simple",
-            "steps": {
-                "main": {
-                    "title": "Main Step",
-                    "objective": "Do the thing.",
-                    "functions": ["chat.*"],
-                    "skills": ["interview-user"],
-                    "tags": ["final"],
-                },
-            },
+            "title": "Main Step",
+            "objective": "Do the thing.",
+            "functions": ["chat.*"],
+            "skills": ["interview-user"],
+            "tags": ["final"],
         })
 
-        tickets = run_playbook("simple")
-        assert len(tickets) == 1
+        ticket = run_playbook("simple")
 
-        t = tickets[0]
-        assert t.metadata.status == "available"
-        assert t.metadata.title == "Main Step"
-        assert t.metadata.functions == ["chat.*"]
-        assert t.metadata.skills == ["interview-user"]
-        assert t.metadata.tags == ["final"]
-        assert t.metadata.playbook_id == "simple"
-        assert t.metadata.playbook_run_id is not None
-        assert t.metadata.depends_on is None
-        assert t.objective == "Do the thing."
+        assert ticket.metadata.status == "available"
+        assert ticket.metadata.title == "Main Step"
+        assert ticket.metadata.functions == ["chat.*"]
+        assert ticket.metadata.skills == ["interview-user"]
+        assert ticket.metadata.tags == ["final"]
+        assert ticket.metadata.playbook_id == "simple"
+        assert ticket.metadata.playbook_run_id is not None
+        assert ticket.metadata.depends_on is None
+        assert ticket.objective == "Do the thing."
 
-    def test_two_steps_with_dep(self, write_playbook):
-        write_playbook("chain", {
-            "name": "chain",
-            "steps": {
-                "first": {
-                    "objective": "Do first thing.",
-                },
-                "second": {
-                    "objective": "Do second with {{first}}.",
-                },
-            },
-        })
-
-        tickets = run_playbook("chain")
-        assert len(tickets) == 2
-
-        first = next(t for t in tickets if t.metadata.title is None and "first" not in (t.metadata.depends_on or []))
-        second = next(t for t in tickets if t.metadata.depends_on)
-
-        # First ticket should be available.
-        assert first.metadata.status == "available"
-
-        # Second should be blocked, depending on first.
-        assert second.metadata.status == "blocked"
-        assert second.metadata.depends_on == [first.id]
-
-        # The objective should have the ticket ID, not the step name.
-        assert first.id in second.objective
-        assert "{{first}}" not in second.objective
-
-    def test_playbook_run_id_shared(self, write_playbook):
-        write_playbook("multi", {
-            "name": "multi",
-            "steps": {
-                "a": {"objective": "step a"},
-                "b": {"objective": "step b with {{a}}"},
-            },
-        })
-
-        tickets = run_playbook("multi")
-        run_ids = {t.metadata.playbook_run_id for t in tickets}
-        assert len(run_ids) == 1  # All share the same run ID.
-
-    def test_assignee_propagates(self, write_playbook):
-        write_playbook("with-assignee", {
-            "name": "with-assignee",
-            "steps": {
-                "main": {
-                    "objective": "Do it.",
-                    "assignee": "app",
-                },
-            },
-        })
-
-        tickets = run_playbook("with-assignee")
-        assert tickets[0].metadata.assignee == "app"
-
-    def test_diamond_deps(self, write_playbook):
-        write_playbook("diamond", {
-            "name": "diamond",
-            "steps": {
-                "root": {"objective": "start"},
-                "left": {"objective": "left {{root}}"},
-                "right": {"objective": "right {{root}}"},
-                "join": {"objective": "combine {{left}} and {{right}}"},
-            },
-        })
-
-        tickets = run_playbook("diamond")
-        assert len(tickets) == 4
-
-        by_playbook_order = {t.objective: t for t in tickets}
-        root = next(t for t in tickets if t.objective == "start")
-        join = next(t for t in tickets if "combine" in t.objective)
-
-        assert join.metadata.depends_on is not None
-        assert len(join.metadata.depends_on) == 2
-        assert root.id not in join.metadata.depends_on  # root is indirect
-
-    def test_not_found_raises(self):
+    def test_not_found_raises(self, write_template):
+        write_template({"name": "other", "objective": "something"})
         with pytest.raises(FileNotFoundError):
             run_playbook("nonexistent")
 
-    def test_missing_steps_raises(self, write_playbook):
-        write_playbook("bad", {"name": "bad"})
-        with pytest.raises(ValueError, match="steps"):
-            run_playbook("bad")
+    def test_no_templates_file_raises(self):
+        with pytest.raises(FileNotFoundError):
+            run_playbook("anything")
 
-    def test_model_propagates(self, write_playbook):
-        write_playbook("with-model", {
+    def test_model_propagates(self, write_template):
+        write_template({
             "name": "with-model",
-            "steps": {
-                "main": {
-                    "objective": "Do the thing.",
-                    "model": "gemini-2.5-pro",
-                },
-            },
+            "objective": "Do the thing.",
+            "model": "gemini-2.5-pro",
         })
 
-        tickets = run_playbook("with-model")
-        assert len(tickets) == 1
-        assert tickets[0].metadata.model == "gemini-2.5-pro"
+        ticket = run_playbook("with-model")
+        assert ticket.metadata.model == "gemini-2.5-pro"
 
-    def test_context_attached_to_root_only(self, write_playbook):
-        """Context briefing is only attached to root tickets."""
-        write_playbook("briefed", {
+    def test_context_attached(self, write_template):
+        write_template({
             "name": "briefed",
-            "steps": {
-                "research": {
-                    "title": "Research",
-                    "objective": "Research the topic.",
-                },
-                "summarise": {
-                    "title": "Summarise",
-                    "objective": "Summarise {{research}}.",
-                },
-            },
+            "title": "Research",
+            "objective": "Research the topic.",
         })
 
-        tickets = run_playbook("briefed", context="All about dinosaurs")
-        assert len(tickets) == 2
+        ticket = run_playbook("briefed", context="All about dinosaurs")
+        assert ticket.metadata.context == "All about dinosaurs"
 
-        research = next(t for t in tickets if t.metadata.title == "Research")
-        summarise = next(t for t in tickets if t.metadata.title == "Summarise")
-
-        assert research.metadata.context == "All about dinosaurs"
-        assert summarise.metadata.context is None
-
-    def test_context_none_when_not_provided(self, write_playbook):
-        """No context field created when not supplied."""
-        write_playbook("plain", {
+    def test_context_none_when_not_provided(self, write_template):
+        write_template({
             "name": "plain",
-            "steps": {
-                "step": {"objective": "Do it."},
-            },
+            "objective": "Do it.",
         })
 
-        tickets = run_playbook("plain")
-        assert tickets[0].metadata.context is None
+        ticket = run_playbook("plain")
+        assert ticket.metadata.context is None
+
+    def test_assignee_propagates(self, write_template):
+        write_template({
+            "name": "with-assignee",
+            "objective": "Do it.",
+            "assignee": "app",
+        })
+
+        ticket = run_playbook("with-assignee")
+        assert ticket.metadata.assignee == "app"
+
+    def test_parent_ticket_id_propagates(self, write_template):
+        write_template({
+            "name": "sub",
+            "objective": "step a",
+        })
+
+        ticket = run_playbook("sub", parent_ticket_id="caller-ticket")
+        assert ticket.metadata.parent_ticket_id == "caller-ticket"
+
+    def test_slug_propagates(self, write_template):
+        write_template({
+            "name": "sub",
+            "objective": "step a",
+        })
+
+        ticket = run_playbook("sub", slug="my-slug")
+        assert ticket.metadata.slug == "my-slug"
+
+    def test_tasks_allowlist_propagates(self, write_template):
+        write_template({
+            "name": "orchestrator",
+            "objective": "Manage stuff.",
+            "tasks": ["worker-a", "worker-b"],
+        })
+
+        ticket = run_playbook("orchestrator")
+        assert ticket.metadata.tasks == ["worker-a", "worker-b"]
 
 
 # --- run_event_hooks ---
 
 
-from bees.playbook import run_event_hooks
-
-
 class TestRunEventHooks:
 
-    def test_no_playbook_passes_through(self, tmp_path):
-        """Tickets without a playbook_id get the signal unmodified."""
+    def test_no_playbook_passes_through(self, write_template):
         from bees.ticket import create_ticket
         ticket = create_ticket("standalone objective")
         result = run_event_hooks("some_signal", "payload", ticket)
         assert result == "payload"
 
-    def test_no_hook_passes_through(self, write_playbook):
-        """Playbook exists but hooks.py has no on_event — pass through."""
-        write_playbook("no-hook", {
+    def test_no_hook_passes_through(self, write_template):
+        write_template({
             "name": "no-hook",
-            "steps": {"main": {"objective": "Do it."}},
+            "objective": "Do it.",
         })
-        tickets = run_playbook("no-hook")
-        ticket = tickets[0]
+        ticket = run_playbook("no-hook")
         result = run_event_hooks("some_signal", "payload", ticket)
         assert result == "payload"
 
-    def test_hook_eats_event(self, tmp_path, write_playbook):
-        """Hook returns None — signal is eaten."""
-        write_playbook("eater", {
+    def test_hook_eats_event(self, write_template, hooks_dir):
+        write_template({
             "name": "eater",
-            "steps": {"main": {"objective": "Do it."}},
+            "objective": "Do it.",
         })
-        hooks_path = tmp_path / "playbooks" / "eater" / "hooks.py"
-        hooks_path.write_text(
+        (hooks_dir / "eater.py").write_text(
             "def on_event(signal_type, payload, ticket):\n"
             "    return None\n"
         )
-        tickets = run_playbook("eater")
-        result = run_event_hooks("any_signal", "payload", tickets[0])
+        ticket = run_playbook("eater")
+        result = run_event_hooks("any_signal", "payload", ticket)
         assert result is None
 
-    def test_hook_transforms_payload(self, tmp_path, write_playbook):
-        """Hook returns a modified payload string."""
-        write_playbook("transformer", {
+    def test_hook_transforms_payload(self, write_template, hooks_dir):
+        write_template({
             "name": "transformer",
-            "steps": {"main": {"objective": "Do it."}},
+            "objective": "Do it.",
         })
-        hooks_path = tmp_path / "playbooks" / "transformer" / "hooks.py"
-        hooks_path.write_text(
+        (hooks_dir / "transformer.py").write_text(
             "def on_event(signal_type, payload, ticket):\n"
             "    return payload.upper()\n"
         )
-        tickets = run_playbook("transformer")
-        result = run_event_hooks("any_signal", "hello", tickets[0])
+        ticket = run_playbook("transformer")
+        result = run_event_hooks("any_signal", "hello", ticket)
         assert result == "HELLO"
 
-    def test_hook_raises_fails_open(self, tmp_path, write_playbook):
-        """Hook crash delivers the signal as-is (fail-open)."""
-        write_playbook("crasher", {
+    def test_hook_raises_fails_open(self, write_template, hooks_dir):
+        write_template({
             "name": "crasher",
-            "steps": {"main": {"objective": "Do it."}},
+            "objective": "Do it.",
         })
-        hooks_path = tmp_path / "playbooks" / "crasher" / "hooks.py"
-        hooks_path.write_text(
+        (hooks_dir / "crasher.py").write_text(
             "def on_event(signal_type, payload, ticket):\n"
             "    raise RuntimeError('boom')\n"
         )
-        tickets = run_playbook("crasher")
-        result = run_event_hooks("any_signal", "payload", tickets[0])
+        ticket = run_playbook("crasher")
+        result = run_event_hooks("any_signal", "payload", ticket)
         assert result == "payload"
 
-    def test_hook_mutates_ticket_metadata(self, tmp_path, write_playbook):
-        """Hook can mutate ticket metadata (e.g., rename title)."""
-        write_playbook("renamer", {
+    def test_hook_mutates_ticket_metadata(self, write_template, hooks_dir):
+        write_template({
             "name": "renamer",
-            "steps": {"main": {"title": "Original Title", "objective": "Do it."}},
+            "title": "Original Title",
+            "objective": "Do it.",
         })
-        hooks_path = tmp_path / "playbooks" / "renamer" / "hooks.py"
-        hooks_path.write_text(
+        (hooks_dir / "renamer.py").write_text(
             "def on_event(signal_type, payload, ticket):\n"
             "    if signal_type == 'update_title':\n"
             "        ticket.metadata.title = payload\n"
@@ -353,8 +238,7 @@ class TestRunEventHooks:
             "        return None\n"
             "    return payload\n"
         )
-        tickets = run_playbook("renamer")
-        ticket = tickets[0]
+        ticket = run_playbook("renamer")
         assert ticket.metadata.title == "Original Title"
 
         result = run_event_hooks("update_title", "New Title", ticket)
@@ -368,8 +252,7 @@ class TestRunEventHooks:
 class TestTicketPaths:
     """Tests for Ticket.dir and Ticket.fs_dir path resolution."""
 
-    def test_dir_always_top_level(self, _temp_tickets):
-        """Ticket.dir is always tickets/{id}/, regardless of run metadata."""
+    def test_dir_always_top_level(self, _temp_dirs):
         from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
 
         t = Ticket(
@@ -382,8 +265,7 @@ class TestTicketPaths:
         )
         assert t.dir == TICKETS_DIR / "abc-123"
 
-    def test_fs_dir_with_parent_ticket_id(self, _temp_tickets):
-        """fs_dir resolves to tickets/{parent_ticket_id}/filesystem/."""
+    def test_fs_dir_with_parent_ticket_id(self, _temp_dirs):
         from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
 
         t = Ticket(
@@ -393,15 +275,13 @@ class TestTicketPaths:
         )
         assert t.fs_dir == TICKETS_DIR / "parent-ticket" / "filesystem"
 
-    def test_fs_dir_plain_ticket(self, _temp_tickets):
-        """Plain tickets get fs_dir at tickets/{id}/filesystem/."""
+    def test_fs_dir_plain_ticket(self, _temp_dirs):
         from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
 
         t = Ticket(id="abc-123", objective="test", metadata=TicketMetadata())
         assert t.fs_dir == TICKETS_DIR / "abc-123" / "filesystem"
 
-    def test_fs_dir_playbook_run_id_alone_uses_own_dir(self, _temp_tickets):
-        """playbook_run_id alone does NOT create a shared workspace dir."""
+    def test_fs_dir_playbook_run_id_alone_uses_own_dir(self, _temp_dirs):
         from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
 
         t = Ticket(
@@ -409,11 +289,9 @@ class TestTicketPaths:
             objective="test",
             metadata=TicketMetadata(playbook_run_id="pb-run"),
         )
-        # Without parent_ticket_id, falls through to own directory.
         assert t.fs_dir == TICKETS_DIR / "abc-123" / "filesystem"
 
-    def test_fs_dir_parent_takes_precedence(self, _temp_tickets):
-        """parent_ticket_id determines fs_dir regardless of playbook_run_id."""
+    def test_fs_dir_parent_takes_precedence(self, _temp_dirs):
         from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
 
         t = Ticket(
@@ -426,166 +304,5 @@ class TestTicketPaths:
         )
         assert t.fs_dir == TICKETS_DIR / "parent-ticket" / "filesystem"
 
-    def test_sibling_steps_get_own_filesystem(self, _temp_tickets, write_playbook):
-        """Top-level playbook steps each get their own filesystem."""
-        write_playbook("siblings", {
-            "name": "siblings",
-            "steps": {
-                "root": {"objective": "I am root"},
-                "child": {"objective": "I depend on {{root}}"},
-            },
-        })
-
-        tickets = run_playbook("siblings")
-        assert len(tickets) == 2
-
-        # Both tickets should have parent_ticket_id=None and distinct fs_dirs.
-        for t in tickets:
-            assert t.metadata.parent_ticket_id is None
-        assert tickets[0].fs_dir != tickets[1].fs_dir
-
-    def test_shared_workspace_propagates_to_all_steps(self, _temp_tickets, write_playbook):
-        """When launched with parent_ticket_id, all steps inherit it."""
-        write_playbook("sub", {
-            "name": "sub",
-            "steps": {
-                "a": {"objective": "step a"},
-                "b": {"objective": "step b with {{a}}"},
-            },
-        })
-
-        tickets = run_playbook("sub", parent_ticket_id="caller-ticket")
-        assert len(tickets) == 2
-
-        for t in tickets:
-            assert t.metadata.parent_ticket_id == "caller-ticket"
-        assert tickets[0].fs_dir == tickets[1].fs_dir
-
-    def test_alphabetical_order_does_not_determine_filesystem_owner(
-        self, _temp_tickets, write_playbook,
-    ):
-        """Step sort order must not affect which ticket owns the filesystem.
-
-        Regression: alphabetical tie-breaking in topological_sort caused the
-        first-sorted step to become workspace_root for all siblings, giving
-        it the filesystem and making every later step a guest.
-        """
-        # "alpha" sorts before "main" — but neither should own the other's fs.
-        write_playbook("alpha-trap", {
-            "name": "alpha-trap",
-            "steps": {
-                "main": {"objective": "I am the primary agent."},
-                "alpha": {"objective": "I sort first alphabetically."},
-            },
-        })
-
-        tickets = run_playbook("alpha-trap")
-        by_objective = {t.objective: t for t in tickets}
-        main = by_objective["I am the primary agent."]
-        alpha = by_objective["I sort first alphabetically."]
-
-        # Each step owns its own filesystem, regardless of sort position.
-        assert main.metadata.parent_ticket_id is None
-        assert alpha.metadata.parent_ticket_id is None
-        assert main.fs_dir != alpha.fs_dir
-        assert main.fs_dir.parent == main.dir
-        assert alpha.fs_dir.parent == alpha.dir
-
-    def test_independent_steps_never_share_filesystem(
-        self, _temp_tickets, write_playbook,
-    ):
-        """Steps with no inter-step deps must get isolated filesystems.
-
-        This is the invariant: workspace sharing is opt-in (share_workspace),
-        never a side effect of being in the same playbook.
-        """
-        write_playbook("isolated", {
-            "name": "isolated",
-            "steps": {
-                "chat": {"objective": "Handle user chat."},
-                "worker": {"objective": "Background processing."},
-                "watcher": {"objective": "Watch for events."},
-            },
-        })
-
-        tickets = run_playbook("isolated")
-        fs_dirs = [t.fs_dir for t in tickets]
-
-        # All three must be distinct.
-        assert len(set(fs_dirs)) == 3
-        # And each must live under its own ticket directory.
-        for t in tickets:
-            assert t.fs_dir == t.dir / "filesystem"
-
-    def test_list_tickets_no_orphan_run_dirs(self, _temp_tickets, write_playbook):
-        """Running a playbook should not create non-ticket directories."""
-        from bees.ticket import list_tickets, TICKETS_DIR
-
-        write_playbook("clean", {
-            "name": "clean",
-            "steps": {
-                "a": {"objective": "do a"},
-                "b": {"objective": "do b with {{a}}"},
-            },
-        })
-
-        tickets = run_playbook("clean")
-        ticket_ids = {t.id for t in tickets}
-
-        # Every directory under tickets/ should be a real ticket.
-        for d in TICKETS_DIR.iterdir():
-            if d.is_dir():
-                assert d.name in ticket_ids, f"Orphan directory: {d.name}"
 
 
-# --- validate_task_template ---
-
-
-from bees.playbook import validate_task_template
-
-
-class TestValidateTaskTemplate:
-
-    def test_valid_template(self):
-        playbook_data = {
-            "type": "task-template",
-            "steps": {
-                "main": {"objective": "Do it."}
-            }
-        }
-        assert validate_task_template(playbook_data) is True
-
-    def test_missing_type(self):
-        playbook_data = {
-            "steps": {
-                "main": {"objective": "Do it."}
-            }
-        }
-        assert validate_task_template(playbook_data) is False
-
-    def test_wrong_type(self):
-        playbook_data = {
-            "type": "standard",
-            "steps": {
-                "main": {"objective": "Do it."}
-            }
-        }
-        assert validate_task_template(playbook_data) is False
-
-    def test_multi_step_template_fails_and_warns(self, caplog):
-        playbook_data = {
-            "type": "task-template",
-            "steps": {
-                "step1": {"objective": "Do 1"},
-                "step2": {"objective": "Do 2"}
-            }
-        }
-        assert validate_task_template(playbook_data) is False
-        assert "marked as 'task-template' but has 2 steps" in caplog.text
-
-    def test_empty_steps(self):
-        playbook_data = {
-            "type": "task-template",
-            "steps": {}
-        }
-        assert validate_task_template(playbook_data) is False
