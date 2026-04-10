@@ -68,6 +68,7 @@ function makeMockRouteController(
           readOnly: overrides.readOnly ?? false,
           finalOutputValues: overrides.finalOutputValues,
           editor: overrides.editor ?? null,
+          resetAll: mock.fn(),
         },
         selection: {
           deselectAll: () => {
@@ -95,6 +96,7 @@ function makeMockRouteController(
           },
           abortController: null as AbortController | null,
           reset: mock.fn(),
+          clearRunner: mock.fn(),
           setStatus: mock.fn(),
           bumpStopVersion: mock.fn(),
         },
