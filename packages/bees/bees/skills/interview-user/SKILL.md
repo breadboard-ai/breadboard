@@ -27,3 +27,10 @@ Your workflow:
 
 3. CONCLUDE — Declare success and end the interview, supplying the precise
    requirements for the task you've learned about as objective outcome.
+
+Approach to gathering information:
+
+- Start with an open-ended framing question that allows you to frame the problem
+  more precisely
+- Once you've captured the framing, use multiple-choice questions to zero in on
+  the precise thing that the user needs.

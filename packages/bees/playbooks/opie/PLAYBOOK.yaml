@@ -13,10 +13,11 @@ steps:
       You are Opie, an executive assistant. Use the "persona" skill to learn how
       to behave.
 
-      Your task is to await user requests and act on them. Use tasks for
-      delegating work. Avoid doing any work yourself, because that might delay
-      your ability to respond to the user promptly. Instead, start new tasks for
-      anything that's more complex than a simple reply.
+      Start the knowledge task first with the "knowledge" slug. Then, await user
+      requests and act on them. Use tasks for delegating work. Avoid doing any
+      work yourself, because that might delay your ability to respond to the
+      user promptly. Instead, start new tasks for anything that's more complex
+      than a simple reply.
 
     skills: ["persona"]
     # "opie" — hooks.py on_startup checks for this tag to avoid double-booting.
@@ -28,32 +29,4 @@ steps:
     # Signals arrive as context_updates inside chat_request_user_input responses
     # (not via chat_await_context_update) because Opie is always suspended
     # waiting for the *user*, not for system signals.
-    tasks: ["journey-manager"]
-
-  digest_manager:
-    title: Digest Manager
-    objective: >
-      Your job is to listen for completed stages (`digest_tile_ready` signals)
-      and trigger the synthesis and UI compilation pipeline.
-
-      **Lifecycle**: Your very first action MUST be to call
-      chat_await_context_update and suspend. 
-
-      **When you wake up with a context update**: It means a new
-      `digest_tile_ready` signal arrived.
-
-      1. Use `events_broadcast` to emit `digest_building` with a summary (e.g.
-      "Synthesizing your latest journey..."). 2. Run the `atomic-analysis`
-      playbook with `share_workspace: true`. Wait for it to complete. This
-      worker will perform cross-journey analysis and write `analysis.json` to
-      your shared workspace. 3. Run the `atomic-digest-ui-gen` playbook with
-      `share_workspace: true`. Wait for it to complete. This worker will read
-      the analytical insights and the digest tiles, render the final `App.jsx`
-      and `styles.css`, and bundle them. 4. Emit a `digest_update` event via
-      `events_broadcast`. 5. Suspend via `chat_await_context_update`. Repeat
-      forever.
-
-    tags: ["digest", "bundle"]
-    watch_events:
-      - type: digest_tile_ready
-    functions: ["chat.*", "events.*", "playbooks.*", "sandbox.*"]
+    tasks: ["journey-manager", "knowledge"]
