@@ -5,7 +5,9 @@
  */
 
 import { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
+import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 import { FlowGenLLMContentPart } from "./flow-generator.js";
 
 export interface AppCatalystChatRequest {
@@ -99,10 +101,16 @@ export interface SetEmailPreferencesRequest {
 export class AppCatalystApiClient {
   readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #apiBaseUrl: string;
+  readonly #shellHost: OpalShellHostProtocol;
 
-  constructor(fetchWithCreds: typeof globalThis.fetch, apiBaseUrl: string) {
+  constructor(
+    fetchWithCreds: typeof globalThis.fetch,
+    apiBaseUrl: string,
+    shellHost: OpalShellHostProtocol
+  ) {
     this.#fetchWithCreds = fetchWithCreds;
     this.#apiBaseUrl = apiBaseUrl;
+    this.#shellHost = shellHost;
   }
 
   async getG1SubscriptionStatus(
@@ -157,9 +165,7 @@ export class AppCatalystApiClient {
     return result;
   }
 
-  async *generateOpalStream(
-    intent: string
-  ): AsyncGenerator<LLMContent> {
+  async *generateOpalStream(intent: string): AsyncGenerator<LLMContent> {
     const request: AppCatalystChatRequestV2 = {
       intent,
       appOptions: {
@@ -220,11 +226,15 @@ export class AppCatalystApiClient {
 
   async checkTos(): Promise<CheckAppAccessResponse> {
     try {
-      const result = (await (
-        await this.#fetchWithCreds(
-          new URL(`v1beta1/checkAppAccess`, this.#apiBaseUrl)
-        )
-      ).json()) as CheckAppAccessResponse;
+      const response = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT
+        ? await this.#shellHost.invokeOpalBackend("checkAppAccess", {
+            method: "GET",
+          })
+        : await this.#fetchWithCreds(
+            new URL(`v1beta1/checkAppAccess`, this.#apiBaseUrl)
+          );
+
+      const result = (await response.json()) as CheckAppAccessResponse;
 
       // TODO: Remove this override.
       if (result.accessStatus !== "ACCESS_STATUS_OK") {

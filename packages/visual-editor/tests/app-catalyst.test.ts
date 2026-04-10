@@ -15,7 +15,8 @@ describe("AppCatalystApiClient", () => {
 
     const client = new AppCatalystApiClient(
       fetchMock as any,
-      "https://api.example.com"
+      "https://api.example.com",
+      {} as any
     );
     await client.getG1SubscriptionStatus({ include_credit_data: true });
 
@@ -47,7 +48,8 @@ describe("AppCatalystApiClient", () => {
 
     const client = new AppCatalystApiClient(
       fetchMock as any,
-      "https://api.example.com"
+      "https://api.example.com",
+      {} as any
     );
     await client.getG1Credits();
 
