@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 CONFIG_DIR = HIVE_DIR / "config"
 TEMPLATES_PATH = CONFIG_DIR / "TEMPLATES.yaml"
+SYSTEM_PATH = CONFIG_DIR / "SYSTEM.yaml"
 HOOKS_DIR = CONFIG_DIR / "hooks"
 
 
@@ -148,29 +149,42 @@ def run_playbook(
     return ticket
 
 
-def run_startup_hooks(tickets: list[Ticket]) -> list[Ticket]:
-    """Run ``on_startup`` hooks for all templates.
+def load_system_config() -> dict[str, Any]:
+    """Load the hive system configuration from ``SYSTEM.yaml``.
 
-    Iterates every template that defines an ``on_startup(tickets)`` hook
-    in its hooks module.  Each hook receives the current ticket list and
-    returns any tickets it created.  All created tickets are collected
-    and returned so the caller can broadcast them.
+    Returns a dict with keys like ``title``, ``description``, and ``root``.
+    Returns an empty dict if the file doesn't exist.
     """
-    created: list[Ticket] = []
-    for name in list_playbooks():
-        hooks = _load_hooks(name)
-        if hooks and hasattr(hooks, "on_startup"):
-            try:
-                new_tickets = hooks.on_startup(tickets)
-                created.extend(new_tickets)
-                if new_tickets:
-                    logger.info(
-                        "Startup hook for '%s' created %d ticket(s)",
-                        name, len(new_tickets),
-                    )
-            except Exception as exc:
-                logger.warning("Startup hook for '%s' failed: %s", name, exc)
-    return created
+    if not SYSTEM_PATH.exists():
+        return {}
+    with open(SYSTEM_PATH) as f:
+        data = yaml.safe_load(f)
+    if not isinstance(data, dict):
+        logger.warning("SYSTEM.yaml must be a mapping; got %s", type(data).__name__)
+        return {}
+    return data
+
+
+def boot_root_template(tickets: list[Ticket]) -> Ticket | None:
+    """Boot the root template if it isn't already running.
+
+    Reads ``root`` from SYSTEM.yaml.  If no existing ticket has a matching
+    ``playbook_id``, creates one via ``run_playbook`` and returns it.
+    Returns ``None`` if the root is already booted or no root is configured.
+    """
+    config = load_system_config()
+    root = config.get("root")
+    if not root:
+        return None
+
+    already_booted = any(
+        t.metadata.playbook_id == root for t in tickets
+    )
+    if already_booted:
+        return None
+
+    logger.info("Booting root template '%s'", root)
+    return run_playbook(root)
 
 
 def run_ticket_done_hooks(ticket: Ticket) -> None:

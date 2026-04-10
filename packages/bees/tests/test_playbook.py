@@ -12,7 +12,9 @@ import pytest
 import yaml
 
 from bees.playbook import (
+    boot_root_template,
     load_playbook,
+    load_system_config,
     run_playbook,
     run_event_hooks,
 )
@@ -34,6 +36,7 @@ def _temp_dirs(tmp_path, monkeypatch):
 
     monkeypatch.setattr("bees.playbook.CONFIG_DIR", config_dir)
     monkeypatch.setattr("bees.playbook.TEMPLATES_PATH", templates_path)
+    monkeypatch.setattr("bees.playbook.SYSTEM_PATH", config_dir / "SYSTEM.yaml")
     monkeypatch.setattr("bees.playbook.HOOKS_DIR", hooks_dir)
     yield
 
@@ -305,4 +308,57 @@ class TestTicketPaths:
         assert t.fs_dir == TICKETS_DIR / "parent-ticket" / "filesystem"
 
 
+# --- boot_root_template ---
 
+
+class TestBootRootTemplate:
+
+    def test_boots_when_no_root_ticket_exists(self, write_template, tmp_path):
+        write_template({"name": "opie", "title": "Opie", "objective": "Be helpful."})
+        system_path = tmp_path / "config" / "SYSTEM.yaml"
+        system_path.write_text(yaml.dump({"root": "opie"}))
+
+        ticket = boot_root_template([])
+
+        assert ticket is not None
+        assert ticket.metadata.playbook_id == "opie"
+
+    def test_skips_when_root_already_booted(self, write_template, tmp_path):
+        write_template({"name": "opie", "title": "Opie", "objective": "Be helpful."})
+        system_path = tmp_path / "config" / "SYSTEM.yaml"
+        system_path.write_text(yaml.dump({"root": "opie"}))
+
+        existing = run_playbook("opie")
+        ticket = boot_root_template([existing])
+
+        assert ticket is None
+
+    def test_returns_none_when_no_root_configured(self, tmp_path):
+        system_path = tmp_path / "config" / "SYSTEM.yaml"
+        system_path.write_text(yaml.dump({"title": "My Hive"}))
+
+        ticket = boot_root_template([])
+        assert ticket is None
+
+    def test_returns_none_when_no_system_yaml(self):
+        ticket = boot_root_template([])
+        assert ticket is None
+
+
+class TestLoadSystemConfig:
+
+    def test_loads_config(self, tmp_path):
+        system_path = tmp_path / "config" / "SYSTEM.yaml"
+        system_path.write_text(yaml.dump({
+            "title": "Opal",
+            "description": "Personal assistant",
+            "root": "opie",
+        }))
+
+        config = load_system_config()
+        assert config["title"] == "Opal"
+        assert config["root"] == "opie"
+
+    def test_returns_empty_when_missing(self):
+        config = load_system_config()
+        assert config == {}
