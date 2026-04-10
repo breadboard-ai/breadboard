@@ -31,7 +31,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from bees.playbook import run_startup_hooks
+from bees.playbook import boot_root_template
 from bees.scheduler import Scheduler, SchedulerHooks
 from bees.session import load_gemini_key
 from bees.ticket import (
@@ -80,9 +80,9 @@ scheduler: Scheduler | None = None
 
 
 async def _on_startup(tickets: list[Ticket]) -> None:
-    """Run playbook startup hooks and broadcast any created tickets."""
-    new_tickets = run_startup_hooks(tickets)
-    for ticket in new_tickets:
+    """Boot the root template if needed and broadcast the new ticket."""
+    ticket = boot_root_template(tickets)
+    if ticket:
         await broadcaster.broadcast({
             "type": "ticket_added",
             "ticket": _ticket_to_dict(ticket),
