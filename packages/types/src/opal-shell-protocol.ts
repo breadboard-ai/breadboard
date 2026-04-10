@@ -30,6 +30,19 @@ export declare interface OpalShellHostProtocol {
 
   fetchWithCreds: typeof fetch;
 
+  /**
+   * Invokes an Opal Backend RPC endpoint. Isolates the backend origin and API
+   * version prefix (`/v1beta1/`) so that callers only need to specify the RPC
+   * endpoint path (e.g., `"checkAppAccess"` or `"sessions/new"`).
+   *
+   * The full URL is constructed as:
+   *   `${BACKEND_API_ENDPOINT}/v1beta1/${rpcEndpoint}`
+   */
+  invokeOpalBackend(
+    rpcEndpoint: string,
+    init?: RequestInit
+  ): Promise<Response>;
+
   signIn(scopes: string[]): Promise<SignInResult>;
 
   signOut(): Promise<void>;

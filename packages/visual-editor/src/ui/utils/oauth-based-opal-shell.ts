@@ -47,7 +47,7 @@ import { getTopLevelOrigin } from "./embed-helpers.js";
 import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { checkFetchAllowlist } from "./fetch-allowlist.js";
-import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types";
+import { GOOGLE_DRIVE_FILES_API_PREFIX, OPAL_BACKEND_API_PREFIX } from "@breadboard-ai/types";
 import {
   findUserOpalFolder,
   getDriveCollectorFile,
@@ -330,6 +330,14 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     const headers = new Headers(init.headers);
     headers.set("Authorization", `Bearer ${accessToken}`);
     return fetch(input, { ...init, headers });
+  };
+
+  invokeOpalBackend = async (
+    rpcEndpoint: string,
+    init: RequestInit = {}
+  ): Promise<Response> => {
+    const url = `${OPAL_BACKEND_API_PREFIX}/v1beta1/${rpcEndpoint}`;
+    return this.fetchWithCreds(url, init);
   };
 
   signIn = async (scopes: string[] = []): Promise<SignInResult> => {
