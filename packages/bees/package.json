@@ -11,7 +11,7 @@
     "ticket:respond": ".venv/bin/python -m bees.respond",
     "playbook:run": ".venv/bin/python -m bees.run_playbook",
     "dev": "npm run dev:server & npm run dev:web",
-    "dev:clean": "rm -rf state && npm run dev",
+    "dev:clean": "rm -rf hive && npm run dev",
     "dev:server": ".venv/bin/python -m bees.server",
     "dev:web": "cd web && npm run dev",
     "test:python": ".venv/bin/python -m pytest tests/ -v"

@@ -7,7 +7,7 @@
 /**
  * Signal-backed reactive store for log files.
  *
- * Resolves the `state/logs/` subdirectory via a shared StateAccess,
+ * Resolves the `hive/logs/` subdirectory via a shared StateAccess,
  * uses FileSystemObserver for live updates, and manages session grouping.
  */
 
@@ -36,7 +36,7 @@ class LogStore {
 
   // ── Private ──
 
-  /** The ``state/logs/`` subdirectory. */
+  /** The ``hive/logs/`` subdirectory. */
   #logsHandle: FileSystemDirectoryHandle | null = null;
   #observer: { disconnect(): void } | null = null;
   #cache = new Map<string, { data: LogRunEntry; lastModified: number }>();
@@ -52,7 +52,7 @@ class LogStore {
 
     const logsHandle = await this.access.getSubdirectory("logs");
     if (!logsHandle) {
-      console.warn("Could not find logs/ subdirectory in state/");
+      console.warn("Could not find logs/ subdirectory in hive/");
       return;
     }
 

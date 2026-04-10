@@ -7,7 +7,7 @@
 /**
  * Signal-backed reactive store for ticket directories.
  *
- * Reads ticket data from `state/tickets/{uuid}/` directories,
+ * Reads ticket data from `hive/tickets/{uuid}/` directories,
  * combining `metadata.json` and `objective.md` into TicketData objects.
  * Uses FileSystemObserver for live updates.
  */
@@ -49,7 +49,7 @@ class TicketStore {
 
     const ticketsHandle = await this.access.getSubdirectory("tickets");
     if (!ticketsHandle) {
-      console.warn("Could not find tickets/ subdirectory in state/");
+      console.warn("Could not find tickets/ subdirectory in hive/");
       return;
     }
 

@@ -41,7 +41,7 @@ export interface TicketData {
 
 
 // ---------------------------------------------------------------------------
-// Log file types (from EvalCollector output in packages/bees/state/logs)
+// Log file types (from EvalCollector output in packages/bees/hive/logs)
 // ---------------------------------------------------------------------------
 
 /** Per-turn boundary recorded by the EvalCollector. */

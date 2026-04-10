@@ -155,10 +155,10 @@ class BeesApp extends SignalWatcher(LitElement) {
           ${access === "none"
             ? html`
                 <button @click=${() => this.handleOpenDirectory()}>
-                  📂 Open State Directory
+                  📂 Open Hive Directory
                 </button>
                 <div style="font-size:0.75rem;color:#64748b">
-                  Select the <code>packages/bees/state</code> directory
+                  Select the <code>packages/bees/hive</code> directory
                 </div>
               `
             : html`

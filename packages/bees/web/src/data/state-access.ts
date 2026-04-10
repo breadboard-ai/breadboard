@@ -5,7 +5,7 @@
  */
 
 /**
- * Shared access to the `state/` directory via File System Access API.
+ * Shared access to the `hive/` directory via File System Access API.
  *
  * Manages the directory handle, IndexedDB persistence for remembering
  * the user's choice across sessions, and the permission lifecycle.
@@ -19,16 +19,16 @@ export type { AccessState };
 
 type AccessState = "none" | "prompt" | "ready";
 
-const DB_NAME = "bees-state-handles";
+const DB_NAME = "bees-hive-handles";
 const STORE_NAME = "handles";
-const HANDLE_KEY = "state-dir";
+const HANDLE_KEY = "hive-dir";
 
 class StateAccess {
   readonly accessState = new Signal.State<AccessState>("none");
 
   #handle: FileSystemDirectoryHandle | null = null;
 
-  /** The root `state/` directory handle, available when access is "ready". */
+  /** The root `hive/` directory handle, available when access is "ready". */
   get handle(): FileSystemDirectoryHandle | null {
     return this.#handle;
   }
@@ -49,7 +49,7 @@ class StateAccess {
     this.accessState.set("ready");
   }
 
-  /** Prompt the user to pick the `state/` directory. */
+  /** Prompt the user to pick the `hive/` directory. */
   async openDirectory(): Promise<void> {
     try {
       const handle = await (
@@ -63,7 +63,7 @@ class StateAccess {
         mode: "read",
         // Browser remembers the last directory chosen for this ID,
         // so re-picks open to the right place automatically.
-        id: "bees-state-dir",
+        id: "bees-hive-dir",
       });
       await this.#saveHandle(handle);
       this.#handle = handle;
@@ -83,7 +83,7 @@ class StateAccess {
     this.accessState.set("ready");
   }
 
-  /** Resolve a subdirectory from the state handle. */
+  /** Resolve a subdirectory from the hive handle. */
   async getSubdirectory(
     name: string
   ): Promise<FileSystemDirectoryHandle | null> {
