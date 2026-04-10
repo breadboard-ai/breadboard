@@ -2,10 +2,6 @@ name: opie
 title: Opie
 description: Executive assistant — understands objectives and delivers results
 
-# Hidden from playbooks_list — Opie has playbooks.* functions and would see
-# itself in the listing, creating a circular delegation loop.
-hidden: true
-
 steps:
   main:
     title: Opie
