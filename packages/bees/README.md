@@ -163,14 +163,14 @@ that the agent can read during its session.
 ### Directory Structure
 
 ```
-bees/skills/
+hive/skills/
   interviewer/
     SKILL.md
   another-skill/
     SKILL.md
 ```
 
-Each skill is a subdirectory of `bees/skills/` containing a `SKILL.md`
+Each skill is a subdirectory of `hive/skills/` containing a `SKILL.md`
 file. The directory name is the skill's filesystem identifier.
 
 ### SKILL.md Format
@@ -212,13 +212,13 @@ Skills default to **none**. You must explicitly list them or use `*`.
 
 ### Adding a New Skill
 
-1. Create a directory: `bees/skills/{your-skill-name}/`
+1. Create a directory: `hive/skills/{your-skill-name}/`
 2. Add a `SKILL.md` with YAML frontmatter (`name`, `title`,
    `description`) and the instruction body.
 3. Reference it by `name` in ticket or playbook `skills` lists.
 
 No code changes needed — skills are discovered by scanning the
-`bees/skills/` directory at import time.
+`hive/skills/` directory at import time.
 
 ---
 
@@ -315,7 +315,7 @@ Both methods create tickets for each step and trigger the drain.
 
 ### Adding a New Playbook
 
-1. Create a YAML file in `playbooks/{name}.yaml`.
+1. Create a YAML file in `hive/playbooks/{name}/PLAYBOOK.yaml`.
 2. Define `name`, `title`, `description`, and `steps`.
 3. Use `functions` and `skills` on each step to scope capabilities.
 4. Use `{{step-name}}` in objectives to wire dependencies.

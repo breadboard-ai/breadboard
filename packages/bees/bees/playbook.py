@@ -4,7 +4,7 @@
 """
 Playbook loader and runner.
 
-A playbook is a directory under ``playbooks/{name}/`` containing:
+A playbook is a directory under ``hive/playbooks/{name}/`` containing:
 - ``PLAYBOOK.yaml`` — step declarations (a DAG of ticket steps)
 - ``hooks.py`` (optional) — Python lifecycle hooks
 
@@ -25,11 +25,12 @@ from typing import Any
 
 import yaml
 
+from bees.config import HIVE_DIR
 from bees.ticket import Ticket, _DEP_PATTERN, create_ticket
 
 logger = logging.getLogger(__name__)
 
-PLAYBOOKS_DIR = Path(__file__).resolve().parent.parent / "playbooks"
+PLAYBOOKS_DIR = HIVE_DIR / "playbooks"
 
 # Step properties that map directly to ticket metadata fields.
 _STEP_KEYS = {"title", "objective", "functions", "skills", "tags", "assignee", "model", "watch_events", "tasks"}

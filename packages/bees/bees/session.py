@@ -51,8 +51,7 @@ from bees.disk_file_system import DiskFileSystem
 from bees.subagent_scope import SubagentScope
 
 # Scan skills once at import time.
-_BEES_DIR = Path(__file__).resolve().parent
-_SKILLS_LISTING, _SKILLS_FILES, _SKILLS_LIST = scan_skills(_BEES_DIR)
+_SKILLS_LISTING, _SKILLS_FILES, _SKILLS_LIST = scan_skills(HIVE_DIR)
 
 OUT_DIR = HIVE_DIR / "logs"
 
