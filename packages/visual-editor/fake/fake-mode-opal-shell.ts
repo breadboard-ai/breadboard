@@ -85,9 +85,9 @@ class FakeModeOpalShell implements OpalShellHostProtocol {
 
   invokeOpalBackend = async (
     methodName: string,
-    options: InvokeOpalBackendOptions = {}
+    options: InvokeOpalBackendOptions
   ): Promise<Response> => {
-    const { method = "POST", body, query, signal } = options;
+    const { method, body, query, signal } = options;
     let url = `${OPAL_BACKEND_API_PREFIX}/v1beta1/${methodName}`;
     if (query) {
       const params = new URLSearchParams(query);

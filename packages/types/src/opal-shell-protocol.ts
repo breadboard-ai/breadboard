@@ -84,8 +84,8 @@ export declare interface OpalShellGuestProtocol {
 }
 
 export declare interface InvokeOpalBackendOptions {
-  /** HTTP method. Defaults to `"POST"`. */
-  method?: "GET" | "POST";
+  /** HTTP method. */
+  method: "GET" | "POST";
 
   /**
    * JSON-serializable request body. Serialized with `JSON.stringify`
