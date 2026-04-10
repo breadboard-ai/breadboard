@@ -972,6 +972,39 @@ suite("Board Route Actions", () => {
       );
     });
 
+    test("resets graph state after deletion", async () => {
+      mock.method(globalThis, "confirm", () => true);
+
+      const boardServer = makeMockBoardServer({});
+      const { controller } = makeMockRouteController();
+      const services = makeMockServices({ boardServer });
+
+      Board.bind({
+        services,
+        controller,
+        env: createMockEnvironment(defaultRuntimeFlags),
+      });
+
+      const evt = new StateEvent<"board.delete">({
+        eventType: "board.delete",
+        url: "https://example.com/board.json",
+        messages: {
+          query: "Delete?",
+          start: "",
+          end: "",
+          error: "",
+        },
+      });
+
+      await Board.onDelete(evt);
+
+      assert.strictEqual(
+        (controller.editor.graph.resetAll as unknown as ReturnType<typeof mock.fn>).mock.callCount(),
+        1,
+        "resetAll should be called"
+      );
+    });
+
     test("stays on home page without navigating again", async () => {
       mock.method(globalThis, "confirm", () => true);
 
