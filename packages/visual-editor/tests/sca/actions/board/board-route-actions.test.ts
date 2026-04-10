@@ -68,6 +68,7 @@ function makeMockRouteController(
           readOnly: overrides.readOnly ?? false,
           finalOutputValues: overrides.finalOutputValues,
           editor: overrides.editor ?? null,
+          resetAll: mock.fn(),
         },
         selection: {
           deselectAll: () => {
@@ -95,6 +96,7 @@ function makeMockRouteController(
           },
           abortController: null as AbortController | null,
           reset: mock.fn(),
+          clearRunner: mock.fn(),
           setStatus: mock.fn(),
           bumpStopVersion: mock.fn(),
         },
@@ -967,6 +969,39 @@ suite("Board Route Actions", () => {
         ctx.deselectAllCalled,
         true,
         "deselectAll should be called"
+      );
+    });
+
+    test("resets graph state after deletion", async () => {
+      mock.method(globalThis, "confirm", () => true);
+
+      const boardServer = makeMockBoardServer({});
+      const { controller } = makeMockRouteController();
+      const services = makeMockServices({ boardServer });
+
+      Board.bind({
+        services,
+        controller,
+        env: createMockEnvironment(defaultRuntimeFlags),
+      });
+
+      const evt = new StateEvent<"board.delete">({
+        eventType: "board.delete",
+        url: "https://example.com/board.json",
+        messages: {
+          query: "Delete?",
+          start: "",
+          end: "",
+          error: "",
+        },
+      });
+
+      await Board.onDelete(evt);
+
+      assert.strictEqual(
+        (controller.editor.graph.resetAll as unknown as ReturnType<typeof mock.fn>).mock.callCount(),
+        1,
+        "resetAll should be called"
       );
     });
 
