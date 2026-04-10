@@ -25,22 +25,28 @@ export type HostMessage =
       code: string;
       css?: string;
       props: Record<string, unknown>;
-      assets: Record<string, string>;
     }
   | { type: "update-props"; props: Record<string, unknown> }
-  | { type: "host.chat.switch"; payload: { ticket_id: string; role: string } };
+  | { type: "host.chat.switch"; payload: { ticket_id: string; role: string } }
+  | {
+      type: "readFile.response";
+      requestId: string;
+      data: string | null;
+      error?: string;
+    };
 
 /** Messages the iframe sends TO the host. */
 export type IframeMessage =
   | { type: "ready" }
   | { type: "navigate"; viewId: string; params?: Record<string, unknown> }
   | { type: "emit"; event: string; payload?: unknown }
-  | { type: "error"; message: string; stack?: string };
+  | { type: "error"; message: string; stack?: string }
+  | { type: "readFile"; requestId: string; path: string };
 
 export interface OpalSDK {
   navigateTo(viewId: string, params?: Record<string, unknown>): void;
   emit(event: string, payload?: unknown): void;
-  asset(name: string): string | undefined;
+  readFile(path: string): Promise<string | null>;
 }
 
 // ─── Globals ─────────────────────────────────────────────────────────────────
@@ -61,7 +67,11 @@ function requireShim(id: string): unknown {
 // ─── Opal SDK ─────────────────────────────────────────────────────────────────
 // The ONLY way components talk to the host. No raw postMessage access.
 
-let currentAssets: Record<string, string> = {};
+/** Pending readFile requests awaiting host responses. */
+const pendingReads = new Map<
+  string,
+  { resolve: (v: string | null) => void; reject: (e: Error) => void }
+>();
 
 const opalSDK: OpalSDK = {
   navigateTo(viewId: string, params?: Record<string, unknown>) {
@@ -72,8 +82,12 @@ const opalSDK: OpalSDK = {
     window.parent.postMessage({ type: "emit", event, payload }, "*");
   },
 
-  asset(name: string): string | undefined {
-    return currentAssets[name];
+  readFile(path: string): Promise<string | null> {
+    const requestId = crypto.randomUUID();
+    return new Promise((resolve, reject) => {
+      pendingReads.set(requestId, { resolve, reject });
+      window.parent.postMessage({ type: "readFile", requestId, path }, "*");
+    });
   },
 };
 
@@ -85,7 +99,7 @@ const safeOpalSDK = new Proxy(opalSDK, {
     }
     console.warn(
       `[opal-sdk] Unknown method "${String(prop)}" — ` +
-        `available: navigateTo, emit, asset`
+        `available: navigateTo, emit, readFile`
     );
     return () => {};
   },
@@ -165,13 +179,23 @@ function handleMessage(event: MessageEvent<HostMessage>) {
       currentProps = data.props;
       rerender();
       break;
+    case "readFile.response": {
+      const pending = pendingReads.get(data.requestId);
+      if (pending) {
+        pendingReads.delete(data.requestId);
+        if (data.error) {
+          pending.reject(new Error(data.error));
+        } else {
+          pending.resolve(data.data);
+        }
+      }
+      break;
+    }
   }
 }
 
 function handleRender(msg: HostMessage & { type: "render" }) {
-  const { code, css, props, assets } = msg;
-
-  currentAssets = assets;
+  const { code, css, props } = msg;
 
   try {
     // Inject CSS if provided.

@@ -15,6 +15,10 @@ export { loadBundleAsync };
  * When `slug` is provided (subagent), only files under the slug
  * subdirectory are considered. This prevents loading a sibling
  * agent's bundle from the shared workspace.
+ *
+ * After rendering, installs a file handler so the iframe can read
+ * arbitrary files from the ticket's shared filesystem via
+ * `window.opalSDK.readFile(path)`.
  */
 async function loadBundleAsync(
   ticketId: string,
@@ -50,6 +54,13 @@ async function loadBundleAsync(
     code,
     css: css || undefined,
     props: {},
-    assets: {},
   });
+
+  // Install file handler so the iframe can read files from the
+  // ticket's shared filesystem. Paths are NOT scoped by slug —
+  // the component can reach any file in the workspace.
+  services.hostCommunication.setFileHandler((path) =>
+    services.api.getFile(ticketId, path)
+  );
 }
+
