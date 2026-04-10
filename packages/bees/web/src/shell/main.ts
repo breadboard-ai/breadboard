@@ -15,7 +15,7 @@ import { styles } from "./opal-shell.styles.js";
 
 import { parseAgentHash } from "../sca/utils/agent-hash.js";
 
-import "./components/opal-header.js";
+
 import "./components/opal-stage.js";
 import "./components/opal-toasts.js";
 import "./components/opal-sidebar.js";
@@ -44,7 +44,7 @@ class OpalShell extends SignalWatcher(LitElement) {
 
   render() {
     return html`
-      <opal-header></opal-header>
+
       <div class="shell-workspace">
         <opal-sidebar></opal-sidebar>
         <div class="shell-main-area">
