@@ -52,7 +52,7 @@ export const processDigestUpdates = asAction(
 
       const allDigestUpdates = tickets
         .filter(
-          (t) => t.kind === "coordination" && t.signal_type === "digest_update"
+          (t) => t.kind === "coordination" && t.signal_type === "digest_ready"
         )
         .sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""));
       const latest = allDigestUpdates[allDigestUpdates.length - 1];
@@ -69,7 +69,11 @@ export const processDigestUpdates = asAction(
           digestLoading = true;
           await new Promise((r) => setTimeout(r, 100));
           const dSlug = digestTicket.slug;
-          await loadBundleAsync(controller.stage.digestTicketId!, services, dSlug);
+          await loadBundleAsync(
+            controller.stage.digestTicketId!,
+            services,
+            dSlug
+          );
           digestLoading = false;
         }
       }
@@ -104,7 +108,11 @@ export const navigateToTicket = asAction(
       const digestT = controller.global.tickets.find(
         (t) => t.id === controller.stage.digestTicketId
       );
-      await loadBundleAsync(controller.stage.digestTicketId, services, digestT?.slug);
+      await loadBundleAsync(
+        controller.stage.digestTicketId,
+        services,
+        digestT?.slug
+      );
       return;
     }
 
