@@ -7,7 +7,8 @@ Template loader and runner.
 A template is an entry in ``hive/config/TEMPLATES.yaml`` that defines a
 single agent ticket: an objective, tools, skills, and metadata.
 
-Running a template creates one ticket and returns it.
+Running a template creates one ticket and returns it.  If the template
+declares ``autostart``, child tickets are stamped automatically.
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ from typing import Any
 import yaml
 
 from bees.config import HIVE_DIR
+from bees.subagent_scope import SubagentScope
 from bees.ticket import Ticket, create_ticket
 
 logger = logging.getLogger(__name__)
@@ -146,7 +148,72 @@ def run_playbook(
         slug=slug,
     )
 
+    # Autostart: stamp child tickets declared in the template.
+    for child_name in data.get("autostart", []):
+        try:
+            stamp_child_ticket(
+                child_name,
+                parent_ticket=ticket,
+                slug=child_name,
+            )
+        except Exception as exc:
+            logger.warning(
+                "Autostart of '%s' for '%s' failed: %s",
+                child_name, name, exc,
+            )
+
     return ticket
+
+
+def stamp_child_ticket(
+    template_name: str,
+    *,
+    parent_ticket: Ticket,
+    slug: str,
+    context: str | None = None,
+    title: str | None = None,
+    scope: SubagentScope | None = None,
+) -> Ticket:
+    """Create a child ticket from a template under a parent.
+
+    Handles SubagentScope composition, sandbox instructions, writable
+    directory creation, and ``creator_ticket_id`` assignment — the
+    shared logic for both ``autostart`` and ``tasks_create_task``.
+
+    If *scope* is not provided, one is derived from the parent ticket.
+    """
+    if scope is None:
+        scope = SubagentScope.for_ticket(parent_ticket)
+    child_scope = scope.child(slug)
+
+    child = run_playbook(
+        template_name,
+        context=context,
+        parent_ticket_id=child_scope.workspace_root_id,
+        slug=child_scope.slug_path,
+    )
+
+    if child_scope.slug_path:
+        sandbox_block = child_scope.sandbox_instructions()
+        child.objective = (
+            f"{child.objective}\n\n"
+            f"<subagent_context>\n"
+            f"Your parent id is: {parent_ticket.id}\n"
+            f"</subagent_context>\n"
+            f"{sandbox_block}"
+        )
+        child.save()
+        child_scope.writable_dir(child.fs_dir).mkdir(
+            parents=True, exist_ok=True,
+        )
+
+    if title:
+        child.metadata.title = title
+
+    child.metadata.creator_ticket_id = parent_ticket.id
+    child.save_metadata()
+
+    return child
 
 
 def load_system_config() -> dict[str, Any]:
