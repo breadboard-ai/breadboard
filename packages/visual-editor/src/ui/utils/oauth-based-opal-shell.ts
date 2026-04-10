@@ -664,7 +664,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   };
 
   setOneGoogleBarVisible = (_visible: boolean): void => {
-    // No-op in OAuth mode — the 1P shell host handles OGB visibility.
+    // No-op in 3P mode, there is no OGB.
   };
 
   pickDriveFiles = async (
