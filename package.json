@@ -33,7 +33,8 @@
       "dependencies": [
         "<workspaces>#<this>",
         "!./experiments/logic#<this>",
-        "!./packages/bees#<this>"
+        "!./packages/bees#<this>",
+        "!./packages/bees/hivetool#<this>"
       ]
     },
     "test": {
@@ -42,7 +43,8 @@
         "!./packages/ui-tests#<this>",
         "!./experiments/screens#<this>",
         "!./packages/opal-backend#<this>",
-        "!./packages/bees#<this>"
+        "!./packages/bees#<this>",
+        "!./packages/bees/hivetool#<this>"
       ]
     },
     "test:python": {
@@ -59,7 +61,8 @@
       "dependencies": [
         "<workspaces>#<this>",
         "!./packages/opal-backend#<this>",
-        "!./packages/bees#<this>"
+        "!./packages/bees#<this>",
+        "!./packages/bees/hivetool#<this>"
       ]
     },
     "lint": {
@@ -67,7 +70,8 @@
         "<workspaces>#<this>",
         "!./packages/jsandbox#<this>",
         "!./packages/opal-backend#<this>",
-        "!./packages/bees#<this>"
+        "!./packages/bees#<this>",
+        "!./packages/bees/hivetool#<this>"
       ]
     },
     "ci:local": {
@@ -146,6 +150,7 @@
   "workspaces": [
     "./core/*",
     "./packages/*",
+    "./packages/bees/hivetool",
     "./experiments/*"
   ],
   "lint-staged": {

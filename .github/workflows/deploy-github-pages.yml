@@ -1,4 +1,4 @@
-name: Deploy Eval Viewer to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -6,7 +6,9 @@ on:
     paths:
       - "packages/visual-editor/eval/**"
       - "packages/visual-editor/src/a2/a2ui/**"
-      - ".github/workflows/deploy-eval-viewer.yml"
+      - "packages/bees/hivetool/**"
+      - "packages/bees/common/**"
+      - ".github/workflows/deploy-github-pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -39,10 +41,14 @@ jobs:
       - name: Build eval viewer
         run: npm run eval:viewer:build -w @breadboard-ai/visual-editor
 
+      - name: Build hivetool
+        run: npm run build -w bees-hivetool
+
       - name: Prepare deployment directory
         run: |
-          mkdir -p _site/eval
+          mkdir -p _site/eval _site/hivetool
           cp -r packages/visual-editor/dist/eval-viewer/* _site/eval/
+          cp -r packages/bees/hivetool/dist/* _site/hivetool/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
