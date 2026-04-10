@@ -38,6 +38,7 @@ export async function createClientConfig(opts: {
     ALLOWED_REDIRECT_ORIGINS: flags.ALLOWED_REDIRECT_ORIGINS,
     MEASUREMENT_ID: flags.MEASUREMENT_ID,
     BACKEND_API_ENDPOINT: flags.BACKEND_API_ENDPOINT,
+    ENABLE_BACKEND_CLIENT: flags.ENABLE_BACKEND_CLIENT,
     ENVIRONMENT_NAME: flags.ENVIRONMENT_NAME,
     GOOGLE_OAUTH_TOKEN_ENDPOINT: flags.GOOGLE_OAUTH_TOKEN_ENDPOINT,
     GOOGLE_OAUTH_AUTH_ENDPOINT: flags.GOOGLE_OAUTH_AUTH_ENDPOINT,
@@ -58,9 +59,7 @@ export async function createClientConfig(opts: {
     SHELL_GUEST_ORIGIN: flags.SHELL_GUEST_ORIGIN,
     SHELL_HOST_ORIGINS: flags.SHELL_HOST_ORIGINS,
     SHELL_PREFIX: flags.SHELL_PREFIX,
-
     SHARE_SURFACE_URL_TEMPLATES: flags.SHARE_SURFACE_URL_TEMPLATES,
-
     FAKE_MODE: flags.FAKE_MODE,
     DEV_BACKEND_MODE: flags.DEV_BACKEND_MODE,
     domains: flags.DOMAIN_CONFIG,
@@ -68,21 +67,15 @@ export async function createClientConfig(opts: {
       mcp: flags.ENABLE_MCP,
       force2DGraph: flags.ENABLE_FORCE_2D_GRAPH,
       consistentUI: flags.ENABLE_CONSISTENT_UI,
-
       opalAdk: flags.ENABLE_OPAL_ADK,
       outputTemplates: flags.ENABLE_OUTPUT_TEMPLATES,
       googleOne: flags.ENABLE_GOOGLE_ONE,
-
-
-
-
       enableGoogleDriveTools: flags.ENABLE_GOOGLE_DRIVE_TOOLS,
       enableNotebookLm: flags.ENABLE_NOTEBOOK_LM,
       enableResumeAgentRun: flags.ENABLE_RESUME_AGENT_RUN,
       enableGraphEditorAgent: flags.ENABLE_GRAPH_EDITOR_AGENT,
       textEditorRemix: flags.ENABLE_TEXT_EDITOR_REMIX,
       showTokenCounter: flags.ENABLE_SHOW_TOKEN_COUNTER,
-
       enableOpalBackend: flags.ENABLE_OPAL_BACKEND,
       enableSessionsBackend: flags.ENABLE_SESSIONS_BACKEND,
       enableSingletonPrefixCache: flags.ENABLE_SINGLETON_PREFIX_CACHE,
