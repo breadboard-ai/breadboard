@@ -128,15 +128,4 @@ export const navigateToTicket = asAction(
   }
 );
 
-export const navigateToDigest = asAction(
-  "Navigate To Digest",
-  { mode: ActionMode.Immediate },
-  async () => {
-    const { controller } = bind;
-    if (controller.stage.digestTicketId) {
-      await navigateToTicket(new CustomEvent("navigate", { detail: "digest" }));
-    } else {
-      controller.stage.currentView = "digest";
-    }
-  }
-);
+
