@@ -61,7 +61,18 @@ export class FeedbackController extends RootController {
   @field()
   accessor status: FeedbackStatus = "closed";
 
-  async open(env: Readonly<AppEnvironment>) {
+  readonly #env: Readonly<AppEnvironment>;
+
+  constructor(
+    controllerId: string,
+    persistenceId: string,
+    env: Readonly<AppEnvironment>
+  ) {
+    super(controllerId, persistenceId);
+    this.#env = env;
+  }
+
+  async open() {
     const LABEL = "Feedback.open";
     const logger = Utils.Logging.getLogger();
 
@@ -69,14 +80,14 @@ export class FeedbackController extends RootController {
       return;
     }
 
-    if (!env) {
+    if (!this.#env) {
       logger.log(
         Utils.Logging.Formatter.error("No environment was provided."),
         LABEL
       );
       return;
     }
-    const productId = env.deploymentConfig.GOOGLE_FEEDBACK_PRODUCT_ID;
+    const productId = this.#env.deploymentConfig.GOOGLE_FEEDBACK_PRODUCT_ID;
     if (!productId) {
       logger.log(
         Utils.Logging.Formatter.error(
@@ -86,7 +97,7 @@ export class FeedbackController extends RootController {
       );
       return;
     }
-    const bucket = env.deploymentConfig.GOOGLE_FEEDBACK_BUCKET;
+    const bucket = this.#env.deploymentConfig.GOOGLE_FEEDBACK_BUCKET;
     if (!bucket) {
       logger.log(
         Utils.Logging.Formatter.error(
@@ -96,9 +107,10 @@ export class FeedbackController extends RootController {
       );
       return;
     }
-    const { packageJsonVersion: version, gitCommitHash } = env.buildInfo;
+    const { packageJsonVersion: version, gitCommitHash } = this.#env.buildInfo;
 
     this.status = "loading";
+    this.#env.shellHost.setOneGoogleBarVisible(false);
     let api;
     try {
       api = await loadGoogleFeedbackApi();
@@ -112,6 +124,7 @@ export class FeedbackController extends RootController {
         LABEL
       );
       this.status = "closed";
+      this.#env.shellHost.setOneGoogleBarVisible(true);
       return;
     }
 
@@ -134,11 +147,13 @@ export class FeedbackController extends RootController {
       },
       callback: () => {
         this.status = "closed";
+        this.#env.shellHost.setOneGoogleBarVisible(true);
       },
     });
   }
 
   close() {
     this.status = "closed";
+    this.#env.shellHost.setOneGoogleBarVisible(true);
   }
 }

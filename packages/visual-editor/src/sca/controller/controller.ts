@@ -97,7 +97,7 @@ class Controller implements AppController {
       main: new Global.GlobalController("Global", "GlobalController"),
       flags: new Global.FlagController("Flags", "FlagController", env.flags),
       debug: new Global.DebugController("Debug", "DebugController"),
-      feedback: new Global.FeedbackController("Feedback", "FeedbackController"),
+      feedback: new Global.FeedbackController("Feedback", "FeedbackController", env),
       flowgenInput: new Global.FlowgenInputController(
         "FlowgenInput",
         "FlowgenInputController"
