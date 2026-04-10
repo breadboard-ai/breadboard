@@ -12,9 +12,14 @@ import { APP_ICON, APP_NAME } from "../constants.js";
 import { LogStore } from "../data/log-store.js";
 import { parseRoute, writeRoute } from "../data/router.js";
 import { StateAccess } from "../data/state-access.js";
+import { SkillStore } from "../data/skill-store.js";
 import type { FileTreeNode } from "../data/ticket-store.js";
 import type { TicketData } from "../data/types.js";
 import { TicketStore } from "../data/ticket-store.js";
+import {
+  TemplateStore,
+  type TemplateData,
+} from "../data/template-store.js";
 import { deriveTicketTree, type TicketTreeNode } from "../data/ticket-tree.js";
 import { getRelativeTime } from "../utils.js";
 import { styles } from "./app.styles.js";
@@ -25,7 +30,7 @@ import "./truncated-text.js";
 
 export { BeesApp };
 
-type TabId = "logs" | "tickets" | "events";
+type TabId = "logs" | "tickets" | "events" | "templates" | "skills";
 type TicketViewMode = "flat" | "tree";
 
 const VIEW_MODE_KEY = "bees-hivetool-ticket-view-mode";
@@ -42,6 +47,8 @@ class BeesApp extends SignalWatcher(LitElement) {
   private stateAccess = new StateAccess();
   private logStore = new LogStore(this.stateAccess);
   private ticketStore = new TicketStore(this.stateAccess);
+  private templateStore = new TemplateStore(this.stateAccess);
+  private skillStore = new SkillStore(this.stateAccess);
   private currentFlashTicketId: string | null = null;
   private currentFlashLogId: string | null = null;
 
@@ -68,10 +75,16 @@ class BeesApp extends SignalWatcher(LitElement) {
     await this.stateAccess.init();
     if (this.stateAccess.accessState.get() !== "ready") return;
     await this.activateStores();
+    this.restoreRoute();
   }
 
   private async activateStores(): Promise<void> {
-    await Promise.all([this.logStore.activate(), this.ticketStore.activate()]);
+    await Promise.all([
+      this.logStore.activate(),
+      this.ticketStore.activate(),
+      this.templateStore.activate(),
+      this.skillStore.activate(),
+    ]);
   }
 
   private async handleOpenDirectory(): Promise<void> {
@@ -93,6 +106,8 @@ class BeesApp extends SignalWatcher(LitElement) {
   private async handleSwitchHive(): Promise<void> {
     this.logStore.reset();
     this.ticketStore.reset();
+    this.templateStore.reset();
+    this.skillStore.reset();
     this.ticketFileTree = [];
     this.ticketFileContents = {};
     this.selectedEventId = null;
@@ -118,6 +133,12 @@ class BeesApp extends SignalWatcher(LitElement) {
       case "events":
         id = this.selectedEventId;
         break;
+      case "templates":
+        id = this.templateStore.selectedTemplateName.get();
+        break;
+      case "skills":
+        id = this.skillStore.selectedSkillDir.get();
+        break;
     }
     writeRoute(this.activeTab, id);
   }
@@ -125,7 +146,7 @@ class BeesApp extends SignalWatcher(LitElement) {
   /** Restore tab and selection from the URL hash on load. */
   private async restoreRoute(): Promise<void> {
     const route = parseRoute();
-    const validTabs: TabId[] = ["logs", "tickets", "events"];
+    const validTabs: TabId[] = ["logs", "tickets", "events", "templates", "skills"];
     const tab = validTabs.includes(route.tab as TabId)
       ? (route.tab as TabId)
       : "tickets";
@@ -146,6 +167,12 @@ class BeesApp extends SignalWatcher(LitElement) {
         break;
       case "events":
         if (route.id) this.selectedEventId = route.id;
+        break;
+      case "templates":
+        if (route.id) this.templateStore.selectTemplate(route.id);
+        break;
+      case "skills":
+        if (route.id) this.skillStore.selectSkill(route.id);
         break;
     }
   }
@@ -237,6 +264,24 @@ class BeesApp extends SignalWatcher(LitElement) {
           >
             Sessions
           </div>
+          <div
+            class="sidebar-tab ${this.activeTab === "templates" ? "active" : ""}"
+            @click=${() => {
+              this.activeTab = "templates";
+              this.syncHash();
+            }}
+          >
+            Templates
+          </div>
+          <div
+            class="sidebar-tab ${this.activeTab === "skills" ? "active" : ""}"
+            @click=${() => {
+              this.activeTab = "skills";
+              this.syncHash();
+            }}
+          >
+            Skills
+          </div>
         </div>
       </div>
 
@@ -246,7 +291,11 @@ class BeesApp extends SignalWatcher(LitElement) {
             ? this.renderTicketsList()
             : this.activeTab === "events"
               ? this.renderEventsList()
-              : this.renderLogsList()}
+              : this.activeTab === "templates"
+                ? this.renderTemplatesList()
+                : this.activeTab === "skills"
+                  ? this.renderSkillsList()
+                  : this.renderLogsList()}
         </div>
 
         <div class="main">
@@ -254,7 +303,11 @@ class BeesApp extends SignalWatcher(LitElement) {
             ? this.renderTicketDetail()
             : this.activeTab === "events"
               ? this.renderEventDetail()
-              : this.renderLogDetail()}
+              : this.activeTab === "templates"
+                ? this.renderTemplateDetail()
+                : this.activeTab === "skills"
+                  ? this.renderSkillDetail()
+                  : this.renderLogDetail()}
         </div>
       </div>
     `;
@@ -793,6 +846,315 @@ class BeesApp extends SignalWatcher(LitElement) {
                 </div>
               `
             : nothing}
+        </div>
+      </div>
+    `;
+  }
+
+  // --- Templates ---
+
+  private renderTemplatesList() {
+    const templates = this.templateStore.templates.get();
+    const selectedName = this.templateStore.selectedTemplateName.get();
+
+    if (templates.length === 0) {
+      return html`<div class="empty-state">No templates found.</div>`;
+    }
+
+    return html`
+      <div class="jobs-list">
+        ${templates.map(
+          (t) => html`
+            <div
+              class="job-item ${selectedName === t.name ? "selected" : ""}"
+              @click=${() => {
+                this.templateStore.selectTemplate(t.name);
+                this.syncHash();
+              }}
+            >
+              <div class="job-header">
+                <div class="job-title">${t.title || t.name}</div>
+              </div>
+              <div class="job-meta">
+                <span class="mono">${t.name}</span>
+                ${t.model
+                  ? html`<span class="template-model-hint">${t.model}</span>`
+                  : nothing}
+              </div>
+              ${t.description
+                ? html`<div class="job-meta" style="margin-top:2px">
+                    <span
+                      style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px"
+                      >${t.description}</span
+                    >
+                  </div>`
+                : nothing}
+            </div>
+          `
+        )}
+      </div>
+    `;
+  }
+
+  private renderTemplateDetail() {
+    const template = this.templateStore.selectedTemplate.get();
+    if (!template)
+      return this.renderEmptyMain("Select a template to view details");
+
+    // Build identity chips.
+    const chips: Array<{
+      label: string;
+      value: string;
+      cls?: string;
+      onclick?: () => void;
+    }> = [];
+    chips.push({ label: "name", value: template.name, cls: "playbook" });
+    if (template.model)
+      chips.push({ label: "model", value: template.model, cls: "model" });
+    if (template.assignee)
+      chips.push({ label: "assignee", value: template.assignee });
+
+    // Resolve delegation targets — check which names exist as templates.
+    const allTemplates = this.templateStore.templates.get();
+    const templateNames = new Set(allTemplates.map((t) => t.name));
+
+    return html`
+      <div class="job-detail">
+        <div class="job-detail-header">
+          <div class="job-detail-header-top">
+            <h2 class="job-detail-title">${template.title || template.name}</h2>
+            <div class="template-badge">TEMPLATE</div>
+          </div>
+          ${template.description
+            ? html`<div class="job-detail-meta">
+                <span>${template.description}</span>
+              </div>`
+            : nothing}
+        </div>
+
+        <div class="timeline">
+          ${chips.length > 0
+            ? html`
+                <div class="identity-row">
+                  ${chips.map(
+                    (c) => html`
+                      <span
+                        class="identity-chip ${c.cls ?? ""} ${c.onclick
+                          ? "linkable"
+                          : ""}"
+                        @click=${c.onclick ?? nothing}
+                      >
+                        <span class="identity-label">${c.label}</span>
+                        ${c.value}
+                      </span>
+                    `
+                  )}
+                </div>
+              `
+            : nothing}
+          ${template.objective
+            ? html`
+                <div class="block">
+                  <div class="block-header">Objective</div>
+                  <div class="block-content">
+                    <bees-truncated-text
+                      threshold="500"
+                      max-height="300"
+                      fadeBg="#0f1115"
+                      >${template.objective}</bees-truncated-text
+                    >
+                  </div>
+                </div>
+              `
+            : nothing}
+          ${template.tasks && template.tasks.length > 0
+            ? html`
+                <div class="block">
+                  <div class="block-header">Subtask Templates</div>
+                  <div class="block-content">
+                    <div class="template-tasks-list">
+                      ${template.tasks.map((taskName) => {
+                        const exists = templateNames.has(taskName);
+                        return html`<span
+                          class="template-task-chip ${exists ? "linkable" : ""}"
+                          @click=${exists
+                            ? () => {
+                                this.templateStore.selectTemplate(taskName);
+                                this.syncHash();
+                              }
+                            : nothing}
+                          >${taskName}</span
+                        >`;
+                      })}
+                    </div>
+                  </div>
+                </div>
+              `
+            : nothing}
+          ${template.tags && template.tags.length > 0
+            ? html`
+                <div class="block">
+                  <div class="block-header">Tags</div>
+                  <div class="block-content">
+                    ${template.tags.map(
+                      (tag) =>
+                        html`<span class="tool-badge" style="margin-right:6px"
+                          >${tag}</span
+                        >`
+                    )}
+                  </div>
+                </div>
+              `
+            : nothing}
+          ${template.skills && template.skills.length > 0
+            ? html`
+                <div class="block">
+                  <div class="block-header">Skills</div>
+                  <div class="block-content">
+                    ${template.skills.map(
+                      (s) => html`
+                        <span class="identity-chip skill" style="margin-right:6px"
+                          >${s}</span
+                        >
+                      `
+                    )}
+                  </div>
+                </div>
+              `
+            : nothing}
+          ${template.functions && template.functions.length > 0
+            ? html`
+                <div class="block">
+                  <div class="block-header">Functions</div>
+                  <div class="block-content">
+                    ${template.functions.map(
+                      (fn) =>
+                        html`<span class="tool-badge" style="margin-right:6px"
+                          >${fn}</span
+                        >`
+                    )}
+                  </div>
+                </div>
+              `
+            : nothing}
+          ${template.watch_events && template.watch_events.length > 0
+            ? html`
+                <div class="block">
+                  <div class="block-header">Listening For</div>
+                  <div class="block-content">
+                    ${template.watch_events.map(
+                      (ev) =>
+                        html`<span class="signal-chip" style="margin-right:6px"
+                          >${ev.type}</span
+                        >`
+                    )}
+                  </div>
+                </div>
+              `
+            : nothing}
+        </div>
+      </div>
+    `;
+  }
+
+  // --- Skills ---
+
+  private renderSkillsList() {
+    const skills = this.skillStore.skills.get();
+    const selectedDir = this.skillStore.selectedSkillDir.get();
+
+    if (skills.length === 0) {
+      return html`<div class="empty-state">No skills found.</div>`;
+    }
+
+    return html`
+      <div class="jobs-list">
+        ${skills.map(
+          (s) => html`
+            <div
+              class="job-item ${selectedDir === s.dirName ? "selected" : ""}"
+              @click=${() => {
+                this.skillStore.selectSkill(s.dirName);
+                this.syncHash();
+              }}
+            >
+              <div class="job-header">
+                <div class="job-title">${s.title || s.name}</div>
+              </div>
+              <div class="job-meta">
+                <span class="mono">${s.dirName}</span>
+              </div>
+              ${s.description
+                ? html`<div class="job-meta" style="margin-top:2px">
+                    <span
+                      style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px"
+                      >${s.description}</span
+                    >
+                  </div>`
+                : nothing}
+            </div>
+          `
+        )}
+      </div>
+    `;
+  }
+
+  private renderSkillDetail() {
+    const skill = this.skillStore.selectedSkill.get();
+    if (!skill)
+      return this.renderEmptyMain("Select a skill to view details");
+
+    // Build identity chips.
+    const chips: Array<{
+      label: string;
+      value: string;
+      cls?: string;
+    }> = [];
+    chips.push({ label: "name", value: skill.name, cls: "skill" });
+    if (skill.dirName !== skill.name)
+      chips.push({ label: "dir", value: skill.dirName });
+
+
+    return html`
+      <div class="job-detail">
+        <div class="job-detail-header">
+          <div class="job-detail-header-top">
+            <h2 class="job-detail-title">${skill.title || skill.name}</h2>
+            <div class="skill-badge">SKILL</div>
+          </div>
+          ${skill.description
+            ? html`<div class="job-detail-meta">
+                <span>${skill.description}</span>
+              </div>`
+            : nothing}
+        </div>
+
+        <div class="timeline">
+          ${chips.length > 0
+            ? html`
+                <div class="identity-row">
+                  ${chips.map(
+                    (c) => html`
+                      <span class="identity-chip ${c.cls ?? ""}">
+                        <span class="identity-label">${c.label}</span>
+                        ${c.value}
+                      </span>
+                    `
+                  )}
+                </div>
+              `
+            : nothing}
+          <div class="block">
+            <div class="block-header">Content</div>
+            <div class="block-content">
+              <bees-truncated-text
+                threshold="800"
+                max-height="500"
+                fadeBg="#0f1115"
+                >${skill.body}</bees-truncated-text
+              >
+            </div>
+          </div>
         </div>
       </div>
     `;

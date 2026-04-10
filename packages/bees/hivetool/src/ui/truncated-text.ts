@@ -43,6 +43,10 @@ class BeesTruncatedText extends LitElement {
       overflow: hidden;
     }
 
+    .text {
+      white-space: pre-wrap;
+    }
+
     .body.clamped::after {
       content: "";
       position: absolute;
@@ -99,7 +103,7 @@ class BeesTruncatedText extends LitElement {
         class="body ${isLong && !this.expanded ? "clamped" : ""}"
         style="${bodyStyle}"
       >
-        <slot></slot>
+        <div class="text"><slot></slot></div>
         ${isLong && !this.expanded
           ? html`<button class="toggle" @click=${this.handleExpand}>»</button>`
           : nothing}
