@@ -2,6 +2,7 @@
 .pytype/
 __pycache__/
 *.egg-info/
+hive/
 state/
 .env
 web/node_modules/

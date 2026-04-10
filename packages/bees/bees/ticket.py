@@ -4,7 +4,7 @@
 """
 Ticket data model and persistence.
 
-A ticket is a directory under ``state/tickets/{uuid}/`` containing:
+A ticket is a directory under ``{hive}/tickets/{uuid}/`` containing:
 - ``objective.md`` — the prompt text
 - ``metadata.json`` — status, dates, metrics, error/outcome
 """
@@ -19,7 +19,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
-TICKETS_DIR = Path(__file__).resolve().parent.parent / "state" / "tickets"
+from bees.config import HIVE_DIR
+
+TICKETS_DIR = HIVE_DIR / "tickets"
 
 TicketStatus = Literal[
     "available", "blocked", "running", "suspended", "paused",

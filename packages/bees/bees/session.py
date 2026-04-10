@@ -23,7 +23,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
-from dotenv import load_dotenv
 import httpx
 
 from opal_backend.local.backend_client_impl import HttpBackendClient
@@ -47,6 +46,7 @@ from bees.functions.chat import get_chat_function_group_factory
 from bees.functions.events import get_events_function_group_factory
 from bees.functions.tasks import get_tasks_function_group_factory
 from bees.context_updates import updates_to_context_parts
+from bees.config import HIVE_DIR, PACKAGE_DIR
 from bees.disk_file_system import DiskFileSystem
 from bees.subagent_scope import SubagentScope
 
@@ -54,8 +54,7 @@ from bees.subagent_scope import SubagentScope
 _BEES_DIR = Path(__file__).resolve().parent
 _SKILLS_LISTING, _SKILLS_FILES, _SKILLS_LIST = scan_skills(_BEES_DIR)
 
-PACKAGE_DIR = Path(__file__).resolve().parent.parent
-OUT_DIR = PACKAGE_DIR / "state" / "logs"
+OUT_DIR = HIVE_DIR / "logs"
 
 CHAT_LOG_FILENAME = "chat_log.json"
 
@@ -388,8 +387,10 @@ def extract_files(
 
 
 def load_gemini_key() -> str:
-    """Load GEMINI_KEY from .env, exit on failure."""
-    load_dotenv(PACKAGE_DIR / ".env")
+    """Load GEMINI_KEY from .env, exit on failure.
+
+    The ``.env`` file is loaded at import time by ``bees.config``.
+    """
     gemini_key = os.environ.get("GEMINI_KEY", "")
     if not gemini_key:
         print("Error: GEMINI_KEY not found in .env", file=sys.stderr)
