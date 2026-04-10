@@ -31,7 +31,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from bees.playbook import PlaybookAborted, list_playbooks, load_playbook, run_playbook, run_startup_hooks
+from bees.playbook import run_startup_hooks
 from bees.scheduler import Scheduler, SchedulerHooks
 from bees.session import load_gemini_key
 from bees.ticket import (
@@ -135,30 +135,6 @@ def _on_events_broadcast(ticket: Ticket) -> None:
     }))
 
 
-async def _on_playbook_complete(run_id: str, siblings: list[Ticket], triggering_ticket: Ticket) -> None:
-    """Broadcast playbook completion via SSE.
-
-    Watcher delivery (notifying interested tickets) is handled by the
-    scheduler's ``_deliver_to_watchers`` — this hook is only for the
-    SSE event stream so the frontend can react to completion.
-    """
-    playbook_name = triggering_ticket.metadata.playbook_id or "(unknown)"
-    succeeded = sum(1 for t in siblings if t.metadata.status == "completed")
-    failed = sum(1 for t in siblings if t.metadata.status == "failed")
-
-    logger.info(
-        "Playbook run %s (%s) complete: %d succeeded, %d failed",
-        run_id, playbook_name, succeeded, failed,
-    )
-
-    await broadcaster.broadcast({
-        "type": "playbook_complete",
-        "playbook_run_id": run_id,
-        "playbook_id": playbook_name,
-        "succeeded": succeeded,
-        "failed": failed,
-    })
-
 
 # ---------------------------------------------------------------------------
 # Request/response models
@@ -207,7 +183,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         on_ticket_start=_on_ticket_start,
         on_ticket_done=_on_ticket_done,
         on_events_broadcast=_on_events_broadcast,
-        on_playbook_complete=_on_playbook_complete,
         on_cycle_complete=_on_cycle_complete,
     )
     scheduler = Scheduler(http=http_client, backend=backend, hooks=hooks)
@@ -433,56 +408,6 @@ async def retry_ticket(ticket_id: str) -> dict[str, Any]:
         scheduler.trigger()
     return _ticket_to_dict(ticket)
 
-
-# ---------------------------------------------------------------------------
-# Playbook endpoints
-# ---------------------------------------------------------------------------
-
-
-@app.get("/playbooks")
-async def get_playbooks() -> list[dict[str, str]]:
-    """List available playbooks."""
-    playbooks = []
-    for name in list_playbooks():
-        try:
-            data = load_playbook(name)
-            if data.get("hidden"):
-                continue
-            playbooks.append({
-                "name": data.get("name", name),
-                "title": data.get("title", name),
-                "description": data.get("description", ""),
-            })
-        except Exception:
-            continue
-    return playbooks
-
-
-@app.post("/playbooks/{name}/run")
-async def run_playbook_endpoint(name: str) -> dict[str, Any]:
-    """Run a playbook, creating tickets for each step."""
-    try:
-        tickets = run_playbook(name)
-    except FileNotFoundError:
-        raise HTTPException(404, f"Playbook '{name}' not found")
-    except PlaybookAborted as exc:
-        return {"playbook": name, "status": "skipped", "message": str(exc)}
-    except ValueError as exc:
-        raise HTTPException(400, str(exc))
-
-    for ticket in tickets:
-        await broadcaster.broadcast({
-            "type": "ticket_added",
-            "ticket": _ticket_to_dict(ticket),
-        })
-
-    if scheduler:
-        scheduler.trigger()
-
-    return {
-        "playbook": name,
-        "tickets": [_ticket_to_dict(t) for t in tickets],
-    }
 
 
 

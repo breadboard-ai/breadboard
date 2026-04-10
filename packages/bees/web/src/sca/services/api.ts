@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { PlaybookData } from "../../data/types.js";
+
 
 export { BeesAPI };
 
@@ -63,16 +63,7 @@ class BeesAPI {
     });
   }
 
-  async listPlaybooks(): Promise<PlaybookData[]> {
-    const resp = await fetch("/playbooks");
-    if (!resp.ok) return [];
-    return resp.json();
-  }
 
-  async runPlaybook(name: string): Promise<boolean> {
-    const resp = await fetch(`/playbooks/${name}/run`, { method: "POST" });
-    return resp.ok;
-  }
 
   async getFile(ticketId: string, path: string): Promise<string | null> {
     try {

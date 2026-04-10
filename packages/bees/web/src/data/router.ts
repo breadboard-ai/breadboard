@@ -19,7 +19,6 @@ export { parseRoute, writeRoute, type Route };
 type RoutableTab =
   | "jobs"
   | "daemons"
-  | "playbooks"
   | "logs"
   | "tickets"
   | "events";
@@ -32,7 +31,6 @@ interface Route {
 const VALID_TABS = new Set<string>([
   "jobs",
   "daemons",
-  "playbooks",
   "logs",
   "tickets",
   "events",
