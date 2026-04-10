@@ -47,19 +47,18 @@ def _make_handlers(
                 allowed_tasks = ticket.metadata.tasks
                 
         task_types = []
-        from bees.playbook import list_playbooks, load_playbook, validate_task_template
+        from bees.playbook import list_playbooks, load_playbook
         
         for name in list_playbooks():
             try:
                 data = load_playbook(name)
-                if validate_task_template(data):
-                    task_name = data.get("name", name)
-                    if task_name in allowed_tasks:
-                        task_types.append({
-                            "name": task_name,
-                            "title": data.get("title", name),
-                            "description": data.get("description", ""),
-                        })
+                task_name = data.get("name", name)
+                if task_name in allowed_tasks:
+                    task_types.append({
+                        "name": task_name,
+                        "title": data.get("title", name),
+                        "description": data.get("description", ""),
+                    })
             except Exception as e:
                 logger.warning("tasks_list_types: skipping invalid %s: %s", name, e)
                 
@@ -82,13 +81,12 @@ def _make_handlers(
         if status_cb:
             status_cb(f"Creating task of type: {task_type}")
             
-        from bees.playbook import load_playbook, validate_task_template
+        from bees.playbook import load_playbook
         try:
-            data = load_playbook(task_type)
-            if not validate_task_template(data):
-                return {"error": f"Invalid task template: {task_type}"}
+            load_playbook(task_type)
         except FileNotFoundError:
             return {"error": f"Task type not found: {task_type}"}
+
 
         # Compose child scope from parent scope + new slug.
         if scope:
@@ -102,16 +100,12 @@ def _make_handlers(
 
         from bees.playbook import run_playbook
         try:
-            tickets = run_playbook(
+            ticket = run_playbook(
                 task_type,
                 context=objective,
                 parent_ticket_id=child_scope.workspace_root_id,
                 slug=child_scope.slug_path,
             )
-            if not tickets:
-                return {"error": "Failed to create task ticket"}
-            
-            ticket = tickets[0]
             
             if child_scope.slug_path:
                 sandbox_block = child_scope.sandbox_instructions()
