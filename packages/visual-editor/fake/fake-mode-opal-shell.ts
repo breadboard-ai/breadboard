@@ -9,6 +9,7 @@ import type {
   FindUserOpalFolderResult,
   GetDriveCollectorFileResult,
   GuestConfiguration,
+  InvokeOpalBackendOptions,
   ListUserOpalsResult,
   OpalShellHostProtocol,
   PickDriveFilesOptions,
@@ -83,10 +84,20 @@ class FakeModeOpalShell implements OpalShellHostProtocol {
   };
 
   invokeOpalBackend = async (
-    rpcEndpoint: string,
-    init: RequestInit = {}
+    methodName: string,
+    options: InvokeOpalBackendOptions = {}
   ): Promise<Response> => {
-    const url = `${OPAL_BACKEND_API_PREFIX}/v1beta1/${rpcEndpoint}`;
+    const { method = "POST", body, query, signal } = options;
+    let url = `${OPAL_BACKEND_API_PREFIX}/v1beta1/${methodName}`;
+    if (query) {
+      const params = new URLSearchParams(query);
+      url += `?${params.toString()}`;
+    }
+    const init: RequestInit = { method, signal };
+    if (body !== undefined) {
+      init.headers = { "Content-Type": "application/json" };
+      init.body = JSON.stringify(body);
+    }
     return this.fetchWithCreds(url, init);
   };
 

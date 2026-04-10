@@ -37,10 +37,13 @@ export declare interface OpalShellHostProtocol {
    *
    * The full URL is constructed as:
    *   `${BACKEND_API_ENDPOINT}/v1beta1/${rpcEndpoint}`
+   *
+   * When a `body` is provided, it is serialized with `JSON.stringify` and the
+   * `Content-Type` header is set to `application/json` automatically.
    */
   invokeOpalBackend(
-    rpcEndpoint: string,
-    init?: RequestInit
+    methodName: string,
+    options?: InvokeOpalBackendOptions
   ): Promise<Response>;
 
   signIn(scopes: string[]): Promise<SignInResult>;
@@ -78,6 +81,23 @@ export declare interface OpalShellHostProtocol {
 
 export declare interface OpalShellGuestProtocol {
   receiveFromEmbedder(message: EmbedderMessage): Promise<void>;
+}
+
+export declare interface InvokeOpalBackendOptions {
+  /** HTTP method. Defaults to `"POST"`. */
+  method?: "GET" | "POST";
+
+  /**
+   * JSON-serializable request body. Serialized with `JSON.stringify`
+   *  internally; callers should pass the object, not a string.
+   */
+  body?: unknown;
+
+  /** Query parameters appended to the URL (e.g., `{ alt: "sse" }`). */
+  query?: Record<string, string>;
+
+  /** AbortSignal for request cancellation. */
+  signal?: AbortSignal;
 }
 
 export declare type SignInState =
