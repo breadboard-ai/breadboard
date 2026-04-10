@@ -160,8 +160,9 @@ async def test_tasks_create_task_async(write_template):
         "objective": "Do it.",
     })
 
-    scope = SubagentScope(workspace_root_id="caller-id")
-    handlers = _make_handlers(scope=scope, caller_ticket_id="caller-id")
+    caller = create_ticket("I'm the caller")
+    scope = SubagentScope(workspace_root_id=caller.id)
+    handlers = _make_handlers(scope=scope, caller_ticket_id=caller.id)
 
     args = {
         "type": "my-task",
@@ -178,7 +179,7 @@ async def test_tasks_create_task_async(write_template):
     ticket = load_ticket(result["task_id"])
     assert ticket is not None
 
-    assert ticket.metadata.creator_ticket_id == "caller-id"
+    assert ticket.metadata.creator_ticket_id == caller.id
     assert ticket.metadata.slug == "my-slug"
     assert ticket.metadata.title == "Testing create"
     assert "You are assigned to work in the subdirectory: ./my-slug" in ticket.objective
@@ -197,8 +198,9 @@ async def test_tasks_create_task_sync_wait_timeout(write_template, monkeypatch):
     mock_scheduler = MagicMock()
     mock_scheduler.wait_for_ticket = AsyncMock(return_value="running")
 
-    scope = SubagentScope(workspace_root_id="caller-id")
-    handlers = _make_handlers(scope=scope, caller_ticket_id="caller-id", scheduler=mock_scheduler)
+    caller = create_ticket("I'm the caller")
+    scope = SubagentScope(workspace_root_id=caller.id)
+    handlers = _make_handlers(scope=scope, caller_ticket_id=caller.id, scheduler=mock_scheduler)
 
     args = {
         "type": "my-task",
@@ -256,13 +258,14 @@ async def test_tasks_create_task_nested_slug(write_template):
         "objective": "Do it.",
     })
 
+    caller = create_ticket("I'm the caller")
     parent_scope = SubagentScope(
-        workspace_root_id="root-id",
+        workspace_root_id=caller.id,
         slug_path="research",
     )
     handlers = _make_handlers(
         scope=parent_scope,
-        caller_ticket_id="parent-id",
+        caller_ticket_id=caller.id,
     )
 
     args = {
@@ -280,6 +283,6 @@ async def test_tasks_create_task_nested_slug(write_template):
     assert ticket is not None
 
     assert ticket.metadata.slug == "research/deep-dive"
-    assert ticket.metadata.creator_ticket_id == "parent-id"
+    assert ticket.metadata.creator_ticket_id == caller.id
     assert "./research/deep-dive" in ticket.objective
     assert (ticket.fs_dir / "research" / "deep-dive").exists()

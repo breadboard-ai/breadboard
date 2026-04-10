@@ -17,6 +17,7 @@ from bees.playbook import (
     load_system_config,
     run_playbook,
     run_event_hooks,
+    stamp_child_ticket,
 )
 from bees.ticket import TICKETS_DIR, _DEP_PATTERN
 
@@ -362,3 +363,145 @@ class TestLoadSystemConfig:
     def test_returns_empty_when_missing(self):
         config = load_system_config()
         assert config == {}
+
+
+# --- stamp_child_ticket ---
+
+
+class TestStampChildTicket:
+
+    def test_creates_child_with_correct_hierarchy(self, write_template):
+        write_template(
+            {"name": "parent", "objective": "Manage."},
+            {"name": "worker", "objective": "Do work."},
+        )
+
+        parent = run_playbook("parent")
+        child = stamp_child_ticket(
+            "worker", parent_ticket=parent, slug="my-worker",
+        )
+
+        assert child.metadata.creator_ticket_id == parent.id
+        assert child.metadata.parent_ticket_id == parent.id
+        assert child.metadata.slug == "my-worker"
+        assert child.metadata.playbook_id == "worker"
+
+    def test_sandbox_instructions_appended(self, write_template):
+        write_template(
+            {"name": "parent", "objective": "Manage."},
+            {"name": "worker", "objective": "Do work."},
+        )
+
+        parent = run_playbook("parent")
+        child = stamp_child_ticket(
+            "worker", parent_ticket=parent, slug="my-worker",
+        )
+
+        assert "<sandbox_environment>" in child.objective
+        assert "my-worker" in child.objective
+        assert "<subagent_context>" in child.objective
+
+    def test_writable_dir_created(self, write_template):
+        write_template(
+            {"name": "parent", "objective": "Manage."},
+            {"name": "worker", "objective": "Do work."},
+        )
+
+        parent = run_playbook("parent")
+        child = stamp_child_ticket(
+            "worker", parent_ticket=parent, slug="my-worker",
+        )
+
+        writable = child.fs_dir / "my-worker"
+        assert writable.is_dir()
+
+    def test_context_propagates(self, write_template):
+        write_template(
+            {"name": "parent", "objective": "Manage."},
+            {"name": "worker", "objective": "Do {{system.context}}"},
+        )
+
+        parent = run_playbook("parent")
+        child = stamp_child_ticket(
+            "worker", parent_ticket=parent, slug="w",
+            context="the important thing",
+        )
+
+        assert child.metadata.context == "the important thing"
+
+    def test_title_override(self, write_template):
+        write_template(
+            {"name": "parent", "objective": "Manage."},
+            {"name": "worker", "title": "Default Title", "objective": "Do work."},
+        )
+
+        parent = run_playbook("parent")
+        child = stamp_child_ticket(
+            "worker", parent_ticket=parent, slug="w",
+            title="Custom Title",
+        )
+
+        assert child.metadata.title == "Custom Title"
+
+
+# --- autostart ---
+
+
+class TestAutostart:
+
+    def test_autostart_creates_child_tickets(self, write_template):
+        write_template(
+            {"name": "boss", "objective": "Manage.", "autostart": ["helper"]},
+            {"name": "helper", "objective": "Help."},
+        )
+
+        parent = run_playbook("boss")
+
+        from bees.ticket import list_tickets
+        all_tickets = list_tickets()
+        children = [t for t in all_tickets if t.metadata.creator_ticket_id == parent.id]
+
+        assert len(children) == 1
+        child = children[0]
+        assert child.metadata.playbook_id == "helper"
+        assert child.metadata.slug == "helper"
+        assert child.metadata.parent_ticket_id == parent.id
+
+    def test_autostart_empty_creates_no_children(self, write_template):
+        write_template(
+            {"name": "solo", "objective": "Work alone."},
+        )
+
+        parent = run_playbook("solo")
+
+        from bees.ticket import list_tickets
+        all_tickets = list_tickets()
+        children = [t for t in all_tickets if t.metadata.creator_ticket_id == parent.id]
+
+        assert len(children) == 0
+
+    def test_autostart_failed_child_does_not_block_parent(self, write_template):
+        write_template(
+            {"name": "boss", "objective": "Manage.", "autostart": ["nonexistent"]},
+        )
+
+        # Should not raise — the failed autostart is logged and skipped.
+        parent = run_playbook("boss")
+        assert parent.metadata.status == "available"
+
+    def test_autostart_multiple_children(self, write_template):
+        write_template(
+            {"name": "boss", "objective": "Manage.", "autostart": ["a", "b"]},
+            {"name": "a", "objective": "Do A."},
+            {"name": "b", "objective": "Do B."},
+        )
+
+        parent = run_playbook("boss")
+
+        from bees.ticket import list_tickets
+        all_tickets = list_tickets()
+        children = [t for t in all_tickets if t.metadata.creator_ticket_id == parent.id]
+
+        assert len(children) == 2
+        slugs = {c.metadata.slug for c in children}
+        assert slugs == {"a", "b"}
