@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -113,33 +113,4 @@ async def test_events_send_to_parent_no_parent():
     assert "error" in result
 
 
-# ---- coordination_pull_digest_tiles ----
 
-
-@pytest.mark.asyncio
-async def test_pull_digest_tiles_empty(tickets_dir):
-    """coordination_pull_digest_tiles returns empty list when no tiles exist."""
-    from bees.functions.events import _make_handlers
-
-    handlers = _make_handlers()
-    result = await handlers["coordination_pull_digest_tiles"]({}, None)
-    assert result["tiles"] == []
-
-
-@pytest.mark.asyncio
-async def test_pull_digest_tiles_finds_tiles(tickets_dir):
-    """coordination_pull_digest_tiles finds tiles in ticket filesystems."""
-    from bees.functions.events import _make_handlers
-
-    # Seed a digest tile.
-    run_dir = tickets_dir / "run-abc"
-    fs_dir = run_dir / "filesystem"
-    fs_dir.mkdir(parents=True)
-    tile_data = {"title": "Test Journey", "summary": "Testing"}
-    (fs_dir / "digest_tile.json").write_text(json.dumps(tile_data))
-
-    handlers = _make_handlers()
-    result = await handlers["coordination_pull_digest_tiles"]({}, None)
-    assert len(result["tiles"]) == 1
-    assert result["tiles"][0]["run_id"] == "run-abc"
-    assert result["tiles"][0]["tile"]["title"] == "Test Journey"

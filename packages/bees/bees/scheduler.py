@@ -102,8 +102,6 @@ class SchedulerHooks:
     on_ticket_done: Callable[[Ticket], Awaitable[None]] | None = None
     """Called when a ticket reaches a resting state (completed/failed/suspended/paused)."""
 
-    on_playbook_run: Callable[[list[Ticket]], None] | None = None
-    """Called when an agent invokes the playbook function mid-session."""
 
     on_events_broadcast: Callable[[Ticket], None] | None = None
     """Called when an agent broadcasts an event mid-session."""
@@ -617,7 +615,6 @@ class Scheduler:
                 function_filter=ticket.metadata.functions,
                 allowed_skills=ticket.metadata.skills,
                 model=ticket.metadata.model,
-                on_playbook_run=self._on_playbook_run_internal,
                 on_events_broadcast=self._on_events_broadcast_internal,
                 deliver_to_parent=self._make_deliver_to_parent(ticket),
                 scope=scope,
@@ -695,7 +692,6 @@ class Scheduler:
                 backend=self._backend,
                 label=label,
                 on_event=self._make_on_event(ticket.id),
-                on_playbook_run=self._on_playbook_run_internal,
                 on_events_broadcast=self._on_events_broadcast_internal,
                 deliver_to_parent=self._make_deliver_to_parent(ticket),
                 scope=scope,
@@ -829,10 +825,6 @@ class Scheduler:
                 file=sys.stderr,
             )
 
-    def _on_playbook_run_internal(self, tickets: list[Ticket]) -> None:
-        if self._hooks.on_playbook_run:
-            self._hooks.on_playbook_run(tickets)
-        self.trigger()
 
     def _on_events_broadcast_internal(self, ticket: Ticket) -> None:
         if self._hooks.on_events_broadcast:

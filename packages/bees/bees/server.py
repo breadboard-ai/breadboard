@@ -122,14 +122,6 @@ async def _on_ticket_done(ticket: Ticket) -> None:
     })
 
 
-def _on_playbook_run(tickets: list[Ticket]) -> None:
-    """When a running agent invokes a playbook mid-session."""
-    for ticket in tickets:
-        asyncio.create_task(broadcaster.broadcast({
-            "type": "ticket_added",
-            "ticket": _ticket_to_dict(ticket),
-        }))
-
 
 async def _on_cycle_complete(cycles: int) -> None:
     await broadcaster.broadcast({"type": "drain_complete", "waves": cycles})
@@ -214,7 +206,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         on_ticket_event=_on_ticket_event,
         on_ticket_start=_on_ticket_start,
         on_ticket_done=_on_ticket_done,
-        on_playbook_run=_on_playbook_run,
         on_events_broadcast=_on_events_broadcast,
         on_playbook_complete=_on_playbook_complete,
         on_cycle_complete=_on_cycle_complete,
