@@ -34,9 +34,12 @@ interface AgentPerspectives {
  * Coordination and internal-only tickets are excluded.
  */
 function deriveAgentTree(tickets: TicketData[]): AgentTreeNode[] {
-  // Filter out coordination tickets — they're infrastructure, not agents.
+  // Filter out coordination tickets and cancelled tickets — they're infrastructure or noise, not active agents.
   const agentTickets = tickets.filter(
-    (t) => t.kind !== "coordination" && !t.tags?.includes("digest")
+    (t) =>
+      t.kind !== "coordination" &&
+      !t.tags?.includes("digest") &&
+      t.status !== "cancelled"
   );
 
   // Build parent → children index.
