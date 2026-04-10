@@ -9,6 +9,7 @@ import type {
   FindUserOpalFolderResult,
   GetDriveCollectorFileResult,
   GuestConfiguration,
+  InvokeOpalBackendOptions,
   ListUserOpalsResult,
   OpalShellHostProtocol,
   PickDriveFilesOptions,
@@ -19,6 +20,7 @@ import type {
   ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import type { BreadboardMessage } from "@breadboard-ai/types/embedder.js";
+import { OPAL_BACKEND_API_PREFIX } from "@breadboard-ai/types";
 import { showFakeModeToast } from "./fake-mode-toast.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../src/ui/config/client-deployment-configuration.js";
 
@@ -79,6 +81,24 @@ class FakeModeOpalShell implements OpalShellHostProtocol {
     // Drive API calls will be routed to the fake Drive server via the
     // GOOGLE_DRIVE_API_ENDPOINT deployment config.
     return fetch(input, init);
+  };
+
+  invokeOpalBackend = async (
+    methodName: string,
+    options: InvokeOpalBackendOptions
+  ): Promise<Response> => {
+    const { method, body, query, signal } = options;
+    let url = `${OPAL_BACKEND_API_PREFIX}/v1beta1/${methodName}`;
+    if (query) {
+      const params = new URLSearchParams(query);
+      url += `?${params.toString()}`;
+    }
+    const init: RequestInit = { method, signal };
+    if (body !== undefined) {
+      init.headers = { "Content-Type": "application/json" };
+      init.body = JSON.stringify(body);
+    }
+    return this.fetchWithCreds(url, init);
   };
 
   signIn = async (_scopes: string[] = []): Promise<SignInResult> => {

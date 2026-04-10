@@ -329,6 +329,9 @@ class EvalRun implements EvalHarnessRuntimeArgs {
         throw new Error("Function not implemented.");
       },
       fetchWithCreds: globalThis.fetch,
+      invokeOpalBackend: function (): Promise<Response> {
+        throw new Error("Function not implemented.");
+      },
       signIn: function (): Promise<SignInResult> {
         throw new Error("Function not implemented.");
       },

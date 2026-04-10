@@ -20,6 +20,7 @@ import type {
   FindUserOpalFolderResult,
   GetDriveCollectorFileResult,
   GuestConfiguration,
+  InvokeOpalBackendOptions,
   ListUserOpalsResult,
   OpalShellHostProtocol,
   PickDriveFilesOptions,
@@ -47,7 +48,7 @@ import { getTopLevelOrigin } from "./embed-helpers.js";
 import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { checkFetchAllowlist } from "./fetch-allowlist.js";
-import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types";
+import { GOOGLE_DRIVE_FILES_API_PREFIX, OPAL_BACKEND_API_PREFIX } from "@breadboard-ai/types";
 import {
   findUserOpalFolder,
   getDriveCollectorFile,
@@ -330,6 +331,24 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     const headers = new Headers(init.headers);
     headers.set("Authorization", `Bearer ${accessToken}`);
     return fetch(input, { ...init, headers });
+  };
+
+  invokeOpalBackend = async (
+    methodName: string,
+    options: InvokeOpalBackendOptions
+  ): Promise<Response> => {
+    const { method, body, query, signal } = options;
+    let url = `${OPAL_BACKEND_API_PREFIX}/v1beta1/${methodName}`;
+    if (query) {
+      const params = new URLSearchParams(query);
+      url += `?${params.toString()}`;
+    }
+    const init: RequestInit = { method, signal };
+    if (body !== undefined) {
+      init.headers = { "Content-Type": "application/json" };
+      init.body = JSON.stringify(body);
+    }
+    return this.fetchWithCreds(url, init);
   };
 
   signIn = async (scopes: string[] = []): Promise<SignInResult> => {
