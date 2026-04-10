@@ -9,8 +9,7 @@ import {
   type IframeMessage,
   type HostMessage,
 } from "../../host/message-bridge.js";
-
-export type FileHandler = (path: string) => Promise<string | null>;
+import type { FileHandler } from "../types.js";
 
 export class HostCommunicationService {
   private bridge: MessageBridge | null = null;
