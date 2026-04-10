@@ -7,7 +7,7 @@
 import { RootController } from "./root-controller.js";
 import type { ToastMessage } from "../../types.js";
 import { field } from "../decorators/field.js";
-import type { TicketData } from "../../../data/types.js";
+import type { TicketData } from "../../../../../common/types.js";
 
 export class GlobalController extends RootController {
   constructor() {

@@ -287,7 +287,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
   }
 
   #renderBreadcrumb(
-    tickets: import("../../data/types.js").TicketData[],
+    tickets: import("../../../../common/types.js").TicketData[],
     selectedId: string
   ) {
     const path = deriveAncestorPath(tickets, selectedId);
@@ -323,7 +323,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
 
   #renderTabContent(
     tab: StageTab,
-    ticket: import("../../data/types.js").TicketData
+    ticket: import("../../../../common/types.js").TicketData
   ) {
     switch (tab) {
       case "app":
@@ -349,7 +349,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
     }
   }
 
-  #renderAgentSummary(ticket: import("../../data/types.js").TicketData) {
+  #renderAgentSummary(ticket: import("../../../../common/types.js").TicketData) {
     const isRunning = ticket.status === "running";
     const title =
       ticket.title ||

@@ -6,10 +6,10 @@
 
 import { asAction, ActionMode } from "../../coordination.js";
 import { makeAction } from "../binder.js";
-import type { TicketData } from "../../../data/types.js";
+import type { TicketData } from "../../../../../common/types.js";
 import type { ChatThread, ChatMessage } from "../../types.js";
 import { onTicketsUpdate, onActiveThreadChange } from "./chat-triggers.js";
-import { extractPrompt, extractChoices } from "../../../utils.js";
+import { extractPrompt, extractChoices } from "../../../../../common/utils.js";
 
 export const bind = makeAction();
 

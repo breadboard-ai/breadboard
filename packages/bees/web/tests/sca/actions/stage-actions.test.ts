@@ -13,7 +13,7 @@ import * as ChatActions from "../../../src/sca/actions/chat/chat-actions.js";
 import { makeTestController } from "../helpers/mock-controller.js";
 import { makeTestServices } from "../helpers/mock-services.js";
 import type { AppController, AppServices } from "../../../src/sca/types.js";
-import type { TicketData } from "../../../src/data/types.js";
+import type { TicketData } from "../../../../common/types.js";
 
 function ticket(
   overrides: Partial<TicketData> & { id: string }

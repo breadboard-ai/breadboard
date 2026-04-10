@@ -12,7 +12,7 @@ import { scaContext } from "../../sca/context/context.js";
 import { type SCA } from "../../sca/sca.js";
 import { sharedStyles } from "./shared.styles.js";
 import { deriveChildAgents } from "../../sca/utils/agent-tree.js";
-import type { TicketData } from "../../data/types.js";
+import type { TicketData } from "../../../../common/types.js";
 
 /** Digest tile data written by the digest-tile-writer playbook. */
 interface DigestTileData {
