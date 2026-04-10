@@ -21,64 +21,74 @@ import {
 
 export { parseDomainConfig };
 
-export const ALLOW_3P_MODULES: boolean = getBoolean("ALLOW_3P_MODULES");
+// Server-side flags for the unified server. All flags are defined as
+// environment variables in the server context.
+//
+// Please keep flags alphabetized
 
-export const ALLOWED_REDIRECT_ORIGINS: string[] = getStringList(
+export const ALLOW_3P_MODULES = getBoolean("ALLOW_3P_MODULES");
+
+export const ALLOWED_REDIRECT_ORIGINS = getStringList(
   "ALLOWED_REDIRECT_ORIGINS"
 );
 
-export const BACKEND_API_ENDPOINT: string = getString("BACKEND_API_ENDPOINT");
+export const BACKEND_API_ENDPOINT = getString("BACKEND_API_ENDPOINT");
 
-export const DOMAIN_CONFIG: Record<string, DomainConfiguration> =
-  getDomainConfig("DOMAIN_CONFIG");
-
-export const ENABLE_FORCE_2D_GRAPH: boolean = getBoolean(
-  "ENABLE_FORCE_2D_GRAPH"
-);
-
-
-
-
-
-
-export const OBSERVE_SYSTEM_THEME = getBoolean("OBSERVE_SYSTEM_THEME");
-
-export const ENABLE_CONSISTENT_UI: boolean = getBoolean("ENABLE_CONSISTENT_UI");
-
-export const ENABLE_MCP: boolean = getBoolean("ENABLE_MCP");
-
-export const ENVIRONMENT_NAME: string = getString("ENVIRONMENT_NAME");
-
-export const GOOGLE_OAUTH_AUTH_ENDPOINT: string = getString(
-  "GOOGLE_OAUTH_AUTH_ENDPOINT"
-);
-
-export const GOOGLE_OAUTH_TOKEN_ENDPOINT: string = getString(
-  "GOOGLE_OAUTH_TOKEN_ENDPOINT"
-);
-
-export const GOOGLE_DOCS_API_ENDPOINT: string = getString(
-  "GOOGLE_DOCS_API_ENDPOINT"
-);
-
-export const GOOGLE_SHEETS_API_ENDPOINT: string = getString(
-  "GOOGLE_SHEETS_API_ENDPOINT"
-);
-
-export const GOOGLE_SLIDES_API_ENDPOINT: string = getString(
-  "GOOGLE_SLIDES_API_ENDPOINT"
-);
-
-export const FAKE_MODE = getBoolean("FAKE_MODE");
 export const DEV_BACKEND_MODE = getBoolean("DEV_BACKEND_MODE");
+
+export const DOMAIN_CONFIG = getDomainConfig("DOMAIN_CONFIG");
+
+export const ENABLE_CONSISTENT_UI = getBoolean("ENABLE_CONSISTENT_UI");
+
+export const ENABLE_FORCE_2D_GRAPH = getBoolean("ENABLE_FORCE_2D_GRAPH");
+
+export const ENABLE_GOOGLE_DRIVE_TOOLS = getBoolean(
+  "ENABLE_GOOGLE_DRIVE_TOOLS"
+);
+
+export const ENABLE_GOOGLE_ONE = getBoolean("ENABLE_GOOGLE_ONE");
+
+export const ENABLE_GRAPH_EDITOR_AGENT = getBoolean(
+  "ENABLE_GRAPH_EDITOR_AGENT"
+);
+
+export const ENABLE_MCP = getBoolean("ENABLE_MCP");
+
+export const ENABLE_NOTEBOOK_LM = getBoolean("ENABLE_NOTEBOOK_LM");
+
+export const ENABLE_OPAL_ADK = getBoolean("ENABLE_OPAL_ADK");
+
+export const ENABLE_OPAL_BACKEND = getBoolean("ENABLE_OPAL_BACKEND");
+
+export const ENABLE_OUTPUT_TEMPLATES = getBoolean("ENABLE_OUTPUT_TEMPLATES");
+
+export const ENABLE_RESUME_AGENT_RUN = getBoolean("ENABLE_RESUME_AGENT_RUN");
+
+export const ENABLE_SESSIONS_BACKEND = getBoolean("ENABLE_SESSIONS_BACKEND");
+
+export const ENABLE_SHOW_TOKEN_COUNTER = getBoolean(
+  "ENABLE_SHOW_TOKEN_COUNTER"
+);
+
+export const ENABLE_SINGLETON_PREFIX_CACHE = getBoolean(
+  "ENABLE_SINGLETON_PREFIX_CACHE"
+);
+
+export const ENABLE_TEXT_EDITOR_REMIX = getBoolean("ENABLE_TEXT_EDITOR_REMIX");
+
+export const ENVIRONMENT_NAME = getString("ENVIRONMENT_NAME");
 
 export const FAKE_DRIVE_PORT = Number(process.env["FAKE_DRIVE_PORT"] || 3110);
 
-export const GOOGLE_DRIVE_API_ENDPOINT: string = FAKE_MODE
+export const FAKE_MODE = getBoolean("FAKE_MODE");
+
+export const GOOGLE_DOCS_API_ENDPOINT = getString("GOOGLE_DOCS_API_ENDPOINT");
+
+export const GOOGLE_DRIVE_API_ENDPOINT = FAKE_MODE
   ? `http://localhost:${FAKE_DRIVE_PORT}`
   : getString("GOOGLE_DRIVE_API_ENDPOINT");
 
-export const GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: string = getString(
+export const GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID = getString(
   "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"
 );
 
@@ -86,33 +96,42 @@ export const GOOGLE_DRIVE_PUBLISH_PERMISSIONS =
   (getJson("GOOGLE_DRIVE_PUBLISH_PERMISSIONS") as GoogleDrivePermission[]) ??
   [];
 
-export const GOOGLE_DRIVE_USER_FOLDER_NAME: string = getString(
+export const GOOGLE_DRIVE_USER_FOLDER_NAME = getString(
   "GOOGLE_DRIVE_USER_FOLDER_NAME"
 );
 
-export const GOOGLE_FEEDBACK_BUCKET: string = getString(
-  "GOOGLE_FEEDBACK_BUCKET"
-);
+export const GOOGLE_FEEDBACK_BUCKET = getString("GOOGLE_FEEDBACK_BUCKET");
 
-export const GOOGLE_FEEDBACK_PRODUCT_ID: string = getString(
+export const GOOGLE_FEEDBACK_PRODUCT_ID = getString(
   "GOOGLE_FEEDBACK_PRODUCT_ID"
 );
 
-export const MCP_SERVER_ALLOW_LIST: string[] = getStringList(
-  "MCP_SERVER_ALLOW_LIST"
+export const GOOGLE_OAUTH_AUTH_ENDPOINT = getString(
+  "GOOGLE_OAUTH_AUTH_ENDPOINT"
 );
 
-export const MEASUREMENT_ID: string = getString("MEASUREMENT_ID");
-
-export const SERVER_URL: string = getString("SERVER_URL");
-
-export const SURVEY_MODE = getSurveyMode("SURVEY_MODE");
-
-export const SURVEY_API_KEY = getSecret("SURVEY_API_KEY");
-
-export const SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID = getString(
-  "SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID"
+export const GOOGLE_OAUTH_TOKEN_ENDPOINT = getString(
+  "GOOGLE_OAUTH_TOKEN_ENDPOINT"
 );
+
+export const GOOGLE_SHEETS_API_ENDPOINT = getString(
+  "GOOGLE_SHEETS_API_ENDPOINT"
+);
+
+export const GOOGLE_SLIDES_API_ENDPOINT = getString(
+  "GOOGLE_SLIDES_API_ENDPOINT"
+);
+
+export const MCP_SERVER_ALLOW_LIST = getStringList("MCP_SERVER_ALLOW_LIST");
+
+export const MEASUREMENT_ID = getString("MEASUREMENT_ID");
+
+export const OBSERVE_SYSTEM_THEME = getBoolean("OBSERVE_SYSTEM_THEME");
+
+export const SERVER_URL = getString("SERVER_URL");
+
+export const SHARE_SURFACE_URL_TEMPLATES =
+  (getJson("SHARE_SURFACE_URL_TEMPLATES") as Record<string, string>) ?? {};
 
 export const SHELL_GUEST_ORIGIN = getString("SHELL_GUEST_ORIGIN");
 
@@ -120,39 +139,12 @@ export const SHELL_HOST_ORIGINS = getStringList("SHELL_HOST_ORIGINS");
 
 export const SHELL_PREFIX = getString("SHELL_PREFIX");
 
-export const ENABLE_OPAL_ADK = getBoolean("ENABLE_OPAL_ADK");
+export const SURVEY_API_KEY = getSecret("SURVEY_API_KEY");
 
-export const ENABLE_OUTPUT_TEMPLATES = getBoolean("ENABLE_OUTPUT_TEMPLATES");
+export const SURVEY_MODE = getSurveyMode("SURVEY_MODE");
 
-export const ENABLE_GOOGLE_ONE = getBoolean("ENABLE_GOOGLE_ONE");
-
-export const SHARE_SURFACE_URL_TEMPLATES =
-  (getJson("SHARE_SURFACE_URL_TEMPLATES") as Record<string, string>) ?? {};
-
-export const ENABLE_GOOGLE_DRIVE_TOOLS = getBoolean(
-  "ENABLE_GOOGLE_DRIVE_TOOLS"
-);
-
-export const ENABLE_RESUME_AGENT_RUN = getBoolean("ENABLE_RESUME_AGENT_RUN");
-
-export const ENABLE_NOTEBOOK_LM = getBoolean("ENABLE_NOTEBOOK_LM");
-
-export const ENABLE_GRAPH_EDITOR_AGENT = getBoolean(
-  "ENABLE_GRAPH_EDITOR_AGENT"
-);
-
-export const ENABLE_TEXT_EDITOR_REMIX = getBoolean("ENABLE_TEXT_EDITOR_REMIX");
-
-export const ENABLE_SHOW_TOKEN_COUNTER = getBoolean(
-  "ENABLE_SHOW_TOKEN_COUNTER"
-);
-
-export const ENABLE_OPAL_BACKEND = getBoolean("ENABLE_OPAL_BACKEND");
-
-export const ENABLE_SESSIONS_BACKEND = getBoolean("ENABLE_SESSIONS_BACKEND");
-
-export const ENABLE_SINGLETON_PREFIX_CACHE = getBoolean(
-  "ENABLE_SINGLETON_PREFIX_CACHE"
+export const SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID = getString(
+  "SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID"
 );
 
 function getDomainConfig(
