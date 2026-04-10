@@ -667,7 +667,7 @@ class Main extends MainBase {
           }
 
           case "feedback": {
-            this.sca.controller.global.feedback.open(this.sca.env);
+            this.sca.controller.global.feedback.open();
             break;
           }
 

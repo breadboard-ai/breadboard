@@ -54,9 +54,6 @@ suite("FeedbackController", () => {
 
   beforeEach(async () => {
     windowWithUserFeedback = globalThis.window as WindowWithUserFeedbackApi;
-    controller = new FeedbackController("Feedback", "FeedbackController");
-    await controller.isHydrated;
-
     mockEnv = {
       environmentName: "test-env",
       hostOrigin: new URL("http://localhost"),
@@ -72,7 +69,13 @@ suite("FeedbackController", () => {
         GOOGLE_FEEDBACK_PRODUCT_ID: "test-product-id",
         GOOGLE_FEEDBACK_BUCKET: "test-bucket",
       },
+      shellHost: {
+        setOneGoogleBarVisible: mock.fn(),
+      },
     } as unknown as AppEnvironment;
+
+    controller = new FeedbackController("Feedback", "FeedbackController", mockEnv);
+    await controller.isHydrated;
 
     const mockApi = {
       startFeedback: mock.fn((config: UserFeedbackConfig) => {
@@ -103,15 +106,20 @@ suite("FeedbackController", () => {
   });
 
   test("open() sets status to loading then open on success", async () => {
-    const openPromise = controller.open(mockEnv);
+    const openPromise = controller.open();
     assert.strictEqual(controller.status, "loading");
     await openPromise;
     assert.strictEqual(controller.status, "open");
   });
 
   test("open() failures handling - missing config", async () => {
-    await controller.open(undefined as unknown as AppEnvironment);
-    assert.strictEqual(controller.status, "closed");
+    const noEnvController = new FeedbackController(
+      "Feedback",
+      "FeedbackController",
+      undefined as unknown as AppEnvironment
+    );
+    await noEnvController.open();
+    assert.strictEqual(noEnvController.status, "closed");
   });
 
   test("open() failures handling - missing product ID", async () => {
@@ -120,7 +128,7 @@ suite("FeedbackController", () => {
         deploymentConfig: { GOOGLE_FEEDBACK_PRODUCT_ID: string | undefined };
       }
     ).deploymentConfig.GOOGLE_FEEDBACK_PRODUCT_ID = undefined;
-    await controller.open(mockEnv);
+    await controller.open();
     assert.strictEqual(controller.status, "closed");
   });
 
@@ -130,7 +138,7 @@ suite("FeedbackController", () => {
         deploymentConfig: { GOOGLE_FEEDBACK_BUCKET: string | undefined };
       }
     ).deploymentConfig.GOOGLE_FEEDBACK_BUCKET = undefined;
-    await controller.open(mockEnv);
+    await controller.open();
     assert.strictEqual(controller.status, "closed");
   });
 
@@ -142,7 +150,7 @@ suite("FeedbackController", () => {
   });
 
   test("callback sets status to closed", async () => {
-    const openPromise = controller.open(mockEnv);
+    const openPromise = controller.open();
     await openPromise;
     assert.strictEqual(controller.status, "open");
 
@@ -156,8 +164,8 @@ suite("FeedbackController", () => {
   });
 
   test("double open is inert", async () => {
-    const openPromise = controller.open(mockEnv);
-    const openPromise2 = controller.open(mockEnv);
+    const openPromise = controller.open();
+    const openPromise2 = controller.open();
     await Promise.all([openPromise, openPromise2]);
     assert.strictEqual(controller.status, "open");
   });

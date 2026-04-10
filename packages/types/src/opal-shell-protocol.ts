@@ -77,6 +77,13 @@ export declare interface OpalShellHostProtocol {
 
   trackProperties(payload: Record<string, string | undefined>): Promise<void>;
   setTitle(title: string | null): void;
+
+  /**
+   * Hide or show the OneGoogleBar profile icon. The guest calls this when a
+   * full-screen overlay (e.g. feedback dialog) is shown, since iframe content
+   * cannot paint above host-page elements.
+   */
+  setOneGoogleBarVisible(visible: boolean): void;
 }
 
 export declare interface OpalShellGuestProtocol {
