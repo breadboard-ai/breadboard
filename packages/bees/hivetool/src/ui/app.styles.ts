@@ -1002,4 +1002,69 @@ export const styles = css`
   .lightning-flash {
     animation: lightning-flash 15s ease-out !important;
   }
+
+  /* ── Template badge ── */
+  .template-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: #134e4a33;
+    color: #5eead4;
+    border: 1px solid #134e4a;
+  }
+
+  /* ── Template sidebar hints ── */
+  .template-model-hint {
+    font-size: 0.65rem;
+    color: #c4b5fd;
+    font-family: "Google Mono", "Roboto Mono", monospace;
+  }
+
+  /* ── Template task delegation chips ── */
+  .template-tasks-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .template-task-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-family: "Google Mono", "Roboto Mono", monospace;
+    background: #111d1f;
+    color: #5eead4;
+    border: 1px solid #1a3338;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  .template-task-chip.linkable {
+    cursor: pointer;
+  }
+
+  .template-task-chip.linkable:hover {
+    background: #1a3338;
+    border-color: #2dd4bf;
+    color: #99f6e4;
+  }
+
+  /* ── Skill badge ── */
+  .skill-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: #1e3a8a22;
+    color: #93c5fd;
+    border: 1px solid #1e3a5c;
+  }
 `;
+

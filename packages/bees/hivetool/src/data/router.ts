@@ -21,7 +21,9 @@ type RoutableTab =
   | "daemons"
   | "logs"
   | "tickets"
-  | "events";
+  | "events"
+  | "templates"
+  | "skills";
 
 interface Route {
   tab: RoutableTab;
@@ -34,6 +36,8 @@ const VALID_TABS = new Set<string>([
   "logs",
   "tickets",
   "events",
+  "templates",
+  "skills",
 ]);
 
 function parseRoute(hash = location.hash): Route {
