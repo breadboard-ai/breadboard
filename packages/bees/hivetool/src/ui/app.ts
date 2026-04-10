@@ -83,6 +83,19 @@ class BeesApp extends SignalWatcher(LitElement) {
     }
   }
 
+  private async handleSwitchHive(): Promise<void> {
+    this.logStore.reset();
+    this.ticketStore.reset();
+    this.ticketFileTree = [];
+    this.ticketFileContents = {};
+    this.selectedEventId = null;
+    await this.stateAccess.openDirectory();
+    if (this.stateAccess.accessState.get() === "ready") {
+      await this.activateStores();
+      this.restoreRoute();
+    }
+  }
+
   // --- Routing ---
 
   /** Write current tab + selection to the URL hash. */
@@ -146,7 +159,7 @@ class BeesApp extends SignalWatcher(LitElement) {
       return html`
         <div class="top-bar">
           <div class="top-bar-header">
-            <h1>${APP_ICON} ${APP_NAME} DevTools</h1>
+            <h1>${APP_ICON} ${APP_NAME} Hivetool</h1>
           </div>
         </div>
         <div
@@ -176,7 +189,18 @@ class BeesApp extends SignalWatcher(LitElement) {
     return html`
       <div class="top-bar">
         <div class="top-bar-header">
-          <h1>${APP_ICON} ${APP_NAME} DevTools</h1>
+          <h1>${APP_ICON} ${APP_NAME} Hivetool</h1>
+          <div class="hive-switcher">
+            <span class="hive-name" title="Current hive directory">
+              📂 ${this.stateAccess.hiveName.get() ?? ""}
+            </span>
+            <button
+              class="switch-hive-btn"
+              @click=${() => this.handleSwitchHive()}
+            >
+              Switch Hive
+            </button>
+          </div>
         </div>
         <div class="top-bar-tabs">
           <div
@@ -204,7 +228,7 @@ class BeesApp extends SignalWatcher(LitElement) {
               this.syncHash();
             }}
           >
-            Logs
+            Sessions
           </div>
         </div>
       </div>
