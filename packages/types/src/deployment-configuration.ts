@@ -10,8 +10,8 @@ export type ClientDeploymentConfiguration = {
   ALLOWED_REDIRECT_ORIGINS?: string[];
   MEASUREMENT_ID?: string;
   BACKEND_API_ENDPOINT?: string;
+  ENABLE_BACKEND_CLIENT: boolean;
   ENVIRONMENT_NAME?: string;
-
   GOOGLE_OAUTH_TOKEN_ENDPOINT?: string;
   GOOGLE_OAUTH_AUTH_ENDPOINT?: string;
   GOOGLE_DOCS_API_ENDPOINT?: string;
@@ -30,6 +30,7 @@ export type ClientDeploymentConfiguration = {
   SHELL_GUEST_ORIGIN?: string;
   SHELL_HOST_ORIGINS?: string[];
   SHELL_PREFIX?: string;
+
   /**
    * Allow running 3P modules (modules that are other than A2). Default
    * value is "false"
