@@ -158,11 +158,11 @@ via browser back — the list updates correctly.
 
 ### Changes
 
-- [ ] Cmd+S to save, Escape to cancel edit mode.
-- [ ] `beforeunload` guard + in-app tab-switch guard when dirty.
-- [ ] Save button spinner → "Saved ✓" flash (already in `<bees-edit-controls>`).
-- [ ] Error banner on write failure (permission revoked, disk full).
-- [ ] Browser-native Cmd+Z within edit session (no custom undo system).
+- [x] Cmd+S to save, Escape to cancel edit mode.
+- [x] `beforeunload` guard + in-app tab-switch guard when dirty.
+- [x] Save button spinner → "Saved ✓" flash (already in `<bees-edit-controls>`).
+- [x] Error banner on write failure (permission revoked, disk full).
+- [x] Browser-native Cmd+Z within edit session (no custom undo system).
 
 ---
 

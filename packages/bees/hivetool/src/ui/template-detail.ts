@@ -536,7 +536,22 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
     this.error = null;
   }
 
-  private cancelEditing() {
+  /** Whether the component is currently in edit/create mode. */
+  get isEditing(): boolean {
+    return this.editing || this.creating;
+  }
+
+  /** Whether there are unsaved changes. */
+  get hasDirtyEdits(): boolean {
+    return this.isEditing && this.isDirty();
+  }
+
+  /** Programmatically trigger a save (e.g. from Cmd+S). */
+  triggerSave() {
+    if (this.isEditing && this.isDirty()) this.handleSave();
+  }
+
+  cancelEditing() {
     this.editing = false;
     this.creating = false;
     this.draft = null;
