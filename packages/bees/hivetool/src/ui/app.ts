@@ -20,6 +20,7 @@ import { LogStore } from "../data/log-store.js";
 import { parseRoute, writeRoute } from "../data/router.js";
 import { StateAccess } from "../data/state-access.js";
 import { SkillStore } from "../data/skill-store.js";
+import { SystemStore } from "../data/system-store.js";
 import { TicketStore } from "../data/ticket-store.js";
 import { TemplateStore } from "../data/template-store.js";
 
@@ -34,10 +35,11 @@ import "./event-list.js";
 import "./event-detail.js";
 import "./log-list.js";
 import "./log-detail.js";
+import "./system-detail.js";
 
 export { BeesApp };
 
-type TabId = "logs" | "tickets" | "events" | "templates" | "skills";
+type TabId = "logs" | "tickets" | "events" | "templates" | "skills" | "system";
 
 /** Shared interface for editable detail panels. */
 interface EditablePanel {
@@ -57,6 +59,7 @@ class BeesApp extends SignalWatcher(LitElement) {
   private ticketStore = new TicketStore(this.stateAccess);
   private templateStore = new TemplateStore(this.stateAccess);
   private skillStore = new SkillStore(this.stateAccess);
+  private systemStore = new SystemStore(this.stateAccess);
 
   static styles = css`
     :host {
@@ -265,6 +268,7 @@ class BeesApp extends SignalWatcher(LitElement) {
       this.ticketStore.activate(),
       this.templateStore.activate(),
       this.skillStore.activate(),
+      this.systemStore.activate(),
     ]);
   }
 
@@ -289,6 +293,7 @@ class BeesApp extends SignalWatcher(LitElement) {
     this.ticketStore.reset();
     this.templateStore.reset();
     this.skillStore.reset();
+    this.systemStore.reset();
     this.selectedEventId = null;
     await this.stateAccess.openDirectory();
     if (this.stateAccess.accessState.get() === "ready") {
@@ -329,6 +334,7 @@ class BeesApp extends SignalWatcher(LitElement) {
       "events",
       "templates",
       "skills",
+      "system",
     ];
     const tab = validTabs.includes(route.tab as TabId)
       ? (route.tab as TabId)
@@ -401,6 +407,11 @@ class BeesApp extends SignalWatcher(LitElement) {
     if (this.activeTab === "skills") {
       return this.renderRoot.querySelector(
         "bees-skill-detail"
+      ) as EditablePanel | null;
+    }
+    if (this.activeTab === "system") {
+      return this.renderRoot.querySelector(
+        "bees-system-detail"
       ) as EditablePanel | null;
     }
     return null;
@@ -527,6 +538,7 @@ class BeesApp extends SignalWatcher(LitElement) {
               ["logs", "Sessions", flashLogId],
               ["templates", "Templates", null],
               ["skills", "Skills", null],
+              ["system", "System", null],
             ] as const
           ).map(
             ([id, label, flash]) => html`
@@ -618,6 +630,8 @@ class BeesApp extends SignalWatcher(LitElement) {
               (detail as { startCreating(): void }).startCreating();
           }}
         ></bees-skill-list>`;
+      case "system":
+        return html``;
     }
   }
 
@@ -651,6 +665,11 @@ class BeesApp extends SignalWatcher(LitElement) {
           .templateStore=${this.templateStore}
           .ticketStore=${this.ticketStore}
         ></bees-skill-detail>`;
+      case "system":
+        return html`<bees-system-detail
+          .systemStore=${this.systemStore}
+          .templateStore=${this.templateStore}
+        ></bees-system-detail>`;
     }
   }
 }
