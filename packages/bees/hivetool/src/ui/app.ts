@@ -55,14 +55,14 @@ class BeesApp extends SignalWatcher(LitElement) {
     super.connectedCallback();
     this.initStores();
     this.restoreRoute();
-    window.addEventListener("hashchange", this.onHashChange);
+    window.addEventListener("popstate", this.onHashChange);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this.logStore.destroy();
     this.ticketStore.destroy();
-    window.removeEventListener("hashchange", this.onHashChange);
+    window.removeEventListener("popstate", this.onHashChange);
   }
 
   // --- Store Initialization ---
