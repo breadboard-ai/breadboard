@@ -1,26 +1,4 @@
-# Ticket templates — each entry defines a single agent ticket.
-#
-# Templates are the unit of work in the Bees framework. When a template is
-# "run", the engine creates a ticket from it: an objective for an agent to
-# fulfill, persisted as a directory on disk.
-#
-# Fields:
-#   name          — Logical identifier. Used as playbook_id on tickets and for
-#                   delegation via tasks_create_task.
-#   title         — Human-readable title shown in UI and task type listings.
-#   description   — Short summary shown in task type listings.
-#   objective     — The agent's instructions (natural-language prompt).
-#   functions     — Function filter globs controlling which tools the agent can
-#                   use. Empty/omitted = all functions available.
-#   skills        — Names of skills to load into the session.
-#   tags          — Metadata tags for UI routing, lifecycle hooks, and filtering.
-#   model         — Override the default model.
-#   watch_events  — Subscribe to inter-agent events.
-#   tasks         — Allowlist of template names this agent can delegate to.
-#   assignee      — Initial assignee ("user" or "agent"). Rarely needed.
-#   autostart     — List of template names to stamp as child tickets
-#                   automatically when this template is run. Each entry
-#                   creates a subagent ticket with the template name as slug.
+# Ticket templates — see docs/TEMPLATE_SCHEMA.md for the field reference.
 
 - name: opie
   title: Opie
