@@ -182,7 +182,7 @@ class BeesApp extends SignalWatcher(LitElement) {
       flex-direction: column;
       background: #0b0c0f;
       height: 100%;
-      overflow: hidden;
+      overflow-y: auto;
     }
 
     .empty-state {
