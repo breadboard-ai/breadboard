@@ -39,6 +39,14 @@ export { BeesApp };
 
 type TabId = "logs" | "tickets" | "events" | "templates" | "skills";
 
+/** Shared interface for editable detail panels. */
+interface EditablePanel {
+  readonly isEditing: boolean;
+  readonly hasDirtyEdits: boolean;
+  triggerSave(): void;
+  cancelEditing(): void;
+}
+
 @customElement("bees-app")
 class BeesApp extends SignalWatcher(LitElement) {
   @state() accessor activeTab: TabId = "tickets";
@@ -229,6 +237,8 @@ class BeesApp extends SignalWatcher(LitElement) {
     this.initStores();
     this.restoreRoute();
     window.addEventListener("popstate", this.onHashChange);
+    window.addEventListener("keydown", this.#onKeyDown);
+    window.addEventListener("beforeunload", this.#onBeforeUnload);
   }
 
   disconnectedCallback() {
@@ -236,6 +246,8 @@ class BeesApp extends SignalWatcher(LitElement) {
     this.logStore.destroy();
     this.ticketStore.destroy();
     window.removeEventListener("popstate", this.onHashChange);
+    window.removeEventListener("keydown", this.#onKeyDown);
+    window.removeEventListener("beforeunload", this.#onBeforeUnload);
   }
 
   // --- Store Initialization ---
@@ -374,6 +386,73 @@ class BeesApp extends SignalWatcher(LitElement) {
 
     this.syncHash();
   }
+  // --- Keyboard shortcuts & navigation guards ---
+
+  /**
+   * Get the currently active editable panel, if one exists for the
+   * current tab. Returns null for tabs without editing (tickets, events, logs).
+   */
+  #getActiveEditor(): EditablePanel | null {
+    if (this.activeTab === "templates") {
+      return this.renderRoot.querySelector(
+        "bees-template-detail"
+      ) as EditablePanel | null;
+    }
+    if (this.activeTab === "skills") {
+      return this.renderRoot.querySelector(
+        "bees-skill-detail"
+      ) as EditablePanel | null;
+    }
+    return null;
+  }
+
+  /** Guard tab switches: confirm if dirty edits would be lost. */
+  private switchTab(tab: TabId) {
+    if (tab === this.activeTab) return;
+
+    const editor = this.#getActiveEditor();
+    if (editor?.hasDirtyEdits) {
+      const discard = confirm(
+        "You have unsaved changes. Discard and switch tabs?"
+      );
+      if (!discard) return;
+      editor.cancelEditing();
+    }
+
+    this.activeTab = tab;
+    this.syncHash();
+  }
+
+  #onKeyDown = (e: KeyboardEvent) => {
+    // Cmd+S / Ctrl+S → save active editor.
+    if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+      const editor = this.#getActiveEditor();
+      if (editor?.isEditing) {
+        e.preventDefault();
+        editor.triggerSave();
+      }
+    }
+
+    // Escape → cancel active editor.
+    if (e.key === "Escape") {
+      const editor = this.#getActiveEditor();
+      if (editor?.isEditing) {
+        e.preventDefault();
+        if (editor.hasDirtyEdits) {
+          const discard = confirm("Discard unsaved changes?");
+          if (!discard) return;
+        }
+        editor.cancelEditing();
+      }
+    }
+  };
+
+  #onBeforeUnload = (e: BeforeUnloadEvent) => {
+    const editor = this.#getActiveEditor();
+    if (editor?.hasDirtyEdits) {
+      e.preventDefault();
+    }
+  };
 
   // --- Render ---
 
@@ -455,10 +534,7 @@ class BeesApp extends SignalWatcher(LitElement) {
                 class="sidebar-tab ${this.activeTab === id
                   ? "active"
                   : ""} ${flash ? "lightning-flash" : ""}"
-                @click=${() => {
-                  this.activeTab = id;
-                  this.syncHash();
-                }}
+                @click=${() => this.switchTab(id)}
               >
                 ${label}
               </div>
