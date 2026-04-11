@@ -16,10 +16,7 @@ import { SkillStore } from "../data/skill-store.js";
 import type { FileTreeNode } from "../data/ticket-store.js";
 import type { TicketData } from "../data/types.js";
 import { TicketStore } from "../data/ticket-store.js";
-import {
-  TemplateStore,
-  type TemplateData,
-} from "../data/template-store.js";
+import { TemplateStore } from "../data/template-store.js";
 import { deriveTicketTree, type TicketTreeNode } from "../data/ticket-tree.js";
 import { getRelativeTime } from "../utils.js";
 import { styles } from "./app.styles.js";
@@ -146,7 +143,13 @@ class BeesApp extends SignalWatcher(LitElement) {
   /** Restore tab and selection from the URL hash on load. */
   private async restoreRoute(): Promise<void> {
     const route = parseRoute();
-    const validTabs: TabId[] = ["logs", "tickets", "events", "templates", "skills"];
+    const validTabs: TabId[] = [
+      "logs",
+      "tickets",
+      "events",
+      "templates",
+      "skills",
+    ];
     const tab = validTabs.includes(route.tab as TabId)
       ? (route.tab as TabId)
       : "tickets";
@@ -184,10 +187,16 @@ class BeesApp extends SignalWatcher(LitElement) {
   render() {
     const access = this.stateAccess.accessState.get();
     const recentUpdate = this.ticketStore.recentlyUpdatedTicket.get();
-    this.currentFlashTicketId = (recentUpdate && (Date.now() - recentUpdate.at < 15000)) ? recentUpdate.id : null;
-    
+    this.currentFlashTicketId =
+      recentUpdate && Date.now() - recentUpdate.at < 15000
+        ? recentUpdate.id
+        : null;
+
     const recentLogUpdate = this.logStore.recentlyUpdatedSession.get();
-    this.currentFlashLogId = (recentLogUpdate && (Date.now() - recentLogUpdate.at < 15000)) ? recentLogUpdate.id : null;
+    this.currentFlashLogId =
+      recentLogUpdate && Date.now() - recentLogUpdate.at < 15000
+        ? recentLogUpdate.id
+        : null;
 
     if (access !== "ready") {
       return html`
@@ -238,7 +247,9 @@ class BeesApp extends SignalWatcher(LitElement) {
         </div>
         <div class="top-bar-tabs">
           <div
-            class="sidebar-tab ${this.activeTab === "tickets" ? "active" : ""} ${this.currentFlashTicketId ? "lightning-flash" : ""}"
+            class="sidebar-tab ${this.activeTab === "tickets"
+              ? "active"
+              : ""} ${this.currentFlashTicketId ? "lightning-flash" : ""}"
             @click=${() => {
               this.activeTab = "tickets";
               this.syncHash();
@@ -256,7 +267,9 @@ class BeesApp extends SignalWatcher(LitElement) {
             Events
           </div>
           <div
-            class="sidebar-tab ${this.activeTab === "logs" ? "active" : ""} ${this.currentFlashLogId ? "lightning-flash" : ""}"
+            class="sidebar-tab ${this.activeTab === "logs"
+              ? "active"
+              : ""} ${this.currentFlashLogId ? "lightning-flash" : ""}"
             @click=${() => {
               this.activeTab = "logs";
               this.syncHash();
@@ -265,7 +278,9 @@ class BeesApp extends SignalWatcher(LitElement) {
             Sessions
           </div>
           <div
-            class="sidebar-tab ${this.activeTab === "templates" ? "active" : ""}"
+            class="sidebar-tab ${this.activeTab === "templates"
+              ? "active"
+              : ""}"
             @click=${() => {
               this.activeTab = "templates";
               this.syncHash();
@@ -326,6 +341,20 @@ class BeesApp extends SignalWatcher(LitElement) {
     this.syncHash();
   }
 
+  /** Navigate to a specific skill by switching to the Skills tab. */
+  private navigateToSkill(dirName: string) {
+    this.activeTab = "skills";
+    this.skillStore.selectSkill(dirName);
+    this.syncHash();
+  }
+
+  /** Navigate to a specific template by switching to the Templates tab. */
+  private navigateToTemplate(name: string) {
+    this.activeTab = "templates";
+    this.templateStore.selectTemplate(name);
+    this.syncHash();
+  }
+
   private renderLogsList() {
     const sessions = this.logStore.sessions.get();
     const selectedSid = this.logStore.selectedSessionId.get();
@@ -342,7 +371,9 @@ class BeesApp extends SignalWatcher(LitElement) {
               <div
                 class="job-item ${selectedSid === session.sessionId
                   ? "selected"
-                  : ""} ${this.currentFlashLogId === session.sessionId ? "lightning-flash" : ""}"
+                  : ""} ${this.currentFlashLogId === session.sessionId
+                  ? "lightning-flash"
+                  : ""}"
                 @click=${() => {
                   this.logStore.selectSession(session.sessionId);
                   this.syncHash();
@@ -435,13 +466,13 @@ class BeesApp extends SignalWatcher(LitElement) {
     `;
   }
 
-  private renderTicketItem(
-    t: TicketData,
-    selectedId: string | null
-  ) {
+  private renderTicketItem(t: TicketData, selectedId: string | null) {
     return html`
       <div
-        class="job-item ${selectedId === t.id ? "selected" : ""} ${this.currentFlashTicketId === t.id ? "lightning-flash" : ""}"
+        class="job-item ${selectedId === t.id ? "selected" : ""} ${this
+          .currentFlashTicketId === t.id
+          ? "lightning-flash"
+          : ""}"
         @click=${() => {
           this.ticketFileTree = [];
           this.ticketFileContents = {};
@@ -475,10 +506,7 @@ class BeesApp extends SignalWatcher(LitElement) {
     `;
   }
 
-  private renderTicketsTree(
-    tickets: TicketData[],
-    selectedId: string | null
-  ) {
+  private renderTicketsTree(tickets: TicketData[], selectedId: string | null) {
     const tree = deriveTicketTree(tickets);
     return tree.map((node) => this.renderTreeNode(node, selectedId));
   }
@@ -525,33 +553,54 @@ class BeesApp extends SignalWatcher(LitElement) {
     }> = [];
     if (ticket.model)
       identityChips.push({ label: "model", value: ticket.model, cls: "model" });
-    if (ticket.playbook_id)
+    if (ticket.playbook_id) {
+      const templateNames = new Set(
+        this.templateStore.templates.get().map((t) => t.name)
+      );
+      const exists = templateNames.has(ticket.playbook_id);
       identityChips.push({
-        label: "playbook",
+        label: "template",
         value: ticket.playbook_id,
         cls: "playbook",
+        onclick: exists
+          ? () => this.navigateToTemplate(ticket.playbook_id!)
+          : undefined,
       });
-    if (ticket.parent_ticket_id)
+    }
+    if (ticket.creator_ticket_id)
       identityChips.push({
         label: "parent",
-        value: ticket.parent_ticket_id.slice(0, 8),
-        onclick: () => this.navigateToTicket(ticket.parent_ticket_id!),
+        value: ticket.creator_ticket_id.slice(0, 8),
+        onclick: () => this.navigateToTicket(ticket.creator_ticket_id!),
       });
     identityChips.push({
       label: "session",
       value: ticket.id.slice(0, 8),
       onclick: () => this.navigateToLog(ticket.id),
     });
-    if (ticket.skills && ticket.skills.length > 0)
+    if (ticket.skills && ticket.skills.length > 0) {
+      const skillDirs = new Set(
+        this.skillStore.skills.get().map((sk) => sk.dirName)
+      );
       for (const s of ticket.skills)
-        identityChips.push({ label: "skill", value: s, cls: "skill" });
+        identityChips.push({
+          label: "skill",
+          value: s,
+          cls: "skill",
+          onclick: skillDirs.has(s) ? () => this.navigateToSkill(s) : undefined,
+        });
+    }
 
     const chatHistory = (ticket.chat_history ?? []).filter(
       (m) => m.text.trim() !== ""
     );
 
     return html`
-      <div class="job-detail ${this.currentFlashTicketId === ticket.id ? "lightning-flash" : ""}">
+      <div
+        class="job-detail ${this.currentFlashTicketId === ticket.id
+          ? "lightning-flash"
+          : ""}"
+      >
         <div class="job-detail-header">
           <div class="job-detail-header-top">
             <h2 class="job-detail-title">${ticket.title || "Ticket"}</h2>
@@ -1007,20 +1056,31 @@ class BeesApp extends SignalWatcher(LitElement) {
               `
             : nothing}
           ${template.skills && template.skills.length > 0
-            ? html`
-                <div class="block">
-                  <div class="block-header">Skills</div>
-                  <div class="block-content">
-                    ${template.skills.map(
-                      (s) => html`
-                        <span class="identity-chip skill" style="margin-right:6px"
+            ? (() => {
+                const skillDirs = new Set(
+                  this.skillStore.skills.get().map((sk) => sk.dirName)
+                );
+                return html`
+                  <div class="block">
+                    <div class="block-header">Skills</div>
+                    <div class="block-content">
+                      ${template.skills.map((s) => {
+                        const exists = skillDirs.has(s);
+                        return html`<span
+                          class="identity-chip skill ${exists
+                            ? "linkable"
+                            : ""}"
+                          style="margin-right:6px"
+                          @click=${exists
+                            ? () => this.navigateToSkill(s)
+                            : nothing}
                           >${s}</span
-                        >
-                      `
-                    )}
+                        >`;
+                      })}
+                    </div>
                   </div>
-                </div>
-              `
+                `;
+              })()
             : nothing}
           ${template.functions && template.functions.length > 0
             ? html`
@@ -1052,6 +1112,34 @@ class BeesApp extends SignalWatcher(LitElement) {
                 </div>
               `
             : nothing}
+          ${(() => {
+                const usingTickets = this.ticketStore.tickets
+                  .get()
+                  .filter(
+                    (t) =>
+                      t.kind !== "coordination" &&
+                      t.playbook_id === template.name
+                  );
+                if (usingTickets.length === 0) return nothing;
+                return html`
+                  <div class="block">
+                    <div class="block-header">
+                      Used by Tickets (${usingTickets.length})
+                    </div>
+                    <div class="block-content">
+                      <div class="backlink-list">
+                        ${usingTickets.map(
+                          (t) => html`<span
+                            class="backlink-chip linkable"
+                            @click=${() => this.navigateToTicket(t.id)}
+                            >${t.title || t.id.slice(0, 8)}</span
+                          >`
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                `;
+              })()}
         </div>
       </div>
     `;
@@ -1101,8 +1189,7 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   private renderSkillDetail() {
     const skill = this.skillStore.selectedSkill.get();
-    if (!skill)
-      return this.renderEmptyMain("Select a skill to view details");
+    if (!skill) return this.renderEmptyMain("Select a skill to view details");
 
     // Build identity chips.
     const chips: Array<{
@@ -1113,7 +1200,6 @@ class BeesApp extends SignalWatcher(LitElement) {
     chips.push({ label: "name", value: skill.name, cls: "skill" });
     if (skill.dirName !== skill.name)
       chips.push({ label: "dir", value: skill.dirName });
-
 
     return html`
       <div class="job-detail">
@@ -1144,6 +1230,21 @@ class BeesApp extends SignalWatcher(LitElement) {
                 </div>
               `
             : nothing}
+          ${skill.allowedTools.length > 0
+            ? html`
+                <div class="block">
+                  <div class="block-header">Allowed Tools</div>
+                  <div class="block-content">
+                    ${skill.allowedTools.map(
+                      (t) =>
+                        html`<span class="tool-badge" style="margin-right:6px"
+                          >${t}</span
+                        >`
+                    )}
+                  </div>
+                </div>
+              `
+            : nothing}
           <div class="block">
             <div class="block-header">Content</div>
             <div class="block-content">
@@ -1155,6 +1256,58 @@ class BeesApp extends SignalWatcher(LitElement) {
               >
             </div>
           </div>
+          ${(() => {
+                const usingTemplates = this.templateStore.templates
+                  .get()
+                  .filter((t) => t.skills?.includes(skill.dirName));
+                if (usingTemplates.length === 0) return nothing;
+                return html`
+                  <div class="block">
+                    <div class="block-header">
+                      Used by Templates (${usingTemplates.length})
+                    </div>
+                    <div class="block-content">
+                      <div class="backlink-list">
+                        ${usingTemplates.map(
+                          (t) => html`<span
+                            class="backlink-chip linkable"
+                            @click=${() => this.navigateToTemplate(t.name)}
+                            >${t.title || t.name}</span
+                          >`
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                `;
+              })()}
+          ${(() => {
+                const usingTickets = this.ticketStore.tickets
+                  .get()
+                  .filter(
+                    (t) =>
+                      t.kind !== "coordination" &&
+                      t.skills?.includes(skill.dirName)
+                  );
+                if (usingTickets.length === 0) return nothing;
+                return html`
+                  <div class="block">
+                    <div class="block-header">
+                      Used by Tickets (${usingTickets.length})
+                    </div>
+                    <div class="block-content">
+                      <div class="backlink-list">
+                        ${usingTickets.map(
+                          (t) => html`<span
+                            class="backlink-chip linkable"
+                            @click=${() => this.navigateToTicket(t.id)}
+                            >${t.title || t.id.slice(0, 8)}</span
+                          >`
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                `;
+              })()}
         </div>
       </div>
     `;
