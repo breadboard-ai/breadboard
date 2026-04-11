@@ -534,6 +534,13 @@ class BeesApp extends SignalWatcher(LitElement) {
             this.skillStore.selectSkill(e.detail.dirName);
             this.syncHash();
           }}
+          @create=${() => {
+            const detail = this.renderRoot.querySelector(
+              "bees-skill-detail"
+            );
+            if (detail)
+              (detail as { startCreating(): void }).startCreating();
+          }}
         ></bees-skill-list>`;
     }
   }

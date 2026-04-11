@@ -7,9 +7,9 @@
 /**
  * Signal-backed reactive store for skills.
  *
- * Reads `hive/skills/{name}/SKILL.md` files via the shared `StateAccess`
- * handle. Parses YAML frontmatter for metadata and exposes the full
- * markdown body for detail rendering.
+ * Reads and writes `hive/skills/{name}/SKILL.md` files via the shared
+ * `StateAccess` handle. Parses YAML frontmatter for metadata and exposes
+ * the full markdown body for detail rendering.
  */
 
 import yaml from "js-yaml";
@@ -134,6 +134,92 @@ class SkillStore {
 
   selectSkill(dirName: string): void {
     this.selectedSkillDir.set(dirName);
+  }
+
+  // ── Write operations ──
+
+  /** Save an existing skill by rewriting its SKILL.md file. */
+  async saveSkill(dirName: string, data: SkillData): Promise<void> {
+    const handle = this.access.handle;
+    if (!handle) throw new Error("No hive directory handle");
+
+    const content = this.#serializeSkill(data);
+    const skillsDir = await handle.getDirectoryHandle("skills");
+    const skillDir = await skillsDir.getDirectoryHandle(dirName);
+    const fileHandle = await skillDir.getFileHandle("SKILL.md");
+    const writable = await fileHandle.createWritable();
+    await writable.write(content);
+    await writable.close();
+
+    await this.scan();
+  }
+
+  /** Create a new skill directory with a SKILL.md file. */
+  async createSkill(dirName: string, data: SkillData): Promise<void> {
+    const handle = this.access.handle;
+    if (!handle) throw new Error("No hive directory handle");
+
+    // Validate: no existing directory with this name.
+    const skillsDir = await handle.getDirectoryHandle("skills");
+    try {
+      await skillsDir.getDirectoryHandle(dirName);
+      throw new Error(`Skill directory "${dirName}" already exists`);
+    } catch (e) {
+      if (e instanceof Error && e.message.includes("already exists")) throw e;
+      // NotFoundError is expected — proceed.
+    }
+
+    const skillDir = await skillsDir.getDirectoryHandle(dirName, {
+      create: true,
+    });
+    const fileHandle = await skillDir.getFileHandle("SKILL.md", {
+      create: true,
+    });
+    const content = this.#serializeSkill(data);
+    const writable = await fileHandle.createWritable();
+    await writable.write(content);
+    await writable.close();
+
+    await this.scan();
+    this.selectedSkillDir.set(dirName);
+  }
+
+  /**
+   * Delete a skill by removing its directory.
+   *
+   * The File System Access API doesn't have recursive directory delete,
+   * so we walk entries and remove them individually.
+   */
+  async deleteSkill(dirName: string): Promise<void> {
+    const handle = this.access.handle;
+    if (!handle) throw new Error("No hive directory handle");
+
+    const skillsDir = await handle.getDirectoryHandle("skills");
+    await skillsDir.removeEntry(dirName, { recursive: true });
+
+    if (this.selectedSkillDir.get() === dirName)
+      this.selectedSkillDir.set(null);
+
+    await this.scan();
+  }
+
+  /** Serialize a SkillData into the `---\nfrontmatter\n---\nbody` format. */
+  #serializeSkill(data: SkillData): string {
+    const fm: Record<string, unknown> = {};
+    fm.name = data.name;
+    if (data.title) fm.title = data.title;
+    if (data.description) fm.description = data.description;
+    if (data.allowedTools.length > 0) fm["allowed-tools"] = data.allowedTools;
+
+    const frontmatter = yaml.dump(fm, {
+      lineWidth: 80,
+      noRefs: true,
+      quotingType: '"',
+      forceQuotes: false,
+    });
+
+    const body = data.body.endsWith("\n") ? data.body : data.body + "\n";
+    return `---\n${frontmatter}---\n\n${body}`;
   }
 
   /** Tear down state so the store can be re-activated against a new hive. */

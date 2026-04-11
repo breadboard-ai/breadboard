@@ -131,17 +131,17 @@ text.
 
 ### Changes
 
-- [ ] `SkillStore.saveSkill()` — serialize frontmatter via `yaml.dump()`,
+- [x] `SkillStore.saveSkill()` — serialize frontmatter via `yaml.dump()`,
   concatenate `---\n{frontmatter}---\n{body}`, write to `SKILL.md`.
-- [ ] `SkillStore.createSkill()` — create directory and `SKILL.md`.
-- [ ] `SkillStore.deleteSkill()` — recursive directory removal.
-- [ ] `<skill-detail>` — view/edit toggle with Edit button.
-- [ ] Wire frontmatter fields: `name`, `title`, `description`.
-- [ ] Wire `allowed-tools` chip input.
-- [ ] Wire body `<textarea>` (monospace).
-- [ ] Dirty indicator + Save/Cancel controls.
-- [ ] Create: "+" button in sidebar → directory name prompt (kebab-case).
-- [ ] Delete: trash icon with confirmation. Warn if referenced by templates.
+- [x] `SkillStore.createSkill()` — create directory and `SKILL.md`.
+- [x] `SkillStore.deleteSkill()` — recursive directory removal.
+- [x] `<skill-detail>` — view/edit toggle with Edit button.
+- [x] Wire frontmatter fields: `name`, `title`, `description`.
+- [x] Wire `allowed-tools` chip input.
+- [x] Wire body `<textarea>` (monospace).
+- [x] Dirty indicator + Save/Cancel controls.
+- [x] Create: "+" button in sidebar → directory name prompt (kebab-case).
+- [x] Delete: trash icon with confirmation. Warn if referenced by templates.
 
 ---
 
