@@ -36,7 +36,7 @@ decomposes it into focused components as a prerequisite for editing.
 
 ---
 
-## Phase 1 — Componentize & Unlock Write Access
+## Phase 1 — Componentize & Unlock Write Access ✅
 
 ### 🎯 Objective
 
@@ -51,42 +51,21 @@ regressions.
 
 ### Changes
 
-#### `StateAccess` — readwrite permission
-
-- `openDirectory()`: change `mode: "read"` → `mode: "readwrite"`.
-- `#checkPermission()`: query/request `"readwrite"` instead of `"read"`.
-- No fallback to read-only. Beekeepers get full access or nothing.
-
-#### Component extraction
-
-Extract from `app.ts` into standalone Lit elements:
-
-| New element | Extracts from | Renders |
-|---|---|---|
-| `<template-list>` | `renderTemplatesList()` | Sidebar list |
-| `<template-detail>` | `renderTemplateDetail()` | Detail panel |
-| `<skill-list>` | `renderSkillsList()` | Sidebar list |
-| `<skill-detail>` | `renderSkillDetail()` | Detail panel |
-| `<ticket-list>` | `renderTicketsList()` + tree | Sidebar list |
-| `<ticket-detail>` | `renderTicketDetail()` + file tree | Detail panel |
-
-Each component receives its store as a **signal property** — the same
-reactive-property pattern used throughout hivetool. `BeesApp` becomes a slim
-orchestrator: tabs, routing, store wiring. No context providers — these are
-shallow compositions, one level deep.
-
-#### Template documentation
-
-The header comments in `TEMPLATES.yaml` are the only documentation for the
-template schema. Move them to:
-
-**`packages/bees/docs/TEMPLATE_SCHEMA.md`** — a human-readable field reference
-for beekeepers. Strip comments from `TEMPLATES.yaml` itself so round-tripping
-via `js-yaml` is lossless.
+- [x] `StateAccess` — `mode: "readwrite"` in `openDirectory()`,
+  `queryPermission()`, `requestPermission()`.
+- [x] Extract `<template-list>`, `<template-detail>` from `app.ts`.
+- [x] Extract `<skill-list>`, `<skill-detail>` from `app.ts`.
+- [x] Extract `<ticket-list>`, `<ticket-detail>` from `app.ts`.
+- [x] Extract `<event-list>`, `<event-detail>` from `app.ts`.
+- [x] Extract `<log-list>` from `app.ts`.
+- [x] Create `shared-styles.ts` with common design tokens.
+- [x] Slim `app.ts` to orchestrator (1432 → ~390 lines).
+- [x] Move YAML comments to `packages/bees/docs/TEMPLATE_SCHEMA.md`.
+- [x] Strip comments from `TEMPLATES.yaml` for lossless round-tripping.
 
 ---
 
-## Phase 2 — Editable Primitives
+## Phase 2 — Editable Primitives ✅
 
 ### 🎯 Objective
 
@@ -95,22 +74,13 @@ any detail panel. Each primitive encapsulates one editing behavior — the same
 architectural pattern as `<bees-truncated-text>` (self-contained, composes via
 properties and events, no knowledge of the domain).
 
-**Observable proof:** Import `<bees-editable-field>` into a scratch page, wire
-it to a signal, type into it, and see the signal update. Same for chip-input,
-textarea, etc. No store or domain coupling.
+### Changes
 
-### Primitives
-
-| Component | Behavior |
-|---|---|
-| `<bees-editable-field>` | Single-line text input. Property: `value` (string signal). Emits `change`. Read-only mode shows plain text; edit mode shows `<input>`. |
-| `<bees-editable-textarea>` | Multi-line text. Monospace option for markdown/code. Auto-grows. |
-| `<bees-chip-input>` | List-of-strings editor. Renders chips with ✕ remove. "Add" input with optional autocomplete suggestions via property. |
-| `<bees-edit-controls>` | Save / Cancel / Delete button bar. Emits `save`, `cancel`, `delete` events. Shows dirty dot, spinner on save, "Saved ✓" flash. |
-
-Each lives in `ui/primitives/` and has its own styles. They are domain-agnostic —
-no imports from data stores. Domain components (`<template-detail>`,
-`<skill-detail>`) compose them and wire them to store signals.
+- [x] `<bees-editable-field>` — single-line text, view/edit toggle.
+- [x] `<bees-editable-textarea>` — multi-line, monospace option, auto-grow.
+- [x] `<bees-chip-input>` — chips with ✕ remove, add input, autocomplete.
+- [x] `<bees-edit-controls>` — save/cancel/delete bar, dirty dot, spinner,
+  saved flash, delete confirmation.
 
 ---
 
@@ -128,40 +98,22 @@ ticket's `objective.md`.
 
 ### Changes
 
-#### `TemplateStore` — write-back
-
-- `saveTemplate(name: string, data: TemplateData)`: Finds the entry in the
-  parsed array, replaces it, serializes the full array via `yaml.dump()`, and
-  writes to `config/TEMPLATES.yaml` using
-  `FileSystemFileHandle.createWritable()`.
-- `createTemplate(data: TemplateData)`: Appends to the array and writes.
-- `deleteTemplate(name: string)`: Removes from the array and writes.
-- After every write, re-scan to sync the signal state.
-
-#### `<template-detail>` — inline editor
-
-Toggle between **view mode** (current read-only rendering) and **edit mode**:
-
-- **Identity fields**: `name` (readonly after creation), `title`, `description`,
-  `model`, `assignee` — text inputs.
-- **Objective**: `<textarea>` with generous height.
-- **List fields** (`functions`, `skills`, `tags`, `tasks`, `autostart`): Chip
-  input — rendered as removable chips with an "add" input. `skills` and `tasks`
-  chips are autocompleted from their respective stores.
-- **`watch_events`**: Array of `{type}` objects — chip input on the `type` field.
-
-Controls:
-- **Edit** button in the header (pencil icon) → switches to edit mode.
-- **Save** / **Cancel** buttons replace Edit while in edit mode.
-- **Dirty indicator**: header shows an unsaved-changes dot.
-- **Validation**: `name` must be non-empty and unique.
-
-#### Create & Delete
-
-- **Create**: "+" button in the template sidebar list. Opens edit mode with empty
-  fields. `name` is editable (required, unique).
-- **Delete**: Trash icon in the detail header, with a confirmation prompt. Not
-  available for templates referenced by active tickets (show a warning instead).
+- [x] `TemplateStore.saveTemplate()` — find entry, replace, serialize via
+  `yaml.dump()`, write to `TEMPLATES.yaml`.
+- [x] `TemplateStore.createTemplate()` — append to array and write.
+- [x] `TemplateStore.deleteTemplate()` — remove from array and write.
+- [x] Re-scan after every write to sync signal state.
+- [x] `<template-detail>` — view/edit toggle with Edit button.
+- [x] Wire identity fields: `name` (readonly after creation), `title`,
+  `description`, `model`, `assignee`.
+- [x] Wire objective `<textarea>`.
+- [x] Wire list fields as chip inputs: `functions`, `skills`, `tags`, `tasks`,
+  `autostart`. Autocomplete `skills`/`tasks` from stores.
+- [x] Wire `watch_events` chip input on the `type` field.
+- [x] Dirty indicator + Save/Cancel controls.
+- [ ] Validation: `name` non-empty and unique.
+- [x] Create: "+" button in sidebar → edit mode with empty fields.
+- [x] Delete: trash icon with confirmation. Warn if referenced by tickets.
 
 ---
 
@@ -179,33 +131,17 @@ text.
 
 ### Changes
 
-#### `SkillStore` — write-back
-
-- `saveSkill(dirName: string, data: SkillData)`: Serializes frontmatter via
-  `yaml.dump()`, concatenates `---\n{frontmatter}---\n{body}`, and writes to
-  `skills/{dirName}/SKILL.md`.
-- `createSkill(dirName: string, data: SkillData)`: Creates the directory and
-  `SKILL.md`.
-- `deleteSkill(dirName: string)`: Removes the directory (recursive). File System
-  Access API doesn't have recursive delete — must walk and remove entries.
-
-#### `<skill-detail>` — inline editor
-
-Same view/edit toggle pattern as templates:
-
-- **Frontmatter fields**: `name`, `title`, `description` — text inputs.
-  `allowed-tools` — chip input.
-- **Body**: `<textarea>` styled as a code editor (monospace, generous height,
-  preserves whitespace).
-
-Controls mirror Phase 2: Edit / Save / Cancel / dirty indicator.
-
-#### Create & Delete
-
-- **Create**: "+" button in the skill sidebar list. Prompts for directory name
-  (kebab-case, validated). Opens edit mode with empty fields.
-- **Delete**: Trash icon, confirmation prompt. Warn if any template references
-  this skill.
+- [ ] `SkillStore.saveSkill()` — serialize frontmatter via `yaml.dump()`,
+  concatenate `---\n{frontmatter}---\n{body}`, write to `SKILL.md`.
+- [ ] `SkillStore.createSkill()` — create directory and `SKILL.md`.
+- [ ] `SkillStore.deleteSkill()` — recursive directory removal.
+- [ ] `<skill-detail>` — view/edit toggle with Edit button.
+- [ ] Wire frontmatter fields: `name`, `title`, `description`.
+- [ ] Wire `allowed-tools` chip input.
+- [ ] Wire body `<textarea>` (monospace).
+- [ ] Dirty indicator + Save/Cancel controls.
+- [ ] Create: "+" button in sidebar → directory name prompt (kebab-case).
+- [ ] Delete: trash icon with confirmation. Warn if referenced by templates.
 
 ---
 
@@ -222,14 +158,11 @@ via browser back — the list updates correctly.
 
 ### Changes
 
-- **Keyboard shortcuts**: Cmd+S to save, Escape to cancel edit mode.
-- **Navigation guard**: `beforeunload` event and in-app tab-switch guard when
-  dirty.
-- **Optimistic UI**: Save button shows a spinner, then a brief "Saved ✓" flash.
-- **Error handling**: If the write fails (permission revoked, disk full), show an
-  inline error banner — don't silently swallow.
-- **Undo**: Not a built-in undo system, but the textarea/inputs support
-  browser-native Cmd+Z within the edit session.
+- [ ] Cmd+S to save, Escape to cancel edit mode.
+- [ ] `beforeunload` guard + in-app tab-switch guard when dirty.
+- [ ] Save button spinner → "Saved ✓" flash (already in `<bees-edit-controls>`).
+- [ ] Error banner on write failure (permission revoked, disk full).
+- [ ] Browser-native Cmd+Z within edit session (no custom undo system).
 
 ---
 

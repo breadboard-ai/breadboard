@@ -19,7 +19,6 @@ fulfill, persisted as a directory on disk.
 | `model` | string | no | Override the default model (e.g., `"gemini-3.1-pro-preview"`). |
 | `watch_events` | object[] | no | Subscribe to inter-agent coordination events. Each entry has a `type` field (e.g., `{type: "digest_ready"}`). |
 | `tasks` | string[] | no | Allowlist of template names this agent can delegate to via `tasks_create_task`. |
-| `assignee` | string | no | Initial assignee: `"user"` or `"agent"` (default). Rarely needed — only for templates that start in a suspended-for-user state. |
 | `autostart` | string[] | no | Template names to stamp as child tickets automatically when this template is run. Each entry creates a subagent ticket linked to the parent. |
 
 ## Interpolation
