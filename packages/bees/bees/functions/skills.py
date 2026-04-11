@@ -48,9 +48,10 @@ class SkillInfo:
     vfs_path: str
     content: str
     dir_name: str
+    allowed_tools: list[str]
 
 
-def _parse_frontmatter(text: str) -> dict[str, str]:
+def _parse_frontmatter(text: str) -> dict[str, Any]:
     """Extract YAML frontmatter key-value pairs from markdown text."""
     match = _FRONTMATTER_RE.match(text)
     if not match:
@@ -58,7 +59,7 @@ def _parse_frontmatter(text: str) -> dict[str, str]:
     data = yaml.safe_load(match.group(1))
     if not isinstance(data, dict):
         return {}
-    return {k: str(v) for k, v in data.items()}
+    return data
 
 
 def scan_skills(
@@ -105,13 +106,23 @@ def scan_skills(
         vfs_name = f"{vfs_prefix}/{dir_name}/SKILL.md"
         vfs_path = vfs_name
 
+        # Parse allowed-tools: accepts YAML list or space-separated string.
+        raw_tools = meta.get("allowed-tools", [])
+        if isinstance(raw_tools, str):
+            allowed_tools = raw_tools.split()
+        elif isinstance(raw_tools, list):
+            allowed_tools = [str(t) for t in raw_tools]
+        else:
+            allowed_tools = []
+
         skill = SkillInfo(
-            name=meta.get("name", dir_name),
-            title=meta.get("title", dir_name),
-            description=meta.get("description", ""),
+            name=str(meta.get("name", dir_name)),
+            title=str(meta.get("title", dir_name)),
+            description=str(meta.get("description", "")),
             vfs_path=vfs_path,
             content=content,
             dir_name=dir_name,
+            allowed_tools=allowed_tools,
         )
         skills.append(skill)
 
