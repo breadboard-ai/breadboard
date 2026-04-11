@@ -11,19 +11,19 @@
     doing any work yourself, because that might delay your ability to respond to
     the user promptly. Instead, start new tasks for anything that's more complex
     than a simple reply.
-
-  skills: ["persona"]
-  autostart: ["knowledge"]
-  # "opie" — hooks on_startup checks for this tag to avoid double-booting.
-  # "chat" — enables persistent chat history across page reloads.
-  tags: ["opie", "chat"]
-  # No system.* — Opie never terminates. It lives as an infinite chat agent,
-  # suspending on chat_request_user_input between turns.
-  functions: ["simple-files.*", "tasks.*"]
-  # Signals arrive as context_updates inside chat_request_user_input responses
-  # (not via chat_await_context_update) because Opie is always suspended
-  # waiting for the *user*, not for system signals.
-  tasks: ["journey-manager", "knowledge"]
+  skills:
+    - persona
+  autostart:
+    - knowledge
+  tags:
+    - opie
+    - chat
+  functions:
+    - simple-files.*
+    - tasks.*
+  tasks:
+    - journey-manager
+    - knowledge
 
 - name: journey-manager
   title: Journey Manager
@@ -94,12 +94,14 @@
 
     - Each subagent working on a task gets a clean LLM context. Be explicit in
     your task assignments. They know nothing about prior conversation.
-
   functions:
     - simple-files.*
     - tasks.*
-  skills: ["interview-user"]
-  tags: ["journey", "chat"]
+  skills:
+    - interview-user
+  tags:
+    - journey
+    - chat
   tasks:
     - researcher
     - ui-generator
@@ -204,14 +206,15 @@
 
     Once you're done with this round, await the update for your next round of
     work.
-
   watch_events:
     - type: digest_ready
-  functions: ["chat.await_context_update", "simple-files.*"]
+  functions:
+    - chat.await_context_update
+    - simple-files.*
 
 - name: researcher
   title: Researcher
-  description: >
+  description: |
     Deeply researches a given topic
   objective: >
     Your job is to deeply research the following topic:
@@ -226,11 +229,15 @@
     is more appropriate for the request.
 
     Return the relative path of the file with research.
-  functions: ["system.*", "sandbox.*", "simple-files.*", "generate.text"]
+  functions:
+    - system.*
+    - sandbox.*
+    - simple-files.*
+    - generate.text
 
 - name: journey-designer
   title: Journey Designer
-  description: >
+  description: |
     Produces an XState-backed journey.json blueprint
   objective: >
     Your job is to produce a journey.json file describing the XState machine for
@@ -249,12 +256,14 @@
     3. Save the result as journey.json.
 
     4. Return the path to the blueprint.
-  functions: ["system.*"]
-  skills: ["app-architect"]
+  functions:
+    - system.*
+  skills:
+    - app-architect
 
 - name: ui-generator
   title: UI Generator
-  description: >
+  description: |
     Builds a React app from an XState specification
   objective: >
     You are a UI generation worker. Your job is to build a React application
@@ -284,9 +293,10 @@
     `navigateTo('{{system.ticket_id}}')`.
 
     Return a brief message summarizing what was done.
-  skills: ["ui-generator"]
-  tags: ["bundle"]
-  # Use a more capable model for code generation.
+  skills:
+    - ui-generator
+  tags:
+    - bundle
   model: gemini-3.1-pro-preview
 
 - name: digest-tile-writer
@@ -313,5 +323,7 @@
     # Context
 
     {{system.context}}
-
-  functions: ["system.*", "events.*", "simple-files.*"]
+  functions:
+    - system.*
+    - events.*
+    - simple-files.*

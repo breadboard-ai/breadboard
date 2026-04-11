@@ -518,6 +518,14 @@ class BeesApp extends SignalWatcher(LitElement) {
             this.templateStore.selectTemplate(e.detail.name);
             this.syncHash();
           }}
+          @create=${() => {
+            // Tell the detail panel to enter create mode.
+            const detail = this.renderRoot.querySelector(
+              "bees-template-detail"
+            );
+            if (detail)
+              (detail as { startCreating(): void }).startCreating();
+          }}
         ></bees-template-list>`;
       case "skills":
         return html`<bees-skill-list
