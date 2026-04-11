@@ -1066,5 +1066,35 @@ export const styles = css`
     color: #93c5fd;
     border: 1px solid #1e3a5c;
   }
+
+  /* ── Backlink chips ── */
+  .backlink-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .backlink-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  .backlink-chip.linkable {
+    cursor: pointer;
+  }
+
+  .backlink-chip.linkable:hover {
+    background: #253347;
+    border-color: #3b82f6;
+    color: #93c5fd;
+  }
 `;
 

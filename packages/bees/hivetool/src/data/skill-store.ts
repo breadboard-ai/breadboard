@@ -12,6 +12,7 @@
  * markdown body for detail rendering.
  */
 
+import yaml from "js-yaml";
 import { Signal } from "signal-polyfill";
 import type { StateAccess } from "./state-access.js";
 
@@ -28,43 +29,28 @@ interface SkillData {
   title?: string;
   /** Frontmatter `description` field. */
   description?: string;
+  /** Frontmatter `allowed-tools` list. */
+  allowedTools: string[];
   /** Full markdown body (everything after the frontmatter). */
   body: string;
 }
 
 /** Matches YAML frontmatter delimited by --- lines. */
-const FRONTMATTER_RE = /\A---\s*\n(.*?)\n---\s*\n/s;
+const FRONTMATTER_RE = /^---\s*\n(.*?)\n---\s*\n/s;
 
-/**
- * Minimal frontmatter parser — extracts key: value pairs from a
- * `---`-delimited YAML block at the start of a markdown file.
- * Avoids pulling in js-yaml for this simple structure.
- */
+/** Parse YAML frontmatter from a markdown file using js-yaml. */
 function parseFrontmatter(text: string): {
-  meta: Record<string, string>;
+  meta: Record<string, unknown>;
   body: string;
 } {
   const match = text.match(FRONTMATTER_RE);
   if (!match) return { meta: {}, body: text };
 
-  const yamlBlock = match[1];
-  const meta: Record<string, string> = {};
-  // Simple line-by-line key: value extraction. Handles multi-line
-  // values that are indented continuations.
-  let currentKey = "";
-  let currentValue = "";
-  for (const line of yamlBlock.split("\n")) {
-    const kvMatch = line.match(/^(\w[\w-]*):\s*(.*)/);
-    if (kvMatch) {
-      if (currentKey) meta[currentKey] = currentValue.trim();
-      currentKey = kvMatch[1];
-      currentValue = kvMatch[2];
-    } else if (currentKey && /^\s+/.test(line)) {
-      // Continuation line.
-      currentValue += " " + line.trim();
-    }
-  }
-  if (currentKey) meta[currentKey] = currentValue.trim();
+  const parsed = yaml.load(match[1]);
+  const meta =
+    parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
 
   const body = text.slice(match[0].length);
   return { meta, body };
@@ -114,11 +100,22 @@ class SkillStore {
           const text = await file.text();
           const { meta, body } = parseFrontmatter(text);
 
+          // Parse allowed-tools: accepts YAML list or space-separated string.
+          const rawTools = meta["allowed-tools"];
+          let allowedTools: string[] = [];
+          if (Array.isArray(rawTools)) {
+            allowedTools = rawTools.map(String);
+          } else if (typeof rawTools === "string") {
+            allowedTools = rawTools.split(/\s+/).filter(Boolean);
+          }
+
           entries.push({
             dirName: name,
-            name: meta.name || name,
-            title: meta.title,
-            description: meta.description,
+            name: String(meta.name || name),
+            title: meta.title != null ? String(meta.title) : undefined,
+            description:
+              meta.description != null ? String(meta.description) : undefined,
+            allowedTools,
             body,
           });
         } catch {
