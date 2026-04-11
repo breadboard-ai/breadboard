@@ -3,6 +3,8 @@ name: interview-user
 title: Interview User
 description:
   Read it to understand the style and workflow for interviewing a user.
+allowed-tools:
+  - chat.*
 ---
 
 Conversation style:

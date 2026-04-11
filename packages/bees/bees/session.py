@@ -398,8 +398,15 @@ def load_gemini_key() -> str:
 
 
 
-def _filter_skills(allowed_skills: list[str] | None) -> tuple[str, dict[str, str]]:
-    """Filter skills based on allowed_skills and return listing + files."""
+def _filter_skills(allowed_skills: list[str] | None) -> tuple[str, dict[str, str], list[str]]:
+    """Filter skills based on allowed_skills and return listing, files, and tool globs.
+
+    Returns:
+        A ``(listing, files, skill_tools)`` tuple:
+        - ``listing``: Formatted markdown for ``{{available_skills}}``.
+        - ``files``: Dict of ``{vfs_name: content}`` for seeding.
+        - ``skill_tools``: Merged ``allowed-tools`` from all selected skills.
+    """
     skills_to_use = allowed_skills if allowed_skills is not None else []
 
     if "*" in skills_to_use:
@@ -408,10 +415,12 @@ def _filter_skills(allowed_skills: list[str] | None) -> tuple[str, dict[str, str
         filtered_skills = [s for s in _SKILLS_LIST if s.name in skills_to_use]
 
     lines = []
+    skill_tools: list[str] = []
     for s in filtered_skills:
         lines.append(f"- [{s.title}]({s.vfs_path})")
         if s.description:
             lines.append(f"  {s.description}")
+        skill_tools.extend(s.allowed_tools)
     session_listing = "\n".join(lines)
 
     session_files = {}
@@ -419,7 +428,7 @@ def _filter_skills(allowed_skills: list[str] | None) -> tuple[str, dict[str, str
         if any(f"skills/{s.dir_name}/" in k for s in filtered_skills):
             session_files[k] = v
 
-    return session_listing, session_files
+    return session_listing, session_files, skill_tools
 
 
 # ---------------------------------------------------------------------------
@@ -468,7 +477,14 @@ async def run_session(
     out_path = OUT_DIR / f"{log_prefix}-{date_stamp}.log.json"
 
 
-    session_listing, session_files = _filter_skills(allowed_skills)
+    session_listing, session_files, skill_tools = _filter_skills(allowed_skills)
+
+    # Union skill-declared tools into the template's function filter.
+    # Also inject skills.* automatically when any skills are selected —
+    # the agent needs it to read skill instructions.
+    if function_filter is not None and allowed_skills:
+        skill_tools.append("skills.*")
+        function_filter = list(dict.fromkeys(function_filter + skill_tools))
 
     # Create disk-backed file system.
     work_dir = fs_dir or (ticket_dir / "filesystem" if ticket_dir else Path(tempfile.mkdtemp(prefix="bees-fs-")))
@@ -652,7 +668,7 @@ async def resume_session(
         except Exception:
             pass
 
-    session_listing, _ = _filter_skills(allowed_skills)
+    session_listing, _, _ = _filter_skills(allowed_skills)
 
     # Create disk-backed file system — files are already on disk from
     # the previous run, so no seeding needed.

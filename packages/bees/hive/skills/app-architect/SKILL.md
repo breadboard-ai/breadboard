@@ -5,6 +5,8 @@ description:
   Decompose a user objective into a segmented app. Each segment is a multi-view
   mini-app. Segments are separated by LLM decision points where the orchestrator
   decides what comes next.
+allowed-tools:
+  - simple-files.*
 ---
 
 # App Architect

@@ -4,6 +4,11 @@ title: UI Component Generation
 description:
   Generate multi-file React component bundles with design tokens from natural
   language descriptions.
+allowed-tools:
+  - sandbox.*
+  - simple-files.*
+  - events.*
+  - system.*
 ---
 
 # UI Component Generation Skill
@@ -25,7 +30,11 @@ component bundles from natural language descriptions.
    `IndexedDB`, or any Web Storage APIs. The iframe environment may not have
    storage access due to origin restrictions. All state lives in React component
    state or is passed via props and the SDK.
-4. **Respect the host theme.** We use a light theme. Do not set `background: black`, `background: #000`, `color: #fff`, or any dark-theme values. All backgrounds must use `var(--cg-color-surface*)` tokens and all text must use `var(--cg-color-on-surface*)` tokens. The tokens will natively map to their light theme variants.
+4. **Respect the host theme.** We use a light theme. Do not set
+   `background: black`, `background: #000`, `color: #fff`, or any dark-theme
+   values. All backgrounds must use `var(--cg-color-surface*)` tokens and all
+   text must use `var(--cg-color-on-surface*)` tokens. The tokens will natively
+   map to their light theme variants.
 
 ## Responsive Layout
 
@@ -110,9 +119,9 @@ code in your response.**
 
 ## Component Library
 
-Before generating sub-components, check `library/` for existing components
-from previous runs. Each subdirectory is a previous run, containing its
-`App.jsx` and `components/*.jsx`.
+Before generating sub-components, check `library/` for existing components from
+previous runs. Each subdirectory is a previous run, containing its `App.jsx` and
+`components/*.jsx`.
 
 **Reuse workflow:**
 
@@ -338,13 +347,16 @@ export default function GroceryList() {
   if (loading) return <div>Loading…</div>;
   return (
     <ul>
-      {items.map((item, i) => <li key={i}>{item}</li>)}
+      {items.map((item, i) => (
+        <li key={i}>{item}</li>
+      ))}
     </ul>
   );
 }
 ```
 
 **Rules for `readFile`:**
+
 - Returns `Promise<string | null>`. `null` means the file was not found.
 - Paths are workspace-relative (e.g. `"analysis/results.json"`,
   `"diet_research/notes.md"`).
