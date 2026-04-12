@@ -87,14 +87,10 @@ class TemplateStore {
   // ── Write operations ──
 
   /** Save an existing template by replacing its entry and writing to disk. */
-  async saveTemplate(
-    originalName: string,
-    data: TemplateData
-  ): Promise<void> {
+  async saveTemplate(originalName: string, data: TemplateData): Promise<void> {
     const current = this.templates.get();
     const index = current.findIndex((t) => t.name === originalName);
-    if (index === -1)
-      throw new Error(`Template "${originalName}" not found`);
+    if (index === -1) throw new Error(`Template "${originalName}" not found`);
 
     const updated = [...current];
     updated[index] = data;
@@ -147,7 +143,7 @@ class TemplateStore {
     });
 
     const header =
-      "# Ticket templates — see docs/TEMPLATE_SCHEMA.md for the field reference.\n\n";
+      "# Ticket templates — see docs/template_schema.md for the field reference.\n\n";
     const raw = yaml.dump(cleaned, {
       lineWidth: 80,
       noRefs: true,

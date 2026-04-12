@@ -31,8 +31,8 @@ requests `mode: "read"`. Editing requires `mode: "readwrite"`.
 
 `app.ts` is a 1432-line Lit element that renders all five tabs (tickets, events,
 sessions, templates, skills) inline. Adding form controls, validation, dirty
-state, and save logic directly into this file would be unsustainable. The project
-decomposes it into focused components as a prerequisite for editing.
+state, and save logic directly into this file would be unsustainable. The
+project decomposes it into focused components as a prerequisite for editing.
 
 ---
 
@@ -41,9 +41,9 @@ decomposes it into focused components as a prerequisite for editing.
 ### 🎯 Objective
 
 Open hivetool, pick `hive/`, and see the same UI as today — but the browser
-prompts for **read-write** permission, and each tab's detail panel is rendered by
-its own Lit element (`<template-detail>`, `<skill-detail>`, `<ticket-detail>`,
-etc.) instead of inline methods on `BeesApp`.
+prompts for **read-write** permission, and each tab's detail panel is rendered
+by its own Lit element (`<template-detail>`, `<skill-detail>`,
+`<ticket-detail>`, etc.) instead of inline methods on `BeesApp`.
 
 **Observable proof:** The permission prompt says "edit files" (not just "view
 files"). Inspecting the DOM shows the new element boundaries. No behavioral
@@ -52,7 +52,7 @@ regressions.
 ### Changes
 
 - [x] `StateAccess` — `mode: "readwrite"` in `openDirectory()`,
-  `queryPermission()`, `requestPermission()`.
+      `queryPermission()`, `requestPermission()`.
 - [x] Extract `<template-list>`, `<template-detail>` from `app.ts`.
 - [x] Extract `<skill-list>`, `<skill-detail>` from `app.ts`.
 - [x] Extract `<ticket-list>`, `<ticket-detail>` from `app.ts`.
@@ -69,8 +69,8 @@ regressions.
 
 ### 🎯 Objective
 
-A library of small, reusable edit components exists and can be composed into
-any detail panel. Each primitive encapsulates one editing behavior — the same
+A library of small, reusable edit components exists and can be composed into any
+detail panel. Each primitive encapsulates one editing behavior — the same
 architectural pattern as `<bees-truncated-text>` (self-contained, composes via
 properties and events, no knowledge of the domain).
 
@@ -79,8 +79,8 @@ properties and events, no knowledge of the domain).
 - [x] `<bees-editable-field>` — single-line text, view/edit toggle.
 - [x] `<bees-editable-textarea>` — multi-line, monospace option, auto-grow.
 - [x] `<bees-chip-input>` — chips with ✕ remove, add input, autocomplete.
-- [x] `<bees-edit-controls>` — save/cancel/delete bar, dirty dot, spinner,
-  saved flash, delete confirmation.
+- [x] `<bees-edit-controls>` — save/cancel/delete bar, dirty dot, spinner, saved
+      flash, delete confirmation.
 
 ---
 
@@ -99,16 +99,16 @@ ticket's `objective.md`.
 ### Changes
 
 - [x] `TemplateStore.saveTemplate()` — find entry, replace, serialize via
-  `yaml.dump()`, write to `TEMPLATES.yaml`.
+      `yaml.dump()`, write to `TEMPLATES.yaml`.
 - [x] `TemplateStore.createTemplate()` — append to array and write.
 - [x] `TemplateStore.deleteTemplate()` — remove from array and write.
 - [x] Re-scan after every write to sync signal state.
 - [x] `<template-detail>` — view/edit toggle with Edit button.
 - [x] Wire identity fields: `name` (readonly after creation), `title`,
-  `description`, `model`, `assignee`.
+      `description`, `model`, `assignee`.
 - [x] Wire objective `<textarea>`.
 - [x] Wire list fields as chip inputs: `functions`, `skills`, `tags`, `tasks`,
-  `autostart`. Autocomplete `skills`/`tasks` from stores.
+      `autostart`. Autocomplete `skills`/`tasks` from stores.
 - [x] Wire `watch_events` chip input on the `type` field.
 - [x] Dirty indicator + Save/Cancel controls.
 - [ ] Validation: `name` non-empty and unique.
@@ -132,7 +132,7 @@ text.
 ### Changes
 
 - [x] `SkillStore.saveSkill()` — serialize frontmatter via `yaml.dump()`,
-  concatenate `---\n{frontmatter}---\n{body}`, write to `SKILL.md`.
+      concatenate `---\n{frontmatter}---\n{body}`, write to `SKILL.md`.
 - [x] `SkillStore.createSkill()` — create directory and `SKILL.md`.
 - [x] `SkillStore.deleteSkill()` — recursive directory removal.
 - [x] `<skill-detail>` — view/edit toggle with Edit button.
@@ -205,7 +205,7 @@ hivetool/src/
     shared-styles.ts         ← [NEW] extracted common styles
 
 packages/bees/docs/
-  TEMPLATE_SCHEMA.md         ← [NEW] field reference (from YAML comments)
+  template_schema.md         ← [NEW] field reference (from YAML comments)
 
 hive/config/
   TEMPLATES.yaml             ← strip header comments

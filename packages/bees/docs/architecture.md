@@ -350,6 +350,7 @@ A template is a blueprint for a task. Each entry defines:
 | Field          | Purpose                                                                    |
 | -------------- | -------------------------------------------------------------------------- |
 | `name`         | Unique identifier, used for delegation                                     |
+| `description`  | Description of the template                                                |
 | `objective`    | The agent's prompt (supports `{{system.context}}`, `{{system.ticket_id}}`) |
 | `functions`    | Filter globs for available tools                                           |
 | `skills`       | Skill directories to load                                                  |
