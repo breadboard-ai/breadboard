@@ -533,7 +533,7 @@ class BeesApp extends SignalWatcher(LitElement) {
         <div class="top-bar-tabs">
           ${(
             [
-              ["tickets", "Tickets", flashTicketId],
+              ["tickets", "Tasks", flashTicketId],
               ["events", "Events", null],
               ["logs", "Sessions", flashLogId],
               ["templates", "Templates", null],

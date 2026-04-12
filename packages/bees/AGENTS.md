@@ -14,7 +14,7 @@ Bees is a Python library for building agent swarm systems. It has two layers:
 Applications (server, web shell, CLI) are built on top of these layers.
 
 For the full architecture reference, see
-[docs/architecture/index.md](docs/architecture/index.md).
+[docs/architecture.md](docs/architecture.md).
 
 ## Directory Structure
 
@@ -48,7 +48,7 @@ packages/bees/
   assignee, dependencies, and outcome. Agents work on tasks; tasks form trees.
 - **Templates** (`TEMPLATES.yaml`) are blueprints for tasks. They define what
   tools, skills, and delegation powers an agent gets. See
-  [docs/TEMPLATE_SCHEMA.md](docs/TEMPLATE_SCHEMA.md).
+  [docs/template_schema.md](docs/template_schema.md).
 - **Skills** are markdown instruction documents in `hive/skills/`. They use
   [Agent Skills](https://agentskills.io/home) format with `allowed-tools`
   frontmatter.
@@ -79,7 +79,7 @@ whatever the surrounding file uses until the codemod lands.
 
 ## Deeper References
 
-| Topic           | Document                                                 |
-| --------------- | -------------------------------------------------------- |
-| Architecture    | [docs/architecture/index.md](docs/architecture/index.md) |
-| Template schema | [docs/TEMPLATE_SCHEMA.md](docs/TEMPLATE_SCHEMA.md)       |
+| Topic           | Document                                           |
+| --------------- | -------------------------------------------------- |
+| Architecture    | [docs/architecture.md](docs/architecture.md)       |
+| Template schema | [docs/template_schema.md](docs/template_schema.md) |

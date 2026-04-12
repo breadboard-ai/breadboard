@@ -1,4 +1,4 @@
-# Ticket templates — see docs/TEMPLATE_SCHEMA.md for the field reference.
+# Ticket templates — see docs/template_schema.md for the field reference.
 
 - name: opie
   title: Opie

@@ -22,10 +22,10 @@ built on top of it.
 
 ## Phase 1: The Organizing Document
 
-🎯 **Objective**: A contributor reads `docs/architecture/layers.md` and can
+🎯 **Objective**: A contributor reads `docs/architecture/index.md` and can
 identify which file to open for any given change.
 
-- [x] Write `docs/architecture/layers.md` — the three-layer model, per-layer
+- [x] Write `docs/architecture/index.md` — the three-layer model, per-layer
       module map, extensibility seams, and cross-cutting concerns (task
       hierarchy, shared workspaces, context delivery).
 - [x] Remove or replace `docs/architecture/manager-agent-pattern.md` (obsolete).
@@ -37,18 +37,21 @@ identify which file to open for any given change.
 🎯 **Objective**: A contributor can trace a task from creation through execution
 to completion using the docs alone.
 
-- [ ] `docs/session.md` — The session concept, the agent loop implementation
+- [x] `docs/session.md` — The session concept, the agent loop implementation
       (`opal_backend`), how `opal_backend` provides the full function inventory
       and bees filters it, function group anatomy (declarations + handlers +
       factory pattern), context window lifecycle (including future compaction),
       suspend/resume/pause mechanics.
-- [ ] `docs/scheduler.md` — Task lifecycle states, dependency promotion,
+  - [x] Gaps section — code changes needed to match `index.md`.
+- [x] `docs/scheduler.md` — Task lifecycle states, dependency promotion,
       coordination routing, cycle waves, context delivery (three paths:
       mid-stream, immediate, buffered), `SubagentScope` and the task hierarchy
       (unbounded nesting depth by design).
-- [ ] `docs/hivetool.md` — The built-in hive inspector: what it shows, how to
+  - [x] Gaps section — code changes needed to match `index.md`.
+- [x] `docs/hivetool.md` — The built-in hive inspector: what it shows, how to
       extend it. Distinct from the web shell — hivetool is part of the
       framework; the web shell is an application built on bees.
+  - [x] Gaps section — code changes needed to match `index.md`.
 
 ---
 
@@ -76,9 +79,9 @@ the docs.
       `config/SYSTEM.yaml`, `config/TEMPLATES.yaml`, `config/hooks/`, `skills/`,
       `tickets/`, `logs/`. How the pieces compose at startup. The declarative
       boot sequence.
-- [ ] Replace `hive/playbooks/GUIDE.md` with a redirect or tombstone pointing to
-      the new docs.
-- [ ] Migrate `docs/TEMPLATE_SCHEMA.md` content into the appropriate new doc
+- [ ] Remove `hive/playbooks/GUIDE.md` after ensuring there aren't any useful
+      bits to transfer over to other docs.
+- [ ] Migrate `docs/template_schema.md` content into the appropriate new doc
       (likely Phase 3's writing-templates guide).
 
 ---
