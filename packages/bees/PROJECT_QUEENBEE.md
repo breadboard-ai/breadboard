@@ -55,71 +55,79 @@ to completion using the docs alone.
 
 ---
 
-## Phase 3: Extension Guides
+## Phase 3: Design Patterns & Mental Models
 
-🎯 **Objective**: A contributor can add a new function group, template, or skill
-by following the guide without reading existing implementations.
+🎯 **Objective**: A template author understands not just the syntax, but the
+_design reasoning_ behind agent composition — the load-bearing mental models
+that are currently unwritten.
 
-- [ ] `docs/guides/writing-functions.md` — Declarations, handlers, factory
-      pattern, filter globs, registration. Worked example.
-- [ ] `docs/guides/writing-templates.md` — TEMPLATES.yaml schema, objective
-      interpolation, function/skill scoping, autostart, hooks, the tasks
-      allowlist. Worked example.
-- [ ] `docs/guides/writing-skills.md` — Skill directory structure, SKILL.md
-      frontmatter, `allowed-tools`, VFS mounting. Worked example.
+Mechanical extension tasks (adding a function group, writing a skill) are
+inferable from existing code. What's missing is the design knowledge: the
+grammar of capability composition, the delegation patterns, the coordination
+model, the context flow. This phase surfaces that knowledge.
+
+### Step 1: Stability map (`docs/flux.md`)
+
+Before surfacing design patterns, establish what's solid and what's moving.
+For each major subsystem, classify as **solid** (stable API, think before
+changing), **settling** (works but patterns still forming), or **fluid**
+(actively changing, expect breakage). Sources: the Gaps sections in
+`session.md` and `scheduler.md`, plus architect input.
+
+- [x] Write `docs/flux.md` — the stability map.
+
+### Step 2: Interview
+
+Structured conversation to discern the architect's unwritten mental models.
+Candidate topics (to be refined during the interview):
+
+- **What failed** — approaches tried and abandoned, and why. The code shows what
+  survived, not what didn't. Dead ends are design knowledge.
+- **What makes a good agent** — what separates a template that works well from
+  one that doesn't? What are the antipatterns? Quality heuristics can't be
+  inferred from framework code.
+- **The economics of delegation** — when should an agent do the work itself vs.
+  delegate? The framework supports both but doesn't encode the judgment.
+- **Context budget** — how to think about what goes in an objective vs. a skill
+  vs. what the agent discovers on its own. The template schema supports all
+  three, but the reasoning about when to use which is unwritten.
+- **The consumption API shape** — `flux.md` establishes it's fluid, but what's
+  the shape you're reaching toward? What should the boundary between bees and
+  its applications look like?
+- **The hive as a product concept** — why a directory on disk? Why not a
+  database, or an API? What's the design philosophy, and where does it break
+  down?
+
+### Step 3: Write `docs/patterns.md`
+
+Distill the interview into a design guide. Not a YAML reference (that's
+`template_schema.md`), but the reasoning that precedes the YAML.
+
+- [x] Conduct interview — surface and name the mental models.
+- [x] Write `docs/patterns.md` — the design guide.
+- [x] Absorb `docs/template_schema.md` content (field reference, interpolation,
+      globs) as an appendix or companion reference card.
+- [x] Delete `hive/playbooks/GUIDE.md` — the old guide is fully superseded.
 
 ---
 
-## Phase 4: The Hive
+## Phase 4: Future Direction
 
-🎯 **Objective**: An operator can configure a new hive from scratch using only
-the docs.
+🎯 **Objective**: A contributor understands where the framework is heading and
+why — the forward arrow that `architecture.md` doesn't cover.
 
-- [ ] `docs/hive.md` — The hive directory as a configuration surface:
-      `config/SYSTEM.yaml`, `config/TEMPLATES.yaml`, `config/hooks/`, `skills/`,
-      `tickets/`, `logs/`. How the pieces compose at startup. The declarative
-      boot sequence.
-- [ ] Remove `hive/playbooks/GUIDE.md` after ensuring there aren't any useful
-      bits to transfer over to other docs.
-- [ ] Migrate `docs/template_schema.md` content into the appropriate new doc
-      (likely Phase 3's writing-templates guide).
+`architecture.md` captures the vision of how bees works today. This phase
+documents where it's going: planned capabilities, known limitations with
+intended solutions, and the trajectory of the framework's evolution. Authored
+collaboratively.
 
----
 
-## Phase 5: Naming Migration
-
-🎯 **Objective**: Code and docs use consistent terminology — "task" not
-"ticket", "template" not "playbook".
-
-The naming migration is already underway conceptually. This phase makes it
-concrete.
-
-- [ ] Document the migration rationale and mapping in
-      `docs/migrations/naming.md`:
-  - `ticket` → `task`
-  - `playbook` → `template`
-  - `playbook_id` → `template_id`
-  - `playbook_run_id` → `run_id`
-  - `PLAYBOOK.yaml` → (already gone, replaced by `TEMPLATES.yaml`)
-- [ ] Codemod to rename `Ticket` → `Task`, `ticket_id` → `task_id`, etc. across
-      the Python codebase (with backward-compat for on-disk format).
-- [ ] Update hivetool, web shell, and server endpoints to use new terminology.
-
----
-
-## Phase 6: Vision & Direction
-
-🎯 **Objective**: A contributor understands not just how the system works today,
-but where it's heading and why.
-
-- [ ] `docs/vision.md` — The architect's view: design principles, the trajectory
-      of the framework, planned capabilities, and the reasoning behind key
-      architectural decisions. Key topics:
-  - Bees as an installable library — authors build their own surfaces.
-  - Context window compaction as a future agent loop concern.
-  - The hive metaphor and its evolution. This document is authored
-    collaboratively — it captures knowledge that only exists in the architect's
-    head.
+- [ ] `docs/future.md` — planned changes, intended direction, and the reasoning
+      behind upcoming architectural decisions. Key topics:
+  - Context window compaction — the session layer's future responsibility.
+  - Event dispatch redesign — replacing coordination tickets.
+  - Bees as an installable library — extracting server + web shell.
+  - The naming migration (ticket → task, playbook → template).
 
 ---
 
@@ -138,3 +146,8 @@ but where it's heading and why.
    reference application built on top of bees. Future direction: bees becomes an
    installable library; authors build their own surfaces. The server + web shell
    will be extracted from the framework.
+5. **Extension guides are inferable** — Mechanical tasks (adding a function
+   group, writing a skill, adding a template field) are learnable from existing
+   code. The docs should focus on the design reasoning that precedes
+   implementation, not the implementation recipe.
+

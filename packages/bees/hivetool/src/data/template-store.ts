@@ -143,7 +143,7 @@ class TemplateStore {
     });
 
     const header =
-      "# Ticket templates — see docs/template_schema.md for the field reference.\n\n";
+      "# Ticket templates — see docs/patterns.md for the field reference.\n\n";
     const raw = yaml.dump(cleaned, {
       lineWidth: 80,
       noRefs: true,
