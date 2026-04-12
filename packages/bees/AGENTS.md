@@ -48,7 +48,7 @@ packages/bees/
   assignee, dependencies, and outcome. Agents work on tasks; tasks form trees.
 - **Templates** (`TEMPLATES.yaml`) are blueprints for tasks. They define what
   tools, skills, and delegation powers an agent gets. See
-  [docs/template_schema.md](docs/template_schema.md).
+  [docs/patterns.md](docs/patterns.md#appendix-template-schema-reference).
 - **Skills** are markdown instruction documents in `hive/skills/`. They use
   [Agent Skills](https://agentskills.io/home) format with `allowed-tools`
   frontmatter.
@@ -79,7 +79,12 @@ whatever the surrounding file uses until the codemod lands.
 
 ## Deeper References
 
-| Topic           | Document                                           |
-| --------------- | -------------------------------------------------- |
-| Architecture    | [docs/architecture.md](docs/architecture.md)       |
-| Template schema | [docs/template_schema.md](docs/template_schema.md) |
+| Topic            | Document                                             |
+| ---------------- | ---------------------------------------------------- |
+| Architecture     | [docs/architecture.md](docs/architecture.md)         |
+| Session layer    | [docs/session.md](docs/session.md)                   |
+| Scheduler layer  | [docs/scheduler.md](docs/scheduler.md)               |
+| Hivetool         | [docs/hivetool.md](docs/hivetool.md)                 |
+| Design patterns  | [docs/patterns.md](docs/patterns.md)                 |
+| Stability map    | [docs/flux.md](docs/flux.md)                         |
+| Interview log    | [docs/interview-log.md](docs/interview-log.md)       |
