@@ -19,12 +19,12 @@ from bees import TaskStore
 GLOBAL_STORE = None
 
 @pytest.fixture(autouse=True)
-def _temp_dirs(tmp_path, monkeypatch):
+def _temp_dirs(tmp_path):
     """Redirect ticket and template storage to temp directories."""
     global GLOBAL_STORE
     tickets_dir = tmp_path / "tickets"
     tickets_dir.mkdir()
-    GLOBAL_STORE = TaskStore(tickets_dir)
+    GLOBAL_STORE = TaskStore(tmp_path)
 
     config_dir = tmp_path / "config"
     config_dir.mkdir()
@@ -32,9 +32,6 @@ def _temp_dirs(tmp_path, monkeypatch):
     hooks_dir = config_dir / "hooks"
     hooks_dir.mkdir()
 
-    monkeypatch.setattr("bees.playbook.CONFIG_DIR", config_dir)
-    monkeypatch.setattr("bees.playbook.TEMPLATES_PATH", templates_path)
-    monkeypatch.setattr("bees.playbook.HOOKS_DIR", hooks_dir)
     yield tickets_dir
 
 
@@ -208,6 +205,7 @@ async def test_tasks_create_task_sync_wait_timeout(write_template, monkeypatch):
     })
 
     mock_scheduler = MagicMock()
+    mock_scheduler.store = GLOBAL_STORE
     mock_scheduler.wait_for_ticket = AsyncMock(return_value="running")
 
     caller = GLOBAL_STORE.create("I'm the caller")

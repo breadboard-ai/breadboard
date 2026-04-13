@@ -29,10 +29,7 @@ from bees.ticket import Ticket
 
 logger = logging.getLogger(__name__)
 
-CONFIG_DIR = HIVE_DIR / "config"
-TEMPLATES_PATH = CONFIG_DIR / "TEMPLATES.yaml"
-SYSTEM_PATH = CONFIG_DIR / "SYSTEM.yaml"
-HOOKS_DIR = CONFIG_DIR / "hooks"
+
 
 
 class PlaybookAborted(Exception):
@@ -44,11 +41,12 @@ class PlaybookAborted(Exception):
 # ---------------------------------------------------------------------------
 
 
-def _load_templates() -> list[dict[str, Any]]:
+def _load_templates(config_dir: Path) -> list[dict[str, Any]]:
     """Parse TEMPLATES.yaml and return the list of template dicts."""
-    if not TEMPLATES_PATH.exists():
+    templates_path = config_dir / "TEMPLATES.yaml"
+    if not templates_path.exists():
         return []
-    with open(TEMPLATES_PATH) as f:
+    with open(templates_path) as f:
         data = yaml.safe_load(f)
     if not isinstance(data, list):
         logger.warning("TEMPLATES.yaml must be a list; got %s", type(data).__name__)
@@ -56,17 +54,17 @@ def _load_templates() -> list[dict[str, Any]]:
     return data
 
 
-def list_playbooks() -> list[str]:
+def list_playbooks(config_dir: Path) -> list[str]:
     """Return the names of all available templates."""
-    return [t["name"] for t in _load_templates() if "name" in t]
+    return [t["name"] for t in _load_templates(config_dir) if "name" in t]
 
 
-def load_playbook(name: str) -> dict[str, Any]:
+def load_playbook(name: str, config_dir: Path) -> dict[str, Any]:
     """Load a template by name.
 
     Returns the template dict directly (flat — no ``steps`` wrapper).
     """
-    for t in _load_templates():
+    for t in _load_templates(config_dir):
         if t.get("name") == name:
             return t
     raise FileNotFoundError(f"Template not found: {name}")
@@ -74,12 +72,12 @@ def load_playbook(name: str) -> dict[str, Any]:
 
 
 
-def _load_hooks(name: str) -> ModuleType | None:
+def _load_hooks(name: str, hooks_dir: Path) -> ModuleType | None:
     """Import a template's hooks module if it exists.
 
     Looks for ``hive/config/hooks/{name}.py``.
     """
-    hooks_path = HOOKS_DIR / f"{name}.py"
+    hooks_path = hooks_dir / f"{name}.py"
     if not hooks_path.exists():
         return None
 
@@ -119,10 +117,14 @@ def run_playbook(
 
     Returns the created ticket.
     """
-    data = load_playbook(name)
+    hive_dir = store.hive_dir
+    config_dir = hive_dir / "config"
+    hooks_dir = config_dir / "hooks"
+
+    data = load_playbook(name, config_dir)
 
     # Run on_run_playbook hook if present.
-    hooks = _load_hooks(name)
+    hooks = _load_hooks(name, hooks_dir)
     if hooks and hasattr(hooks, "on_run_playbook"):
         context = hooks.on_run_playbook(context)
         if context is None:
@@ -221,15 +223,16 @@ def stamp_child_ticket(
     return child
 
 
-def load_system_config() -> dict[str, Any]:
+def load_system_config(config_dir: Path) -> dict[str, Any]:
     """Load the hive system configuration from ``SYSTEM.yaml``.
 
     Returns a dict with keys like ``title``, ``description``, and ``root``.
     Returns an empty dict if the file doesn't exist.
     """
-    if not SYSTEM_PATH.exists():
+    system_path = config_dir / "SYSTEM.yaml"
+    if not system_path.exists():
         return {}
-    with open(SYSTEM_PATH) as f:
+    with open(system_path) as f:
         data = yaml.safe_load(f)
     if not isinstance(data, dict):
         logger.warning("SYSTEM.yaml must be a mapping; got %s", type(data).__name__)
@@ -250,7 +253,10 @@ def run_ticket_done_hooks(ticket: Ticket) -> None:
     if not playbook_id:
         return
 
-    hooks = _load_hooks(playbook_id)
+    hive_dir = ticket.dir.parent.parent
+    hooks_dir = hive_dir / "config" / "hooks"
+
+    hooks = _load_hooks(playbook_id, hooks_dir)
     if hooks and hasattr(hooks, "on_ticket_done"):
         try:
             hooks.on_ticket_done(ticket)
@@ -278,7 +284,10 @@ def run_event_hooks(
     if not playbook_id:
         return payload
 
-    hooks = _load_hooks(playbook_id)
+    hive_dir = ticket.dir.parent.parent
+    hooks_dir = hive_dir / "config" / "hooks"
+
+    hooks = _load_hooks(playbook_id, hooks_dir)
     if not hooks or not hasattr(hooks, "on_event"):
         return payload
 

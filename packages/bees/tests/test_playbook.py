@@ -32,23 +32,17 @@ def stamp_child_ticket(template_name: str, *, parent_ticket, slug, **kwargs):
     return _real_stamp_child_ticket(template_name, parent_ticket=parent_ticket, slug=slug, store=GLOBAL_STORE, **kwargs)
 
 @pytest.fixture(autouse=True)
-def _temp_dirs(tmp_path, monkeypatch):
+def _temp_dirs(tmp_path):
     """Redirect ticket and template storage to temp directories."""
     global GLOBAL_STORE
     tickets_dir = tmp_path / "tickets"
     tickets_dir.mkdir()
-    GLOBAL_STORE = TaskStore(tickets_dir)
+    GLOBAL_STORE = TaskStore(tmp_path)
 
     config_dir = tmp_path / "config"
     config_dir.mkdir()
-    templates_path = config_dir / "TEMPLATES.yaml"
     hooks_dir = config_dir / "hooks"
     hooks_dir.mkdir()
-
-    monkeypatch.setattr("bees.playbook.CONFIG_DIR", config_dir)
-    monkeypatch.setattr("bees.playbook.TEMPLATES_PATH", templates_path)
-    monkeypatch.setattr("bees.playbook.SYSTEM_PATH", config_dir / "SYSTEM.yaml")
-    monkeypatch.setattr("bees.playbook.HOOKS_DIR", hooks_dir)
     yield
 
 
@@ -339,12 +333,12 @@ class TestLoadSystemConfig:
             "root": "opie",
         }))
 
-        config = load_system_config()
+        config = load_system_config(tmp_path / "config")
         assert config["title"] == "Opal"
         assert config["root"] == "opie"
 
-    def test_returns_empty_when_missing(self):
-        config = load_system_config()
+    def test_returns_empty_when_missing(self, tmp_path):
+        config = load_system_config(tmp_path / "config")
         assert config == {}
 
 

@@ -50,10 +50,13 @@ from bees.config import HIVE_DIR, PACKAGE_DIR
 from bees.disk_file_system import DiskFileSystem
 from bees.subagent_scope import SubagentScope
 
-# Scan skills once at import time.
-_SKILLS_LISTING, _SKILLS_FILES, _SKILLS_LIST = scan_skills(HIVE_DIR)
+_SKILLS_CACHE = {}
 
-OUT_DIR = HIVE_DIR / "logs"
+
+def _get_skills(hive_dir: Path):
+    if hive_dir not in _SKILLS_CACHE:
+        _SKILLS_CACHE[hive_dir] = scan_skills(hive_dir)
+    return _SKILLS_CACHE[hive_dir]
 
 CHAT_LOG_FILENAME = "chat_log.json"
 
@@ -389,7 +392,9 @@ def extract_files(
 
 
 
-def _filter_skills(allowed_skills: list[str] | None) -> tuple[str, dict[str, str], list[str]]:
+def _filter_skills(
+    allowed_skills: list[str] | None, hive_dir: Path
+) -> tuple[str, dict[str, str], list[str]]:
     """Filter skills based on allowed_skills and return listing, files, and tool globs.
 
     Returns:
@@ -398,12 +403,14 @@ def _filter_skills(allowed_skills: list[str] | None) -> tuple[str, dict[str, str
         - ``files``: Dict of ``{vfs_name: content}`` for seeding.
         - ``skill_tools``: Merged ``allowed-tools`` from all selected skills.
     """
+    _, skills_files, skills_list = _get_skills(hive_dir)
+
     skills_to_use = allowed_skills if allowed_skills is not None else []
 
     if "*" in skills_to_use:
-        filtered_skills = _SKILLS_LIST
+        filtered_skills = skills_list
     else:
-        filtered_skills = [s for s in _SKILLS_LIST if s.name in skills_to_use]
+        filtered_skills = [s for s in skills_list if s.name in skills_to_use]
 
     lines = []
     skill_tools: list[str] = []
@@ -415,7 +422,7 @@ def _filter_skills(allowed_skills: list[str] | None) -> tuple[str, dict[str, str
     session_listing = "\n".join(lines)
 
     session_files = {}
-    for k, v in _SKILLS_FILES.items():
+    for k, v in skills_files.items():
         if any(f"skills/{s.dir_name}/" in k for s in filtered_skills):
             session_files[k] = v
 
@@ -446,6 +453,7 @@ async def run_session(
     scope: SubagentScope | None = None,
     scheduler: Any | None = None,
     context_queue: Any | None = None,
+    hive_dir: Path | None = None,
 ) -> SessionResult:
     """Run a single agent session and return the result.
 
@@ -455,6 +463,14 @@ async def run_session(
     If ``ticket_dir`` is provided, session state is persisted on
     suspend so it can be resumed later.
     """
+    if hive_dir is None:
+        if ticket_dir:
+            hive_dir = ticket_dir.parent.parent
+        else:
+            from bees.config import HIVE_DIR
+
+            hive_dir = HIVE_DIR
+
     session_store = InMemorySessionStore()
     interaction_store = InMemoryInteractionStore()
     subscribers = Subscribers()
@@ -465,10 +481,12 @@ async def run_session(
 
     date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     log_prefix = f"bees-{ticket_id[:8]}" if ticket_id else "bees-session"
-    out_path = OUT_DIR / f"{log_prefix}-{date_stamp}.log.json"
+    out_dir = hive_dir / "logs"
+    out_path = out_dir / f"{log_prefix}-{date_stamp}.log.json"
 
-
-    session_listing, session_files, skill_tools = _filter_skills(allowed_skills)
+    session_listing, session_files, skill_tools = _filter_skills(
+        allowed_skills, hive_dir
+    )
 
     # Union skill-declared tools into the template's function filter.
     # Also inject skills.* automatically when any skills are selected —
@@ -622,12 +640,16 @@ async def resume_session(
     scope: SubagentScope | None = None,
     scheduler: Any | None = None,
     context_queue: Any | None = None,
+    hive_dir: Path | None = None,
 ) -> SessionResult:
     """Resume a suspended session from saved state on disk.
 
     Loads session state from ``ticket_dir``, reconstructs the session
     infrastructure, and calls the sessions API ``resume_session()``.
     """
+    if hive_dir is None:
+        hive_dir = ticket_dir.parent.parent
+
     context = load_session_state(ticket_dir)
     if context is None:
         return SessionResult(
@@ -643,7 +665,8 @@ async def resume_session(
 
     date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     log_prefix = f"bees-{ticket_id[:8]}" if ticket_id else "bees-session"
-    out_path = OUT_DIR / f"{log_prefix}-{date_stamp}.log.json"
+    out_dir = hive_dir / "logs"
+    out_path = out_dir / f"{log_prefix}-{date_stamp}.log.json"
 
     interaction_state = InteractionState.from_dict(context["interaction_state"])
 
@@ -661,7 +684,7 @@ async def resume_session(
         except Exception:
             pass
 
-    session_listing, _, _ = _filter_skills(allowed_skills)
+    session_listing, _, _ = _filter_skills(allowed_skills, hive_dir)
 
     # Create disk-backed file system — files are already on disk from
     # the previous run, so no seeding needed.

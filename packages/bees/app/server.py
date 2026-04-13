@@ -34,14 +34,14 @@ from sse_starlette.sse import EventSourceResponse
 
 from bees.scheduler import Scheduler, SchedulerHooks
 from app.auth import load_gemini_key
+from app.config import load_hive_dir
 from bees import Task, TaskStore
-from bees.config import HIVE_DIR
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
 logger = logging.getLogger(__name__)
 
-TICKETS_DIR = HIVE_DIR / "tickets"
-task_store = TaskStore(TICKETS_DIR)
+hive_dir = load_hive_dir()
+task_store = TaskStore(hive_dir)
 
 
 # ---------------------------------------------------------------------------

@@ -19,9 +19,9 @@ import sys
 from typing import Any
 
 from bees import Task, TaskStore
-from bees.config import HIVE_DIR
+from app.config import load_hive_dir
 
-task_store = TaskStore(HIVE_DIR / "tickets")
+task_store = TaskStore(load_hive_dir())
 
 
 def _format_prompt(suspend_event: dict[str, Any] | None) -> str:
