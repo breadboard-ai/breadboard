@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { OpalBackendClient, OpalBackendRequestOptions } from "@breadboard-ai/types/opal-backend-client.js";
+import type {
+  OpalBackendClient,
+  OpalBackendRequestOptions,
+} from "@breadboard-ai/types/opal-backend-client.js";
 import { OPAL_BACKEND_API_PREFIX } from "@breadboard-ai/types";
 
 export { HttpBackendClient };
@@ -26,6 +29,7 @@ class HttpBackendClient implements OpalBackendClient {
   ): Promise<Response> => {
     const { method, body, query, signal } = options;
     let url = `${OPAL_BACKEND_API_PREFIX}/v1beta1/${methodName}`;
+    console.log(`[backend-client] fetching ${url}`);
     if (query) {
       const params = new URLSearchParams(query);
       url += `?${params.toString()}`;

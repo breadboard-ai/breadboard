@@ -9,12 +9,14 @@ import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
 import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
 
 export function createGoogleDriveBoardServer(
   signInInfo: SignInInfo,
   googleDriveClient: GoogleDriveClient,
   findUserOpalFolder: OpalShellHostProtocol["findUserOpalFolder"],
-  listUserOpals: OpalShellHostProtocol["listUserOpals"]
+  listUserOpals: OpalShellHostProtocol["listUserOpals"],
+  backendClientPromise: Promise<OpalBackendClient>
 ): GoogleDriveBoardServer {
   const googleDrivePublishPermissions =
     CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];
@@ -27,6 +29,7 @@ export function createGoogleDriveBoardServer(
     googleDrivePublishPermissions,
     userFolderName,
     findUserOpalFolder,
-    listUserOpals
+    listUserOpals,
+    backendClientPromise
   );
 }

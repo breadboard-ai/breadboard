@@ -160,7 +160,8 @@ export function services(
       signinAdapter,
       googleDriveClient,
       config.shellHost.findUserOpalFolder,
-      config.shellHost.listUserOpals
+      config.shellHost.listUserOpals,
+      config.shellHost.getOpalBackendClient()
     );
     const loader = createLoader(googleDriveBoardServer);
 

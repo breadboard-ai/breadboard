@@ -6,6 +6,8 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
+import * as Comlink from "comlink";
+
 import type { BreadboardMessage } from "@breadboard-ai/types/embedder.js";
 import {
   OAUTH_POPUP_MESSAGE_TYPE,
@@ -336,7 +338,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
 
   #opalBackendClient = new HttpBackendClient(this.fetchWithCreds);
   getOpalBackendClient = async (): Promise<OpalBackendClient> => {
-    return this.#opalBackendClient;
+    return Comlink.proxy(this.#opalBackendClient);
   };
 
   signIn = async (scopes: string[] = []): Promise<SignInResult> => {

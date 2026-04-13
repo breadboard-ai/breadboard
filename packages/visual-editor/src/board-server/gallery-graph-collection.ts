@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
 import type {
   GraphProviderItem,
   ImmutableGraphCollection,
@@ -15,6 +16,7 @@ import { readProperties } from "@breadboard-ai/utils/google-drive/utils.js";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { parseUrl } from "../ui/navigation/urls.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
 
 export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   readonly #graphs = new SignalMap<string, GraphProviderItem>();
@@ -48,7 +50,8 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
 
   constructor(
     private readonly signInInfo: SignInInfo,
-    private readonly fetchWithCreds: typeof globalThis.fetch
+    private readonly fetchWithCreds: typeof globalThis.fetch,
+    private readonly backendClientPromise: Promise<OpalBackendClient>
   ) {
     void this.#initialize();
   }
@@ -116,9 +119,17 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
       return undefined;
     }
 
-    const locationResponse = await this.fetchWithCreds(
-      new URL(`${OPAL_BACKEND_API_PREFIX}/v1beta1/getLocation`)
-    );
+    let locationResponse: Response;
+    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
+      const backendClient = await this.backendClientPromise;
+      locationResponse = await backendClient.sendHttpRequest("getLocation", {
+        method: "GET",
+      });
+    } else {
+      locationResponse = await this.fetchWithCreds(
+        new URL(`${OPAL_BACKEND_API_PREFIX}/v1beta1/getLocation`)
+      );
+    }
     if (!locationResponse.ok) {
       console.error(
         `HTTP ${locationResponse.status} error getting user location`
