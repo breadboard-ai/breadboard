@@ -3,7 +3,7 @@
 
 import unittest
 from bees.ticket import Ticket, TicketMetadata
-from bees.server import should_include_ticket
+from app.server import should_include_ticket
 
 
 class TestQueryParser(unittest.TestCase):
