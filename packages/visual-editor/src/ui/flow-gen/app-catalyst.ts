@@ -5,7 +5,9 @@
  */
 
 import { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
+import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 import { FlowGenLLMContentPart } from "./flow-generator.js";
 
 export interface AppCatalystChatRequest {
@@ -99,10 +101,16 @@ export interface SetEmailPreferencesRequest {
 export class AppCatalystApiClient {
   readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #apiBaseUrl: string;
+  readonly #backendClientPromise: Promise<OpalBackendClient>;
 
-  constructor(fetchWithCreds: typeof globalThis.fetch, apiBaseUrl: string) {
+  constructor(
+    fetchWithCreds: typeof globalThis.fetch,
+    apiBaseUrl: string,
+    backendClientPromise: Promise<OpalBackendClient>
+  ) {
     this.#fetchWithCreds = fetchWithCreds;
     this.#apiBaseUrl = apiBaseUrl;
+    this.#backendClientPromise = backendClientPromise;
   }
 
   async getG1SubscriptionStatus(
@@ -157,9 +165,7 @@ export class AppCatalystApiClient {
     return result;
   }
 
-  async *generateOpalStream(
-    intent: string
-  ): AsyncGenerator<LLMContent> {
+  async *generateOpalStream(intent: string): AsyncGenerator<LLMContent> {
     const request: AppCatalystChatRequestV2 = {
       intent,
       appOptions: {
@@ -220,11 +226,19 @@ export class AppCatalystApiClient {
 
   async checkTos(): Promise<CheckAppAccessResponse> {
     try {
-      const result = (await (
-        await this.#fetchWithCreds(
+      let response: Response;
+      if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
+        const backendClient = await this.#backendClientPromise;
+        response = await backendClient.sendHttpRequest("checkAppAccess", {
+          method: "GET",
+        });
+      } else {
+        response = await this.#fetchWithCreds(
           new URL(`v1beta1/checkAppAccess`, this.#apiBaseUrl)
-        )
-      ).json()) as CheckAppAccessResponse;
+        );
+      }
+
+      const result = (await response.json()) as CheckAppAccessResponse;
 
       // TODO: Remove this override.
       if (result.accessStatus !== "ACCESS_STATUS_OK") {
