@@ -20,8 +20,8 @@ import type {
   FindUserOpalFolderResult,
   GetDriveCollectorFileResult,
   GuestConfiguration,
-  InvokeOpalBackendOptions,
   ListUserOpalsResult,
+  OpalBackendClient,
   OpalShellHostProtocol,
   PickDriveFilesOptions,
   PickDriveFilesResult,
@@ -48,7 +48,7 @@ import { getTopLevelOrigin } from "./embed-helpers.js";
 import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { checkFetchAllowlist } from "./fetch-allowlist.js";
-import { GOOGLE_DRIVE_FILES_API_PREFIX, OPAL_BACKEND_API_PREFIX } from "@breadboard-ai/types";
+import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types";
 import {
   findUserOpalFolder,
   getDriveCollectorFile,
@@ -56,6 +56,7 @@ import {
 } from "./google-drive-host-operations.js";
 import { createFetchWithCreds } from "@breadboard-ai/utils/fetch-with-creds.js";
 import { GTagEventSender } from "./gtag-event-sender.js";
+import { HttpBackendClient } from "./http-backend-client.js";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -333,22 +334,9 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     return fetch(input, { ...init, headers });
   };
 
-  invokeOpalBackend = async (
-    methodName: string,
-    options: InvokeOpalBackendOptions
-  ): Promise<Response> => {
-    const { method, body, query, signal } = options;
-    let url = `${OPAL_BACKEND_API_PREFIX}/v1beta1/${methodName}`;
-    if (query) {
-      const params = new URLSearchParams(query);
-      url += `?${params.toString()}`;
-    }
-    const init: RequestInit = { method, signal };
-    if (body !== undefined) {
-      init.headers = { "Content-Type": "application/json" };
-      init.body = JSON.stringify(body);
-    }
-    return this.fetchWithCreds(url, init);
+  #opalBackendClient = new HttpBackendClient(this.fetchWithCreds);
+  getOpalBackendClient = async (): Promise<OpalBackendClient> => {
+    return this.#opalBackendClient;
   };
 
   signIn = async (scopes: string[] = []): Promise<SignInResult> => {

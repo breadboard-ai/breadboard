@@ -26,6 +26,7 @@ import {
   ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { getDriveCollectorFile } from "../src/ui/utils/google-drive-host-operations.js";
+import { HttpBackendClient } from "../src/ui/utils/http-backend-client.js";
 import { getAuthenticatedClient } from "./authenticate.js";
 import { type ConsentController } from "../src/sca/controller/subcontrollers/global/global.js";
 import { AgentService } from "../src/a2/agent/agent-service.js";
@@ -329,9 +330,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
         throw new Error("Function not implemented.");
       },
       fetchWithCreds: globalThis.fetch,
-      invokeOpalBackend: function (): Promise<Response> {
-        throw new Error("Function not implemented.");
-      },
+      getOpalBackendClient: async () => new HttpBackendClient(globalThis.fetch),
       signIn: function (): Promise<SignInResult> {
         throw new Error("Function not implemented.");
       },
