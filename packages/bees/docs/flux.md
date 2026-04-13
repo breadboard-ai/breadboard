@@ -103,7 +103,7 @@ abstractions, and incomplete contracts.
 This is the biggest open question in bees: **how do applications build on this
 framework?**
 
-Today, the answer is ad-hoc. `bees/server.py` wires `SchedulerHooks` to SSE
+Today, the answer is ad-hoc. `app/server.py` wires `SchedulerHooks` to SSE
 broadcasting and exposes REST endpoints. The web shell consumes those endpoints.
 But this isn't a designed API — it's the first thing that worked. The boundary
 between "bees the library" and "the application built on bees" is blurry:

@@ -21,14 +21,16 @@ For the full architecture reference, see
 
 ```
 packages/bees/
-  bees/                  # Python source — the library
+  bees/                  # Python source — the core library
     session.py           # Session layer: agent loop, context, suspend/resume
     scheduler.py         # Scheduler layer: task lifecycle, coordination
-    server.py            # Reference FastAPI server (will be extracted)
     playbook.py          # Template loading, task creation from templates
     ticket.py            # Task data model (on-disk "ticket" format)
     functions/           # Function group implementations
     declarations/        # Function declarations (JSON schemas)
+  app/                   # Reference application and CLI tools
+    server.py            # FastAPI server (REST API + SSE)
+    cli.py               # Main CLI entry point
   hive/                  # Runtime configuration — the "hive" directory
     config/
       SYSTEM.yaml        # Boot config: title, root template
