@@ -431,16 +431,14 @@ entire web app, complete with backend and frontend.
 
 The current codebase includes a reference application:
 
-- **`bees/server.py`** — A FastAPI server that projects scheduler state as REST
+- **`app/server.py`** — A FastAPI server that projects scheduler state as REST
   endpoints and SSE events. Every endpoint is a thin view: `GET /tickets`
   queries the task list, `POST /tickets/{id}/respond` writes a response file and
   triggers the scheduler.
 - **`web/`** — A chat-based web shell that connects to the server via SSE.
   Renders agent conversations and iframe-hosted React apps.
 
-This reference application will be extracted from the bees package in the
-future. Bees will become an installable library; application authors will build
-their own frontends and backends on top of the scheduler.
+This reference application has been extracted from the core `bees` package into `app/`. Bees is designed to be an installable library; application authors will build their own frontends and backends on top of the scheduler.
 
 ## Hivetool
 

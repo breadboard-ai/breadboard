@@ -28,7 +28,7 @@ The server is the glue layer that projects the scheduler's model as REST
 endpoints and SSE events. The web shell consumes those projections and renders
 them as a chat UI with an embedded app stage.
 
-## The Server (`bees/server.py`)
+## The Server (`app/server.py`)
 
 The server has three responsibilities:
 
@@ -71,7 +71,7 @@ API.
 #### Querying tasks
 
 Tasks can be filtered by metadata fields. The reference app's `/status` endpoint
-exposes this, but the filtering logic (`should_include_ticket` in `server.py`)
+exposes this, but the filtering logic (`should_include_ticket` in `app/server.py`)
 operates on the task model directly.
 
 | Filter   | Example                 | Effect                        |

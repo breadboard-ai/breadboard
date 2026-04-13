@@ -113,7 +113,7 @@ Applications wire into the scheduler via `SchedulerHooks`:
 | `on_events_broadcast` | Agent broadcasts an event mid-session.                       |
 | `on_cycle_complete`   | No more work (total cycles count).                           |
 
-The reference application (`bees/server.py`) wires these hooks to SSE
+The reference application (`app/server.py`) wires these hooks to SSE
 broadcasting.
 
 ## Context delivery
