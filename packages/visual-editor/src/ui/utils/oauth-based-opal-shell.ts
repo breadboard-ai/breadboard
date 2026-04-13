@@ -6,6 +6,8 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
+import * as Comlink from "comlink";
+
 import type { BreadboardMessage } from "@breadboard-ai/types/embedder.js";
 import {
   OAUTH_POPUP_MESSAGE_TYPE,
@@ -46,7 +48,6 @@ import {
 import { TOKEN_TYPE } from "../types/types.js";
 import { getTopLevelOrigin } from "./embed-helpers.js";
 import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
-import * as Comlink from "comlink";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { checkFetchAllowlist } from "./fetch-allowlist.js";
 import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types";
