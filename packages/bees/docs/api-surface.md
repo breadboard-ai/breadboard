@@ -18,11 +18,11 @@ The application layer (`app/`) consumes `bees` primarily for:
 
 - [x] TODO: Consider introducing a `TaskStore` (Repository pattern) to encapsulate task CRUD operations (`create_ticket`, `list_tickets`, `load_ticket`), preparing for non-filesystem storage backends.
 - `Ticket`: The task data model. Used in `app/server.py` and `app/respond.py`.
-  - [ ] TODO: Alias to `Task` when exposing in the public API.
+  - [x] TODO: Alias to `Task` when exposing in the public API. (DONE)
 - `create_ticket(...)`: Used in `app/add_ticket.py`. (Note: `app/server.py` now uses `scheduler.create_task()`).
 - `list_tickets(...)`: Used in `app/respond.py` and `app/server.py` to list tasks.
 - `load_ticket(id: str)`: Used in `app/edit_tags.py` and `app/server.py` to load a specific task.
-- [ ] TODO: `app/respond.py` directly manipulates ticket files (writing `response.json`). We need a proper API for updating task state (e.g., responding to a task) to fix this abstraction leak.
+- [x] TODO: `app/respond.py` directly manipulates ticket files (writing `response.json`). We need a proper API for updating task state (e.g., responding to a task) to fix this abstraction leak.
 
 ### `bees.scheduler`
 
@@ -35,6 +35,7 @@ The application layer (`app/`) consumes `bees` primarily for:
 ## Completed Refactors
 
 - [x] Introduce `TaskStore` to encapsulate task CRUD operations (DONE)
+- [x] Fix abstraction leak in `app/respond.py` by adding `TaskStore.respond` (DONE)
 - [x] Move `boot_root_template` to `Scheduler` (DONE)
 - [x] Remove `run_playbook` from public API and CLI (DONE)
 - [x] Move key loading to the app layer (DONE)

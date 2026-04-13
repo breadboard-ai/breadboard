@@ -14,7 +14,10 @@ from __future__ import annotations
 import argparse
 import sys
 
-from bees.ticket import load_ticket
+from bees import TaskStore
+from bees.config import HIVE_DIR
+
+task_store = TaskStore(HIVE_DIR / "tickets")
 
 
 def main() -> None:
@@ -35,7 +38,7 @@ def main() -> None:
     
     args = parser.parse_args()
 
-    ticket = load_ticket(args.ticket_id)
+    ticket = task_store.get(args.ticket_id)
     if not ticket:
         print(f"Error: Ticket {args.ticket_id} not found", file=sys.stderr)
         sys.exit(1)

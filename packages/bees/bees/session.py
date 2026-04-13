@@ -508,6 +508,7 @@ async def run_session(
                 deliver_to_parent=deliver_to_parent,
                 ticket_id=ticket_id,
                 scope=scope,
+                scheduler=scheduler,
             ),
             get_tasks_function_group_factory(
                 scope=scope,
@@ -518,6 +519,7 @@ async def run_session(
             get_chat_function_group_factory(
                 on_chat_entry=_make_chat_log_writer(ticket_dir) if ticket_dir else None,
                 workspace_root_id=workspace_root_id,
+                scheduler=scheduler,
             ),
         ],
         function_filter=function_filter,
@@ -692,6 +694,7 @@ async def resume_session(
                 deliver_to_parent=deliver_to_parent,
                 ticket_id=ticket_id,
                 scope=scope,
+                scheduler=scheduler,
             ),
             get_tasks_function_group_factory(
                 scope=scope,
@@ -702,6 +705,7 @@ async def resume_session(
             get_chat_function_group_factory(
                 on_chat_entry=_make_chat_log_writer(ticket_dir),
                 workspace_root_id=workspace_root_id,
+                scheduler=scheduler,
             ),
         ],
         file_system=disk_fs,
@@ -722,8 +726,12 @@ async def resume_session(
         all_updates.extend(response_updates)
 
     if ticket_id:
-        from bees.ticket import load_ticket
-        own_ticket = load_ticket(ticket_id)
+        if scheduler:
+            own_ticket = scheduler.store.get(ticket_id)
+        else:
+            from bees.ticket import get_default_store
+            own_ticket = get_default_store().get(ticket_id)
+            
         if own_ticket and own_ticket.metadata.pending_context_updates:
             all_updates.extend(own_ticket.metadata.pending_context_updates)
             own_ticket.metadata.pending_context_updates = []

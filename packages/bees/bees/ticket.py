@@ -21,7 +21,7 @@ from typing import Any, Literal
 
 from bees.config import HIVE_DIR
 
-TICKETS_DIR = HIVE_DIR / "tickets"
+
 
 TicketStatus = Literal[
     "available", "blocked", "running", "suspended", "paused",
@@ -116,11 +116,8 @@ class Ticket:
 
     id: str
     objective: str
+    dir: Path
     metadata: TicketMetadata = field(default_factory=TicketMetadata)
-
-    @property
-    def dir(self) -> Path:
-        return TICKETS_DIR / self.id
 
     @property
     def fs_dir(self) -> Path:
@@ -133,7 +130,7 @@ class Ticket:
         parent = self.metadata.parent_ticket_id
         
         if parent:
-            base = TICKETS_DIR / parent / "filesystem"
+            base = self.dir.parent / parent / "filesystem"
         else:
             base = self.dir / "filesystem"
             
@@ -181,6 +178,7 @@ class TaskStore:
         return Ticket(
             id=ticket_id,
             objective=objective_path.read_text(),
+            dir=ticket_dir,
             metadata=TicketMetadata.from_dict(
                 json.loads(metadata_path.read_text())
             ),
@@ -220,6 +218,22 @@ class TaskStore:
             json.dumps(ticket.metadata.to_dict(), indent=2, ensure_ascii=False)
             + "\n"
         )
+
+    def respond(self, ticket_id: str, response: dict[str, Any]) -> Ticket:
+        """Save user response to a suspended ticket."""
+        ticket = self.get(ticket_id)
+        if not ticket:
+            raise ValueError(f"Ticket {ticket_id} not found")
+        
+        ticket_dir = self.tickets_dir / ticket_id
+        response_path = ticket_dir / "response.json"
+        response_path.write_text(
+            json.dumps(response, indent=2, ensure_ascii=False) + "\n"
+        )
+        
+        ticket.metadata.assignee = "agent"
+        self.save_metadata(ticket)
+        return ticket
 
     def create(
         self,
@@ -265,9 +279,11 @@ class TaskStore:
                     resolved_deps.append(dep_ref)
             status = "blocked"
 
+        ticket_id = str(uuid.uuid4())
         ticket = Ticket(
-            id=str(uuid.uuid4()),
+            id=ticket_id,
             objective=objective,
+            dir=self.tickets_dir / ticket_id,
             metadata=TicketMetadata(
                 status=status,
                 created_at=datetime.now(timezone.utc).isoformat(),
@@ -293,53 +309,7 @@ class TaskStore:
         return ticket
 
 
-def get_default_store() -> TaskStore:
-    return TaskStore(TICKETS_DIR)
 
-
-def create_ticket(
-    objective: str,
-    *,
-    tags: list[str] | None = None,
-    functions: list[str] | None = None,
-    skills: list[str] | None = None,
-    tasks: list[str] | None = None,
-    title: str | None = None,
-    assignee: str | None = None,
-    playbook_id: str | None = None,
-    playbook_run_id: str | None = None,
-    parent_ticket_id: str | None = None,
-    model: str | None = None,
-    context: str | None = None,
-    watch_events: list[dict[str, Any]] | None = None,
-    kind: TicketKind = "work",
-    signal_type: str | None = None,
-    slug: str | None = None,
-) -> Ticket:
-    """Create a new ticket.
-
-    Scans the objective for ``{{id}}`` references. If any are found,
-    the ticket is created with status ``blocked`` and a ``depends_on``
-    list of the referenced ticket IDs (resolved by prefix match).
-    """
-    return get_default_store().create(
-        objective=objective,
-        tags=tags,
-        functions=functions,
-        skills=skills,
-        tasks=tasks,
-        title=title,
-        assignee=assignee,
-        playbook_id=playbook_id,
-        playbook_run_id=playbook_run_id,
-        parent_ticket_id=parent_ticket_id,
-        model=model,
-        context=context,
-        watch_events=watch_events,
-        kind=kind,
-        signal_type=signal_type,
-        slug=slug,
-    )
 
 
 def _resolve_ticket_id(
@@ -352,13 +322,4 @@ def _resolve_ticket_id(
     return None
 
 
-def load_ticket(ticket_id: str, ticket_dir: Path | None = None) -> Ticket | None:
-    """Load a ticket from disk by ID. If ticket_dir is provided, skips path lookup."""
-    if ticket_dir is not None:
-        return TaskStore(ticket_dir.parent).get(ticket_id)
-    return get_default_store().get(ticket_id)
 
-
-def list_tickets(*, status: TicketStatus | None = None) -> list[Ticket]:
-    """List all tickets, optionally filtered by status."""
-    return get_default_store().query_all(status=status)

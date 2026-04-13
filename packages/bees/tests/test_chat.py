@@ -8,29 +8,30 @@ from __future__ import annotations
 import pytest
 from unittest.mock import MagicMock
 from bees.functions.chat import get_chat_function_group_factory
-from bees.ticket import create_ticket, load_ticket
+from bees import TaskStore
 from bees.context_updates import CONTEXT_UPDATE_TAG
 from opal_backend.function_caller import CONTEXT_PARTS_KEY
 
 
-@pytest.fixture(autouse=True)
-def _temp_tickets(tmp_path, monkeypatch):
-    """Redirect ticket storage to a temp directory for each test."""
+@pytest.fixture
+def task_store(tmp_path):
+    """Create a TaskStore in a temp directory."""
     tickets_dir = tmp_path / "tickets"
     tickets_dir.mkdir()
-    monkeypatch.setattr("bees.ticket.TICKETS_DIR", tickets_dir)
-    yield tickets_dir
+    return TaskStore(tickets_dir)
 
 
 @pytest.mark.asyncio
-async def test_chat_await_context_update_from_metadata(monkeypatch):
+async def test_chat_await_context_update_from_metadata(task_store, monkeypatch):
     # 1. Create a ticket with pending updates
-    ticket = create_ticket("Objective")
+    ticket = task_store.create("Objective")
     ticket.metadata.pending_context_updates = [{"task_id": "sub-1", "outcome": "done"}]
     ticket.save_metadata()
 
     # 2. Get handlers via factory
-    factory = get_chat_function_group_factory(workspace_root_id=ticket.id)
+    mock_scheduler = MagicMock()
+    mock_scheduler.store = task_store
+    factory = get_chat_function_group_factory(workspace_root_id=ticket.id, scheduler=mock_scheduler)
     mock_hooks = MagicMock()
     
     # Mock assemble_function_group to just return the handlers
@@ -56,6 +57,7 @@ async def test_chat_await_context_update_from_metadata(monkeypatch):
     assert "done" in part["text"]
     
     # Verify metadata cleared
-    updated_ticket = load_ticket(ticket.id)
+    updated_ticket = task_store.get(ticket.id)
     assert updated_ticket.metadata.pending_context_updates == []
+
 

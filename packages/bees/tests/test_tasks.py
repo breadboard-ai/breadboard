@@ -13,15 +13,18 @@ from unittest.mock import MagicMock, AsyncMock
 
 from bees.functions.tasks import _make_handlers
 from bees.subagent_scope import SubagentScope
-from bees.ticket import create_ticket
+from bees import TaskStore
 
+
+GLOBAL_STORE = None
 
 @pytest.fixture(autouse=True)
 def _temp_dirs(tmp_path, monkeypatch):
     """Redirect ticket and template storage to temp directories."""
+    global GLOBAL_STORE
     tickets_dir = tmp_path / "tickets"
     tickets_dir.mkdir()
-    monkeypatch.setattr("bees.ticket.TICKETS_DIR", tickets_dir)
+    GLOBAL_STORE = TaskStore(tickets_dir)
 
     config_dir = tmp_path / "config"
     config_dir.mkdir()
@@ -68,12 +71,14 @@ async def test_tasks_list_types_scoped(write_template):
         },
     )
 
-    ticket = create_ticket("Objective")
+    ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.tasks = ["task-a"]  # Only task-a is allowed
     ticket.save_metadata()
 
     scope = SubagentScope(workspace_root_id=ticket.id)
-    handlers = _make_handlers(scope=scope, caller_ticket_id=ticket.id)
+    mock_scheduler = MagicMock()
+    mock_scheduler.store = GLOBAL_STORE
+    handlers = _make_handlers(scope=scope, caller_ticket_id=ticket.id, scheduler=mock_scheduler)
 
     result = await handlers["tasks_list_types"]({}, None)
 
@@ -103,12 +108,14 @@ async def test_tasks_list_types_filters_by_allowlist(write_template):
         },
     )
 
-    ticket = create_ticket("Objective")
+    ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.tasks = ["allowed-task"]  # Only allowed-task
     ticket.save_metadata()
 
     scope = SubagentScope(workspace_root_id=ticket.id)
-    handlers = _make_handlers(scope=scope, caller_ticket_id=ticket.id)
+    mock_scheduler = MagicMock()
+    mock_scheduler.store = GLOBAL_STORE
+    handlers = _make_handlers(scope=scope, caller_ticket_id=ticket.id, scheduler=mock_scheduler)
 
     result = await handlers["tasks_list_types"]({}, None)
 
@@ -119,18 +126,20 @@ async def test_tasks_list_types_filters_by_allowlist(write_template):
 
 @pytest.mark.asyncio
 async def test_tasks_check_status(write_template):
-    task_ticket = create_ticket("Do something")
+    task_ticket = GLOBAL_STORE.create("Do something")
     task_ticket.metadata.creator_ticket_id = "caller-id"
     task_ticket.metadata.title = "My Task"
     task_ticket.metadata.status = "running"
     task_ticket.save_metadata()
 
-    other_ticket = create_ticket("Do something else")
+    other_ticket = GLOBAL_STORE.create("Do something else")
     other_ticket.metadata.creator_ticket_id = "other-id"
     other_ticket.save_metadata()
 
     scope = SubagentScope(workspace_root_id="caller-id")
-    handlers = _make_handlers(scope=scope, caller_ticket_id="caller-id")
+    mock_scheduler = MagicMock()
+    mock_scheduler.store = GLOBAL_STORE
+    handlers = _make_handlers(scope=scope, caller_ticket_id="caller-id", scheduler=mock_scheduler)
 
     result = await handlers["tasks_check_status"]({}, None)
 
@@ -145,7 +154,9 @@ async def test_tasks_check_status(write_template):
 @pytest.mark.asyncio
 async def test_tasks_check_status_empty():
     scope = SubagentScope(workspace_root_id="caller-id")
-    handlers = _make_handlers(scope=scope, caller_ticket_id="caller-id")
+    mock_scheduler = MagicMock()
+    mock_scheduler.store = GLOBAL_STORE
+    handlers = _make_handlers(scope=scope, caller_ticket_id="caller-id", scheduler=mock_scheduler)
     result = await handlers["tasks_check_status"]({}, None)
     assert "message" in result
     assert result["message"] == "There are no tasks."
@@ -160,9 +171,11 @@ async def test_tasks_create_task_async(write_template):
         "objective": "Do it.",
     })
 
-    caller = create_ticket("I'm the caller")
+    caller = GLOBAL_STORE.create("I'm the caller")
     scope = SubagentScope(workspace_root_id=caller.id)
-    handlers = _make_handlers(scope=scope, caller_ticket_id=caller.id)
+    mock_scheduler = MagicMock()
+    mock_scheduler.store = GLOBAL_STORE
+    handlers = _make_handlers(scope=scope, caller_ticket_id=caller.id, scheduler=mock_scheduler)
 
     args = {
         "type": "my-task",
@@ -175,8 +188,7 @@ async def test_tasks_create_task_async(write_template):
     assert "task_id" in result
     assert result["status"] == "available"
 
-    from bees.ticket import load_ticket
-    ticket = load_ticket(result["task_id"])
+    ticket = GLOBAL_STORE.get(result["task_id"])
     assert ticket is not None
 
     assert ticket.metadata.creator_ticket_id == caller.id
@@ -198,7 +210,7 @@ async def test_tasks_create_task_sync_wait_timeout(write_template, monkeypatch):
     mock_scheduler = MagicMock()
     mock_scheduler.wait_for_ticket = AsyncMock(return_value="running")
 
-    caller = create_ticket("I'm the caller")
+    caller = GLOBAL_STORE.create("I'm the caller")
     scope = SubagentScope(workspace_root_id=caller.id)
     handlers = _make_handlers(scope=scope, caller_ticket_id=caller.id, scheduler=mock_scheduler)
 
@@ -258,14 +270,17 @@ async def test_tasks_create_task_nested_slug(write_template):
         "objective": "Do it.",
     })
 
-    caller = create_ticket("I'm the caller")
+    caller = GLOBAL_STORE.create("I'm the caller")
     parent_scope = SubagentScope(
         workspace_root_id=caller.id,
         slug_path="research",
     )
+    mock_scheduler = MagicMock()
+    mock_scheduler.store = GLOBAL_STORE
     handlers = _make_handlers(
         scope=parent_scope,
         caller_ticket_id=caller.id,
+        scheduler=mock_scheduler,
     )
 
     args = {
@@ -278,8 +293,7 @@ async def test_tasks_create_task_nested_slug(write_template):
 
     assert "task_id" in result
 
-    from bees.ticket import load_ticket
-    ticket = load_ticket(result["task_id"])
+    ticket = GLOBAL_STORE.get(result["task_id"])
     assert ticket is not None
 
     assert ticket.metadata.slug == "research/deep-dive"

@@ -9,29 +9,30 @@ from __future__ import annotations
 import pytest
 from unittest.mock import MagicMock
 
-from bees.ticket import TICKETS_DIR
+from bees import TaskStore
 from bees.subagent_scope import SubagentScope
 
 
-@pytest.fixture(autouse=True)
-def tickets_dir(tmp_path, monkeypatch):
-    """Point TICKETS_DIR to a temp directory."""
+@pytest.fixture
+def task_store(tmp_path):
+    """Create a TaskStore in a temp directory."""
     tickets_dir = tmp_path / "tickets"
     tickets_dir.mkdir()
-    monkeypatch.setattr("bees.ticket.TICKETS_DIR", tickets_dir)
-    return tickets_dir
+    return TaskStore(tickets_dir)
 
 
 # ---- events_broadcast ----
 
 
 @pytest.mark.asyncio
-async def test_events_broadcast_creates_ticket(tickets_dir):
+async def test_events_broadcast_creates_ticket(task_store):
     """events_broadcast creates a coordination ticket and calls the callback."""
     from bees.functions.events import _make_handlers
 
     callback = MagicMock()
-    handlers = _make_handlers(on_events_broadcast=callback)
+    mock_scheduler = MagicMock()
+    mock_scheduler.store = task_store
+    handlers = _make_handlers(on_events_broadcast=callback, scheduler=mock_scheduler)
 
     result = await handlers["events_broadcast"](
         {"type": "app_update", "message": "New app"}, None,
@@ -111,6 +112,7 @@ async def test_events_send_to_parent_no_parent():
         {"type": "progress", "message": "hello"}, None,
     )
     assert "error" in result
+
 
 
 

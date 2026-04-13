@@ -18,7 +18,10 @@ import json
 import sys
 from typing import Any
 
-from bees.ticket import Ticket, list_tickets
+from bees import Task, TaskStore
+from bees.config import HIVE_DIR
+
+task_store = TaskStore(HIVE_DIR / "tickets")
 
 
 def _format_prompt(suspend_event: dict[str, Any] | None) -> str:
@@ -48,7 +51,7 @@ def _format_choices(suspend_event: dict[str, Any] | None) -> list[dict] | None:
     return payload.get("choices", [])
 
 
-def _respond_to_ticket(ticket: Ticket) -> bool:
+def _respond_to_ticket(ticket: Task) -> bool:
     """Prompt the user and save their response. Returns True if responded."""
     label = ticket.id[:8]
     prompt_text = _format_prompt(ticket.metadata.suspend_event)
@@ -91,13 +94,8 @@ def _respond_to_ticket(ticket: Ticket) -> bool:
     else:
         response = {"text": answer}
 
-    # Write response and update assignee.
-    response_path = ticket.dir / "response.json"
-    response_path.write_text(
-        json.dumps(response, indent=2, ensure_ascii=False) + "\n"
-    )
-    ticket.metadata.assignee = "agent"
-    ticket.save_metadata()
+    # Write response and update assignee via store.
+    task_store.respond(ticket.id, response)
 
     print(f"  ✅ Response saved. Run 'npm run ticket:drain' to resume.")
     return True
@@ -106,7 +104,7 @@ def _respond_to_ticket(ticket: Ticket) -> bool:
 def main() -> None:
     """CLI entry point for ticket:respond."""
     suspended = [
-        t for t in list_tickets(status="suspended")
+        t for t in task_store.query_all(status="suspended")
         if t.metadata.assignee == "user"
     ]
 

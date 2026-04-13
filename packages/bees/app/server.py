@@ -34,15 +34,13 @@ from sse_starlette.sse import EventSourceResponse
 
 from bees.scheduler import Scheduler, SchedulerHooks
 from app.auth import load_gemini_key
-from bees.ticket import (
-    Ticket,
-    TaskStore,
-    TICKETS_DIR,
-)
+from bees import Task, TaskStore
+from bees.config import HIVE_DIR
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
 logger = logging.getLogger(__name__)
 
+TICKETS_DIR = HIVE_DIR / "tickets"
 task_store = TaskStore(TICKETS_DIR)
 
 
@@ -80,7 +78,7 @@ scheduler: Scheduler | None = None
 # ---------------------------------------------------------------------------
 
 
-async def _on_ticket_added(ticket: Ticket) -> None:
+async def _on_ticket_added(ticket: Task) -> None:
     """Broadcast a newly added ticket."""
     await broadcaster.broadcast({
         "type": "ticket_added",
@@ -105,7 +103,7 @@ async def _on_ticket_event(ticket_id: str, event: dict[str, Any]) -> None:
     })
 
 
-async def _on_ticket_start(ticket: Ticket) -> None:
+async def _on_ticket_start(ticket: Task) -> None:
     """Broadcast when a ticket transitions to running."""
     await broadcaster.broadcast({
         "type": "ticket_update",
@@ -113,7 +111,7 @@ async def _on_ticket_start(ticket: Ticket) -> None:
     })
 
 
-async def _on_ticket_done(ticket: Ticket) -> None:
+async def _on_ticket_done(ticket: Task) -> None:
     """Post-completion hook: broadcast and run playbook hooks."""
     await broadcaster.broadcast({
         "type": "ticket_update",
@@ -207,7 +205,7 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 
 
-def _ticket_to_dict(ticket: Ticket) -> dict[str, Any]:
+def _ticket_to_dict(ticket: Task) -> dict[str, Any]:
     """Serialize a ticket for JSON response."""
     d = {
         "id": ticket.id,
@@ -221,7 +219,7 @@ def _ticket_to_dict(ticket: Ticket) -> dict[str, Any]:
     return d
 
 
-def _read_chat_log(ticket: Ticket) -> list[dict[str, str]]:
+def _read_chat_log(ticket: Task) -> list[dict[str, str]]:
     """Read the ticket's chat log written by the chat function.
 
     Returns a list of ``{"role": "agent"|"user", "text": "..."}`` entries.
@@ -325,9 +323,6 @@ async def respond_to_ticket(
     if ticket.metadata.assignee != "user":
         raise HTTPException(400, f"Ticket is not assigned to user")
 
-    # Write response and flip assignee.
-    response_path = ticket.dir / "response.json"
-
     response: dict[str, Any] = {}
     if req.selectedIds is not None:
         response["selectedIds"] = req.selectedIds
@@ -336,11 +331,7 @@ async def respond_to_ticket(
     if req.contextUpdates:
         response["context_updates"] = req.contextUpdates
 
-    response_path.write_text(
-        json.dumps(response, indent=2, ensure_ascii=False) + "\n"
-    )
-    ticket.metadata.assignee = "agent"
-    ticket.save_metadata()
+    ticket = task_store.respond(ticket_id, response)
 
     await broadcaster.broadcast({
         "type": "ticket_update",
@@ -409,7 +400,7 @@ async def retry_ticket(ticket_id: str) -> dict[str, Any]:
 
 
 def should_include_ticket(
-    ticket: Ticket,
+    ticket: Task,
     status: str | None = None,
     tags: str | None = None,
     kind: str | None = None,
@@ -473,7 +464,7 @@ async def get_status(
     """Return a status response containing both the summary text and structured tasks."""
     tickets = task_store.query_all()
 
-    by_run: dict[str, list[Ticket]] = {}
+    by_run: dict[str, list[Task]] = {}
     active_running = []
 
     for t in tickets:
