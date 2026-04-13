@@ -58,11 +58,8 @@ from bees.session import (
     resume_session,
     run_session,
 )
-from bees.ticket import (
-    Ticket,
-    _DEP_PATTERN,
-    TaskStore,
-)
+from bees.ticket import Ticket
+from bees.task_store import TaskStore, _DEP_PATTERN
 from bees.subagent_scope import SubagentScope
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
@@ -223,12 +220,12 @@ def promote_blocked_tickets(store: TaskStore) -> int:
         if any_failed:
             ticket.metadata.status = "failed"
             ticket.metadata.error = "Dependency failed"
-            ticket.save_metadata()
+            store.save_metadata(ticket)
             continue
 
         if all_met:
             ticket.metadata.status = "available"
-            ticket.save_metadata()
+            store.save_metadata(ticket)
             promoted += 1
 
     return promoted
@@ -357,7 +354,7 @@ class Scheduler:
         ticket = self.store.get(ticket_id)
         if ticket:
             ticket.metadata.status = "cancelled"
-            ticket.save_metadata()
+            self.store.save_metadata(ticket)
             cancelled = True
             
         return cancelled
@@ -429,7 +426,7 @@ class Scheduler:
             if target.metadata.pending_context_updates is None:
                 target.metadata.pending_context_updates = []
             target.metadata.pending_context_updates.append(update)
-            target.save_metadata()
+            self.store.save_metadata(target)
             logger.info("Context update buffered for %s", target_id)
 
     def _enrich_creator_tags(self, ticket: Ticket) -> Ticket | None:
@@ -460,7 +457,7 @@ class Scheduler:
             return None  # Nothing new.
 
         creator.metadata.tags = sorted(merged)
-        creator.save_metadata()
+        self.store.save_metadata(creator)
         logger.info(
             "Tag enrichment: %s -> %s (added %s)",
             ticket.id[:8],
@@ -496,7 +493,7 @@ class Scheduler:
             if t.metadata.status in ("running", "paused"):
                 logger.info("Recovered stuck %s ticket: %s", t.metadata.status, t.id)
                 t.metadata.status = "available"
-                t.save_metadata()
+                self.store.save_metadata(t)
         return tickets
 
     async def run_all_waves(self) -> list[dict]:
@@ -603,7 +600,7 @@ class Scheduler:
             ticket.metadata.title = fresh.metadata.title
 
         ticket.metadata.status = "running"
-        ticket.save_metadata()
+        self.store.save_metadata(ticket)
         if self._hooks.on_ticket_start:
             await self._hooks.on_ticket_start(ticket)
 
@@ -637,7 +634,7 @@ class Scheduler:
             ticket.metadata.status = "failed"
             ticket.metadata.completed_at = datetime.now(timezone.utc).isoformat()
             ticket.metadata.error = str(exc)
-            ticket.save_metadata()
+            self.store.save_metadata(ticket)
             print(f"  [{label}] ❌ {exc}", file=sys.stderr)
             return SessionResult(
                 session_id="",
@@ -652,7 +649,7 @@ class Scheduler:
         self._update_metadata(ticket, result)
         self._handle_suspend(ticket, result)
         self._handle_pause(ticket, result)
-        ticket.save_metadata()
+        self.store.save_metadata(ticket)
         return result
 
     async def resume_ticket(
@@ -668,7 +665,7 @@ class Scheduler:
         if not response_path.exists():
             ticket.metadata.status = "failed"
             ticket.metadata.error = "No response.json found for resume"
-            ticket.save_metadata()
+            self.store.save_metadata(ticket)
             return SessionResult(
                 session_id="",
                 status="failed",
@@ -687,7 +684,7 @@ class Scheduler:
 
         ticket.metadata.status = "running"
         ticket.metadata.assignee = "agent"
-        ticket.save_metadata()
+        self.store.save_metadata(ticket)
         if self._hooks.on_ticket_start:
             await self._hooks.on_ticket_start(ticket)
 
@@ -714,7 +711,7 @@ class Scheduler:
             ticket.metadata.status = "failed"
             ticket.metadata.completed_at = datetime.now(timezone.utc).isoformat()
             ticket.metadata.error = str(exc)
-            ticket.save_metadata()
+            self.store.save_metadata(ticket)
             print(f"  [{label}] ❌ {exc}", file=sys.stderr)
             return SessionResult(
                 session_id="",
@@ -735,7 +732,7 @@ class Scheduler:
             # Clean up response file.
             response_path.unlink(missing_ok=True)
 
-        ticket.save_metadata()
+        self.store.save_metadata(ticket)
         return result
 
     # -- internal ----------------------------------------------------------
@@ -916,11 +913,11 @@ class Scheduler:
                 continue
 
             # Let the playbook hook intercept before delivery.
-            result = run_event_hooks(signal_type, payload, sub)
+            result = run_event_hooks(signal_type, payload, sub, self.store)
             if result is None:
                 # Hook ate the event — mark delivered, skip agent.
                 delivered.add(sub.id)
-                sub.save_metadata()
+                self.store.save_metadata(sub)
                 logger.info(
                     "Coordination %s eaten by hook for %s",
                     ticket.id[:8],
@@ -944,7 +941,7 @@ class Scheduler:
                     + "\n"
                 )
                 sub.metadata.assignee = "agent"
-                sub.save_metadata()
+                self.store.save_metadata(sub)
                 delivered.add(sub.id)
                 logger.info(
                     "Coordination %s delivered to %s",
@@ -967,7 +964,7 @@ class Scheduler:
                 signal_type,
             )
 
-        ticket.save_metadata()
+        self.store.save_metadata(ticket)
 
         # Broadcast the updated coordination ticket to the UI.
         if self._hooks.on_ticket_done:

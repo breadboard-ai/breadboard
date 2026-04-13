@@ -70,7 +70,7 @@ async def test_tasks_list_types_scoped(write_template):
 
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.tasks = ["task-a"]  # Only task-a is allowed
-    ticket.save_metadata()
+    GLOBAL_STORE.save_metadata(ticket)
 
     scope = SubagentScope(workspace_root_id=ticket.id)
     mock_scheduler = MagicMock()
@@ -107,7 +107,7 @@ async def test_tasks_list_types_filters_by_allowlist(write_template):
 
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.tasks = ["allowed-task"]  # Only allowed-task
-    ticket.save_metadata()
+    GLOBAL_STORE.save_metadata(ticket)
 
     scope = SubagentScope(workspace_root_id=ticket.id)
     mock_scheduler = MagicMock()
@@ -127,11 +127,11 @@ async def test_tasks_check_status(write_template):
     task_ticket.metadata.creator_ticket_id = "caller-id"
     task_ticket.metadata.title = "My Task"
     task_ticket.metadata.status = "running"
-    task_ticket.save_metadata()
+    GLOBAL_STORE.save_metadata(task_ticket)
 
     other_ticket = GLOBAL_STORE.create("Do something else")
     other_ticket.metadata.creator_ticket_id = "other-id"
-    other_ticket.save_metadata()
+    GLOBAL_STORE.save_metadata(other_ticket)
 
     scope = SubagentScope(workspace_root_id="caller-id")
     mock_scheduler = MagicMock()

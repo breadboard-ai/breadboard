@@ -18,7 +18,7 @@ from bees.playbook import (
     run_event_hooks,
     stamp_child_ticket as _real_stamp_child_ticket,
 )
-from bees.ticket import _DEP_PATTERN
+from bees.task_store import _DEP_PATTERN
 from bees import TaskStore
 
 GLOBAL_STORE = None
@@ -180,7 +180,7 @@ class TestRunEventHooks:
 
     def test_no_playbook_passes_through(self, write_template):
         ticket = GLOBAL_STORE.create("standalone objective")
-        result = run_event_hooks("some_signal", "payload", ticket)
+        result = run_event_hooks("some_signal", "payload", ticket, GLOBAL_STORE)
         assert result == "payload"
 
     def test_no_hook_passes_through(self, write_template):
@@ -189,7 +189,7 @@ class TestRunEventHooks:
             "objective": "Do it.",
         })
         ticket = run_playbook("no-hook")
-        result = run_event_hooks("some_signal", "payload", ticket)
+        result = run_event_hooks("some_signal", "payload", ticket, GLOBAL_STORE)
         assert result == "payload"
 
     def test_hook_eats_event(self, write_template, hooks_dir):
@@ -198,11 +198,11 @@ class TestRunEventHooks:
             "objective": "Do it.",
         })
         (hooks_dir / "eater.py").write_text(
-            "def on_event(signal_type, payload, ticket):\n"
+            "def on_event(signal_type, payload, ticket, store=None):\n"
             "    return None\n"
         )
         ticket = run_playbook("eater")
-        result = run_event_hooks("any_signal", "payload", ticket)
+        result = run_event_hooks("any_signal", "payload", ticket, GLOBAL_STORE)
         assert result is None
 
     def test_hook_transforms_payload(self, write_template, hooks_dir):
@@ -211,11 +211,11 @@ class TestRunEventHooks:
             "objective": "Do it.",
         })
         (hooks_dir / "transformer.py").write_text(
-            "def on_event(signal_type, payload, ticket):\n"
+            "def on_event(signal_type, payload, ticket, store=None):\n"
             "    return payload.upper()\n"
         )
         ticket = run_playbook("transformer")
-        result = run_event_hooks("any_signal", "hello", ticket)
+        result = run_event_hooks("any_signal", "hello", ticket, GLOBAL_STORE)
         assert result == "HELLO"
 
     def test_hook_raises_fails_open(self, write_template, hooks_dir):
@@ -224,11 +224,11 @@ class TestRunEventHooks:
             "objective": "Do it.",
         })
         (hooks_dir / "crasher.py").write_text(
-            "def on_event(signal_type, payload, ticket):\n"
+            "def on_event(signal_type, payload, ticket, store=None):\n"
             "    raise RuntimeError('boom')\n"
         )
         ticket = run_playbook("crasher")
-        result = run_event_hooks("any_signal", "payload", ticket)
+        result = run_event_hooks("any_signal", "payload", ticket, GLOBAL_STORE)
         assert result == "payload"
 
     def test_hook_mutates_ticket_metadata(self, write_template, hooks_dir):
@@ -238,17 +238,17 @@ class TestRunEventHooks:
             "objective": "Do it.",
         })
         (hooks_dir / "renamer.py").write_text(
-            "def on_event(signal_type, payload, ticket):\n"
+            "def on_event(signal_type, payload, ticket, store):\n"
             "    if signal_type == 'update_title':\n"
             "        ticket.metadata.title = payload\n"
-            "        ticket.save_metadata()\n"
+            "        store.save_metadata(ticket)\n"
             "        return None\n"
             "    return payload\n"
         )
         ticket = run_playbook("renamer")
         assert ticket.metadata.title == "Original Title"
 
-        result = run_event_hooks("update_title", "New Title", ticket)
+        result = run_event_hooks("update_title", "New Title", ticket, GLOBAL_STORE)
         assert result is None
         assert ticket.metadata.title == "New Title"
 

@@ -24,7 +24,7 @@ async def test_chat_await_context_update_from_metadata(task_store, monkeypatch):
     # 1. Create a ticket with pending updates
     ticket = task_store.create("Objective")
     ticket.metadata.pending_context_updates = [{"task_id": "sub-1", "outcome": "done"}]
-    ticket.save_metadata()
+    task_store.save_metadata(ticket)
 
     # 2. Get handlers via factory
     mock_scheduler = MagicMock()

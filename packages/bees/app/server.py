@@ -353,7 +353,7 @@ async def update_ticket_tags(
         raise HTTPException(404, f"Ticket {ticket_id} not found")
 
     ticket.metadata.tags = req.tags
-    ticket.save_metadata()
+    task_store.save_metadata(ticket)
 
     await broadcaster.broadcast({
         "type": "ticket_update",
@@ -379,7 +379,7 @@ async def retry_ticket(ticket_id: str) -> dict[str, Any]:
 
     ticket.metadata.status = "available"
     ticket.metadata.error = None
-    ticket.save_metadata()
+    task_store.save_metadata(ticket)
 
     await broadcaster.broadcast({
         "type": "ticket_update",

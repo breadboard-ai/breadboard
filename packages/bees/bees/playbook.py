@@ -209,7 +209,7 @@ def stamp_child_ticket(
             f"</subagent_context>\n"
             f"{sandbox_block}"
         )
-        child.save()
+        store.save(child)
         child_scope.writable_dir(child.fs_dir).mkdir(
             parents=True, exist_ok=True,
         )
@@ -218,7 +218,7 @@ def stamp_child_ticket(
         child.metadata.title = title
 
     child.metadata.creator_ticket_id = parent_ticket.id
-    child.save_metadata()
+    store.save_metadata(child)
 
     return child
 
@@ -267,7 +267,7 @@ def run_ticket_done_hooks(ticket: Ticket) -> None:
 
 
 def run_event_hooks(
-    signal_type: str, payload: str, ticket: Ticket,
+    signal_type: str, payload: str, ticket: Ticket, store: TaskStore,
 ) -> str | None:
     """Run ``on_event`` for the template that owns this ticket.
 
@@ -292,7 +292,7 @@ def run_event_hooks(
         return payload
 
     try:
-        return hooks.on_event(signal_type, payload, ticket)
+        return hooks.on_event(signal_type, payload, ticket, store)
     except Exception as exc:
         logger.warning(
             "on_event hook for '%s' failed: %s", playbook_id, exc,
