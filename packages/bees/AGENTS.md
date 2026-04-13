@@ -1,6 +1,7 @@
 # Bees — Agent Context
 
-Read this before making changes in `packages/bees`.
+Read this before making changes in `packages/bees`. Update this doc after making
+changes to the code in `packages/bees`.
 
 ## What is Bees
 
@@ -79,12 +80,16 @@ whatever the surrounding file uses until the codemod lands.
 
 ## Deeper References
 
-| Topic            | Document                                             |
-| ---------------- | ---------------------------------------------------- |
-| Architecture     | [docs/architecture.md](docs/architecture.md)         |
-| Session layer    | [docs/session.md](docs/session.md)                   |
-| Scheduler layer  | [docs/scheduler.md](docs/scheduler.md)               |
-| Hivetool         | [docs/hivetool.md](docs/hivetool.md)                 |
-| Design patterns  | [docs/patterns.md](docs/patterns.md)                 |
-| Stability map    | [docs/flux.md](docs/flux.md)                         |
-| Interview log    | [docs/interview-log.md](docs/interview-log.md)       |
+See [docs/README.md](docs/README.md) for the full documentation index.
+
+| Topic            | Document                                       |
+| ---------------- | ---------------------------------------------- |
+| Architecture     | [docs/architecture.md](docs/architecture.md)   |
+| Session layer    | [docs/session.md](docs/session.md)             |
+| Scheduler layer  | [docs/scheduler.md](docs/scheduler.md)         |
+| Reference app    | [docs/reference-app.md](docs/reference-app.md) |
+| Hivetool         | [docs/hivetool.md](docs/hivetool.md)           |
+| Design patterns  | [docs/patterns.md](docs/patterns.md)           |
+| Stability map    | [docs/flux.md](docs/flux.md)                   |
+| Future direction | [docs/future.md](docs/future.md)               |
+| Interview log    | [docs/interview-log.md](docs/interview-log.md) |
