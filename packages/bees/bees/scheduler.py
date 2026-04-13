@@ -47,13 +47,13 @@ from typing import Any, Awaitable, Callable
 
 import httpx
 
-from bees.playbook import run_event_hooks, run_ticket_done_hooks
+from bees.playbook import run_event_hooks, run_ticket_done_hooks, load_system_config, run_playbook
 from bees.session import (
     SessionResult,
     append_chat_log,
     clear_session_state,
     extract_files,
-    load_gemini_key,
+
     load_session_state,
     resume_session,
     run_session,
@@ -83,6 +83,9 @@ class SchedulerHooks:
 
     on_startup: Callable[[list[Ticket]], Awaitable[None]] | None = None
     """Called once after recovery, with the full ticket list."""
+
+    on_ticket_added: Callable[[Ticket], Awaitable[None]] | None = None
+    """Called when a new ticket is created."""
 
     on_cycle_start: Callable[[int, int, int], Awaitable[None]] | None = None
     """Called at the start of each cycle.
@@ -273,6 +276,50 @@ class Scheduler:
     def trigger(self) -> None:
         """Wake the scheduler loop."""
         self._trigger.set()
+
+    async def startup(self) -> Ticket | None:
+        """Recover stuck tickets, boot root template if needed, and fire startup hook."""
+        tickets = await self.recover_stuck_tickets()
+        
+        root_ticket = await self._boot_root_template(tickets)
+        if root_ticket:
+            tickets.append(root_ticket)
+            
+        if self._hooks.on_startup:
+            await self._hooks.on_startup(tickets)
+            
+        return root_ticket
+
+    async def create_task(self, objective: str, **kwargs) -> Ticket:
+        """Create a new task and notify hooks."""
+        ticket = create_ticket(objective, **kwargs)
+        
+        if self._hooks.on_ticket_added:
+            await self._hooks.on_ticket_added(ticket)
+            
+        self.trigger()
+        return ticket
+
+    async def _boot_root_template(self, tickets: list[Ticket]) -> Ticket | None:
+        """Boot the root template if it isn't already running."""
+        config = load_system_config()
+        root = config.get("root")
+        if not root:
+            return None
+
+        already_booted = any(
+            t.metadata.playbook_id == root for t in tickets
+        )
+        if already_booted:
+            return None
+
+        logger.info("Booting root template '%s'", root)
+        ticket = run_playbook(root)
+        
+        if self._hooks.on_ticket_added:
+            await self._hooks.on_ticket_added(ticket)
+            
+        return ticket
 
     async def wait_for_ticket(self, ticket_id: str, timeout_ms: float) -> str:
         """Wait for a ticket to complete, fail, or suspend.
@@ -808,6 +855,8 @@ class Scheduler:
     def _on_events_broadcast_internal(self, ticket: Ticket) -> None:
         if self._hooks.on_events_broadcast:
             self._hooks.on_events_broadcast(ticket)
+        if self._hooks.on_ticket_added:
+            asyncio.create_task(self._hooks.on_ticket_added(ticket))
         self.trigger()
 
     def _make_deliver_to_parent(self, ticket: Ticket) -> Callable[[dict[str, Any]], None] | None:

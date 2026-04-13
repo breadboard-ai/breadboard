@@ -31,9 +31,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from bees.playbook import boot_root_template
+
 from bees.scheduler import Scheduler, SchedulerHooks
-from bees.session import load_gemini_key
+from app.auth import load_gemini_key
 from bees.ticket import (
     Ticket,
     create_ticket,
@@ -79,14 +79,12 @@ scheduler: Scheduler | None = None
 # ---------------------------------------------------------------------------
 
 
-async def _on_startup(tickets: list[Ticket]) -> None:
-    """Boot the root template if needed and broadcast the new ticket."""
-    ticket = boot_root_template(tickets)
-    if ticket:
-        await broadcaster.broadcast({
-            "type": "ticket_added",
-            "ticket": _ticket_to_dict(ticket),
-        })
+async def _on_ticket_added(ticket: Ticket) -> None:
+    """Broadcast a newly added ticket."""
+    await broadcaster.broadcast({
+        "type": "ticket_added",
+        "ticket": _ticket_to_dict(ticket),
+    })
 
 
 async def _on_cycle_start(cycle: int, new: int, resumable: int) -> None:
@@ -127,12 +125,6 @@ async def _on_cycle_complete(cycles: int) -> None:
     await broadcaster.broadcast({"type": "drain_complete", "waves": cycles})
 
 
-def _on_events_broadcast(ticket: Ticket) -> None:
-    """When a running agent broadcasts an event."""
-    asyncio.create_task(broadcaster.broadcast({
-        "type": "ticket_added",
-        "ticket": _ticket_to_dict(ticket),
-    }))
 
 
 
@@ -177,20 +169,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
 
     hooks = SchedulerHooks(
-        on_startup=_on_startup,
+        on_ticket_added=_on_ticket_added,
         on_cycle_start=_on_cycle_start,
         on_ticket_event=_on_ticket_event,
         on_ticket_start=_on_ticket_start,
         on_ticket_done=_on_ticket_done,
-        on_events_broadcast=_on_events_broadcast,
         on_cycle_complete=_on_cycle_complete,
     )
     scheduler = Scheduler(http=http_client, backend=backend, hooks=hooks)
 
-    # Recover stuck tickets and fire startup hook.
-    tickets = await scheduler.recover_stuck_tickets()
-    if hooks.on_startup:
-        await hooks.on_startup(tickets)
+    # Startup scheduler (recovers tickets and boots root if needed)
+    await scheduler.startup()
 
     loop_task = asyncio.create_task(scheduler.start_loop())
 
@@ -309,15 +298,16 @@ async def get_ticket_file(ticket_id: str, path: str) -> FileResponse:
 @app.post("/tickets")
 async def add_ticket(req: AddTicketRequest) -> dict[str, Any]:
     """Create a new ticket and trigger scheduling."""
-    ticket = create_ticket(req.objective, tags=req.tags, functions=req.functions, skills=req.skills)
+    if not scheduler:
+        raise HTTPException(500, "Scheduler not initialized")
 
-    await broadcaster.broadcast({
-        "type": "ticket_added",
-        "ticket": _ticket_to_dict(ticket),
-    })
+    ticket = await scheduler.create_task(
+        req.objective,
+        tags=req.tags,
+        functions=req.functions,
+        skills=req.skills,
+    )
 
-    if scheduler:
-        scheduler.trigger()
     return _ticket_to_dict(ticket)
 
 

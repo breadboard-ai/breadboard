@@ -385,16 +385,7 @@ def extract_files(
 # ---------------------------------------------------------------------------
 
 
-def load_gemini_key() -> str:
-    """Load GEMINI_KEY from .env, exit on failure.
 
-    The ``.env`` file is loaded at import time by ``bees.config``.
-    """
-    gemini_key = os.environ.get("GEMINI_KEY", "")
-    if not gemini_key:
-        print("Error: GEMINI_KEY not found in .env", file=sys.stderr)
-        sys.exit(1)
-    return gemini_key
 
 
 
