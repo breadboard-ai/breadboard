@@ -8,6 +8,8 @@ from __future__ import annotations
 import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock
+from pathlib import Path
+import yaml
 
 from bees.scheduler import Scheduler
 from bees.ticket import create_ticket
@@ -25,6 +27,23 @@ def tickets_dir(tmp_path, monkeypatch):
     tickets_dir.mkdir()
     monkeypatch.setattr("bees.ticket.TICKETS_DIR", tickets_dir)
     return tickets_dir
+
+@pytest.fixture
+def write_template(tmp_path):
+    """Helper to write template entries to the temp TEMPLATES.yaml.
+
+    Accepts one or more template dicts and writes them as a YAML list.
+    """
+    templates_path = tmp_path / "config" / "TEMPLATES.yaml"
+    templates_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def _write(*templates: dict) -> Path:
+        templates_path.write_text(
+            yaml.dump(list(templates), default_flow_style=False)
+        )
+        return templates_path
+
+    return _write
 
 
 @pytest.mark.asyncio
@@ -312,3 +331,69 @@ def test_promote_does_not_cascade_paused(mock_clients):
     fresh_child = load_ticket(child.id)
     # Should still be blocked, NOT failed.
     assert fresh_child.metadata.status == "blocked"
+
+
+# --- boot_root_template ---
+
+@pytest.mark.asyncio
+async def test_boots_when_no_root_ticket_exists(mock_clients, write_template, tmp_path, monkeypatch):
+    write_template({"name": "opie", "title": "Opie", "objective": "Be helpful."})
+    system_path = tmp_path / "config" / "SYSTEM.yaml"
+    system_path.write_text(yaml.dump({"root": "opie"}))
+    
+    monkeypatch.setattr("bees.playbook.SYSTEM_PATH", system_path)
+    monkeypatch.setattr("bees.playbook.TEMPLATES_PATH", tmp_path / "config" / "TEMPLATES.yaml")
+
+    http, backend = mock_clients
+    scheduler = Scheduler(http=http, backend=backend)
+
+    ticket = await scheduler._boot_root_template([])
+
+    assert ticket is not None
+    assert ticket.metadata.playbook_id == "opie"
+
+
+@pytest.mark.asyncio
+async def test_skips_when_root_already_booted(mock_clients, write_template, tmp_path, monkeypatch):
+    write_template({"name": "opie", "title": "Opie", "objective": "Be helpful."})
+    system_path = tmp_path / "config" / "SYSTEM.yaml"
+    system_path.write_text(yaml.dump({"root": "opie"}))
+    
+    monkeypatch.setattr("bees.playbook.SYSTEM_PATH", system_path)
+    monkeypatch.setattr("bees.playbook.TEMPLATES_PATH", tmp_path / "config" / "TEMPLATES.yaml")
+
+    from bees.playbook import run_playbook
+    existing = run_playbook("opie")
+    
+    http, backend = mock_clients
+    scheduler = Scheduler(http=http, backend=backend)
+
+    ticket = await scheduler._boot_root_template([existing])
+
+    assert ticket is None
+
+
+@pytest.mark.asyncio
+async def test_returns_none_when_no_root_configured(mock_clients, tmp_path, monkeypatch):
+    system_path = tmp_path / "config" / "SYSTEM.yaml"
+    system_path.parent.mkdir(parents=True, exist_ok=True)
+    system_path.write_text(yaml.dump({"title": "My Hive"}))
+    
+    monkeypatch.setattr("bees.playbook.SYSTEM_PATH", system_path)
+
+    http, backend = mock_clients
+    scheduler = Scheduler(http=http, backend=backend)
+
+    ticket = await scheduler._boot_root_template([])
+    assert ticket is None
+
+
+@pytest.mark.asyncio
+async def test_returns_none_when_no_system_yaml(mock_clients, tmp_path, monkeypatch):
+    monkeypatch.setattr("bees.playbook.SYSTEM_PATH", tmp_path / "config" / "SYSTEM.yaml")
+    
+    http, backend = mock_clients
+    scheduler = Scheduler(http=http, backend=backend)
+
+    ticket = await scheduler._boot_root_template([])
+    assert ticket is None

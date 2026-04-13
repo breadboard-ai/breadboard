@@ -232,26 +232,6 @@ def load_system_config() -> dict[str, Any]:
     return data
 
 
-def boot_root_template(tickets: list[Ticket]) -> Ticket | None:
-    """Boot the root template if it isn't already running.
-
-    Reads ``root`` from SYSTEM.yaml.  If no existing ticket has a matching
-    ``playbook_id``, creates one via ``run_playbook`` and returns it.
-    Returns ``None`` if the root is already booted or no root is configured.
-    """
-    config = load_system_config()
-    root = config.get("root")
-    if not root:
-        return None
-
-    already_booted = any(
-        t.metadata.playbook_id == root for t in tickets
-    )
-    if already_booted:
-        return None
-
-    logger.info("Booting root template '%s'", root)
-    return run_playbook(root)
 
 
 def run_ticket_done_hooks(ticket: Ticket) -> None:

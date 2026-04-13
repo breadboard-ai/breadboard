@@ -17,8 +17,9 @@ import json
 import httpx
 
 from bees.scheduler import Scheduler, SchedulerHooks
-from bees.session import load_gemini_key
 from opal_backend.local.backend_client_impl import HttpBackendClient
+
+from app.auth import load_gemini_key
 
 
 async def drain() -> list[dict]:
