@@ -5,6 +5,7 @@
  */
 
 import { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
+import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 import { FlowGenLLMContentPart } from "./flow-generator.js";
@@ -100,12 +101,12 @@ export interface SetEmailPreferencesRequest {
 export class AppCatalystApiClient {
   readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #apiBaseUrl: string;
-  readonly #backendClientPromise: Promise<any>;
+  readonly #backendClientPromise: Promise<OpalBackendClient>;
 
   constructor(
     fetchWithCreds: typeof globalThis.fetch,
     apiBaseUrl: string,
-    backendClientPromise: Promise<any>
+    backendClientPromise: Promise<OpalBackendClient>
   ) {
     this.#fetchWithCreds = fetchWithCreds;
     this.#apiBaseUrl = apiBaseUrl;
