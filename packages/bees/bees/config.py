@@ -11,17 +11,10 @@ that compute directory paths at the module level.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-
-from dotenv import load_dotenv
 
 PACKAGE_DIR = Path(__file__).resolve().parent.parent
 
-# Load .env early so BEES_HIVE_DIR (and GEMINI_KEY, etc.) are available
-# before any module-level path constants are computed.
-load_dotenv(PACKAGE_DIR / ".env")
-
 # The root directory where Bees stores runtime data (tickets, logs).
-# Configurable via the BEES_HIVE_DIR environment variable; defaults to "hive".
-HIVE_DIR = PACKAGE_DIR / os.environ.get("BEES_HIVE_DIR", "hive")
+# Defaults to "hive" relative to the package directory.
+HIVE_DIR = PACKAGE_DIR / "hive"

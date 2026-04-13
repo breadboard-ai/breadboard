@@ -16,9 +16,7 @@ from opal_backend.function_caller import CONTEXT_PARTS_KEY
 @pytest.fixture
 def task_store(tmp_path):
     """Create a TaskStore in a temp directory."""
-    tickets_dir = tmp_path / "tickets"
-    tickets_dir.mkdir()
-    return TaskStore(tickets_dir)
+    return TaskStore(tmp_path)
 
 
 @pytest.mark.asyncio

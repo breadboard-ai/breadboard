@@ -302,7 +302,7 @@ class Scheduler:
 
     async def _boot_root_template(self, tickets: list[Ticket]) -> Ticket | None:
         """Boot the root template if it isn't already running."""
-        config = load_system_config()
+        config = load_system_config(self.store.hive_dir / "config")
         root = config.get("root")
         if not root:
             return None

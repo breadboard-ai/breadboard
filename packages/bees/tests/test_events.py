@@ -16,9 +16,7 @@ from bees.subagent_scope import SubagentScope
 @pytest.fixture
 def task_store(tmp_path):
     """Create a TaskStore in a temp directory."""
-    tickets_dir = tmp_path / "tickets"
-    tickets_dir.mkdir()
-    return TaskStore(tickets_dir)
+    return TaskStore(tmp_path)
 
 
 # ---- events_broadcast ----

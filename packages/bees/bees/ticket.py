@@ -19,8 +19,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
-from bees.config import HIVE_DIR
-
 
 
 TicketStatus = Literal[
@@ -163,8 +161,9 @@ class Ticket:
 class TaskStore:
     """Encapsulates task CRUD operations."""
 
-    def __init__(self, tickets_dir: Path):
-        self.tickets_dir = tickets_dir
+    def __init__(self, hive_dir: Path):
+        self.hive_dir = hive_dir
+        self.tickets_dir = hive_dir / "tickets"
 
     def get(self, ticket_id: str) -> Ticket | None:
         """Load a specific task."""

@@ -28,7 +28,7 @@ def tickets_dir(tmp_path, monkeypatch):
     global GLOBAL_STORE
     tickets_dir = tmp_path / "tickets"
     tickets_dir.mkdir()
-    GLOBAL_STORE = TaskStore(tickets_dir)
+    GLOBAL_STORE = TaskStore(tmp_path)
     return tickets_dir
 
 @pytest.fixture
@@ -338,9 +338,6 @@ async def test_boots_when_no_root_ticket_exists(mock_clients, write_template, tm
     write_template({"name": "opie", "title": "Opie", "objective": "Be helpful."})
     system_path = tmp_path / "config" / "SYSTEM.yaml"
     system_path.write_text(yaml.dump({"root": "opie"}))
-    
-    monkeypatch.setattr("bees.playbook.SYSTEM_PATH", system_path)
-    monkeypatch.setattr("bees.playbook.TEMPLATES_PATH", tmp_path / "config" / "TEMPLATES.yaml")
 
     http, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
@@ -357,9 +354,6 @@ async def test_skips_when_root_already_booted(mock_clients, write_template, tmp_
     system_path = tmp_path / "config" / "SYSTEM.yaml"
     system_path.write_text(yaml.dump({"root": "opie"}))
     
-    monkeypatch.setattr("bees.playbook.SYSTEM_PATH", system_path)
-    monkeypatch.setattr("bees.playbook.TEMPLATES_PATH", tmp_path / "config" / "TEMPLATES.yaml")
-
     from bees.playbook import run_playbook
     existing = run_playbook("opie", store=GLOBAL_STORE)
     
@@ -376,8 +370,6 @@ async def test_returns_none_when_no_root_configured(mock_clients, tmp_path, monk
     system_path = tmp_path / "config" / "SYSTEM.yaml"
     system_path.parent.mkdir(parents=True, exist_ok=True)
     system_path.write_text(yaml.dump({"title": "My Hive"}))
-    
-    monkeypatch.setattr("bees.playbook.SYSTEM_PATH", system_path)
 
     http, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
@@ -387,8 +379,7 @@ async def test_returns_none_when_no_root_configured(mock_clients, tmp_path, monk
 
 
 @pytest.mark.asyncio
-async def test_returns_none_when_no_system_yaml(mock_clients, tmp_path, monkeypatch):
-    monkeypatch.setattr("bees.playbook.SYSTEM_PATH", tmp_path / "config" / "SYSTEM.yaml")
+async def test_returns_none_when_no_system_yaml(mock_clients, tmp_path):
     
     http, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)

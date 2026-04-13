@@ -48,9 +48,11 @@ def _make_handlers(
         task_types = []
         from bees.playbook import list_playbooks, load_playbook
         
-        for name in list_playbooks():
+        config_dir = scheduler.store.hive_dir / "config"
+        
+        for name in list_playbooks(config_dir):
             try:
-                data = load_playbook(name)
+                data = load_playbook(name, config_dir)
                 task_name = data.get("name", name)
                 if task_name in allowed_tasks:
                     task_types.append({
@@ -81,8 +83,9 @@ def _make_handlers(
             status_cb(f"Creating task of type: {task_type}")
             
         from bees.playbook import load_playbook, stamp_child_ticket
+        config_dir = scheduler.store.hive_dir / "config"
         try:
-            load_playbook(task_type)
+            load_playbook(task_type, config_dir)
         except FileNotFoundError:
             return {"error": f"Task type not found: {task_type}"}
 
