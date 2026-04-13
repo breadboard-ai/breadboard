@@ -36,6 +36,7 @@ import "./event-detail.js";
 import "./log-list.js";
 import "./log-detail.js";
 import "./system-detail.js";
+import { scrollbarStyles } from "./shared-styles.js";
 
 export { BeesApp };
 
@@ -61,8 +62,10 @@ class BeesApp extends SignalWatcher(LitElement) {
   private skillStore = new SkillStore(this.stateAccess);
   private systemStore = new SystemStore(this.stateAccess);
 
-  static styles = css`
-    :host {
+  static styles = [
+    scrollbarStyles,
+    css`
+      :host {
       display: flex;
       flex-direction: column;
       height: 100vh;
@@ -233,7 +236,8 @@ class BeesApp extends SignalWatcher(LitElement) {
     .lightning-flash {
       animation: lightning-flash 15s ease-out !important;
     }
-  `;
+  `,
+  ];
 
   connectedCallback() {
     super.connectedCallback();

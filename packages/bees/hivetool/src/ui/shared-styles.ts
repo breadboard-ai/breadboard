@@ -13,11 +13,10 @@
 
 import { css } from "lit";
 
-export { sharedStyles };
+export { sharedStyles, scrollbarStyles };
 
-const sharedStyles = css`
+const scrollbarStyles = css`
   * {
-    box-sizing: border-box;
     scrollbar-width: thin;
     scrollbar-color: #334155 transparent;
   }
@@ -38,6 +37,14 @@ const sharedStyles = css`
 
   *::-webkit-scrollbar-thumb:hover {
     background: #475569;
+  }
+`;
+
+const sharedStyles = css`
+  ${scrollbarStyles}
+
+  * {
+    box-sizing: border-box;
   }
 
   .mono {

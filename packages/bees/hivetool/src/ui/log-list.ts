@@ -23,6 +23,12 @@ class BeesLogList extends SignalWatcher(LitElement) {
   static styles = [
     sharedStyles,
     css`
+      :host {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
       .job-item-group {
         display: flex;
         flex-direction: column;

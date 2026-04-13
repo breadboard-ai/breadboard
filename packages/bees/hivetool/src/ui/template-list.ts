@@ -22,6 +22,12 @@ class BeesTemplateList extends SignalWatcher(LitElement) {
   static styles = [
     sharedStyles,
     css`
+      :host {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
       .sidebar-toolbar {
         display: flex;
         justify-content: flex-end;
