@@ -41,6 +41,7 @@ import { DriveGalleryGraphCollection } from "./gallery-graph-collection.js";
 import { DriveUserGraphCollection } from "./user-graph-collection.js";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
 import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
 import { getLogger, Formatter } from "../sca/utils/logging/logger.js";
 
 export { GoogleDriveBoardServer };
@@ -97,6 +98,7 @@ class GoogleDriveBoardServer
     userFolderName: string,
     findUserOpalFolder: OpalShellHostProtocol["findUserOpalFolder"],
     listUserOpals: OpalShellHostProtocol["listUserOpals"],
+    backendClientPromise: Promise<OpalBackendClient>,
     // Optional graph collections for testing - if not provided, creates real ones
     galleryGraphs?: ImmutableGraphCollection,
     userGraphs?: MutableGraphCollection
@@ -136,7 +138,8 @@ class GoogleDriveBoardServer
       galleryGraphs ??
       new DriveGalleryGraphCollection(
         signInInfo,
-        googleDriveClient.fetchWithCreds
+        googleDriveClient.fetchWithCreds,
+        backendClientPromise
       );
     this.userGraphs = userGraphs ?? new DriveUserGraphCollection(listUserOpals);
   }

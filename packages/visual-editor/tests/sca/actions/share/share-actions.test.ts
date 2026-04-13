@@ -99,6 +99,7 @@ suite("Share Actions", () => {
       "Breadboard",
       async () => ({ ok: true, id: "fake-folder-id" }),
       async () => ({ ok: true as const, files: [] }),
+      Promise.resolve({} as any),
       emptyReadonlyCollection,
       {
         ...emptyReadonlyCollection,

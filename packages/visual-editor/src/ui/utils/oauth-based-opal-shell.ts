@@ -46,6 +46,7 @@ import {
 import { TOKEN_TYPE } from "../types/types.js";
 import { getTopLevelOrigin } from "./embed-helpers.js";
 import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
+import * as Comlink from "comlink";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { checkFetchAllowlist } from "./fetch-allowlist.js";
 import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types";
@@ -336,7 +337,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
 
   #opalBackendClient = new HttpBackendClient(this.fetchWithCreds);
   getOpalBackendClient = async (): Promise<OpalBackendClient> => {
-    return this.#opalBackendClient;
+    return Comlink.proxy(this.#opalBackendClient);
   };
 
   signIn = async (scopes: string[] = []): Promise<SignInResult> => {
