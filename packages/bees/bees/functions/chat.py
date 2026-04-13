@@ -81,7 +81,7 @@ def get_chat_function_group_factory(
                 if ticket and ticket.metadata.pending_context_updates:
                     updates = ticket.metadata.pending_context_updates
                     ticket.metadata.pending_context_updates = []
-                    ticket.save_metadata()
+                    scheduler.store.save_metadata(ticket)
                     return {
                         "resumed": True,
                         CONTEXT_PARTS_KEY: updates_to_context_parts(updates),

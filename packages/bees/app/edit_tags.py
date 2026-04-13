@@ -49,7 +49,7 @@ def main() -> None:
         tags = [t.strip() for t in args.tags.split(",") if t.strip()]
 
     ticket.metadata.tags = tags if tags else None
-    ticket.save_metadata()
+    task_store.save_metadata(ticket)
 
     print(f"Updated tags for ticket {ticket.id}", file=sys.stderr)
     print(f"  objective: {ticket.objective!r}", file=sys.stderr)

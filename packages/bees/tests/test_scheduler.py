@@ -56,7 +56,7 @@ async def test_wait_for_ticket_already_completed(mock_clients):
     
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.status = "completed"
-    ticket.save_metadata()
+    GLOBAL_STORE.save_metadata(ticket)
     
     status = await scheduler.wait_for_ticket(ticket.id, timeout_ms=100)
     assert status == "completed"
@@ -72,7 +72,7 @@ async def test_wait_for_ticket_blocks_and_completes(mock_clients):
     async def simulate_completion():
         await asyncio.sleep(0.05)
         ticket.metadata.status = "completed"
-        ticket.save_metadata()
+        GLOBAL_STORE.save_metadata(ticket)
         scheduler._notify_ticket_done(ticket.id)
 
     # Run wait and simulation concurrently
@@ -90,7 +90,7 @@ async def test_wait_for_ticket_timeout(mock_clients):
     
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.status = "running"
-    ticket.save_metadata()
+    GLOBAL_STORE.save_metadata(ticket)
     
     status = await scheduler.wait_for_ticket(ticket.id, timeout_ms=50)
     assert status == "running" # Returns current status on timeout
@@ -103,12 +103,12 @@ async def test_wait_for_ticket_returns_early_on_suspend(mock_clients):
     
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.status = "running"
-    ticket.save_metadata()
+    GLOBAL_STORE.save_metadata(ticket)
     
     async def simulate_suspend():
         await asyncio.sleep(0.05)
         ticket.metadata.status = "suspended"
-        ticket.save_metadata()
+        GLOBAL_STORE.save_metadata(ticket)
         scheduler._notify_ticket_done(ticket.id)
 
     wait_task = asyncio.create_task(scheduler.wait_for_ticket(ticket.id, timeout_ms=1000))
@@ -125,12 +125,12 @@ async def test_wait_for_ticket_returns_early_on_fail(mock_clients):
     
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.status = "running"
-    ticket.save_metadata()
+    GLOBAL_STORE.save_metadata(ticket)
     
     async def simulate_fail():
         await asyncio.sleep(0.05)
         ticket.metadata.status = "failed"
-        ticket.save_metadata()
+        GLOBAL_STORE.save_metadata(ticket)
         scheduler._notify_ticket_done(ticket.id)
 
     wait_task = asyncio.create_task(scheduler.wait_for_ticket(ticket.id, timeout_ms=1000))
@@ -148,7 +148,7 @@ async def test_deliver_context_update_immediate(mock_clients):
     creator = GLOBAL_STORE.create("Parent Objective")
     creator.metadata.status = "suspended"
     creator.metadata.assignee = "user"
-    creator.save_metadata()
+    GLOBAL_STORE.save_metadata(creator)
     
     update = {"task_id": "sub-1", "outcome": "done"}
     scheduler._deliver_context_update(creator.id, update)
@@ -179,7 +179,7 @@ async def test_enrich_creator_tags_merges(mock_clients):
     creator = GLOBAL_STORE.create("Parent", tags=["b", "c"])
     child = GLOBAL_STORE.create("Child", tags=["a", "b"])
     child.metadata.creator_ticket_id = creator.id
-    child.save_metadata()
+    GLOBAL_STORE.save_metadata(child)
 
     result = scheduler._enrich_creator_tags(child)
 
@@ -197,7 +197,7 @@ async def test_enrich_creator_tags_no_creator(mock_clients):
 
     child = GLOBAL_STORE.create("Child", tags=["a"])
     child.metadata.creator_ticket_id = "nonexistent-id"
-    child.save_metadata()
+    GLOBAL_STORE.save_metadata(child)
 
     # Should not raise, returns None.
     assert scheduler._enrich_creator_tags(child) is None
@@ -212,7 +212,7 @@ async def test_enrich_creator_tags_no_tags(mock_clients):
     creator = GLOBAL_STORE.create("Parent", tags=["x"])
     child = GLOBAL_STORE.create("Child")  # No tags.
     child.metadata.creator_ticket_id = creator.id
-    child.save_metadata()
+    GLOBAL_STORE.save_metadata(child)
 
     assert scheduler._enrich_creator_tags(child) is None
 
@@ -229,7 +229,7 @@ async def test_enrich_creator_tags_creator_has_no_tags(mock_clients):
     creator = GLOBAL_STORE.create("Parent")  # tags=None
     child = GLOBAL_STORE.create("Child", tags=["a"])
     child.metadata.creator_ticket_id = creator.id
-    child.save_metadata()
+    GLOBAL_STORE.save_metadata(child)
 
     result = scheduler._enrich_creator_tags(child)
 
@@ -317,12 +317,12 @@ def test_promote_does_not_cascade_paused(mock_clients):
 
     parent = GLOBAL_STORE.create("Parent")
     parent.metadata.status = "paused"
-    parent.save_metadata()
+    GLOBAL_STORE.save_metadata(parent)
 
     child = GLOBAL_STORE.create("Child")
     child.metadata.status = "blocked"
     child.metadata.depends_on = [parent.id]
-    child.save_metadata()
+    GLOBAL_STORE.save_metadata(child)
 
     promote_blocked_tickets(GLOBAL_STORE)
 
