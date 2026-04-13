@@ -90,21 +90,21 @@ describe("AppCatalystApiClient", () => {
         }
       );
 
-      const shellHostMock = {
-        invokeOpalBackend: mock.fn(async () => new Response("{}")),
+      const backendClientMock = {
+        sendHttpRequest: mock.fn(async () => new Response("{}")),
       };
 
       const client = new AppCatalystApiClient(
         fetchMock as any,
         "https://api.example.com",
-        shellHostMock as any
+        Promise.resolve(backendClientMock)
       );
 
       const result = await client.checkTos();
 
-      // fetchWithCreds was called, invokeOpalBackend was not.
+      // fetchWithCreds was called, sendHttpRequest was not.
       assert.strictEqual(fetchMock.mock.calls.length, 1);
-      assert.strictEqual(shellHostMock.invokeOpalBackend.mock.calls.length, 0);
+      assert.strictEqual(backendClientMock.sendHttpRequest.mock.calls.length, 0);
 
       // Correct URL was constructed.
       const [url] = fetchMock.mock.calls[0].arguments;
@@ -131,8 +131,8 @@ describe("AppCatalystApiClient", () => {
         }
       );
 
-      const shellHostMock = {
-        invokeOpalBackend: mock.fn(async () => {
+      const backendClientMock = {
+        sendHttpRequest: mock.fn(async () => {
           return new Response(
             JSON.stringify({
               canAccess: true,
@@ -146,17 +146,17 @@ describe("AppCatalystApiClient", () => {
       const client = new AppCatalystApiClient(
         fetchMock as any,
         "https://api.example.com",
-        shellHostMock as any
+        Promise.resolve(backendClientMock)
       );
 
       const result = await client.checkTos();
 
-      // invokeOpalBackend was called, fetchWithCreds was not.
-      assert.strictEqual(shellHostMock.invokeOpalBackend.mock.calls.length, 1);
+      // sendHttpRequest was called, fetchWithCreds was not.
+      assert.strictEqual(backendClientMock.sendHttpRequest.mock.calls.length, 1);
       assert.strictEqual(fetchMock.mock.calls.length, 0);
 
       // Correct RPC endpoint and options were passed.
-      const [methodName, options] = shellHostMock.invokeOpalBackend.mock
+      const [methodName, options] = backendClientMock.sendHttpRequest.mock
         .calls[0].arguments as unknown as [string, unknown];
       assert.strictEqual(methodName, "checkAppAccess");
       assert.deepStrictEqual(options, { method: "GET" });
@@ -172,8 +172,8 @@ describe("AppCatalystApiClient", () => {
       const saved = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
       CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
 
-      const shellHostMock = {
-        invokeOpalBackend: mock.fn(async () => {
+      const backendClientMock = {
+        sendHttpRequest: mock.fn(async () => {
           return new Response(
             JSON.stringify({
               canAccess: true,
@@ -188,7 +188,7 @@ describe("AppCatalystApiClient", () => {
       const client = new AppCatalystApiClient(
         (() => {}) as any,
         "https://api.example.com",
-        shellHostMock as any
+        Promise.resolve(backendClientMock)
       );
 
       const result = await client.checkTos();
@@ -204,8 +204,8 @@ describe("AppCatalystApiClient", () => {
       const saved = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
       CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
 
-      const shellHostMock = {
-        invokeOpalBackend: mock.fn(async () => {
+      const backendClientMock = {
+        sendHttpRequest: mock.fn(async () => {
           throw new Error("network failure");
         }),
       };
@@ -213,7 +213,7 @@ describe("AppCatalystApiClient", () => {
       const client = new AppCatalystApiClient(
         (() => {}) as any,
         "https://api.example.com",
-        shellHostMock as any
+        Promise.resolve(backendClientMock)
       );
 
       const result = await client.checkTos();

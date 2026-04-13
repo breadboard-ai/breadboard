@@ -168,7 +168,7 @@ export function services(
     const apiClient = new AppCatalystApiClient(
       fetchWithCreds,
       OPAL_BACKEND_API_PREFIX,
-      config.shellHost
+      config.shellHost.getOpalBackendClient()
     );
     const emailPrefsManager = new EmailPrefsManager(apiClient);
     const flowGenerator = new FlowGenerator(apiClient);
