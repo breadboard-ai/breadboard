@@ -1,7 +1,7 @@
 # Copyright 2026 Google LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Lifecycle hooks for the ui-generator playbook.
+"""Lifecycle hooks for the ui-generator template.
 
 Auto-bundles the UI if the agent produced an App.jsx but didn't run
 the bundler itself.

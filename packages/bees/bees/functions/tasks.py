@@ -47,19 +47,18 @@ def _make_handlers(
                 allowed_tasks = ticket.metadata.tasks
                 
         task_types = []
-        from bees.playbook import list_playbooks, load_playbook, validate_task_template
+        from bees.playbook import list_playbooks, load_playbook
         
         for name in list_playbooks():
             try:
                 data = load_playbook(name)
-                if validate_task_template(data):
-                    task_name = data.get("name", name)
-                    if task_name in allowed_tasks:
-                        task_types.append({
-                            "name": task_name,
-                            "title": data.get("title", name),
-                            "description": data.get("description", ""),
-                        })
+                task_name = data.get("name", name)
+                if task_name in allowed_tasks:
+                    task_types.append({
+                        "name": task_name,
+                        "title": data.get("title", name),
+                        "description": data.get("description", ""),
+                    })
             except Exception as e:
                 logger.warning("tasks_list_types: skipping invalid %s: %s", name, e)
                 
@@ -82,58 +81,27 @@ def _make_handlers(
         if status_cb:
             status_cb(f"Creating task of type: {task_type}")
             
-        from bees.playbook import load_playbook, validate_task_template
+        from bees.playbook import load_playbook, stamp_child_ticket
         try:
-            data = load_playbook(task_type)
-            if not validate_task_template(data):
-                return {"error": f"Invalid task template: {task_type}"}
+            load_playbook(task_type)
         except FileNotFoundError:
             return {"error": f"Task type not found: {task_type}"}
 
-        # Compose child scope from parent scope + new slug.
-        if scope:
-            child_scope = scope.child(slug)
-        else:
-            # Fallback: no parent scope (shouldn't happen in practice).
-            child_scope = SubagentScope(
-                workspace_root_id=caller_ticket_id or "",
-                slug_path=slug,
-            )
 
-        from bees.playbook import run_playbook
         try:
-            tickets = run_playbook(
+            from bees.ticket import load_ticket as _load
+            parent = _load(caller_ticket_id) if caller_ticket_id else None
+            if not parent:
+                return {"error": "Parent ticket not found"}
+
+            ticket = stamp_child_ticket(
                 task_type,
+                parent_ticket=parent,
+                slug=slug,
                 context=objective,
-                parent_ticket_id=child_scope.workspace_root_id,
-                slug=child_scope.slug_path,
+                title=title or summary,
+                scope=scope,
             )
-            if not tickets:
-                return {"error": "Failed to create task ticket"}
-            
-            ticket = tickets[0]
-            
-            if child_scope.slug_path:
-                sandbox_block = child_scope.sandbox_instructions()
-                ticket.objective = (
-                    f"{ticket.objective}\n\n"
-                    f"<subagent_context>\n"
-                    f"Your parent id is: {caller_ticket_id}\n"
-                    f"</subagent_context>\n"
-                    f"{sandbox_block}"
-                )
-                ticket.save()
-                child_scope.writable_dir(ticket.fs_dir).mkdir(
-                    parents=True, exist_ok=True,
-                )
-                
-            if title:
-                ticket.metadata.title = title
-            elif summary:
-                ticket.metadata.title = summary
-                
-            ticket.metadata.creator_ticket_id = caller_ticket_id
-            ticket.save_metadata()
             
         except Exception as e:
             logger.exception("tasks_create_task failed")

@@ -24,6 +24,26 @@ export const styles = css`
 
   * {
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 3px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: #475569;
   }
 
   .mono {
@@ -145,6 +165,42 @@ export const styles = css`
     line-height: 1;
   }
 
+  /* ── Sidebar toolbar ── */
+  .sidebar-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 12px 0;
+    flex-shrink: 0;
+  }
+
+  .view-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font-size: 0.8rem;
+    background: transparent;
+    color: #64748b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .view-toggle:hover {
+    color: #e2e8f0;
+    border-color: #3b82f6;
+    background: #1e293b;
+  }
+
+  .view-toggle.active {
+    color: #60a5fa;
+    border-color: #3b82f6;
+    background: #1e293b33;
+  }
+
   .jobs-list {
     flex: 1;
     overflow-y: auto;
@@ -152,6 +208,27 @@ export const styles = css`
     display: flex;
     flex-direction: column;
     gap: 4px;
+  }
+
+  /* ── Ticket tree (hierarchical view) ── */
+  .ticket-tree-branch {
+    border: none;
+    margin: 0;
+  }
+
+  .ticket-tree-branch > summary {
+    list-style: none;
+    cursor: default;
+  }
+
+  .ticket-tree-branch > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .ticket-tree-children {
+    margin-left: 16px;
+    border-left: 1px solid #1e293b;
+    padding-left: 4px;
   }
 
   .job-item {
@@ -925,4 +1002,99 @@ export const styles = css`
   .lightning-flash {
     animation: lightning-flash 15s ease-out !important;
   }
+
+  /* ── Template badge ── */
+  .template-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: #134e4a33;
+    color: #5eead4;
+    border: 1px solid #134e4a;
+  }
+
+  /* ── Template sidebar hints ── */
+  .template-model-hint {
+    font-size: 0.65rem;
+    color: #c4b5fd;
+    font-family: "Google Mono", "Roboto Mono", monospace;
+  }
+
+  /* ── Template task delegation chips ── */
+  .template-tasks-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .template-task-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-family: "Google Mono", "Roboto Mono", monospace;
+    background: #111d1f;
+    color: #5eead4;
+    border: 1px solid #1a3338;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  .template-task-chip.linkable {
+    cursor: pointer;
+  }
+
+  .template-task-chip.linkable:hover {
+    background: #1a3338;
+    border-color: #2dd4bf;
+    color: #99f6e4;
+  }
+
+  /* ── Skill badge ── */
+  .skill-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: #1e3a8a22;
+    color: #93c5fd;
+    border: 1px solid #1e3a5c;
+  }
+
+  /* ── Backlink chips ── */
+  .backlink-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .backlink-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  .backlink-chip.linkable {
+    cursor: pointer;
+  }
+
+  .backlink-chip.linkable:hover {
+    background: #253347;
+    border-color: #3b82f6;
+    color: #93c5fd;
+  }
 `;
+

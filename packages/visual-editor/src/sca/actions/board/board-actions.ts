@@ -1144,6 +1144,8 @@ export const onDelete = asAction(
 
     controller.editor.selection.deselectAll();
 
+    close();
+
     if (controller.router.parsedUrl.page === "home") return;
 
     const { lite, dev } = parseUrl(window.location.href);

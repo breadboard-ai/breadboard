@@ -10,8 +10,8 @@
  * URL format: #/{tab}/{selectionId}
  * Examples: #/logs/abc123, #/tickets/def456, #/events/ghi789
  *
- * Uses history.replaceState so hash updates don't clutter browser history.
- * The hashchange listener only fires on external changes (manual URL edits).
+ * Uses history.pushState so each navigation creates a history entry,
+ * enabling browser back/forward buttons.
  */
 
 export { parseRoute, writeRoute, type Route };
@@ -21,7 +21,9 @@ type RoutableTab =
   | "daemons"
   | "logs"
   | "tickets"
-  | "events";
+  | "events"
+  | "templates"
+  | "skills";
 
 interface Route {
   tab: RoutableTab;
@@ -34,6 +36,8 @@ const VALID_TABS = new Set<string>([
   "logs",
   "tickets",
   "events",
+  "templates",
+  "skills",
 ]);
 
 function parseRoute(hash = location.hash): Route {
@@ -52,5 +56,5 @@ function parseRoute(hash = location.hash): Route {
 function writeRoute(tab: string, id?: string | null): void {
   const hash = id ? `#/${tab}/${id}` : `#/${tab}`;
   if (location.hash === hash) return;
-  history.replaceState(null, "", hash);
+  history.pushState(null, "", hash);
 }

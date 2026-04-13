@@ -4,6 +4,11 @@ title: UI Component Generation
 description:
   Generate multi-file React component bundles with design tokens from natural
   language descriptions.
+allowed-tools:
+  - sandbox.*
+  - simple-files.*
+  - events.*
+  - system.*
 ---
 
 # UI Component Generation Skill
@@ -25,7 +30,11 @@ component bundles from natural language descriptions.
    `IndexedDB`, or any Web Storage APIs. The iframe environment may not have
    storage access due to origin restrictions. All state lives in React component
    state or is passed via props and the SDK.
-4. **Respect the host theme.** We use a light theme. Do not set `background: black`, `background: #000`, `color: #fff`, or any dark-theme values. All backgrounds must use `var(--cg-color-surface*)` tokens and all text must use `var(--cg-color-on-surface*)` tokens. The tokens will natively map to their light theme variants.
+4. **Respect the host theme.** We use a light theme. Do not set
+   `background: black`, `background: #000`, `color: #fff`, or any dark-theme
+   values. All backgrounds must use `var(--cg-color-surface*)` tokens and all
+   text must use `var(--cg-color-on-surface*)` tokens. The tokens will natively
+   map to their light theme variants.
 
 ## Responsive Layout
 
@@ -110,9 +119,9 @@ code in your response.**
 
 ## Component Library
 
-Before generating sub-components, check `library/` for existing components
-from previous runs. Each subdirectory is a previous run, containing its
-`App.jsx` and `components/*.jsx`.
+Before generating sub-components, check `library/` for existing components from
+previous runs. Each subdirectory is a previous run, containing its `App.jsx` and
+`components/*.jsx`.
 
 **Reuse workflow:**
 
@@ -293,7 +302,7 @@ Each state gets its own component file named after the state:
 **boundary** (the segment's final view), use `window.opalSDK.emit` to send data
 back to the orchestrator.
 
-The **SDK** is available as `window.opalSDK`. It has exactly three methods:
+The **SDK** is available as `window.opalSDK`. It has three methods:
 
 ```jsx
 // Navigate to another view WITHIN this segment.
@@ -303,14 +312,56 @@ window.opalSDK.navigateTo("select_models", { teamProfile });
 // Use on the final view's CTA — this is what connects segments.
 window.opalSDK.emit("journey:result", { decision, comparisonSet });
 
-// Get an asset URL by reference name.
-window.opalSDK.asset("logo"); // → "blob:..."
+// Read a file from the shared workspace (async, returns text or null).
+const data = await window.opalSDK.readFile("groceries.json");
 ```
 
 **Do not call any other methods on `window.opalSDK`.** There is no
 `onNavigation`, `subscribe`, or event listener API. Navigation state is managed
 internally by your App component (e.g. `useState` + switch statement), not by
 the SDK.
+
+### Data Loading with `readFile`
+
+Use `readFile` to load data files from the shared workspace at runtime instead
+of hardcoding data into your component. Paths are relative to the workspace
+root. You can read files written by any agent in the workspace — for example, a
+menu planner can read files produced by a diet researcher.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function GroceryList() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    window.opalSDK.readFile("groceries.json").then((text) => {
+      if (text) {
+        setItems(JSON.parse(text));
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) return <div>Loading…</div>;
+  return (
+    <ul>
+      {items.map((item, i) => (
+        <li key={i}>{item}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+**Rules for `readFile`:**
+
+- Returns `Promise<string | null>`. `null` means the file was not found.
+- Paths are workspace-relative (e.g. `"analysis/results.json"`,
+  `"diet_research/notes.md"`).
+- Always handle the `null` case gracefully — the file may not exist yet.
+- Show a loading state while data is being fetched.
 
 ### View Contract
 
@@ -339,7 +390,7 @@ export default function SelectModels({ data = {}, onTransition }) {
 3. **Shared components go in `components/`.** Headers, cards, buttons used
    across multiple views should be extracted.
 4. **Context flows forward.** Each transition carries the data the next view
-   needs. Views never fetch — they receive.
+   needs. Views may also use `readFile` to load shared workspace data.
 5. **Final view emits.** The last view must include a CTA that calls
    `window.opalSDK.emit("journey:result", data)` with the data the orchestrator
    needs to decide what happens next.

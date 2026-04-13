@@ -62,7 +62,7 @@ class StateAccess {
           }): Promise<FileSystemDirectoryHandle>;
         }
       ).showDirectoryPicker({
-        mode: "read",
+        mode: "readwrite",
         // Browser remembers the last directory chosen for this ID,
         // so re-picks open to the right place automatically.
         id: "bees-hive-dir",
@@ -157,14 +157,14 @@ class StateAccess {
           queryPermission(opts: { mode: string }): Promise<string>;
           requestPermission(opts: { mode: string }): Promise<string>;
         }
-      ).queryPermission({ mode: "read" });
+      ).queryPermission({ mode: "readwrite" });
       if (perm === "granted") return true;
 
       const req = await (
         handle as FileSystemDirectoryHandle & {
           requestPermission(opts: { mode: string }): Promise<string>;
         }
-      ).requestPermission({ mode: "read" });
+      ).requestPermission({ mode: "readwrite" });
       return req === "granted";
     } catch {
       return false;
