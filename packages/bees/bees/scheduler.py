@@ -61,9 +61,8 @@ from bees.session import (
 from bees.ticket import (
     Ticket,
     _DEP_PATTERN,
-    create_ticket,
-    list_tickets,
-    load_ticket,
+    TaskStore,
+    get_default_store,
 )
 from bees.subagent_scope import SubagentScope
 from opal_backend.local.backend_client_impl import HttpBackendClient
@@ -120,7 +119,7 @@ class SchedulerHooks:
 # ---------------------------------------------------------------------------
 
 
-def resolve_segments(ticket: Ticket) -> list[dict[str, Any]]:
+def resolve_segments(ticket: Ticket, store: TaskStore) -> list[dict[str, Any]]:
     """Build segments from a ticket's objective, resolving ``{{…}}`` references.
 
     References are resolved by namespace:
@@ -139,7 +138,7 @@ def resolve_segments(ticket: Ticket) -> list[dict[str, Any]]:
     # Build a lookup from dep ID to resolved outcome.
     dep_outcomes: dict[str, dict[str, Any]] = {}
     for dep_id in deps:
-        dep = load_ticket(dep_id)
+        dep = store.get(dep_id)
         if dep and dep.metadata.outcome_content:
             dep_outcomes[dep_id] = dep.metadata.outcome_content
 
@@ -197,12 +196,12 @@ def _find_dep_id(ref: str, dep_ids: list[str]) -> str | None:
 # ---------------------------------------------------------------------------
 
 
-def promote_blocked_tickets() -> int:
+def promote_blocked_tickets(store: TaskStore) -> int:
     """Check blocked tickets and promote those whose deps are met.
 
     Returns the number of tickets promoted.
     """
-    blocked = list_tickets(status="blocked")
+    blocked = store.query_all(status="blocked")
     promoted = 0
 
     for ticket in blocked:
@@ -211,7 +210,7 @@ def promote_blocked_tickets() -> int:
         any_failed = False
 
         for dep_id in deps:
-            dep = load_ticket(dep_id)
+            dep = store.get(dep_id)
             if dep is None:
                 all_met = False
                 continue
@@ -260,10 +259,12 @@ class Scheduler:
         http: httpx.AsyncClient,
         backend: HttpBackendClient,
         hooks: SchedulerHooks | None = None,
+        store: TaskStore | None = None,
     ) -> None:
         self._http = http
         self._backend = backend
         self._hooks = hooks or SchedulerHooks()
+        self.store = store or get_default_store()
         self._trigger = asyncio.Event()
         self._running = False
         self._running_tickets: set[str] = set()
@@ -292,7 +293,7 @@ class Scheduler:
 
     async def create_task(self, objective: str, **kwargs) -> Ticket:
         """Create a new task and notify hooks."""
-        ticket = create_ticket(objective, **kwargs)
+        ticket = self.store.create(objective, **kwargs)
         
         if self._hooks.on_ticket_added:
             await self._hooks.on_ticket_added(ticket)
@@ -334,7 +335,7 @@ class Scheduler:
         except asyncio.TimeoutError:
             pass
             
-        fresh = load_ticket(ticket_id)
+        fresh = self.store.get(ticket_id)
         return fresh.metadata.status if fresh else "unknown"
 
     def _notify_ticket_done(self, ticket_id: str) -> None:
@@ -354,8 +355,7 @@ class Scheduler:
             self._active_tasks[ticket_id].cancel()
             cancelled = True
             
-        from bees.ticket import load_ticket
-        ticket = load_ticket(ticket_id)
+        ticket = self.store.get(ticket_id)
         if ticket:
             ticket.metadata.status = "cancelled"
             ticket.save_metadata()
@@ -378,9 +378,7 @@ class Scheduler:
         ``creator_ticket_id`` must match — this prevents one agent from
         injecting updates into another agent's tasks.
         """
-        from bees.ticket import load_ticket
-
-        ticket = load_ticket(ticket_id)
+        ticket = self.store.get(ticket_id)
         if not ticket:
             return f"Task {ticket_id} not found"
 
@@ -403,7 +401,6 @@ class Scheduler:
            batch mode).  Append to ``pending_context_updates`` in
            metadata for later drain.
         """
-        from bees.ticket import load_ticket
         from bees.context_updates import updates_to_context_parts
         import json
 
@@ -415,7 +412,7 @@ class Scheduler:
             logger.info("Context update injected mid-stream for %s", target_id)
             return
 
-        target = load_ticket(target_id)
+        target = self.store.get(target_id)
         if not target:
             logger.warning("Failed to load ticket %s for context update", target_id)
             return
@@ -460,7 +457,7 @@ class Scheduler:
         if not creator_id or not child_tags:
             return None
 
-        creator = load_ticket(creator_id)
+        creator = self.store.get(creator_id)
         if not creator:
             logger.warning(
                 "Tag enrichment: creator %s not found for %s",
@@ -505,7 +502,7 @@ class Scheduler:
 
         Returns the full ticket list (for ``on_startup``).
         """
-        tickets = list_tickets()
+        tickets = self.store.query_all()
         for t in tickets:
             if t.metadata.status in ("running", "paused"):
                 logger.info("Recovered stuck %s ticket: %s", t.metadata.status, t.id)
@@ -523,9 +520,9 @@ class Scheduler:
         cycle = 0
 
         while True:
-            promote_blocked_tickets()
+            promote_blocked_tickets(self.store)
 
-            all_available = list_tickets(status="available")
+            all_available = self.store.query_all(status="available")
 
             # Route coordination tickets before processing work tickets.
             coordination = [
@@ -540,13 +537,13 @@ class Scheduler:
                 if t.metadata.kind != "coordination"
             ]
             resumable = [
-                t for t in list_tickets(status="suspended")
+                t for t in self.store.query_all(status="suspended")
                 if t.metadata.assignee == "agent"
             ]
 
             if not tickets and not resumable:
                 if cycle == 0:
-                    blocked = list_tickets(status="blocked")
+                    blocked = self.store.query_all(status="blocked")
                     if blocked:
                         print(
                             f"No runnable tickets. "
@@ -612,7 +609,7 @@ class Scheduler:
         # Reload title from disk — it may have been renamed by an on_event
         # hook during coordination routing earlier in this cycle, while the
         # in-memory ticket object (from list_tickets) still has the old value.
-        fresh = load_ticket(ticket.id)
+        fresh = self.store.get(ticket.id)
         if fresh and fresh.metadata.title != ticket.metadata.title:
             ticket.metadata.title = fresh.metadata.title
 
@@ -627,7 +624,7 @@ class Scheduler:
         try:
             ctx_queue: asyncio.Queue = asyncio.Queue()
             self._context_queues[ticket.id] = ctx_queue
-            segments = resolve_segments(ticket)
+            segments = resolve_segments(ticket, self.store)
             scope = SubagentScope.for_ticket(ticket)
             result = await run_session(
                 segments=segments,
@@ -805,7 +802,7 @@ class Scheduler:
             # the session was running (e.g., by on_event hooks or
             # coordination delivery).  The in-memory ticket object is
             # stale for these fields.
-            fresh = load_ticket(ticket.id)
+            fresh = self.store.get(ticket.id)
             if fresh:
                 if fresh.metadata.queued_updates:
                     ticket.metadata.queued_updates = fresh.metadata.queued_updates
@@ -900,7 +897,7 @@ class Scheduler:
         # Find all matching subscribers.
         source_run_id = ticket.metadata.playbook_run_id
         subscribers: list[Ticket] = []
-        for candidate in list_tickets():
+        for candidate in self.store.query_all():
             if candidate.id == ticket.id:
                 continue
             if not candidate.metadata.watch_events:
@@ -997,9 +994,9 @@ class Scheduler:
         cycle = 0
 
         while True:
-            promote_blocked_tickets()
+            promote_blocked_tickets(self.store)
 
-            all_available = list_tickets(status="available")
+            all_available = self.store.query_all(status="available")
 
             # Route coordination tickets before processing work tickets.
             coordination = [
@@ -1014,7 +1011,7 @@ class Scheduler:
                 if t.metadata.kind != "coordination"
             ]
             resumable = [
-                t for t in list_tickets(status="suspended")
+                t for t in self.store.query_all(status="suspended")
                 if t.metadata.assignee == "agent"
             ]
 
@@ -1039,7 +1036,7 @@ class Scheduler:
                     finally:
                         self._running_tickets.discard(t.id)
                         self._active_tasks.pop(t.id, None)
-                        updated = load_ticket(t.id) or t
+                        updated = self.store.get(t.id) or t
                         run_ticket_done_hooks(updated)
                         self._notify_ticket_done(t.id)
 
@@ -1069,7 +1066,7 @@ class Scheduler:
                     finally:
                         self._running_tickets.discard(t.id)
                         self._active_tasks.pop(t.id, None)
-                        updated = load_ticket(t.id) or t
+                        updated = self.store.get(t.id) or t
                         run_ticket_done_hooks(updated)
                         self._notify_ticket_done(t.id)
 

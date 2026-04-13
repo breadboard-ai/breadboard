@@ -36,13 +36,14 @@ from bees.scheduler import Scheduler, SchedulerHooks
 from app.auth import load_gemini_key
 from bees.ticket import (
     Ticket,
-    create_ticket,
-    list_tickets,
-    load_ticket,
+    TaskStore,
+    TICKETS_DIR,
 )
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
 logger = logging.getLogger(__name__)
+
+task_store = TaskStore(TICKETS_DIR)
 
 
 # ---------------------------------------------------------------------------
@@ -176,7 +177,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         on_ticket_done=_on_ticket_done,
         on_cycle_complete=_on_cycle_complete,
     )
-    scheduler = Scheduler(http=http_client, backend=backend, hooks=hooks)
+    scheduler = Scheduler(http=http_client, backend=backend, hooks=hooks, store=task_store)
 
     # Startup scheduler (recovers tickets and boots root if needed)
     await scheduler.startup()
@@ -237,7 +238,7 @@ def _read_chat_log(ticket: Ticket) -> list[dict[str, str]]:
 @app.get("/tickets")
 async def get_tickets(tag: str | None = None) -> list[dict[str, Any]]:
     """List all tickets, sorted by created_at latest first, optionally filtered by tag."""
-    tickets = list_tickets()
+    tickets = task_store.query_all()
 
     if tag:
         tickets = [t for t in tickets if t.metadata.tags and tag in t.metadata.tags]
@@ -251,7 +252,7 @@ async def get_tickets(tag: str | None = None) -> list[dict[str, Any]]:
 @app.get("/tickets/{ticket_id}")
 async def get_ticket(ticket_id: str) -> dict[str, Any]:
     """Get a single ticket."""
-    ticket = load_ticket(ticket_id)
+    ticket = task_store.get(ticket_id)
     if not ticket:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
     return _ticket_to_dict(ticket)
@@ -260,7 +261,7 @@ async def get_ticket(ticket_id: str) -> dict[str, Any]:
 @app.get("/tickets/{ticket_id}/files")
 async def list_ticket_files(ticket_id: str) -> list[str]:
     """List files in the ticket's filesystem directory."""
-    ticket = load_ticket(ticket_id)
+    ticket = task_store.get(ticket_id)
     if not ticket:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
 
@@ -278,7 +279,7 @@ async def list_ticket_files(ticket_id: str) -> list[str]:
 @app.get("/tickets/{ticket_id}/files/{path:path}")
 async def get_ticket_file(ticket_id: str, path: str) -> FileResponse:
     """Serve files from the ticket's filesystem."""
-    ticket = load_ticket(ticket_id)
+    ticket = task_store.get(ticket_id)
     if not ticket:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
 
@@ -316,7 +317,7 @@ async def respond_to_ticket(
     ticket_id: str, req: RespondRequest,
 ) -> dict[str, Any]:
     """Submit a response to a suspended ticket and trigger scheduling."""
-    ticket = load_ticket(ticket_id)
+    ticket = task_store.get(ticket_id)
     if not ticket:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
     if ticket.metadata.status != "suspended":
@@ -356,7 +357,7 @@ async def update_ticket_tags(
     ticket_id: str, req: UpdateTagsRequest
 ) -> dict[str, Any]:
     """Update tags for a ticket and broadcast."""
-    ticket = load_ticket(ticket_id)
+    ticket = task_store.get(ticket_id)
     if not ticket:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
 
@@ -379,7 +380,7 @@ async def retry_ticket(ticket_id: str) -> dict[str, Any]:
     (e.g. 503).  Retrying clears the error and re-queues the ticket
     for the scheduler to pick up.
     """
-    ticket = load_ticket(ticket_id)
+    ticket = task_store.get(ticket_id)
     if not ticket:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
     if ticket.metadata.status != "paused":
@@ -470,7 +471,7 @@ async def get_status(
     kind: str | None = None,
 ) -> dict[str, Any]:
     """Return a status response containing both the summary text and structured tasks."""
-    tickets = list_tickets()
+    tickets = task_store.query_all()
 
     by_run: dict[str, list[Ticket]] = {}
     active_running = []
@@ -550,7 +551,7 @@ async def events() -> EventSourceResponse:
             yield {
                 "event": "init",
                 "data": json.dumps([
-                    _ticket_to_dict(t) for t in list_tickets()
+                    _ticket_to_dict(t) for t in task_store.query_all()
                 ]),
             }
             while True:

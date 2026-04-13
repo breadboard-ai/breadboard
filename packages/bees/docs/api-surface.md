@@ -14,17 +14,15 @@ The application layer (`app/`) consumes `bees` primarily for:
 
 ## API Surface by Module
 
-### `bees.playbook`
+### `bees.ticket`
 
-- `run_playbook(name: str)`: Used in `app/run_playbook.py` to create a task from a template.
-  - [x] TODO: Remove this capability and remove `run_playbook` from the public API. (DONE)
-
-### `bees.session`
-
-- `load_gemini_key()`: Used in `app/cli.py`, `app/drain.py`, and `app/server.py` to load the API key.
-  - [x] TODO: Move key loading to the `app` layer. The library should receive the key as a parameter. (DONE)
-- `run_session(...)`: Used in `app/cli.py` to run a session directly.
-  - [x] TODO: Remove this capability from the CLI and remove `run_session` from the public API. (DONE)
+- [x] TODO: Consider introducing a `TaskStore` (Repository pattern) to encapsulate task CRUD operations (`create_ticket`, `list_tickets`, `load_ticket`), preparing for non-filesystem storage backends.
+- `Ticket`: The task data model. Used in `app/server.py` and `app/respond.py`.
+  - [ ] TODO: Alias to `Task` when exposing in the public API.
+- `create_ticket(...)`: Used in `app/add_ticket.py`. (Note: `app/server.py` now uses `scheduler.create_task()`).
+- `list_tickets(...)`: Used in `app/respond.py` and `app/server.py` to list tasks.
+- `load_ticket(id: str)`: Used in `app/edit_tags.py` and `app/server.py` to load a specific task.
+- [ ] TODO: `app/respond.py` directly manipulates ticket files (writing `response.json`). We need a proper API for updating task state (e.g., responding to a task) to fix this abstraction leak.
 
 ### `bees.scheduler`
 
@@ -34,15 +32,13 @@ The application layer (`app/`) consumes `bees` primarily for:
 - `SchedulerHooks`: Interface for receiving callbacks from the scheduler. Used in `app/drain.py` and `app/server.py`.
   - Added `on_ticket_added` hook.
 
-### `bees.ticket`
+## Completed Refactors
 
-- `Ticket`: The task data model. Used in `app/server.py` and `app/respond.py`.
-  - [ ] TODO: Alias to `Task` when exposing in the public API.
-- `create_ticket(...)`: Used in `app/add_ticket.py`. (Note: `app/server.py` now uses `scheduler.create_task()`).
-- `list_tickets(...)`: Used in `app/respond.py` and `app/server.py` to list tasks.
-- `load_ticket(id: str)`: Used in `app/edit_tags.py` and `app/server.py` to load a specific task.
-- [ ] TODO: `app/respond.py` directly manipulates ticket files (writing `response.json`). We need a proper API for updating task state (e.g., responding to a task) to fix this abstraction leak.
-- [ ] TODO: Consider introducing a `TaskStore` (Repository pattern) to encapsulate task CRUD operations (`create_ticket`, `list_tickets`, `load_ticket`), preparing for non-filesystem storage backends.
+- [x] Introduce `TaskStore` to encapsulate task CRUD operations (DONE)
+- [x] Move `boot_root_template` to `Scheduler` (DONE)
+- [x] Remove `run_playbook` from public API and CLI (DONE)
+- [x] Move key loading to the app layer (DONE)
+- [x] Remove `run_session` from CLI and public API (DONE)
 
 ## Rationale for API Exposure
 

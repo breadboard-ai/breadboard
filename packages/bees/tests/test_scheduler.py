@@ -315,6 +315,7 @@ def test_handle_pause_sets_status(mock_clients):
 def test_promote_does_not_cascade_paused(mock_clients):
     """A blocked ticket with a paused dep stays blocked (no cascade)."""
     from bees.scheduler import promote_blocked_tickets
+    from bees.ticket import get_default_store
 
     parent = create_ticket("Parent")
     parent.metadata.status = "paused"
@@ -325,7 +326,7 @@ def test_promote_does_not_cascade_paused(mock_clients):
     child.metadata.depends_on = [parent.id]
     child.save_metadata()
 
-    promote_blocked_tickets()
+    promote_blocked_tickets(get_default_store())
 
     from bees.ticket import load_ticket
     fresh_child = load_ticket(child.id)
