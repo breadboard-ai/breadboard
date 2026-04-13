@@ -28,6 +28,12 @@ class BeesTicketList extends SignalWatcher(LitElement) {
   static styles = [
     sharedStyles,
     css`
+      :host {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
       /* Sidebar toolbar */
       .sidebar-toolbar {
         display: flex;

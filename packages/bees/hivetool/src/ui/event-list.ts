@@ -9,7 +9,7 @@
  */
 
 import { SignalWatcher } from "@lit-labs/signals";
-import { LitElement, html, nothing } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
 import type { TicketStore } from "../data/ticket-store.js";
@@ -20,7 +20,16 @@ export { BeesEventList };
 
 @customElement("bees-event-list")
 class BeesEventList extends SignalWatcher(LitElement) {
-  static styles = [sharedStyles];
+  static styles = [
+    sharedStyles,
+    css`
+      :host {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+    `,
+  ];
 
   @property({ attribute: false })
   accessor store: TicketStore | null = null;
