@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import unittest
+from pathlib import Path
 from bees.ticket import Ticket, TicketMetadata
 from app.server import should_include_ticket
 
@@ -11,6 +12,7 @@ class TestQueryParser(unittest.TestCase):
         self.ticket = Ticket(
             id="test-id",
             objective="test objective",
+            dir=Path("/tmp/test-ticket"),
             metadata=TicketMetadata(
                 status="available",
                 tags=["foo", "bar"],

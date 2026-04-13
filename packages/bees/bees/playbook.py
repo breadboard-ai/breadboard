@@ -24,7 +24,8 @@ import yaml
 
 from bees.config import HIVE_DIR
 from bees.subagent_scope import SubagentScope
-from bees.ticket import Ticket, create_ticket
+from bees import TaskStore
+from bees.ticket import Ticket
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,7 @@ def _load_hooks(name: str) -> ModuleType | None:
 def run_playbook(
     name: str,
     *,
+    store: TaskStore,
     context: str | None = None,
     parent_ticket_id: str | None = None,
     slug: str | None = None,
@@ -131,7 +133,7 @@ def run_playbook(
     playbook_id = data.get("name", name)
     playbook_run_id = str(uuid.uuid4())
 
-    ticket = create_ticket(
+    ticket = store.create(
         data.get("objective", ""),
         title=data.get("title"),
         functions=data.get("functions"),
@@ -155,6 +157,7 @@ def run_playbook(
                 child_name,
                 parent_ticket=ticket,
                 slug=child_name,
+                store=store,
             )
         except Exception as exc:
             logger.warning(
@@ -170,6 +173,7 @@ def stamp_child_ticket(
     *,
     parent_ticket: Ticket,
     slug: str,
+    store: TaskStore,
     context: str | None = None,
     title: str | None = None,
     scope: SubagentScope | None = None,
@@ -188,6 +192,7 @@ def stamp_child_ticket(
 
     child = run_playbook(
         template_name,
+        store=store,
         context=context,
         parent_ticket_id=child_scope.workspace_root_id,
         slug=child_scope.slug_path,

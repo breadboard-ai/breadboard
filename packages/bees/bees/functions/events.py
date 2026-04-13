@@ -24,7 +24,7 @@ from opal_backend.function_definition import (
     FunctionGroupFactory,
 )
 
-from bees.ticket import Ticket, create_ticket
+from bees.ticket import Ticket
 
 __all__ = ["get_events_function_group_factory"]
 
@@ -42,6 +42,7 @@ def _make_handlers(
     deliver_to_parent: Callable[[dict[str, Any]], None] | None = None,
     ticket_id: str | None = None,
     scope: SubagentScope | None = None,
+    scheduler: Any | None = None,
 ) -> dict[str, Any]:
     """Build the handler map for the events function group."""
 
@@ -95,7 +96,9 @@ def _make_handlers(
             status_cb(f"Broadcasting event: {event_type}")
 
         try:
-            ticket = create_ticket(
+            if not scheduler:
+                return {"error": "Scheduler not available"}
+            ticket = scheduler.store.create(
                 "",  # No objective — event tickets carry context, not work.
                 kind="coordination",
                 signal_type=event_type,
@@ -129,6 +132,7 @@ def get_events_function_group_factory(
     deliver_to_parent: Callable[[dict[str, Any]], None] | None = None,
     ticket_id: str | None = None,
     scope: SubagentScope | None = None,
+    scheduler: Any | None = None,
 ) -> FunctionGroupFactory:
     """Build a FunctionGroupFactory for events."""
     def factory(hooks: SessionHooks) -> FunctionGroup:
@@ -137,6 +141,7 @@ def get_events_function_group_factory(
             deliver_to_parent=deliver_to_parent,
             ticket_id=ticket_id,
             scope=scope,
+            scheduler=scheduler,
         )
         return assemble_function_group(_LOADED, handlers)
     return factory

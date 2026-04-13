@@ -62,7 +62,6 @@ from bees.ticket import (
     Ticket,
     _DEP_PATTERN,
     TaskStore,
-    get_default_store,
 )
 from bees.subagent_scope import SubagentScope
 from opal_backend.local.backend_client_impl import HttpBackendClient
@@ -258,13 +257,13 @@ class Scheduler:
         *,
         http: httpx.AsyncClient,
         backend: HttpBackendClient,
+        store: TaskStore,
         hooks: SchedulerHooks | None = None,
-        store: TaskStore | None = None,
     ) -> None:
         self._http = http
         self._backend = backend
         self._hooks = hooks or SchedulerHooks()
-        self.store = store or get_default_store()
+        self.store = store
         self._trigger = asyncio.Event()
         self._running = False
         self._running_tickets: set[str] = set()
@@ -315,7 +314,7 @@ class Scheduler:
             return None
 
         logger.info("Booting root template '%s'", root)
-        ticket = run_playbook(root)
+        ticket = run_playbook(root, store=self.store)
         
         if self._hooks.on_ticket_added:
             await self._hooks.on_ticket_added(ticket)
@@ -423,17 +422,7 @@ class Scheduler:
             and target.metadata.assignee == "user"
             and target_id not in self._running_tickets
         ):
-            response_path = target.dir / "response.json"
-            response_path.write_text(
-                json.dumps(
-                    {"context_updates": [update]},
-                    indent=2,
-                    ensure_ascii=False,
-                )
-                + "\n"
-            )
-            target.metadata.assignee = "agent"
-            target.save_metadata()
+            self.store.respond(target_id, {"context_updates": [update]})
             logger.info("Context update delivered to %s via response.json", target_id)
         else:
             # Path 3: buffer in metadata.

@@ -39,6 +39,7 @@ _LOADED = load_declarations("chat", declarations_dir=_DECLARATIONS_DIR)
 def get_chat_function_group_factory(
     on_chat_entry: "ChatEntryCallback" = None,
     workspace_root_id: str | None = None,
+    scheduler: Any | None = None,
 ) -> "FunctionGroupFactory":
     """Return a factory that builds the bees chat function group.
 
@@ -75,9 +76,8 @@ def get_chat_function_group_factory(
             # If updates are already buffered, return immediately
             # without suspending — the updates are emitted as text
             # parts via CONTEXT_PARTS_KEY.
-            if workspace_root_id:
-                from bees.ticket import load_ticket
-                ticket = load_ticket(workspace_root_id)
+            if workspace_root_id and scheduler:
+                ticket = scheduler.store.get(workspace_root_id)
                 if ticket and ticket.metadata.pending_context_updates:
                     updates = ticket.metadata.pending_context_updates
                     ticket.metadata.pending_context_updates = []

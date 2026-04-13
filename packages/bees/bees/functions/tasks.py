@@ -41,8 +41,7 @@ def _make_handlers(
             
         allowed_tasks = []
         if caller_ticket_id:
-            from bees.ticket import load_ticket
-            ticket = load_ticket(caller_ticket_id)
+            ticket = scheduler.store.get(caller_ticket_id) if scheduler else None
             if ticket and ticket.metadata.tasks:
                 allowed_tasks = ticket.metadata.tasks
                 
@@ -89,8 +88,7 @@ def _make_handlers(
 
 
         try:
-            from bees.ticket import load_ticket as _load
-            parent = _load(caller_ticket_id) if caller_ticket_id else None
+            parent = scheduler.store.get(caller_ticket_id) if scheduler and caller_ticket_id else None
             if not parent:
                 return {"error": "Parent ticket not found"}
 
@@ -98,6 +96,7 @@ def _make_handlers(
                 task_type,
                 parent_ticket=parent,
                 slug=slug,
+                store=scheduler.store,
                 context=objective,
                 title=title or summary,
                 scope=scope,
@@ -118,8 +117,7 @@ def _make_handlers(
                 status_cb(None, None)
                 
             if status == "completed":
-                from bees.ticket import load_ticket
-                fresh = load_ticket(ticket.id)
+                fresh = scheduler.store.get(ticket.id) if scheduler else None
                 return {"outcome": fresh.metadata.outcome if fresh else "completed"}
             else:
                 return {"task_id": ticket.id, "status": status}
@@ -134,11 +132,9 @@ def _make_handlers(
         if caller_ticket_id:
             from collections import defaultdict
 
-            from bees.ticket import list_tickets as _list_tickets
-
             # Build an index: creator_ticket_id -> list of child tickets.
             children_of: dict[str, list[Any]] = defaultdict(list)
-            for t in _list_tickets():
+            for t in (scheduler.store.query_all() if scheduler else []):
                 if t.metadata.creator_ticket_id:
                     children_of[t.metadata.creator_ticket_id].append(t)
 

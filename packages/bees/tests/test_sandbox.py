@@ -14,16 +14,6 @@ from unittest.mock import MagicMock
 
 from bees.functions.sandbox import get_sandbox_function_group_factory
 from bees.subagent_scope import SubagentScope
-from bees.ticket import create_ticket
-
-
-@pytest.fixture(autouse=True)
-def _temp_tickets(tmp_path, monkeypatch):
-    """Redirect ticket storage to a temp directory for each test."""
-    tickets_dir = tmp_path / "tickets"
-    tickets_dir.mkdir()
-    monkeypatch.setattr("bees.ticket.TICKETS_DIR", tickets_dir)
-    yield tickets_dir
 
 
 @pytest.mark.asyncio

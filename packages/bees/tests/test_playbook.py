@@ -14,19 +14,30 @@ import yaml
 from bees.playbook import (
     load_playbook,
     load_system_config,
-    run_playbook,
+    run_playbook as _real_run_playbook,
     run_event_hooks,
-    stamp_child_ticket,
+    stamp_child_ticket as _real_stamp_child_ticket,
 )
-from bees.ticket import TICKETS_DIR, _DEP_PATTERN
+from bees.ticket import _DEP_PATTERN
+from bees import TaskStore
 
+GLOBAL_STORE = None
+
+def run_playbook(name: str, **kwargs):
+    assert GLOBAL_STORE is not None, "GLOBAL_STORE not initialized"
+    return _real_run_playbook(name, store=GLOBAL_STORE, **kwargs)
+
+def stamp_child_ticket(template_name: str, *, parent_ticket, slug, **kwargs):
+    assert GLOBAL_STORE is not None, "GLOBAL_STORE not initialized"
+    return _real_stamp_child_ticket(template_name, parent_ticket=parent_ticket, slug=slug, store=GLOBAL_STORE, **kwargs)
 
 @pytest.fixture(autouse=True)
 def _temp_dirs(tmp_path, monkeypatch):
     """Redirect ticket and template storage to temp directories."""
+    global GLOBAL_STORE
     tickets_dir = tmp_path / "tickets"
     tickets_dir.mkdir()
-    monkeypatch.setattr("bees.ticket.TICKETS_DIR", tickets_dir)
+    GLOBAL_STORE = TaskStore(tickets_dir)
 
     config_dir = tmp_path / "config"
     config_dir.mkdir()
@@ -174,8 +185,7 @@ class TestRunPlaybook:
 class TestRunEventHooks:
 
     def test_no_playbook_passes_through(self, write_template):
-        from bees.ticket import create_ticket
-        ticket = create_ticket("standalone objective")
+        ticket = GLOBAL_STORE.create("standalone objective")
         result = run_event_hooks("some_signal", "payload", ticket)
         assert result == "payload"
 
@@ -256,56 +266,65 @@ class TestTicketPaths:
     """Tests for Ticket.dir and Ticket.fs_dir path resolution."""
 
     def test_dir_always_top_level(self, _temp_dirs):
-        from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
+        from bees.ticket import Ticket, TicketMetadata
 
         t = Ticket(
             id="abc-123",
             objective="test",
+            dir=GLOBAL_STORE.tickets_dir / "abc-123",
             metadata=TicketMetadata(
                 playbook_run_id="run-456",
                 parent_ticket_id="run-789",
             ),
         )
-        assert t.dir == TICKETS_DIR / "abc-123"
+        assert t.dir == GLOBAL_STORE.tickets_dir / "abc-123"
 
     def test_fs_dir_with_parent_ticket_id(self, _temp_dirs):
-        from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
+        from bees.ticket import Ticket, TicketMetadata
 
         t = Ticket(
             id="abc-123",
             objective="test",
+            dir=GLOBAL_STORE.tickets_dir / "abc-123",
             metadata=TicketMetadata(parent_ticket_id="parent-ticket"),
         )
-        assert t.fs_dir == TICKETS_DIR / "parent-ticket" / "filesystem"
+        assert t.fs_dir == GLOBAL_STORE.tickets_dir / "parent-ticket" / "filesystem"
 
     def test_fs_dir_plain_ticket(self, _temp_dirs):
-        from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
+        from bees.ticket import Ticket, TicketMetadata
 
-        t = Ticket(id="abc-123", objective="test", metadata=TicketMetadata())
-        assert t.fs_dir == TICKETS_DIR / "abc-123" / "filesystem"
+        t = Ticket(
+            id="abc-123",
+            objective="test",
+            dir=GLOBAL_STORE.tickets_dir / "abc-123",
+            metadata=TicketMetadata(),
+        )
+        assert t.fs_dir == GLOBAL_STORE.tickets_dir / "abc-123" / "filesystem"
 
     def test_fs_dir_playbook_run_id_alone_uses_own_dir(self, _temp_dirs):
-        from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
+        from bees.ticket import Ticket, TicketMetadata
 
         t = Ticket(
             id="abc-123",
             objective="test",
+            dir=GLOBAL_STORE.tickets_dir / "abc-123",
             metadata=TicketMetadata(playbook_run_id="pb-run"),
         )
-        assert t.fs_dir == TICKETS_DIR / "abc-123" / "filesystem"
+        assert t.fs_dir == GLOBAL_STORE.tickets_dir / "abc-123" / "filesystem"
 
     def test_fs_dir_parent_takes_precedence(self, _temp_dirs):
-        from bees.ticket import Ticket, TicketMetadata, TICKETS_DIR
+        from bees.ticket import Ticket, TicketMetadata
 
         t = Ticket(
             id="abc-123",
             objective="test",
+            dir=GLOBAL_STORE.tickets_dir / "abc-123",
             metadata=TicketMetadata(
                 playbook_run_id="pb-run",
                 parent_ticket_id="parent-ticket",
             ),
         )
-        assert t.fs_dir == TICKETS_DIR / "parent-ticket" / "filesystem"
+        assert t.fs_dir == GLOBAL_STORE.tickets_dir / "parent-ticket" / "filesystem"
 
 
 
@@ -421,8 +440,7 @@ class TestAutostart:
 
         parent = run_playbook("boss")
 
-        from bees.ticket import list_tickets
-        all_tickets = list_tickets()
+        all_tickets = GLOBAL_STORE.query_all()
         children = [t for t in all_tickets if t.metadata.creator_ticket_id == parent.id]
 
         assert len(children) == 1
@@ -438,8 +456,7 @@ class TestAutostart:
 
         parent = run_playbook("solo")
 
-        from bees.ticket import list_tickets
-        all_tickets = list_tickets()
+        all_tickets = GLOBAL_STORE.query_all()
         children = [t for t in all_tickets if t.metadata.creator_ticket_id == parent.id]
 
         assert len(children) == 0
@@ -462,8 +479,7 @@ class TestAutostart:
 
         parent = run_playbook("boss")
 
-        from bees.ticket import list_tickets
-        all_tickets = list_tickets()
+        all_tickets = GLOBAL_STORE.query_all()
         children = [t for t in all_tickets if t.metadata.creator_ticket_id == parent.id]
 
         assert len(children) == 2

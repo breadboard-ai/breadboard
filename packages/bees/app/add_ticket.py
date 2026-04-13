@@ -14,7 +14,10 @@ from __future__ import annotations
 import argparse
 import sys
 
-from bees.ticket import create_ticket
+from bees import TaskStore
+from bees.config import HIVE_DIR
+
+task_store = TaskStore(HIVE_DIR / "tickets")
 
 
 def main() -> None:
@@ -64,7 +67,7 @@ def main() -> None:
     if args.skills:
         skills = [f.strip() for f in args.skills.split(",") if f.strip()]
 
-    ticket = create_ticket(objective, tags=tags, functions=functions, skills=skills)  # noqa: positional ok — objective is before *
+    ticket = task_store.create(objective, tags=tags, functions=functions, skills=skills)
 
     print(f"Created ticket {ticket.id}", file=sys.stderr)
     print(f"  objective: {objective!r}", file=sys.stderr)
