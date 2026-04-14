@@ -37,7 +37,7 @@ on `TicketMetadata`:
 | `playbook_id`             | Template name (pending rename to `template_id`).                  |
 | `playbook_run_id`         | UUID grouping tasks in the same run (pending rename to `run_id`). |
 | `creator_ticket_id`       | Parent task that created this one.                                |
-| `parent_ticket_id`        | Task whose filesystem this task shares.                           |
+| `owning_task_id`          | Task whose filesystem this task shares.                           |
 | `slug`                    | Writable subdirectory within the shared workspace.                |
 | `depends_on`              | List of task IDs that must complete first.                        |
 | `functions`               | Filter globs for available tools.                                 |

@@ -241,12 +241,12 @@ export class OpalTimeline extends SignalWatcher(LitElement) {
     }
 
     // Gather worker tickets that share this journey's workspace.
-    // Child workers get parent_ticket_id = the root ticket's ID,
+    // Child workers get owning_task_id = the root ticket's ID,
     // so match directly against this ticket's ID.
     const workerTickets = this.sca.controller.global.tickets
       .filter(
         (t) =>
-          t.parent_ticket_id === ticket.id &&
+          t.owning_task_id === ticket.id &&
           t.kind !== "coordination" &&
           t.playbook_id &&
           t.id !== this.ticketId &&

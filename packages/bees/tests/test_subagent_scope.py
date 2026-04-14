@@ -20,7 +20,7 @@ class TestForTicket:
 
     def test_root_ticket(self):
         """Root ticket (no parent) gets scope with own ID as workspace root."""
-        ticket = _fake_ticket("root-id", parent_ticket_id=None, slug=None)
+        ticket = _fake_ticket("root-id", owning_task_id=None, slug=None)
         scope = SubagentScope.for_ticket(ticket)
         assert scope.workspace_root_id == "root-id"
         assert scope.slug_path is None
@@ -28,7 +28,7 @@ class TestForTicket:
     def test_child_ticket(self):
         """Child ticket gets parent as workspace root and slug from metadata."""
         ticket = _fake_ticket(
-            "child-id", parent_ticket_id="root-id", slug="research",
+            "child-id", owning_task_id="root-id", slug="research",
         )
         scope = SubagentScope.for_ticket(ticket)
         assert scope.workspace_root_id == "root-id"
@@ -38,7 +38,7 @@ class TestForTicket:
         """Grandchild ticket preserves full slug path from metadata."""
         ticket = _fake_ticket(
             "grandchild-id",
-            parent_ticket_id="root-id",
+            owning_task_id="root-id",
             slug="research/deep-dive",
         )
         scope = SubagentScope.for_ticket(ticket)
@@ -212,10 +212,10 @@ class TestFrozen:
 class _FakeMetadata:
     def __init__(
         self,
-        parent_ticket_id: str | None = None,
+        owning_task_id: str | None = None,
         slug: str | None = None,
     ) -> None:
-        self.parent_ticket_id = parent_ticket_id
+        self.owning_task_id = owning_task_id
         self.slug = slug
 
 
@@ -223,19 +223,19 @@ class _FakeTicket:
     def __init__(
         self,
         ticket_id: str,
-        parent_ticket_id: str | None = None,
+        owning_task_id: str | None = None,
         slug: str | None = None,
     ) -> None:
         self.id = ticket_id
         self.metadata = _FakeMetadata(
-            parent_ticket_id=parent_ticket_id,
+            owning_task_id=owning_task_id,
             slug=slug,
         )
 
 
 def _fake_ticket(
     ticket_id: str,
-    parent_ticket_id: str | None = None,
+    owning_task_id: str | None = None,
     slug: str | None = None,
 ) -> _FakeTicket:
-    return _FakeTicket(ticket_id, parent_ticket_id, slug)
+    return _FakeTicket(ticket_id, owning_task_id, slug)

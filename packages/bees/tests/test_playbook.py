@@ -144,14 +144,14 @@ class TestRunPlaybook:
         ticket = run_playbook("with-assignee")
         assert ticket.metadata.assignee == "app"
 
-    def test_parent_ticket_id_propagates(self, write_template):
+    def test_owning_task_id_propagates(self, write_template):
         write_template({
             "name": "sub",
             "objective": "step a",
         })
 
-        ticket = run_playbook("sub", parent_ticket_id="caller-ticket")
-        assert ticket.metadata.parent_ticket_id == "caller-ticket"
+        ticket = run_playbook("sub", owning_task_id="caller-ticket")
+        assert ticket.metadata.owning_task_id == "caller-ticket"
 
     def test_slug_propagates(self, write_template):
         write_template({
@@ -268,19 +268,19 @@ class TestTicketPaths:
             dir=GLOBAL_STORE.tickets_dir / "abc-123",
             metadata=TicketMetadata(
                 playbook_run_id="run-456",
-                parent_ticket_id="run-789",
+                owning_task_id="run-789",
             ),
         )
         assert t.dir == GLOBAL_STORE.tickets_dir / "abc-123"
 
-    def test_fs_dir_with_parent_ticket_id(self, _temp_dirs):
+    def test_fs_dir_with_owning_task_id(self, _temp_dirs):
         from bees.ticket import Ticket, TicketMetadata
 
         t = Ticket(
             id="abc-123",
             objective="test",
             dir=GLOBAL_STORE.tickets_dir / "abc-123",
-            metadata=TicketMetadata(parent_ticket_id="parent-ticket"),
+            metadata=TicketMetadata(owning_task_id="parent-ticket"),
         )
         assert t.fs_dir == GLOBAL_STORE.tickets_dir / "parent-ticket" / "filesystem"
 
@@ -315,7 +315,7 @@ class TestTicketPaths:
             dir=GLOBAL_STORE.tickets_dir / "abc-123",
             metadata=TicketMetadata(
                 playbook_run_id="pb-run",
-                parent_ticket_id="parent-ticket",
+                owning_task_id="parent-ticket",
             ),
         )
         assert t.fs_dir == GLOBAL_STORE.tickets_dir / "parent-ticket" / "filesystem"
@@ -359,7 +359,7 @@ class TestStampChildTicket:
         )
 
         assert child.metadata.creator_ticket_id == parent.id
-        assert child.metadata.parent_ticket_id == parent.id
+        assert child.metadata.owning_task_id == parent.id
         assert child.metadata.slug == "my-worker"
         assert child.metadata.playbook_id == "worker"
 
@@ -441,7 +441,7 @@ class TestAutostart:
         child = children[0]
         assert child.metadata.playbook_id == "helper"
         assert child.metadata.slug == "helper"
-        assert child.metadata.parent_ticket_id == parent.id
+        assert child.metadata.owning_task_id == parent.id
 
     def test_autostart_empty_creates_no_children(self, write_template):
         write_template(
