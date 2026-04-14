@@ -108,7 +108,8 @@ export default tseslint.config(
   {
     files: [
       "packages/visual-editor/src/**/*.ts",
-      "packages/bees/web/src/sca/**/*.ts"
+      "packages/bees/web/src/sca/**/*.ts",
+      "packages/folio/frontend/sca/**/*.ts"
     ],
     plugins: {
       "expect-type": expectType,

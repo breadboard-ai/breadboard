@@ -1,0 +1,28 @@
+{
+  "name": "folio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Folio - example app",
+  "scripts": {
+    "setup": "wireit",
+    "dev": "npm run dev:server & npm run dev:web",
+    "dev:server": ".venv/bin/python backend/server.py",
+    "dev:web": "vite",
+    "test:python": ".venv/bin/python -m pytest tests/ -v"
+  },
+  "wireit": {
+    "setup": {
+      "command": "python3 -m venv .venv && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/python -m pip install -e '../bees' -e '../opal-backend[local]' '.[dev]'",
+      "files": [
+        "pyproject.toml",
+        "package.json"
+      ],
+      "output": []
+    }
+  },
+  "devDependencies": {
+    "@google-labs/tsconfig": "^0.0.2",
+    "vite": "^7.3.2",
+    "wireit": "^0.15.0-pre.2"
+  }
+}
