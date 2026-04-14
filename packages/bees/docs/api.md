@@ -60,7 +60,7 @@ Creates a new root task in the hive.
 
 Registers an event handler for the specified event.
 
-- **`event_name`**: The name of the event (e.g., `ticket_done`).
+- **`event_name`**: The name of the event. Supported events: `task_added`, `cycle_start`, `task_event`, `task_start`, `task_done`, `cycle_complete`.
 - **`handler`**: The callback function to run when the event fires.
 
 #### `listen(self)` (Async)
