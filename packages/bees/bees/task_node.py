@@ -2,11 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict, overload
 from bees.ticket import Ticket
 
 if TYPE_CHECKING:
     from bees.bees import Bees
+
+class ReplyResponse(TypedDict):
+    text: str
+
+class ChooseResponse(TypedDict):
+    selectedIds: list[str]
+
 
 class TaskNode:
     """Wraps a Ticket and provides a tree traversal and manipulation API."""
@@ -39,6 +46,11 @@ class TaskNode:
             return None
         parent_task = self._store.get(self._task.metadata.parent_task_id)
         return TaskNode(parent_task, self._bees) if parent_task else None
+
+    @property
+    def awaiting_response(self) -> bool:
+        """Returns True if the task is suspended and assigned to the user."""
+        return self._task.metadata.status == "suspended" and self._task.metadata.assignee == "user"
 
     def query(self, tags: list[str]) -> list[TaskNode]:
         """Searches for tasks in the subtree that contain all of the specified tags."""
@@ -86,9 +98,44 @@ class TaskNode:
         ticket = await self._bees._scheduler.create_task(objective, **kwargs)
         return TaskNode(ticket, self._bees)
 
-    def respond(self, response: dict):
+    @overload
+    def respond(self, response: ReplyResponse) -> Ticket: ...
+    
+    @overload
+    def respond(self, response: ChooseResponse) -> Ticket: ...
+    
+    @overload
+    def respond(self, *, text: str) -> Ticket: ...
+    
+    @overload
+    def respond(self, *, selectedIds: list[str]) -> Ticket: ...
+    
+    def respond(
+        self, 
+        response: dict | None = None, 
+        *, 
+        text: str | None = None, 
+        selectedIds: list[str] | None = None
+    ) -> Ticket:
         """Delivers a response to this task."""
-        self._task = self._store.respond(self.id, response)
+        
+        if response is not None:
+            if text is not None or selectedIds is not None:
+                raise ValueError("Cannot provide both a dictionary response and keyword arguments")
+            payload = response
+        else:
+            if text is not None and selectedIds is not None:
+                raise ValueError("Cannot provide both 'text' and 'selectedIds'")
+            if text is None and selectedIds is None:
+                raise ValueError("Must provide either 'text' or 'selectedIds' (or a dictionary response)")
+            
+            payload = {}
+            if text is not None:
+                payload["text"] = text
+            else:
+                payload["selectedIds"] = selectedIds
+
+        self._task = self._store.respond(self.id, payload)
         self._bees._trigger()
         return self._task
 

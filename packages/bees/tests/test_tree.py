@@ -162,6 +162,93 @@ def test_task_node_respond(temp_hive):
     store_mock.respond.assert_called_once_with("task1", {"text": "reply"})
 
 
+def test_task_node_respond_with_text_kwarg(temp_hive):
+    bees = Bees(temp_hive, backend=Mock())
+    store_mock = Mock()
+    bees._store = store_mock
+    
+    ticket = Mock()
+    ticket.id = "task1"
+    node = TaskNode(ticket, bees)
+    
+    node.respond(text="reply")
+    
+    store_mock.respond.assert_called_once_with("task1", {"text": "reply"})
+
+
+def test_task_node_respond_with_selected_ids_kwarg(temp_hive):
+    bees = Bees(temp_hive, backend=Mock())
+    store_mock = Mock()
+    bees._store = store_mock
+    
+    ticket = Mock()
+    ticket.id = "task1"
+    node = TaskNode(ticket, bees)
+    
+    node.respond(selectedIds=["choice1"])
+    
+    store_mock.respond.assert_called_once_with("task1", {"selectedIds": ["choice1"]})
+
+
+def test_task_node_respond_mutually_exclusive_kwargs(temp_hive):
+    bees = Bees(temp_hive, backend=Mock())
+    ticket = Mock()
+    ticket.id = "task1"
+    node = TaskNode(ticket, bees)
+    
+    with pytest.raises(ValueError, match="Cannot provide both 'text' and 'selectedIds'"):
+        node.respond(text="reply", selectedIds=["choice1"])
+
+
+def test_task_node_respond_missing_kwargs(temp_hive):
+    bees = Bees(temp_hive, backend=Mock())
+    ticket = Mock()
+    ticket.id = "task1"
+    node = TaskNode(ticket, bees)
+    
+    with pytest.raises(ValueError, match="Must provide either 'text' or 'selectedIds'"):
+        node.respond()
+
+
+def test_task_node_respond_dict_and_kwargs_conflict(temp_hive):
+    bees = Bees(temp_hive, backend=Mock())
+    ticket = Mock()
+    ticket.id = "task1"
+    node = TaskNode(ticket, bees)
+    
+    with pytest.raises(ValueError, match="Cannot provide both a dictionary response and keyword arguments"):
+        node.respond({"text": "reply"}, text="another reply")
+
+
+def test_task_node_awaiting_response(temp_hive):
+    bees = Bees(temp_hive, backend=Mock())
+    
+    ticket = Mock()
+    ticket.metadata = Mock()
+    
+    node = TaskNode(ticket, bees)
+    
+    # Case 1: Not suspended, not user
+    ticket.metadata.status = "running"
+    ticket.metadata.assignee = "agent"
+    assert not node.awaiting_response
+    
+    # Case 2: Suspended, but not user
+    ticket.metadata.status = "suspended"
+    ticket.metadata.assignee = "agent"
+    assert not node.awaiting_response
+    
+    # Case 3: Not suspended, but user
+    ticket.metadata.status = "running"
+    ticket.metadata.assignee = "user"
+    assert not node.awaiting_response
+    
+    # Case 4: Suspended and user
+    ticket.metadata.status = "suspended"
+    ticket.metadata.assignee = "user"
+    assert node.awaiting_response
+
+
 def test_bees_all(temp_hive):
     bees = Bees(temp_hive, backend=Mock())
     store_mock = Mock()
