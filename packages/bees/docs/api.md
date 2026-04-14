@@ -85,6 +85,8 @@ A wrapper around a task that provides DOM-like traversal properties and manipula
 
 - **`parent`**: `TaskNode | None` (Read-only) The parent task of this task, or `None` if it is a root task.
 
+- **`awaiting_response`**: `bool` (Read-only) Returns `True` if the task is suspended and assigned to the user, indicating it is waiting for a response.
+
 #### Methods
 
 #### `query(self, tags: list[str]) -> list[TaskNode]`
@@ -102,11 +104,16 @@ Creates a child task under this task.
 - **`**kwargs`**: Additional arguments for task creation.
 - **Returns**: A `TaskNode` representing the newly created child task.
 
-#### `respond(self, response: dict)`
+#### `respond(self, response: dict | None = None, *, text: str | None = None, selectedIds: list[str] | None = None)`
 
-Submits a response to the task (e.g., answering a question or providing data).
+Submits a response to the task (e.g., answering a question or providing data). Supports both dictionary style and specific keyword arguments for improved ergonomics.
 
-- **`response`**: The data to respond with.
+- **`response`**: A dictionary containing the response data (e.g., `{"text": "..."}`).
+- **`text`**: (Keyword only) The text response to provide.
+- **`selectedIds`**: (Keyword only) A list of selected choice IDs.
+
+> [!NOTE]
+> You must provide either `text` or `selectedIds` when using keyword arguments, or pass a dictionary as the `response` argument. You cannot provide both keyword arguments, nor can you mix a dictionary response with keyword arguments.
 
 #### `save(self)`
 
