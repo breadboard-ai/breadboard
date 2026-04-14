@@ -3,6 +3,6 @@
 
 """Allow ``python -m app``."""
 
-from app.cli import main
+from app.server import main
 
 main()

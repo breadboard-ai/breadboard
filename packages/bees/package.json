@@ -5,9 +5,6 @@
   "description": "Bees — agent swarm orchestration framework",
   "scripts": {
     "setup": "wireit",
-    "ticket:add": ".venv/bin/python -m app.add_ticket",
-    "ticket:drain": ".venv/bin/python -m app.drain",
-    "ticket:respond": ".venv/bin/python -m app.respond",
 
     "dev": "npm run dev:server & npm run dev:web",
     "dev:clean": "rm -rf hive/tickets hive/logs && npm run dev",
