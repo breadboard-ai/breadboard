@@ -16,11 +16,22 @@ class Bees:
     def __init__(self, hive_dir: Path):
         self.store = TaskStore(hive_dir)
 
-    def get_children(self) -> list[TaskNode]:
+    @property
+    def children(self) -> list[TaskNode]:
         """Returns all tasks that have no parents, as TaskNodes."""
         return [TaskNode(task, self.store) for task in self.store.get_children(None)]
 
-    def get_node(self, task_id: str) -> TaskNode | None:
+    def get_by_id(self, task_id: str) -> TaskNode | None:
         """Looks up a task by ID and returns it as a TaskNode."""
         task = self.store.get(task_id)
         return TaskNode(task, self.store) if task else None
+
+    def query(self, tags: list[str]) -> list[TaskNode]:
+        """Searches for tasks that contain all of the specified tags."""
+        all_tickets = self.store.query_all()
+        matching_nodes: list[TaskNode] = []
+        for ticket in all_tickets:
+            ticket_tags = ticket.metadata.tags or []
+            if all(tag in ticket_tags for tag in tags):
+                matching_nodes.append(TaskNode(ticket, self.store))
+        return matching_nodes
