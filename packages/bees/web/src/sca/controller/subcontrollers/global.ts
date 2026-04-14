@@ -7,7 +7,7 @@
 import { RootController } from "./root-controller.js";
 import type { ToastMessage } from "../../types.js";
 import { field } from "../decorators/field.js";
-import type { TicketData } from "../../../../../common/types.js";
+import type { TaskData } from "../../../../../common/types.js";
 
 export class GlobalController extends RootController {
   constructor() {
@@ -19,6 +19,6 @@ export class GlobalController extends RootController {
     string,
     string
   >();
-  @field({ deep: true }) accessor tickets: TicketData[] = [];
+  @field({ deep: true }) accessor tickets: TaskData[] = [];
   @field() accessor draining = false;
 }

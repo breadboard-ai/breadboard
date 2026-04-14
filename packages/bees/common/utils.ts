@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TicketData } from "./types.js";
+import type { TaskData } from "./types.js";
 
 export { extractPrompt, extractChoices };
 export type { Choice };
@@ -14,7 +14,7 @@ interface Choice {
   text: string;
 }
 
-function extractPrompt(ticket: TicketData): string {
+function extractPrompt(ticket: TaskData): string {
   const se = ticket.suspend_event;
   if (!se) return "(no prompt)";
   for (const key of ["waitForInput", "waitForChoice"]) {
@@ -28,7 +28,7 @@ function extractPrompt(ticket: TicketData): string {
   return "(no prompt)";
 }
 
-function extractChoices(ticket: TicketData): Choice[] {
+function extractChoices(ticket: TaskData): Choice[] {
   const se = ticket.suspend_event;
   if (!se || !se.waitForChoice) return [];
   const payload = se.waitForChoice as Record<string, unknown>;

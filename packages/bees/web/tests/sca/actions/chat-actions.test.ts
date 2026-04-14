@@ -11,11 +11,9 @@ import * as ChatActions from "../../../src/sca/actions/chat/chat-actions.js";
 import { makeTestController } from "../helpers/mock-controller.js";
 import { makeTestServices } from "../helpers/mock-services.js";
 import type { AppController, AppServices } from "../../../src/sca/types.js";
-import type { TicketData } from "../../../../common/types.js";
+import type { TaskData as TicketData } from "../../../../common/types.js";
 
-function ticket(
-  overrides: Partial<TicketData> & { id: string }
-): TicketData {
+function ticket(overrides: Partial<TicketData> & { id: string }): TicketData {
   return {
     objective: "",
     status: "completed",
@@ -223,16 +221,14 @@ describe("Chat Actions", () => {
         }),
       ];
 
-      await ChatActions.sendChat(
-        new CustomEvent("chat", { detail: "Hello" })
-      );
+      await ChatActions.sendChat(new CustomEvent("chat", { detail: "Hello" }));
 
-      const respondMock = services.api.respond as unknown as ReturnType<
+      const replyMock = services.api.reply as unknown as ReturnType<
         typeof mock.fn
       >;
-      assert.equal(respondMock.mock.calls.length, 1);
-      assert.equal(respondMock.mock.calls[0].arguments[0], "t-1");
-      assert.equal(respondMock.mock.calls[0].arguments[1], "Hello");
+      assert.equal(replyMock.mock.calls.length, 1);
+      assert.equal(replyMock.mock.calls[0].arguments[0], "t-1");
+      assert.equal(replyMock.mock.calls[0].arguments[1], "Hello");
     });
 
     it("appends user message to thread messages immediately", async () => {
@@ -260,14 +256,12 @@ describe("Chat Actions", () => {
     it("does nothing when no active thread", async () => {
       controller.chat.activeThreadId = null;
 
-      await ChatActions.sendChat(
-        new CustomEvent("chat", { detail: "Hello" })
-      );
+      await ChatActions.sendChat(new CustomEvent("chat", { detail: "Hello" }));
 
-      const respondMock = services.api.respond as unknown as ReturnType<
+      const replyMock = services.api.reply as unknown as ReturnType<
         typeof mock.fn
       >;
-      assert.equal(respondMock.mock.calls.length, 0);
+      assert.equal(replyMock.mock.calls.length, 0);
     });
   });
 
@@ -292,13 +286,12 @@ describe("Chat Actions", () => {
         new CustomEvent("choices", { detail: ["c1"] })
       );
 
-      const respondMock = services.api.respond as unknown as ReturnType<
+      const chooseMock = services.api.choose as unknown as ReturnType<
         typeof mock.fn
       >;
-      assert.equal(respondMock.mock.calls.length, 1);
-      assert.equal(respondMock.mock.calls[0].arguments[0], "t-1");
-      assert.equal(respondMock.mock.calls[0].arguments[1], "Option A");
-      assert.deepEqual(respondMock.mock.calls[0].arguments[2], ["c1"]);
+      assert.equal(chooseMock.mock.calls.length, 1);
+      assert.equal(chooseMock.mock.calls[0].arguments[0], "t-1");
+      assert.deepEqual(chooseMock.mock.calls[0].arguments[1], ["c1"]);
     });
 
     it("clears pending choices after sending", async () => {

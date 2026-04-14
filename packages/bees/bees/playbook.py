@@ -135,7 +135,7 @@ def run_playbook(
     playbook_id = data.get("name", name)
     playbook_run_id = str(uuid.uuid4())
 
-    ticket = store.create(
+    task = store.create(
         data.get("objective", ""),
         title=data.get("title"),
         functions=data.get("functions"),
@@ -157,7 +157,7 @@ def run_playbook(
         try:
             stamp_child_ticket(
                 child_name,
-                parent_ticket=ticket,
+                parent_ticket=task,
                 slug=child_name,
                 store=store,
             )
@@ -167,7 +167,7 @@ def run_playbook(
                 child_name, name, exc,
             )
 
-    return ticket
+    return task
 
 
 def stamp_child_ticket(

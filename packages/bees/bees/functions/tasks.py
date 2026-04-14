@@ -41,9 +41,9 @@ def _make_handlers(
             
         allowed_tasks = []
         if caller_ticket_id:
-            ticket = scheduler.store.get(caller_ticket_id) if scheduler else None
-            if ticket and ticket.metadata.tasks:
-                allowed_tasks = ticket.metadata.tasks
+            task = scheduler.store.get(caller_ticket_id) if scheduler else None
+            if task and task.metadata.tasks:
+                allowed_tasks = task.metadata.tasks
                 
         task_types = []
         from bees.playbook import list_playbooks, load_playbook
@@ -95,7 +95,7 @@ def _make_handlers(
             if not parent:
                 return {"error": "Parent ticket not found"}
 
-            ticket = stamp_child_ticket(
+            task = stamp_child_ticket(
                 task_type,
                 parent_ticket=parent,
                 slug=slug,
@@ -114,18 +114,18 @@ def _make_handlers(
             
         if wait_ms and scheduler:
             if status_cb:
-                status_cb(f"Waiting for task {ticket.id}...")
-            status = await scheduler.wait_for_ticket(ticket.id, wait_ms)
+                status_cb(f"Waiting for task {task.id}...")
+            status = await scheduler.wait_for_ticket(task.id, wait_ms)
             if status_cb:
                 status_cb(None, None)
                 
             if status == "completed":
-                fresh = scheduler.store.get(ticket.id) if scheduler else None
+                fresh = scheduler.store.get(task.id) if scheduler else None
                 return {"outcome": fresh.metadata.outcome if fresh else "completed"}
             else:
-                return {"task_id": ticket.id, "status": status}
+                return {"task_id": task.id, "status": status}
         
-        return {"task_id": ticket.id, "status": ticket.metadata.status}
+        return {"task_id": task.id, "status": task.metadata.status}
 
     async def _tasks_check_status(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
         if status_cb:

@@ -98,7 +98,7 @@ def _make_handlers(
         try:
             if not scheduler:
                 return {"error": "Scheduler not available"}
-            ticket = scheduler.store.create(
+            task = scheduler.store.create(
                 "",  # No objective — event tickets carry context, not work.
                 kind="coordination",
                 signal_type=event_type,
@@ -112,10 +112,10 @@ def _make_handlers(
             status_cb(None, None)
 
         if on_events_broadcast:
-            on_events_broadcast(ticket)
+            on_events_broadcast(task)
 
         return {
-            "ticket_id": ticket.id,
+            "ticket_id": task.id,
             "type": event_type,
             "broadcast": True,
         }

@@ -37,23 +37,20 @@ export const syncAgentSelection = asAction(
 
     // Sync chat to the selected agent.
     if (agentId) {
-      const ticket = controller.global.tickets.find((t) => t.id === agentId);
+      const task = controller.global.tickets.find((t) => t.id === agentId);
 
       // If the agent has a chat thread, activate it.
-      if (ticket?.tags?.includes("chat")) {
+      if (task?.tags?.includes("chat")) {
         controller.chat.activeThreadId = agentId;
         controller.chat.visitedThreadIds.add(agentId);
         controller.chat.pendingChoices = [];
         controller.chat.selectedChoiceIds = [];
 
         // Notify the host about the chat switch.
-        if (
-          ticket.status === "suspended" &&
-          ticket.assignee === "user"
-        ) {
+        if (task.status === "suspended" && task.assignee === "user") {
           services.hostCommunication.send({
             type: "host.chat.switch",
-            payload: { ticket_id: agentId, role: "user" },
+            payload: { task_id: agentId, role: "user" },
           });
         }
       } else {
@@ -63,11 +60,11 @@ export const syncAgentSelection = asAction(
       }
 
       // If the selected agent has a bundle, ensure the iframe gets it.
-      if (ticket?.tags?.includes("bundle")) {
+      if (task?.tags?.includes("bundle")) {
         controller.stage.currentView = agentId;
         // Small delay to let Lit render the iframe element.
         await new Promise((r) => setTimeout(r, 100));
-        await loadBundleAsync(agentId, services, ticket.slug);
+        await loadBundleAsync(agentId, services, task.slug);
       }
     } else {
       controller.chat.activeThreadId = null;

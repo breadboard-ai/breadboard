@@ -6,7 +6,7 @@
 
 import { asAction, ActionMode } from "../../coordination.js";
 import { makeAction } from "../binder.js";
-import type { TicketData } from "../../../../../common/types.js";
+import type { TaskData } from "../../../../../common/types.js";
 import type { ChatThread, ChatMessage } from "../../types.js";
 import { onTicketsUpdate, onActiveThreadChange } from "./chat-triggers.js";
 import { extractPrompt, extractChoices } from "../../../../../common/utils.js";
@@ -37,9 +37,7 @@ export const deriveThreads = asAction(
       const suspendedForUser =
         t.status === "suspended" && t.assignee === "user";
       const isActive =
-        suspendedForUser ||
-        t.status === "running" ||
-        t.status === "available";
+        suspendedForUser || t.status === "running" || t.status === "available";
 
       const title =
         t.title ||
@@ -76,7 +74,7 @@ export const deriveThreads = asAction(
   }
 );
 
-function restoreThreadHistory(thread: ChatThread, tickets: TicketData[]) {
+function restoreThreadHistory(thread: ChatThread, tickets: TaskData[]) {
   const { controller } = bind;
   const messages: ChatMessage[] = [];
 
@@ -107,7 +105,7 @@ function restoreThreadHistory(thread: ChatThread, tickets: TicketData[]) {
 
 async function processTicketTransitions(
   threads: ChatThread[],
-  tickets: TicketData[]
+  tickets: TaskData[]
 ) {
   const { controller } = bind;
   const activeThreadId = controller.chat.activeThreadId;
@@ -206,9 +204,7 @@ export const applyPromptState = asAction(
       controller.chat.pendingChoices = [];
       return;
     }
-    const thread = controller.chat.threads.find(
-      (t) => t.id === activeThreadId
-    );
+    const thread = controller.chat.threads.find((t) => t.id === activeThreadId);
     if (!thread?.activeTicketId) {
       controller.chat.pendingChoices = [];
       return;
@@ -322,7 +318,7 @@ export const processHostSessionEvent = asAction(
     if (!evt) return;
     const { controller } = bind;
     const data = (evt as CustomEvent<Record<string, unknown>>).detail;
-    const ticketId = data.ticket_id as string;
+    const ticketId = data.task_id as string;
     const event = data.event as Record<string, unknown>;
 
     const thread = controller.chat.threads.find(

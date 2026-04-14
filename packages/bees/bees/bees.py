@@ -78,15 +78,16 @@ class Bees:
 
     def query(self, tags: list[str]) -> list[TaskNode]:
         """Searches for tasks that contain all of the specified tags."""
-        all_tickets = self._store.query_all()
+        all_tasks = self._store.query_all()
         matching_nodes: list[TaskNode] = []
-        for ticket in all_tickets:
-            ticket_tags = ticket.metadata.tags or []
-            if all(tag in ticket_tags for tag in tags):
-                matching_nodes.append(TaskNode(ticket, self))
+        for task in all_tasks:
+            task_tags = task.metadata.tags or []
+            if all(tag in task_tags for tag in tags):
+                matching_nodes.append(TaskNode(task, self))
         return matching_nodes
 
     async def create_child(self, objective: str, **kwargs) -> TaskNode:
         """Creates a root task."""
-        ticket = await self._scheduler.create_task(objective, **kwargs)
-        return TaskNode(ticket, self)
+        task = await self._scheduler.create_task(objective, **kwargs)
+        return TaskNode(task, self)
+

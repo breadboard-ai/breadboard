@@ -5,7 +5,7 @@
  */
 
 // Re-export the shared backend API contract.
-export type { TicketData } from "../../../common/types.js";
+export type { TaskData as TicketData } from "../../../common/types.js";
 
 // ---------------------------------------------------------------------------
 // Log file types (from EvalCollector output in packages/bees/hive/logs)

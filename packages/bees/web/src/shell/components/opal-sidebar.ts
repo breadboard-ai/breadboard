@@ -12,14 +12,13 @@ import { scaContext } from "../../sca/context/context.js";
 import { type SCA } from "../../sca/sca.js";
 import { sharedStyles } from "./shared.styles.js";
 
-
 import {
   deriveAgentTree,
   derivePerspectives,
   deriveAncestorPath,
   type AgentTreeNode,
 } from "../../sca/utils/agent-tree.js";
-import type { TicketData } from "../../../../common/types.js";
+import type { TaskData } from "../../../../common/types.js";
 
 const styles = css`
   :host {
@@ -248,9 +247,7 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
         <div class="section-title">Agents</div>
         ${tree.length === 0
           ? html`<div class="empty-state">No agents running yet</div>`
-          : tree.map((node) =>
-              this.#renderNode(node, selectedId, tickets)
-            )}
+          : tree.map((node) => this.#renderNode(node, selectedId, tickets))}
       </div>
     `;
   }
@@ -287,14 +284,16 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
   #renderNode(
     node: AgentTreeNode,
     selectedId: string | null,
-    allTickets: TicketData[]
+    allTickets: TaskData[]
   ): TemplateResult | typeof nothing {
     const t = node.ticket;
     const perspectives = derivePerspectives(t, allTickets);
 
     // Hide agents with no interesting perspectives — they're noise.
     const hasAnyPerspective =
-      perspectives.hasChat || perspectives.hasBundle || perspectives.hasSubagents;
+      perspectives.hasChat ||
+      perspectives.hasBundle ||
+      perspectives.hasSubagents;
     if (!hasAnyPerspective) return nothing;
 
     const hasChildren = node.children.length > 0;
@@ -302,9 +301,11 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
 
     const isNewNode = !this.#knownTicketIds.has(t.id);
     const previousStatus = this.#previousStatuses.get(t.id);
-    const statusChanged = previousStatus !== undefined && previousStatus !== t.status;
+    const statusChanged =
+      previousStatus !== undefined && previousStatus !== t.status;
 
-    const title = t.title || t.playbook_id?.replace(/-/g, " ") || t.id.slice(0, 8);
+    const title =
+      t.title || t.playbook_id?.replace(/-/g, " ") || t.id.slice(0, 8);
 
     const nodeRow = html`
       <div
@@ -312,8 +313,12 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
         @click=${() => this.#selectNode(t.id)}
       >
         <span class="expand-toggle ${hasChildren ? "" : "leaf"}"
-          ><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 6l6 6-6 6z"/></svg></span>
-        <span class="status-dot ${t.status} ${statusChanged ? "pulse" : ""}"></span>
+          ><svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10 6l6 6-6 6z" /></svg
+        ></span>
+        <span
+          class="status-dot ${t.status} ${statusChanged ? "pulse" : ""}"
+        ></span>
         <span class="node-title">${title}</span>
         <span class="perspective-icons">
           ${perspectives.hasChat ? "💬" : nothing}
@@ -326,15 +331,16 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
     // Leaf node — no <details> needed.
     if (!hasChildren) {
       return html`
-        <div class="tree-node ${isNewNode ? "new-node" : ""}">
-          ${nodeRow}
-        </div>
+        <div class="tree-node ${isNewNode ? "new-node" : ""}">${nodeRow}</div>
       `;
     }
 
     // Branch node — use <details>/<summary> for native expand/collapse.
     return html`
-      <details class="tree-node ${isNewNode ? "new-node" : ""}" data-agent-id=${t.id}>
+      <details
+        class="tree-node ${isNewNode ? "new-node" : ""}"
+        data-agent-id=${t.id}
+      >
         <summary>${nodeRow}</summary>
         <div class="children">
           ${node.children.map((child) =>
