@@ -12,13 +12,7 @@ import { scaContext } from "../../sca/context/context.js";
 import { type SCA } from "../../sca/sca.js";
 import { sharedStyles } from "./shared.styles.js";
 
-import {
-  deriveAgentTree,
-  derivePerspectives,
-  deriveAncestorPath,
-  type AgentTreeNode,
-} from "../../sca/utils/agent-tree.js";
-import type { TaskData } from "../../../../common/types.js";
+import type { AgentTreeNode } from "../../sca/services/agent-tree-service.js";
 
 const styles = css`
   :host {
@@ -238,8 +232,10 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
   static styles = [sharedStyles, styles];
 
   render() {
-    const tickets = this.sca.controller.global.tickets;
-    const tree = deriveAgentTree(tickets);
+    const agentTree = this.sca.services.agentTree;
+    // Read version signal to trigger reactive re-renders.
+    agentTree.version.get();
+    const tree = agentTree.tree;
     const selectedId = this.sca.controller.agentTree.selectedAgentId;
 
     return html`
@@ -247,21 +243,27 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
         <div class="section-title">Agents</div>
         ${tree.length === 0
           ? html`<div class="empty-state">No agents running yet</div>`
-          : tree.map((node) => this.#renderNode(node, selectedId, tickets))}
+          : tree.map((node) => this.#renderNode(node, selectedId))}
       </div>
     `;
   }
 
   updated() {
-    const tickets = this.sca.controller.global.tickets;
+    const agentTree = this.sca.services.agentTree;
+
+    // Walk the tree to collect visible tickets for status tracking.
+    const collectTickets = (nodes: AgentTreeNode[]): AgentTreeNode[] =>
+      nodes.flatMap((n) => [n, ...collectTickets(n.children)]);
+    const allNodes = collectTickets(agentTree.tree);
 
     // Detect newly running agents and auto-expand their ancestor path.
-    for (const ticket of tickets) {
+    for (const node of allNodes) {
+      const ticket = node.ticket;
       const isRunning = ticket.status === "running";
       const isNew = !this.#knownTicketIds.has(ticket.id);
 
       if ((isNew || isRunning) && ticket.creator_ticket_id) {
-        const ancestorPath = deriveAncestorPath(tickets, ticket.id);
+        const ancestorPath = agentTree.ancestorPath(ticket.id);
         // Set `open` on all ancestor <details> elements.
         for (const ancestorId of ancestorPath) {
           const details = this.renderRoot.querySelector(
@@ -275,19 +277,18 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
     }
 
     // Update status tracking for pulse detection, and track new tickets.
-    for (const ticket of tickets) {
-      this.#previousStatuses.set(ticket.id, ticket.status);
-      this.#knownTicketIds.add(ticket.id);
+    for (const node of allNodes) {
+      this.#previousStatuses.set(node.ticket.id, node.ticket.status);
+      this.#knownTicketIds.add(node.ticket.id);
     }
   }
 
   #renderNode(
     node: AgentTreeNode,
-    selectedId: string | null,
-    allTickets: TaskData[]
+    selectedId: string | null
   ): TemplateResult | typeof nothing {
     const t = node.ticket;
-    const perspectives = derivePerspectives(t, allTickets);
+    const perspectives = this.sca.services.agentTree.perspectives(t.id);
 
     // Hide agents with no interesting perspectives — they're noise.
     const hasAnyPerspective =
@@ -344,7 +345,7 @@ export class OpalSidebar extends SignalWatcher(LitElement) {
         <summary>${nodeRow}</summary>
         <div class="children">
           ${node.children.map((child) =>
-            this.#renderNode(child, selectedId, allTickets)
+            this.#renderNode(child, selectedId)
           )}
         </div>
       </details>

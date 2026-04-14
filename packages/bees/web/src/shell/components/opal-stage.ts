@@ -12,10 +12,7 @@ import { scaContext } from "../../sca/context/context.js";
 import { type SCA } from "../../sca/sca.js";
 import { sharedStyles } from "./shared.styles.js";
 import { styles as baseStyles } from "./opal-stage.styles.js";
-import {
-  derivePerspectives,
-  deriveAncestorPath,
-} from "../../sca/utils/agent-tree.js";
+
 
 import { parseAgentHash, updateAgentHash } from "../../sca/utils/agent-hash.js";
 import { loadBundleAsync } from "../../sca/utils/load-bundle.js";
@@ -185,9 +182,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
       if (changedProperties.has("activeTab") && this.activeTab === "app") {
         const selectedId = this.sca.controller.agentTree.selectedAgentId;
         if (selectedId) {
-          const ticket = this.sca.controller.global.tickets.find(
-            (t) => t.id === selectedId
-          );
+          const ticket = this.sca.services.agentTree.ticket(selectedId);
           loadBundleAsync(selectedId, this.sca.services, ticket?.slug);
         }
       }
@@ -196,6 +191,9 @@ export class OpalStage extends SignalWatcher(LitElement) {
 
   render() {
     const selectedId = this.sca.controller.agentTree.selectedAgentId;
+    const agentTree = this.sca.services.agentTree;
+    // Read version signal to trigger reactive re-renders.
+    agentTree.version.get();
 
     // No agent selected — fall back to the legacy stage behavior.
     if (!selectedId) {
@@ -203,15 +201,14 @@ export class OpalStage extends SignalWatcher(LitElement) {
       return this.#renderLegacyStage();
     }
 
-    const tickets = this.sca.controller.global.tickets;
-    const ticket = tickets.find((t) => t.id === selectedId);
+    const ticket = agentTree.ticket(selectedId);
     if (!ticket) {
       // Orphan: selected agent no longer exists — clear selection.
       this.sca.controller.agentTree.selectedAgentId = null;
       return this.#renderLegacyStage();
     }
 
-    const perspectives = derivePerspectives(ticket, tickets);
+    const perspectives = agentTree.perspectives(selectedId);
     const tabs: { id: StageTab; label: string }[] = [];
 
     if (perspectives.hasBundle) tabs.push({ id: "app", label: "App" });
@@ -233,7 +230,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
       this.activeTab = tabs[0].id;
     }
 
-    const breadcrumb = this.#renderBreadcrumb(tickets, selectedId);
+    const breadcrumb = this.#renderBreadcrumb(selectedId);
 
     // No tabs at all — show agent summary.
     if (tabs.length === 0) {
@@ -282,17 +279,15 @@ export class OpalStage extends SignalWatcher(LitElement) {
     `;
   }
 
-  #renderBreadcrumb(
-    tickets: import("../../../../common/types.js").TaskData[],
-    selectedId: string
-  ) {
-    const path = deriveAncestorPath(tickets, selectedId);
+  #renderBreadcrumb(selectedId: string) {
+    const agentTree = this.sca.services.agentTree;
+    const path = agentTree.ancestorPath(selectedId);
     if (path.length <= 1) return nothing;
 
     return html`
       <nav class="breadcrumb" aria-label="Agent path">
         ${path.map((id, i) => {
-          const t = tickets.find((t) => t.id === id);
+          const t = agentTree.ticket(id);
           const label =
             t?.title || t?.playbook_id?.replace(/-/g, " ") || id.slice(0, 8);
           const isCurrent = i === path.length - 1;
@@ -378,8 +373,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
     const currentView = this.sca.controller.stage.currentView;
     const isBundle =
       currentView !== null &&
-      this.sca.controller.global.tickets
-        .find((t) => t.id === currentView)
+      this.sca.services.agentTree.ticket(currentView)
         ?.tags?.includes("bundle");
 
     return html`

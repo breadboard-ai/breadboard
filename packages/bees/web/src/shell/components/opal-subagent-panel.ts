@@ -11,7 +11,6 @@ import { consume } from "@lit/context";
 import { scaContext } from "../../sca/context/context.js";
 import { type SCA } from "../../sca/sca.js";
 import { sharedStyles } from "./shared.styles.js";
-import { deriveChildAgents } from "../../sca/utils/agent-tree.js";
 import type { TaskData } from "../../../../common/types.js";
 
 /** Digest tile data written by the digest-tile-writer playbook. */
@@ -266,8 +265,11 @@ export class OpalSubagentPanel extends SignalWatcher(LitElement) {
       </div>`;
     }
 
+    const agentTree = this.sca.services.agentTree;
+    // Read version signal to trigger reactive re-renders.
+    agentTree.version.get();
     const tickets = this.sca.controller.global.tickets;
-    const children = deriveChildAgents(tickets, this.parentTicketId).sort(
+    const children = agentTree.children(this.parentTicketId).sort(
       (a, b) => (a.created_at ?? "").localeCompare(b.created_at ?? "")
     );
 
