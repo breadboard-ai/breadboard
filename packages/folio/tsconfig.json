@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "nodenext",
+    "lib": ["ES2023", "DOM", "DOM.Iterable", "ES2024.Promise"],
+    "skipLibCheck": true,
+    "useDefineForClassFields": false,
+    "outDir": "dist/tsc",
+
+    /* Bundler mode */
+    "moduleResolution": "nodenext",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["vite/client", "@types/gtag.js", "node", "trusted-types"],
+    "allowJs": true
+  },
+  "include": ["frontend/**/*.ts"],
+  "extends": "@google-labs/tsconfig/base.json"
+}
