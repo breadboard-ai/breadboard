@@ -58,38 +58,37 @@ app.add_middleware(
 async def get_tasks():
     if not bees:
         raise HTTPException(500, "Bees not initialized")
-    roots = bees._store.get_children(None)
+    roots = bees.children
     return [
         {
-            "id": t.id,
-            "title": t.metadata.title or t.objective[:30],
-            "status": t.metadata.status,
-            "timestamp": t.metadata.created_at
+            "id": node.id,
+            "title": node.task.metadata.title or node.task.objective[:30],
+            "status": node.task.metadata.status,
+            "timestamp": node.task.metadata.created_at
         }
-        for t in roots
+        for node in roots
     ]
 
 @app.get("/folio/tasks/{task_id}/blocks")
 async def get_blocks(task_id: str):
     if not bees:
         raise HTTPException(500, "Bees not initialized")
-    ticket = bees._store.get(task_id)
-    if not ticket:
+    node = bees.get_by_id(task_id)
+    if not node:
         raise HTTPException(404, "Task not found")
         
-    children = bees._store.get_children(task_id)
-    
-    all_tickets = [ticket] + children
-    all_tickets.sort(key=lambda t: t.metadata.created_at or "")
+    all_nodes = [node] + node.children
+    all_nodes.sort(key=lambda n: n.task.metadata.created_at or "")
     
     blocks = []
-    for t in all_tickets:
+    for n in all_nodes:
+        t = n.task
         block_type = "markdown"
-        if t.metadata.status == "running" and bees._store.get_children(t.id):
+        if t.metadata.status == "running" and n.children:
             block_type = "parallel_workload"
             
         blocks.append({
-            "id": t.id,
+            "id": n.id,
             "type": block_type,
             "status": t.metadata.status,
             "content": {

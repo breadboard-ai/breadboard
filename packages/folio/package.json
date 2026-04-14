@@ -6,6 +6,7 @@
   "scripts": {
     "setup": "wireit",
     "dev": "npm run dev:server & npm run dev:web",
+    "dev:clean": "rm -rf backend/hive/tickets backend/hive/logs && npm run dev",
     "dev:server": ".venv/bin/python backend/server.py",
     "dev:web": "vite",
     "test:python": ".venv/bin/python -m pytest tests/ -v"
