@@ -18,8 +18,8 @@ class Bees:
 
     def __init__(self, hive_dir: Path, http, backend):
         self._store = TaskStore(hive_dir)
-        self.http = http
-        self.backend = backend
+        self._http = http
+        self._backend = backend
         self._events = defaultdict(list)
         self._loop_task = None
         
@@ -49,7 +49,7 @@ class Bees:
         self._loop_task = asyncio.create_task(self._scheduler.start_loop())
         self._scheduler.trigger()
 
-    def trigger(self):
+    def _trigger(self):
         """Triggers the scheduler to process tasks."""
         self._scheduler.trigger()
 
