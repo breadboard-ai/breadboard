@@ -37,7 +37,7 @@ export const syncAgentSelection = asAction(
 
     // Sync chat to the selected agent.
     if (agentId) {
-      const task = controller.global.tickets.find((t) => t.id === agentId);
+      const task = services.agentTree.ticket(agentId);
 
       // If the agent has a chat thread, activate it.
       if (task?.tags?.includes("chat")) {

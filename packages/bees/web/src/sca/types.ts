@@ -61,11 +61,13 @@ export type FileHandler = (path: string) => Promise<string | null>;
 import { BeesAPI } from "./services/api.js";
 import { SSEClient } from "./services/sse.js";
 import { HostCommunicationService } from "./services/host-communication.js";
+import { AgentTreeService } from "./services/agent-tree-service.js";
 
 export interface AppServices {
   api: BeesAPI;
   sse: SSEClient;
   hostCommunication: HostCommunicationService;
+  agentTree: AgentTreeService;
   stateEventBus: EventTarget;
 }
 

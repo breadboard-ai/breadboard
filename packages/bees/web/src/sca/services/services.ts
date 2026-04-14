@@ -7,6 +7,7 @@
 import { BeesAPI } from "./api.js";
 import { SSEClient } from "./sse.js";
 import { HostCommunicationService } from "./host-communication.js";
+import { AgentTreeService } from "./agent-tree-service.js";
 
 import { AppServices } from "../types.js";
 
@@ -18,11 +19,13 @@ export function services(): AppServices {
     const api = new BeesAPI();
     const sse = new SSEClient(stateEventBus);
     const hostCommunication = new HostCommunicationService(stateEventBus);
+    const agentTree = new AgentTreeService(stateEventBus);
 
     instance = {
       api,
       sse,
       hostCommunication,
+      agentTree,
       stateEventBus,
     } satisfies AppServices;
   }
