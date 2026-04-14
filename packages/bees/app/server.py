@@ -158,7 +158,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         gemini_key=gemini_key,
     )
 
-    bees = Bees(hive_dir, http_client, backend)
+    bees = Bees(hive_dir, backend)
 
     bees.on("ticket_added", _on_ticket_added)
     bees.on("cycle_start", _on_cycle_start)

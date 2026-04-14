@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, AsyncMock
 
 from bees.functions.tasks import _make_handlers
 from bees.subagent_scope import SubagentScope
-from bees import TaskStore
+from bees.task_store import TaskStore
 
 
 GLOBAL_STORE = None

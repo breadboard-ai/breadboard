@@ -252,12 +252,10 @@ class Scheduler:
     def __init__(
         self,
         *,
-        http: httpx.AsyncClient,
         backend: HttpBackendClient,
         store: TaskStore,
         hooks: SchedulerHooks | None = None,
     ) -> None:
-        self._http = http
         self._backend = backend
         self._hooks = hooks or SchedulerHooks()
         self.store = store
@@ -614,7 +612,6 @@ class Scheduler:
             scope = SubagentScope.for_ticket(ticket)
             result = await run_session(
                 segments=segments,
-                http=self._http,
                 backend=self._backend,
                 label=label,
                 ticket_id=ticket.id,
@@ -697,7 +694,6 @@ class Scheduler:
                 ticket_dir=ticket.dir,
                 fs_dir=ticket.fs_dir,
                 response=response,
-                http=self._http,
                 backend=self._backend,
                 label=label,
                 on_event=self._make_on_event(ticket.id),

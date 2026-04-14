@@ -19,7 +19,7 @@ from bees.playbook import (
     stamp_child_ticket as _real_stamp_child_ticket,
 )
 from bees.task_store import _DEP_PATTERN
-from bees import TaskStore
+from bees.task_store import TaskStore
 
 GLOBAL_STORE = None
 

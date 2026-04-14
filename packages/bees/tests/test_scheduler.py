@@ -12,7 +12,7 @@ from pathlib import Path
 import yaml
 
 from bees.scheduler import Scheduler
-from bees import TaskStore
+from bees.task_store import TaskStore
 
 
 @pytest.fixture
@@ -51,8 +51,8 @@ def write_template(tmp_path):
 
 @pytest.mark.asyncio
 async def test_wait_for_ticket_already_completed(mock_clients):
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
     
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.status = "completed"
@@ -64,8 +64,8 @@ async def test_wait_for_ticket_already_completed(mock_clients):
 
 @pytest.mark.asyncio
 async def test_wait_for_ticket_blocks_and_completes(mock_clients):
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
     
     ticket = GLOBAL_STORE.create("Objective")
     
@@ -85,8 +85,8 @@ async def test_wait_for_ticket_blocks_and_completes(mock_clients):
 
 @pytest.mark.asyncio
 async def test_wait_for_ticket_timeout(mock_clients):
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
     
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.status = "running"
@@ -98,8 +98,8 @@ async def test_wait_for_ticket_timeout(mock_clients):
 
 @pytest.mark.asyncio
 async def test_wait_for_ticket_returns_early_on_suspend(mock_clients):
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
     
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.status = "running"
@@ -120,8 +120,8 @@ async def test_wait_for_ticket_returns_early_on_suspend(mock_clients):
 
 @pytest.mark.asyncio
 async def test_wait_for_ticket_returns_early_on_fail(mock_clients):
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
     
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.status = "running"
@@ -142,8 +142,8 @@ async def test_wait_for_ticket_returns_early_on_fail(mock_clients):
 
 @pytest.mark.asyncio
 async def test_deliver_context_update_immediate(mock_clients):
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
     
     creator = GLOBAL_STORE.create("Parent Objective")
     creator.metadata.status = "suspended"
@@ -173,8 +173,8 @@ async def test_deliver_context_update_immediate(mock_clients):
 @pytest.mark.asyncio
 async def test_enrich_creator_tags_merges(mock_clients):
     """Child tags are merged (union) into the creator's existing tags."""
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
     creator = GLOBAL_STORE.create("Parent", tags=["b", "c"])
     child = GLOBAL_STORE.create("Child", tags=["a", "b"])
@@ -192,8 +192,8 @@ async def test_enrich_creator_tags_merges(mock_clients):
 @pytest.mark.asyncio
 async def test_enrich_creator_tags_no_creator(mock_clients):
     """No crash when creator_ticket_id points to a nonexistent ticket."""
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
     child = GLOBAL_STORE.create("Child", tags=["a"])
     child.metadata.creator_ticket_id = "nonexistent-id"
@@ -206,8 +206,8 @@ async def test_enrich_creator_tags_no_creator(mock_clients):
 @pytest.mark.asyncio
 async def test_enrich_creator_tags_no_tags(mock_clients):
     """Creator is unchanged when the child has no tags."""
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
     creator = GLOBAL_STORE.create("Parent", tags=["x"])
     child = GLOBAL_STORE.create("Child")  # No tags.
@@ -223,8 +223,8 @@ async def test_enrich_creator_tags_no_tags(mock_clients):
 @pytest.mark.asyncio
 async def test_enrich_creator_tags_creator_has_no_tags(mock_clients):
     """Creator with None tags receives the child's tags."""
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
     creator = GLOBAL_STORE.create("Parent")  # tags=None
     child = GLOBAL_STORE.create("Child", tags=["a"])
@@ -263,8 +263,8 @@ def test_update_metadata_paused(mock_clients):
     """Paused result → ticket status 'paused', completed_at is None."""
     from bees.session import SessionResult
 
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
     ticket = GLOBAL_STORE.create("Objective")
     result = SessionResult(
@@ -289,8 +289,8 @@ def test_handle_pause_sets_status(mock_clients):
     """_handle_pause sets ticket status to 'paused', assignee to None."""
     from bees.session import SessionResult
 
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.status = "running"
@@ -339,8 +339,8 @@ async def test_boots_when_no_root_ticket_exists(mock_clients, write_template, tm
     system_path = tmp_path / "config" / "SYSTEM.yaml"
     system_path.write_text(yaml.dump({"root": "opie"}))
 
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
     ticket = await scheduler._boot_root_template([])
 
@@ -357,8 +357,8 @@ async def test_skips_when_root_already_booted(mock_clients, write_template, tmp_
     from bees.playbook import run_playbook
     existing = run_playbook("opie", store=GLOBAL_STORE)
     
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
     ticket = await scheduler._boot_root_template([existing])
 
@@ -371,8 +371,8 @@ async def test_returns_none_when_no_root_configured(mock_clients, tmp_path, monk
     system_path.parent.mkdir(parents=True, exist_ok=True)
     system_path.write_text(yaml.dump({"title": "My Hive"}))
 
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
     ticket = await scheduler._boot_root_template([])
     assert ticket is None
@@ -381,8 +381,8 @@ async def test_returns_none_when_no_root_configured(mock_clients, tmp_path, monk
 @pytest.mark.asyncio
 async def test_returns_none_when_no_system_yaml(mock_clients, tmp_path):
     
-    http, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, http=http, backend=backend)
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
     ticket = await scheduler._boot_root_template([])
     assert ticket is None
