@@ -3,8 +3,10 @@
 
 import tempfile
 from pathlib import Path
+from unittest.mock import Mock, AsyncMock
 import pytest
 from bees import Bees
+from bees.task_node import TaskNode
 
 
 @pytest.fixture
@@ -14,8 +16,8 @@ def temp_hive():
 
 
 def test_tree_traversal(temp_hive):
-    bees = Bees(temp_hive)
-    store = bees.store
+    bees = Bees(temp_hive, http=Mock(), backend=Mock())
+    store = bees._store
 
     # Create a tree structure
     # root1
@@ -68,14 +70,14 @@ def test_tree_traversal(temp_hive):
 
 
 def test_empty_store(temp_hive):
-    bees = Bees(temp_hive)
+    bees = Bees(temp_hive, http=Mock(), backend=Mock())
     assert len(bees.children) == 0
     assert bees.get_by_id("non-existent") is None
 
 
 def test_query_by_tags(temp_hive):
-    bees = Bees(temp_hive)
-    store = bees.store
+    bees = Bees(temp_hive, http=Mock(), backend=Mock())
+    store = bees._store
 
     # Create tasks with tags
     t1 = store.create("Task 1", tags=["bug", "ui"])
@@ -103,3 +105,81 @@ def test_query_by_tags(temp_hive):
     subtree_bug_tasks = t2_node.query(["bug"])
     assert len(subtree_bug_tasks) == 1  # t4
     assert subtree_bug_tasks[0].id == t4.id
+
+
+@pytest.mark.asyncio
+async def test_bees_create_child(temp_hive):
+    bees = Bees(temp_hive, http=Mock(), backend=Mock())
+    bees._scheduler = Mock()
+    
+    mock_ticket = Mock()
+    mock_ticket.id = "task1"
+    mock_ticket.metadata = Mock()
+    mock_ticket.metadata.tags = []
+    bees._scheduler.create_task = AsyncMock(return_value=mock_ticket)
+    
+    node = await bees.create_child("New Task", tags=["test"])
+    
+    bees._scheduler.create_task.assert_called_once_with("New Task", tags=["test"])
+    assert node.id == "task1"
+
+
+@pytest.mark.asyncio
+async def test_task_node_create_child(temp_hive):
+    bees = Bees(temp_hive, http=Mock(), backend=Mock())
+    bees._scheduler = Mock()
+    
+    mock_ticket = Mock()
+    mock_ticket.id = "child1"
+    mock_ticket.metadata = Mock()
+    mock_ticket.metadata.tags = []
+    bees._scheduler.create_task = AsyncMock(return_value=mock_ticket)
+    
+    parent_ticket = Mock()
+    parent_ticket.id = "parent1"
+    parent_ticket.metadata = Mock()
+    parent_ticket.metadata.tags = []
+    
+    parent_node = TaskNode(parent_ticket, bees)
+    
+    child_node = await parent_node.create_child("Child Task")
+    
+    bees._scheduler.create_task.assert_called_once_with("Child Task", parent_ticket_id="parent1")
+    assert child_node.id == "child1"
+
+
+def test_task_node_respond(temp_hive):
+    bees = Bees(temp_hive, http=Mock(), backend=Mock())
+    store_mock = Mock()
+    bees._store = store_mock
+    
+    ticket = Mock()
+    ticket.id = "task1"
+    node = TaskNode(ticket, bees)
+    
+    node.respond({"text": "reply"})
+    
+    store_mock.respond.assert_called_once_with("task1", {"text": "reply"})
+
+
+def test_bees_all(temp_hive):
+    bees = Bees(temp_hive, http=Mock(), backend=Mock())
+    store_mock = Mock()
+    bees._store = store_mock
+    
+    t1 = Mock()
+    t1.id = "t1"
+    t1.metadata = Mock()
+    t1.metadata.tags = []
+    
+    t2 = Mock()
+    t2.id = "t2"
+    t2.metadata = Mock()
+    t2.metadata.tags = []
+    
+    store_mock.query_all.return_value = [t1, t2]
+    
+    all_nodes = bees.all
+    assert len(all_nodes) == 2
+    assert all_nodes[0].id == "t1"
+    assert all_nodes[1].id == "t2"

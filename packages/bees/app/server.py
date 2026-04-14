@@ -32,16 +32,14 @@ from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
 
-from bees.scheduler import Scheduler, SchedulerHooks
 from app.auth import load_gemini_key
 from app.config import load_hive_dir
-from bees import Task, TaskStore
+from bees import Task, Bees
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
 logger = logging.getLogger(__name__)
 
 hive_dir = load_hive_dir()
-task_store = TaskStore(hive_dir)
 
 
 # ---------------------------------------------------------------------------
@@ -70,7 +68,7 @@ class Broadcaster:
 
 
 broadcaster = Broadcaster()
-scheduler: Scheduler | None = None
+bees: Bees | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -156,7 +154,7 @@ class UpdateTagsRequest(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    global scheduler
+    global bees
 
     gemini_key = load_gemini_key()
     http_client = httpx.AsyncClient(timeout=httpx.Timeout(300.0))
@@ -167,27 +165,20 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         gemini_key=gemini_key,
     )
 
-    hooks = SchedulerHooks(
-        on_ticket_added=_on_ticket_added,
-        on_cycle_start=_on_cycle_start,
-        on_ticket_event=_on_ticket_event,
-        on_ticket_start=_on_ticket_start,
-        on_ticket_done=_on_ticket_done,
-        on_cycle_complete=_on_cycle_complete,
-    )
-    scheduler = Scheduler(http=http_client, backend=backend, hooks=hooks, store=task_store)
+    bees = Bees(hive_dir, http_client, backend)
 
-    # Startup scheduler (recovers tickets and boots root if needed)
-    await scheduler.startup()
+    bees.on("ticket_added", _on_ticket_added)
+    bees.on("cycle_start", _on_cycle_start)
+    bees.on("ticket_event", _on_ticket_event)
+    bees.on("ticket_start", _on_ticket_start)
+    bees.on("ticket_done", _on_ticket_done)
+    bees.on("cycle_complete", _on_cycle_complete)
 
-    loop_task = asyncio.create_task(scheduler.start_loop())
-
-    # Auto-schedule any existing available tickets on startup.
-    scheduler.trigger()
+    await bees.listen()
 
     yield
 
-    loop_task.cancel()
+    await bees.shutdown()
     await http_client.aclose()
 
 
@@ -236,34 +227,42 @@ def _read_chat_log(ticket: Task) -> list[dict[str, str]]:
 @app.get("/tickets")
 async def get_tickets(tag: str | None = None) -> list[dict[str, Any]]:
     """List all tickets, sorted by created_at latest first, optionally filtered by tag."""
-    tickets = task_store.query_all()
-
+    if not bees:
+        raise HTTPException(500, "Bees not initialized")
+        
     if tag:
-        tickets = [t for t in tickets if t.metadata.tags and tag in t.metadata.tags]
+        nodes = bees.query([tag])
+    else:
+        nodes = bees.all
 
     # Sort by created_at latest first (ISO string sorting works for chronological order).
-    tickets.sort(key=lambda t: t.metadata.created_at or "", reverse=True)
+    nodes.sort(key=lambda n: n.task.metadata.created_at or "", reverse=True)
 
-    return [_ticket_to_dict(t) for t in tickets]
+    return [_ticket_to_dict(n.task) for n in nodes]
 
 
 @app.get("/tickets/{ticket_id}")
 async def get_ticket(ticket_id: str) -> dict[str, Any]:
     """Get a single ticket."""
-    ticket = task_store.get(ticket_id)
-    if not ticket:
+    if not bees:
+        raise HTTPException(500, "Bees not initialized")
+        
+    node = bees.get_by_id(ticket_id)
+    if not node:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
-    return _ticket_to_dict(ticket)
+    return _ticket_to_dict(node.task)
 
 
 @app.get("/tickets/{ticket_id}/files")
 async def list_ticket_files(ticket_id: str) -> list[str]:
     """List files in the ticket's filesystem directory."""
-    ticket = task_store.get(ticket_id)
-    if not ticket:
+    if not bees:
+        raise HTTPException(500, "Bees not initialized")
+    node = bees.get_by_id(ticket_id)
+    if not node:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
 
-    fs_dir = ticket.fs_dir
+    fs_dir = node.task.fs_dir
     if not fs_dir.is_dir():
         return []
 
@@ -277,16 +276,18 @@ async def list_ticket_files(ticket_id: str) -> list[str]:
 @app.get("/tickets/{ticket_id}/files/{path:path}")
 async def get_ticket_file(ticket_id: str, path: str) -> FileResponse:
     """Serve files from the ticket's filesystem."""
-    ticket = task_store.get(ticket_id)
-    if not ticket:
+    if not bees:
+        raise HTTPException(500, "Bees not initialized")
+    node = bees.get_by_id(ticket_id)
+    if not node:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
 
-    file_path = ticket.fs_dir / path
+    file_path = node.task.fs_dir / path
     if not file_path.is_file():
         raise HTTPException(404, f"File {path} not found")
 
     try:
-        file_path.resolve().relative_to(ticket.fs_dir.resolve())
+        file_path.resolve().relative_to(node.task.fs_dir.resolve())
     except ValueError:
         raise HTTPException(403, "Access denied")
 
@@ -297,17 +298,17 @@ async def get_ticket_file(ticket_id: str, path: str) -> FileResponse:
 @app.post("/tickets")
 async def add_ticket(req: AddTicketRequest) -> dict[str, Any]:
     """Create a new ticket and trigger scheduling."""
-    if not scheduler:
-        raise HTTPException(500, "Scheduler not initialized")
+    if not bees:
+        raise HTTPException(500, "Bees not initialized")
 
-    ticket = await scheduler.create_task(
+    node = await bees.create_child(
         req.objective,
         tags=req.tags,
         functions=req.functions,
         skills=req.skills,
     )
 
-    return _ticket_to_dict(ticket)
+    return _ticket_to_dict(node.task)
 
 
 @app.post("/tickets/{ticket_id}/respond")
@@ -315,9 +316,14 @@ async def respond_to_ticket(
     ticket_id: str, req: RespondRequest,
 ) -> dict[str, Any]:
     """Submit a response to a suspended ticket and trigger scheduling."""
-    ticket = task_store.get(ticket_id)
-    if not ticket:
+    if not bees:
+        raise HTTPException(500, "Bees not initialized")
+        
+    node = bees.get_by_id(ticket_id)
+    if not node:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
+        
+    ticket = node.task
     if ticket.metadata.status != "suspended":
         raise HTTPException(400, f"Ticket is not suspended")
     if ticket.metadata.assignee != "user":
@@ -331,15 +337,13 @@ async def respond_to_ticket(
     if req.contextUpdates:
         response["context_updates"] = req.contextUpdates
 
-    ticket = task_store.respond(ticket_id, response)
+    ticket = node.respond(response)
 
     await broadcaster.broadcast({
         "type": "ticket_update",
         "ticket": _ticket_to_dict(ticket),
     })
 
-    if scheduler:
-        scheduler.trigger()
     return _ticket_to_dict(ticket)
 
 
@@ -348,19 +352,21 @@ async def update_ticket_tags(
     ticket_id: str, req: UpdateTagsRequest
 ) -> dict[str, Any]:
     """Update tags for a ticket and broadcast."""
-    ticket = task_store.get(ticket_id)
-    if not ticket:
+    if not bees:
+        raise HTTPException(500, "Bees not initialized")
+    node = bees.get_by_id(ticket_id)
+    if not node:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
 
-    ticket.metadata.tags = req.tags
-    task_store.save_metadata(ticket)
+    node.task.metadata.tags = req.tags
+    node.save()
 
     await broadcaster.broadcast({
         "type": "ticket_update",
-        "ticket": _ticket_to_dict(ticket),
+        "ticket": _ticket_to_dict(node.task),
     })
 
-    return _ticket_to_dict(ticket)
+    return _ticket_to_dict(node.task)
 
 
 @app.post("/tickets/{ticket_id}/retry")
@@ -371,24 +377,22 @@ async def retry_ticket(ticket_id: str) -> dict[str, Any]:
     (e.g. 503).  Retrying clears the error and re-queues the ticket
     for the scheduler to pick up.
     """
-    ticket = task_store.get(ticket_id)
-    if not ticket:
+    if not bees:
+        raise HTTPException(500, "Bees not initialized")
+    node = bees.get_by_id(ticket_id)
+    if not node:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
-    if ticket.metadata.status != "paused":
+    if node.task.metadata.status != "paused":
         raise HTTPException(400, "Ticket is not paused")
 
-    ticket.metadata.status = "available"
-    ticket.metadata.error = None
-    task_store.save_metadata(ticket)
+    node.retry()
 
     await broadcaster.broadcast({
         "type": "ticket_update",
-        "ticket": _ticket_to_dict(ticket),
+        "ticket": _ticket_to_dict(node.task),
     })
 
-    if scheduler:
-        scheduler.trigger()
-    return _ticket_to_dict(ticket)
+    return _ticket_to_dict(node.task)
 
 
 
@@ -462,7 +466,9 @@ async def get_status(
     kind: str | None = None,
 ) -> dict[str, Any]:
     """Return a status response containing both the summary text and structured tasks."""
-    tickets = task_store.query_all()
+    if not bees:
+        raise HTTPException(500, "Bees not initialized")
+    tickets = [n.task for n in bees.all]
 
     by_run: dict[str, list[Task]] = {}
     active_running = []
@@ -534,6 +540,9 @@ async def get_status(
 @app.get("/events")
 async def events() -> EventSourceResponse:
     """Server-Sent Events stream for real-time updates."""
+    if not bees:
+        raise HTTPException(500, "Bees not initialized")
+        
     queue = broadcaster.subscribe()
 
     async def event_generator() -> AsyncIterator[dict]:
@@ -542,7 +551,7 @@ async def events() -> EventSourceResponse:
             yield {
                 "event": "init",
                 "data": json.dumps([
-                    _ticket_to_dict(t) for t in task_store.query_all()
+                    _ticket_to_dict(n.task) for n in bees.all
                 ]),
             }
             while True:
