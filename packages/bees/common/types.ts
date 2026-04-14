@@ -29,7 +29,7 @@ export interface TicketData {
   title?: string;
   playbook_id?: string;
   playbook_run_id?: string;
-  parent_ticket_id?: string;
+  owning_task_id?: string;
   creator_ticket_id?: string;
   slug?: string;
   kind?: string;

@@ -35,9 +35,9 @@ class TaskNode:
     @property
     def parent(self) -> TaskNode | None:
         """Returns the parent of this task."""
-        if not self._task.metadata.parent_ticket_id:
+        if not self._task.metadata.owning_task_id:
             return None
-        parent_task = self._store.get(self._task.metadata.parent_ticket_id)
+        parent_task = self._store.get(self._task.metadata.owning_task_id)
         return TaskNode(parent_task, self._bees) if parent_task else None
 
     def query(self, tags: list[str]) -> list[TaskNode]:
@@ -50,8 +50,8 @@ class TaskNode:
         ticket_map = {}
         for t in all_tickets:
             ticket_map[t.id] = t
-            if t.metadata.parent_ticket_id:
-                child_map[t.metadata.parent_ticket_id].append(t.id)
+            if t.metadata.owning_task_id:
+                child_map[t.metadata.owning_task_id].append(t.id)
                 
         # Find all descendants of current node
         descendants = []
@@ -81,7 +81,7 @@ class TaskNode:
 
     async def create_child(self, objective: str, **kwargs) -> TaskNode:
         """Creates a child task under this task."""
-        kwargs['parent_ticket_id'] = self.id
+        kwargs['owning_task_id'] = self.id
         ticket = await self._bees._scheduler.create_task(objective, **kwargs)
         return TaskNode(ticket, self._bees)
 

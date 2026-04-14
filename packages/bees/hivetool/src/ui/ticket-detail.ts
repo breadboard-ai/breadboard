@@ -242,6 +242,12 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
         value: ticket.creator_ticket_id.slice(0, 8),
         onclick: () => this.navigate("tickets", ticket.creator_ticket_id!),
       });
+    if (ticket.owning_task_id)
+      identityChips.push({
+        label: "fs owner",
+        value: ticket.owning_task_id.slice(0, 8),
+        onclick: () => this.navigate("tickets", ticket.owning_task_id!),
+      });
     identityChips.push({
       label: "session",
       value: ticket.id.slice(0, 8),

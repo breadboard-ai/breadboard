@@ -48,7 +48,7 @@ class SubagentScope:
     def for_ticket(ticket: Ticket) -> SubagentScope:
         """Reconstruct a scope from persisted ticket metadata."""
         return SubagentScope(
-            workspace_root_id=ticket.metadata.parent_ticket_id or ticket.id,
+            workspace_root_id=ticket.metadata.owning_task_id or ticket.id,
             slug_path=ticket.metadata.slug,
         )
 

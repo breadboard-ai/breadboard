@@ -53,7 +53,7 @@ class TicketMetadata:
     title: str | None = None
     playbook_id: str | None = None
     playbook_run_id: str | None = None
-    parent_ticket_id: str | None = None
+    owning_task_id: str | None = None
     model: str | None = None
     context: str | None = None
     watch_events: list[dict[str, Any]] | None = None
@@ -92,7 +92,8 @@ class TicketMetadata:
             title=data.get("title"),
             playbook_id=data.get("playbook_id"),
             playbook_run_id=data.get("playbook_run_id"),
-            parent_ticket_id=data.get("parent_ticket_id") or data.get("parent_run_id"),
+            # Fallback to parent_ticket_id or parent_run_id for backward compatibility.
+            owning_task_id=data.get("owning_task_id") or data.get("parent_ticket_id") or data.get("parent_run_id"),
             model=data.get("model"),
             context=data.get("context"),
             watch_events=data.get("watch_events"),
@@ -120,11 +121,11 @@ class Ticket:
     def fs_dir(self) -> Path:
         """The working filesystem directory for this ticket.
 
-        If ``parent_ticket_id`` is set, the ticket shares its parent's
-        workspace at ``tickets/{parent_ticket_id}/filesystem``.
+        If ``owning_task_id`` is set, the ticket shares its parent's
+        workspace at ``tickets/{owning_task_id}/filesystem``.
         Otherwise it uses its own directory.
         """
-        parent = self.metadata.parent_ticket_id
+        parent = self.metadata.owning_task_id
         
         if parent:
             base = self.dir.parent / parent / "filesystem"

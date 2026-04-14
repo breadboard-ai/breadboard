@@ -102,12 +102,12 @@ def run_playbook(
     *,
     store: TaskStore,
     context: str | None = None,
-    parent_ticket_id: str | None = None,
+    owning_task_id: str | None = None,
     slug: str | None = None,
 ) -> Ticket:
     """Create a ticket from a template.
 
-    If ``parent_ticket_id`` is provided, the created ticket shares the
+    If ``owning_task_id`` is provided, the created ticket shares the
     parent ticket's workspace directory instead of getting its own.
 
     If the template has a hooks module with an ``on_run_playbook`` function,
@@ -147,7 +147,7 @@ def run_playbook(
         tasks=data.get("tasks"),
         playbook_id=playbook_id,
         playbook_run_id=playbook_run_id,
-        parent_ticket_id=parent_ticket_id,
+        owning_task_id=owning_task_id,
         context=context,
         slug=slug,
     )
@@ -196,7 +196,7 @@ def stamp_child_ticket(
         template_name,
         store=store,
         context=context,
-        parent_ticket_id=child_scope.workspace_root_id,
+        owning_task_id=child_scope.workspace_root_id,
         slug=child_scope.slug_path,
     )
 

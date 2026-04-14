@@ -66,8 +66,8 @@ class TaskStore:
     def get_children(self, task_id: str | None = None) -> list[Ticket]:
         """Returns children of the given task, or roots if task_id is None."""
         if task_id is None:
-            return [t for t in self.query_all() if not t.metadata.parent_ticket_id]
-        return [t for t in self.query_all() if t.metadata.parent_ticket_id == task_id]
+            return [t for t in self.query_all() if not t.metadata.owning_task_id]
+        return [t for t in self.query_all() if t.metadata.owning_task_id == task_id]
 
 
 
@@ -117,7 +117,7 @@ class TaskStore:
         assignee: str | None = None,
         playbook_id: str | None = None,
         playbook_run_id: str | None = None,
-        parent_ticket_id: str | None = None,
+        owning_task_id: str | None = None,
         model: str | None = None,
         context: str | None = None,
         watch_events: list[dict[str, Any]] | None = None,
@@ -166,7 +166,7 @@ class TaskStore:
                 assignee=assignee,
                 playbook_id=playbook_id,
                 playbook_run_id=playbook_run_id,
-                parent_ticket_id=parent_ticket_id,
+                owning_task_id=owning_task_id,
                 model=model,
                 context=context,
                 watch_events=watch_events,
