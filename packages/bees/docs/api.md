@@ -67,10 +67,6 @@ Registers an event handler for the specified event.
 
 Starts the scheduler loop and begins processing tasks.
 
-#### `trigger(self)`
-
-Triggers the scheduler to process tasks immediately.
-
 #### `shutdown(self)` (Async)
 
 Stops the scheduler loop and cleans up resources.
