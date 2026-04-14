@@ -30,7 +30,7 @@ interface AgentPerspectives {
 /**
  * Derive a forest of agent trees from a flat ticket list.
  *
- * Root nodes are tickets with no `creator_ticket_id` (user-initiated).
+ * Root nodes are tickets with no `parent_task_id` (or legacy `creator_ticket_id`) (user-initiated).
  * Coordination and internal-only tickets are excluded.
  */
 function deriveAgentTree(tickets: TicketData[]): AgentTreeNode[] {
@@ -47,10 +47,12 @@ function deriveAgentTree(tickets: TicketData[]): AgentTreeNode[] {
   const roots: TicketData[] = [];
 
   for (const t of agentTickets) {
-    if (t.creator_ticket_id) {
-      const siblings = childrenOf.get(t.creator_ticket_id) ?? [];
+    // Fallback for legacy creator_ticket_id
+    const parentId = t.parent_task_id || t.creator_ticket_id;
+    if (parentId) {
+      const siblings = childrenOf.get(parentId) ?? [];
       siblings.push(t);
-      childrenOf.set(t.creator_ticket_id, siblings);
+      childrenOf.set(parentId, siblings);
     } else {
       roots.push(t);
     }
@@ -75,7 +77,8 @@ function deriveChildAgents(
 ): TicketData[] {
   return tickets.filter(
     (t) =>
-      t.creator_ticket_id === parentId &&
+      // Fallback for legacy creator_ticket_id
+      (t.parent_task_id || t.creator_ticket_id) === parentId &&
       t.kind !== "coordination" &&
       !t.tags?.includes("digest")
   );
@@ -90,7 +93,8 @@ function derivePerspectives(
   const hasBundle = ticket.tags?.includes("bundle") ?? false;
   const hasSubagents = allTickets.some(
     (t) =>
-      t.creator_ticket_id === ticket.id &&
+      // Fallback for legacy creator_ticket_id
+      (t.parent_task_id || t.creator_ticket_id) === ticket.id &&
       t.kind !== "coordination" &&
       !t.tags?.includes("digest")
   );
@@ -102,7 +106,7 @@ function derivePerspectives(
  * Derive the ancestor path from root to the given agent.
  *
  * Returns an ordered array of ticket IDs: `[root, ..., parent, agentId]`.
- * Walks the `creator_ticket_id` chain upward, then reverses.
+ * Walks the `parent_task_id` (or `creator_ticket_id`) chain upward, then reverses.
  * Returns an empty array if the agent is not found.
  *
  * Guards against cycles with a visited set.
@@ -118,8 +122,10 @@ function deriveAncestorPath(tickets: TicketData[], agentId: string): string[] {
     visited.add(current);
     path.push(current);
     const ticket = byId.get(current);
-    if (!ticket?.creator_ticket_id) break;
-    current = ticket.creator_ticket_id;
+    // Fallback for legacy creator_ticket_id
+    const parentId = ticket?.parent_task_id || ticket?.creator_ticket_id;
+    if (!parentId) break;
+    current = parentId;
   }
 
   return path.reverse();

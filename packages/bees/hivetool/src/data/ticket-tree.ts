@@ -6,8 +6,9 @@
 
 /**
  * Derives a parent–child tree from a flat ticket list using
- * `creator_ticket_id`. Hivetool-specific copy — no filtering beyond
- * what the caller provides (devtools should show everything).
+ * `parent_task_id` (falling back to `creator_ticket_id`).
+ * Hivetool-specific copy — no filtering beyond what the caller provides
+ * (devtools should show everything).
  */
 
 import type { TicketData } from "../../../common/types.js";
@@ -24,7 +25,7 @@ interface TicketTreeNode {
 /**
  * Build a forest of ticket trees from a flat list.
  *
- * Root nodes are tickets with no `creator_ticket_id`.
+ * Root nodes are tickets with no `parent_task_id` (or legacy `creator_ticket_id`).
  * Children are sorted by `created_at` ascending (oldest first) so the
  * tree reads in chronological order.
  */
@@ -33,10 +34,12 @@ function deriveTicketTree(tickets: TicketData[]): TicketTreeNode[] {
   const roots: TicketData[] = [];
 
   for (const t of tickets) {
-    if (t.creator_ticket_id) {
-      const siblings = childrenOf.get(t.creator_ticket_id) ?? [];
+    // Fallback for legacy creator_ticket_id
+    const parentId = t.parent_task_id || t.creator_ticket_id;
+    if (parentId) {
+      const siblings = childrenOf.get(parentId) ?? [];
       siblings.push(t);
-      childrenOf.set(t.creator_ticket_id, siblings);
+      childrenOf.set(parentId, siblings);
     } else {
       roots.push(t);
     }

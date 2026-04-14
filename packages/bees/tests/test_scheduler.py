@@ -171,70 +171,70 @@ async def test_deliver_context_update_immediate(mock_clients):
 
 
 @pytest.mark.asyncio
-async def test_enrich_creator_tags_merges(mock_clients):
-    """Child tags are merged (union) into the creator's existing tags."""
+async def test_enrich_parent_tags_merges(mock_clients):
+    """Child tags are merged (union) into the parent's existing tags."""
     _, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
-    creator = GLOBAL_STORE.create("Parent", tags=["b", "c"])
+    parent = GLOBAL_STORE.create("Parent", tags=["b", "c"])
     child = GLOBAL_STORE.create("Child", tags=["a", "b"])
-    child.metadata.creator_ticket_id = creator.id
+    child.metadata.parent_task_id = parent.id
     GLOBAL_STORE.save_metadata(child)
 
-    result = scheduler._enrich_creator_tags(child)
+    result = scheduler._enrich_parent_tags(child)
 
     assert result is not None
-    assert result.id == creator.id
-    fresh = GLOBAL_STORE.get(creator.id)
+    assert result.id == parent.id
+    fresh = GLOBAL_STORE.get(parent.id)
     assert fresh.metadata.tags == ["a", "b", "c"]
 
 
 @pytest.mark.asyncio
-async def test_enrich_creator_tags_no_creator(mock_clients):
-    """No crash when creator_ticket_id points to a nonexistent ticket."""
+async def test_enrich_parent_tags_no_parent(mock_clients):
+    """No crash when parent_task_id points to a nonexistent ticket."""
     _, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
     child = GLOBAL_STORE.create("Child", tags=["a"])
-    child.metadata.creator_ticket_id = "nonexistent-id"
+    child.metadata.parent_task_id = "nonexistent-id"
     GLOBAL_STORE.save_metadata(child)
 
     # Should not raise, returns None.
-    assert scheduler._enrich_creator_tags(child) is None
+    assert scheduler._enrich_parent_tags(child) is None
 
 
 @pytest.mark.asyncio
-async def test_enrich_creator_tags_no_tags(mock_clients):
-    """Creator is unchanged when the child has no tags."""
+async def test_enrich_parent_tags_no_tags(mock_clients):
+    """Parent is unchanged when the child has no tags."""
     _, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
-    creator = GLOBAL_STORE.create("Parent", tags=["x"])
+    parent = GLOBAL_STORE.create("Parent", tags=["x"])
     child = GLOBAL_STORE.create("Child")  # No tags.
-    child.metadata.creator_ticket_id = creator.id
+    child.metadata.parent_task_id = parent.id
     GLOBAL_STORE.save_metadata(child)
 
-    assert scheduler._enrich_creator_tags(child) is None
+    assert scheduler._enrich_parent_tags(child) is None
 
-    fresh = GLOBAL_STORE.get(creator.id)
+    fresh = GLOBAL_STORE.get(parent.id)
     assert fresh.metadata.tags == ["x"]
 
 
 @pytest.mark.asyncio
-async def test_enrich_creator_tags_creator_has_no_tags(mock_clients):
-    """Creator with None tags receives the child's tags."""
+async def test_enrich_parent_tags_parent_has_no_tags(mock_clients):
+    """Parent with None tags receives the child's tags."""
     _, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
-    creator = GLOBAL_STORE.create("Parent")  # tags=None
+    parent = GLOBAL_STORE.create("Parent")  # tags=None
     child = GLOBAL_STORE.create("Child", tags=["a"])
-    child.metadata.creator_ticket_id = creator.id
+    child.metadata.parent_task_id = parent.id
     GLOBAL_STORE.save_metadata(child)
 
-    result = scheduler._enrich_creator_tags(child)
+    result = scheduler._enrich_parent_tags(child)
 
     assert result is not None
-    fresh = GLOBAL_STORE.get(creator.id)
+    fresh = GLOBAL_STORE.get(parent.id)
     assert fresh.metadata.tags == ["a"]
 
 

@@ -36,7 +36,7 @@ on `TicketMetadata`:
 | `assignee`                | `"user"`, `"agent"`, or `None`.                                   |
 | `playbook_id`             | Template name (pending rename to `template_id`).                  |
 | `playbook_run_id`         | UUID grouping tasks in the same run (pending rename to `run_id`). |
-| `creator_ticket_id`       | Parent task that created this one.                                |
+| `parent_task_id`          | Parent task that created this one.                                |
 | `owning_task_id`          | Task whose filesystem this task shares.                           |
 | `slug`                    | Writable subdirectory within the shared workspace.                |
 | `depends_on`              | List of task IDs that must complete first.                        |
@@ -209,7 +209,7 @@ Key operations:
 - **`run_playbook(name)`** — Creates a task from a template. Runs
   `on_run_playbook` hook if present. Stamps child tasks for `autostart` entries.
 - **`stamp_child_ticket(name, parent, slug)`** — Creates a child task with
-  proper scope composition, sandbox instructions, and `creator_ticket_id`
+  proper scope composition, sandbox instructions, and `parent_task_id`
   assignment. Shared by both `autostart` and `tasks_create_task`.
 - **`boot_root_template(tickets)`** — Reads `root` from `SYSTEM.yaml`. If no
   existing task has a matching `playbook_id`, creates one.

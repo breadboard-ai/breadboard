@@ -124,13 +124,13 @@ async def test_tasks_list_types_filters_by_allowlist(write_template):
 @pytest.mark.asyncio
 async def test_tasks_check_status(write_template):
     task_ticket = GLOBAL_STORE.create("Do something")
-    task_ticket.metadata.creator_ticket_id = "caller-id"
+    task_ticket.metadata.parent_task_id = "caller-id"
     task_ticket.metadata.title = "My Task"
     task_ticket.metadata.status = "running"
     GLOBAL_STORE.save_metadata(task_ticket)
 
     other_ticket = GLOBAL_STORE.create("Do something else")
-    other_ticket.metadata.creator_ticket_id = "other-id"
+    other_ticket.metadata.parent_task_id = "other-id"
     GLOBAL_STORE.save_metadata(other_ticket)
 
     scope = SubagentScope(workspace_root_id="caller-id")
@@ -188,7 +188,7 @@ async def test_tasks_create_task_async(write_template):
     ticket = GLOBAL_STORE.get(result["task_id"])
     assert ticket is not None
 
-    assert ticket.metadata.creator_ticket_id == caller.id
+    assert ticket.metadata.parent_task_id == caller.id
     assert ticket.metadata.slug == "my-slug"
     assert ticket.metadata.title == "Testing create"
     assert "You are assigned to work in the subdirectory: ./my-slug" in ticket.objective
@@ -295,6 +295,6 @@ async def test_tasks_create_task_nested_slug(write_template):
     assert ticket is not None
 
     assert ticket.metadata.slug == "research/deep-dive"
-    assert ticket.metadata.creator_ticket_id == caller.id
+    assert ticket.metadata.parent_task_id == caller.id
     assert "./research/deep-dive" in ticket.objective
     assert (ticket.fs_dir / "research" / "deep-dive").exists()

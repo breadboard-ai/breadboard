@@ -5,7 +5,7 @@
 The server currently ships a flat bag of `TicketData` objects to the frontend via SSE. The frontend then does significant work to make sense of this bag:
 
 - Filters out `coordination` and `digest` tickets (framework internals)
-- Builds a recursive tree from `creator_ticket_id` chains
+- Builds a recursive tree from `parent_task_id` chains
 - Scans tags to determine agent capabilities (`chat`, `bundle`)
 - Introspects `suspend_event` to extract prompts and choices
 - Detects `signal_type === "digest_ready"` to know when to reload the stage
@@ -108,7 +108,7 @@ The client upserts by `id` using `location` to know which list to update. No tre
 | `digest-tile-writer` agents | Infrastructure — filtered out at the worker level. |
 | `knowledge` agent | Background agent — filtered out at the journey level. |
 | `suspend_event` raw object | Middleware extracts `prompt` and `choices` — client never sees the raw event shape. |
-| `playbook_run_id`, `creator_ticket_id`, `kind`, `signal_type` | Framework internals. Not in the wire format. |
+| `playbook_run_id`, `parent_task_id`, `kind`, `signal_type` | Framework internals. Not in the wire format. |
 
 ### Session Events (Thoughts/Tool Calls)
 

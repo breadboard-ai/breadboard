@@ -30,6 +30,8 @@ export interface TicketData {
   playbook_id?: string;
   playbook_run_id?: string;
   owning_task_id?: string;
+  parent_task_id?: string;
+  /** Legacy fallback creator_ticket_id -> parent_task_id */
   creator_ticket_id?: string;
   slug?: string;
   kind?: string;

@@ -29,10 +29,10 @@ def test_tree_traversal(temp_hive):
     root1 = store.create("Root 1")
     root2 = store.create("Root 2")
 
-    child1 = store.create("Child 1", creator_ticket_id=root1.id)
-    child2 = store.create("Child 2", creator_ticket_id=root1.id)
+    child1 = store.create("Child 1", parent_task_id=root1.id)
+    child2 = store.create("Child 2", parent_task_id=root1.id)
 
-    grandchild1 = store.create("Grandchild 1", creator_ticket_id=child1.id)
+    grandchild1 = store.create("Grandchild 1", parent_task_id=child1.id)
 
     # Test get_children
     roots = bees.children
@@ -85,7 +85,7 @@ def test_query_by_tags(temp_hive):
     t3 = store.create("Task 3", tags=["bug"])
     
     # Create a child task with tags
-    t4 = store.create("Task 4", tags=["bug", "ui"], creator_ticket_id=t2.id)
+    t4 = store.create("Task 4", tags=["bug", "ui"], parent_task_id=t2.id)
 
     # Test global query
     ui_tasks = bees.query(["ui"])
@@ -144,7 +144,7 @@ async def test_task_node_create_child(temp_hive):
     
     child_node = await parent_node.create_child("Child Task")
     
-    bees._scheduler.create_task.assert_called_once_with("Child Task", owning_task_id="parent1", creator_ticket_id="parent1")
+    bees._scheduler.create_task.assert_called_once_with("Child Task", owning_task_id="parent1", parent_task_id="parent1")
     assert child_node.id == "child1"
 
 

@@ -183,7 +183,7 @@ def stamp_child_ticket(
     """Create a child ticket from a template under a parent.
 
     Handles SubagentScope composition, sandbox instructions, writable
-    directory creation, and ``creator_ticket_id`` assignment — the
+    directory creation, and ``parent_task_id`` assignment — the
     shared logic for both ``autostart`` and ``tasks_create_task``.
 
     If *scope* is not provided, one is derived from the parent ticket.
@@ -217,7 +217,7 @@ def stamp_child_ticket(
     if title:
         child.metadata.title = title
 
-    child.metadata.creator_ticket_id = parent_ticket.id
+    child.metadata.parent_task_id = parent_ticket.id
     store.save_metadata(child)
 
     return child

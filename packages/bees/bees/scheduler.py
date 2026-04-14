@@ -369,14 +369,14 @@ class Scheduler:
         Returns ``None`` on success, or an error string on failure.
 
         When ``expected_creator`` is provided the target ticket's
-        ``creator_ticket_id`` must match — this prevents one agent from
+        ``parent_task_id`` must match — this prevents one agent from
         injecting updates into another agent's tasks.
         """
         ticket = self.store.get(ticket_id)
         if not ticket:
             return f"Task {ticket_id} not found"
 
-        if expected_creator and ticket.metadata.creator_ticket_id != expected_creator:
+        if expected_creator and ticket.metadata.parent_task_id != expected_creator:
             return f"Task {ticket_id} is not owned by this agent"
 
         self._deliver_context_update(ticket_id, update)
@@ -427,42 +427,42 @@ class Scheduler:
             self.store.save_metadata(target)
             logger.info("Context update buffered for %s", target_id)
 
-    def _enrich_creator_tags(self, ticket: Ticket) -> Ticket | None:
-        """Merge a completed ticket's tags into its creator's tags.
+    def _enrich_parent_tags(self, ticket: Ticket) -> Ticket | None:
+        """Merge a completed ticket's tags into its parent's tags.
 
         Called when a subagent finishes (any terminal status).  Performs
         a deduplicated union — one level up only.
 
-        Returns the enriched creator ticket so the caller can broadcast
+        Returns the enriched parent ticket so the caller can broadcast
         a ``ticket_update`` via SSE, or ``None`` if nothing changed.
         """
-        creator_id = ticket.metadata.creator_ticket_id
+        parent_id = ticket.metadata.parent_task_id
         child_tags = ticket.metadata.tags
-        if not creator_id or not child_tags:
+        if not parent_id or not child_tags:
             return None
 
-        creator = self.store.get(creator_id)
-        if not creator:
+        parent = self.store.get(parent_id)
+        if not parent:
             logger.warning(
-                "Tag enrichment: creator %s not found for %s",
-                creator_id, ticket.id[:8],
+                "Tag enrichment: parent %s not found for %s",
+                parent_id, ticket.id[:8],
             )
             return None
 
-        existing = set(creator.metadata.tags or [])
+        existing = set(parent.metadata.tags or [])
         merged = existing | set(child_tags)
         if merged == existing:
             return None  # Nothing new.
 
-        creator.metadata.tags = sorted(merged)
-        self.store.save_metadata(creator)
+        parent.metadata.tags = sorted(merged)
+        self.store.save_metadata(parent)
         logger.info(
             "Tag enrichment: %s -> %s (added %s)",
             ticket.id[:8],
-            creator_id[:8],
+            parent_id[:8],
             sorted(merged - existing),
         )
-        return creator
+        return parent
 
     async def start_loop(self) -> None:
         """Background loop that runs cycles whenever triggered."""
@@ -839,13 +839,13 @@ class Scheduler:
         self.trigger()
 
     def _make_deliver_to_parent(self, ticket: Ticket) -> Callable[[dict[str, Any]], None] | None:
-        """Create a callback that delivers an update to this ticket's creator."""
-        creator_id = ticket.metadata.creator_ticket_id
-        if not creator_id:
+        """Create a callback that delivers an update to this task's parent."""
+        parent_id = ticket.metadata.parent_task_id
+        if not parent_id:
             return None
 
         def deliver(update: dict[str, Any]) -> None:
-            self._deliver_context_update(creator_id, update)
+            self._deliver_context_update(parent_id, update)
 
         return deliver
 
@@ -1022,11 +1022,11 @@ class Scheduler:
                         run_ticket_done_hooks(updated)
                         self._notify_ticket_done(t.id)
 
-                        creator_id = updated.metadata.creator_ticket_id
-                        if creator_id and updated.metadata.status in ("completed", "failed"):
+                        parent_id = updated.metadata.parent_task_id
+                        if parent_id and updated.metadata.status in ("completed", "failed"):
                             update = {"task_id": updated.id, "status": updated.metadata.status, "outcome": updated.metadata.outcome or updated.metadata.error or "(no outcome)"}
-                            self._deliver_context_update(creator_id, update)
-                        enriched = self._enrich_creator_tags(updated)
+                            self._deliver_context_update(parent_id, update)
+                        enriched = self._enrich_parent_tags(updated)
                         if enriched and self._hooks.on_ticket_done:
                             await self._hooks.on_ticket_done(enriched)
                         if self._hooks.on_ticket_done:
@@ -1052,11 +1052,11 @@ class Scheduler:
                         run_ticket_done_hooks(updated)
                         self._notify_ticket_done(t.id)
 
-                        creator_id = updated.metadata.creator_ticket_id
-                        if creator_id and updated.metadata.status in ("completed", "failed"):
+                        parent_id = updated.metadata.parent_task_id
+                        if parent_id and updated.metadata.status in ("completed", "failed"):
                             update = {"task_id": updated.id, "status": updated.metadata.status, "outcome": updated.metadata.outcome or updated.metadata.error or "(no outcome)"}
-                            self._deliver_context_update(creator_id, update)
-                        enriched = self._enrich_creator_tags(updated)
+                            self._deliver_context_update(parent_id, update)
+                        enriched = self._enrich_parent_tags(updated)
                         if enriched and self._hooks.on_ticket_done:
                             await self._hooks.on_ticket_done(enriched)
                         if self._hooks.on_ticket_done:

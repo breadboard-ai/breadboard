@@ -62,7 +62,7 @@ class TicketMetadata:
     signal_type: str | None = None
     delivered_to: list[str] | None = None
     tasks: list[str] | None = None
-    creator_ticket_id: str | None = None
+    parent_task_id: str | None = None
     slug: str | None = None
     pending_context_updates: list[dict[str, Any]] | None = None
 
@@ -102,7 +102,8 @@ class TicketMetadata:
             signal_type=data.get("signal_type"),
             delivered_to=data.get("delivered_to"),
             tasks=data.get("tasks"),
-            creator_ticket_id=data.get("creator_ticket_id"),
+            # Fallback for legacy creator_ticket_id
+            parent_task_id=data.get("parent_task_id") or data.get("creator_ticket_id"),
             slug=data.get("slug"),
             pending_context_updates=data.get("pending_context_updates"),
         )
