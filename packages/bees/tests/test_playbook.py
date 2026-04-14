@@ -358,7 +358,7 @@ class TestStampChildTicket:
             "worker", parent_ticket=parent, slug="my-worker",
         )
 
-        assert child.metadata.creator_ticket_id == parent.id
+        assert child.metadata.parent_task_id == parent.id
         assert child.metadata.owning_task_id == parent.id
         assert child.metadata.slug == "my-worker"
         assert child.metadata.playbook_id == "worker"
@@ -435,7 +435,7 @@ class TestAutostart:
         parent = run_playbook("boss")
 
         all_tickets = GLOBAL_STORE.query_all()
-        children = [t for t in all_tickets if t.metadata.creator_ticket_id == parent.id]
+        children = [t for t in all_tickets if t.metadata.parent_task_id == parent.id]
 
         assert len(children) == 1
         child = children[0]
@@ -451,7 +451,7 @@ class TestAutostart:
         parent = run_playbook("solo")
 
         all_tickets = GLOBAL_STORE.query_all()
-        children = [t for t in all_tickets if t.metadata.creator_ticket_id == parent.id]
+        children = [t for t in all_tickets if t.metadata.parent_task_id == parent.id]
 
         assert len(children) == 0
 
@@ -474,7 +474,7 @@ class TestAutostart:
         parent = run_playbook("boss")
 
         all_tickets = GLOBAL_STORE.query_all()
-        children = [t for t in all_tickets if t.metadata.creator_ticket_id == parent.id]
+        children = [t for t in all_tickets if t.metadata.parent_task_id == parent.id]
 
         assert len(children) == 2
         slugs = {c.metadata.slug for c in children}

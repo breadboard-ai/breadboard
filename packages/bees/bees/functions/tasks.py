@@ -135,11 +135,11 @@ def _make_handlers(
         if caller_ticket_id:
             from collections import defaultdict
 
-            # Build an index: creator_ticket_id -> list of child tickets.
+            # Build an index: parent_task_id -> list of child tickets.
             children_of: dict[str, list[Any]] = defaultdict(list)
             for t in (scheduler.store.query_all() if scheduler else []):
-                if t.metadata.creator_ticket_id:
-                    children_of[t.metadata.creator_ticket_id].append(t)
+                if t.metadata.parent_task_id:
+                    children_of[t.metadata.parent_task_id].append(t)
 
             def _build_tree(parent_id: str) -> list[dict[str, Any]]:
                 result: list[dict[str, Any]] = []
