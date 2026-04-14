@@ -72,11 +72,11 @@ bees: Bees | None = None
 # ---------------------------------------------------------------------------
 
 
-async def _on_ticket_added(ticket: Task) -> None:
+async def _on_task_added(task: Task) -> None:
     """Broadcast a newly added agent."""
     await broadcaster.broadcast({
         "type": "agent:added",
-        "agent": _agent_to_dict(ticket),
+        "agent": _agent_to_dict(task),
     })
 
 
@@ -89,27 +89,27 @@ async def _on_cycle_start(cycle: int, new: int, resumable: int) -> None:
     })
 
 
-async def _on_ticket_event(ticket_id: str, event: dict[str, Any]) -> None:
+async def _on_task_event(task_id: str, event: dict[str, Any]) -> None:
     await broadcaster.broadcast({
         "type": "session:event",
-        "ticket_id": ticket_id,
+        "ticket_id": task_id,
         "event": event,
     })
 
 
-async def _on_ticket_start(ticket: Task) -> None:
+async def _on_task_start(task: Task) -> None:
     """Broadcast when an agent transitions to running."""
     await broadcaster.broadcast({
         "type": "agent:updated",
-        "agent": _agent_to_dict(ticket),
+        "agent": _agent_to_dict(task),
     })
 
 
-async def _on_ticket_done(ticket: Task) -> None:
+async def _on_task_done(task: Task) -> None:
     """Post-completion hook: broadcast updated agent state."""
     await broadcaster.broadcast({
         "type": "agent:updated",
-        "agent": _agent_to_dict(ticket),
+        "agent": _agent_to_dict(task),
     })
 
 
@@ -160,11 +160,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     bees = Bees(hive_dir, backend)
 
-    bees.on("ticket_added", _on_ticket_added)
+    bees.on("task_added", _on_task_added)
     bees.on("cycle_start", _on_cycle_start)
-    bees.on("ticket_event", _on_ticket_event)
-    bees.on("ticket_start", _on_ticket_start)
-    bees.on("ticket_done", _on_ticket_done)
+    bees.on("task_event", _on_task_event)
+    bees.on("task_start", _on_task_start)
+    bees.on("task_done", _on_task_done)
     bees.on("cycle_complete", _on_cycle_complete)
 
     await bees.listen()
@@ -189,26 +189,26 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 
 
-def _agent_to_dict(ticket: Task) -> dict[str, Any]:
-    """Serialize an agent (ticket) for JSON response."""
+def _agent_to_dict(task: Task) -> dict[str, Any]:
+    """Serialize an agent (task) for JSON response."""
     d = {
-        "id": ticket.id,
-        "objective": ticket.objective,
-        **ticket.metadata.to_dict(),
+        "id": task.id,
+        "objective": task.objective,
+        **task.metadata.to_dict(),
     }
     # Include chat history for chat-tagged agents so the shell can
     # restore conversation after page reload / server restart.
-    if ticket.metadata.tags and "chat" in ticket.metadata.tags:
-        d["chat_history"] = _read_chat_log(ticket)
+    if task.metadata.tags and "chat" in task.metadata.tags:
+        d["chat_history"] = _read_chat_log(task)
     return d
 
 
-def _read_chat_log(ticket: Task) -> list[dict[str, str]]:
+def _read_chat_log(task: Task) -> list[dict[str, str]]:
     """Read the agent's chat log written by the chat function.
 
     Returns a list of ``{"role": "agent"|"user", "text": "..."}`` entries.
     """
-    log_path = ticket.dir / "chat_log.json"
+    log_path = task.dir / "chat_log.json"
     if not log_path.exists():
         return []
     try:
@@ -242,20 +242,20 @@ def _get_node(agent_id: str):
 async def reply_to_agent(agent_id: str, req: ReplyRequest) -> dict[str, Any]:
     """Send a chat reply to a suspended agent."""
     node = _get_node(agent_id)
-    ticket = node.task
-    if ticket.metadata.status != "suspended":
+    task = node.task
+    if task.metadata.status != "suspended":
         raise HTTPException(400, "Agent is not suspended")
-    if ticket.metadata.assignee != "user":
+    if task.metadata.assignee != "user":
         raise HTTPException(400, "Agent is not assigned to user")
 
-    ticket = node.respond({"text": req.text})
+    task = node.respond({"text": req.text})
 
     await broadcaster.broadcast({
         "type": "agent:updated",
-        "agent": _agent_to_dict(ticket),
+        "agent": _agent_to_dict(task),
     })
 
-    return _agent_to_dict(ticket)
+    return _agent_to_dict(task)
 
 
 @app.post("/agents/{agent_id}/choose")
@@ -264,20 +264,20 @@ async def choose_for_agent(
 ) -> dict[str, Any]:
     """Submit a choice selection to a suspended agent."""
     node = _get_node(agent_id)
-    ticket = node.task
-    if ticket.metadata.status != "suspended":
+    task = node.task
+    if task.metadata.status != "suspended":
         raise HTTPException(400, "Agent is not suspended")
-    if ticket.metadata.assignee != "user":
+    if task.metadata.assignee != "user":
         raise HTTPException(400, "Agent is not assigned to user")
 
-    ticket = node.respond({"selectedIds": req.selectedIds})
+    task = node.respond({"selectedIds": req.selectedIds})
 
     await broadcaster.broadcast({
         "type": "agent:updated",
-        "agent": _agent_to_dict(ticket),
+        "agent": _agent_to_dict(task),
     })
 
-    return _agent_to_dict(ticket)
+    return _agent_to_dict(task)
 
 
 @app.post("/agents/{agent_id}/retry")
