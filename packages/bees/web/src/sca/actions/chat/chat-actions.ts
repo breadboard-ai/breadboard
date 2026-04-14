@@ -277,7 +277,7 @@ export const sendChat = asAction(
     controller.chat.threadMessages = updated;
 
     if (thread?.activeTicketId) {
-      await services.api.respond(thread.activeTicketId, text);
+      await services.api.reply(thread.activeTicketId, text);
     }
   }
 );
@@ -311,7 +311,7 @@ export const sendChoices = asAction(
     controller.chat.pendingChoices = [];
     controller.chat.selectedChoiceIds = [];
 
-    await services.api.respond(thread.activeTicketId, labels, ids);
+    await services.api.choose(thread.activeTicketId, ids);
   }
 );
 

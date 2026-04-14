@@ -24,7 +24,7 @@ import yaml
 
 from bees.config import HIVE_DIR
 from bees.subagent_scope import SubagentScope
-from bees import TaskStore
+from bees.task_store import TaskStore
 from bees.ticket import Ticket
 
 logger = logging.getLogger(__name__)
