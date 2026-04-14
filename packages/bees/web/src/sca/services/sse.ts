@@ -21,34 +21,30 @@ export class SSEClient {
       );
     });
 
-    this.source.addEventListener("ticket_added", (e: MessageEvent) => {
+    this.source.addEventListener("agent:added", (e: MessageEvent) => {
       this.bus.dispatchEvent(
-        new CustomEvent("ticket_added", { detail: JSON.parse(e.data).ticket })
+        new CustomEvent("agent_added", { detail: JSON.parse(e.data).agent })
       );
     });
 
-    this.source.addEventListener("ticket_update", (e: MessageEvent) => {
+    this.source.addEventListener("agent:updated", (e: MessageEvent) => {
       this.bus.dispatchEvent(
-        new CustomEvent("ticket_update", { detail: JSON.parse(e.data).ticket })
+        new CustomEvent("agent_updated", { detail: JSON.parse(e.data).agent })
       );
     });
 
-    this.source.addEventListener("session_event", (e: MessageEvent) => {
+    this.source.addEventListener("session:event", (e: MessageEvent) => {
       this.bus.dispatchEvent(
         new CustomEvent("session_event", { detail: JSON.parse(e.data) })
       );
     });
 
-    this.source.addEventListener("drain_start", () => {
-      this.bus.dispatchEvent(new CustomEvent("drain_start"));
+    this.source.addEventListener("scheduler:started", () => {
+      this.bus.dispatchEvent(new CustomEvent("scheduler_started"));
     });
 
-    this.source.addEventListener("drain_complete", () => {
-      this.bus.dispatchEvent(new CustomEvent("drain_complete"));
-    });
-
-    this.source.addEventListener("drain_error", () => {
-      this.bus.dispatchEvent(new CustomEvent("drain_error"));
+    this.source.addEventListener("scheduler:stopped", () => {
+      this.bus.dispatchEvent(new CustomEvent("scheduler_stopped"));
     });
 
     this.source.onerror = () => {

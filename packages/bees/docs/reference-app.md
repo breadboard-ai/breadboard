@@ -15,16 +15,16 @@ consumption model described in `patterns.md`.
 │                    SSE ↓ REST ↑                          │
 ├─────────────────────────────────────────────────────────┤
 │                   Server (FastAPI)                       │
-│          REST endpoints · SSE broadcaster               │
+│            Agent API · SSE broadcaster                  │
 │                          │                               │
-│               SchedulerHooks ↕                          │
+│                 Bees hooks ↕                             │
 ├─────────────────────────────────────────────────────────┤
 │                   Bees Framework                        │
 │              Scheduler → Session → LLM                  │
 └─────────────────────────────────────────────────────────┘
 ```
 
-The server is the glue layer that projects the scheduler's model as REST
+The server is the glue layer that projects the framework's model as REST
 endpoints and SSE events. The web shell consumes those projections and renders
 them as a chat UI with an embedded app stage.
 
@@ -34,75 +34,63 @@ The server has three responsibilities:
 
 ### 1. Boot the system
 
-On startup, the server:
-
-1. Creates a `Scheduler` instance with an `HttpBackendClient`.
-2. Recovers stuck tickets (tasks that were running when the server last shut
-   down) by resetting them to `available`.
-3. Calls `boot_root_template()` — reads `SYSTEM.yaml` and creates the root task
-   if none exists.
-4. Starts the scheduler loop (`scheduler.start_loop()`), which continuously
-   drains available tasks.
+On startup, the server creates a `Bees` instance with an `HttpBackendClient`
+and calls `bees.listen()`, which recovers stuck tasks, boots the root template
+from `SYSTEM.yaml`, and starts the scheduler loop.
 
 ### 2. Project the model as REST
 
 Every endpoint is a thin view over the task list. The server does no business
-logic beyond serializing task data and writing user responses.
+logic beyond serializing task data and writing user responses. All endpoints
+use the `/agents` prefix.
 
-| Endpoint                     | Method | Purpose                                    |
-| ---------------------------- | ------ | ------------------------------------------ |
-| `/tickets`                   | GET    | List all tasks, optionally filtered by tag |
-| `/tickets/{id}`              | GET    | Single task with chat history              |
-| `/tickets/{id}/respond`      | POST   | Write user response, flip assignee         |
-| `/tickets/{id}/retry`        | POST   | Reset a paused task to available           |
-| `/tickets/{id}/tags`         | POST   | Update task tags                           |
-| `/tickets/{id}/files`        | GET    | List files in the task's workspace         |
-| `/tickets/{id}/files/{path}` | GET    | Serve a file from the task's workspace     |
-| `/tickets`                   | POST   | Create a new ad-hoc task                   |
-| `/status`                    | GET    | Summary of active tasks grouped by run     |
+#### Commands (writes)
 
-The `respond` endpoint is the **controller** interaction point: when an agent
-suspends with `assignee == "user"`, the web shell calls this endpoint to deliver
-the user's response. Under the hood, it writes `response.json` and flips
-`assignee` to `"agent"`, then triggers the scheduler. This is the direct
+| Endpoint                      | Method | Purpose                                |
+| ----------------------------- | ------ | -------------------------------------- |
+| `/agents/{id}/reply`          | POST   | Send a chat message to a suspended agent |
+| `/agents/{id}/choose`         | POST   | Submit a choice selection to a suspended agent |
+| `/agents/{id}/retry`          | POST   | Reset a paused agent to available      |
+| `/agents/{id}/tags`           | POST   | Update agent tags                      |
+
+`reply` and `choose` are the **controller** interaction points: when an agent
+suspends with `assignee == "user"`, the web shell calls one of these endpoints
+to deliver the user's response. Under the hood, they write `response.json` and
+flip `assignee` to `"agent"`, then trigger the scheduler. This is the direct
 model-editing pattern noted in `patterns.md` as the main gap in the consumption
 API.
 
-#### Querying tasks
+#### Queries (reads)
 
-Tasks can be filtered by metadata fields. The reference app's `/status` endpoint
-exposes this, but the filtering logic (`should_include_ticket` in `app/server.py`)
-operates on the task model directly.
+| Endpoint                       | Method | Purpose                                    |
+| ------------------------------ | ------ | ------------------------------------------ |
+| `/agents/{id}/bundle?slug=`    | GET    | Resolved JS/CSS bundle for an agent        |
+| `/agents/{id}/files`           | GET    | List files in the agent's workspace        |
+| `/agents/{id}/files/{path}`    | GET    | Serve a file from the agent's workspace    |
 
-| Filter   | Example                 | Effect                        |
-| -------- | ----------------------- | ----------------------------- |
-| `kind`   | `work`, `!coordination` | Match/exclude by ticket kind  |
-| `status` | `running,suspended`     | OR across statuses            |
-| `tags`   | `chat`, `!opie`         | OR across tags, `!` to negate |
-
-- Prefix with `!` to negate.
-- Comma-separated values within a filter are OR'd.
-- Multiple filters are AND'd.
+The `bundle` endpoint resolves the agent's JS and CSS files server-side,
+eliminating a multi-step client-side fetch dance. The optional `slug` query
+parameter scopes the search to a subagent's subdirectory.
 
 ### 3. Broadcast state changes via SSE
 
 The server uses a `Broadcaster` (fan-out queue) to deliver real-time state
 changes to all connected clients via Server-Sent Events.
 
-The wiring: each `SchedulerHooks` callback maps to an SSE event type.
+The wiring: each `Bees` event callback maps to an SSE event type.
 
-| SchedulerHook         | SSE event type   | What happened                    |
-| --------------------- | ---------------- | -------------------------------- |
-| `on_startup`          | `ticket_added`   | Root task was created at boot    |
-| `on_ticket_start`     | `ticket_update`  | Task transitioned to running     |
-| `on_ticket_done`      | `ticket_update`  | Task reached a resting state     |
-| `on_ticket_event`     | `session_event`  | Running session emitted an event |
-| `on_events_broadcast` | `ticket_added`   | Agent created a task mid-session |
-| `on_cycle_start`      | `drain_start`    | Scheduler cycle beginning        |
-| `on_cycle_complete`   | `drain_complete` | Scheduler has no more work       |
+| Bees hook             | SSE event type      | What happened                    |
+| --------------------- | ------------------- | -------------------------------- |
+| `ticket_added`        | `agent:added`       | A new agent was created          |
+| `ticket_start`        | `agent:updated`     | Agent transitioned to running    |
+| `ticket_done`         | `agent:updated`     | Agent reached a resting state    |
+| `ticket_event`        | `session:event`     | Running session emitted an event |
+| `cycle_start`         | `scheduler:started` | Scheduler cycle beginning        |
+| `cycle_complete`      | `scheduler:stopped` | Scheduler has no more work       |
 
 On initial connection, the SSE stream sends an `init` event with the full task
-list. After that, clients receive incremental updates.
+list. After that, clients receive incremental updates. There is no REST endpoint
+to list all tasks — SSE `init` is the sole source of truth.
 
 ## The Web Shell (`web/`)
 
@@ -112,11 +100,11 @@ broader codebase.
 
 ### Services
 
-| Service                    | Responsibility                                                         |
-| -------------------------- | ---------------------------------------------------------------------- |
-| `BeesAPI`                  | Thin REST wrapper — `respond()`, `retry()`, `getFile()`, etc.          |
-| `SSEClient`                | Connects to `/events`, parses SSE, dispatches to an `EventTarget` bus. |
-| `HostCommunicationService` | postMessage bridge to the iframe-hosted React apps.                    |
+| Service                    | Responsibility                                                                |
+| -------------------------- | ----------------------------------------------------------------------------- |
+| `BeesAPI`                  | REST wrapper — `reply()`, `choose()`, `retry()`, `getBundle()`, `getFile()`   |
+| `SSEClient`                | Connects to `/events`, parses SSE, dispatches to an `EventTarget` bus.        |
+| `HostCommunicationService` | postMessage bridge to the iframe-hosted React apps.                           |
 
 The `SSEClient` is the pipeline from the server's model to the frontend's
 controller state. It listens for SSE events and dispatches them as DOM
@@ -141,12 +129,12 @@ tasks tagged `"chat"`).
 
 Actions are triggered by SSE events and transform the controller state.
 
-| Action group | Trigger                        | What it does                                 |
-| ------------ | ------------------------------ | -------------------------------------------- |
-| `sync/`      | SSE events (init, add, update) | Upsert tasks into `GlobalController.tickets` |
-| `chat/`      | User input, agent messages     | Send responses via `BeesAPI.respond()`       |
-| `stage/`     | Bundle events                  | Load React apps into the iframe stage        |
-| `tree/`      | Agent selection in sidebar     | Update `AgentTreeController.selectedAgentId` |
+| Action group | Trigger                          | What it does                                     |
+| ------------ | -------------------------------- | ------------------------------------------------ |
+| `sync/`      | SSE events (init, added, updated)| Upsert tasks into `GlobalController.tickets`     |
+| `chat/`      | User input, agent messages       | Send responses via `BeesAPI.reply()` / `choose()`|
+| `stage/`     | Bundle events                    | Load React apps into the iframe stage            |
+| `tree/`      | Agent selection in sidebar       | Update `AgentTreeController.selectedAgentId`     |
 
 The sync actions are the MVC bridge: SSE events arrive → sync actions upsert
 into `GlobalController.tickets` → signal reactivity causes UI components to
@@ -200,9 +188,9 @@ concretely here:
 When the consumption API matures (see [flux.md](./flux.md)), the reference app
 would:
 
-1. Stop editing task files directly in `/respond` — use a framework-provided
-   interaction surface instead.
-2. Replace `SchedulerHooks` callbacks with a more principled observation API.
+1. Stop editing task files directly in `/reply` and `/choose` — use a
+   framework-provided interaction surface instead.
+2. Replace `Bees` event callbacks with a more principled observation API.
 3. Potentially extract into its own package, consuming bees as a library.
 
 The current implementation works but is tightly coupled to the framework's

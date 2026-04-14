@@ -14,14 +14,14 @@ export function onInitTickets(bind: ActionBind): EventTrigger {
   return eventTrigger("Init Tickets", services.stateEventBus, "init_tickets");
 }
 
-export function onTicketAdded(bind: ActionBind): EventTrigger {
+export function onAgentAdded(bind: ActionBind): EventTrigger {
   const { services } = bind;
-  return eventTrigger("Ticket Added", services.stateEventBus, "ticket_added");
+  return eventTrigger("Agent Added", services.stateEventBus, "agent_added");
 }
 
-export function onTicketUpdate(bind: ActionBind): EventTrigger {
+export function onAgentUpdated(bind: ActionBind): EventTrigger {
   const { services } = bind;
-  return eventTrigger("Ticket Update", services.stateEventBus, "ticket_update");
+  return eventTrigger("Agent Updated", services.stateEventBus, "agent_updated");
 }
 
 export function onSessionEvent(bind: ActionBind): EventTrigger {
@@ -29,23 +29,22 @@ export function onSessionEvent(bind: ActionBind): EventTrigger {
   return eventTrigger("Session Event", services.stateEventBus, "session_event");
 }
 
-export function onDrainStart(bind: ActionBind): EventTrigger {
-  const { services } = bind;
-  return eventTrigger("Drain Start", services.stateEventBus, "drain_start");
-}
-
-export function onDrainComplete(bind: ActionBind): EventTrigger {
+export function onSchedulerStarted(bind: ActionBind): EventTrigger {
   const { services } = bind;
   return eventTrigger(
-    "Drain Complete",
+    "Scheduler Started",
     services.stateEventBus,
-    "drain_complete"
+    "scheduler_started"
   );
 }
 
-export function onDrainError(bind: ActionBind): EventTrigger {
+export function onSchedulerStopped(bind: ActionBind): EventTrigger {
   const { services } = bind;
-  return eventTrigger("Drain Error", services.stateEventBus, "drain_error");
+  return eventTrigger(
+    "Scheduler Stopped",
+    services.stateEventBus,
+    "scheduler_stopped"
+  );
 }
 
 export function onConnectionError(bind: ActionBind): EventTrigger {

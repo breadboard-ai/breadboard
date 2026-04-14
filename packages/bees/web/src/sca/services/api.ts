@@ -10,29 +10,35 @@ export { BeesAPI };
 
 /**
  * Thin wrapper around the Bees REST endpoints.
+ *
+ * All endpoints use the `/agents` prefix and semantic verbs.
  */
 class BeesAPI {
-  async addTicket(
-    objective: string,
-    tags?: string[],
-    functions?: string[],
-    skills?: string[]
-  ) {
-    await fetch("/tickets", {
+  async reply(agentId: string, text: string) {
+    await fetch(`/agents/${agentId}/reply`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        objective,
-        tags: tags?.length ? tags : undefined,
-        functions: functions?.length ? functions : undefined,
-        skills: skills?.length ? skills : undefined,
-      }),
+      body: JSON.stringify({ text }),
     });
   }
 
-  async updateTags(ticketId: string, tags: string[]): Promise<boolean> {
+  async choose(agentId: string, selectedIds: string[]) {
+    await fetch(`/agents/${agentId}/choose`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ selectedIds }),
+    });
+  }
+
+  async retry(agentId: string) {
+    await fetch(`/agents/${agentId}/retry`, {
+      method: "POST",
+    });
+  }
+
+  async updateTags(agentId: string, tags: string[]): Promise<boolean> {
     try {
-      const resp = await fetch(`/tickets/${ticketId}/tags`, {
+      const resp = await fetch(`/agents/${agentId}/tags`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tags }),
@@ -44,48 +50,41 @@ class BeesAPI {
     }
   }
 
-  async respond(
-    ticketId: string,
-    text?: string,
-    selectedIds?: string[],
-    contextUpdates?: string[]
-  ) {
-    await fetch(`/tickets/${ticketId}/respond`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, selectedIds, contextUpdates }),
-    });
-  }
-
-  async retry(ticketId: string) {
-    await fetch(`/tickets/${ticketId}/retry`, {
-      method: "POST",
-    });
-  }
-
-
-
-  async getFile(ticketId: string, path: string): Promise<string | null> {
+  async getBundle(
+    agentId: string,
+    slug?: string | null
+  ): Promise<{ js: string; css?: string } | null> {
     try {
-      const resp = await fetch(`/tickets/${ticketId}/files/${path}`);
+      const params = slug ? `?slug=${encodeURIComponent(slug)}` : "";
+      const resp = await fetch(`/agents/${agentId}/bundle${params}`);
       if (!resp.ok) return null;
-      return resp.text();
+      return resp.json();
     } catch (e) {
-      console.error(`Error fetching file ${path} for ticket ${ticketId}:`, e);
+      console.error(`Error fetching bundle for agent ${agentId}:`, e);
       return null;
     }
   }
 
-  async listFiles(ticketId: string): Promise<string[]> {
+  async getFile(agentId: string, path: string): Promise<string | null> {
     try {
-      const resp = await fetch(`/tickets/${ticketId}/files`);
+      const resp = await fetch(`/agents/${agentId}/files/${path}`);
+      if (!resp.ok) return null;
+      return resp.text();
+    } catch (e) {
+      console.error(`Error fetching file ${path} for agent ${agentId}:`, e);
+      return null;
+    }
+  }
+
+  async listFiles(agentId: string): Promise<string[]> {
+    try {
+      const resp = await fetch(`/agents/${agentId}/files`);
       if (!resp.ok) return [];
       return resp.json();
     } catch (e) {
-      console.error(`Error listing files for ticket ${ticketId}:`, e);
+      console.error(`Error listing files for agent ${agentId}:`, e);
       return [];
     }
   }
 
 }
-

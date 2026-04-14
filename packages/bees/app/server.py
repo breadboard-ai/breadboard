@@ -4,9 +4,8 @@
 """
 Bees HTTP server — REST API + scheduler + SSE event stream.
 
-Provides the same functionality as the CLI tools (ticket:add,
-ticket:drain, ticket:respond) via HTTP, plus auto-scheduling and
-real-time status updates via Server-Sent Events.
+Provides an agent-centric API for the Opal shell, plus
+auto-scheduling and real-time status updates via Server-Sent Events.
 
 Usage::
 
@@ -16,12 +15,9 @@ Usage::
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import json
 import logging
-import sys
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
 from typing import Any, AsyncIterator
 
 import httpx
@@ -77,16 +73,16 @@ bees: Bees | None = None
 
 
 async def _on_ticket_added(ticket: Task) -> None:
-    """Broadcast a newly added ticket."""
+    """Broadcast a newly added agent."""
     await broadcaster.broadcast({
-        "type": "ticket_added",
-        "ticket": _ticket_to_dict(ticket),
+        "type": "agent:added",
+        "agent": _agent_to_dict(ticket),
     })
 
 
 async def _on_cycle_start(cycle: int, new: int, resumable: int) -> None:
     await broadcaster.broadcast({
-        "type": "drain_start",
+        "type": "scheduler:started",
         "wave": cycle,
         "new": new,
         "resumable": resumable,
@@ -95,34 +91,31 @@ async def _on_cycle_start(cycle: int, new: int, resumable: int) -> None:
 
 async def _on_ticket_event(ticket_id: str, event: dict[str, Any]) -> None:
     await broadcaster.broadcast({
-        "type": "session_event",
+        "type": "session:event",
         "ticket_id": ticket_id,
         "event": event,
     })
 
 
 async def _on_ticket_start(ticket: Task) -> None:
-    """Broadcast when a ticket transitions to running."""
+    """Broadcast when an agent transitions to running."""
     await broadcaster.broadcast({
-        "type": "ticket_update",
-        "ticket": _ticket_to_dict(ticket),
+        "type": "agent:updated",
+        "agent": _agent_to_dict(ticket),
     })
 
 
 async def _on_ticket_done(ticket: Task) -> None:
-    """Post-completion hook: broadcast and run playbook hooks."""
+    """Post-completion hook: broadcast updated agent state."""
     await broadcaster.broadcast({
-        "type": "ticket_update",
-        "ticket": _ticket_to_dict(ticket),
+        "type": "agent:updated",
+        "agent": _agent_to_dict(ticket),
     })
 
 
 
 async def _on_cycle_complete(cycles: int) -> None:
-    await broadcaster.broadcast({"type": "drain_complete", "waves": cycles})
-
-
-
+    await broadcaster.broadcast({"type": "scheduler:stopped", "waves": cycles})
 
 
 # ---------------------------------------------------------------------------
@@ -130,21 +123,21 @@ async def _on_cycle_complete(cycles: int) -> None:
 # ---------------------------------------------------------------------------
 
 
-class AddTicketRequest(BaseModel):
-    objective: str
-    tags: list[str] | None = None
-    functions: list[str] | None = None
-    skills: list[str] | None = None
+class ReplyRequest(BaseModel):
+    text: str
 
 
-class RespondRequest(BaseModel):
-    text: str | None = None
-    selectedIds: list[str] | None = None
-    contextUpdates: list[str] | None = None
+class ChooseRequest(BaseModel):
+    selectedIds: list[str]
 
 
 class UpdateTagsRequest(BaseModel):
     tags: list[str]
+
+
+class BundleResponse(BaseModel):
+    js: str
+    css: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -192,18 +185,18 @@ app.add_middleware(
 
 
 # ---------------------------------------------------------------------------
-# REST endpoints
+# Helpers
 # ---------------------------------------------------------------------------
 
 
-def _ticket_to_dict(ticket: Task) -> dict[str, Any]:
-    """Serialize a ticket for JSON response."""
+def _agent_to_dict(ticket: Task) -> dict[str, Any]:
+    """Serialize an agent (ticket) for JSON response."""
     d = {
         "id": ticket.id,
         "objective": ticket.objective,
         **ticket.metadata.to_dict(),
     }
-    # Include chat history for chat-tagged tickets so the shell can
+    # Include chat history for chat-tagged agents so the shell can
     # restore conversation after page reload / server restart.
     if ticket.metadata.tags and "chat" in ticket.metadata.tags:
         d["chat_history"] = _read_chat_log(ticket)
@@ -211,7 +204,7 @@ def _ticket_to_dict(ticket: Task) -> dict[str, Any]:
 
 
 def _read_chat_log(ticket: Task) -> list[dict[str, str]]:
-    """Read the ticket's chat log written by the chat function.
+    """Read the agent's chat log written by the chat function.
 
     Returns a list of ``{"role": "agent"|"user", "text": "..."}`` entries.
     """
@@ -224,43 +217,162 @@ def _read_chat_log(ticket: Task) -> list[dict[str, str]]:
         return []
 
 
-@app.get("/tickets")
-async def get_tickets(tag: str | None = None) -> list[dict[str, Any]]:
-    """List all tickets, sorted by created_at latest first, optionally filtered by tag."""
+def _require_bees() -> Bees:
+    """Return the Bees instance, raising 500 if not yet initialized."""
     if not bees:
         raise HTTPException(500, "Bees not initialized")
-        
-    if tag:
-        nodes = bees.query([tag])
-    else:
-        nodes = bees.all
-
-    # Sort by created_at latest first (ISO string sorting works for chronological order).
-    nodes.sort(key=lambda n: n.task.metadata.created_at or "", reverse=True)
-
-    return [_ticket_to_dict(n.task) for n in nodes]
+    return bees
 
 
-@app.get("/tickets/{ticket_id}")
-async def get_ticket(ticket_id: str) -> dict[str, Any]:
-    """Get a single ticket."""
-    if not bees:
-        raise HTTPException(500, "Bees not initialized")
-        
-    node = bees.get_by_id(ticket_id)
+def _get_node(agent_id: str):
+    """Look up a node by agent ID, raising 404 if not found."""
+    b = _require_bees()
+    node = b.get_by_id(agent_id)
     if not node:
-        raise HTTPException(404, f"Ticket {ticket_id} not found")
-    return _ticket_to_dict(node.task)
+        raise HTTPException(404, f"Agent {agent_id} not found")
+    return node
 
 
-@app.get("/tickets/{ticket_id}/files")
-async def list_ticket_files(ticket_id: str) -> list[str]:
-    """List files in the ticket's filesystem directory."""
-    if not bees:
-        raise HTTPException(500, "Bees not initialized")
-    node = bees.get_by_id(ticket_id)
-    if not node:
-        raise HTTPException(404, f"Ticket {ticket_id} not found")
+# ---------------------------------------------------------------------------
+# REST endpoints — Commands (writes)
+# ---------------------------------------------------------------------------
+
+
+@app.post("/agents/{agent_id}/reply")
+async def reply_to_agent(agent_id: str, req: ReplyRequest) -> dict[str, Any]:
+    """Send a chat reply to a suspended agent."""
+    node = _get_node(agent_id)
+    ticket = node.task
+    if ticket.metadata.status != "suspended":
+        raise HTTPException(400, "Agent is not suspended")
+    if ticket.metadata.assignee != "user":
+        raise HTTPException(400, "Agent is not assigned to user")
+
+    ticket = node.respond({"text": req.text})
+
+    await broadcaster.broadcast({
+        "type": "agent:updated",
+        "agent": _agent_to_dict(ticket),
+    })
+
+    return _agent_to_dict(ticket)
+
+
+@app.post("/agents/{agent_id}/choose")
+async def choose_for_agent(
+    agent_id: str, req: ChooseRequest,
+) -> dict[str, Any]:
+    """Submit a choice selection to a suspended agent."""
+    node = _get_node(agent_id)
+    ticket = node.task
+    if ticket.metadata.status != "suspended":
+        raise HTTPException(400, "Agent is not suspended")
+    if ticket.metadata.assignee != "user":
+        raise HTTPException(400, "Agent is not assigned to user")
+
+    ticket = node.respond({"selectedIds": req.selectedIds})
+
+    await broadcaster.broadcast({
+        "type": "agent:updated",
+        "agent": _agent_to_dict(ticket),
+    })
+
+    return _agent_to_dict(ticket)
+
+
+@app.post("/agents/{agent_id}/retry")
+async def retry_agent(agent_id: str) -> dict[str, Any]:
+    """Retry a paused agent by flipping it back to available.
+
+    Paused agents are those that hit a transient Gemini API error
+    (e.g. 503).  Retrying clears the error and re-queues the agent
+    for the scheduler to pick up.
+    """
+    node = _get_node(agent_id)
+    if node.task.metadata.status != "paused":
+        raise HTTPException(400, "Agent is not paused")
+
+    node.retry()
+
+    await broadcaster.broadcast({
+        "type": "agent:updated",
+        "agent": _agent_to_dict(node.task),
+    })
+
+    return _agent_to_dict(node.task)
+
+
+@app.post("/agents/{agent_id}/tags")
+async def update_agent_tags(
+    agent_id: str, req: UpdateTagsRequest
+) -> dict[str, Any]:
+    """Update tags for an agent and broadcast."""
+    node = _get_node(agent_id)
+
+    node.task.metadata.tags = req.tags
+    node.save()
+
+    await broadcaster.broadcast({
+        "type": "agent:updated",
+        "agent": _agent_to_dict(node.task),
+    })
+
+    return _agent_to_dict(node.task)
+
+
+# ---------------------------------------------------------------------------
+# REST endpoints — Queries (reads)
+# ---------------------------------------------------------------------------
+
+
+@app.get("/agents/{agent_id}/bundle")
+async def get_agent_bundle(
+    agent_id: str, slug: str | None = None,
+) -> dict[str, Any]:
+    """Return the resolved JS (and optional CSS) bundle for an agent.
+
+    When ``slug`` is provided, only files under the slug subdirectory
+    are considered. This prevents loading a sibling agent's bundle from
+    the shared workspace.
+    """
+    node = _get_node(agent_id)
+    fs_dir = node.task.fs_dir
+    if not fs_dir.is_dir():
+        raise HTTPException(404, "No files for this agent")
+
+    all_files = [
+        str(p.relative_to(fs_dir))
+        for p in fs_dir.rglob("*")
+        if p.is_file()
+    ]
+
+    # Scope to the agent's slug subdirectory when present.
+    files = (
+        [f for f in all_files if f.startswith(slug + "/")]
+        if slug
+        else all_files
+    )
+
+    js_file = next((f for f in files if f.endswith(".js")), None)
+    if not js_file:
+        raise HTTPException(404, "No JS bundle found")
+
+    js_content = (fs_dir / js_file).read_text(encoding="utf-8")
+
+    css_file = next((f for f in files if f.endswith(".css")), None)
+    css_content = (
+        (fs_dir / css_file).read_text(encoding="utf-8")
+        if css_file
+        else None
+    )
+
+    return {"js": js_content, "css": css_content}
+
+
+@app.get("/agents/{agent_id}/files")
+async def list_agent_files(agent_id: str) -> list[str]:
+    """List files in the agent's filesystem directory."""
+    node = _get_node(agent_id)
 
     fs_dir = node.task.fs_dir
     if not fs_dir.is_dir():
@@ -273,14 +385,10 @@ async def list_ticket_files(ticket_id: str) -> list[str]:
     ]
 
 
-@app.get("/tickets/{ticket_id}/files/{path:path}")
-async def get_ticket_file(ticket_id: str, path: str) -> FileResponse:
-    """Serve files from the ticket's filesystem."""
-    if not bees:
-        raise HTTPException(500, "Bees not initialized")
-    node = bees.get_by_id(ticket_id)
-    if not node:
-        raise HTTPException(404, f"Ticket {ticket_id} not found")
+@app.get("/agents/{agent_id}/files/{path:path}")
+async def get_agent_file(agent_id: str, path: str) -> FileResponse:
+    """Serve files from the agent's filesystem."""
+    node = _get_node(agent_id)
 
     file_path = node.task.fs_dir / path
     if not file_path.is_file():
@@ -294,244 +402,6 @@ async def get_ticket_file(ticket_id: str, path: str) -> FileResponse:
     return FileResponse(file_path)
 
 
-
-@app.post("/tickets")
-async def add_ticket(req: AddTicketRequest) -> dict[str, Any]:
-    """Create a new ticket and trigger scheduling."""
-    if not bees:
-        raise HTTPException(500, "Bees not initialized")
-
-    node = await bees.create_child(
-        req.objective,
-        tags=req.tags,
-        functions=req.functions,
-        skills=req.skills,
-    )
-
-    return _ticket_to_dict(node.task)
-
-
-@app.post("/tickets/{ticket_id}/respond")
-async def respond_to_ticket(
-    ticket_id: str, req: RespondRequest,
-) -> dict[str, Any]:
-    """Submit a response to a suspended ticket and trigger scheduling."""
-    if not bees:
-        raise HTTPException(500, "Bees not initialized")
-        
-    node = bees.get_by_id(ticket_id)
-    if not node:
-        raise HTTPException(404, f"Ticket {ticket_id} not found")
-        
-    ticket = node.task
-    if ticket.metadata.status != "suspended":
-        raise HTTPException(400, f"Ticket is not suspended")
-    if ticket.metadata.assignee != "user":
-        raise HTTPException(400, f"Ticket is not assigned to user")
-
-    response: dict[str, Any] = {}
-    if req.selectedIds is not None:
-        response["selectedIds"] = req.selectedIds
-    if req.text is not None:
-        response["text"] = req.text
-    if req.contextUpdates:
-        response["context_updates"] = req.contextUpdates
-
-    ticket = node.respond(response)
-
-    await broadcaster.broadcast({
-        "type": "ticket_update",
-        "ticket": _ticket_to_dict(ticket),
-    })
-
-    return _ticket_to_dict(ticket)
-
-
-@app.post("/tickets/{ticket_id}/tags")
-async def update_ticket_tags(
-    ticket_id: str, req: UpdateTagsRequest
-) -> dict[str, Any]:
-    """Update tags for a ticket and broadcast."""
-    if not bees:
-        raise HTTPException(500, "Bees not initialized")
-    node = bees.get_by_id(ticket_id)
-    if not node:
-        raise HTTPException(404, f"Ticket {ticket_id} not found")
-
-    node.task.metadata.tags = req.tags
-    node.save()
-
-    await broadcaster.broadcast({
-        "type": "ticket_update",
-        "ticket": _ticket_to_dict(node.task),
-    })
-
-    return _ticket_to_dict(node.task)
-
-
-@app.post("/tickets/{ticket_id}/retry")
-async def retry_ticket(ticket_id: str) -> dict[str, Any]:
-    """Retry a paused ticket by flipping it back to available.
-
-    Paused tickets are those that hit a transient Gemini API error
-    (e.g. 503).  Retrying clears the error and re-queues the ticket
-    for the scheduler to pick up.
-    """
-    if not bees:
-        raise HTTPException(500, "Bees not initialized")
-    node = bees.get_by_id(ticket_id)
-    if not node:
-        raise HTTPException(404, f"Ticket {ticket_id} not found")
-    if node.task.metadata.status != "paused":
-        raise HTTPException(400, "Ticket is not paused")
-
-    node.retry()
-
-    await broadcaster.broadcast({
-        "type": "ticket_update",
-        "ticket": _ticket_to_dict(node.task),
-    })
-
-    return _ticket_to_dict(node.task)
-
-
-
-
-
-# ---------------------------------------------------------------------------
-# System Pulse — Flash-powered status summary
-# ---------------------------------------------------------------------------
-
-
-def should_include_ticket(
-    ticket: Task,
-    status: str | None = None,
-    tags: str | None = None,
-    kind: str | None = None,
-) -> bool:
-    """Evaluate if a ticket matches the query parameters."""
-    
-    # 1. Kind filter
-    if kind:
-        is_neg = kind.startswith("!")
-        val = kind[1:] if is_neg else kind
-        match = ticket.metadata.kind == val
-        if is_neg and match:
-            return False
-        if not is_neg and not match:
-            return False
-
-    # 2. Status filter
-    if status:
-        is_neg = status.startswith("!")
-        val = status[1:] if is_neg else status
-        allowed_statuses = set(val.split(","))
-        match = ticket.metadata.status in allowed_statuses
-        if is_neg and match:
-            return False
-        if not is_neg and not match:
-            return False
-
-    # 3. Tags filter
-    if tags:
-        tag_list = tags.split(",")
-        ticket_tags = set(ticket.metadata.tags or [])
-        
-        positive_reqs = []
-        negative_reqs = []
-        for t in tag_list:
-            if t.startswith("!"):
-                negative_reqs.append(t[1:])
-            else:
-                positive_reqs.append(t)
-                
-        for nt in negative_reqs:
-            if nt in ticket_tags:
-                return False
-                
-        if positive_reqs:
-            if not any(pt in ticket_tags for pt in positive_reqs):
-                return False
-
-    return True
-
-
-_pulse_cache: dict[str, Any] = {"hash": "", "text": "", "active": False}
-
-
-@app.get("/status")
-async def get_status(
-    status: str | None = None,
-    tags: str | None = None,
-    kind: str | None = None,
-) -> dict[str, Any]:
-    """Return a status response containing both the summary text and structured tasks."""
-    if not bees:
-        raise HTTPException(500, "Bees not initialized")
-    tickets = [n.task for n in bees.all]
-
-    by_run: dict[str, list[Task]] = {}
-    active_running = []
-
-    for t in tickets:
-        if not should_include_ticket(t, status=status, tags=tags, kind=kind):
-            continue
-
-        run_id = t.metadata.playbook_run_id or f"standalone-{t.id}"
-        by_run.setdefault(run_id, []).append(t)
-
-        if t.metadata.status in ("available", "running", "blocked", "suspended"):
-            active_running.append(t)
-
-    # 1. Generate text
-    if not active_running:
-        text = ""
-    else:
-        first_ticket = active_running[0]
-        title = first_ticket.metadata.title or "a task"
-        if len(active_running) == 1:
-            text = f"Working on {title}…"
-        elif len(active_running) == 2:
-            text = f"Working on {title} and 1 other task…"
-        else:
-            text = f"Working on {title} and {len(active_running) - 1} other tasks…"
-
-    # 2. Build task objects
-    active_statuses = {"available", "running", "blocked", "suspended"}
-    tasks = []
-    for run_id, group in by_run.items():
-        if not any(t.metadata.status in active_statuses for t in group):
-            continue
-
-        group.sort(key=lambda t: t.metadata.created_at or "")
-        first_ticket = group[0]
-        title = "Task"
-        if first_ticket.metadata.playbook_id:
-            title = first_ticket.metadata.playbook_id.replace("-", " ").title()
-        elif first_ticket.metadata.title:
-            title = first_ticket.metadata.title
-
-        completed_steps = sum(1 for t in group if t.metadata.status in ("success", "error"))
-        total_steps = len(group)
-        active_tickets = [t for t in group if t.metadata.status in active_statuses]
-        current_ticket = active_tickets[0] if active_tickets else group[-1]
-
-        tasks.append({
-            "id": run_id,
-            "title": title,
-            "context": first_ticket.metadata.context or "",
-            "current_step": current_ticket.metadata.title or "Working...",
-            "status": current_ticket.metadata.status,
-            "completed_steps": completed_steps,
-            "total_steps": total_steps,
-            "created_at": first_ticket.metadata.created_at,
-            "tags": list(set(first_ticket.metadata.tags or []))
-        })
-
-    tasks.sort(key=lambda x: x["created_at"] or "", reverse=True)
-    return {"text": text, "active": bool(active_running), "tasks": tasks}
-
-
 # ---------------------------------------------------------------------------
 # SSE endpoint
 # ---------------------------------------------------------------------------
@@ -540,9 +410,8 @@ async def get_status(
 @app.get("/events")
 async def events() -> EventSourceResponse:
     """Server-Sent Events stream for real-time updates."""
-    if not bees:
-        raise HTTPException(500, "Bees not initialized")
-        
+    b = _require_bees()
+
     queue = broadcaster.subscribe()
 
     async def event_generator() -> AsyncIterator[dict]:
@@ -551,7 +420,7 @@ async def events() -> EventSourceResponse:
             yield {
                 "event": "init",
                 "data": json.dumps([
-                    _ticket_to_dict(n.task) for n in bees.all
+                    _agent_to_dict(n.task) for n in b.all
                 ]),
             }
             while True:

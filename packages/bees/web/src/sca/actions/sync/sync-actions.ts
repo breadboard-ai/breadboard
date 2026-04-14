@@ -8,13 +8,12 @@ import { asAction, ActionMode } from "../../coordination.js";
 import { makeAction } from "../binder.js";
 import type { TicketData } from "../../../../../common/types.js";
 import {
-  onTicketAdded,
-  onTicketUpdate,
+  onAgentAdded,
+  onAgentUpdated,
   onSessionEvent,
   onInitTickets,
-  onDrainStart,
-  onDrainComplete,
-  onDrainError,
+  onSchedulerStarted,
+  onSchedulerStopped,
   onConnectionError,
 } from "./sync-triggers.js";
 
@@ -50,7 +49,7 @@ export const upsertTicketOnAdd = asAction(
   "Upsert Ticket On Add",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: () => onTicketAdded(bind),
+    triggeredBy: () => onAgentAdded(bind),
   },
   async (evt?: Event) => {
     if (!evt) return;
@@ -63,7 +62,7 @@ export const upsertTicketOnUpdate = asAction(
   "Upsert Ticket On Update",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: () => onTicketUpdate(bind),
+    triggeredBy: () => onAgentUpdated(bind),
   },
   async (evt?: Event) => {
     if (!evt) return;
@@ -115,11 +114,11 @@ export const initTickets = asAction(
   }
 );
 
-export const setDrainingStart = asAction(
-  "Set Draining Start",
+export const setSchedulerStarted = asAction(
+  "Set Scheduler Started",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: () => onDrainStart(bind),
+    triggeredBy: () => onSchedulerStarted(bind),
   },
   async () => {
     const { controller } = bind;
@@ -127,30 +126,15 @@ export const setDrainingStart = asAction(
   }
 );
 
-async function doSetDrainingStop() {
-  const { controller } = bind;
-  controller.global.draining = false;
-}
-
-export const setDrainingStopComplete = asAction(
-  "Set Draining Stop Complete",
+export const setSchedulerStopped = asAction(
+  "Set Scheduler Stopped",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: () => onDrainComplete(bind),
+    triggeredBy: () => onSchedulerStopped(bind),
   },
   async () => {
-    await doSetDrainingStop();
-  }
-);
-
-export const setDrainingStopError = asAction(
-  "Set Draining Stop Error",
-  {
-    mode: ActionMode.Immediate,
-    triggeredBy: () => onDrainError(bind),
-  },
-  async () => {
-    await doSetDrainingStop();
+    const { controller } = bind;
+    controller.global.draining = false;
   }
 );
 
