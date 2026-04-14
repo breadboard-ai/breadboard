@@ -1,0 +1,11 @@
+# Hive system configuration.
+#
+# title       — Display name for this hive instance.
+# description — Short summary shown in UI.
+# root        — Template name to auto-boot at startup. The system creates a
+#               ticket from this template if none with a matching playbook_id
+#               exists yet.
+
+title: Opal
+description: Personal assistant
+root: opie
