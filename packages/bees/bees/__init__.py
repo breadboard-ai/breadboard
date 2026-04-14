@@ -6,5 +6,6 @@
 from .ticket import Ticket as Task
 from .task_store import TaskStore
 from .scheduler import Scheduler, SchedulerHooks
+from .bees import Bees
 
-__all__ = ["Task", "TaskStore", "Scheduler", "SchedulerHooks"]
+__all__ = ["Task", "TaskStore", "Scheduler", "SchedulerHooks", "Bees"]

@@ -63,6 +63,14 @@ class TaskStore:
         tickets.sort(key=lambda t: t.metadata.created_at or "", reverse=True)
         return tickets
 
+    def get_children(self, task_id: str | None = None) -> list[Ticket]:
+        """Returns children of the given task, or roots if task_id is None."""
+        if task_id is None:
+            return [t for t in self.query_all() if not t.metadata.parent_ticket_id]
+        return [t for t in self.query_all() if t.metadata.parent_ticket_id == task_id]
+
+
+
     def save(self, ticket: Ticket) -> None:
         """Persist ticket to disk."""
         ticket_dir = self.tickets_dir / ticket.id
