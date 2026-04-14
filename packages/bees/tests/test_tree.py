@@ -16,7 +16,7 @@ def temp_hive():
 
 
 def test_tree_traversal(temp_hive):
-    bees = Bees(temp_hive, http=Mock(), backend=Mock())
+    bees = Bees(temp_hive, backend=Mock())
     store = bees._store
 
     # Create a tree structure
@@ -70,13 +70,13 @@ def test_tree_traversal(temp_hive):
 
 
 def test_empty_store(temp_hive):
-    bees = Bees(temp_hive, http=Mock(), backend=Mock())
+    bees = Bees(temp_hive, backend=Mock())
     assert len(bees.children) == 0
     assert bees.get_by_id("non-existent") is None
 
 
 def test_query_by_tags(temp_hive):
-    bees = Bees(temp_hive, http=Mock(), backend=Mock())
+    bees = Bees(temp_hive, backend=Mock())
     store = bees._store
 
     # Create tasks with tags
@@ -109,7 +109,7 @@ def test_query_by_tags(temp_hive):
 
 @pytest.mark.asyncio
 async def test_bees_create_child(temp_hive):
-    bees = Bees(temp_hive, http=Mock(), backend=Mock())
+    bees = Bees(temp_hive, backend=Mock())
     bees._scheduler = Mock()
     
     mock_ticket = Mock()
@@ -126,7 +126,7 @@ async def test_bees_create_child(temp_hive):
 
 @pytest.mark.asyncio
 async def test_task_node_create_child(temp_hive):
-    bees = Bees(temp_hive, http=Mock(), backend=Mock())
+    bees = Bees(temp_hive, backend=Mock())
     bees._scheduler = Mock()
     
     mock_ticket = Mock()
@@ -149,7 +149,7 @@ async def test_task_node_create_child(temp_hive):
 
 
 def test_task_node_respond(temp_hive):
-    bees = Bees(temp_hive, http=Mock(), backend=Mock())
+    bees = Bees(temp_hive, backend=Mock())
     store_mock = Mock()
     bees._store = store_mock
     
@@ -163,7 +163,7 @@ def test_task_node_respond(temp_hive):
 
 
 def test_bees_all(temp_hive):
-    bees = Bees(temp_hive, http=Mock(), backend=Mock())
+    bees = Bees(temp_hive, backend=Mock())
     store_mock = Mock()
     bees._store = store_mock
     

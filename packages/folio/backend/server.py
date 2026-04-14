@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI):
     )
     
     # Pass None for http as discussed, since it's unused in Bees
-    bees = Bees(hive_dir=HIVE_DIR, http=None, backend=backend)
+    bees = Bees(hive_dir=HIVE_DIR, backend=backend)
     
     # Start the background scheduler
     await bees.listen()

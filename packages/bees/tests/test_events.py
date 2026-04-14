@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 from unittest.mock import MagicMock
 
-from bees import TaskStore
+from bees.task_store import TaskStore
 from bees.subagent_scope import SubagentScope
 
 
