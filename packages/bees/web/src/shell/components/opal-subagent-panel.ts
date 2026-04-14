@@ -12,7 +12,7 @@ import { scaContext } from "../../sca/context/context.js";
 import { type SCA } from "../../sca/sca.js";
 import { sharedStyles } from "./shared.styles.js";
 import { deriveChildAgents } from "../../sca/utils/agent-tree.js";
-import type { TicketData } from "../../../../common/types.js";
+import type { TaskData } from "../../../../common/types.js";
 
 /** Digest tile data written by the digest-tile-writer playbook. */
 interface DigestTileData {
@@ -296,7 +296,7 @@ export class OpalSubagentPanel extends SignalWatcher(LitElement) {
     `;
   }
 
-  #renderCard(child: TicketData) {
+  #renderCard(child: TaskData) {
     const isRunning = child.status === "running";
 
     const icon =
@@ -369,7 +369,7 @@ export class OpalSubagentPanel extends SignalWatcher(LitElement) {
     `;
   }
 
-  async #fetchDigestTiles(children: TicketData[]) {
+  async #fetchDigestTiles(children: TaskData[]) {
     if (this.#fetching || !this.parentTicketId) return;
     this.#fetching = true;
     try {

@@ -27,7 +27,7 @@ export type HostMessage =
       props: Record<string, unknown>;
     }
   | { type: "update-props"; props: Record<string, unknown> }
-  | { type: "host.chat.switch"; payload: { ticket_id: string; role: string } }
+  | { type: "host.chat.switch"; payload: { task_id: string; role: string } }
   | {
       type: "readFile.response";
       requestId: string;

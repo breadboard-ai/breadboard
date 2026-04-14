@@ -77,11 +77,11 @@ def get_chat_function_group_factory(
             # without suspending — the updates are emitted as text
             # parts via CONTEXT_PARTS_KEY.
             if workspace_root_id and scheduler:
-                ticket = scheduler.store.get(workspace_root_id)
-                if ticket and ticket.metadata.pending_context_updates:
-                    updates = ticket.metadata.pending_context_updates
-                    ticket.metadata.pending_context_updates = []
-                    scheduler.store.save_metadata(ticket)
+                task = scheduler.store.get(workspace_root_id)
+                if task and task.metadata.pending_context_updates:
+                    updates = task.metadata.pending_context_updates
+                    task.metadata.pending_context_updates = []
+                    scheduler.store.save_metadata(task)
                     return {
                         "resumed": True,
                         CONTEXT_PARTS_KEY: updates_to_context_parts(updates),

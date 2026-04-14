@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TicketData } from "../../../../common/types.js";
+import type { TaskData } from "../../../../common/types.js";
 
 export {
   deriveAgentTree,
@@ -16,7 +16,7 @@ export type { AgentTreeNode, AgentPerspectives };
 
 /** A node in the agent tree. */
 interface AgentTreeNode {
-  ticket: TicketData;
+  ticket: TaskData;
   children: AgentTreeNode[];
 }
 
@@ -33,7 +33,7 @@ interface AgentPerspectives {
  * Root nodes are tickets with no `parent_task_id` (or legacy `creator_ticket_id`) (user-initiated).
  * Coordination and internal-only tickets are excluded.
  */
-function deriveAgentTree(tickets: TicketData[]): AgentTreeNode[] {
+function deriveAgentTree(tickets: TaskData[]): AgentTreeNode[] {
   // Filter out coordination tickets and cancelled tickets — they're infrastructure or noise, not active agents.
   const agentTickets = tickets.filter(
     (t) =>
@@ -43,8 +43,8 @@ function deriveAgentTree(tickets: TicketData[]): AgentTreeNode[] {
   );
 
   // Build parent → children index.
-  const childrenOf = new Map<string, TicketData[]>();
-  const roots: TicketData[] = [];
+  const childrenOf = new Map<string, TaskData[]>();
+  const roots: TaskData[] = [];
 
   for (const t of agentTickets) {
     // Fallback for legacy creator_ticket_id
@@ -58,7 +58,7 @@ function deriveAgentTree(tickets: TicketData[]): AgentTreeNode[] {
     }
   }
 
-  function buildNode(ticket: TicketData): AgentTreeNode {
+  function buildNode(ticket: TaskData): AgentTreeNode {
     const children = (childrenOf.get(ticket.id) ?? [])
       .sort((a, b) => (a.created_at ?? "").localeCompare(b.created_at ?? ""))
       .map(buildNode);
@@ -71,10 +71,7 @@ function deriveAgentTree(tickets: TicketData[]): AgentTreeNode[] {
 }
 
 /** Get the direct child agents of a given ticket ID. */
-function deriveChildAgents(
-  tickets: TicketData[],
-  parentId: string
-): TicketData[] {
+function deriveChildAgents(tickets: TaskData[], parentId: string): TaskData[] {
   return tickets.filter(
     (t) =>
       // Fallback for legacy creator_ticket_id
@@ -86,8 +83,8 @@ function deriveChildAgents(
 
 /** Determine which perspectives are present for a given ticket. */
 function derivePerspectives(
-  ticket: TicketData,
-  allTickets: TicketData[]
+  ticket: TaskData,
+  allTickets: TaskData[]
 ): AgentPerspectives {
   const hasChat = ticket.tags?.includes("chat") ?? false;
   const hasBundle = ticket.tags?.includes("bundle") ?? false;
@@ -111,7 +108,7 @@ function derivePerspectives(
  *
  * Guards against cycles with a visited set.
  */
-function deriveAncestorPath(tickets: TicketData[], agentId: string): string[] {
+function deriveAncestorPath(tickets: TaskData[], agentId: string): string[] {
   const byId = new Map(tickets.map((t) => [t.id, t]));
   const path: string[] = [];
   const visited = new Set<string>();

@@ -15,7 +15,8 @@ export function makeTestServices(): { services: AppServices } {
         listFiles: mock.fn(async () => []),
         getFile: mock.fn(),
         createTicket: mock.fn(),
-        respond: mock.fn(),
+        reply: mock.fn(),
+        choose: mock.fn(),
         sendEvent: mock.fn(),
       },
       sse: {

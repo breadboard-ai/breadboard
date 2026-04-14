@@ -13,7 +13,7 @@ import {
   derivePerspectives,
   deriveAncestorPath,
 } from "../../../src/sca/utils/agent-tree.js";
-import type { TicketData } from "../../../../common/types.js";
+import type { TaskData as TicketData } from "../../../../common/types.js";
 
 function ticket(overrides: Partial<TicketData> & { id: string }): TicketData {
   return {

@@ -92,7 +92,7 @@ async def _on_cycle_start(cycle: int, new: int, resumable: int) -> None:
 async def _on_task_event(task_id: str, event: dict[str, Any]) -> None:
     await broadcaster.broadcast({
         "type": "session:event",
-        "ticket_id": task_id,
+        "task_id": task_id,
         "event": event,
     })
 

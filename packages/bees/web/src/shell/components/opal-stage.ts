@@ -17,10 +17,7 @@ import {
   deriveAncestorPath,
 } from "../../sca/utils/agent-tree.js";
 
-import {
-  parseAgentHash,
-  updateAgentHash,
-} from "../../sca/utils/agent-hash.js";
+import { parseAgentHash, updateAgentHash } from "../../sca/utils/agent-hash.js";
 import { loadBundleAsync } from "../../sca/utils/load-bundle.js";
 
 import "./opal-timeline.js";
@@ -181,7 +178,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
   updated(changedProperties: Map<string | number | symbol, unknown>) {
     super.updated(changedProperties);
     const iframe = this.renderRoot.querySelector("iframe");
-    
+
     if (iframe && this.sca.controller.stage.currentView !== null) {
       this.sca.services.hostCommunication.connect(iframe);
 
@@ -242,8 +239,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
     if (tabs.length === 0) {
       return html`
         <div class="stage" id="stage">
-          ${breadcrumb}
-          ${this.#renderAgentSummary(ticket)}
+          ${breadcrumb} ${this.#renderAgentSummary(ticket)}
         </div>
       `;
     }
@@ -287,7 +283,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
   }
 
   #renderBreadcrumb(
-    tickets: import("../../../../common/types.js").TicketData[],
+    tickets: import("../../../../common/types.js").TaskData[],
     selectedId: string
   ) {
     const path = deriveAncestorPath(tickets, selectedId);
@@ -323,7 +319,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
 
   #renderTabContent(
     tab: StageTab,
-    ticket: import("../../../../common/types.js").TicketData
+    ticket: import("../../../../common/types.js").TaskData
   ) {
     switch (tab) {
       case "app":
@@ -349,7 +345,7 @@ export class OpalStage extends SignalWatcher(LitElement) {
     }
   }
 
-  #renderAgentSummary(ticket: import("../../../../common/types.js").TicketData) {
+  #renderAgentSummary(ticket: import("../../../../common/types.js").TaskData) {
     const isRunning = ticket.status === "running";
     const title =
       ticket.title ||

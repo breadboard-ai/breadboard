@@ -9,7 +9,7 @@
  * HiveTool devtools — any additions here must be reflected in the Python
  * server's serialisation logic.
  */
-export interface TicketData {
+export interface TaskData {
   id: string;
   objective: string;
   status: string;

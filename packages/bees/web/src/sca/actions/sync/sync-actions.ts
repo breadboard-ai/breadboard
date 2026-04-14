@@ -6,7 +6,7 @@
 
 import { asAction, ActionMode } from "../../coordination.js";
 import { makeAction } from "../binder.js";
-import type { TicketData } from "../../../../../common/types.js";
+import type { TaskData } from "../../../../../common/types.js";
 import {
   onAgentAdded,
   onAgentUpdated,
@@ -19,7 +19,7 @@ import {
 
 export const bind = makeAction();
 
-async function doUpsertTicket(ticket: TicketData) {
+async function doUpsertTicket(ticket: TaskData) {
   const { controller } = bind;
   const c = controller.global;
   const current = c.tickets;
@@ -53,7 +53,7 @@ export const upsertTicketOnAdd = asAction(
   },
   async (evt?: Event) => {
     if (!evt) return;
-    const ticket = (evt as CustomEvent<TicketData>).detail;
+    const ticket = (evt as CustomEvent<TaskData>).detail;
     if (ticket) await doUpsertTicket(ticket);
   }
 );
@@ -66,7 +66,7 @@ export const upsertTicketOnUpdate = asAction(
   },
   async (evt?: Event) => {
     if (!evt) return;
-    const ticket = (evt as CustomEvent<TicketData>).detail;
+    const ticket = (evt as CustomEvent<TaskData>).detail;
     if (ticket) await doUpsertTicket(ticket);
   }
 );
@@ -80,14 +80,14 @@ export const appendSessionEvent = asAction(
   async (evt?: Event) => {
     if (!evt) return;
     const payload = (
-      evt as CustomEvent<{ ticket_id: string; event: Record<string, unknown> }>
+      evt as CustomEvent<{ task_id: string; event: Record<string, unknown> }>
     ).detail;
     if (!payload) return;
 
     const { controller } = bind;
     const c = controller.global;
     const current = c.tickets;
-    const idx = current.findIndex((t) => t.id === payload.ticket_id);
+    const idx = current.findIndex((t) => t.id === payload.task_id);
 
     if (idx < 0) return;
 
@@ -108,7 +108,7 @@ export const initTickets = asAction(
   },
   async (evt?: Event) => {
     if (!evt) return;
-    const tickets = (evt as CustomEvent<TicketData[]>).detail;
+    const tickets = (evt as CustomEvent<TaskData[]>).detail;
     const { controller } = bind;
     controller.global.tickets = tickets;
   }

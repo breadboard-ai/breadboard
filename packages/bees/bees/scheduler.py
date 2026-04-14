@@ -200,8 +200,8 @@ def promote_blocked_tickets(store: TaskStore) -> int:
     blocked = store.query_all(status="blocked")
     promoted = 0
 
-    for ticket in blocked:
-        deps = ticket.metadata.depends_on or []
+    for task in blocked:
+        deps = task.metadata.depends_on or []
         all_met = True
         any_failed = False
 
@@ -218,14 +218,14 @@ def promote_blocked_tickets(store: TaskStore) -> int:
             all_met = False
 
         if any_failed:
-            ticket.metadata.status = "failed"
-            ticket.metadata.error = "Dependency failed"
-            store.save_metadata(ticket)
+            task.metadata.status = "failed"
+            task.metadata.error = "Dependency failed"
+            store.save_metadata(task)
             continue
 
         if all_met:
-            ticket.metadata.status = "available"
-            store.save_metadata(ticket)
+            task.metadata.status = "available"
+            store.save_metadata(task)
             promoted += 1
 
     return promoted
@@ -274,26 +274,26 @@ class Scheduler:
 
     async def startup(self) -> Ticket | None:
         """Recover stuck tickets, boot root template if needed, and fire startup hook."""
-        tickets = await self.recover_stuck_tickets()
+        tasks = await self.recover_stuck_tickets()
         
-        root_ticket = await self._boot_root_template(tickets)
-        if root_ticket:
-            tickets.append(root_ticket)
+        root_task = await self._boot_root_template(tasks)
+        if root_task:
+            tasks.append(root_task)
             
         if self._hooks.on_startup:
-            await self._hooks.on_startup(tickets)
+            await self._hooks.on_startup(tasks)
             
-        return root_ticket
+        return root_task
 
     async def create_task(self, objective: str, **kwargs) -> Ticket:
         """Create a new task and notify hooks."""
-        ticket = self.store.create(objective, **kwargs)
+        task = self.store.create(objective, **kwargs)
         
         if self._hooks.on_ticket_added:
-            await self._hooks.on_ticket_added(ticket)
+            await self._hooks.on_ticket_added(task)
             
         self.trigger()
-        return ticket
+        return task
 
     async def _boot_root_template(self, tickets: list[Ticket]) -> Ticket | None:
         """Boot the root template if it isn't already running."""
@@ -309,12 +309,12 @@ class Scheduler:
             return None
 
         logger.info("Booting root template '%s'", root)
-        ticket = run_playbook(root, store=self.store)
+        task = run_playbook(root, store=self.store)
         
         if self._hooks.on_ticket_added:
-            await self._hooks.on_ticket_added(ticket)
+            await self._hooks.on_ticket_added(task)
             
-        return ticket
+        return task
 
     async def wait_for_ticket(self, ticket_id: str, timeout_ms: float) -> str:
         """Wait for a ticket to complete, fail, or suspend.
@@ -349,10 +349,10 @@ class Scheduler:
             self._active_tasks[ticket_id].cancel()
             cancelled = True
             
-        ticket = self.store.get(ticket_id)
-        if ticket:
-            ticket.metadata.status = "cancelled"
-            self.store.save_metadata(ticket)
+        task = self.store.get(ticket_id)
+        if task:
+            task.metadata.status = "cancelled"
+            self.store.save_metadata(task)
             cancelled = True
             
         return cancelled
@@ -372,11 +372,11 @@ class Scheduler:
         ``parent_task_id`` must match — this prevents one agent from
         injecting updates into another agent's tasks.
         """
-        ticket = self.store.get(ticket_id)
-        if not ticket:
+        task = self.store.get(ticket_id)
+        if not task:
             return f"Task {ticket_id} not found"
 
-        if expected_creator and ticket.metadata.parent_task_id != expected_creator:
+        if expected_creator and task.metadata.parent_task_id != expected_creator:
             return f"Task {ticket_id} is not owned by this agent"
 
         self._deliver_context_update(ticket_id, update)
