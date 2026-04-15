@@ -140,12 +140,25 @@ This is ~50-100 lines of projection logic in the server, replacing ~300 lines of
 
 ### Frontend
 
-#### Deleted
-- `sca/utils/agent-tree.ts` (127 lines) — entire file
-- Tree derivation in sidebar `render()` — replaced by iterating the typed structure
+#### Current State: `AgentTreeService` (seam in place)
+
+All tree derivation, filtering, and querying now goes through
+`AgentTreeService` (`sca/services/agent-tree-service.ts`). The service
+listens to the SSE event bus directly, maintains its own ticket store, and
+exposes a query interface (`tree`, `perspectives()`, `ancestorPath()`,
+`children()`, `ticket()`). No UI component imports `agent-tree.ts`
+directly — the service is the sole caller.
+
+This is the **seam**. Today the service derives the tree locally from raw
+tickets. When the server ships typed `AgentProjection`, the service swaps
+its internals — same interface, zero UI changes.
+
+#### What Remains (after server projection ships)
+- `sca/utils/agent-tree.ts` — derivation logic, deleted (server does it)
 - `suspend_event` introspection in `chat-actions.ts` — prompt/choices arrive pre-extracted
 - `signal_type` detection in `stage-actions.ts` — middleware handles digest refresh
-- `kind !== "coordination"` filters everywhere
+- `kind !== "coordination"` filters — gone from the wire entirely
+- `controller.global.tickets` — replaced by service-owned state
 
 #### Simplified
 - **Sidebar**: Three flat lists (assistant header, journey sections, worker items) instead of recursive `#renderNode`. ~350 lines → ~100 lines.
@@ -170,13 +183,19 @@ tags:
 
 ## Migration Path
 
+0. ~~**Introduce `AgentTreeService`**~~ ✅ — Service boundary in place.
+   Tree derivation, filtering, and querying behind `AgentTreeService`.
+   UI components query the service; the service delegates to pure
+   functions in `agent-tree.ts`. The seam is ready.
 1. **Add `worker` tags** to the three visible leaf templates.
 2. **Build the projection layer** in the server alongside the current flat emission.
 3. **Ship a new SSE event type** (`init_v2` or a query parameter) so the frontend can opt in.
-4. **Migrate the frontend** to consume the typed projection.
-5. **Remove the old flat emission** and delete the client-side derivation code.
+4. **Swap `AgentTreeService` internals** to consume the typed projection
+   instead of deriving locally. Delete `agent-tree.ts`.
+5. **Remove the old flat emission** and delete `controller.global.tickets`.
 
 Steps 2-3 allow rolling this out without a coordinated server+client deploy.
+Step 4 is a single-file change inside the service — no UI work.
 
 ## Resolved Decisions
 

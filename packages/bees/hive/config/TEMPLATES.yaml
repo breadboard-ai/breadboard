@@ -23,7 +23,6 @@
     - tasks.*
   tasks:
     - journey-manager
-    - knowledge
 
 - name: journey-manager
   title: Journey Manager
@@ -234,6 +233,8 @@
     - sandbox.*
     - simple-files.*
     - generate.text
+  tags:
+    - worker
 
 - name: journey-designer
   title: Journey Designer
@@ -260,6 +261,8 @@
     - system.*
   skills:
     - app-architect
+  tags:
+    - worker
 
 - name: ui-generator
   title: UI Generator
@@ -296,6 +299,7 @@
   skills:
     - ui-generator
   tags:
+    - worker
     - bundle
   model: gemini-3.1-pro-preview
 
