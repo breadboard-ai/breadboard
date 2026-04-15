@@ -22,7 +22,11 @@ export class PageAgent extends SignalWatcher(LitElement) {
     sharedStyles,
     css`
       :host {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 32px;
       }
     `,
   ];
@@ -32,8 +36,15 @@ export class PageAgent extends SignalWatcher(LitElement) {
   }
 
   render() {
+    const url = this.sca.controller.router.parsedUrl;
+    const agentId = url.page === "agent" ? url.agentId : undefined;
+    const agent = this.sca.controller.agent.agents.find(
+      (a) => a.id === agentId
+    );
+    const name = agent ? agent.name : "Unknown Agent";
+
     return [
-      html`<h1>${msg("Agent")}</h1>`,
+      html`<h1>${msg(name)}</h1>`,
       html`<button @click=${() => this.#onClick()}>Home</button>`,
     ];
   }

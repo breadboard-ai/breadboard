@@ -22,7 +22,8 @@ import type { Signal } from "@lit-labs/signals";
 import { PENDING_HYDRATION } from "./utils/sentinel.js";
 import type { GlobalController } from "./controller/subcontrollers/global/global.js";
 import type { RouterController } from "./controller/subcontrollers/router/router-controller.js";
-import { ThemeController } from "./controller/subcontrollers/global/theme-controller.js";
+import type { ThemeController } from "./controller/subcontrollers/global/theme-controller.js";
+import type { AgentController } from "./controller/subcontrollers/agent/agent-controller.js";
 
 export type pending = typeof PENDING_HYDRATION;
 
@@ -126,10 +127,19 @@ export interface Storage {
   delete(name: string): Promise<void>;
 }
 
+export interface Agent {
+  id: string;
+  name: string;
+  bgColor: string;
+  fgColor: string;
+  count: number;
+}
+
 export interface AppController extends HydratedController {
   global: GlobalController;
   theme: ThemeController;
   router: RouterController;
+  agent: AgentController;
 }
 
 export interface HydratedController {
