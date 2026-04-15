@@ -61,6 +61,7 @@ from bees.session import (
 from bees.ticket import Ticket
 from bees.task_store import TaskStore, _DEP_PATTERN
 from bees.subagent_scope import SubagentScope
+from bees.functions.mcp_bridge import MCPRegistry
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
 logger = logging.getLogger(__name__)
@@ -265,6 +266,7 @@ class Scheduler:
         self._completion_events: dict[str, asyncio.Event] = {}
         self._active_tasks: dict[str, asyncio.Task] = {}
         self._context_queues: dict[str, asyncio.Queue] = {}
+        self._mcp_registry: MCPRegistry | None = None
 
     # -- public API --------------------------------------------------------
 
@@ -275,7 +277,14 @@ class Scheduler:
     async def startup(self) -> Ticket | None:
         """Recover stuck tickets, boot root template if needed, and fire startup hook."""
         tasks = await self.recover_stuck_tickets()
-        
+
+        # Connect to MCP servers declared in SYSTEM.yaml.
+        config = load_system_config(self.store.hive_dir / "config")
+        mcp_configs = config.get("mcp", [])
+        if mcp_configs:
+            self._mcp_registry = MCPRegistry()
+            await self._mcp_registry.connect_all(mcp_configs)
+
         root_task = await self._boot_root_template(tasks)
         if root_task:
             tasks.append(root_task)
@@ -284,6 +293,12 @@ class Scheduler:
             await self._hooks.on_startup(tasks)
             
         return root_task
+
+    async def shutdown(self) -> None:
+        """Clean up MCP connections and other resources."""
+        if self._mcp_registry:
+            await self._mcp_registry.disconnect_all()
+            self._mcp_registry = None
 
     async def create_task(self, objective: str, **kwargs) -> Ticket:
         """Create a new task and notify hooks."""
@@ -626,6 +641,10 @@ class Scheduler:
                 scope=scope,
                 scheduler=self,
                 context_queue=ctx_queue,
+                mcp_factories=(
+                    self._mcp_registry.get_factories()
+                    if self._mcp_registry else None
+                ),
             )
         except Exception as exc:
             ticket.metadata.status = "failed"
@@ -702,6 +721,10 @@ class Scheduler:
                 scope=scope,
                 scheduler=self,
                 context_queue=ctx_queue,
+                mcp_factories=(
+                    self._mcp_registry.get_factories()
+                    if self._mcp_registry else None
+                ),
             )
         except Exception as exc:
             ticket.metadata.status = "failed"

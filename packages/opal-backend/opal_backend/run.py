@@ -667,11 +667,16 @@ def _apply_function_filter(
     """Filter function groups using dot-notation patterns.
 
     Each pattern is one of:
-    - ``"group.*"`` — include all functions in the named group
-    - ``"group.function_name"`` — include a single function (the dot
-      translates to underscore for matching against the flat function
+
+    - ``"group.*"`` — include all functions in the named group.
+    - ``"group.sub.*"`` — include functions whose name starts with
+      ``group_sub_`` (hierarchical wildcard). This lets MCP servers
+      expose sub-namespaces: ``zapier.google_calendar.*`` matches
+      ``zapier_google_calendar_create_event`` etc.
+    - ``"group.function_name"`` — include a single function (dots
+      translate to underscores for matching against the flat function
       name convention, e.g. ``"system.objective_fulfilled"`` matches
-      ``system_objective_fulfilled``)
+      ``system_objective_fulfilled``).
 
     Groups whose name is ``None`` (unnamed) are always passed through
     unfiltered. Groups with no surviving functions are dropped.
@@ -680,12 +685,29 @@ def _apply_function_filter(
     """
     from .function_definition import FunctionGroup
 
-    # Pre-process patterns into (group, function_suffix | None) pairs.
-    wildcard_groups: set[str] = set()
+    # Pre-process patterns into three buckets:
+    #   1. Full-group wildcards:  "system.*"  → include entire group
+    #   2. Prefix wildcards:     "zapier.slack.*" → include tools with
+    #      name prefix "zapier_slack_" within the "zapier" group
+    #   3. Exact functions:      "system.list_dir" → "system_list_dir"
+    full_group_wildcards: set[str] = set()
+    # Maps group name → set of name prefixes (including trailing _).
+    prefix_wildcards: dict[str, set[str]] = {}
     specific_functions: set[str] = set()
+
     for pattern in patterns:
         if pattern.endswith(".*"):
-            wildcard_groups.add(pattern[:-2])
+            stem = pattern[:-2]  # e.g. "zapier.slack"
+            first_dot = stem.find(".")
+            if first_dot == -1:
+                # Simple: "group.*"
+                full_group_wildcards.add(stem)
+            else:
+                # Hierarchical: "zapier.slack.*" → group "zapier",
+                # prefix "zapier_slack_"
+                group_name = stem[:first_dot]
+                prefix = stem.replace(".", "_") + "_"
+                prefix_wildcards.setdefault(group_name, set()).add(prefix)
         else:
             # "group.func" → "group_func"
             specific_functions.add(pattern.replace(".", "_"))
@@ -697,20 +719,32 @@ def _apply_function_filter(
             filtered.append(group)
             continue
 
-        if group.name in wildcard_groups:
+        if group.name in full_group_wildcards:
             # Entire group is included.
             filtered.append(group)
             continue
 
-        # Check individual functions.
-        kept_definitions = [
-            (name, defn) for name, defn in group.definitions
-            if name in specific_functions
-        ]
-        kept_declarations = [
-            decl for decl in group.declarations
-            if decl.get("name") in specific_functions
-        ]
+        # Check for prefix wildcards targeting this group.
+        prefixes = prefix_wildcards.get(group.name)
+
+        # Collect individual functions by prefix match or exact name.
+        kept_definitions = []
+        kept_declarations = []
+
+        for name, defn in group.definitions:
+            if name in specific_functions:
+                kept_definitions.append((name, defn))
+            elif prefixes and any(name.startswith(p) for p in prefixes):
+                kept_definitions.append((name, defn))
+
+        for decl in group.declarations:
+            decl_name = decl.get("name")
+            if decl_name in specific_functions:
+                kept_declarations.append(decl)
+            elif prefixes and any(
+                decl_name.startswith(p) for p in prefixes
+            ):
+                kept_declarations.append(decl)
 
         if kept_definitions:
             filtered.append(FunctionGroup(

@@ -17,16 +17,31 @@ import yaml from "js-yaml";
 import type { StateAccess } from "./state-access.js";
 
 export { SystemStore };
-export type { SystemData };
+export type { SystemData, MCPServerConfig };
+
+/** A single MCP server registration in SYSTEM.yaml. */
+interface MCPServerConfig {
+  name: string;
+  description?: string;
+  /** Shell command for stdio transport. */
+  command?: string;
+  /** URL for Streamable HTTP transport. */
+  url?: string;
+  /** HTTP headers (values may contain ${ENV_VAR} references). */
+  headers?: Record<string, string>;
+  /** Environment variables for stdio (values may contain ${ENV_VAR}). */
+  env?: Record<string, string>;
+}
 
 /** The shape of SYSTEM.yaml. */
 interface SystemData {
   title: string;
   description: string;
   root: string;
+  mcp: MCPServerConfig[];
 }
 
-const EMPTY: SystemData = { title: "", description: "", root: "" };
+const EMPTY: SystemData = { title: "", description: "", root: "", mcp: [] };
 
 class SystemStore {
   constructor(private access: StateAccess) {}
@@ -62,10 +77,32 @@ class SystemStore {
       }
 
       const raw = data as Record<string, unknown>;
+      const rawMcp = Array.isArray(raw.mcp) ? raw.mcp : [];
+
       this.config.set({
         title: String(raw.title ?? ""),
         description: String(raw.description ?? ""),
         root: String(raw.root ?? ""),
+        mcp: rawMcp.map((entry: Record<string, unknown>) => ({
+          name: String(entry.name ?? ""),
+          description: entry.description ? String(entry.description) : undefined,
+          command: entry.command ? String(entry.command) : undefined,
+          url: entry.url ? String(entry.url) : undefined,
+          headers: entry.headers && typeof entry.headers === "object"
+            ? Object.fromEntries(
+                Object.entries(entry.headers as Record<string, unknown>).map(
+                  ([k, v]) => [k, String(v)]
+                )
+              )
+            : undefined,
+          env: entry.env && typeof entry.env === "object"
+            ? Object.fromEntries(
+                Object.entries(entry.env as Record<string, unknown>).map(
+                  ([k, v]) => [k, String(v)]
+                )
+              )
+            : undefined,
+        })),
       });
     } catch (e) {
       console.warn("Could not read SYSTEM.yaml:", e);
@@ -91,7 +128,30 @@ class SystemStore {
       "",
     ].join("\n");
 
-    const body = yaml.dump(data, {
+    // Build the serializable object, omitting empty mcp array.
+    const obj: Record<string, unknown> = {
+      title: data.title,
+      description: data.description,
+      root: data.root,
+    };
+
+    if (data.mcp.length > 0) {
+      obj.mcp = data.mcp.map((server) => {
+        const entry: Record<string, unknown> = { name: server.name };
+        if (server.description) entry.description = server.description;
+        if (server.command) entry.command = server.command;
+        if (server.url) entry.url = server.url;
+        if (server.headers && Object.keys(server.headers).length > 0) {
+          entry.headers = server.headers;
+        }
+        if (server.env && Object.keys(server.env).length > 0) {
+          entry.env = server.env;
+        }
+        return entry;
+      });
+    }
+
+    const body = yaml.dump(obj, {
       lineWidth: 80,
       noRefs: true,
       quotingType: '"',

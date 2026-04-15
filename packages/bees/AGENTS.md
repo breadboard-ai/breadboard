@@ -57,6 +57,9 @@ packages/bees/
   frontmatter.
 - **Function groups** are the extensibility seam for the session layer. Each
   group bundles declarations, handlers, and a system prompt fragment.
+- **MCP servers** are external tool providers registered in `SYSTEM.yaml`. Each
+  MCP server becomes a function group that agents access via the `functions`
+  filter (e.g., `weather.*`). See `bees/functions/mcp_bridge.py`.
 - **The Hive** is the on-disk directory that holds all configuration and runtime
   state.
 

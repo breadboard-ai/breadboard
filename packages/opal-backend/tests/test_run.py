@@ -870,6 +870,76 @@ class TestApplyFunctionFilter:
         assert None in group_names
         assert "system" in group_names
 
+    def test_hierarchical_wildcard_filters_by_prefix(self):
+        """'zapier.slack.*' includes only zapier_slack_* tools."""
+        zapier = self._make_group("zapier", [
+            "zapier_slack_send_message",
+            "zapier_slack_list_channels",
+            "zapier_google_calendar_create_event",
+            "zapier_gmail_find_email",
+        ])
+
+        result = _apply_function_filter([zapier], ["zapier.slack.*"])
+
+        assert len(result) == 1
+        names = [n for n, _ in result[0].definitions]
+        assert "zapier_slack_send_message" in names
+        assert "zapier_slack_list_channels" in names
+        assert "zapier_google_calendar_create_event" not in names
+        assert "zapier_gmail_find_email" not in names
+
+    def test_multiple_hierarchical_wildcards(self):
+        """Multiple prefix wildcards on the same group compose correctly."""
+        zapier = self._make_group("zapier", [
+            "zapier_slack_send_message",
+            "zapier_google_calendar_create_event",
+            "zapier_gmail_find_email",
+        ])
+
+        result = _apply_function_filter(
+            [zapier], ["zapier.slack.*", "zapier.gmail.*"]
+        )
+
+        assert len(result) == 1
+        names = [n for n, _ in result[0].definitions]
+        assert "zapier_slack_send_message" in names
+        assert "zapier_gmail_find_email" in names
+        assert "zapier_google_calendar_create_event" not in names
+
+    def test_full_wildcard_beats_prefix(self):
+        """'zapier.*' includes everything, even if prefix patterns also match."""
+        zapier = self._make_group("zapier", [
+            "zapier_slack_send_message",
+            "zapier_google_calendar_create_event",
+        ])
+
+        result = _apply_function_filter(
+            [zapier], ["zapier.*", "zapier.slack.*"]
+        )
+
+        assert len(result) == 1
+        names = [n for n, _ in result[0].definitions]
+        assert len(names) == 2
+
+    def test_prefix_and_exact_combined(self):
+        """Prefix wildcard and exact match can coexist."""
+        zapier = self._make_group("zapier", [
+            "zapier_slack_send_message",
+            "zapier_gmail_find_email",
+            "zapier_google_calendar_create_event",
+        ])
+
+        result = _apply_function_filter(
+            [zapier],
+            ["zapier.slack.*", "zapier.google_calendar.create_event"],
+        )
+
+        assert len(result) == 1
+        names = [n for n, _ in result[0].definitions]
+        assert "zapier_slack_send_message" in names
+        assert "zapier_google_calendar_create_event" in names
+        assert "zapier_gmail_find_email" not in names
+
 
 class TestProcessChatResponse:
     """Tests for _process_chat_response."""
