@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type AppController } from "../types.js";
+import type { AppController, AppEnvironment } from "../types.js";
 import { type AppServices } from "../services/services.js";
-import type { AppEnvironment } from "../environment/environment.js";
 import * as Router from "./router/router-actions.js";
+import * as Theme from "./theme/theme-actions.js";
 import type { ActionWithTriggers } from "../coordination.js";
 import { AppActions } from "../types.js";
 
@@ -21,15 +21,17 @@ export function actions(
 ) {
   if (!instance) {
     Router.bind({ controller, services, env });
+    Theme.bind({ controller, services, env });
     instance = {
       router: Router,
+      theme: Theme,
     } satisfies AppActions;
   }
   return instance;
 }
 
 export function activateTriggers(): () => void {
-  const allActions = [...Object.values(Router)];
+  const allActions = [...Object.values(Router), ...Object.values(Theme)];
 
   const actionsWithTriggers: Array<{
     action: ActionWithTriggers<(...args: never[]) => Promise<unknown>>;

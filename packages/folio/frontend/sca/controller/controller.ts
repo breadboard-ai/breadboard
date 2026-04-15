@@ -3,24 +3,25 @@
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import type { AppController } from "../types.js";
-import type { AppEnvironment } from "../environment/environment.js";
+import type { AppController, AppEnvironment } from "../types.js";
 import { GlobalController } from "./subcontrollers/global/global.js";
 import { RouterController } from "./subcontrollers/router/router-controller.js";
 import { RootController } from "./subcontrollers/root-controller.js";
+import { ThemeController } from "./subcontrollers/global/theme-controller.js";
 
 /**
  * The root application controller for Folio.
- * Reduced to the bare minimum: global state and routing.
  */
 class Controller extends RootController implements AppController {
   global: GlobalController;
   router: RouterController;
+  theme: ThemeController;
 
   constructor(_env: AppEnvironment) {
     super("App", "AppController");
     this.global = new GlobalController();
     this.router = new RouterController();
+    this.theme = new ThemeController();
   }
 }
 

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MakeUrlInit, ParsedUrlProvider } from "../../../types.js";
+import { FolioUrlInit, ParsedUrlProvider } from "../../../types.js";
 import { makeUrl, parseUrl } from "../../../../ui/navigation/urls.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
@@ -12,29 +12,25 @@ import { RootController } from "../root-controller.js";
 /**
  * Controller managing URL state and browser navigation.
  *
- * Replaces the legacy `Runtime.Router` class with a signal-based, SCA-compliant
- * implementation. All URL state is reactive via the `@field` decorator,
- * enabling efficient reactivity across the application.
+ * All URL state is reactive via the `@field` decorator, enabling efficient
+ * reactivity across the application.
  *
  * **Responsibilities:**
  * - Maintains the current parsed URL state (`parsedUrl`)
  * - Provides navigation via `go()` method
  * - Handles URL canonicalization on initialization
- * - Clears flow/tab parameters when needed
  *
  * @example
  * ```typescript
- * // Navigate to a new board
+ * // Navigate to an agent
  * sca.controller.router.go({
- *   page: "graph",
- *   mode: "canvas",
- *   flow: "drive:/12345",
- *   guestPrefixed: true,
+ *   page: "agent",
+ *   agentId: "my-agent",
  * });
  *
  * // React to URL changes
- * const title = sca.controller.router.parsedUrl.page === "graph"
- *   ? sca.controller.router.parsedUrl.flow
+ * const title = sca.controller.router.parsedUrl.page === "agent"
+ *   ? sca.controller.router.parsedUrl.agentId
  *   : "Home";
  * ```
  */
@@ -43,7 +39,7 @@ export class RouterController
   implements ParsedUrlProvider
 {
   @field()
-  private accessor _parsedUrl: MakeUrlInit;
+  private accessor _parsedUrl: FolioUrlInit;
 
   @field()
   accessor urlError: string | null = null;
@@ -51,15 +47,10 @@ export class RouterController
   constructor() {
     super("Router", "router");
 
-    // Parse initial URL and clear redirect flag if present
     const parsed = parseUrl(window.location.href);
-    if ("redirectFromLanding" in parsed) {
-      parsed.redirectFromLanding = false;
-    }
 
-    // Canonicalize URL if needed. If the URL contains an unsupported flow ID
-    // (e.g. `?flow=foo`), makeUrl will throw. In that case, fall back to home
-    // and record the error so the UI can display a snackbar.
+    // Canonicalize URL if needed. If makeUrl rejects the parsed state,
+    // fall back to home and record the error for UI display.
     try {
       const canonicalized = makeUrl(parsed);
       if (window.location.href !== canonicalized) {
@@ -77,7 +68,7 @@ export class RouterController
   /**
    * The current parsed URL state.
    */
-  get parsedUrl(): MakeUrlInit {
+  get parsedUrl(): FolioUrlInit {
     return this._parsedUrl;
   }
 
@@ -89,7 +80,7 @@ export class RouterController
    *
    * @param init - The URL configuration to navigate to
    */
-  go(init: MakeUrlInit) {
+  go(init: FolioUrlInit) {
     const url = makeUrl(init);
     if (url !== window.location.href) {
       window.history.pushState(null, "", url);
@@ -104,7 +95,7 @@ export class RouterController
    * landing page, which is a separate HTML entrypoint). Unlike `go()`, this
    * does NOT use `pushState` — it triggers a hard browser navigation.
    */
-  navigateAway(init: MakeUrlInit) {
+  navigateAway(init: FolioUrlInit) {
     window.location.href = makeUrl(init);
   }
 
@@ -125,24 +116,6 @@ export class RouterController
    */
   updateFromCurrentUrl() {
     this.#updateParsedUrl();
-  }
-
-  /**
-   * Remove all flow and tab parameters from the current URL.
-   *
-   * Used when closing a board to return to a clean home URL.
-   */
-  clearFlowParameters() {
-    const pageUrl = new URL(window.location.href);
-    const paramsToDelete = [...pageUrl.searchParams]
-      .filter(([id]) => id.startsWith("tab") || id.startsWith("flow"))
-      .map(([id]) => id);
-
-    for (const id of paramsToDelete) {
-      pageUrl.searchParams.delete(id);
-    }
-
-    window.history.replaceState(null, "", pageUrl);
   }
 
   #updateParsedUrl() {

@@ -1,2 +1,5 @@
 __pycache__
 tickets
+frontend/localization/generated
+frontend/ui/tokens.ts
+frontend/public/tokens.css

@@ -5,8 +5,11 @@
  */
 
 import { defineConfig } from "vite";
+import { tokenPlugin } from "./scripts/tokens-plugin.js";
 
 export default defineConfig({
+  publicDir: "./frontend/public",
+  plugins: [tokenPlugin()],
   server: {
     proxy: {
       "/folio": {

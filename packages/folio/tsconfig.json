@@ -18,7 +18,9 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "types": ["vite/client", "@types/gtag.js", "node", "trusted-types"],
-    "allowJs": true
+    "allowJs": true,
+    "declaration": false,
+    "declarationMap": false
   },
   "include": ["frontend/**/*.ts"],
   "extends": "@google-labs/tsconfig/base.json"
