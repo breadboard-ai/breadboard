@@ -12,7 +12,8 @@
     "dev:web": "vite",
     "test:python": ".venv/bin/python -m pytest tests/ -v",
     "localize:extract": "lit-localize extract",
-    "localize:build": "lit-localize build"
+    "localize:build": "lit-localize build",
+    "postinstall": "npm run localize:extract && (npm run localize:build >/dev/null 2>&1 || true)"
   },
   "wireit": {
     "setup": {
