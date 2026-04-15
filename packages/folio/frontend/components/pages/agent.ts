@@ -5,7 +5,7 @@
  */
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
-import { localized, msg } from "@lit/localize";
+import { localized } from "@lit/localize";
 import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { scaContext } from "../../sca/context/context.js";
@@ -44,7 +44,7 @@ export class PageAgent extends SignalWatcher(LitElement) {
     const name = agent ? agent.name : "Unknown Agent";
 
     return [
-      html`<h1>${msg(name)}</h1>`,
+      html`<h1>${name}</h1>`,
       html`<button @click=${() => this.#onClick()}>Home</button>`,
     ];
   }

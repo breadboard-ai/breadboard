@@ -14,11 +14,14 @@
 <trans-unit id="sac895c732f350ac5">
   <source>Dark</source>
 </trans-unit>
-<trans-unit id="s95416925fd51a346">
-  <source>Agent</source>
-</trans-unit>
 <trans-unit id="s6abb1cd87fe0114e">
   <source>Home</source>
+</trans-unit>
+<trans-unit id="s6ef05bd7cc857c54">
+  <source>Hello, World!</source>
+</trans-unit>
+<trans-unit id="s76783561209eaef2">
+  <source>Experiment</source>
 </trans-unit>
 </body>
 </file>
