@@ -133,18 +133,18 @@
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@types/node": "^22.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.43.0",
-    "@typescript-eslint/parser": "^8.34.1",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
     "ava": "6.4.1",
     "eslint": "^8.57.1",
     "eslint-plugin-expect-type": "^0.6.2",
     "husky": "^9.1.7",
-    "lint-staged": "^16.2.7",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "syncpack": "^13.0.3",
     "ts-morph": "^27.0.2",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.54.0",
+    "typescript-eslint": "^8.58.0",
     "wireit": "^0.15.0-pre.2"
   },
   "workspaces": [
