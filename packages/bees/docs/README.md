@@ -19,6 +19,12 @@
   consume the bees framework. Traces the MVC pattern from architecture through
   REST endpoints, SSE wiring, and the Lit frontend.
 
+## Configuration
+
+- [system-config.md](system-config.md) — The `SYSTEM.yaml` reference: hive
+  identity, root template, and MCP server registration (transports, env var
+  expansion, runtime behavior).
+
 ## Tooling
 
 - [hivetool.md](hivetool.md) — The built-in developer workbench for inspecting

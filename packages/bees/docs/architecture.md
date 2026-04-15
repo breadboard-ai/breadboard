@@ -96,7 +96,7 @@ groups. Each **function group** contains:
 - a system prompt fragment that gets appended to the system prompt when the
   group is enabled.
 
-There are two kinds of function groups:
+There are three kinds of function groups:
 
 - **Built-in functions** — these are considered part of the session layer and
   provide the means for the agent to have some basic utility and to
@@ -104,6 +104,12 @@ There are two kinds of function groups:
 
 - **Custom functions** — these are provided by the session consumer and are used
   to extend the capabilities of the agent.
+
+- **MCP functions** — external tool servers registered in `SYSTEM.yaml`. Each
+  MCP server becomes a function group whose tools agents can call via proxy
+  handlers. MCP tools use the same filter mechanism as built-in groups (e.g.,
+  `weather.*` includes all tools from the `weather` MCP server). Connections are
+  shared across agent sessions. See `bees/functions/mcp_bridge.py`.
 
 The built-in functions are:
 

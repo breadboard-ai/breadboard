@@ -453,6 +453,7 @@ async def run_session(
     scheduler: Any | None = None,
     context_queue: Any | None = None,
     hive_dir: Path | None = None,
+    mcp_factories: list | None = None,
 ) -> SessionResult:
     """Run a single agent session and return the result.
 
@@ -538,7 +539,7 @@ async def run_session(
                 workspace_root_id=workspace_root_id,
                 scheduler=scheduler,
             ),
-        ],
+        ] + (mcp_factories or []),
         function_filter=function_filter,
         model=model,
         file_system=disk_fs,
@@ -639,6 +640,7 @@ async def resume_session(
     scheduler: Any | None = None,
     context_queue: Any | None = None,
     hive_dir: Path | None = None,
+    mcp_factories: list | None = None,
 ) -> SessionResult:
     """Resume a suspended session from saved state on disk.
 
@@ -728,7 +730,7 @@ async def resume_session(
                 workspace_root_id=workspace_root_id,
                 scheduler=scheduler,
             ),
-        ],
+        ] + (mcp_factories or []),
         file_system=disk_fs,
         context_queue=context_queue,
     )

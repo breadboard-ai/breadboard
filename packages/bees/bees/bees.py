@@ -54,6 +54,7 @@ class Bees:
 
     async def shutdown(self):
         """Stops the scheduler loop and cleans up."""
+        await self._scheduler.shutdown()
         if self._loop_task:
             self._loop_task.cancel()
             try:
