@@ -13,6 +13,7 @@ import { scaContext } from "../../sca/context/context.js";
 import { SCA } from "../../sca/sca.js";
 
 import "./shell-header.js";
+import "./shell-sidebar.js";
 import "../pages/home.js";
 import "../pages/agent.js";
 
@@ -24,11 +25,16 @@ export class ShellMain extends SignalWatcher(LitElement) {
 
   static styles = css`
     :host {
-      display: block;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
     }
+
     .content {
-      padding: var(--opal-grid-6) var(--opal-grid-6) var(--opal-grid-6)
-        var(--opal-grid-8);
+      display: grid;
+      grid-template-columns: var(--opal-width-sidebar) auto;
+      flex: 1;
     }
   `;
 
@@ -50,6 +56,10 @@ export class ShellMain extends SignalWatcher(LitElement) {
     return html`<o-page-agent></o-page-agent>`;
   }
 
+  #renderSidebar() {
+    return html`<o-shell-sidebar></o-shell-sidebar>`;
+  }
+
   #renderContent() {
     const url = this.sca.controller.router.parsedUrl;
     let content;
@@ -61,7 +71,7 @@ export class ShellMain extends SignalWatcher(LitElement) {
         content = this.#renderAgent();
         break;
     }
-    return html`<div class="content">${content}</div>`;
+    return html`<div class="content">${[this.#renderSidebar(), content]}</div>`;
   }
 
   render() {

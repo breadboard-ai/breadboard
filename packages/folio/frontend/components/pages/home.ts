@@ -12,6 +12,8 @@ import { scaContext } from "../../sca/context/context.js";
 import { SCA } from "../../sca/sca.js";
 import { sharedStyles } from "../../ui/shared-styles.js";
 
+import "../primitives/primitive-card.js";
+
 @localized()
 @customElement("o-page-home")
 export class PageHome extends SignalWatcher(LitElement) {
@@ -22,19 +24,19 @@ export class PageHome extends SignalWatcher(LitElement) {
     sharedStyles,
     css`
       :host {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
     `,
   ];
 
-  #onClick() {
-    this.sca.controller.router.go({ agentId: "foobar", page: "agent" });
-  }
-
   render() {
-    return [
-      html`<h1>${msg("Home")}</h1>`,
-      html`<button @click=${() => this.#onClick()}>Agent</button>`,
-    ];
+    return html`<o-primitive-card>
+      <h1 slot="header">${msg("Home")}</h1>
+      <div slot="content">
+        <p>${msg("Hello, World!")}</p>
+      </div>
+    </o-primitive-card>`;
   }
 }

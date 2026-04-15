@@ -13,9 +13,13 @@ body.light-theme {
   color-scheme: light;
 }
 
+html,
 body {
   background: var(--opal-color-surface);
   color: var(--opal-color-on-surface);
   margin: 0;
+  padding: 0;
   font-family: var(--opal-font-family);
+  width: 100svw;
+  height: 100svh;
 }

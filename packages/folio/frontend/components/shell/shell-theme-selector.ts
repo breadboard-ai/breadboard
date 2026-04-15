@@ -26,9 +26,9 @@ export class ShellThemeSelector extends SignalWatcher(LitElement) {
     }
 
     select {
-      padding: var(--opal-grid-2);
-      border-radius: var(--opal-grid-1);
-      background: var(--opal-color-surface);
+      padding: var(--opal-grid-2) var(--opal-grid-4);
+      border-radius: var(--opal-grid-6);
+      background: var(--opal-color-surface-container);
       color: var(--opal-color-on-surface);
       border: 1px solid var(--opal-color-spinner-track);
       font-family: var(--opal-font-family);
