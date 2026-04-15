@@ -3,13 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "description": "Folio - example app",
+  "type": "module",
   "scripts": {
     "setup": "wireit",
     "dev": "npm run dev:server & npm run dev:web",
     "dev:clean": "rm -rf backend/hive/tickets backend/hive/logs && npm run dev",
     "dev:server": ".venv/bin/python backend/server.py",
     "dev:web": "vite",
-    "test:python": ".venv/bin/python -m pytest tests/ -v"
+    "test:python": ".venv/bin/python -m pytest tests/ -v",
+    "localize:extract": "lit-localize extract",
+    "localize:build": "lit-localize build"
   },
   "wireit": {
     "setup": {
@@ -23,7 +26,14 @@
   },
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.2",
+    "@lit/localize-tools": "^0.8.1",
     "vite": "^7.3.2",
     "wireit": "^0.15.0-pre.2"
+  },
+  "dependencies": {
+    "@lit-labs/signals": "^0.2.0",
+    "@lit/localize": "^0.12.2",
+    "lit": "^3.3.2",
+    "urlpattern-polyfill": "^10.1.0"
   }
 }

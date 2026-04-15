@@ -153,6 +153,7 @@ export default tseslint.config(
   {
     files: [
       "packages/visual-editor/src/sca/controller/subcontrollers/router/router-controller.ts",
+      "packages/folio/frontend/sca/controller/subcontrollers/router/router-controller.ts",
     ],
     rules: {
       "local-rules/deja-code-prefer-router-navigate": "off",

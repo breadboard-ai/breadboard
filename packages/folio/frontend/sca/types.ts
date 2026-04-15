@@ -10,12 +10,19 @@
  */
 
 import type { AppServices } from "./services/services.js";
-import type { AppEnvironment } from "./environment/environment.js";
+import type { EnvironmentFlags } from "./environment/environment-flags.js";
 import type * as RouterActions from "./actions/router/router-actions.js";
+
+export interface AppEnvironment {
+  readonly flags: EnvironmentFlags;
+  readonly isHydrated: Promise<number>;
+}
+import type * as ThemeActions from "./actions/theme/theme-actions.js";
 import type { Signal } from "@lit-labs/signals";
 import { PENDING_HYDRATION } from "./utils/sentinel.js";
 import type { GlobalController } from "./controller/subcontrollers/global/global.js";
 import type { RouterController } from "./controller/subcontrollers/router/router-controller.js";
+import { ThemeController } from "./controller/subcontrollers/global/theme-controller.js";
 
 export type pending = typeof PENDING_HYDRATION;
 
@@ -35,7 +42,7 @@ export interface AgentProjection {
 }
 
 export type ParsedUrlProvider = {
-  readonly parsedUrl: MakeUrlInit;
+  readonly parsedUrl: FolioUrlInit;
 };
 
 export interface BaseUrlInit {
@@ -48,46 +55,25 @@ export interface BaseUrlInit {
     forceSurveySelection?: "true";
   };
   oauthRedirect?: string;
-  lite?: boolean;
   colorScheme?: "light" | "dark";
-  guestPrefixed: boolean;
 }
 
 export interface HomeUrlInit extends BaseUrlInit {
   page: "home";
-  new?: boolean;
-  redirectFromLanding?: boolean;
 }
 
-export interface GraphUrlInit extends BaseUrlInit {
-  page: "graph";
-  mode: "app" | "canvas";
-  flow: string;
-  remix?: boolean;
-  resourceKey?: string | undefined;
-  results?: string;
-  redirectFromLanding?: boolean;
+export interface AgentUrlInit extends BaseUrlInit {
+  page: "agent";
+  agentId: string;
 }
 
-export interface LandingUrlInit extends BaseUrlInit {
-  page: "landing";
-  redirect: MakeUrlInit;
-  missingScopes?: boolean;
-  geoRestriction?: boolean;
-  autoSignIn?: boolean;
+export interface AgentTaskUrlInit extends BaseUrlInit {
+  page: "agent-task";
+  agentId: string;
+  taskId: string;
 }
 
-export interface OpenUrlInit extends BaseUrlInit {
-  page: "open";
-  fileId: string;
-  resourceKey?: string;
-}
-
-export type MakeUrlInit =
-  | HomeUrlInit
-  | GraphUrlInit
-  | LandingUrlInit
-  | OpenUrlInit;
+export type FolioUrlInit = HomeUrlInit | AgentUrlInit | AgentTaskUrlInit;
 
 export type ActionBind = {
   /** The application controller tree (editor, global, run subcontrollers). */
@@ -114,8 +100,11 @@ export enum STATUS {
   STOPPED = "stopped",
 }
 
+export type ThemeMode = "light" | "dark" | "auto";
+
 export interface AppActions {
   router: typeof RouterActions;
+  theme: typeof ThemeActions;
 }
 
 export type PrimitiveType =
@@ -139,6 +128,7 @@ export interface Storage {
 
 export interface AppController extends HydratedController {
   global: GlobalController;
+  theme: ThemeController;
   router: RouterController;
 }
 

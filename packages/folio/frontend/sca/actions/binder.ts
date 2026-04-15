@@ -6,24 +6,6 @@
 
 import { ActionBind, AppController } from "../types.js";
 
-/**
- * Returns true if the keyboard event originated from within the graph renderer
- * (`<bb-renderer>`). Used as a `guard` for keyboard triggers that should only
- * fire when the renderer has focus (e.g. Delete, Undo, Copy).
- *
- * Uses tag-name matching instead of `instanceof Renderer` to avoid importing
- * the heavy UI element module into the SCA action graph.
- */
-export function isFocusedOnGraphRenderer(evt: KeyboardEvent): boolean {
-  return evt
-    .composedPath()
-    .some(
-      (target) =>
-        target instanceof HTMLElement &&
-        target.tagName.toLowerCase() === "bb-renderer"
-    );
-}
-
 type DefaultBindings = ActionBind;
 
 /**

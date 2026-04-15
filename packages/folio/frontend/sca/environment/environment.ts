@@ -5,17 +5,9 @@
  */
 
 import { EnvironmentFlags } from "./environment-flags.js";
+import type { AppEnvironment } from "../types.js";
 
-export { createEnvironment, type AppEnvironment };
-
-/**
- * The Environment layer for Folio.
- * Reduced to the bare minimum: just flags.
- */
-interface AppEnvironment {
-  readonly flags: EnvironmentFlags;
-  readonly isHydrated: Promise<number>;
-}
+export { createEnvironment };
 
 function createEnvironment(
   flags: Record<string, boolean> = {}

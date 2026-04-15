@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+<file target-language="de-DE" source-language="en" original="lit-localize-inputs" datatype="plaintext">
+<body>
+<trans-unit id="s94cc88161b5ef9a2">
+  <source>Folio</source>
+</trans-unit>
+<trans-unit id="sdb73788b3c975f16">
+  <source>Auto</source>
+</trans-unit>
+<trans-unit id="s3b0ab4b52326316f">
+  <source>Light</source>
+</trans-unit>
+<trans-unit id="sac895c732f350ac5">
+  <source>Dark</source>
+</trans-unit>
+<trans-unit id="s95416925fd51a346">
+  <source>Agent</source>
+</trans-unit>
+<trans-unit id="s6abb1cd87fe0114e">
+  <source>Home</source>
+</trans-unit>
+</body>
+</file>
+</xliff>

@@ -1,0 +1,21 @@
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* Overrides just switch the color-scheme property */
+body.dark-theme {
+  color-scheme: dark;
+}
+
+body.light-theme {
+  color-scheme: light;
+}
+
+body {
+  background: var(--opal-color-surface);
+  color: var(--opal-color-on-surface);
+  margin: 0;
+  font-family: var(--opal-font-family);
+}
