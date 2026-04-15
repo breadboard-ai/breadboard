@@ -54,7 +54,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "typescript": "^5.8.3",
+    "typescript": "^6.0.2",
     "@google-labs/tsconfig": "^0.0.2",
     "wireit": "^0.15.0-pre.2"
   }
