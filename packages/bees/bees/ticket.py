@@ -65,6 +65,8 @@ class TicketMetadata:
     parent_task_id: str | None = None
     slug: str | None = None
     pending_context_updates: list[dict[str, Any]] | None = None
+    paused_from: str | None = None
+    """The status this task had before it was paused (set by pause-all / pause-task)."""
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -106,6 +108,7 @@ class TicketMetadata:
             parent_task_id=data.get("parent_task_id") or data.get("creator_ticket_id"),
             slug=data.get("slug"),
             pending_context_updates=data.get("pending_context_updates"),
+            paused_from=data.get("paused_from"),
         )
 
 

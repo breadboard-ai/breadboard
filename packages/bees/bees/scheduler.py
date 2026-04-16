@@ -295,6 +295,53 @@ class Scheduler:
             
         return cancelled
 
+    def pause_all_tasks(self) -> int:
+        """Pause all running, available, suspended, blocked, and paused tasks.
+
+        Cancels in-flight asyncio tasks and flips metadata to ``paused``.
+        Stashes the pre-pause status in ``paused_from`` so resume can
+        restore it.  Returns the number of tasks paused.
+        """
+        # Cancel all in-flight asyncio tasks.
+        for task_id, async_task in list(self._active_tasks.items()):
+            async_task.cancel()
+
+        # Flip all non-terminal tasks to paused.
+        NON_TERMINAL = ("available", "blocked", "running", "suspended")
+        count = 0
+        for status in NON_TERMINAL:
+            for task in self.store.query_all(status=status):
+                task.metadata.paused_from = task.metadata.status
+                task.metadata.status = "paused"
+                self.store.save_metadata(task)
+                count += 1
+
+        return count
+
+    def pause_task(self, task_id: str) -> bool:
+        """Pause a single task.
+
+        Cancels its asyncio task if running, then flips status to
+        ``paused`` with ``paused_from`` set for later resume.
+        Returns True if the task was found and paused.
+        """
+        task = self.store.get(task_id)
+        if not task:
+            return False
+
+        # Already in a terminal or paused state — nothing to do.
+        if task.metadata.status in ("completed", "failed", "cancelled", "paused"):
+            return False
+
+        # Cancel the asyncio task if it's actively running.
+        if task_id in self._active_tasks:
+            self._active_tasks[task_id].cancel()
+
+        task.metadata.paused_from = task.metadata.status
+        task.metadata.status = "paused"
+        self.store.save_metadata(task)
+        return True
+
     def deliver_to_task(
         self,
         task_id: str,
@@ -423,15 +470,27 @@ class Scheduler:
                 self._running = False
 
     async def recover_stuck_tasks(self) -> list[Ticket]:
-        """Flip any ``running`` or ``paused`` tasks back to ``available``.
+        """Flip any ``running`` or ``paused`` tasks back to a runnable state.
+
+        For ``paused`` tasks with ``paused_from`` set, the original status
+        is restored.  Otherwise they become ``available``.
 
         Returns the full task list (for ``on_startup``).
         """
         tickets = self.store.query_all()
         for t in tickets:
-            if t.metadata.status in ("running", "paused"):
-                logger.info("Recovered stuck %s task: %s", t.metadata.status, t.id)
+            if t.metadata.status == "running":
+                logger.info("Recovered stuck running task: %s", t.id)
                 t.metadata.status = "available"
+                self.store.save_metadata(t)
+            elif t.metadata.status == "paused":
+                restored = t.metadata.paused_from or "available"
+                logger.info(
+                    "Recovered paused task: %s (restoring to %s)",
+                    t.id, restored,
+                )
+                t.metadata.status = restored
+                t.metadata.paused_from = None
                 self.store.save_metadata(t)
         return tickets
 

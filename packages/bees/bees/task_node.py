@@ -149,3 +149,33 @@ class TaskNode:
         self._task.metadata.error = None
         self.save()
         self._bees.trigger()
+
+    def pause(self) -> bool:
+        """Pause this task.
+
+        Cancels the asyncio task if running, stashes the current status
+        in ``paused_from``, and sets status to ``paused``.
+        Returns True if the task was paused, False if it was already
+        in a terminal or paused state.
+        """
+        paused = self._bees._scheduler.pause_task(self.id)
+        if paused:
+            # Refresh our snapshot.
+            refreshed = self._store.get(self.id)
+            if refreshed:
+                self._task = refreshed
+        return paused
+
+    def resume(self) -> bool:
+        """Resume this task from a paused state.
+
+        Restores the pre-pause status from ``paused_from``.
+        Returns True if the task was resumed, False if it wasn't paused.
+        """
+        if self._task.metadata.status != "paused":
+            return False
+        self._task.metadata.status = self._task.metadata.paused_from or "available"
+        self._task.metadata.paused_from = None
+        self.save()
+        self._bees.trigger()
+        return True

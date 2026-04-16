@@ -432,7 +432,10 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
         <div class="job-detail-header">
           <div class="job-detail-header-top">
             <h2 class="job-detail-title">${ticket.title || "Ticket"}</h2>
-            <div class="job-detail-badge ${ticket.status}">${statusLabel}</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              ${this.renderTaskControl(ticket.id, ticket.status)}
+              <div class="job-detail-badge ${ticket.status}">${statusLabel}</div>
+            </div>
           </div>
           <div class="job-detail-meta">
             <span
@@ -731,6 +734,60 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
         bubbles: true,
       })
     );
+  }
+
+  // ── Per-task pause / resume ──
+
+  private renderTaskControl(taskId: string, status: string) {
+    const ACTIVE = new Set(["running", "available", "suspended", "blocked"]);
+
+    if (ACTIVE.has(status)) {
+      return html`
+        <button
+          style="padding:3px 10px;font-size:0.65rem;font-weight:600;
+                 background:transparent;color:#f87171;border:1px solid #991b1b;
+                 border-radius:4px;cursor:pointer;font-family:inherit;
+                 transition:all 0.15s"
+          @click=${() => this.handlePauseTask(taskId)}
+        >
+          ⏸ Pause
+        </button>
+      `;
+    }
+
+    if (status === "paused") {
+      return html`
+        <button
+          style="padding:3px 10px;font-size:0.65rem;font-weight:600;
+                 background:transparent;color:#4ade80;border:1px solid #166534;
+                 border-radius:4px;cursor:pointer;font-family:inherit;
+                 transition:all 0.15s"
+          @click=${() => this.handleResumeTask(taskId)}
+        >
+          ▶ Resume
+        </button>
+      `;
+    }
+
+    return nothing;
+  }
+
+  private async handlePauseTask(taskId: string) {
+    if (!this.mutationClient) return;
+    try {
+      await this.mutationClient.pauseTask(taskId);
+    } catch (e) {
+      console.error("Failed to pause task:", e);
+    }
+  }
+
+  private async handleResumeTask(taskId: string) {
+    if (!this.mutationClient) return;
+    try {
+      await this.mutationClient.resumeTask(taskId);
+    } catch (e) {
+      console.error("Failed to resume task:", e);
+    }
   }
 
   // ── Suspend / Response ──

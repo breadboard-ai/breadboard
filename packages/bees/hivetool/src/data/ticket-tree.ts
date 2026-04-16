@@ -11,7 +11,7 @@
  * (devtools should show everything).
  */
 
-import type { TicketData } from "../../../common/types.js";
+import type { TaskData as TicketData } from "../../../common/types.js";
 
 export { deriveTicketTree };
 export type { TicketTreeNode };

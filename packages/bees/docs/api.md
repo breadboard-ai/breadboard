@@ -71,6 +71,19 @@ Starts the scheduler loop and begins processing tasks.
 
 Stops the scheduler loop and cleans up resources.
 
+#### `pause_all(self) -> int`
+
+Pauses all non-terminal tasks. Cancels in-flight asyncio tasks and sets
+status to `paused`, preserving the original status in `paused_from`.
+
+- **Returns**: The number of tasks paused.
+
+#### `resume_all(self) -> int`
+
+Resumes all paused tasks, restoring their pre-pause status from `paused_from`.
+
+- **Returns**: The number of tasks resumed.
+
 ### `TaskNode`
 
 A wrapper around a task that provides DOM-like traversal properties and manipulation methods.
@@ -122,3 +135,16 @@ Saves the task's current state to persistent storage.
 #### `retry(self)`
 
 Retries a paused task by resetting its status to available and clearing errors.
+
+#### `pause(self) -> bool`
+
+Pauses this task. Cancels the asyncio task if running, stashes the current
+status in `paused_from`, and sets status to `paused`.
+
+- **Returns**: `True` if the task was paused, `False` if already terminal or paused.
+
+#### `resume(self) -> bool`
+
+Resumes this task from a paused state, restoring the pre-pause status.
+
+- **Returns**: `True` if the task was resumed, `False` if it wasn't paused.

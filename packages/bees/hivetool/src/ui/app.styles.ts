@@ -284,6 +284,9 @@ export const styles = css`
   .job-status.suspended {
     background: #f59e0b;
   }
+  .job-status.paused {
+    background: #f87171;
+  }
 
   .job-meta {
     font-size: 0.75rem;
@@ -370,6 +373,11 @@ export const styles = css`
     background: #92400e33;
     color: #fbbf24;
     border: 1px solid #92400e;
+  }
+  .job-detail-badge.paused {
+    background: #991b1b33;
+    color: #f87171;
+    border: 1px solid #991b1b;
   }
 
   .job-detail-meta {
