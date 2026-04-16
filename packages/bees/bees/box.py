@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Literal
 
 from bees.mutations import process_all as process_mutations
+from bees.mutations import process_cold, process_inline
 
 import httpx
 from watchfiles import awatch, Change
@@ -146,8 +147,13 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
     This function runs indefinitely until cancelled or interrupted.
     Config changes cause a restart (inner loop breaks, outer loop
     re-creates ``Bees``). Task changes trigger the scheduler.
-    Mutations are processed in the quiescent gap between shutdown
-    and restart, guaranteeing atomicity.
+
+    Mutations come in two flavors:
+
+    - **Hot** (e.g., respond-to-task) — processed inline, then the
+      scheduler is triggered.
+    - **Cold** (e.g., reset) — processed in the quiescent gap between
+      shutdown and restart.
     """
     logger.info("Box starting — watching %s", hive_dir)
 
@@ -169,7 +175,7 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
         logger.info("Bees started — watching for changes")
 
         restart = False
-        mutation_pending = False
+        cold_pending = False
         try:
             async for changes in awatch(hive_dir):
                 needs_restart = False
@@ -185,12 +191,17 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
                     elif kind == "mutation":
                         needs_mutation = True
 
-                # Mutations take priority — require shutdown + processing.
+                # Process mutations: hot mutations run inline,
+                # cold mutations signal a restart.
                 if needs_mutation:
-                    logger.info("Mutation detected — shutting down for processing")
-                    mutation_pending = True
-                    restart = True
-                    break
+                    outcome = process_inline(hive_dir)
+                    if outcome.hot_processed > 0:
+                        needs_trigger = True
+                    if outcome.cold_pending:
+                        logger.info("Cold mutation pending — shutting down")
+                        cold_pending = True
+                        restart = True
+                        break
 
                 if needs_restart:
                     logger.info("Config change detected — restarting")
@@ -208,9 +219,9 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
 
         await bees.shutdown()
 
-        # Process mutations in the quiescent gap between shutdown and restart.
-        if mutation_pending:
-            process_mutations(hive_dir)
+        # Process cold mutations in the quiescent gap.
+        if cold_pending:
+            process_cold(hive_dir)
 
         if not restart:
             return
