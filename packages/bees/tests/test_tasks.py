@@ -206,7 +206,7 @@ async def test_tasks_create_task_sync_wait_timeout(write_template, monkeypatch):
 
     mock_scheduler = MagicMock()
     mock_scheduler.store = GLOBAL_STORE
-    mock_scheduler.wait_for_ticket = AsyncMock(return_value="running")
+    mock_scheduler.wait_for_task = AsyncMock(return_value="running")
 
     caller = GLOBAL_STORE.create("I'm the caller")
     scope = SubagentScope(workspace_root_id=caller.id)
@@ -224,13 +224,13 @@ async def test_tasks_create_task_sync_wait_timeout(write_template, monkeypatch):
 
     assert "task_id" in result
     assert result["status"] == "running"
-    mock_scheduler.wait_for_ticket.assert_called_once()
+    mock_scheduler.wait_for_task.assert_called_once()
 
 
 @pytest.mark.asyncio
 async def test_tasks_cancel_task():
     mock_scheduler = MagicMock()
-    mock_scheduler.cancel_ticket = MagicMock(return_value=True)
+    mock_scheduler.cancel_task = MagicMock(return_value=True)
 
     scope = SubagentScope(workspace_root_id="caller-id")
     handlers = _make_handlers(scope=scope, caller_ticket_id="caller-id", scheduler=mock_scheduler)
@@ -240,13 +240,13 @@ async def test_tasks_cancel_task():
 
     assert "message" in result
     assert "cancellation requested" in result["message"]
-    mock_scheduler.cancel_ticket.assert_called_once_with("target-id")
+    mock_scheduler.cancel_task.assert_called_once_with("target-id")
 
 
 @pytest.mark.asyncio
 async def test_tasks_cancel_task_not_found():
     mock_scheduler = MagicMock()
-    mock_scheduler.cancel_ticket = MagicMock(return_value=False)
+    mock_scheduler.cancel_task = MagicMock(return_value=False)
 
     scope = SubagentScope(workspace_root_id="caller-id")
     handlers = _make_handlers(scope=scope, caller_ticket_id="caller-id", scheduler=mock_scheduler)

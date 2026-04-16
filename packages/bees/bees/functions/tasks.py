@@ -82,7 +82,7 @@ def _make_handlers(
         if status_cb:
             status_cb(f"Creating task of type: {task_type}")
             
-        from bees.playbook import load_playbook, stamp_child_ticket
+        from bees.playbook import load_playbook, stamp_child_task
         config_dir = scheduler.store.hive_dir / "config"
         try:
             load_playbook(task_type, config_dir)
@@ -95,9 +95,9 @@ def _make_handlers(
             if not parent:
                 return {"error": "Parent ticket not found"}
 
-            task = stamp_child_ticket(
+            task = stamp_child_task(
                 task_type,
-                parent_ticket=parent,
+                parent_task=parent,
                 slug=slug,
                 store=scheduler.store,
                 context=objective,
@@ -115,7 +115,7 @@ def _make_handlers(
         if wait_ms and scheduler:
             if status_cb:
                 status_cb(f"Waiting for task {task.id}...")
-            status = await scheduler.wait_for_ticket(task.id, wait_ms)
+            status = await scheduler.wait_for_task(task.id, wait_ms)
             if status_cb:
                 status_cb(None, None)
                 
@@ -176,7 +176,7 @@ def _make_handlers(
         if not scheduler:
             return {"error": "Scheduler not available in handler"}
             
-        cancelled = scheduler.cancel_ticket(task_id)
+        cancelled = scheduler.cancel_task(task_id)
         
         if status_cb:
             status_cb(None, None)
@@ -208,7 +208,7 @@ def _make_handlers(
                 "message": message,
                 "from_ticket_id": ticket_id,
             }
-            error = scheduler.deliver_to_ticket(
+            error = scheduler.deliver_to_task(
                 task_id,
                 update,
                 expected_creator=caller_ticket_id,

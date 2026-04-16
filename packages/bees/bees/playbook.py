@@ -5,10 +5,10 @@
 Template loader and runner.
 
 A template is an entry in ``hive/config/TEMPLATES.yaml`` that defines a
-single agent ticket: an objective, tools, skills, and metadata.
+single agent task: an objective, tools, skills, and metadata.
 
-Running a template creates one ticket and returns it.  If the template
-declares ``autostart``, child tickets are stamped automatically.
+Running a template creates one task and returns it.  If the template
+declares ``autostart``, child tasks are stamped automatically.
 """
 
 from __future__ import annotations
@@ -105,17 +105,17 @@ def run_playbook(
     owning_task_id: str | None = None,
     slug: str | None = None,
 ) -> Ticket:
-    """Create a ticket from a template.
+    """Create a task from a template.
 
-    If ``owning_task_id`` is provided, the created ticket shares the
-    parent ticket's workspace directory instead of getting its own.
+    If ``owning_task_id`` is provided, the created task shares the
+    parent task's workspace directory instead of getting its own.
 
     If the template has a hooks module with an ``on_run_playbook`` function,
-    it is called before ticket creation. The hook receives the
+    it is called before task creation. The hook receives the
     caller-supplied context and may return enriched context, or ``None``
     to abort the run (raises ``PlaybookAborted``).
 
-    Returns the created ticket.
+    Returns the created task.
     """
     hive_dir = store.hive_dir
     config_dir = hive_dir / "config"
@@ -152,12 +152,12 @@ def run_playbook(
         slug=slug,
     )
 
-    # Autostart: stamp child tickets declared in the template.
+    # Autostart: stamp child tasks declared in the template.
     for child_name in data.get("autostart", []):
         try:
-            stamp_child_ticket(
+            stamp_child_task(
                 child_name,
-                parent_ticket=task,
+                parent_task=task,
                 slug=child_name,
                 store=store,
             )
@@ -170,26 +170,26 @@ def run_playbook(
     return task
 
 
-def stamp_child_ticket(
+def stamp_child_task(
     template_name: str,
     *,
-    parent_ticket: Ticket,
+    parent_task: Ticket,
     slug: str,
     store: TaskStore,
     context: str | None = None,
     title: str | None = None,
     scope: SubagentScope | None = None,
 ) -> Ticket:
-    """Create a child ticket from a template under a parent.
+    """Create a child task from a template under a parent.
 
     Handles SubagentScope composition, sandbox instructions, writable
     directory creation, and ``parent_task_id`` assignment — the
     shared logic for both ``autostart`` and ``tasks_create_task``.
 
-    If *scope* is not provided, one is derived from the parent ticket.
+    If *scope* is not provided, one is derived from the parent task.
     """
     if scope is None:
-        scope = SubagentScope.for_ticket(parent_ticket)
+        scope = SubagentScope.for_ticket(parent_task)
     child_scope = scope.child(slug)
 
     child = run_playbook(
@@ -205,7 +205,7 @@ def stamp_child_ticket(
         child.objective = (
             f"{child.objective}\n\n"
             f"<subagent_context>\n"
-            f"Your parent id is: {parent_ticket.id}\n"
+            f"Your parent id is: {parent_task.id}\n"
             f"</subagent_context>\n"
             f"{sandbox_block}"
         )
@@ -217,7 +217,7 @@ def stamp_child_ticket(
     if title:
         child.metadata.title = title
 
-    child.metadata.parent_task_id = parent_ticket.id
+    child.metadata.parent_task_id = parent_task.id
     store.save_metadata(child)
 
     return child
@@ -242,12 +242,12 @@ def load_system_config(config_dir: Path) -> dict[str, Any]:
 
 
 
-def run_ticket_done_hooks(ticket: Ticket) -> None:
-    """Run ``on_ticket_done`` for the template that owns this ticket.
+def run_task_done_hooks(ticket: Ticket) -> None:
+    """Run ``on_task_done`` for the template that owns this task.
 
-    Looks up the ticket's ``playbook_id`` and, if the corresponding
-    template defines an ``on_ticket_done(ticket)`` hook, calls it.
-    Tickets not created by a template are silently skipped.
+    Looks up the task's ``playbook_id`` and, if the corresponding
+    template defines an ``on_task_done(ticket)`` hook, calls it.
+    Tasks not created by a template are silently skipped.
     """
     playbook_id = ticket.metadata.playbook_id
     if not playbook_id:
@@ -257,12 +257,12 @@ def run_ticket_done_hooks(ticket: Ticket) -> None:
     hooks_dir = hive_dir / "config" / "hooks"
 
     hooks = _load_hooks(playbook_id, hooks_dir)
-    if hooks and hasattr(hooks, "on_ticket_done"):
+    if hooks and hasattr(hooks, "on_task_done"):
         try:
-            hooks.on_ticket_done(ticket)
+            hooks.on_task_done(ticket)
         except Exception as exc:
             logger.warning(
-                "on_ticket_done hook for '%s' failed: %s", playbook_id, exc,
+                "on_task_done hook for '%s' failed: %s", playbook_id, exc,
             )
 
 
