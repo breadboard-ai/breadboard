@@ -1,6 +1,3 @@
-# Copyright 2026 Google LLC
-# SPDX-License-Identifier: Apache-2.0
-
 """
 Mutation log — filesystem-based command channel.
 
@@ -21,8 +18,8 @@ Two processing modes:
   executes all writes atomically, then triggers the scheduler once.
 
 Some hot mutations (``pause-all``) need runtime access to cancel
-in-flight asyncio tasks.  The box passes a ``Bees`` reference via
-``process_inline``.
+in-flight asyncio tasks.  The ``MutationManager`` holds a ``Bees``
+reference for this purpose.
 
 Supported mutation types:
 
@@ -100,417 +97,437 @@ class MutationOutcome:
     """Mapping of ref → task_id for create-task-group results."""
 
 
-# ---------------------------------------------------------------------------
-# Scanning
-# ---------------------------------------------------------------------------
+# Name of the sentinel file that indicates the box is actively listening.
+BOX_ACTIVE_SENTINEL = ".box-active"
 
 
-def scan_pending(hive_dir: Path) -> list[PendingMutation]:
-    """Find mutation files without a matching result file.
+class MutationManager:
+    """Processes mutation files from the hive's ``mutations/`` directory.
 
-    Returns mutations sorted by filename (effectively by creation time
-    if UUIDs are used, though ordering is best-effort).
+    Holds an optional ``Bees`` reference for hot mutations that need
+    runtime access (e.g., cancelling asyncio tasks).  When no ``Bees``
+    instance is available (startup processing), handlers fall back to
+    direct filesystem operations via ``TaskStore``.
     """
-    mutations_dir = hive_dir / "mutations"
-    if not mutations_dir.exists():
-        return []
 
-    pending: list[PendingMutation] = []
+    def __init__(self, hive_dir: Path, bees: Bees | None = None):
+        self._hive_dir = hive_dir
+        self._bees = bees
 
-    for path in sorted(mutations_dir.glob("*.json")):
-        # Skip result files.
-        if path.stem.endswith(".result"):
-            continue
+    # -- Sentinel lifecycle ------------------------------------------------
 
-        # Skip if already processed.
-        result_path = path.with_suffix("").with_suffix(".result.json")
-        if result_path.exists():
-            continue
+    def activate(self) -> None:
+        """Write the box-active sentinel file.
 
+        Called when the box starts listening for mutations.  The hivetool
+        checks for this file to decide whether to show mutation-powered UI.
+        """
+        sentinel = self._mutations_dir / BOX_ACTIVE_SENTINEL
+        sentinel.parent.mkdir(parents=True, exist_ok=True)
+        sentinel.write_text(f"pid={__import__('os').getpid()}\n")
+        logger.info("Box sentinel written: %s", sentinel)
+
+    def deactivate(self) -> None:
+        """Remove the box-active sentinel file.
+
+        Called when the box shuts down.
+        """
+        sentinel = self._mutations_dir / BOX_ACTIVE_SENTINEL
         try:
-            data = json.loads(path.read_text())
-        except (json.JSONDecodeError, OSError) as exc:
-            logger.warning("Skipping unreadable mutation %s: %s", path.name, exc)
-            continue
+            sentinel.unlink(missing_ok=True)
+            logger.info("Box sentinel removed")
+        except OSError:
+            logger.warning("Could not remove box sentinel")
 
-        if not isinstance(data, dict) or "type" not in data:
-            logger.warning("Skipping malformed mutation %s: missing 'type'", path.name)
-            _write_result(
-                result_path,
-                {"status": "error", "error": "Malformed mutation: missing 'type'"},
+    @property
+    def _mutations_dir(self) -> Path:
+        return self._hive_dir / "mutations"
+
+    # -- Public API --------------------------------------------------------
+
+    def process_all(self) -> bool:
+        """Process all pending mutations (startup).
+
+        Handles both hot and cold mutations.  Used when the box starts
+        and no Bees instance is running yet.
+
+        Returns ``True`` if any mutations were processed.
+        """
+        pending = self._scan_pending()
+        if not pending:
+            return False
+
+        for mutation in pending:
+            logger.info(
+                "Processing mutation: %s (%s)",
+                mutation.mutation_type, mutation.path.name,
             )
-            continue
+            self._dispatch(mutation)
 
-        pending.append(PendingMutation(path=path, data=data))
+        return True
 
-    return pending
+    def process_inline(self) -> MutationOutcome:
+        """Process hot mutations inline while the scheduler is running.
 
+        Cold mutations are not processed — they're flagged in the outcome
+        so the caller can initiate a shutdown/restart cycle.
 
-# ---------------------------------------------------------------------------
-# Processing — two modes
-# ---------------------------------------------------------------------------
+        Returns a ``MutationOutcome`` indicating what happened.
+        """
+        pending = self._scan_pending()
+        outcome = MutationOutcome()
 
+        for mutation in pending:
+            if mutation.is_cold:
+                outcome.cold_pending = True
+                continue
 
-def process_all(hive_dir: Path) -> bool:
-    """Process all pending mutations (startup).
+            logger.info(
+                "Processing hot mutation: %s (%s)",
+                mutation.mutation_type, mutation.path.name,
+            )
+            result = self._dispatch(mutation)
+            if result:
+                outcome.hot_processed += 1
+                if result.get("created"):
+                    outcome.created_tasks.update(result["created"])
 
-    Handles both hot and cold mutations.  Used when the box starts
-    and no Bees instance is running yet.
+        return outcome
 
-    Returns ``True`` if any mutations were processed.
-    """
-    pending = scan_pending(hive_dir)
-    if not pending:
-        return False
+    def process_cold(self) -> bool:
+        """Process cold mutations only (requires quiescent state).
 
-    for mutation in pending:
-        logger.info("Processing mutation: %s (%s)", mutation.mutation_type, mutation.path.name)
-        _dispatch(mutation, hive_dir)
+        Called in the gap between Bees shutdown and restart.
+        Returns ``True`` if any cold mutations were processed.
+        """
+        pending = self._scan_pending()
+        processed = False
 
-    return True
+        for mutation in pending:
+            if not mutation.is_cold:
+                continue
 
+            logger.info(
+                "Processing cold mutation: %s (%s)",
+                mutation.mutation_type, mutation.path.name,
+            )
+            self._dispatch(mutation)
+            processed = True
 
-def process_inline(
-    hive_dir: Path,
-    bees: Bees | None = None,
-) -> MutationOutcome:
-    """Process hot mutations inline while the scheduler is running.
+        return processed
 
-    Cold mutations are not processed — they're flagged in the outcome
-    so the caller can initiate a shutdown/restart cycle.
+    # -- Scanning ----------------------------------------------------------
 
-    ``bees`` is passed through to handlers that need runtime
-    access (e.g., ``pause-all`` needs to cancel asyncio tasks).
+    def _scan_pending(self) -> list[PendingMutation]:
+        """Find mutation files without a matching result file.
 
-    Returns a ``MutationOutcome`` indicating what happened.
-    """
-    pending = scan_pending(hive_dir)
-    outcome = MutationOutcome()
+        Returns mutations sorted by filename (effectively by creation
+        time if UUIDs are used, though ordering is best-effort).
+        """
+        mutations_dir = self._hive_dir / "mutations"
+        if not mutations_dir.exists():
+            return []
 
-    for mutation in pending:
-        if mutation.is_cold:
-            outcome.cold_pending = True
-            continue
+        pending: list[PendingMutation] = []
 
-        logger.info("Processing hot mutation: %s (%s)", mutation.mutation_type, mutation.path.name)
-        result = _dispatch(mutation, hive_dir, bees=bees)
-        if result:
-            outcome.hot_processed += 1
-            if result.get("created"):
-                outcome.created_tasks.update(result["created"])
+        for path in sorted(mutations_dir.glob("*.json")):
+            # Skip result files.
+            if path.stem.endswith(".result"):
+                continue
 
-    return outcome
+            # Skip if already processed.
+            result_path = path.with_suffix("").with_suffix(".result.json")
+            if result_path.exists():
+                continue
 
+            try:
+                data = json.loads(path.read_text())
+            except (json.JSONDecodeError, OSError) as exc:
+                logger.warning("Skipping unreadable mutation %s: %s", path.name, exc)
+                continue
 
-def process_cold(hive_dir: Path) -> bool:
-    """Process cold mutations only (requires quiescent state).
-
-    Called in the gap between Bees shutdown and restart.
-    Returns ``True`` if any cold mutations were processed.
-    """
-    pending = scan_pending(hive_dir)
-    processed = False
-
-    for mutation in pending:
-        if not mutation.is_cold:
-            continue
-
-        logger.info("Processing cold mutation: %s (%s)", mutation.mutation_type, mutation.path.name)
-        _dispatch(mutation, hive_dir)
-        processed = True
-
-    return processed
-
-
-# ---------------------------------------------------------------------------
-# Dispatch
-# ---------------------------------------------------------------------------
-
-
-def _dispatch(
-    mutation: PendingMutation,
-    hive_dir: Path,
-    *,
-    bees: Bees | None = None,
-) -> dict[str, Any] | None:
-    """Dispatch a mutation by type and write the result.
-
-    Returns extra result data on success (e.g., created task IDs),
-    or ``None`` on failure.
-    """
-    try:
-        extra: dict[str, Any] = {}
-
-        match mutation.mutation_type:
-            case "reset":
-                _execute_reset(hive_dir)
-            case "respond-to-task":
-                _execute_respond(hive_dir, mutation)
-            case "create-task-group":
-                extra = _execute_create_group(hive_dir, mutation)
-            case "cancel-all" | "pause-all":
-                extra = _execute_pause_all(hive_dir, bees)
-            case "resume-cancelled" | "resume-paused":
-                extra = _execute_resume_paused(hive_dir, bees)
-            case "pause-task":
-                extra = _execute_pause_task(hive_dir, mutation, bees)
-            case "resume-task":
-                extra = _execute_resume_task(hive_dir, mutation, bees)
-            case _:
-                _write_result(
-                    mutation.result_path,
-                    {
-                        "status": "error",
-                        "error": f"Unknown mutation type: {mutation.mutation_type}",
-                    },
+            if not isinstance(data, dict) or "type" not in data:
+                logger.warning(
+                    "Skipping malformed mutation %s: missing 'type'", path.name,
                 )
-                return None
+                self._write_result(
+                    result_path,
+                    {"status": "error", "error": "Malformed mutation: missing 'type'"},
+                )
+                continue
 
-        result = {"status": "ok", **extra}
-        _write_result(mutation.result_path, result)
-        logger.info("Mutation complete: %s", mutation.mutation_type)
-        return result
+            pending.append(PendingMutation(path=path, data=data))
 
-    except Exception as exc:
-        logger.exception("Mutation failed: %s", mutation.mutation_type)
-        _write_result(
-            mutation.result_path,
-            {"status": "error", "error": str(exc)},
-        )
-        return None
+        return pending
 
+    # -- Dispatch ----------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# Mutation handlers
-# ---------------------------------------------------------------------------
+    def _dispatch(self, mutation: PendingMutation) -> dict[str, Any] | None:
+        """Dispatch a mutation by type and write the result.
 
+        Returns extra result data on success (e.g., created task IDs),
+        or ``None`` on failure.
+        """
+        try:
+            extra: dict[str, Any] = {}
 
-def _execute_reset(hive_dir: Path) -> None:
-    """Delete all tasks and session logs.
-
-    Removes the contents of ``tickets/`` and ``logs/`` while preserving
-    the directories themselves (so watchers don't lose their handles).
-    """
-    for subdir_name in ("tickets", "logs", "mutations"):
-        subdir = hive_dir / subdir_name
-        if not subdir.exists():
-            continue
-
-        for child in subdir.iterdir():
-            if child.is_dir():
-                shutil.rmtree(child)
-            else:
-                child.unlink()
-
-        logger.info("Cleared %s/", subdir_name)
-
-
-def _execute_respond(hive_dir: Path, mutation: PendingMutation) -> None:
-    """Write response and flip assignee atomically.
-
-    Both writes happen before the scheduler is triggered, so the
-    scheduler never sees a metadata flip without a response file.
-    """
-    task_id = mutation.data.get("task_id")
-    response = mutation.data.get("response")
-
-    if not task_id:
-        raise ValueError("respond-to-task mutation missing 'task_id'")
-    if response is None:
-        raise ValueError("respond-to-task mutation missing 'response'")
-
-    store = TaskStore(hive_dir)
-    store.respond(task_id, response)
-    logger.info("Response written for task %s", task_id[:8])
-
-
-def _execute_create_group(hive_dir: Path, mutation: PendingMutation) -> dict[str, Any]:
-    """Create multiple tasks with intra-batch dependency resolution.
-
-    Tasks are created sequentially.  Each task may include a ``ref``
-    name and a ``depends_on`` list of refs.  Refs are resolved to real
-    task IDs within the batch.
-
-    Returns ``{"created": {"ref": "task-id", ...}}`` for the result file.
-    """
-    tasks = mutation.data.get("tasks")
-    if not tasks or not isinstance(tasks, list):
-        raise ValueError("create-task-group mutation missing 'tasks' array")
-
-    store = TaskStore(hive_dir)
-    ref_to_id: dict[str, str] = {}
-
-    for task_spec in tasks:
-        ref = task_spec.get("ref")
-        depends_on_refs = task_spec.get("depends_on", [])
-
-        # Resolve ref-based dependencies to real task IDs.
-        resolved_deps: list[str] | None = None
-        if depends_on_refs:
-            resolved_deps = []
-            for dep_ref in depends_on_refs:
-                dep_id = ref_to_id.get(dep_ref)
-                if not dep_id:
-                    raise ValueError(
-                        f"Unresolved dependency ref '{dep_ref}' in task "
-                        f"'{ref or '(unnamed)'}'. Refs must reference "
-                        f"earlier tasks in the group."
+            match mutation.mutation_type:
+                case "reset":
+                    self._handle_reset()
+                case "respond-to-task":
+                    self._handle_respond(mutation)
+                case "create-task-group":
+                    extra = self._handle_create_group(mutation)
+                case "cancel-all" | "pause-all":
+                    extra = self._handle_pause_all()
+                case "resume-cancelled" | "resume-paused":
+                    extra = self._handle_resume_paused()
+                case "pause-task":
+                    extra = self._handle_pause_task(mutation)
+                case "resume-task":
+                    extra = self._handle_resume_task(mutation)
+                case _:
+                    self._write_result(
+                        mutation.result_path,
+                        {
+                            "status": "error",
+                            "error": f"Unknown mutation type: {mutation.mutation_type}",
+                        },
                     )
-                resolved_deps.append(dep_id)
+                    return None
 
-        # Create the task — if it has resolved deps, it starts blocked.
-        task = store.create(
-            objective=task_spec.get("objective", ""),
-            title=task_spec.get("title"),
-            playbook_id=task_spec.get("playbook_id"),
-            tags=task_spec.get("tags"),
-            functions=task_spec.get("functions"),
-            skills=task_spec.get("skills"),
-            tasks=task_spec.get("tasks"),
-            model=task_spec.get("model"),
-            context=task_spec.get("context"),
-            watch_events=task_spec.get("watch_events"),
-            kind=task_spec.get("kind", "work"),
-        )
+            result = {"status": "ok", **extra}
+            self._write_result(mutation.result_path, result)
+            logger.info("Mutation complete: %s", mutation.mutation_type)
+            return result
 
-        # Override dependency state if ref-based deps were specified.
-        if resolved_deps:
-            task.metadata.depends_on = resolved_deps
-            task.metadata.status = "blocked"
-            store.save_metadata(task)
+        except Exception as exc:
+            logger.exception("Mutation failed: %s", mutation.mutation_type)
+            self._write_result(
+                mutation.result_path,
+                {"status": "error", "error": str(exc)},
+            )
+            return None
 
-        if ref:
-            ref_to_id[ref] = task.id
+    # -- Handlers ----------------------------------------------------------
 
-        logger.info(
-            "Created task %s%s",
-            task.id[:8],
-            f" (ref={ref})" if ref else "",
-        )
+    def _handle_reset(self) -> None:
+        """Delete all tasks and session logs.
 
-    return {"created": ref_to_id}
+        Removes the contents of ``tickets/``, ``logs/``, and
+        ``mutations/`` while preserving the directories themselves
+        (so watchers don't lose their handles).
+        """
+        for subdir_name in ("tickets", "logs", "mutations"):
+            subdir = self._hive_dir / subdir_name
+            if not subdir.exists():
+                continue
 
+            for child in subdir.iterdir():
+                if child.is_dir():
+                    shutil.rmtree(child)
+                else:
+                    child.unlink()
 
-def _execute_pause_all(
-    hive_dir: Path,
-    bees: Bees | None,
-) -> dict[str, Any]:
-    """Pause all non-terminal tasks.
+            logger.info("Cleared %s/", subdir_name)
 
-    When a ``Bees`` instance is available (inline processing), delegates
-    to the high-level ``pause_all()`` API.  Falls back to pure filesystem
-    operations when processing at startup without a live scheduler.
-    """
-    if bees:
-        count = bees.pause_all()
-    else:
-        # Startup fallback: no live scheduler, just flip metadata.
-        store = TaskStore(hive_dir)
-        count = 0
-        for status in ("available", "blocked", "running", "suspended"):
-            for task in store.query_all(status=status):
+    def _handle_respond(self, mutation: PendingMutation) -> None:
+        """Write response and flip assignee atomically.
+
+        Uses ``TaskNode.respond()`` when a Bees instance is available,
+        falling back to ``TaskStore.respond()`` at startup.
+        """
+        task_id = mutation.data.get("task_id")
+        response = mutation.data.get("response")
+
+        if not task_id:
+            raise ValueError("respond-to-task mutation missing 'task_id'")
+        if response is None:
+            raise ValueError("respond-to-task mutation missing 'response'")
+
+        if self._bees:
+            node = self._bees.get_by_id(task_id)
+            if not node:
+                raise ValueError(f"Task {task_id[:8]} not found")
+            node.respond(response)
+        else:
+            store = TaskStore(self._hive_dir)
+            store.respond(task_id, response)
+
+        logger.info("Response written for task %s", task_id[:8])
+
+    def _handle_create_group(
+        self, mutation: PendingMutation,
+    ) -> dict[str, Any]:
+        """Create multiple tasks with intra-batch dependency resolution.
+
+        Tasks are created sequentially.  Each task may include a ``ref``
+        name and a ``depends_on`` list of refs.  Refs are resolved to
+        real task IDs within the batch.
+
+        Returns ``{"created": {"ref": "task-id", ...}}``.
+        """
+        tasks = mutation.data.get("tasks")
+        if not tasks or not isinstance(tasks, list):
+            raise ValueError("create-task-group mutation missing 'tasks' array")
+
+        store = TaskStore(self._hive_dir)
+        ref_to_id: dict[str, str] = {}
+
+        for task_spec in tasks:
+            ref = task_spec.get("ref")
+            depends_on_refs = task_spec.get("depends_on", [])
+
+            # Resolve ref-based dependencies to real task IDs.
+            resolved_deps: list[str] | None = None
+            if depends_on_refs:
+                resolved_deps = []
+                for dep_ref in depends_on_refs:
+                    dep_id = ref_to_id.get(dep_ref)
+                    if not dep_id:
+                        raise ValueError(
+                            f"Unresolved dependency ref '{dep_ref}' in task "
+                            f"'{ref or '(unnamed)'}'. Refs must reference "
+                            f"earlier tasks in the group."
+                        )
+                    resolved_deps.append(dep_id)
+
+            # Create the task — if it has resolved deps, it starts blocked.
+            task = store.create(
+                objective=task_spec.get("objective", ""),
+                title=task_spec.get("title"),
+                playbook_id=task_spec.get("playbook_id"),
+                tags=task_spec.get("tags"),
+                functions=task_spec.get("functions"),
+                skills=task_spec.get("skills"),
+                tasks=task_spec.get("tasks"),
+                model=task_spec.get("model"),
+                context=task_spec.get("context"),
+                watch_events=task_spec.get("watch_events"),
+                kind=task_spec.get("kind", "work"),
+            )
+
+            # Override dependency state if ref-based deps were specified.
+            if resolved_deps:
+                task.metadata.depends_on = resolved_deps
+                task.metadata.status = "blocked"
+                store.save_metadata(task)
+
+            if ref:
+                ref_to_id[ref] = task.id
+
+            logger.info(
+                "Created task %s%s",
+                task.id[:8],
+                f" (ref={ref})" if ref else "",
+            )
+
+        return {"created": ref_to_id}
+
+    def _handle_pause_all(self) -> dict[str, Any]:
+        """Pause all non-terminal tasks.
+
+        Delegates to ``Bees.pause_all()`` when available, falls back
+        to direct filesystem operations at startup.
+        """
+        if self._bees:
+            count = self._bees.pause_all()
+        else:
+            store = TaskStore(self._hive_dir)
+            count = 0
+            for status in ("available", "blocked", "running", "suspended"):
+                for task in store.query_all(status=status):
+                    task.metadata.paused_from = task.metadata.status
+                    task.metadata.status = "paused"
+                    store.save_metadata(task)
+                    count += 1
+
+        logger.info("Paused %d task(s)", count)
+        return {"paused": count}
+
+    def _handle_resume_paused(self) -> dict[str, Any]:
+        """Flip all paused tasks back to their pre-pause status."""
+        if self._bees:
+            count = self._bees.resume_all()
+        else:
+            store = TaskStore(self._hive_dir)
+            paused = store.query_all(status="paused")
+            for task in paused:
+                task.metadata.status = task.metadata.paused_from or "available"
+                task.metadata.paused_from = None
+                store.save_metadata(task)
+            count = len(paused)
+
+        logger.info("Resumed %d paused task(s)", count)
+        return {"resumed": count}
+
+    def _handle_pause_task(self, mutation: PendingMutation) -> dict[str, Any]:
+        """Pause a single task by ID."""
+        task_id = mutation.data.get("task_id")
+        if not task_id:
+            raise ValueError("pause-task mutation missing 'task_id'")
+
+        if self._bees:
+            node = self._bees.get_by_id(task_id)
+            paused = node.pause() if node else False
+        else:
+            store = TaskStore(self._hive_dir)
+            task = store.get(task_id)
+            if not task or task.metadata.status in (
+                "completed", "failed", "cancelled", "paused",
+            ):
+                paused = False
+            else:
                 task.metadata.paused_from = task.metadata.status
                 task.metadata.status = "paused"
                 store.save_metadata(task)
-                count += 1
+                paused = True
 
-    logger.info("Paused %d task(s)", count)
-    return {"paused": count}
+        if paused:
+            logger.info("Paused task %s", task_id[:8])
+        else:
+            logger.warning("Could not pause task %s", task_id[:8])
 
+        return {"paused": paused}
 
-def _execute_resume_paused(
-    hive_dir: Path,
-    bees: Bees | None,
-) -> dict[str, Any]:
-    """Flip all paused tasks back to their pre-pause status."""
-    if bees:
-        count = bees.resume_all()
-    else:
-        store = TaskStore(hive_dir)
-        paused = store.query_all(status="paused")
-        for task in paused:
+    def _handle_resume_task(self, mutation: PendingMutation) -> dict[str, Any]:
+        """Resume a single paused task by ID."""
+        task_id = mutation.data.get("task_id")
+        if not task_id:
+            raise ValueError("resume-task mutation missing 'task_id'")
+
+        if self._bees:
+            node = self._bees.get_by_id(task_id)
+            resumed = node.resume() if node else False
+        else:
+            store = TaskStore(self._hive_dir)
+            task = store.get(task_id)
+            if not task or task.metadata.status != "paused":
+                logger.warning(
+                    "Could not resume task %s (not paused)", task_id[:8],
+                )
+                return {"resumed": False}
             task.metadata.status = task.metadata.paused_from or "available"
             task.metadata.paused_from = None
             store.save_metadata(task)
-        count = len(paused)
+            resumed = True
 
-    logger.info("Resumed %d paused task(s)", count)
-    return {"resumed": count}
-
-
-def _execute_pause_task(
-    hive_dir: Path,
-    mutation: PendingMutation,
-    bees: Bees | None,
-) -> dict[str, Any]:
-    """Pause a single task by ID."""
-    task_id = mutation.data.get("task_id")
-    if not task_id:
-        raise ValueError("pause-task mutation missing 'task_id'")
-
-    if bees:
-        node = bees.get_by_id(task_id)
-        paused = node.pause() if node else False
-    else:
-        store = TaskStore(hive_dir)
-        task = store.get(task_id)
-        if not task or task.metadata.status in ("completed", "failed", "cancelled", "paused"):
-            paused = False
+        if resumed:
+            logger.info("Resumed task %s", task_id[:8])
         else:
-            task.metadata.paused_from = task.metadata.status
-            task.metadata.status = "paused"
-            store.save_metadata(task)
-            paused = True
+            logger.warning(
+                "Could not resume task %s (not paused)", task_id[:8],
+            )
 
-    if paused:
-        logger.info("Paused task %s", task_id[:8])
-    else:
-        logger.warning("Could not pause task %s", task_id[:8])
+        return {"resumed": resumed}
 
-    return {"paused": paused}
+    # -- Utilities ---------------------------------------------------------
 
-
-def _execute_resume_task(
-    hive_dir: Path,
-    mutation: PendingMutation,
-    bees: Bees | None,
-) -> dict[str, Any]:
-    """Resume a single paused task by ID."""
-    task_id = mutation.data.get("task_id")
-    if not task_id:
-        raise ValueError("resume-task mutation missing 'task_id'")
-
-    if bees:
-        node = bees.get_by_id(task_id)
-        resumed = node.resume() if node else False
-    else:
-        store = TaskStore(hive_dir)
-        task = store.get(task_id)
-        if not task or task.metadata.status != "paused":
-            logger.warning("Could not resume task %s (not paused)", task_id[:8])
-            return {"resumed": False}
-        task.metadata.status = task.metadata.paused_from or "available"
-        task.metadata.paused_from = None
-        store.save_metadata(task)
-        resumed = True
-
-    if resumed:
-        logger.info("Resumed task %s", task_id[:8])
-    else:
-        logger.warning("Could not resume task %s (not paused)", task_id[:8])
-
-    return {"resumed": resumed}
-
-
-# ---------------------------------------------------------------------------
-# Result writing
-# ---------------------------------------------------------------------------
-
-
-def _write_result(result_path: Path, result: dict[str, Any]) -> None:
-    """Write a mutation result file."""
-    result["timestamp"] = datetime.now(timezone.utc).isoformat()
-    result_path.parent.mkdir(parents=True, exist_ok=True)
-    result_path.write_text(
-        json.dumps(result, indent=2, ensure_ascii=False) + "\n"
-    )
+    @staticmethod
+    def _write_result(result_path: Path, result: dict[str, Any]) -> None:
+        """Write a mutation result file."""
+        result["timestamp"] = datetime.now(timezone.utc).isoformat()
+        result_path.parent.mkdir(parents=True, exist_ok=True)
+        result_path.write_text(
+            json.dumps(result, indent=2, ensure_ascii=False) + "\n"
+        )

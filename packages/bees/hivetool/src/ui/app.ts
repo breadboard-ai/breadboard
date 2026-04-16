@@ -12,7 +12,7 @@
  */
 
 import { SignalWatcher } from "@lit-labs/signals";
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 
 import { APP_ICON, APP_NAME } from "../constants.js";
@@ -318,6 +318,7 @@ class BeesApp extends SignalWatcher(LitElement) {
       this.skillStore.activate(),
       this.systemStore.activate(),
     ]);
+    this.mutationClient.startObserving();
   }
 
   private async handleOpenDirectory(): Promise<void> {
@@ -617,6 +618,9 @@ class BeesApp extends SignalWatcher(LitElement) {
   }
 
   private renderHiveControl() {
+    // Only show mutation-powered controls when the box is listening.
+    if (!this.mutationClient.boxActive.get()) return nothing;
+
     const tickets = this.ticketStore.tickets.get();
 
     const hasActive = tickets.some(

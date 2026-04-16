@@ -16,9 +16,13 @@
  * Effects are observed through existing store observers.
  */
 
+import { Signal } from "signal-polyfill";
 import type { StateAccess } from "./state-access.js";
 
 export { MutationClient };
+
+/** Name of the sentinel file written by the box. */
+const BOX_ACTIVE_SENTINEL = ".box-active";
 
 /** Task specification for batch creation. */
 interface TaskSpec {
@@ -39,6 +43,57 @@ interface TaskSpec {
 
 class MutationClient {
   constructor(private access: StateAccess) {}
+
+  /**
+   * Reactive signal: `true` when the box is actively listening for
+   * mutations (sentinel file exists in `mutations/`).
+   */
+  readonly boxActive = new Signal.State<boolean>(false);
+
+  #sentinelObserver: { disconnect(): void } | null = null;
+
+  /**
+   * Start observing the mutations directory for the box-active sentinel.
+   * Uses FileSystemObserver when available, otherwise does a single check.
+   */
+  async startObserving(): Promise<void> {
+    if (this.#sentinelObserver) return;
+
+    // Do an initial check.
+    await this.#checkSentinel();
+
+    if (!("FileSystemObserver" in globalThis)) return;
+
+    try {
+      const mutationsDir = await this.#getMutationsDir();
+      // FileSystemObserver is experimental — access via dynamic typing.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const Ctor = (globalThis as any).FileSystemObserver;
+      const observer = new Ctor(() => void this.#checkSentinel());
+      observer.observe(mutationsDir);
+      this.#sentinelObserver = observer;
+    } catch (e) {
+      console.warn("Could not observe mutations/ for sentinel:", e);
+    }
+  }
+
+  /** Stop observing. */
+  stopObserving(): void {
+    if (this.#sentinelObserver) {
+      this.#sentinelObserver.disconnect();
+      this.#sentinelObserver = null;
+    }
+  }
+
+  async #checkSentinel(): Promise<void> {
+    try {
+      const mutationsDir = await this.#getMutationsDir();
+      await mutationsDir.getFileHandle(BOX_ACTIVE_SENTINEL);
+      this.boxActive.set(true);
+    } catch {
+      this.boxActive.set(false);
+    }
+  }
 
   /**
    * Request a hive reset — deletes all tasks and session logs.

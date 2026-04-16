@@ -739,6 +739,9 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
   // ── Per-task pause / resume ──
 
   private renderTaskControl(taskId: string, status: string) {
+    // Only show when the box is actively listening for mutations.
+    if (!this.mutationClient?.boxActive.get()) return nothing;
+
     const ACTIVE = new Set(["running", "available", "suspended", "blocked"]);
 
     if (ACTIVE.has(status)) {
@@ -806,8 +809,9 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
       assignee === "user" &&
       functionName !== "chat_await_context_update";
 
-    // For user-facing suspensions, show interactive response UI.
-    if (isUserFacing) {
+    // For user-facing suspensions, show interactive response UI
+    // only when the box is actively listening for mutations.
+    if (isUserFacing && this.mutationClient?.boxActive.get()) {
       const waitForInput = suspendEvent.waitForInput as
         | Record<string, unknown>
         | undefined;

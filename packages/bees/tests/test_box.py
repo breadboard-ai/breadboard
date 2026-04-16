@@ -77,3 +77,20 @@ class TestClassifyChange:
 
     def test_dot_files_ignored(self):
         assert classify_change(HIVE / ".DS_Store", HIVE) == "ignore"
+
+    # -- Mutation paths --
+
+    def test_mutation_file(self):
+        assert classify_change(
+            HIVE / "mutations" / "abc-123.json", HIVE
+        ) == "mutation"
+
+    def test_mutation_result_ignored(self):
+        assert classify_change(
+            HIVE / "mutations" / "abc-123.result.json", HIVE
+        ) == "ignore"
+
+    def test_box_sentinel_ignored(self):
+        assert classify_change(
+            HIVE / "mutations" / ".box-active", HIVE
+        ) == "ignore"

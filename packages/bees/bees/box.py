@@ -34,8 +34,7 @@ import sys
 from pathlib import Path
 from typing import Literal
 
-from bees.mutations import process_all as process_mutations
-from bees.mutations import process_cold, process_inline
+from bees.mutations import MutationManager
 
 import httpx
 from watchfiles import awatch, Change
@@ -86,6 +85,8 @@ def classify_change(path: Path, hive_dir: Path) -> ChangeKind:
     # Ignore result files (written by the box itself).
     if top == "mutations":
         if path.name.endswith(".result.json"):
+            return "ignore"
+        if path.name.startswith("."):
             return "ignore"
         return "mutation"
 
@@ -158,8 +159,12 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
     logger.info("Box starting — watching %s", hive_dir)
 
     # Process any mutations that arrived while the box was down.
-    if process_mutations(hive_dir):
+    startup_manager = MutationManager(hive_dir)
+    if startup_manager.process_all():
         logger.info("Processed pending mutations on startup")
+
+    # Write sentinel so hivetool knows the box is listening.
+    startup_manager.activate()
 
     while True:
         bees = Bees(hive_dir, backend)
@@ -194,7 +199,8 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
                 # Process mutations: hot mutations run inline,
                 # cold mutations signal a restart.
                 if needs_mutation:
-                    outcome = process_inline(hive_dir, bees=bees)
+                    manager = MutationManager(hive_dir, bees=bees)
+                    outcome = manager.process_inline()
                     if outcome.hot_processed > 0:
                         needs_trigger = True
                     if outcome.cold_pending:
@@ -215,15 +221,18 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
         except asyncio.CancelledError:
             logger.info("Box cancelled — shutting down")
             await bees.shutdown()
+            MutationManager(hive_dir).deactivate()
             return
 
         await bees.shutdown()
 
         # Process cold mutations in the quiescent gap.
         if cold_pending:
-            process_cold(hive_dir)
+            cold_manager = MutationManager(hive_dir)
+            cold_manager.process_cold()
 
         if not restart:
+            MutationManager(hive_dir).deactivate()
             return
 
         logger.info("Restarting bees...")
