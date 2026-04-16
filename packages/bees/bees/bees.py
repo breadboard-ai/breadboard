@@ -23,11 +23,11 @@ class Bees:
         self._loop_task = None
         
         hooks = SchedulerHooks(
-            on_ticket_added=lambda t: self._emit("task_added", t),
+            on_task_added=lambda t: self._emit("task_added", t),
             on_cycle_start=lambda c, a, r: self._emit("cycle_start", c, a, r),
-            on_ticket_event=lambda t, e: self._emit("task_event", t, e),
-            on_ticket_start=lambda t: self._emit("task_start", t),
-            on_ticket_done=lambda t: self._emit("task_done", t),
+            on_task_event=lambda t, e: self._emit("task_event", t, e),
+            on_task_start=lambda t: self._emit("task_start", t),
+            on_task_done=lambda t: self._emit("task_done", t),
             on_cycle_complete=lambda c: self._emit("cycle_complete", c),
         )
         self._scheduler = Scheduler(backend=backend, hooks=hooks, store=self._store)

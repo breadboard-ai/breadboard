@@ -1,7 +1,7 @@
 # Copyright 2026 Google LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for the Scheduler wait_for_ticket mechanism."""
+"""Tests for the Scheduler wait_for_task mechanism."""
 
 from __future__ import annotations
 
@@ -50,7 +50,7 @@ def write_template(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_wait_for_ticket_already_completed(mock_clients):
+async def test_wait_for_task_already_completed(mock_clients):
     _, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
     
@@ -58,12 +58,12 @@ async def test_wait_for_ticket_already_completed(mock_clients):
     ticket.metadata.status = "completed"
     GLOBAL_STORE.save_metadata(ticket)
     
-    status = await scheduler.wait_for_ticket(ticket.id, timeout_ms=100)
+    status = await scheduler.wait_for_task(ticket.id, timeout_ms=100)
     assert status == "completed"
 
 
 @pytest.mark.asyncio
-async def test_wait_for_ticket_blocks_and_completes(mock_clients):
+async def test_wait_for_task_blocks_and_completes(mock_clients):
     _, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
     
@@ -73,10 +73,10 @@ async def test_wait_for_ticket_blocks_and_completes(mock_clients):
         await asyncio.sleep(0.05)
         ticket.metadata.status = "completed"
         GLOBAL_STORE.save_metadata(ticket)
-        scheduler._notify_ticket_done(ticket.id)
+        scheduler._notify_task_done(ticket.id)
 
     # Run wait and simulation concurrently
-    wait_task = asyncio.create_task(scheduler.wait_for_ticket(ticket.id, timeout_ms=1000))
+    wait_task = asyncio.create_task(scheduler.wait_for_task(ticket.id, timeout_ms=1000))
     await simulate_completion()
     
     status = await wait_task
@@ -84,7 +84,7 @@ async def test_wait_for_ticket_blocks_and_completes(mock_clients):
 
 
 @pytest.mark.asyncio
-async def test_wait_for_ticket_timeout(mock_clients):
+async def test_wait_for_task_timeout(mock_clients):
     _, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
     
@@ -92,12 +92,12 @@ async def test_wait_for_ticket_timeout(mock_clients):
     ticket.metadata.status = "running"
     GLOBAL_STORE.save_metadata(ticket)
     
-    status = await scheduler.wait_for_ticket(ticket.id, timeout_ms=50)
+    status = await scheduler.wait_for_task(ticket.id, timeout_ms=50)
     assert status == "running" # Returns current status on timeout
 
 
 @pytest.mark.asyncio
-async def test_wait_for_ticket_returns_early_on_suspend(mock_clients):
+async def test_wait_for_task_returns_early_on_suspend(mock_clients):
     _, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
     
@@ -109,9 +109,9 @@ async def test_wait_for_ticket_returns_early_on_suspend(mock_clients):
         await asyncio.sleep(0.05)
         ticket.metadata.status = "suspended"
         GLOBAL_STORE.save_metadata(ticket)
-        scheduler._notify_ticket_done(ticket.id)
+        scheduler._notify_task_done(ticket.id)
 
-    wait_task = asyncio.create_task(scheduler.wait_for_ticket(ticket.id, timeout_ms=1000))
+    wait_task = asyncio.create_task(scheduler.wait_for_task(ticket.id, timeout_ms=1000))
     await simulate_suspend()
     
     status = await wait_task
@@ -119,7 +119,7 @@ async def test_wait_for_ticket_returns_early_on_suspend(mock_clients):
 
 
 @pytest.mark.asyncio
-async def test_wait_for_ticket_returns_early_on_fail(mock_clients):
+async def test_wait_for_task_returns_early_on_fail(mock_clients):
     _, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
     
@@ -131,9 +131,9 @@ async def test_wait_for_ticket_returns_early_on_fail(mock_clients):
         await asyncio.sleep(0.05)
         ticket.metadata.status = "failed"
         GLOBAL_STORE.save_metadata(ticket)
-        scheduler._notify_ticket_done(ticket.id)
+        scheduler._notify_task_done(ticket.id)
 
-    wait_task = asyncio.create_task(scheduler.wait_for_ticket(ticket.id, timeout_ms=1000))
+    wait_task = asyncio.create_task(scheduler.wait_for_task(ticket.id, timeout_ms=1000))
     await simulate_fail()
     
     status = await wait_task
@@ -191,7 +191,7 @@ async def test_enrich_parent_tags_merges(mock_clients):
 
 @pytest.mark.asyncio
 async def test_enrich_parent_tags_no_parent(mock_clients):
-    """No crash when parent_task_id points to a nonexistent ticket."""
+    """No crash when parent_task_id points to a nonexistent task."""
     _, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
 
@@ -260,7 +260,7 @@ def test_eval_collector_detects_paused():
 
 
 def test_update_metadata_paused(mock_clients):
-    """Paused result → ticket status 'paused', completed_at is None."""
+    """Paused result → task status 'paused', completed_at is None."""
     from bees.session import SessionResult
 
     _, backend = mock_clients
@@ -276,7 +276,7 @@ def test_update_metadata_paused(mock_clients):
         error="503 Service Unavailable",
     )
 
-    scheduler._update_metadata(ticket, result)
+    scheduler._runner._update_metadata(ticket, result)
 
     # _update_metadata sets completed_at, but for paused it should be None.
     assert ticket.metadata.completed_at is None
@@ -286,7 +286,7 @@ def test_update_metadata_paused(mock_clients):
 
 
 def test_handle_pause_sets_status(mock_clients):
-    """_handle_pause sets ticket status to 'paused', assignee to None."""
+    """_handle_pause sets task status to 'paused', assignee to None."""
     from bees.session import SessionResult
 
     _, backend = mock_clients
@@ -305,15 +305,15 @@ def test_handle_pause_sets_status(mock_clients):
         error="503 Service Unavailable",
     )
 
-    scheduler._handle_pause(ticket, result)
+    scheduler._runner._handle_pause(ticket, result)
 
     assert ticket.metadata.status == "paused"
     assert ticket.metadata.assignee is None
 
 
 def test_promote_does_not_cascade_paused(mock_clients):
-    """A blocked ticket with a paused dep stays blocked (no cascade)."""
-    from bees.scheduler import promote_blocked_tickets
+    """A blocked task with a paused dep stays blocked (no cascade)."""
+    from bees.scheduler import promote_blocked_tasks
 
     parent = GLOBAL_STORE.create("Parent")
     parent.metadata.status = "paused"
@@ -324,7 +324,7 @@ def test_promote_does_not_cascade_paused(mock_clients):
     child.metadata.depends_on = [parent.id]
     GLOBAL_STORE.save_metadata(child)
 
-    promote_blocked_tickets(GLOBAL_STORE)
+    promote_blocked_tasks(GLOBAL_STORE)
 
     fresh_child = GLOBAL_STORE.get(child.id)
     # Should still be blocked, NOT failed.

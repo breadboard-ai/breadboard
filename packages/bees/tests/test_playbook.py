@@ -16,7 +16,7 @@ from bees.playbook import (
     load_system_config,
     run_playbook as _real_run_playbook,
     run_event_hooks,
-    stamp_child_ticket as _real_stamp_child_ticket,
+    stamp_child_task as _real_stamp_child_task,
 )
 from bees.task_store import _DEP_PATTERN
 from bees.task_store import TaskStore
@@ -27,9 +27,9 @@ def run_playbook(name: str, **kwargs):
     assert GLOBAL_STORE is not None, "GLOBAL_STORE not initialized"
     return _real_run_playbook(name, store=GLOBAL_STORE, **kwargs)
 
-def stamp_child_ticket(template_name: str, *, parent_ticket, slug, **kwargs):
+def stamp_child_task(template_name: str, *, parent_task, slug, **kwargs):
     assert GLOBAL_STORE is not None, "GLOBAL_STORE not initialized"
-    return _real_stamp_child_ticket(template_name, parent_ticket=parent_ticket, slug=slug, store=GLOBAL_STORE, **kwargs)
+    return _real_stamp_child_task(template_name, parent_task=parent_task, slug=slug, store=GLOBAL_STORE, **kwargs)
 
 @pytest.fixture(autouse=True)
 def _temp_dirs(tmp_path):
@@ -342,10 +342,10 @@ class TestLoadSystemConfig:
         assert config == {}
 
 
-# --- stamp_child_ticket ---
+# --- stamp_child_task ---
 
 
-class TestStampChildTicket:
+class TestStampChildTask:
 
     def test_creates_child_with_correct_hierarchy(self, write_template):
         write_template(
@@ -354,8 +354,8 @@ class TestStampChildTicket:
         )
 
         parent = run_playbook("parent")
-        child = stamp_child_ticket(
-            "worker", parent_ticket=parent, slug="my-worker",
+        child = stamp_child_task(
+            "worker", parent_task=parent, slug="my-worker",
         )
 
         assert child.metadata.parent_task_id == parent.id
@@ -370,8 +370,8 @@ class TestStampChildTicket:
         )
 
         parent = run_playbook("parent")
-        child = stamp_child_ticket(
-            "worker", parent_ticket=parent, slug="my-worker",
+        child = stamp_child_task(
+            "worker", parent_task=parent, slug="my-worker",
         )
 
         assert "<sandbox_environment>" in child.objective
@@ -385,8 +385,8 @@ class TestStampChildTicket:
         )
 
         parent = run_playbook("parent")
-        child = stamp_child_ticket(
-            "worker", parent_ticket=parent, slug="my-worker",
+        child = stamp_child_task(
+            "worker", parent_task=parent, slug="my-worker",
         )
 
         writable = child.fs_dir / "my-worker"
@@ -399,8 +399,8 @@ class TestStampChildTicket:
         )
 
         parent = run_playbook("parent")
-        child = stamp_child_ticket(
-            "worker", parent_ticket=parent, slug="w",
+        child = stamp_child_task(
+            "worker", parent_task=parent, slug="w",
             context="the important thing",
         )
 
@@ -413,8 +413,8 @@ class TestStampChildTicket:
         )
 
         parent = run_playbook("parent")
-        child = stamp_child_ticket(
-            "worker", parent_ticket=parent, slug="w",
+        child = stamp_child_task(
+            "worker", parent_task=parent, slug="w",
             title="Custom Title",
         )
 
