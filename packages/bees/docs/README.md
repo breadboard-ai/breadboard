@@ -27,6 +27,8 @@
 
 ## Tooling
 
+- [box.md](box.md) — The filesystem-driven orchestrator. Watches the hive for
+  changes and drives the scheduler without an HTTP server.
 - [hivetool.md](hivetool.md) — The built-in developer workbench for inspecting
   and editing hive configuration.
 
