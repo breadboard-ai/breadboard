@@ -38,7 +38,7 @@ from opal_backend.sessions.api import (
     update_context,
 )
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
-from bees.functions.skills import get_skills_function_group, scan_skills
+from bees.functions.skills import get_skills_function_group
 from bees.functions.simple_files import get_simple_files_function_group_factory
 from bees.functions.system import get_system_function_group_factory
 from bees.functions.sandbox import get_sandbox_function_group_factory
@@ -49,14 +49,7 @@ from bees.context_updates import updates_to_context_parts
 from bees.config import HIVE_DIR, PACKAGE_DIR
 from bees.disk_file_system import DiskFileSystem
 from bees.subagent_scope import SubagentScope
-
-_SKILLS_CACHE = {}
-
-
-def _get_skills(hive_dir: Path):
-    if hive_dir not in _SKILLS_CACHE:
-        _SKILLS_CACHE[hive_dir] = scan_skills(hive_dir)
-    return _SKILLS_CACHE[hive_dir]
+from bees.skill_filter import filter_skills, merge_function_filter
 
 CHAT_LOG_FILENAME = "chat_log.json"
 
@@ -392,43 +385,6 @@ def extract_files(
 
 
 
-def _filter_skills(
-    allowed_skills: list[str] | None, hive_dir: Path
-) -> tuple[str, dict[str, str], list[str]]:
-    """Filter skills based on allowed_skills and return listing, files, and tool globs.
-
-    Returns:
-        A ``(listing, files, skill_tools)`` tuple:
-        - ``listing``: Formatted markdown for ``{{available_skills}}``.
-        - ``files``: Dict of ``{vfs_name: content}`` for seeding.
-        - ``skill_tools``: Merged ``allowed-tools`` from all selected skills.
-    """
-    _, skills_files, skills_list = _get_skills(hive_dir)
-
-    skills_to_use = allowed_skills if allowed_skills is not None else []
-
-    if "*" in skills_to_use:
-        filtered_skills = skills_list
-    else:
-        filtered_skills = [s for s in skills_list if s.name in skills_to_use]
-
-    lines = []
-    skill_tools: list[str] = []
-    for s in filtered_skills:
-        lines.append(f"- [{s.title}]({s.vfs_path})")
-        if s.description:
-            lines.append(f"  {s.description}")
-        skill_tools.extend(s.allowed_tools)
-    session_listing = "\n".join(lines)
-
-    session_files = {}
-    for k, v in skills_files.items():
-        if any(f"skills/{s.dir_name}/" in k for s in filtered_skills):
-            session_files[k] = v
-
-    return session_listing, session_files, skill_tools
-
-
 # ---------------------------------------------------------------------------
 # Core session runner
 # ---------------------------------------------------------------------------
@@ -484,16 +440,13 @@ async def run_session(
     out_dir = hive_dir / "logs"
     out_path = out_dir / f"{log_prefix}-{date_stamp}.log.json"
 
-    session_listing, session_files, skill_tools = _filter_skills(
+    session_listing, session_files, skill_tools = filter_skills(
         allowed_skills, hive_dir
     )
 
-    # Union skill-declared tools into the template's function filter.
-    # Also inject skills.* automatically when any skills are selected —
-    # the agent needs it to read skill instructions.
-    if function_filter is not None and allowed_skills:
-        skill_tools.append("skills.*")
-        function_filter = list(dict.fromkeys(function_filter + skill_tools))
+    function_filter = merge_function_filter(
+        function_filter, skill_tools, allowed_skills,
+    )
 
     # Create disk-backed file system.
     work_dir = fs_dir or (ticket_dir / "filesystem" if ticket_dir else Path(tempfile.mkdtemp(prefix="bees-fs-")))
@@ -677,14 +630,20 @@ async def resume_session(
     # Load allowed skills from ticket metadata
     metadata_path = ticket_dir / "metadata.json"
     allowed_skills = None
+    function_filter: list[str] | None = None
     if metadata_path.exists():
         try:
             meta = json.loads(metadata_path.read_text())
             allowed_skills = meta.get("skills")
+            function_filter = meta.get("functions")
         except Exception:
             pass
 
-    session_listing, _, _ = _filter_skills(allowed_skills, hive_dir)
+    session_listing, _, skill_tools = filter_skills(allowed_skills, hive_dir)
+
+    function_filter = merge_function_filter(
+        function_filter, skill_tools, allowed_skills,
+    )
 
     # Create disk-backed file system — files are already on disk from
     # the previous run, so no seeding needed.
@@ -731,6 +690,7 @@ async def resume_session(
                 scheduler=scheduler,
             ),
         ] + (mcp_factories or []),
+        function_filter=function_filter,
         file_system=disk_fs,
         context_queue=context_queue,
     )
