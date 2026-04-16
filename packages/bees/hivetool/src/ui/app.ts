@@ -646,6 +646,7 @@ class BeesApp extends SignalWatcher(LitElement) {
       case "tickets":
         return html`<bees-ticket-detail
           .ticketStore=${this.ticketStore}
+          .mutationClient=${this.mutationClient}
           .templateStore=${this.templateStore}
           .skillStore=${this.skillStore}
           .flashTicketId=${flashTicketId}

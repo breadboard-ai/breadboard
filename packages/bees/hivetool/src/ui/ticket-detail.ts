@@ -17,6 +17,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 
 import type { TicketStore, FileTreeNode } from "../data/ticket-store.js";
+import type { MutationClient } from "../data/mutation-client.js";
 import type { TemplateStore } from "../data/template-store.js";
 import type { SkillStore } from "../data/skill-store.js";
 import { sharedStyles } from "./shared-styles.js";
@@ -308,6 +309,9 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
 
   @property({ attribute: false })
   accessor ticketStore: TicketStore | null = null;
+
+  @property({ attribute: false })
+  accessor mutationClient: MutationClient | null = null;
 
   @property({ attribute: false })
   accessor templateStore: TemplateStore | null = null;
@@ -910,11 +914,11 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
 
   private async handleTextReply(ticketId: string) {
     const text = this.replyText.trim();
-    if (!text || !this.ticketStore) return;
+    if (!text || !this.mutationClient) return;
 
     this.responding = true;
     try {
-      await this.ticketStore.respondToTask(ticketId, { text });
+      await this.mutationClient.respondToTask(ticketId, { text });
       this.replyText = "";
     } catch (e) {
       console.error("Failed to send reply:", e);
@@ -924,11 +928,11 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
   }
 
   private async handleChoiceReply(ticketId: string) {
-    if (this.selectedChoiceIds.size === 0 || !this.ticketStore) return;
+    if (this.selectedChoiceIds.size === 0 || !this.mutationClient) return;
 
     this.responding = true;
     try {
-      await this.ticketStore.respondToTask(ticketId, {
+      await this.mutationClient.respondToTask(ticketId, {
         selectedIds: [...this.selectedChoiceIds],
       });
       this.selectedChoiceIds = new Set();
