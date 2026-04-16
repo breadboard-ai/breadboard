@@ -942,6 +942,9 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
   // ── Danger zone ──
 
   private renderDangerZone() {
+    // Only show when the box is actively listening for mutations.
+    if (!this.mutationClient?.boxActive.get()) return nothing;
+
     return html`
       <div class="danger-zone">
         <div class="danger-zone-header">Danger Zone</div>
