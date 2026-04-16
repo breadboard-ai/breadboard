@@ -20,6 +20,10 @@ Two processing modes:
   are processed inline while the scheduler is running.  The box
   executes all writes atomically, then triggers the scheduler once.
 
+Some hot mutations (``pause-all``) need runtime access to cancel
+in-flight asyncio tasks.  The box passes a ``Bees`` reference via
+``process_inline``.
+
 Supported mutation types:
 
 - **reset** (cold) — Deletes all tasks and session logs.
@@ -27,6 +31,12 @@ Supported mutation types:
   ``assignee`` to ``"agent"`` atomically.
 - **create-task-group** (hot) — Creates multiple tasks with
   intra-batch dependency resolution via named refs.
+- **cancel-all** (hot) — Cancels all in-flight tasks and flips
+  non-terminal statuses to ``paused``.
+- **resume-paused** (hot) — Flips all ``paused`` tasks back
+  to their pre-pause status.
+- **pause-task** (hot) — Pauses a single task by ID.
+- **resume-task** (hot) — Resumes a single paused task by ID.
 """
 
 from __future__ import annotations
@@ -37,9 +47,12 @@ import shutil
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from bees.task_store import TaskStore
+
+if TYPE_CHECKING:
+    from bees.bees import Bees
 
 logger = logging.getLogger("bees.mutations")
 
@@ -157,11 +170,17 @@ def process_all(hive_dir: Path) -> bool:
     return True
 
 
-def process_inline(hive_dir: Path) -> MutationOutcome:
+def process_inline(
+    hive_dir: Path,
+    bees: Bees | None = None,
+) -> MutationOutcome:
     """Process hot mutations inline while the scheduler is running.
 
     Cold mutations are not processed — they're flagged in the outcome
     so the caller can initiate a shutdown/restart cycle.
+
+    ``bees`` is passed through to handlers that need runtime
+    access (e.g., ``pause-all`` needs to cancel asyncio tasks).
 
     Returns a ``MutationOutcome`` indicating what happened.
     """
@@ -174,7 +193,7 @@ def process_inline(hive_dir: Path) -> MutationOutcome:
             continue
 
         logger.info("Processing hot mutation: %s (%s)", mutation.mutation_type, mutation.path.name)
-        result = _dispatch(mutation, hive_dir)
+        result = _dispatch(mutation, hive_dir, bees=bees)
         if result:
             outcome.hot_processed += 1
             if result.get("created"):
@@ -208,7 +227,12 @@ def process_cold(hive_dir: Path) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def _dispatch(mutation: PendingMutation, hive_dir: Path) -> dict[str, Any] | None:
+def _dispatch(
+    mutation: PendingMutation,
+    hive_dir: Path,
+    *,
+    bees: Bees | None = None,
+) -> dict[str, Any] | None:
     """Dispatch a mutation by type and write the result.
 
     Returns extra result data on success (e.g., created task IDs),
@@ -224,6 +248,14 @@ def _dispatch(mutation: PendingMutation, hive_dir: Path) -> dict[str, Any] | Non
                 _execute_respond(hive_dir, mutation)
             case "create-task-group":
                 extra = _execute_create_group(hive_dir, mutation)
+            case "cancel-all" | "pause-all":
+                extra = _execute_pause_all(hive_dir, bees)
+            case "resume-cancelled" | "resume-paused":
+                extra = _execute_resume_paused(hive_dir, bees)
+            case "pause-task":
+                extra = _execute_pause_task(hive_dir, mutation, bees)
+            case "resume-task":
+                extra = _execute_resume_task(hive_dir, mutation, bees)
             case _:
                 _write_result(
                     mutation.result_path,
@@ -357,6 +389,117 @@ def _execute_create_group(hive_dir: Path, mutation: PendingMutation) -> dict[str
         )
 
     return {"created": ref_to_id}
+
+
+def _execute_pause_all(
+    hive_dir: Path,
+    bees: Bees | None,
+) -> dict[str, Any]:
+    """Pause all non-terminal tasks.
+
+    When a ``Bees`` instance is available (inline processing), delegates
+    to the high-level ``pause_all()`` API.  Falls back to pure filesystem
+    operations when processing at startup without a live scheduler.
+    """
+    if bees:
+        count = bees.pause_all()
+    else:
+        # Startup fallback: no live scheduler, just flip metadata.
+        store = TaskStore(hive_dir)
+        count = 0
+        for status in ("available", "blocked", "running", "suspended"):
+            for task in store.query_all(status=status):
+                task.metadata.paused_from = task.metadata.status
+                task.metadata.status = "paused"
+                store.save_metadata(task)
+                count += 1
+
+    logger.info("Paused %d task(s)", count)
+    return {"paused": count}
+
+
+def _execute_resume_paused(
+    hive_dir: Path,
+    bees: Bees | None,
+) -> dict[str, Any]:
+    """Flip all paused tasks back to their pre-pause status."""
+    if bees:
+        count = bees.resume_all()
+    else:
+        store = TaskStore(hive_dir)
+        paused = store.query_all(status="paused")
+        for task in paused:
+            task.metadata.status = task.metadata.paused_from or "available"
+            task.metadata.paused_from = None
+            store.save_metadata(task)
+        count = len(paused)
+
+    logger.info("Resumed %d paused task(s)", count)
+    return {"resumed": count}
+
+
+def _execute_pause_task(
+    hive_dir: Path,
+    mutation: PendingMutation,
+    bees: Bees | None,
+) -> dict[str, Any]:
+    """Pause a single task by ID."""
+    task_id = mutation.data.get("task_id")
+    if not task_id:
+        raise ValueError("pause-task mutation missing 'task_id'")
+
+    if bees:
+        node = bees.get_by_id(task_id)
+        paused = node.pause() if node else False
+    else:
+        store = TaskStore(hive_dir)
+        task = store.get(task_id)
+        if not task or task.metadata.status in ("completed", "failed", "cancelled", "paused"):
+            paused = False
+        else:
+            task.metadata.paused_from = task.metadata.status
+            task.metadata.status = "paused"
+            store.save_metadata(task)
+            paused = True
+
+    if paused:
+        logger.info("Paused task %s", task_id[:8])
+    else:
+        logger.warning("Could not pause task %s", task_id[:8])
+
+    return {"paused": paused}
+
+
+def _execute_resume_task(
+    hive_dir: Path,
+    mutation: PendingMutation,
+    bees: Bees | None,
+) -> dict[str, Any]:
+    """Resume a single paused task by ID."""
+    task_id = mutation.data.get("task_id")
+    if not task_id:
+        raise ValueError("resume-task mutation missing 'task_id'")
+
+    if bees:
+        node = bees.get_by_id(task_id)
+        resumed = node.resume() if node else False
+    else:
+        store = TaskStore(hive_dir)
+        task = store.get(task_id)
+        if not task or task.metadata.status != "paused":
+            logger.warning("Could not resume task %s (not paused)", task_id[:8])
+            return {"resumed": False}
+        task.metadata.status = task.metadata.paused_from or "available"
+        task.metadata.paused_from = None
+        store.save_metadata(task)
+        resumed = True
+
+    if resumed:
+        logger.info("Resumed task %s", task_id[:8])
+    else:
+        logger.warning("Could not resume task %s (not paused)", task_id[:8])
+
+    return {"resumed": resumed}
 
 
 # ---------------------------------------------------------------------------

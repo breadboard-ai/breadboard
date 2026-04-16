@@ -194,7 +194,7 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
                 # Process mutations: hot mutations run inline,
                 # cold mutations signal a restart.
                 if needs_mutation:
-                    outcome = process_inline(hive_dir)
+                    outcome = process_inline(hive_dir, bees=bees)
                     if outcome.hot_processed > 0:
                         needs_trigger = True
                     if outcome.cold_pending:

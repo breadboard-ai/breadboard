@@ -153,6 +153,73 @@ Result includes the ref → task ID mapping:
 }
 ```
 
+### `pause-all` (hot)
+
+Cancels all in-flight asyncio tasks and flips every non-terminal task
+(`available`, `blocked`, `running`, `suspended`) to `paused`. Stashes the
+pre-pause status in `paused_from` so resume can restore it. When processed
+inline, the box passes the scheduler reference so the handler can cancel
+live coroutines — not just update metadata. Aliases: `cancel-all`.
+
+```json
+{
+  "type": "pause-all"
+}
+```
+
+Result includes the count of affected tasks:
+
+```json
+{
+  "status": "ok",
+  "paused": 5
+}
+```
+
+### `resume-paused` (hot)
+
+Flips all `paused` tasks back to their pre-pause status (from `paused_from`).
+Pure filesystem operation. Aliases: `resume-cancelled`.
+
+```json
+{
+  "type": "resume-paused"
+}
+```
+
+Result:
+
+```json
+{
+  "status": "ok",
+  "resumed": 5
+}
+```
+
+### `pause-task` (hot)
+
+Pauses a single task by ID. Cancels its asyncio task if running, then
+flips status to `paused` with `paused_from` set for later resume.
+
+```json
+{
+  "type": "pause-task",
+  "task_id": "uuid"
+}
+```
+
+### `resume-task` (hot)
+
+Resumes a single paused task by ID, restoring its pre-pause status.
+
+```json
+{
+  "type": "resume-task",
+  "task_id": "uuid"
+}
+```
+
+
 ## Driving Mutations from the Command Line
 
 ```bash
@@ -205,7 +272,6 @@ direct writes.
 |----------|---------------------|
 | `create-task` (single) | One `mkdir` + two file writes. `watchfiles` debounce usually batches them. The risk is low and the latency cost of a mutation is disproportionate. |
 | `config-update` | Already handled by the config restart path. Could become a mutation if config updates need to carry metadata (e.g., "who changed this and why"). |
-| `cancel-all` | Emergency stop: cancel running asyncio tasks and set status to `cancelled`. The filesystem alone can't stop in-flight coroutines — only the box can. But without a `resume-task` mutation, the recovery story is thin: cancelled tasks stay cancelled, and the system freezes. Needs a resume path to justify its own mutation type. |
 
 ### Not candidates (direct writes are fine)
 

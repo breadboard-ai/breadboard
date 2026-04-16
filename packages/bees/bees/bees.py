@@ -42,6 +42,28 @@ class Bees:
         """Registers an event listener."""
         self._events[event_name].append(callback)
 
+    def pause_all(self) -> int:
+        """Pause all non-terminal tasks.
+
+        Cancels in-flight asyncio tasks and flips statuses to ``paused``,
+        preserving the original status in ``paused_from`` for later resume.
+        Returns the number of tasks paused.
+        """
+        return self._scheduler.pause_all_tasks()
+
+    def resume_all(self) -> int:
+        """Resume all paused tasks, restoring their pre-pause status.
+
+        Returns the number of tasks resumed.
+        """
+        count = 0
+        for task in self._store.query_all(status="paused"):
+            task.metadata.status = task.metadata.paused_from or "available"
+            task.metadata.paused_from = None
+            self._store.save_metadata(task)
+            count += 1
+        return count
+
     async def listen(self):
         """Starts the scheduler loop."""
         await self._scheduler.startup()

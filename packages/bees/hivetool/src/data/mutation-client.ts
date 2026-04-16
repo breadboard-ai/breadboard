@@ -84,6 +84,41 @@ class MutationClient {
     });
   }
 
+  /**
+   * Pause all running and pending tasks.
+   *
+   * Hot mutation: the box cancels in-flight asyncio tasks and flips
+   * all non-terminal task statuses to `paused`, preserving prior
+   * status in `paused_from` for later resume.
+   */
+  async requestPauseAll(): Promise<string> {
+    return this.#writeMutation({ type: "pause-all" });
+  }
+
+  /**
+   * Resume all paused tasks — restores their pre-pause status.
+   *
+   * Hot mutation: the box restores each task's `paused_from` status
+   * and triggers the scheduler.
+   */
+  async requestResumeAll(): Promise<string> {
+    return this.#writeMutation({ type: "resume-paused" });
+  }
+
+  /**
+   * Pause a single task by ID.
+   */
+  async pauseTask(taskId: string): Promise<string> {
+    return this.#writeMutation({ type: "pause-task", task_id: taskId });
+  }
+
+  /**
+   * Resume a single paused task by ID.
+   */
+  async resumeTask(taskId: string): Promise<string> {
+    return this.#writeMutation({ type: "resume-task", task_id: taskId });
+  }
+
   // -- internal -----------------------------------------------------------
 
   async #writeMutation(data: Record<string, unknown>): Promise<string> {

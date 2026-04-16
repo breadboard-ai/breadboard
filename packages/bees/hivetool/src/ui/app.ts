@@ -238,6 +238,48 @@ class BeesApp extends SignalWatcher(LitElement) {
     .lightning-flash {
       animation: lightning-flash 15s ease-out !important;
     }
+
+    /* --- Hive control button --- */
+    .hive-control-btn {
+      padding: 4px 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .hive-control-btn.stop {
+      background: transparent;
+      color: #f87171;
+      border: 1px solid #991b1b;
+    }
+
+    .hive-control-btn.stop:hover {
+      background: #991b1b33;
+      border-color: #f87171;
+    }
+
+    .hive-control-btn.resume {
+      background: transparent;
+      color: #4ade80;
+      border: 1px solid #166534;
+    }
+
+    .hive-control-btn.resume:hover {
+      background: #16653422;
+      border-color: #4ade80;
+    }
+
+    .hive-control-btn.start {
+      background: transparent;
+      color: #475569;
+      border: 1px solid #1e293b;
+      cursor: default;
+      opacity: 0.6;
+    }
   `,
   ];
 
@@ -525,6 +567,7 @@ class BeesApp extends SignalWatcher(LitElement) {
         <div class="top-bar-header">
           <h1>${APP_ICON} ${APP_NAME} Hivetool</h1>
           <div class="hive-switcher">
+            ${this.renderHiveControl()}
             <span class="hive-name" title="Current hive directory">
               📂 ${this.stateAccess.hiveName.get() ?? ""}
             </span>
@@ -571,6 +614,65 @@ class BeesApp extends SignalWatcher(LitElement) {
         <div class="main">${this.renderMain(flashTicketId)}</div>
       </div>
     `;
+  }
+
+  private renderHiveControl() {
+    const tickets = this.ticketStore.tickets.get();
+
+    const hasActive = tickets.some(
+      (t) =>
+        t.status === "running" ||
+        t.status === "available" ||
+        t.status === "suspended"
+    );
+    const hasPaused = tickets.some((t) => t.status === "paused");
+
+    if (hasActive) {
+      return html`
+        <button
+          class="hive-control-btn stop"
+          @click=${() => this.handleStop()}
+        >
+          ⏹ Pause All
+        </button>
+      `;
+    }
+
+    if (hasPaused) {
+      return html`
+        <button
+          class="hive-control-btn resume"
+          @click=${() => this.handleResume()}
+        >
+          ▶ Resume
+        </button>
+      `;
+    }
+
+    return html`
+      <button class="hive-control-btn start" disabled>⏸ Idle</button>
+    `;
+  }
+
+  private async handleStop() {
+    const confirmed = confirm("Pause all running and pending tasks?");
+    if (!confirmed) return;
+
+    try {
+      const id = await this.mutationClient.requestPauseAll();
+      console.info("Pause-all mutation submitted:", id);
+    } catch (e) {
+      console.error("Failed to submit pause-all mutation:", e);
+    }
+  }
+
+  private async handleResume() {
+    try {
+      const id = await this.mutationClient.requestResumeAll();
+      console.info("Resume-paused mutation submitted:", id);
+    } catch (e) {
+      console.error("Failed to submit resume-paused mutation:", e);
+    }
   }
 
   private renderSidebar(
