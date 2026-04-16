@@ -124,6 +124,129 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
         color: #fca5a5;
         font-size: 0.8rem;
       }
+
+      /* ── Run button ── */
+
+      .run-btn {
+        padding: 4px 10px;
+        font-size: 0.7rem;
+        background: #065f4633;
+        color: #34d399;
+        border: 1px solid #065f46;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: inherit;
+      }
+
+      .run-btn:hover {
+        color: #6ee7b7;
+        border-color: #10b981;
+        background: #065f4666;
+      }
+
+      /* ── Run dialog overlay ── */
+
+      .run-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        backdrop-filter: blur(4px);
+      }
+
+      .run-dialog {
+        background: #151822;
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        padding: 24px;
+        min-width: 480px;
+        max-width: 600px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+
+      .run-dialog h3 {
+        margin: 0 0 4px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #f8fafc;
+      }
+
+      .run-dialog .run-subtitle {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-bottom: 16px;
+      }
+
+      .run-dialog textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 10px 12px;
+        background: #0b0c0f;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        color: #e2e8f0;
+        font-family: inherit;
+        font-size: 0.85rem;
+        resize: vertical;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+
+      .run-dialog textarea:focus {
+        border-color: #10b981;
+      }
+
+      .run-dialog textarea::placeholder {
+        color: #475569;
+      }
+
+      .run-dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .run-dialog-actions button {
+        padding: 6px 16px;
+        font-size: 0.8rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.15s;
+      }
+
+      .run-cancel-btn {
+        background: transparent;
+        color: #94a3b8;
+        border: 1px solid #334155;
+      }
+
+      .run-cancel-btn:hover {
+        color: #e2e8f0;
+        border-color: #475569;
+      }
+
+      .run-create-btn {
+        background: #065f46;
+        color: #34d399;
+        border: 1px solid #10b981;
+        font-weight: 600;
+      }
+
+      .run-create-btn:hover {
+        background: #047857;
+        color: #6ee7b7;
+      }
+
+      .run-create-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
     `,
   ];
 
@@ -142,6 +265,11 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
   @state() accessor saving = false;
   @state() accessor error: string | null = null;
   @state() accessor draft: TemplateData | null = null;
+
+  // ── Run state ──
+  @state() accessor showRunDialog = false;
+  @state() accessor runContext = "";
+  @state() accessor runningTemplate: TemplateData | null = null;
 
   /** The name of the template when editing started (for rename detection). */
   #originalName: string | null = null;
@@ -164,7 +292,12 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
       return this.renderEditMode(this.draft, false);
     }
 
-    return this.renderViewMode(template);
+    return html`
+      ${this.renderViewMode(template)}
+      ${this.showRunDialog && this.runningTemplate
+        ? this.renderRunDialog(this.runningTemplate)
+        : nothing}
+    `;
   }
 
   // ── View Mode ──
@@ -189,6 +322,9 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
           <div class="job-detail-header-top">
             <h2 class="job-detail-title">${template.title || template.name}</h2>
             <div style="display:flex;align-items:center;gap:8px">
+              <button class="run-btn" @click=${() => this.handleRun(template)}>
+                ▶ Run
+              </button>
               <button class="edit-btn" @click=${() => this.startEditing(template)}>
                 ✏️ Edit
               </button>
@@ -691,6 +827,104 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
         bubbles: true,
       })
     );
+  }
+
+  // ── Run from template ──
+
+  /** Whether the template objective uses {{system.context}}. */
+  private needsContext(template: TemplateData): boolean {
+    return (template.objective ?? "").includes("{{system.context}}");
+  }
+
+  /**
+   * Initiate a run from a template. If the template needs context,
+   * show the dialog; otherwise create the task immediately.
+   */
+  private handleRun(template: TemplateData) {
+    if (this.needsContext(template)) {
+      this.runningTemplate = template;
+      this.runContext = "";
+      this.showRunDialog = true;
+    } else {
+      this.executeRun(template, undefined);
+    }
+  }
+
+  private closeRunDialog() {
+    this.showRunDialog = false;
+    this.runningTemplate = null;
+    this.runContext = "";
+  }
+
+  private renderRunDialog(template: TemplateData) {
+    return html`
+      <div class="run-overlay" @click=${(e: Event) => {
+        if (e.target === e.currentTarget) this.closeRunDialog();
+      }}>
+        <div class="run-dialog">
+          <h3>▶ Run: ${template.title || template.name}</h3>
+          <div class="run-subtitle">
+            This template requires context to run.
+          </div>
+          <textarea
+            placeholder="Provide context for {{system.context}}…"
+            .value=${this.runContext}
+            @input=${(e: Event) => {
+              this.runContext = (e.target as HTMLTextAreaElement).value;
+            }}
+          ></textarea>
+          <div class="run-dialog-actions">
+            <button
+              class="run-cancel-btn"
+              @click=${() => this.closeRunDialog()}
+            >Cancel</button>
+            <button
+              class="run-create-btn"
+              ?disabled=${!this.runContext.trim()}
+              @click=${() => {
+                this.executeRun(template, this.runContext.trim());
+                this.closeRunDialog();
+              }}
+            >Create Task</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Create a task on disk from a template.
+   * Writes objective.md + metadata.json so the box picks it up.
+   */
+  private async executeRun(template: TemplateData, context: string | undefined) {
+    if (!this.ticketStore) return;
+
+    try {
+      const taskId = await this.ticketStore.createTask({
+        objective: template.objective ?? "",
+        playbook_id: template.name,
+        title: template.title,
+        functions: template.functions,
+        skills: template.skills,
+        tags: template.tags,
+        tasks: template.tasks,
+        model: template.model,
+        context,
+        watch_events: template.watch_events,
+      });
+
+      // Navigate to the new task.
+      this.dispatchEvent(
+        new CustomEvent("navigate", {
+          detail: { tab: "tickets", id: taskId },
+          bubbles: true,
+        })
+      );
+    } catch (e) {
+      console.error("Failed to create task from template:", e);
+      this.error =
+        e instanceof Error ? e.message : "Failed to create task.";
+    }
   }
 }
 
