@@ -249,6 +249,8 @@ export type LoopDeps = {
 export type FunctionGroupConfiguratorFlags = {
   uiType: UIType;
   useMemory: boolean;
+  useGmail: boolean;
+  useDrive: boolean;
   useNotebookLM: boolean;
   objective: LLMContent;
   uiPrompt?: LLMContent;

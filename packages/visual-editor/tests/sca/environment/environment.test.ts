@@ -34,6 +34,7 @@ function makeRuntimeConfig(
       },
       flags: {
         mcp: false,
+        enableWorkspaceMcp: false,
         force2DGraph: false,
         consistentUI: false,
 
@@ -72,6 +73,7 @@ function makeRuntimeConfig(
 
 const testFlags: RuntimeFlags = {
   mcp: true,
+  enableWorkspaceMcp: false,
   force2DGraph: false,
   consistentUI: false,
 

@@ -16,6 +16,7 @@ import { type ClientDeploymentConfiguration } from "@breadboard-ai/types/deploym
  */
 const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   mcp: false,
+  enableWorkspaceMcp: false,
   force2DGraph: false,
   consistentUI: false,
   opalAdk: false,

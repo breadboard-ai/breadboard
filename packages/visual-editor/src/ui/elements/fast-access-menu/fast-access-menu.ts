@@ -313,6 +313,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       {
         environmentName: this.sca?.env.environmentName,
         enableNotebookLm: this.sca?.env.flags.get("enableNotebookLm") ?? false,
+        enableWorkspaceMcp: this.sca?.env.flags.get("enableWorkspaceMcp") ?? false,
         integrationsController:
           this.sca?.controller.editor.integrations ?? null,
       }

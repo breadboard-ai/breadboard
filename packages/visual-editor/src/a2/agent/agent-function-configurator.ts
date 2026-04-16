@@ -11,6 +11,8 @@ import { getGoogleDriveFunctionGroup } from "./functions/google-drive.js";
 import { getGenerateFunctionGroup } from "./functions/generate.js";
 import { getSystemFunctionGroup } from "./functions/system.js";
 import { getMemoryFunctionGroup } from "./functions/memory.js";
+import { getDriveFunctionGroup } from "./functions/drive.js";
+import { getGmailFunctionGroup } from "./functions/gmail.js";
 import { getNotebookLMFunctionGroup } from "./functions/notebooklm.js";
 import { CHAT_LOG_PATH, getChatFunctionGroup } from "./functions/chat.js";
 import { getA2UIFunctionGroup } from "./functions/a2ui.js";
@@ -65,6 +67,25 @@ function createAgentConfigurator(
     }
 
     const runtimeFlags = await moduleArgs.context.flags?.flags();
+    
+    if (flags.useGmail && runtimeFlags?.enableWorkspaceMcp) {
+      groups.push(
+        getGmailFunctionGroup({
+          moduleArgs,
+          taskTreeManager,
+        })
+      );
+    }
+
+    if (flags.useDrive && runtimeFlags?.enableWorkspaceMcp) {
+      groups.push(
+        getDriveFunctionGroup({
+          moduleArgs,
+          taskTreeManager,
+        })
+      );
+    }
+
     if (flags.useNotebookLM && runtimeFlags?.enableNotebookLm) {
       groups.push(
         getNotebookLMFunctionGroup({

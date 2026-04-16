@@ -48,6 +48,48 @@ const BASE_URL = "embed://a2/tools.bgl.json";
  */
 const A2_TOOLS: [string, A2Tool][] = [
   [
+    "gmailmcp:use_gmail",
+    {
+      url: "gmailmcp:use_gmail",
+      title: "Use Gmail",
+      description: "Provides access to Gmail actions to search threads, retrieve contents, and add labels.",
+      icon: "mail",
+      describe: async () => ({
+        title: "Use Gmail",
+        description: "Provides access to Gmail actions to search threads, retrieve contents, and add labels.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+        },
+        outputSchema: { type: "object" },
+      }),
+      invoke: async () => {
+        return { success: true };
+      },
+    },
+  ],
+  [
+    "drivemcp:use_drive",
+    {
+      url: "drivemcp:use_drive",
+      title: "Use Drive",
+      description: "Provides access to Google Drive actions to read, manage, and search for files.",
+      icon: "drive",
+      describe: async () => ({
+        title: "Use Drive",
+        description: "Provides access to Google Drive actions to read, manage, and search for files.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+        },
+        outputSchema: { type: "object" },
+      }),
+      invoke: async () => {
+        return { success: true };
+      },
+    },
+  ],
+  [
     `${BASE_URL}#module:get-weather`,
     {
       url: `${BASE_URL}#module:get-weather`,

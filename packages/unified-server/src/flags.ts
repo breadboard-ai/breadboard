@@ -56,6 +56,8 @@ export const ENABLE_GRAPH_EDITOR_AGENT = getBoolean(
 
 export const ENABLE_MCP = getBoolean("ENABLE_MCP");
 
+export const ENABLE_WORKSPACE_MCP = getBoolean("ENABLE_WORKSPACE_MCP");
+
 export const ENABLE_NOTEBOOK_LM = getBoolean("ENABLE_NOTEBOOK_LM");
 
 export const ENABLE_OPAL_ADK = getBoolean("ENABLE_OPAL_ADK");
@@ -90,6 +92,8 @@ export const GOOGLE_DRIVE_API_ENDPOINT = FAKE_MODE
   ? `http://localhost:${FAKE_DRIVE_PORT}`
   : getString("GOOGLE_DRIVE_API_ENDPOINT");
 
+export const GOOGLE_DRIVE_MCP_ENDPOINT = getString("GOOGLE_DRIVE_MCP_ENDPOINT");
+
 export const GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID = getString(
   "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"
 );
@@ -106,6 +110,10 @@ export const GOOGLE_FEEDBACK_BUCKET = getString("GOOGLE_FEEDBACK_BUCKET");
 
 export const GOOGLE_FEEDBACK_PRODUCT_ID = getString(
   "GOOGLE_FEEDBACK_PRODUCT_ID"
+);
+
+export const GOOGLE_GMAIL_MCP_ENDPOINT = getString(
+  "GOOGLE_GMAIL_MCP_ENDPOINT"
 );
 
 export const GOOGLE_OAUTH_AUTH_ENDPOINT = getString(

@@ -21,6 +21,7 @@ suite("FastAccessController", () => {
   const noOpts = {
     environmentName: undefined,
     enableNotebookLm: false,
+    enableWorkspaceMcp: false,
     integrationsController: null,
   } as const;
 
@@ -221,6 +222,7 @@ suite("FastAccessController", () => {
     const items = controller.getDisplayItems(rawItems, noAgentTools, {
       environmentName: "production",
       enableNotebookLm: false,
+      enableWorkspaceMcp: false,
       integrationsController: null,
     });
     assert.strictEqual(items.length, 2);

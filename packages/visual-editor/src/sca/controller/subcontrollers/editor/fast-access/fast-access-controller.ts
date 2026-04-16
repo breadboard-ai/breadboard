@@ -58,6 +58,7 @@ class FastAccessController extends RootController {
     opts: {
       environmentName?: string;
       enableNotebookLm: boolean;
+      enableWorkspaceMcp: boolean;
       integrationsController: IntegrationsController | null;
     }
   ): DisplayItem[] {
@@ -76,7 +77,13 @@ class FastAccessController extends RootController {
     for (const item of rawItems) {
       // Apply visibility filters
       if (item.kind === "asset" && !showAssets) continue;
-      if (item.kind === "tool" && !showTools) continue;
+      if (item.kind === "tool") {
+        if (!showTools) continue;
+        const url = item.tool.url;
+        if ((url === "gmailmcp:use_gmail" || url === "drivemcp:use_drive") && !opts.enableWorkspaceMcp) {
+          continue;
+        }
+      }
       if (item.kind === "component" && !showComponents) continue;
       if (item.kind === "route" && !showRoutes) continue;
 

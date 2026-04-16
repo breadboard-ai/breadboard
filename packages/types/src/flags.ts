@@ -22,6 +22,10 @@ export type RuntimeFlags = {
    */
   mcp: boolean;
   /**
+   * Enable Workspace MCP support
+   */
+  enableWorkspaceMcp: boolean;
+  /**
    * Use 2D matrices for graph rendering.
    */
   force2DGraph: boolean;
@@ -145,6 +149,11 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
   mcp: {
     title: "MCP Support",
     description: "Enable Model Context Protocol support",
+    visibility: "experimental",
+  },
+  enableWorkspaceMcp: {
+    title: "Workspace MCP Support",
+    description: "Enable Workspace MCP integrations (Gmail, Drive)",
     visibility: "experimental",
   },
   force2DGraph: {

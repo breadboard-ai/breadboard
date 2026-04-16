@@ -40,6 +40,8 @@ export type ToPidginResult = {
   tools: SimplifiedToolManager;
   useMemory: boolean;
   useNotebookLM: boolean;
+  useGmail: boolean;
+  useDrive: boolean;
 };
 
 export type SubstitutePartsArgs = {
@@ -280,6 +282,9 @@ ${text}
 `;
     };
 
+    let useGmail = false;
+    let useDrive = false;
+
     const pidginContent = await template.asyncSimpleSubstitute(
       async (param) => {
         const { type } = param;
@@ -355,6 +360,12 @@ ${inner}
             } else if (param.path === MEMORY_TOOL_PATH) {
               useMemory = true;
               return "Use Memory";
+            } else if (param.path === "drivemcp:use_drive") {
+              useDrive = true;
+              return "Use Drive";
+            } else if (param.path === "gmailmcp:use_gmail") {
+              useGmail = true;
+              return "Use Gmail";
             } else if (param.path === NOTEBOOKLM_TOOL_PATH) {
               useNotebookLM = true;
               return "Use NotebookLM";
@@ -400,10 +411,19 @@ ${inner}
         tools: toolManager,
         useMemory,
         useNotebookLM,
+        useGmail,
+        useDrive,
       };
     }
 
-    return { text, tools: toolManager, useMemory, useNotebookLM };
+    return {
+      text,
+      tools: toolManager,
+      useMemory,
+      useNotebookLM,
+      useGmail,
+      useDrive,
+    };
   }
 }
 

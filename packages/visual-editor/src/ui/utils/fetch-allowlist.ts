@@ -65,6 +65,16 @@ const FETCH_ALLOWLIST: AllowListParams[] = [
       CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_API_ENDPOINT
     ),
   },
+  ...(CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_MCP_ENDPOINT
+    ? [
+        {
+          canonicalPrefix: new URL(
+            CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_MCP_ENDPOINT
+          ),
+          scopes: DRIVE_SCOPES,
+        },
+      ]
+    : []),
   {
     canonicalPrefix: new URL(CANONICAL.GOOGLE_DOCS_API_PREFIX),
     scopes: DRIVE_SCOPES,
@@ -98,12 +108,16 @@ const FETCH_ALLOWLIST: AllowListParams[] = [
     // Not currently configurable
     remapOrigin: undefined,
   },
-  {
-    canonicalPrefix: new URL(CANONICAL.GOOGLE_GMAIL_API_PREFIX),
-    scopes: GMAIL_SCOPES,
-    // Not currently configurable
-    remapOrigin: undefined,
-  },
+  ...(CLIENT_DEPLOYMENT_CONFIG.GOOGLE_GMAIL_MCP_ENDPOINT
+    ? [
+        {
+          canonicalPrefix: new URL(
+            CLIENT_DEPLOYMENT_CONFIG.GOOGLE_GMAIL_MCP_ENDPOINT
+          ),
+          scopes: GMAIL_SCOPES,
+        },
+      ]
+    : []),
   {
     canonicalPrefix: new URL(CANONICAL.NOTEBOOKLM_API_PREFIX),
     scopes: GENAI_SCOPES,

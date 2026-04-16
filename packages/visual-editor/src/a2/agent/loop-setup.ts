@@ -159,6 +159,8 @@ async function buildAgentRun(args: {
     {
       uiType,
       useMemory: objectivePidgin.useMemory,
+      useGmail: objectivePidgin.useGmail,
+      useDrive: objectivePidgin.useDrive,
       useNotebookLM: objectivePidgin.useNotebookLM,
       objective,
       uiPrompt,

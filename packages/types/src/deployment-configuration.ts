@@ -18,6 +18,8 @@ export type ClientDeploymentConfiguration = {
   GOOGLE_SHEETS_API_ENDPOINT?: string;
   GOOGLE_SLIDES_API_ENDPOINT?: string;
   GOOGLE_DRIVE_API_ENDPOINT?: string;
+  GOOGLE_DRIVE_MCP_ENDPOINT?: string;
+  GOOGLE_GMAIL_MCP_ENDPOINT?: string;
   // TODO: Rename to GOOGLE_DRIVE_BROAD_PERMISSIONS
   GOOGLE_DRIVE_PUBLISH_PERMISSIONS?: GoogleDrivePermission[];
   GOOGLE_DRIVE_USER_FOLDER_NAME?: string;

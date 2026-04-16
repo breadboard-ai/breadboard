@@ -11,6 +11,7 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   force2DGraph: false,
   googleOne: false,
   mcp: false,
+  enableWorkspaceMcp: false,
   opalAdk: false,
   outputTemplates: false,
   enableGoogleDriveTools: false,
