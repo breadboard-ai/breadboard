@@ -136,7 +136,7 @@ class TaskNode:
                 payload["selectedIds"] = selectedIds
 
         self._task = self._store.respond(self.id, payload)
-        self._bees._trigger()
+        self._bees.trigger()
         return self._task
 
     def save(self):
@@ -148,4 +148,4 @@ class TaskNode:
         self._task.metadata.status = "available"
         self._task.metadata.error = None
         self.save()
-        self._bees._trigger()
+        self._bees.trigger()

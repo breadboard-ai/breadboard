@@ -48,8 +48,8 @@ class Bees:
         self._loop_task = asyncio.create_task(self._scheduler.start_loop())
         self._scheduler.trigger()
 
-    def _trigger(self):
-        """Triggers the scheduler to process tasks."""
+    def trigger(self):
+        """Wake the scheduler to re-evaluate available work."""
         self._scheduler.trigger()
 
     async def shutdown(self):

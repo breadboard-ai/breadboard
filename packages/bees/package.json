@@ -8,6 +8,7 @@
 
     "dev": "npm run dev:server & npm run dev:web",
     "dev:clean": "rm -rf hive/tickets hive/logs && npm run dev",
+    "dev:box": ".venv/bin/python -m bees.box",
     "dev:server": ".venv/bin/python -m app.server",
     "dev:web": "cd web && npm run dev",
     "dev:hivetool": "cd hivetool && npm run dev",
