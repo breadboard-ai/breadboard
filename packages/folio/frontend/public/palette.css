@@ -215,4 +215,16 @@
   --palette-yellow-state-color-90: rgba(144, 155, 6, 0.9);
   --palette-yellow-state-color-05: rgba(144, 155, 6, 0.05);
 
+  /* Pastel Pool */
+  --palette-pastel-1-light: #7D9C8B;
+  --palette-pastel-1-dark: #4A6B5D;
+
+  --palette-pastel-2-light: #86A2D8;
+  --palette-pastel-2-dark: #5572A5;
+
+  --palette-pastel-3-light: #BBA393;
+  --palette-pastel-3-dark: #8A7262;
+
+  --palette-pastel-4-light: #A593C4;
+  --palette-pastel-4-dark: #6C3483;
 }

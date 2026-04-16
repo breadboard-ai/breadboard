@@ -22,4 +22,5 @@ body {
   font-family: var(--opal-font-family);
   width: 100svw;
   height: 100svh;
+  overflow: hidden;
 }

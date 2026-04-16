@@ -3,10 +3,11 @@
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, css, html, svg } from "lit";
+import { LitElement, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { classMap } from "lit/directives/class-map.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 @customElement("o-primitive-avatar")
 export class PrimitiveAvatar extends SignalWatcher(LitElement) {
@@ -16,6 +17,9 @@ export class PrimitiveAvatar extends SignalWatcher(LitElement) {
   @property({ type: Boolean, reflect: true })
   accessor selected = false;
 
+  @property({ type: Boolean, reflect: true })
+  accessor inverted = false;
+
   @property({ type: String })
   accessor bgColor = "#D98880";
 
@@ -23,7 +27,7 @@ export class PrimitiveAvatar extends SignalWatcher(LitElement) {
   accessor fgColor = "#7E5109";
 
   @property({ type: Number })
-  accessor count = 3;
+  accessor count = 0;
 
   @state()
   accessor lookDirection: "left" | "center" | "right" = "center";
@@ -32,8 +36,6 @@ export class PrimitiveAvatar extends SignalWatcher(LitElement) {
   accessor blinking = false;
 
   #blinkTimeout: ReturnType<typeof setTimeout> | undefined;
-  #filterId = `avatar-noise-${Math.random().toString(36).slice(2, 9)}`;
-  #seed = Math.floor(Math.random() * 1000);
 
   static styles = css`
     :host {
@@ -92,7 +94,6 @@ export class PrimitiveAvatar extends SignalWatcher(LitElement) {
       width: 100%;
       height: 100%;
       background: var(--opal-color-avatar-background);
-      filter: var(--avatar-filter);
     }
 
     .eyes {
@@ -133,7 +134,7 @@ export class PrimitiveAvatar extends SignalWatcher(LitElement) {
       border: 2px solid var(--opal-color-bubble-border);
       background: var(--opal-color-bubble-background);
       color: var(--opal-color-bubble-text);
-      font-family: "Google Sans Flex";
+      font-family: var(--opal-font-display);
       font-size: var(--opal-font-size-bubble);
       font-weight: 500;
       line-height: 16px;
@@ -211,60 +212,34 @@ export class PrimitiveAvatar extends SignalWatcher(LitElement) {
   }
 
   render() {
+    const bgStyle = styleMap({
+      backgroundColor: this.inverted
+        ? "var(--opal-color-avatar-eyes)"
+        : this.bgColor,
+    });
+
+    const eyeStyle = styleMap({
+      backgroundColor: this.inverted
+        ? this.bgColor
+        : "var(--opal-color-avatar-eyes)",
+    });
+
     return html`
       <div class="clipper">
-        <div class="bg" style="--avatar-filter: url(#${this.#filterId})"></div>
+        <div class="bg" style=${bgStyle}></div>
       </div>
       <div class="${classMap({ eyes: true, [this.lookDirection]: true })}">
-        <div class="${classMap({ eye: true, blink: this.blinking })}"></div>
-        <div class="${classMap({ eye: true, blink: this.blinking })}"></div>
+        <div
+          class="${classMap({ eye: true, blink: this.blinking })}"
+          style=${eyeStyle}
+        ></div>
+        <div
+          class="${classMap({ eye: true, blink: this.blinking })}"
+          style=${eyeStyle}
+        ></div>
       </div>
 
       ${this.count > 0 ? html`<div class="bubble">${this.count}</div>` : ""}
-
-      <!-- Hidden SVG for the filter -->
-      ${svg`
-        <svg width="0" height="0" style="position: absolute;">
-          <filter id="${this.#filterId}">
-            <!-- 1. Generate noise with lower frequency for larger blobs -->
-            <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="${this.#seed}" result="noise">
-              <animate attributeName="baseFrequency" values="0.03;0.035;0.03" dur="10s" repeatCount="indefinite"/>
-            </feTurbulence>
-
-            <!-- 2. Convert to grayscale -->
-            <feColorMatrix type="matrix" values="
-              0.33 0.33 0.33 0 0
-              0.33 0.33 0.33 0 0
-              0.33 0.33 0.33 0 0
-              0    0    0    1 0" in="noise" result="gray"/>
-
-            <!-- 4. Flood background color -->
-            <feFlood flood-color="${this.bgColor}" result="bg"/>
-
-            <!-- 5. Flood foreground color -->
-            <feFlood flood-color="${this.fgColor}" result="fg"/>
-
-            <!-- 6. Mask foreground with the soft grayscale noise -->
-            <feComposite operator="in" in="fg" in2="gray" result="maskedFg"/>
-
-            <!-- 7. Merge -->
-            <feComposite operator="over" in="maskedFg" in2="bg" result="coloredNoise"/>
-
-            <!-- 8. Generate static high-frequency noise -->
-            <feTurbulence type="fractalNoise" baseFrequency="1" numOctaves="1" result="rawStaticNoise"/>
-
-            <!-- 8.5 Convert static noise to grayscale and set opacity to 0.4 -->
-            <feColorMatrix type="matrix" values="
-              0.33 0.33 0.33 0 0
-              0.33 0.33 0.33 0 0
-              0.33 0.33 0.33 0 0
-              0    0    0    0.8 0" in="rawStaticNoise" result="staticNoise"/>
-
-            <!-- 9. Blend static noise with colored noise -->
-            <feBlend mode="overlay" in="coloredNoise" in2="staticNoise"/>
-          </filter>
-        </svg>
-      `}
     `;
   }
 }

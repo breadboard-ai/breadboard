@@ -26,7 +26,7 @@ export class PageAgent extends SignalWatcher(LitElement) {
         align-items: center;
         justify-content: center;
         flex-direction: column;
-        gap: 32px;
+        gap: var(--opal-grid-8);
       }
     `,
   ];
