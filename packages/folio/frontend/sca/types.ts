@@ -127,12 +127,27 @@ export interface Storage {
   delete(name: string): Promise<void>;
 }
 
+export interface AgentCard {
+  id: string;
+  header: string;
+  content: string;
+  cta?: {
+    title: string;
+    price?: string;
+    icon?: string;
+    logo?: string;
+    primary: string;
+    secondary?: string;
+  };
+}
+
 export interface Agent {
   id: string;
   name: string;
   bgColor: string;
   fgColor: string;
   count: number;
+  cards: AgentCard[];
 }
 
 export interface AppController extends HydratedController {

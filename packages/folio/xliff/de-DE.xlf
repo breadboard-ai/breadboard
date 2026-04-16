@@ -14,14 +14,17 @@
 <trans-unit id="sac895c732f350ac5">
   <source>Dark</source>
 </trans-unit>
-<trans-unit id="s6abb1cd87fe0114e">
-  <source>Home</source>
-</trans-unit>
-<trans-unit id="s6ef05bd7cc857c54">
-  <source>Hello, World!</source>
-</trans-unit>
 <trans-unit id="s76783561209eaef2">
   <source>Experiment</source>
+</trans-unit>
+<trans-unit id="h5ba3aff7f5b6ebfc">
+  <source>Hi <x id="0" equiv-text="${name}"/>, here's what's top of mind today!</source>
+</trans-unit>
+<trans-unit id="se8edf05c0d1a7108">
+  <source>Unknown Agent</source>
+</trans-unit>
+<trans-unit id="s189620c1cf3ae8ca">
+  <source>Type your thoughts here...</source>
 </trans-unit>
 </body>
 </file>

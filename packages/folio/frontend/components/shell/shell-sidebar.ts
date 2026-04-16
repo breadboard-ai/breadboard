@@ -8,6 +8,7 @@ import { LitElement, css, html } from "lit";
 import { customElement } from "lit/decorators.js";
 
 import "../primitives/primitive-avatar.js";
+import "../primitives/primitive-home-button.js";
 import { consume } from "@lit/context";
 import { scaContext } from "../../sca/context/context.js";
 import { SCA } from "../../sca/sca.js";
@@ -37,6 +38,10 @@ export class ShellSidebar extends SignalWatcher(LitElement) {
     this.sca.controller.router.go({ agentId, page: "agent" });
   }
 
+  #onHomeClick() {
+    this.sca.controller.router.go({ page: "home" });
+  }
+
   #renderAvatars() {
     const configs = this.sca.controller.agent.agents;
 
@@ -55,6 +60,15 @@ export class ShellSidebar extends SignalWatcher(LitElement) {
   }
 
   render() {
-    return this.#renderAvatars();
+    const url = this.sca.controller.router.parsedUrl;
+    const isHomeSelected = url.page === "home" || !url.agentId;
+
+    return html`
+      <o-primitive-home-button
+        ?selected=${isHomeSelected}
+        @click=${() => this.#onHomeClick()}
+      ></o-primitive-home-button>
+      ${this.#renderAvatars()}
+    `;
   }
 }
