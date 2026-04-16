@@ -17,6 +17,7 @@ import { customElement, state } from "lit/decorators.js";
 
 import { APP_ICON, APP_NAME } from "../constants.js";
 import { LogStore } from "../data/log-store.js";
+import { MutationClient } from "../data/mutation-client.js";
 import { parseRoute, writeRoute } from "../data/router.js";
 import { StateAccess } from "../data/state-access.js";
 import { SkillStore } from "../data/skill-store.js";
@@ -61,6 +62,7 @@ class BeesApp extends SignalWatcher(LitElement) {
   private templateStore = new TemplateStore(this.stateAccess);
   private skillStore = new SkillStore(this.stateAccess);
   private systemStore = new SystemStore(this.stateAccess);
+  private mutationClient = new MutationClient(this.stateAccess);
 
   static styles = [
     scrollbarStyles,
@@ -673,6 +675,7 @@ class BeesApp extends SignalWatcher(LitElement) {
         return html`<bees-system-detail
           .systemStore=${this.systemStore}
           .templateStore=${this.templateStore}
+          .mutationClient=${this.mutationClient}
         ></bees-system-detail>`;
     }
   }
