@@ -118,6 +118,72 @@ class TicketStore {
     this.#observer = null;
   }
 
+  /**
+   * Create a new task by writing files to `tickets/{uuid}/`.
+   *
+   * Writes `objective.md` and `metadata.json` — the minimal structure
+   * the scheduler expects. The box's file watcher will detect the new
+   * directory and trigger the scheduler automatically.
+   *
+   * Returns the generated task ID (UUID).
+   */
+  async createTask(opts: {
+    objective: string;
+    playbook_id?: string;
+    title?: string;
+    functions?: string[];
+    skills?: string[];
+    tags?: string[];
+    tasks?: string[];
+    model?: string;
+    context?: string;
+    watch_events?: Array<{ type: string }>;
+  }): Promise<string> {
+    if (!this.#ticketsHandle) throw new Error("Ticket store not activated");
+
+    const taskId = crypto.randomUUID();
+    const taskDir = await this.#ticketsHandle.getDirectoryHandle(taskId, {
+      create: true,
+    });
+
+    // Write objective.md
+    const objectiveHandle = await taskDir.getFileHandle("objective.md", {
+      create: true,
+    });
+    const objectiveWritable = await objectiveHandle.createWritable();
+    await objectiveWritable.write(opts.objective);
+    await objectiveWritable.close();
+
+    // Build metadata — mirror Python's TaskStore.create() shape.
+    const metadata: Record<string, unknown> = {
+      status: "available",
+      created_at: new Date().toISOString(),
+      kind: "work",
+    };
+    if (opts.playbook_id) metadata.playbook_id = opts.playbook_id;
+    if (opts.playbook_id) metadata.playbook_run_id = crypto.randomUUID();
+    if (opts.title) metadata.title = opts.title;
+    if (opts.functions?.length) metadata.functions = opts.functions;
+    if (opts.skills?.length) metadata.skills = opts.skills;
+    if (opts.tags?.length) metadata.tags = opts.tags;
+    if (opts.tasks?.length) metadata.tasks = opts.tasks;
+    if (opts.model) metadata.model = opts.model;
+    if (opts.context) metadata.context = opts.context;
+    if (opts.watch_events?.length) metadata.watch_events = opts.watch_events;
+
+    // Write metadata.json
+    const metadataHandle = await taskDir.getFileHandle("metadata.json", {
+      create: true,
+    });
+    const metadataWritable = await metadataHandle.createWritable();
+    await metadataWritable.write(
+      JSON.stringify(metadata, null, 2) + "\n"
+    );
+    await metadataWritable.close();
+
+    return taskId;
+  }
+
   // ── File tree ──
 
   /** Read the directory tree for a ticket's filesystem. */
