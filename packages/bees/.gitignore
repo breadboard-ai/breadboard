@@ -2,8 +2,6 @@
 .pytype/
 __pycache__/
 *.egg-info/
-*/logs/
-*/tickets/
 state/
 .env
 web/node_modules/

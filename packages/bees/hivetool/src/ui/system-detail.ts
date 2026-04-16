@@ -17,6 +17,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 
+import type { MutationClient } from "../data/mutation-client.js";
 import type {
   SystemStore,
   SystemData,
@@ -281,7 +282,9 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
         color: #64748b;
         cursor: pointer;
         border-radius: 50%;
-        transition: color 0.15s, background 0.15s;
+        transition:
+          color 0.15s,
+          background 0.15s;
       }
 
       .kv-remove:hover {
@@ -315,6 +318,48 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
         letter-spacing: 0.06em;
         color: #64748b;
         margin-bottom: 4px;
+      }
+
+      /* Danger zone */
+      .danger-zone {
+        margin-top: 24px;
+        padding: 16px;
+        border: 1px solid #991b1b55;
+        border-radius: 8px;
+        background: #450a0a22;
+      }
+
+      .danger-zone-header {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #f87171;
+        margin-bottom: 8px;
+      }
+
+      .danger-zone-desc {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-bottom: 12px;
+      }
+
+      .reset-btn {
+        padding: 6px 14px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: transparent;
+        color: #f87171;
+        border: 1px solid #991b1b;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: inherit;
+      }
+
+      .reset-btn:hover {
+        background: #991b1b33;
+        border-color: #f87171;
       }
 
       .transport-toggle {
@@ -361,6 +406,9 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor templateStore: TemplateStore | null = null;
 
+  @property({ attribute: false })
+  accessor mutationClient: MutationClient | null = null;
+
   // ── Edit state ──
   @state() accessor editing = false;
   @state() accessor saving = false;
@@ -385,9 +433,8 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
 
   private renderViewMode(config: SystemData) {
     const rootExists =
-      this.templateStore
-        ?.templates.get()
-        .some((t) => t.name === config.root) ?? false;
+      this.templateStore?.templates.get().some((t) => t.name === config.root) ??
+      false;
 
     return html`
       <div class="job-detail">
@@ -395,7 +442,10 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
           <div class="job-detail-header-top">
             <h2 class="job-detail-title">${config.title || "Untitled Hive"}</h2>
             <div style="display:flex;align-items:center;gap:8px">
-              <button class="edit-btn" @click=${() => this.startEditing(config)}>
+              <button
+                class="edit-btn"
+                @click=${() => this.startEditing(config)}
+              >
                 ✏️ Edit
               </button>
               <div class="system-badge">SYSTEM</div>
@@ -419,7 +469,10 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
           <div class="block">
             <div class="block-header">Description</div>
             <div class="block-content">
-              ${config.description || html`<span style="color:#475569;font-style:italic">No description</span>`}
+              ${config.description ||
+              html`<span style="color:#475569;font-style:italic"
+                >No description</span
+              >`}
             </div>
           </div>
 
@@ -436,14 +489,16 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
                 ${config.root || "—"}
               </span>
               ${config.root && !rootExists
-                ? html`<span style="color:#f59e0b;font-size:0.75rem;margin-left:8px">
+                ? html`<span
+                    style="color:#f59e0b;font-size:0.75rem;margin-left:8px"
+                  >
                     ⚠ template not found
                   </span>`
                 : nothing}
             </div>
           </div>
 
-          ${this.renderMCPViewSection(config.mcp)}
+          ${this.renderMCPViewSection(config.mcp)} ${this.renderDangerZone()}
         </div>
       </div>
     `;
@@ -486,9 +541,7 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
         ${server.description
           ? html`<div class="mcp-desc">${server.description}</div>`
           : nothing}
-        ${server.url
-          ? html`<div class="mcp-url">${server.url}</div>`
-          : nothing}
+        ${server.url ? html`<div class="mcp-url">${server.url}</div>` : nothing}
         ${server.command
           ? html`<div class="mcp-command">${server.command}</div>`
           : nothing}
@@ -520,9 +573,7 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
       <div class="job-detail">
         <div class="job-detail-header">
           <div class="job-detail-header-top">
-            <h2 class="job-detail-title">
-              Editing: System Configuration
-            </h2>
+            <h2 class="job-detail-title">Editing: System Configuration</h2>
             <div class="system-badge">EDITING</div>
           </div>
         </div>
@@ -580,7 +631,8 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
                           class="identity-chip playbook linkable"
                           style="font-size:0.7rem;margin:2px"
                           @click=${() => this.updateDraft({ root: name })}
-                        >${name}</span>
+                          >${name}</span
+                        >
                       `
                     )}
                   </div>
@@ -598,9 +650,7 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
                   + Add Server
                 </button>
               </div>
-              ${draft.mcp.map((server, i) =>
-                this.renderMCPEditCard(server, i)
-              )}
+              ${draft.mcp.map((server, i) => this.renderMCPEditCard(server, i))}
             </div>
           </div>
         </div>
@@ -658,7 +708,9 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
                   command: undefined,
                   env: undefined,
                 })}
-            >HTTP</button>
+            >
+              HTTP
+            </button>
             <button
               class="local ${!isHttp ? "active" : ""}"
               @click=${() =>
@@ -667,7 +719,9 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
                   url: undefined,
                   headers: undefined,
                 })}
-            >Local</button>
+            >
+              Local
+            </button>
           </div>
 
           ${isHttp
@@ -756,7 +810,8 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
                     onChange(updated);
                   }}
                   title="Remove"
-                >✕</span>
+                  >✕</span
+                >
               </div>
             `
           )}
@@ -881,6 +936,38 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
       console.error("System config save error:", e);
     } finally {
       this.saving = false;
+    }
+  }
+
+  // ── Danger zone ──
+
+  private renderDangerZone() {
+    return html`
+      <div class="danger-zone">
+        <div class="danger-zone-header">Danger Zone</div>
+        <div class="danger-zone-desc">
+          Reset deletes all tasks and session logs.
+        </div>
+        <button class="reset-btn" @click=${() => this.handleReset()}>
+          🗑 Reset Hive
+        </button>
+      </div>
+    `;
+  }
+
+  private async handleReset() {
+    if (!this.mutationClient) return;
+
+    const confirmed = confirm(
+      "This will delete all tasks and session logs. Continue?"
+    );
+    if (!confirmed) return;
+
+    try {
+      const id = await this.mutationClient.requestReset();
+      console.info("Reset mutation submitted:", id);
+    } catch (e) {
+      console.error("Failed to submit reset mutation:", e);
     }
   }
 

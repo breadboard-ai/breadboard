@@ -34,6 +34,8 @@ import sys
 from pathlib import Path
 from typing import Literal
 
+from bees.mutations import process_all as process_mutations
+
 import httpx
 from watchfiles import awatch, Change
 
@@ -50,7 +52,7 @@ logger = logging.getLogger("bees.box")
 # Change classification
 # ---------------------------------------------------------------------------
 
-ChangeKind = Literal["config", "task", "ignore"]
+ChangeKind = Literal["config", "task", "mutation", "ignore"]
 
 
 def classify_change(path: Path, hive_dir: Path) -> ChangeKind:
@@ -59,6 +61,7 @@ def classify_change(path: Path, hive_dir: Path) -> ChangeKind:
     Returns:
         ``"config"`` for configuration files that require a restart,
         ``"task"`` for ticket changes that should trigger the scheduler,
+        ``"mutation"`` for mutation files that need atomic processing,
         ``"ignore"`` for everything else (logs, temp files, etc.).
     """
     try:
@@ -77,6 +80,13 @@ def classify_change(path: Path, hive_dir: Path) -> ChangeKind:
         return "config"
     if top == "skills":
         return "config"
+
+    # Mutation paths → process between shutdown and restart.
+    # Ignore result files (written by the box itself).
+    if top == "mutations":
+        if path.name.endswith(".result.json"):
+            return "ignore"
+        return "mutation"
 
     # Task paths → hot trigger.
     if top == "tickets":
@@ -136,8 +146,14 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
     This function runs indefinitely until cancelled or interrupted.
     Config changes cause a restart (inner loop breaks, outer loop
     re-creates ``Bees``). Task changes trigger the scheduler.
+    Mutations are processed in the quiescent gap between shutdown
+    and restart, guaranteeing atomicity.
     """
     logger.info("Box starting — watching %s", hive_dir)
+
+    # Process any mutations that arrived while the box was down.
+    if process_mutations(hive_dir):
+        logger.info("Processed pending mutations on startup")
 
     while True:
         bees = Bees(hive_dir, backend)
@@ -153,10 +169,12 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
         logger.info("Bees started — watching for changes")
 
         restart = False
+        mutation_pending = False
         try:
             async for changes in awatch(hive_dir):
                 needs_restart = False
                 needs_trigger = False
+                needs_mutation = False
 
                 for _change_type, changed_path in changes:
                     kind = classify_change(Path(changed_path), hive_dir)
@@ -164,6 +182,15 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
                         needs_restart = True
                     elif kind == "task":
                         needs_trigger = True
+                    elif kind == "mutation":
+                        needs_mutation = True
+
+                # Mutations take priority — require shutdown + processing.
+                if needs_mutation:
+                    logger.info("Mutation detected — shutting down for processing")
+                    mutation_pending = True
+                    restart = True
+                    break
 
                 if needs_restart:
                     logger.info("Config change detected — restarting")
@@ -180,6 +207,11 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
             return
 
         await bees.shutdown()
+
+        # Process mutations in the quiescent gap between shutdown and restart.
+        if mutation_pending:
+            process_mutations(hive_dir)
+
         if not restart:
             return
 
