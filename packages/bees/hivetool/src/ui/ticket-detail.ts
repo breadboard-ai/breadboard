@@ -165,6 +165,144 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
         white-space: pre-wrap;
         word-break: break-word;
       }
+
+      /* ── Response form ── */
+
+      .response-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .agent-prompt {
+        padding: 12px 16px;
+        background: #111827;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        color: #e2e8f0;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+
+      .reply-textarea {
+        width: 100%;
+        min-height: 80px;
+        padding: 10px 12px;
+        background: #0b0c0f;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        color: #e2e8f0;
+        font-family: inherit;
+        font-size: 0.85rem;
+        resize: vertical;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+
+      .reply-textarea:focus {
+        border-color: #3b82f6;
+      }
+
+      .reply-textarea::placeholder {
+        color: #475569;
+      }
+
+      .reply-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .send-btn {
+        padding: 6px 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: #1d4ed8;
+        color: #dbeafe;
+        border: 1px solid #2563eb;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.15s;
+      }
+
+      .send-btn:hover {
+        background: #2563eb;
+        color: #fff;
+      }
+
+      .send-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* ── Choice cards ── */
+
+      .choices-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .choice-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: #111827;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-size: 0.8rem;
+        color: #e2e8f0;
+      }
+
+      .choice-card:hover {
+        background: #1e293b;
+        border-color: #334155;
+      }
+
+      .choice-card.selected {
+        background: #1e3a5f;
+        border-color: #3b82f6;
+      }
+
+      .choice-indicator {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid #475569;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+      }
+
+      .choice-card.selected .choice-indicator {
+        border-color: #3b82f6;
+        background: #3b82f6;
+      }
+
+      .choice-indicator::after {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: transparent;
+        transition: background 0.15s;
+      }
+
+      .choice-card.selected .choice-indicator::after {
+        background: #fff;
+      }
+
+      .choice-label {
+        flex: 1;
+        line-height: 1.4;
+      }
     `,
   ];
 
@@ -184,6 +322,11 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
   @state() accessor fileTree: FileTreeNode[] = [];
   @state() accessor fileContents: Record<string, string | null> = {};
 
+  // ── Response state ──
+  @state() accessor replyText = "";
+  @state() accessor selectedChoiceIds = new Set<string>();
+  @state() accessor responding = false;
+
   /** Track the ticket ID we loaded the tree for. */
   #treeLoadedFor: string | null = null;
 
@@ -202,11 +345,15 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
       this.#treeLoadedFor = ticket.id;
     }
 
+    const suspendFn =
+      ticket.suspend_event?.function_name as string | undefined;
     const statusLabel =
-      ticket.status === "suspended" && ticket.assignee === "user"
+      ticket.status === "suspended" &&
+      ticket.assignee === "user" &&
+      suspendFn !== "chat_await_context_update"
         ? "waiting for user"
         : ticket.status === "suspended"
-          ? "waiting for signal"
+          ? "waiting for event"
           : ticket.status;
 
     // Collect identity chips.
@@ -408,16 +555,7 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
               `
             : nothing}
           ${ticket.status === "suspended" && ticket.suspend_event
-            ? html`
-                <div class="block">
-                  <div class="block-header">Suspended</div>
-                  <div class="block-content">
-                    <div class="json-tree">
-                      ${renderJson(ticket.suspend_event)}
-                    </div>
-                  </div>
-                </div>
-              `
+            ? this.renderSuspendedBlock(ticket.id, ticket.suspend_event, ticket.assignee)
             : nothing}
           ${ticket.tags && ticket.tags.length > 0
             ? html`
@@ -589,6 +727,216 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
         bubbles: true,
       })
     );
+  }
+
+  // ── Suspend / Response ──
+
+  /**
+   * Render the suspended block — interactive response form for user-facing
+   * suspensions, JSON tree for everything else.
+   */
+  private renderSuspendedBlock(
+    ticketId: string,
+    suspendEvent: Record<string, unknown>,
+    assignee?: string
+  ) {
+    const functionName = suspendEvent.function_name as string | undefined;
+    const isUserFacing =
+      assignee === "user" &&
+      functionName !== "chat_await_context_update";
+
+    // For user-facing suspensions, show interactive response UI.
+    if (isUserFacing) {
+      const waitForInput = suspendEvent.waitForInput as
+        | Record<string, unknown>
+        | undefined;
+      const waitForChoice = suspendEvent.waitForChoice as
+        | Record<string, unknown>
+        | undefined;
+
+      if (waitForInput) {
+        return this.renderReplyForm(ticketId, waitForInput);
+      }
+      if (waitForChoice) {
+        return this.renderChoiceForm(ticketId, waitForChoice);
+      }
+    }
+
+    // Fallback: raw JSON tree for non-interactive or unknown events.
+    const label =
+      functionName === "chat_await_context_update"
+        ? "Waiting for Event"
+        : "Suspended";
+    return html`
+      <div class="block">
+        <div class="block-header">${label}</div>
+        <div class="block-content">
+          <div class="json-tree">
+            ${renderJson(suspendEvent)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /** Extract displayable text from an LLMContent prompt. */
+  private extractPromptText(prompt: unknown): string {
+    if (!prompt || typeof prompt !== "object") return "";
+    const p = prompt as { parts?: Array<{ text?: string }> };
+    if (!Array.isArray(p.parts)) return "";
+    return p.parts.map((part) => part.text ?? "").join("");
+  }
+
+  /** Interactive text reply form for waitForInput suspensions. */
+  private renderReplyForm(
+    ticketId: string,
+    waitForInput: Record<string, unknown>
+  ) {
+    const promptText = this.extractPromptText(waitForInput.prompt);
+
+    return html`
+      <div class="block">
+        <div class="block-header">Reply</div>
+        <div class="block-content">
+          <div class="response-form">
+            ${promptText
+              ? html`<div class="agent-prompt">${promptText}</div>`
+              : nothing}
+            <textarea
+              class="reply-textarea"
+              placeholder="Type your reply…"
+              .value=${this.replyText}
+              ?disabled=${this.responding}
+              @input=${(e: Event) => {
+                this.replyText = (e.target as HTMLTextAreaElement).value;
+              }}
+              @keydown=${(e: KeyboardEvent) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault();
+                  if (this.replyText.trim()) {
+                    this.handleTextReply(ticketId);
+                  }
+                }
+              }}
+            ></textarea>
+            <div class="reply-actions">
+              <button
+                class="send-btn"
+                ?disabled=${!this.replyText.trim() || this.responding}
+                @click=${() => this.handleTextReply(ticketId)}
+              >
+                ${this.responding ? "Sending…" : "Send"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /** Interactive choice selection form for waitForChoice suspensions. */
+  private renderChoiceForm(
+    ticketId: string,
+    waitForChoice: Record<string, unknown>
+  ) {
+    const promptText = this.extractPromptText(waitForChoice.prompt);
+    const choices = (waitForChoice.choices ?? []) as Array<{
+      id: string;
+      content?: { parts?: Array<{ text?: string }> };
+    }>;
+    const selectionMode =
+      (waitForChoice.selectionMode as string) ?? "single";
+
+    return html`
+      <div class="block">
+        <div class="block-header">Choose</div>
+        <div class="block-content">
+          <div class="response-form">
+            ${promptText
+              ? html`<div class="agent-prompt">${promptText}</div>`
+              : nothing}
+            <div class="choices-grid">
+              ${choices.map((choice) => {
+                const selected = this.selectedChoiceIds.has(choice.id);
+                const label = this.extractPromptText(choice.content) || choice.id;
+                return html`
+                  <div
+                    class="choice-card ${selected ? "selected" : ""}"
+                    @click=${() =>
+                      this.toggleChoice(choice.id, selectionMode)}
+                  >
+                    <div class="choice-indicator"></div>
+                    <span class="choice-label">${label}</span>
+                  </div>
+                `;
+              })}
+            </div>
+            <div class="reply-actions">
+              <button
+                class="send-btn"
+                ?disabled=${this.selectedChoiceIds.size === 0 ||
+                  this.responding}
+                @click=${() => this.handleChoiceReply(ticketId)}
+              >
+                ${this.responding ? "Sending…" : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private toggleChoice(choiceId: string, mode: string) {
+    const next = new Set(this.selectedChoiceIds);
+    if (mode === "single") {
+      // Single select: toggle or replace.
+      if (next.has(choiceId)) {
+        next.clear();
+      } else {
+        next.clear();
+        next.add(choiceId);
+      }
+    } else {
+      // Multiple select: toggle.
+      if (next.has(choiceId)) {
+        next.delete(choiceId);
+      } else {
+        next.add(choiceId);
+      }
+    }
+    this.selectedChoiceIds = next;
+  }
+
+  private async handleTextReply(ticketId: string) {
+    const text = this.replyText.trim();
+    if (!text || !this.ticketStore) return;
+
+    this.responding = true;
+    try {
+      await this.ticketStore.respondToTask(ticketId, { text });
+      this.replyText = "";
+    } catch (e) {
+      console.error("Failed to send reply:", e);
+    } finally {
+      this.responding = false;
+    }
+  }
+
+  private async handleChoiceReply(ticketId: string) {
+    if (this.selectedChoiceIds.size === 0 || !this.ticketStore) return;
+
+    this.responding = true;
+    try {
+      await this.ticketStore.respondToTask(ticketId, {
+        selectedIds: [...this.selectedChoiceIds],
+      });
+      this.selectedChoiceIds = new Set();
+    } catch (e) {
+      console.error("Failed to send choice:", e);
+    } finally {
+      this.responding = false;
+    }
   }
 }
 

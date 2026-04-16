@@ -184,6 +184,47 @@ class TicketStore {
     return taskId;
   }
 
+  /**
+   * Respond to a suspended task.
+   *
+   * Writes `response.json` with the user's response and flips `assignee`
+   * to `"agent"` in `metadata.json`. The box's file watcher detects
+   * both changes and the scheduler resumes the task.
+   *
+   * For text replies:   `{ text: "user's message" }`
+   * For choice replies: `{ selectedIds: ["id1", ...] }`
+   */
+  async respondToTask(
+    ticketId: string,
+    response: Record<string, unknown>
+  ): Promise<void> {
+    if (!this.#ticketsHandle) throw new Error("Ticket store not activated");
+
+    const ticketDir = await this.#ticketsHandle.getDirectoryHandle(ticketId);
+
+    // Write response.json
+    const responseHandle = await ticketDir.getFileHandle("response.json", {
+      create: true,
+    });
+    const responseWritable = await responseHandle.createWritable();
+    await responseWritable.write(
+      JSON.stringify(response, null, 2) + "\n"
+    );
+    await responseWritable.close();
+
+    // Read, update, and write metadata.json — flip assignee to "agent".
+    const metadataHandle = await ticketDir.getFileHandle("metadata.json");
+    const metadataFile = await metadataHandle.getFile();
+    const metadata = JSON.parse(await metadataFile.text());
+    metadata.assignee = "agent";
+
+    const metadataWritable = await metadataHandle.createWritable();
+    await metadataWritable.write(
+      JSON.stringify(metadata, null, 2) + "\n"
+    );
+    await metadataWritable.close();
+  }
+
   // ── File tree ──
 
   /** Read the directory tree for a ticket's filesystem. */
