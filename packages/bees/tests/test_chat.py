@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 from bees.functions.chat import get_chat_function_group_factory
 from bees.task_store import TaskStore
 from bees.context_updates import CONTEXT_UPDATE_TAG
-from opal_backend.function_caller import CONTEXT_PARTS_KEY
+from bees.protocols.handler_types import CONTEXT_PARTS_KEY
 
 
 @pytest.fixture

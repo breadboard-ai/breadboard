@@ -17,7 +17,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from opal_backend.function_caller import CONTEXT_PARTS_KEY
 from bees.protocols.functions import (
     FunctionGroup,
     FunctionGroupFactory,
@@ -25,8 +24,12 @@ from bees.protocols.functions import (
     assemble_function_group,
     load_declarations,
 )
+from bees.protocols.handler_types import (
+    ChatEntryCallback,
+    CONTEXT_PARTS_KEY,
+    SuspendError,
+)
 from opal_backend.functions.chat import _make_handlers
-from opal_backend.functions.chat import ChatEntryCallback
 from bees.context_updates import updates_to_context_parts
 
 __all__ = ["get_chat_function_group_factory"]
@@ -70,7 +73,7 @@ def get_chat_function_group_factory(
         async def chat_await_context_update(
             args: dict[str, Any], status_cb: Any,
         ) -> dict[str, Any]:
-            from opal_backend.functions.chat import SuspendError
+            # SuspendError imported at module level from bees.protocols.
 
             # Check for pending context updates first.
             # If updates are already buffered, return immediately
