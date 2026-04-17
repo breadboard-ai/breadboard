@@ -5,9 +5,9 @@
 # Package Split
 
 The goal: `bees` becomes a zero-dependency orchestration library that owns both
-task lifecycle _and_ the function layer. Model-provider concerns live in a separate
-runner package. CLI and server applications are thin shells that wire the two
-together.
+task lifecycle _and_ the function layer. Model-provider concerns live in a
+separate runner package. CLI and server applications are thin shells that wire
+the two together.
 
 ## The dependency graph
 
@@ -29,12 +29,12 @@ bees (zero external deps)
 
 Four packages, four responsibilities:
 
-| Package           | What it is                    | External deps                       |
-| ----------------- | ----------------------------- | ----------------------------------- |
+| Package           | What it is                        | External deps                       |
+| ----------------- | --------------------------------- | ----------------------------------- |
 | **`bees`**        | Orchestration library + functions | None (stdlib only)                  |
-| **`bees-gemini`** | Gemini model provider         | `google-genai`, `httpx`             |
-| **`box`**         | Filesystem-driven CLI runner  | `bees`, `bees-gemini`, `watchfiles` |
-| **`app`**         | Reference web application     | `bees`, `bees-gemini`, `fastapi`    |
+| **`bees-gemini`** | Gemini model provider             | `google-genai`, `httpx`             |
+| **`box`**         | Filesystem-driven CLI runner      | `bees`, `bees-gemini`, `watchfiles` |
+| **`app`**         | Reference web application         | `bees`, `bees-gemini`, `fastapi`    |
 
 ## What each package owns
 
@@ -75,9 +75,9 @@ bees-gemini/
   adapter.py         # bridges bees ↔ opal_backend FunctionGroup
 ```
 
-**The adapter** bridges bees' function protocols to `opal_backend`'s types. Since
-the protocols are designed to mirror `opal_backend`'s shape, this is structural
-compatibility — no translation logic, just type-level bridging.
+**The adapter** bridges bees' function protocols to `opal_backend`'s types.
+Since the protocols are designed to mirror `opal_backend`'s shape, this is
+structural compatibility — no translation logic, just type-level bridging.
 
 **Auth lives here.** The runner's constructor takes credentials. Bees never sees
 API keys:
@@ -181,10 +181,11 @@ own types and implement bees' protocols directly, that's a non-breaking change.
 
 ## Function declarations
 
-Function declarations use Gemini's `FunctionDeclaration` format directly. There's no
-need to invent a bees-native schema — Gemini's format is well-documented JSON
-Schema and serves as a practical lingua franca. If a future non-Gemini runner
-needs a different format, the adaptation happens on the runner's side.
+Function declarations use Gemini's `FunctionDeclaration` format directly.
+There's no need to invent a bees-native schema — Gemini's format is
+well-documented JSON Schema and serves as a practical lingua franca. If a future
+non-Gemini runner needs a different format, the adaptation happens on the
+runner's side.
 
 ## What moves where
 
@@ -270,12 +271,13 @@ session API directly. This entire file _is_ the `StreamingRunner`.
 with a protocol or `Any` and it's clean. `task_runner.py` already uses
 `backend: Any` — zero `opal_backend` imports.
 
-`box.py` imports `app.auth`, `app.config`, `HttpBackendClient`. All three
-become constructor parameters when it moves to its own package.
+`box.py` imports `app.auth`, `app.config`, `HttpBackendClient`. All three become
+constructor parameters when it moves to its own package.
 
 ### The friction: function modules
 
 All 8 function modules import `opal_backend.function_definition` for:
+
 - `FunctionGroup`, `FunctionGroupFactory`, `SessionHooks` (types)
 - `assemble_function_group`, `load_declarations` (assembly utilities)
 
@@ -283,8 +285,8 @@ Additionally, `chat.py` and `simple_files.py` import `_make_handlers` from
 `opal_backend.functions.*` — these delegate to `opal_backend`'s built-in
 handlers for file I/O and chat.
 
-**Resolution**: The tool protocol bridge (above) addresses the type imports.
-The `_make_handlers` delegations and `load_declarations`/`assemble_function_group`
+**Resolution**: The tool protocol bridge (above) addresses the type imports. The
+`_make_handlers` delegations and `load_declarations`/`assemble_function_group`
 utilities need bees-native equivalents or thin wrappers in the protocols module.
 Since these are pure data assembly (JSON schema loading + handler map → group),
 the extraction is mechanical.
@@ -306,7 +308,23 @@ provider-specific). Needs investigation.
 
 ## Gradual migration
 
-1. Define tool protocols in `bees/protocols.py` (mirror `opal_backend` shapes).
+This split follows Spec-Driven Development. Write protocols first, prove them
+with conformance tests, then migrate imports.
+
+### Protocol inventory
+
+| Protocol          | Replaces                            | Specified | Tested | Migrated |
+| ----------------- | ----------------------------------- | --------- | ------ | -------- |
+| `FunctionGroup`   | `opal_backend.FunctionGroup`        | Pending   | —      | —        |
+| `FunctionFactory` | `opal_backend.FunctionGroupFactory` | Pending   | —      | —        |
+| `FunctionHooks`   | `opal_backend.SessionHooks`         | Pending   | —      | —        |
+| `SessionRunner`   | Implicit contract in `session.py`   | Pending   | —      | —        |
+| `FileSystem`      | `opal_backend.FileSystemProtocol`   | Pending   | —      | —        |
+
+### Migration steps
+
+1. Define function protocols in `bees/protocols.py` (mirror `opal_backend`
+   shapes).
 2. Define `SessionRunner` protocol.
 3. Migrate `bees/functions/` to import from `bees/protocols.py`.
 4. Create `bees-gemini` with `StreamingRunner` (wraps `session.py` +
