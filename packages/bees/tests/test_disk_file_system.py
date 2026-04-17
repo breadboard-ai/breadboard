@@ -15,7 +15,7 @@ import base64
 import pytest
 
 from bees.disk_file_system import DiskFileSystem
-from opal_backend.file_system_protocol import FileDescriptor
+from bees.protocols.filesystem import FileDescriptor
 
 
 # ---------------------------------------------------------------------------

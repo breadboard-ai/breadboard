@@ -315,11 +315,15 @@ with conformance tests, then migrate imports.
 
 | Protocol          | Replaces                            | Specified | Tested | Migrated |
 | ----------------- | ----------------------------------- | --------- | ------ | -------- |
-| `FunctionGroup`   | `opal_backend.FunctionGroup`        | Pending   | —      | —        |
-| `FunctionFactory` | `opal_backend.FunctionGroupFactory` | Pending   | —      | —        |
-| `FunctionHooks`   | `opal_backend.SessionHooks`         | Pending   | —      | —        |
+| `FunctionGroup`   | `opal_backend.FunctionGroup`        | ✅        | ✅     | ✅       |
+| `FunctionFactory` | `opal_backend.FunctionGroupFactory` | ✅        | ✅     | ✅       |
+| `FunctionHooks`   | `opal_backend.SessionHooks`         | ✅        | ✅     | ✅       |
 | `SessionRunner`   | Implicit contract in `session.py`   | Pending   | —      | —        |
-| `FileSystem`      | `opal_backend.FileSystemProtocol`   | Pending   | —      | —        |
+| `FileSystem`      | `opal_backend.FileSystemProtocol`   | ✅        | ✅     | ✅       |
+
+See [spec/function-types.md](../spec/function-types.md) for the function types
+spec and [spec/filesystem.md](../spec/filesystem.md) for the filesystem types
+spec and conformance tests.
 
 ### Migration steps
 

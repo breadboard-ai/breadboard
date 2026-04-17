@@ -4,9 +4,9 @@
 """
 Disk-backed file system for bees agent sessions.
 
-Satisfies the ``FileSystem`` protocol from ``opal_backend`` by reading
-and writing directly to a working directory on disk.  Paths are relative
-to ``work_dir`` — no ``/mnt/`` prefix.
+Satisfies the ``FileSystem`` protocol by reading and writing directly
+to a working directory on disk.  Paths are relative to ``work_dir`` —
+no ``/mnt/`` prefix.
 
 This replaces the in-memory ``AgentFileSystem`` + bidirectional sync
 hacks that previously bridged the virtual FS with the bash sandbox.
@@ -21,11 +21,10 @@ import mimetypes
 from pathlib import Path
 from typing import Any
 
-from opal_backend.file_system_protocol import (
+from bees.protocols.filesystem import (
     FileDescriptor,
     FileSystemSnapshot,
     SystemFileGetter,
-    file_descriptor_to_part,
     DEFAULT_EXTENSION,
     DEFAULT_MIME_TYPE,
     KNOWN_TYPES,

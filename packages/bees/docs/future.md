@@ -37,6 +37,31 @@ The delegated sessions insight, stated as a packaging concern. Four packages:
 The key refinement: functions (tool declarations + handlers) stay in `bees` as
 framework capabilities. They're orthogonal to the model provider.
 
+### Progress
+
+The library extraction follows [Spec-Driven Development](../spec/). Each
+protocol is specified, tested for conformance, then migrated.
+
+**Function types** ([spec](../spec/function-types.md)) — ✅ complete. Bees-native
+copies of `FunctionGroup`, `FunctionDefinition`, `SessionHooks`,
+`load_declarations`, and `assemble_function_group` live in
+`bees/protocols/functions.py`. All 8 function modules now import from
+`bees.protocols` instead of `opal_backend.function_definition`. Remaining
+`opal_backend` imports in `chat.py`, `simple_files.py`, and `system.py` are
+handler-level (`_make_handlers`) — a separate spec.
+
+**FileSystem types** ([spec](../spec/filesystem.md)) — ✅ complete. Bees-native
+copies of `FileSystem`, `FileDescriptor`, `FileSystemSnapshot`,
+`SystemFileGetter`, `file_descriptor_to_part`, and constants live in
+`bees/protocols/filesystem.py`. `disk_file_system.py` now imports from
+`bees.protocols` instead of `opal_backend.file_system_protocol`.
+
+**Remaining protocols** from the [package-split inventory](./package-split.md):
+
+| Protocol        | Status  |
+| --------------- | ------- |
+| `SessionRunner` | Pending |
+
 ## The Consumption API
 
 With the library extraction as the goal, three sub-problems need to
