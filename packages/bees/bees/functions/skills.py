@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from opal_backend.function_definition import (
+from bees.protocols.functions import (
     FunctionGroup,
     assemble_function_group,
     load_declarations,

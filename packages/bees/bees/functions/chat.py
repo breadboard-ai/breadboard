@@ -18,8 +18,9 @@ from pathlib import Path
 from typing import Any
 
 from opal_backend.function_caller import CONTEXT_PARTS_KEY
-from opal_backend.function_definition import (
+from bees.protocols.functions import (
     FunctionGroup,
+    FunctionGroupFactory,
     SessionHooks,
     assemble_function_group,
     load_declarations,
@@ -40,7 +41,7 @@ def get_chat_function_group_factory(
     on_chat_entry: "ChatEntryCallback" = None,
     workspace_root_id: str | None = None,
     scheduler: Any | None = None,
-) -> "FunctionGroupFactory":
+) -> FunctionGroupFactory:
     """Return a factory that builds the bees chat function group.
 
     The returned callable accepts ``SessionHooks`` and produces a
@@ -52,7 +53,6 @@ def get_chat_function_group_factory(
         on_chat_entry: Optional callback ``(role, content) -> None``
             invoked when the agent sends a user-facing message.
     """
-    from opal_backend.function_definition import FunctionGroupFactory
 
     def factory(hooks: SessionHooks) -> FunctionGroup:
         handlers = _make_handlers(

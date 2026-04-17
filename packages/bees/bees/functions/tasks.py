@@ -11,12 +11,12 @@ from typing import Any
 
 from bees.subagent_scope import SubagentScope
 
-from opal_backend.function_definition import (
+from bees.protocols.functions import (
     FunctionGroup,
+    FunctionGroupFactory,
     SessionHooks,
     assemble_function_group,
     load_declarations,
-    FunctionGroupFactory,
 )
 
 __all__ = ["get_tasks_function_group_factory"]

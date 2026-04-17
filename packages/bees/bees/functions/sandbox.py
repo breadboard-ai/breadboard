@@ -28,7 +28,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from opal_backend.function_definition import (
+from bees.protocols.functions import (
     FunctionGroup,
     FunctionGroupFactory,
     SessionHooks,

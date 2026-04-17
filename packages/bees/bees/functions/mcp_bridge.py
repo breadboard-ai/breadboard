@@ -32,10 +32,10 @@ from contextlib import AsyncExitStack
 from dataclasses import dataclass, field
 from typing import Any
 
-from opal_backend.function_definition import (
+from bees.protocols.functions import (
+    FunctionDefinition,
     FunctionGroup,
     FunctionGroupFactory,
-    FunctionDefinition,
     SessionHooks,
 )
 
