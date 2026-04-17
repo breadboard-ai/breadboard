@@ -17,8 +17,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-from opal_backend.function_definition import (
+from bees.protocols.functions import (
     FunctionGroup,
+    FunctionGroupFactory,
     SessionHooks,
     assemble_function_group,
     load_declarations,
@@ -96,7 +97,7 @@ def _make_list_dir_handler(work_dir: Path) -> Any:
     return system_list_dir
 
 
-def get_simple_files_function_group_factory(scope: SubagentScope | None = None) -> "FunctionGroupFactory":
+def get_simple_files_function_group_factory(scope: SubagentScope | None = None) -> FunctionGroupFactory:
     """Return a factory that builds the simple-files function group.
 
     The returned callable accepts ``SessionHooks`` and produces a
@@ -106,7 +107,6 @@ def get_simple_files_function_group_factory(scope: SubagentScope | None = None) 
     With ``DiskFileSystem``, paths are bare (relative to work_dir) —
     no path translation is needed.
     """
-    from opal_backend.function_definition import FunctionGroupFactory
 
     def factory(hooks: SessionHooks) -> FunctionGroup:
         handlers = _make_handlers(

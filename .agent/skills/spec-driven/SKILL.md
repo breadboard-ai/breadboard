@@ -40,7 +40,9 @@ Activities:
   the library because they're framework capabilities"), record it with its
   rationale.
 
-The outcome is a **spec doc**.
+The outcome is a **spec doc**. After producing each revision of the spec doc,
+stop and discuss it with the user. The idea is that the spec doc is the work
+order, and the user needs to approve it.
 
 ## The Spec Doc
 

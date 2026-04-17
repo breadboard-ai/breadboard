@@ -21,8 +21,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from opal_backend.function_definition import (
+from bees.protocols.functions import (
     FunctionGroup,
+    FunctionGroupFactory,
     SessionHooks,
     assemble_function_group,
     load_declarations,
@@ -37,7 +38,7 @@ _DECLARATIONS_DIR = Path(__file__).resolve().parent.parent / "declarations"
 _LOADED = load_declarations("system", declarations_dir=_DECLARATIONS_DIR)
 
 
-def get_system_function_group_factory() -> "FunctionGroupFactory":
+def get_system_function_group_factory() -> FunctionGroupFactory:
     """Return a factory that builds the bees system function group.
 
     The returned callable accepts ``SessionHooks`` and produces a
@@ -45,7 +46,6 @@ def get_system_function_group_factory() -> "FunctionGroupFactory":
     system group entirely. Only termination functions are included,
     but their implementations are identical to the built-in versions.
     """
-    from opal_backend.function_definition import FunctionGroupFactory
 
     def factory(hooks: SessionHooks) -> FunctionGroup:
         handlers = _make_handlers(

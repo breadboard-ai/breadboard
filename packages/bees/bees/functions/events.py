@@ -16,12 +16,12 @@ from typing import Any, Callable
 
 from bees.subagent_scope import SubagentScope
 
-from opal_backend.function_definition import (
+from bees.protocols.functions import (
     FunctionGroup,
+    FunctionGroupFactory,
     SessionHooks,
     assemble_function_group,
     load_declarations,
-    FunctionGroupFactory,
 )
 
 from bees.ticket import Ticket
