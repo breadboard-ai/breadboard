@@ -56,11 +56,34 @@ copies of `FileSystem`, `FileDescriptor`, `FileSystemSnapshot`,
 `bees/protocols/filesystem.py`. `disk_file_system.py` now imports from
 `bees.protocols` instead of `opal_backend.file_system_protocol`.
 
+**Pidgin** ([spec](../spec/pidgin.md)) — ✅ complete. Bees-native copies of
+`from_pidgin_string` and `merge_text_parts` live in `bees/pidgin.py`. These
+resolve pidgin markup (`<file>`, `<a>` tags) in agent output back to data parts
+from the file system. Prerequisite for inlining handler bodies.
+
 **Remaining protocols** from the [package-split inventory](./package-split.md):
 
 | Protocol        | Status  |
 | --------------- | ------- |
 | `SessionRunner` | Pending |
+
+**Remaining `opal_backend` imports** in `bees/` after the three completed
+migrations:
+
+| Module             | Imports                                                    | Category           |
+| ------------------ | ---------------------------------------------------------- | ------------------ |
+| `session.py`       | Session runtime (`new_session`, `start_session`, stores…)  | SessionRunner      |
+| `scheduler.py`     | `HttpBackendClient` (type annotation only)                 | SessionRunner      |
+| `box.py`           | `HttpBackendClient`, `app.auth`, `app.config`              | SessionRunner      |
+| `functions/chat.py`| `_make_handlers`, `CONTEXT_PARTS_KEY`, `ChatEntryCallback`, `SuspendError` | Handler delegation |
+| `functions/simple_files.py` | `_make_handlers`                                  | Handler delegation |
+| `functions/system.py`       | `_make_handlers`                                  | Handler delegation |
+
+The "SessionRunner" category disappears when `session.py` moves to
+`bees-gemini`. The "Handler delegation" category decomposes into two remaining
+specs: **handler types** (bees-native copies of `SuspendError`, suspend event
+types, `AgentResult`, `SessionTerminator` protocol, constants) and **handler
+bodies** (inlining `_make_handlers` using bees-native pidgin + handler types).
 
 ## The Consumption API
 

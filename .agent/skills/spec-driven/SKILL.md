@@ -39,6 +39,10 @@ Activities:
 - **Name the decisions.** When a design question is resolved ("functions stay in
   the library because they're framework capabilities"), record it with its
   rationale.
+- **Separate "what to copy" from "what to change."** During brainstorm, you'll
+  spot things that could be improved. Record them, but don't mix them into the
+  spec. The spec should only contain copies of existing shapes. Improvements
+  belong in a follow-up spec after the abstraction boundary exists.
 
 The outcome is a **spec doc**. After producing each revision of the spec doc,
 stop and discuss it with the user. The idea is that the spec doc is the work
@@ -104,6 +108,19 @@ migration.
 
 At the start of each session, check the spec doc. Pick the next pending protocol
 from the inventory.
+
+### Scope Check
+
+Before starting the cycle, count the inventory items in your spec doc.
+
+- **≤ 8 items** → proceed.
+- **> 8 items** → you're probably combining multiple specs. Decompose first.
+  Draw the dependency graph of the types you want to extract. Start from the
+  leaves — types that depend only on things you've already extracted. Each leaf
+  cluster is a natural spec boundary.
+
+A spec that covers one source module is a good size. A spec that reaches across
+3+ source modules is almost certainly too big.
 
 ## The Cycle
 
@@ -198,7 +215,14 @@ requires changing logic, the protocol is wrong — go back to step 1.
 
 **Work bottom-up.** Start with protocols that have the most importers — they
 eliminate the most legacy coupling. Save the big structural protocols for last.
+Concretely: draw the dependency graph of the types you want to extract. Start
+from the leaves — types whose only dependencies are things already in your
+library. If a type depends on something you haven't extracted yet, extract that
+dependency first.
 
 **Mirror, then evolve.** First release: the protocol mirrors the existing type
 exactly. Second release (optional): evolve the protocol to a better shape now
-that the abstraction boundary exists. Don't try to do both at once.
+that the abstraction boundary exists. Don't try to do both at once. During
+brainstorm, you'll spot simplifications ("bees doesn't need pidgin" — wrong;
+"bees could use a simpler API for X" — maybe, but later). Record them as
+follow-up work, not spec items.
