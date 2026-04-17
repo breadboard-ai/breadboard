@@ -318,12 +318,16 @@ with conformance tests, then migrate imports.
 | `FunctionGroup`   | `opal_backend.FunctionGroup`        | ✅        | ✅     | ✅       |
 | `FunctionFactory` | `opal_backend.FunctionGroupFactory` | ✅        | ✅     | ✅       |
 | `FunctionHooks`   | `opal_backend.SessionHooks`         | ✅        | ✅     | ✅       |
-| `SessionRunner`   | Implicit contract in `session.py`   | Pending   | —      | —        |
 | `FileSystem`      | `opal_backend.FileSystemProtocol`   | ✅        | ✅     | ✅       |
+| `SuspendError`    | `opal_backend.suspend.SuspendError` | ✅        | ✅     | ✅       |
+| `AgentResult`     | `opal_backend.events.AgentResult`   | ✅        | ✅     | ✅       |
+| `SessionTerminator` | `opal_backend.loop.LoopController`| ✅        | ✅     | ✅       |
+| `SessionRunner`   | Implicit contract in `session.py`   | Pending   | —      | —        |
 
 See [spec/function-types.md](../spec/function-types.md) for the function types
-spec and [spec/filesystem.md](../spec/filesystem.md) for the filesystem types
-spec and conformance tests.
+spec, [spec/filesystem.md](../spec/filesystem.md) for the filesystem types spec,
+and [spec/handler-types.md](../spec/handler-types.md) for the handler types spec
+and conformance tests.
 
 ### Migration steps
 

@@ -7,6 +7,7 @@ Each module defines the types for one boundary:
 
 - ``functions`` — function declaration, assembly, and dispatch.
 - ``filesystem`` — FileSystem protocol and supporting types.
+- ``handler_types`` — suspend/resume, termination, and context injection.
 - (future) ``session`` — SessionRunner, SessionConfiguration, etc.
 """
 
@@ -37,6 +38,19 @@ from bees.protocols.functions import (
     load_declarations,
     map_definitions,
 )
+from bees.protocols.handler_types import (
+    AgentResult,
+    ChatEntryCallback,
+    ChoiceItem,
+    CONTEXT_PARTS_KEY,
+    FileData,
+    LLMContent,
+    SessionTerminator,
+    SuspendError,
+    SuspendEvent,
+    WaitForChoiceEvent,
+    WaitForInputEvent,
+)
 
 __all__ = [
     # filesystem
@@ -64,4 +78,16 @@ __all__ = [
     "empty_definitions",
     "load_declarations",
     "map_definitions",
+    # handler types
+    "AgentResult",
+    "ChatEntryCallback",
+    "ChoiceItem",
+    "CONTEXT_PARTS_KEY",
+    "FileData",
+    "LLMContent",
+    "SessionTerminator",
+    "SuspendError",
+    "SuspendEvent",
+    "WaitForChoiceEvent",
+    "WaitForInputEvent",
 ]

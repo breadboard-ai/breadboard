@@ -61,13 +61,21 @@ copies of `FileSystem`, `FileDescriptor`, `FileSystemSnapshot`,
 resolve pidgin markup (`<file>`, `<a>` tags) in agent output back to data parts
 from the file system. Prerequisite for inlining handler bodies.
 
+**Handler types** ([spec](../spec/handler-types.md)) — ✅ complete. Bees-native
+copies of `SuspendError`, `WaitForInputEvent`, `WaitForChoiceEvent`,
+`ChoiceItem`, `AgentResult`, `FileData`, `SessionTerminator` protocol,
+`CONTEXT_PARTS_KEY`, and `ChatEntryCallback` live in
+`bees/protocols/handler_types.py`. These are the types that function handlers use
+for suspend/resume, session termination, and context injection. Prerequisite for
+inlining handler bodies.
+
 **Remaining protocols** from the [package-split inventory](./package-split.md):
 
 | Protocol        | Status  |
 | --------------- | ------- |
 | `SessionRunner` | Pending |
 
-**Remaining `opal_backend` imports** in `bees/` after the three completed
+**Remaining `opal_backend` imports** in `bees/` after the four completed
 migrations:
 
 | Module             | Imports                                                    | Category           |
@@ -75,15 +83,14 @@ migrations:
 | `session.py`       | Session runtime (`new_session`, `start_session`, stores…)  | SessionRunner      |
 | `scheduler.py`     | `HttpBackendClient` (type annotation only)                 | SessionRunner      |
 | `box.py`           | `HttpBackendClient`, `app.auth`, `app.config`              | SessionRunner      |
-| `functions/chat.py`| `_make_handlers`, `CONTEXT_PARTS_KEY`, `ChatEntryCallback`, `SuspendError` | Handler delegation |
-| `functions/simple_files.py` | `_make_handlers`                                  | Handler delegation |
-| `functions/system.py`       | `_make_handlers`                                  | Handler delegation |
+| `functions/chat.py`| `_make_handlers`, `CONTEXT_PARTS_KEY`, `ChatEntryCallback`, `SuspendError` | Handler bodies |\
+| `functions/simple_files.py` | `_make_handlers`                                  | Handler bodies |
+| `functions/system.py`       | `_make_handlers`                                  | Handler bodies |
 
 The "SessionRunner" category disappears when `session.py` moves to
-`bees-gemini`. The "Handler delegation" category decomposes into two remaining
-specs: **handler types** (bees-native copies of `SuspendError`, suspend event
-types, `AgentResult`, `SessionTerminator` protocol, constants) and **handler
-bodies** (inlining `_make_handlers` using bees-native pidgin + handler types).
+`bees-gemini`. The "Handler bodies" category is the final spec: inlining
+`_make_handlers` using bees-native pidgin + handler types. All type dependencies
+are now satisfied — only the handler logic itself remains to be copied.
 
 ## The Consumption API
 
