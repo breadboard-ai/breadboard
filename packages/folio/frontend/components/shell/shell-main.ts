@@ -26,6 +26,7 @@ export class ShellMain extends SignalWatcher(LitElement) {
 
   static styles = css`
     :host {
+      background: var(--opal-color-surface);
       display: flex;
       flex-direction: column;
       width: 100svw;
@@ -43,7 +44,7 @@ export class ShellMain extends SignalWatcher(LitElement) {
 
     .content {
       display: grid;
-      grid-template-columns: var(--opal-width-sidebar) auto;
+      grid-template-columns: var(--opal-layout-sidebar-width) auto;
       flex: 1;
       width: 100%;
       height: 100%;

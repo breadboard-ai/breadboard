@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invoice Reminder</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: var(--opal-font-display, "Google Sans", sans-serif);
+        color: var(--opal-color-on-surface, #1a1a1a);
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* ── Scroll Container ── */
+      .scroll-container {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        gap: var(--opal-grid-3, 12px);
+        padding: var(--opal-grid-4, 16px) var(--opal-grid-5, 20px);
+        height: 100%;
+      }
+      .scroll-container::-webkit-scrollbar { display: none; }
+
+      /* ── Reminder Card ── */
+      .reminder-card {
+        flex: 0 0 calc(100% - 40px);
+        scroll-snap-align: start;
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-3, 12px);
+        padding: var(--opal-grid-4, 16px);
+        border: 1px solid var(--opal-color-border-subtle, #e8e8e8);
+        border-radius: var(--opal-radius-16, 16px);
+        background: var(--opal-color-surface, #fff);
+        min-width: 0;
+      }
+
+      /* ── Client Header ── */
+      .client-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .client-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .client-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+      .avatar-op { background: #c5b39a; color: #fff; }
+      .avatar-jw { background: #8b7355; color: #fff; }
+      .avatar-sc { background: #e8b4b8; color: #6b2c35; }
+      .client-name {
+        font-weight: 500;
+        font-size: var(--opal-body-medium-size, 14px);
+      }
+      .client-invoice {
+        font-size: 12px;
+        color: var(--opal-color-on-surface-variant, #666);
+      }
+      .amount-info {
+        text-align: right;
+        flex-shrink: 0;
+      }
+      .amount {
+        font-weight: 600;
+        font-size: var(--opal-body-large-size, 16px);
+      }
+      .overdue {
+        font-size: 11px;
+        color: #c0392b;
+      }
+
+      /* ── Tone Chips ── */
+      .tone-chips {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .tone {
+        padding: 6px 16px;
+        border-radius: var(--opal-radius-pill, 24px);
+        border: none;
+        background: var(--opal-color-interactive-surface, #f5f5f5);
+        color: var(--opal-color-on-surface, #333);
+        font-size: 12px;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .tone.selected {
+        background: var(--opal-color-on-surface-strong, #000);
+        color: var(--opal-color-surface, #fff);
+      }
+      .tone:not(.selected):hover {
+        background: var(--opal-color-border-subtle, #e0e0e0);
+      }
+
+      /* ── Draft ── */
+      .draft {
+        flex: 1;
+        min-height: 0;
+        font-size: var(--opal-body-medium-size, 14px);
+        line-height: 1.6;
+        color: var(--opal-color-on-surface-variant, #555);
+        overflow-y: auto;
+        scrollbar-width: none;
+      }
+      .draft::-webkit-scrollbar { display: none; }
+
+      /* ── Actions ── */
+      .actions-row {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--opal-grid-3, 12px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scroll-container">
+      <!-- Reminder 1: Our Place -->
+      <div class="reminder-card">
+        <div class="client-row">
+          <div class="client-info">
+            <div class="client-avatar avatar-op">OP</div>
+            <div>
+              <div class="client-name">Our Place</div>
+              <div class="client-invoice">Invoice: #112026</div>
+            </div>
+          </div>
+          <div class="amount-info">
+            <div class="amount">$2,400</div>
+            <div class="overdue">7 days overdue</div>
+          </div>
+        </div>
+
+        <div class="tone-chips" data-card="0">
+          <button class="tone selected">Friendly</button>
+          <button class="tone">Professional</button>
+          <button class="tone">Diplomatic</button>
+          <button class="tone">Firm</button>
+        </div>
+
+        <div class="draft">
+          Hey there,<br><br>
+          Hope all is well! Just a quick heads up — invoice #112026 for
+          $2,400 was due on April 9. Wanted to flag it in case it slipped
+          through the cracks. Happy to answer any questions if anything
+          looks off.
+        </div>
+
+        <div class="actions-row">
+          <button class="secondary">
+            <span class="g-icon">edit</span>
+            Edit
+          </button>
+          <button class="agent">Send</button>
+        </div>
+      </div>
+
+      <!-- Reminder 2: John Wang -->
+      <div class="reminder-card">
+        <div class="client-row">
+          <div class="client-info">
+            <div class="client-avatar avatar-jw">JW</div>
+            <div>
+              <div class="client-name">John Wang</div>
+              <div class="client-invoice">Invoice: #122026</div>
+            </div>
+          </div>
+          <div class="amount-info">
+            <div class="amount">$3,200</div>
+            <div class="overdue">3 days overdue</div>
+          </div>
+        </div>
+
+        <div class="tone-chips" data-card="1">
+          <button class="tone selected">Friendly</button>
+          <button class="tone">Professional</button>
+          <button class="tone">Diplomatic</button>
+          <button class="tone">Firm</button>
+        </div>
+
+        <div class="draft">
+          Hi John,<br><br>
+          Hope you're doing well! Just a friendly note that invoice
+          #122026 for $3,200 was due on April 13. Wanted to make sure
+          it didn't slip through the cracks on your end.<br><br>
+          Let me know if you have any questions — happy to help!
+        </div>
+
+        <div class="actions-row">
+          <button class="secondary">
+            <span class="g-icon">edit</span>
+            Edit
+          </button>
+          <button class="agent">Send</button>
+        </div>
+      </div>
+
+      <!-- Reminder 3: Sarah Chen -->
+      <div class="reminder-card">
+        <div class="client-row">
+          <div class="client-info">
+            <div class="client-avatar avatar-sc">SC</div>
+            <div>
+              <div class="client-name">Sarah Chen</div>
+              <div class="client-invoice">Invoice: #132026</div>
+            </div>
+          </div>
+          <div class="amount-info">
+            <div class="amount">$1,850</div>
+            <div class="overdue">14 days overdue</div>
+          </div>
+        </div>
+
+        <div class="tone-chips" data-card="2">
+          <button class="tone">Friendly</button>
+          <button class="tone">Professional</button>
+          <button class="tone selected">Diplomatic</button>
+          <button class="tone">Firm</button>
+        </div>
+
+        <div class="draft">
+          Hi Sarah,<br><br>
+          I hope this finds you well. I wanted to follow up regarding
+          invoice #132026 for $1,850, which was originally due on
+          April 2. I understand things can get busy — just wanted to
+          check in and see if there's anything I can help with to move
+          this along.
+        </div>
+
+        <div class="actions-row">
+          <button class="secondary">
+            <span class="g-icon">edit</span>
+            Edit
+          </button>
+          <button class="agent">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.querySelectorAll(".tone-chips").forEach(group => {
+        group.querySelectorAll(".tone").forEach(btn => {
+          btn.addEventListener("click", () => {
+            group.querySelectorAll(".tone").forEach(b => b.classList.remove("selected"));
+            btn.classList.add("selected");
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

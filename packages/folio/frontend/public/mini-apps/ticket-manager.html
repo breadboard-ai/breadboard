@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ticket #4521</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: var(--opal-font-display, "Google Sans", sans-serif);
+        color: var(--opal-color-on-surface, #1a1a1a);
+        height: 100%;
+      }
+      .container {
+        padding: var(--opal-grid-4, 16px) var(--opal-grid-5, 20px);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-4, 16px);
+      }
+
+      .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .customer {
+        font-weight: 500;
+        font-size: var(--opal-body-large-size, 16px);
+      }
+      .severity {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+        background: #fbe9e7;
+        color: #bf360c;
+      }
+      .severity-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #bf360c;
+      }
+
+      .assignee {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .assignee-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #b4c9e8;
+        color: #2c4a6b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .assignee-info {
+        display: flex;
+        flex-direction: column;
+      }
+      .assignee-name {
+        font-size: var(--opal-body-medium-size, 14px);
+        font-weight: 500;
+      }
+      .assignee-role {
+        font-size: 11px;
+        color: var(--opal-color-on-surface-variant, #666);
+      }
+
+      .section-label {
+        font-size: var(--opal-label-medium-size, 12px);
+        color: var(--opal-color-on-surface-variant, #666);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        padding-left: 12px;
+        border-left: 2px solid var(--opal-color-border-subtle, #e0e0e0);
+      }
+      .timeline-event {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 8px 0;
+        position: relative;
+      }
+      .timeline-event::before {
+        content: "";
+        position: absolute;
+        left: -17px;
+        top: 12px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--opal-color-surface, #fff);
+        border: 2px solid var(--agent-color, #2d6a4f);
+      }
+      .timeline-event:last-child::before {
+        background: var(--agent-color, #2d6a4f);
+      }
+      .event-time {
+        font-size: 12px;
+        color: var(--opal-color-on-surface-variant, #888);
+        min-width: 60px;
+        flex-shrink: 0;
+      }
+      .event-text {
+        font-size: var(--opal-body-medium-size, 14px);
+      }
+
+      .actions-row {
+        display: flex;
+        gap: var(--opal-grid-3, 12px);
+        margin-top: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header-row">
+        <span class="customer">Acme Corp</span>
+        <span class="severity">
+          <span class="severity-dot"></span>
+          High Priority
+        </span>
+      </div>
+
+      <div class="assignee">
+        <div class="assignee-avatar">PL</div>
+        <div class="assignee-info">
+          <span class="assignee-name">Paul Lewis</span>
+          <span class="assignee-role">Assigned</span>
+        </div>
+      </div>
+
+      <div>
+        <span class="section-label">Activity</span>
+        <div class="timeline">
+          <div class="timeline-event">
+            <span class="event-time">9:00 AM</span>
+            <span class="event-text">Ticket created by Acme Corp</span>
+          </div>
+          <div class="timeline-event">
+            <span class="event-time">9:15 AM</span>
+            <span class="event-text">Assigned to Paul Lewis</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions-row">
+        <button class="agent">
+          <span class="g-icon">reply</span>
+          Respond
+        </button>
+        <button class="secondary">
+          <span class="g-icon">group</span>
+          Delegate
+        </button>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expense Logger</title>
+    <style>
+      .drop-zone {
+        border: 2px dashed var(--opal-color-outline, #e0e0e0);
+        border-radius: var(--opal-radius-8);
+        padding: var(--opal-grid-10) var(--opal-grid-6);
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--opal-grid-4);
+        box-sizing: border-box;
+        height: 100%;
+      }
+
+      .subtitle {
+        color: var(--opal-color-on-surface-variant, #666);
+        max-width: 300px;
+      }
+
+      .actions {
+        display: flex;
+        gap: var(--opal-grid-4);
+        margin-top: var(--opal-grid-4);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="drop-zone">
+      <h3>Upload or drag and drop files</h3>
+      <p class="subtitle">
+        Text-based documents work best. Zip files are not supported. [Max 20MB]
+      </p>
+      <div class="actions">
+        <button class="agent">
+          <span class="g-icon">upload</span>
+          Upload files
+        </button>
+        <button class="secondary">
+          <span class="g-icon">add</span>
+          Add from Drive
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Mock SDK interaction
+      document.querySelector(".agent").addEventListener("click", () => {
+        if (window.opalSDK) {
+          window.opalSDK.emit("file:upload", { status: "simulated" });
+        } else {
+          console.log("SDK not found, would emit file:upload");
+        }
+      });
+    </script>
+  </body>
+</html>

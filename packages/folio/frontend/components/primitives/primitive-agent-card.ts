@@ -75,7 +75,7 @@ export class PrimitiveAgentCard extends SignalWatcher(LitElement) {
 
       :host {
         display: block;
-        box-shadow: var(--opal-shadow-card);
+        box-shadow: var(--opal-shadow-resting);
         height: 100%;
       }
 
@@ -92,12 +92,12 @@ export class PrimitiveAgentCard extends SignalWatcher(LitElement) {
         display: flex;
         align-items: center;
         gap: var(--opal-grid-3);
-        color: var(--opal-color-agent-foreground);
+        color: var(--opal-color-on-accent);
         font-weight: 500;
       }
 
       .agent-name {
-        color: var(--opal-color-agent-foreground);
+        color: var(--opal-color-on-accent);
         font-feature-settings: var(--opal-title-medium-font-feature);
         font-family: var(--opal-font-display);
         font-size: var(--opal-title-medium-size);
@@ -127,7 +127,7 @@ export class PrimitiveAgentCard extends SignalWatcher(LitElement) {
         background: none;
         border: none;
         cursor: pointer;
-        color: var(--opal-color-agent-foreground);
+        color: var(--opal-color-on-accent);
         opacity: 0.7;
         transition: opacity 0.2s ease-out;
       }
@@ -144,7 +144,7 @@ export class PrimitiveAgentCard extends SignalWatcher(LitElement) {
       .card-nav .card-counter {
         font-family: var(--opal-font-display);
         font-size: var(--opal-label-medium-size);
-        color: var(--opal-color-agent-foreground);
+        color: var(--opal-color-on-accent);
         opacity: 0.7;
         min-width: var(--opal-grid-8);
         text-align: center;
@@ -185,7 +185,7 @@ export class PrimitiveAgentCard extends SignalWatcher(LitElement) {
       }
 
       .empty-state {
-        color: var(--opal-color-agent-foreground);
+        color: var(--opal-color-on-accent);
         opacity: 0.7;
         font-family: var(--opal-font-display);
         font-size: var(--opal-headline-large-size);

@@ -15,7 +15,6 @@ body.light-theme {
 
 html,
 body {
-  background: var(--opal-color-surface);
   color: var(--opal-color-on-surface);
   margin: 0;
   padding: 0;

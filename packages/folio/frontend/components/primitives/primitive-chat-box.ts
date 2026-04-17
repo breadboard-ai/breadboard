@@ -25,9 +25,9 @@ export class PrimitiveChatBox extends LitElement {
         align-items: flex-start;
 
         border-radius: var(--opal-radius-16);
-        border: 1px solid var(--opal-color-bubble-border);
+        border: 1px solid var(--opal-color-border-subtle);
         background: var(--opal-color-surface);
-        box-shadow: var(--opal-shadow-chat);
+        box-shadow: var(--opal-shadow-elevated);
         box-sizing: border-box;
       }
 
@@ -89,18 +89,18 @@ export class PrimitiveChatBox extends LitElement {
       }
 
       .left-controls span:hover {
-        background-color: var(--opal-color-cta-background);
+        background-color: var(--opal-color-surface-tinted);
       }
 
-      .send-btn {
+      button.send-btn {
         display: flex;
         width: var(--opal-grid-8);
         height: var(--opal-grid-8);
         justify-content: center;
         align-items: center;
         border-radius: 50%;
-        background: var(--opal-color-send-button-background);
-        color: var(--opal-color-send-button-foreground);
+        background: var(--opal-color-surface-tinted);
+        color: var(--opal-color-on-surface);
         border: none;
         cursor: pointer;
         padding: 0;

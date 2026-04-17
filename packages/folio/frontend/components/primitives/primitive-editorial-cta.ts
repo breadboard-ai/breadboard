@@ -15,7 +15,7 @@ export class PrimitiveEditorialCta extends LitElement {
     :host {
       display: flex;
       flex-direction: column;
-      background: var(--opal-color-cta-background);
+      background: var(--opal-color-surface-tinted);
       border-radius: var(--opal-radius-20);
       padding: var(--opal-grid-4);
       gap: var(--opal-grid-6);
@@ -42,7 +42,7 @@ export class PrimitiveEditorialCta extends LitElement {
       color: var(--opal-color-primary);
       align-items: center;
       justify-content: center;
-      background: var(--palette-neutral-white);
+      background: var(--opal-color-surface);
       border-radius: var(--opal-radius-4);
     }
 
@@ -86,20 +86,18 @@ export class PrimitiveEditorialCta extends LitElement {
       cursor: pointer;
       font-weight: 500;
       font-family: var(--opal-font-display);
-      background: var(--opal-color-button-background);
+      background: var(--opal-color-interactive-surface);
       color: var(--opal-color-on-surface);
     }
 
-    ::slotted(button.primary) {
-      --opal-color-button-background: var(--current-agent-color);
-      --opal-color-on-surface: var(--opal-color-agent-foreground);
+    ::slotted(button.agent) {
+      background: var(--agent-color, var(--opal-color-interactive-surface));
+      color: var(--agent-text-color, var(--opal-color-on-surface));
     }
 
     ::slotted(button.secondary) {
-      --opal-color-button-background: var(
-        --opal-color-secondary-button-background
-      );
-      border: 1px solid var(--opal-color-secondary-button-border);
+      background: var(--opal-color-surface);
+      border: 1px solid transparent;
     }
   `;
 

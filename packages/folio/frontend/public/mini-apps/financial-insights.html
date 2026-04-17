@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Financial Insights</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: var(--opal-font-display, "Google Sans", sans-serif);
+        color: var(--opal-color-on-surface, #1a1a1a);
+        height: 100%;
+      }
+      .container {
+        padding: var(--opal-grid-4, 16px) var(--opal-grid-5, 20px);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-5, 20px);
+      }
+
+      /* ── Cash Flow ── */
+      .cash-flow {
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-2, 8px);
+      }
+      .section-label {
+        font-size: var(--opal-label-medium-size, 12px);
+        color: var(--opal-color-on-surface-variant, #666);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .big-number {
+        font-size: 28px;
+        font-weight: 500;
+        line-height: 1;
+      }
+      .big-number-sub {
+        font-size: 12px;
+        color: var(--opal-color-on-surface-variant, #666);
+        margin-top: 2px;
+      }
+      .sparkline {
+        height: 48px;
+        position: relative;
+      }
+      .sparkline svg {
+        width: 100%;
+        height: 100%;
+      }
+      .sparkline-fill {
+        fill: var(--agent-color, #2d6a4f);
+        opacity: 0.1;
+      }
+      .sparkline-line {
+        fill: none;
+        stroke: var(--agent-color, #2d6a4f);
+        stroke-width: 2;
+        opacity: 0.6;
+      }
+      .sparkline-labels {
+        display: flex;
+        justify-content: space-between;
+      }
+      .sparkline-labels span {
+        font-size: 9px;
+        color: var(--opal-color-on-surface-variant, #999);
+      }
+
+      /* ── Revenue ── */
+      .revenue {
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-2, 8px);
+      }
+      .mini-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        height: 56px;
+      }
+      .mini-bar-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        height: 100%;
+        justify-content: flex-end;
+      }
+      .mini-bar {
+        width: 100%;
+        border-radius: 3px 3px 1px 1px;
+        background: var(--agent-color, #2d6a4f);
+        opacity: 0.3;
+      }
+      .mini-bar.high { opacity: 0.7; }
+      .mini-bar.peak { opacity: 1; }
+      .mini-bar-val {
+        font-size: 9px;
+        font-weight: 500;
+        color: var(--opal-color-on-surface-variant, #888);
+      }
+      .mini-bar-label {
+        font-size: 9px;
+        color: var(--opal-color-on-surface-variant, #999);
+      }
+
+      /* ── Margins ── */
+      .margins {
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-2, 8px);
+      }
+      .margin-headline {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+      .margin-big {
+        font-size: 28px;
+        font-weight: 500;
+        line-height: 1;
+      }
+      .margin-pct {
+        font-size: 14px;
+        color: var(--opal-color-on-surface-variant, #666);
+      }
+      .margin-bar-track {
+        height: 10px;
+        border-radius: 5px;
+        background: var(--opal-color-surface-tinted, #eee);
+        overflow: hidden;
+      }
+      .margin-bar-fill {
+        height: 100%;
+        border-radius: 5px;
+        background: var(--agent-color, #2d6a4f);
+        opacity: 0.7;
+      }
+      .margin-legend {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+      }
+      .margin-legend .revenue-label {
+        color: var(--opal-color-on-surface, #333);
+      }
+      .margin-legend .expense-label {
+        color: var(--opal-color-on-surface-variant, #888);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Cash Flow -->
+      <div class="cash-flow">
+        <span class="section-label">Projected Cash Flow</span>
+        <div>
+          <div class="big-number">$18.2K</div>
+          <div class="big-number-sub">April 16</div>
+        </div>
+        <div class="sparkline">
+          <svg viewBox="0 0 300 48" preserveAspectRatio="none">
+            <path class="sparkline-fill" d="M0,30 Q40,28 75,25 T150,20 T225,18 T300,22 L300,48 L0,48 Z" />
+            <path class="sparkline-line" d="M0,30 Q40,28 75,25 T150,20 T225,18 T300,22" />
+          </svg>
+        </div>
+        <div class="sparkline-labels">
+          <span>Today</span>
+          <span>April 23</span>
+          <span>April 30</span>
+          <span>May 9</span>
+          <span>May 16</span>
+        </div>
+      </div>
+
+      <!-- Revenue Runway -->
+      <div class="revenue">
+        <span class="section-label">Revenue Runway</span>
+        <div class="mini-bars">
+          <div class="mini-bar-group">
+            <span class="mini-bar-val">$8.2K</span>
+            <div class="mini-bar high" style="height: 68%"></div>
+            <span class="mini-bar-label">May</span>
+          </div>
+          <div class="mini-bar-group">
+            <span class="mini-bar-val">$10K</span>
+            <div class="mini-bar high" style="height: 83%"></div>
+            <span class="mini-bar-label">Jun</span>
+          </div>
+          <div class="mini-bar-group">
+            <span class="mini-bar-val">$12K</span>
+            <div class="mini-bar peak" style="height: 100%"></div>
+            <span class="mini-bar-label">Jul</span>
+          </div>
+          <div class="mini-bar-group">
+            <span class="mini-bar-val">$5.8K</span>
+            <div class="mini-bar" style="height: 48%"></div>
+            <span class="mini-bar-label">Aug</span>
+          </div>
+          <div class="mini-bar-group">
+            <span class="mini-bar-val">$2.3K</span>
+            <div class="mini-bar" style="height: 19%"></div>
+            <span class="mini-bar-label">Sep</span>
+          </div>
+          <div class="mini-bar-group">
+            <span class="mini-bar-val">$0</span>
+            <div class="mini-bar" style="height: 3px"></div>
+            <span class="mini-bar-label">Oct</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profit Margins -->
+      <div class="margins">
+        <span class="section-label">Profit Margins</span>
+        <div class="margin-headline">
+          <span class="margin-big">$7,560</span>
+          <span class="margin-pct">/ 82% margin</span>
+        </div>
+        <div class="margin-bar-track">
+          <div class="margin-bar-fill" style="width: 82%"></div>
+        </div>
+        <div class="margin-legend">
+          <span class="revenue-label">Revenue: $9,200</span>
+          <span class="expense-label">Expenses: -$1,640</span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

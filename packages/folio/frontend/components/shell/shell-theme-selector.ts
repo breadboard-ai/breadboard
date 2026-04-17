@@ -30,7 +30,7 @@ export class ShellThemeSelector extends SignalWatcher(LitElement) {
       border-radius: var(--opal-grid-6);
       background: var(--opal-color-surface-container);
       color: var(--opal-color-on-surface);
-      border: 1px solid var(--opal-color-spinner-track);
+      border: 1px solid var(--opal-color-border-subtle);
       font-family: var(--opal-font-family);
       cursor: pointer;
     }
