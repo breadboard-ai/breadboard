@@ -112,6 +112,11 @@ export class PageHome extends SignalWatcher(LitElement) {
         font-weight: var(--opal-label-large-weight);
         line-height: var(--opal-label-large-line-height);
       }
+
+      .scroll-spacer {
+        padding-bottom: var(--opal-grid-25);
+        width: 100%;
+      }
     `,
   ];
 
@@ -205,6 +210,7 @@ export class PageHome extends SignalWatcher(LitElement) {
       ${this.#renderHeader()}
       <o-primitive-scroll-container scrollSnap>
         ${this.#renderAgentCards()}
+        <div class="scroll-spacer"></div>
       </o-primitive-scroll-container>
     `;
   }
