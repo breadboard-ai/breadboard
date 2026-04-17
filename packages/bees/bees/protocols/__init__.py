@@ -6,10 +6,20 @@
 Each module defines the types for one boundary:
 
 - ``functions`` — function declaration, assembly, and dispatch.
+- ``filesystem`` — FileSystem protocol and supporting types.
 - (future) ``session`` — SessionRunner, SessionConfiguration, etc.
-- (future) ``filesystem`` — FileSystem protocol.
 """
 
+from bees.protocols.filesystem import (
+    DEFAULT_EXTENSION,
+    DEFAULT_MIME_TYPE,
+    KNOWN_TYPES,
+    FileDescriptor,
+    FileSystem,
+    FileSystemSnapshot,
+    SystemFileGetter,
+    file_descriptor_to_part,
+)
 from bees.protocols.functions import (
     FunctionDeclaration,
     FunctionDefinition,
@@ -29,6 +39,16 @@ from bees.protocols.functions import (
 )
 
 __all__ = [
+    # filesystem
+    "DEFAULT_EXTENSION",
+    "DEFAULT_MIME_TYPE",
+    "FileDescriptor",
+    "FileSystem",
+    "FileSystemSnapshot",
+    "KNOWN_TYPES",
+    "SystemFileGetter",
+    "file_descriptor_to_part",
+    # functions
     "FunctionDeclaration",
     "FunctionDefinition",
     "FunctionGroup",
