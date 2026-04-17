@@ -23,7 +23,7 @@ export class ShellHeader extends LitElement {
 
       h1 {
         margin: 0;
-        color: var(--opal-color-header-foreground);
+        color: var(--opal-color-on-surface-strong);
         font-family: var(--opal-font-display);
         font-size: var(--opal-headline-small-size);
         font-weight: var(--opal-headline-small-weight);
@@ -38,7 +38,7 @@ export class ShellHeader extends LitElement {
       }
 
       aside {
-        color: var(--opal-color-header-foreground);
+        color: var(--opal-color-on-surface-strong);
         text-align: center;
         font-family: var(--opal-font-text);
         font-size: var(--opal-label-medium-size);
@@ -46,7 +46,7 @@ export class ShellHeader extends LitElement {
         line-height: var(--opal-label-medium-line-height);
         text-transform: uppercase;
         border-radius: var(--opal-radius-pill);
-        border: 1px solid var(--opal-color-header-foreground);
+        border: 1px solid var(--opal-color-on-surface-strong);
         padding: 0 var(--opal-grid-2);
       }
     `,

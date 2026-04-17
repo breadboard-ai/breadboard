@@ -23,8 +23,8 @@ export class ShellSplash extends LitElement {
       .spinner {
         width: var(--opal-grid-10);
         height: var(--opal-grid-10);
-        border: var(--opal-grid-1) solid var(--opal-color-spinner-track);
-        border-top: var(--opal-grid-1) solid var(--opal-color-spinner-head);
+        border: var(--opal-grid-1) solid var(--opal-color-border-subtle);
+        border-top: var(--opal-grid-1) solid var(--opal-color-primary);
         border-radius: 50%;
         animation: spin 1s linear infinite;
       }

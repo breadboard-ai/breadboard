@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flight Status</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: var(--opal-font-display, "Google Sans", sans-serif);
+        color: var(--opal-color-on-surface, #1a1a1a);
+        height: 100%;
+      }
+      .container {
+        padding: var(--opal-grid-4, 16px) var(--opal-grid-5, 20px);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-5, 20px);
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 12px;
+        background: #fff3e0;
+        color: #e65100;
+        font-size: 12px;
+        font-weight: 500;
+        width: fit-content;
+      }
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #e65100;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      .route {
+        display: flex;
+        align-items: center;
+        gap: var(--opal-grid-4, 16px);
+      }
+      .airport {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .airport-code {
+        font-size: 28px;
+        font-weight: 500;
+        line-height: 1;
+      }
+      .airport-time {
+        font-size: var(--opal-body-medium-size, 14px);
+        color: var(--opal-color-on-surface-variant, #666);
+      }
+      .airport-time .original {
+        text-decoration: line-through;
+        opacity: 0.5;
+        margin-left: 6px;
+        font-size: 12px;
+      }
+      .route-line {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+      .route-line-track {
+        width: 100%;
+        height: 2px;
+        background: var(--opal-color-border-subtle, #ddd);
+        position: relative;
+      }
+      .route-line-progress {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 0%;
+        background: var(--agent-color, #2d6a4f);
+      }
+      .route-line-icon {
+        font-size: 18px;
+        color: var(--opal-color-on-surface-variant, #888);
+        transform: rotate(90deg);
+      }
+      .route-duration {
+        font-size: 11px;
+        color: var(--opal-color-on-surface-variant, #888);
+      }
+
+      .details {
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-2, 8px);
+      }
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: var(--opal-body-medium-size, 14px);
+      }
+      .detail-label {
+        color: var(--opal-color-on-surface-variant, #666);
+      }
+      .detail-value {
+        font-weight: 500;
+      }
+
+      .updates {
+        padding: var(--opal-grid-3, 12px);
+        background: var(--opal-color-surface, #fff);
+        border: 1px solid var(--opal-color-border-subtle, #e8e8e8);
+        border-radius: var(--opal-radius-8, 8px);
+        font-size: 13px;
+        color: var(--opal-color-on-surface-variant, #555);
+        line-height: 1.5;
+      }
+      .updates strong {
+        color: var(--opal-color-on-surface, #333);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        Delayed — 45 min
+      </div>
+
+      <div class="route">
+        <div class="airport">
+          <span class="airport-code">SFO</span>
+          <span class="airport-time">
+            10:45 AM
+            <span class="original">10:00</span>
+          </span>
+        </div>
+        <div class="route-line">
+          <span class="route-line-icon g-icon">flight</span>
+          <div class="route-line-track">
+            <div class="route-line-progress"></div>
+          </div>
+          <span class="route-duration">2h 30m</span>
+        </div>
+        <div class="airport">
+          <span class="airport-code">JFK</span>
+          <span class="airport-time">
+            1:15 PM
+            <span class="original">12:30</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="details">
+        <div class="detail-row">
+          <span class="detail-label">Airline</span>
+          <span class="detail-value">American Airlines</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Flight</span>
+          <span class="detail-value">AA123</span>
+        </div>
+      </div>
+
+      <div class="updates">
+        <strong>Auto-updates:</strong> Calendar adjusted, hotel notified,
+        ground transportation rescheduled to 1:45 PM.
+      </div>
+    </div>
+  </body>
+</html>

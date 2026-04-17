@@ -25,7 +25,7 @@ export class PrimitiveHomeButton extends SignalWatcher(LitElement) {
         box-sizing: border-box;
         position: relative;
         cursor: pointer;
-        background: var(--opal-color-home-button-background);
+        background: var(--opal-color-surface-tinted);
         border-radius: 50%;
       }
 
@@ -40,7 +40,7 @@ export class PrimitiveHomeButton extends SignalWatcher(LitElement) {
         left: -4px;
         right: -4px;
         bottom: -4px;
-        border: 2px solid var(--opal-color-avatar-hover-ring);
+        border: 2px solid var(--opal-color-interactive-hover);
         border-radius: 50%;
         pointer-events: none;
         opacity: 0;
@@ -51,17 +51,17 @@ export class PrimitiveHomeButton extends SignalWatcher(LitElement) {
 
       :host(:hover)::after {
         opacity: 1;
-        border-color: var(--opal-color-avatar-hover-ring);
+        border-color: var(--opal-color-interactive-hover);
       }
 
       :host([selected])::after {
         opacity: 1;
-        border-color: var(--opal-color-avatar-selected-ring);
+        border-color: var(--opal-color-on-surface-strong);
       }
 
       .g-icon {
         font-size: var(--opal-radius-pill);
-        color: var(--opal-color-home-icon);
+        color: var(--opal-color-on-surface-strong);
       }
     `,
   ];

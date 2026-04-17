@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DesignPro Renewal</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: var(--opal-font-display, "Google Sans", sans-serif);
+        color: var(--opal-color-on-surface, #1a1a1a);
+        height: 100%;
+      }
+      .container {
+        padding: var(--opal-grid-4, 16px) var(--opal-grid-5, 20px);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-5, 20px);
+      }
+
+      .chart-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-2, 8px);
+        min-height: 0;
+      }
+      .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      .chart-label {
+        font-size: var(--opal-label-medium-size, 12px);
+        color: var(--opal-color-on-surface-variant, #666);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .chart-highlight {
+        font-size: var(--opal-label-medium-size, 12px);
+        color: var(--opal-color-on-surface-variant, #666);
+      }
+      .chart-area {
+        flex: 1;
+        min-height: 80px;
+      }
+      .bar-chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        height: 100%;
+        padding-bottom: 2px;
+      }
+      .bar-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        height: 100%;
+        justify-content: flex-end;
+      }
+      .bar {
+        width: 100%;
+        border-radius: 4px 4px 2px 2px;
+        background: var(--agent-color, #2d6a4f);
+        opacity: 0.25;
+        min-height: 4px;
+      }
+      .bar.active { opacity: 0.6; }
+      .bar.current { opacity: 1; }
+      .bar-label {
+        font-size: 9px;
+        color: var(--opal-color-on-surface-variant, #999);
+      }
+      .bar-value {
+        font-size: 9px;
+        font-weight: 500;
+        color: var(--opal-color-on-surface-variant, #888);
+      }
+
+      .stats-row {
+        display: flex;
+        gap: var(--opal-grid-3, 12px);
+      }
+      .stat {
+        flex: 1;
+        padding: var(--opal-grid-3, 12px);
+        background: var(--opal-color-surface, #fff);
+        border: 1px solid var(--opal-color-border-subtle, #e8e8e8);
+        border-radius: var(--opal-radius-8, 8px);
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .stat-value {
+        font-size: var(--opal-headline-small-size, 20px);
+        font-weight: 500;
+        line-height: 1;
+      }
+      .stat-label {
+        font-size: 11px;
+        color: var(--opal-color-on-surface-variant, #666);
+      }
+      .stat-value.renews {
+        color: var(--agent-color, #2d6a4f);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="chart-section">
+        <div class="chart-header">
+          <span class="chart-label">Assets created</span>
+          <span class="chart-highlight">Last 6 months</span>
+        </div>
+        <div class="chart-area">
+          <div class="bar-chart">
+            <div class="bar-group">
+              <span class="bar-value">8</span>
+              <div class="bar" style="height: 18%"></div>
+              <span class="bar-label">Oct</span>
+            </div>
+            <div class="bar-group">
+              <span class="bar-value">15</span>
+              <div class="bar" style="height: 33%"></div>
+              <span class="bar-label">Nov</span>
+            </div>
+            <div class="bar-group">
+              <span class="bar-value">22</span>
+              <div class="bar active" style="height: 49%"></div>
+              <span class="bar-label">Dec</span>
+            </div>
+            <div class="bar-group">
+              <span class="bar-value">31</span>
+              <div class="bar active" style="height: 69%"></div>
+              <span class="bar-label">Jan</span>
+            </div>
+            <div class="bar-group">
+              <span class="bar-value">38</span>
+              <div class="bar active" style="height: 84%"></div>
+              <span class="bar-label">Feb</span>
+            </div>
+            <div class="bar-group">
+              <span class="bar-value">45</span>
+              <div class="bar current" style="height: 100%"></div>
+              <span class="bar-label">Mar</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat">
+          <span class="stat-value">$119.99</span>
+          <span class="stat-label">per year</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value renews">3 days</span>
+          <span class="stat-label">until renewal</span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

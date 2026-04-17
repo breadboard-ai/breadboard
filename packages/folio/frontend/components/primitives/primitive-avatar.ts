@@ -60,7 +60,7 @@ export class PrimitiveAvatar extends SignalWatcher(LitElement) {
       left: -4px;
       right: -4px;
       bottom: -4px;
-      border: 2px solid var(--opal-color-avatar-hover-ring);
+      border: 2px solid var(--opal-color-interactive-hover);
       border-radius: 50%;
       pointer-events: none;
       opacity: 0;
@@ -71,12 +71,12 @@ export class PrimitiveAvatar extends SignalWatcher(LitElement) {
 
     :host(:hover)::after {
       opacity: 1;
-      border-color: var(--opal-color-avatar-hover-ring);
+      border-color: var(--opal-color-interactive-hover);
     }
 
     :host([selected])::after {
       opacity: 1;
-      border-color: var(--opal-color-avatar-selected-ring);
+      border-color: var(--opal-color-on-surface-strong);
     }
 
     .clipper {
@@ -93,7 +93,7 @@ export class PrimitiveAvatar extends SignalWatcher(LitElement) {
     .bg {
       width: 100%;
       height: 100%;
-      background: var(--opal-color-avatar-background);
+      background: var(--opal-color-on-surface-strong);
     }
 
     .eyes {
@@ -115,7 +115,7 @@ export class PrimitiveAvatar extends SignalWatcher(LitElement) {
     .eye {
       width: 5px;
       height: 10px;
-      background: var(--opal-color-avatar-eyes);
+      background: var(--opal-color-surface);
       border-radius: 2px;
       transition: transform 0.1s ease-in-out;
       transform-origin: center;
@@ -131,11 +131,11 @@ export class PrimitiveAvatar extends SignalWatcher(LitElement) {
       right: -8px;
       top: -6px;
       border-radius: 50%;
-      border: 2px solid var(--opal-color-bubble-border);
-      background: var(--opal-color-bubble-background);
-      color: var(--opal-color-bubble-text);
+      border: 2px solid var(--opal-color-border-subtle);
+      background: var(--opal-color-on-surface-strong);
+      color: var(--opal-color-surface);
       font-family: var(--opal-font-display);
-      font-size: var(--opal-font-size-bubble);
+      font-size: 8px;
       font-weight: 500;
       line-height: 16px;
       letter-spacing: 0.1px;
@@ -214,14 +214,14 @@ export class PrimitiveAvatar extends SignalWatcher(LitElement) {
   render() {
     const bgStyle = styleMap({
       backgroundColor: this.inverted
-        ? "var(--opal-color-avatar-eyes)"
+        ? "var(--opal-color-surface)"
         : this.bgColor,
     });
 
     const eyeStyle = styleMap({
       backgroundColor: this.inverted
         ? this.bgColor
-        : "var(--opal-color-avatar-eyes)",
+        : "var(--opal-color-surface)",
     });
 
     return html`

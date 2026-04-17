@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meeting Briefing</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: var(--opal-font-display, "Google Sans", sans-serif);
+        color: var(--opal-color-on-surface, #1a1a1a);
+        height: 100%;
+      }
+      .container {
+        padding: var(--opal-grid-4, 16px) var(--opal-grid-5, 20px);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-4, 16px);
+      }
+
+      .attendees {
+        display: flex;
+        gap: var(--opal-grid-2, 8px);
+        align-items: center;
+      }
+      .attendee {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 12px;
+        color: #fff;
+      }
+      .attendee.lp { background: #d4b4e8; color: #4a2c6b; }
+      .attendee.pl { background: #b4c9e8; color: #2c4a6b; }
+      .attendee-label {
+        font-size: 12px;
+        color: var(--opal-color-on-surface-variant, #666);
+        margin-left: 4px;
+      }
+
+      .section-label {
+        font-size: var(--opal-label-medium-size, 12px);
+        color: var(--opal-color-on-surface-variant, #666);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .agenda {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .agenda-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--opal-color-border-subtle, #eee);
+      }
+      .agenda-item:last-child { border-bottom: none; }
+      .agenda-num {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--agent-color, #2d6a4f);
+        opacity: 0.15;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+      .agenda-text {
+        font-size: var(--opal-body-medium-size, 14px);
+        line-height: 24px;
+      }
+
+      .docs {
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-2, 8px);
+      }
+      .doc {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: var(--opal-radius-8, 8px);
+        background: var(--opal-color-surface, #fff);
+        border: 1px solid var(--opal-color-border-subtle, #e8e8e8);
+        font-size: var(--opal-body-medium-size, 14px);
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .doc:hover {
+        background: var(--opal-color-interactive-surface, #f0f0f0);
+      }
+      .doc-icon {
+        font-size: 18px;
+        color: var(--opal-color-on-surface-variant, #666);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="attendees">
+        <div class="attendee lp">LP</div>
+        <div class="attendee pl">PL</div>
+        <span class="attendee-label">2 attendees</span>
+      </div>
+
+      <div>
+        <span class="section-label">Agenda</span>
+        <div class="agenda">
+          <div class="agenda-item">
+            <div class="agenda-num">1</div>
+            <span class="agenda-text">Q2 Campaign Review</span>
+          </div>
+          <div class="agenda-item">
+            <div class="agenda-num">2</div>
+            <span class="agenda-text">Budget Allocation</span>
+          </div>
+          <div class="agenda-item">
+            <div class="agenda-num">3</div>
+            <span class="agenda-text">Next Steps</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="docs">
+        <span class="section-label">Documents</span>
+        <div class="doc">
+          <span class="doc-icon g-icon">picture_as_pdf</span>
+          Q1 Results.pdf
+        </div>
+        <div class="doc">
+          <span class="doc-icon g-icon">article</span>
+          Campaign Proposal.gdoc
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

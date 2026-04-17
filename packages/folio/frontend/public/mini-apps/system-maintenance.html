@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>System Maintenance</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: var(--opal-font-display, "Google Sans", sans-serif);
+        color: var(--opal-color-on-surface, #1a1a1a);
+        height: 100%;
+      }
+      .container {
+        padding: var(--opal-grid-4, 16px) var(--opal-grid-5, 20px);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-4, 16px);
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+
+      .icon-ring {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: 2px solid var(--opal-color-border-subtle, #e0e0e0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .icon-ring .g-icon {
+        font-size: 28px;
+        color: var(--opal-color-on-surface-variant, #888);
+      }
+
+      .schedule-time {
+        font-size: 22px;
+        font-weight: 500;
+        line-height: 1;
+      }
+      .schedule-date {
+        font-size: var(--opal-body-medium-size, 14px);
+        color: var(--opal-color-on-surface-variant, #666);
+        margin-top: 2px;
+      }
+
+      .impact {
+        font-size: 13px;
+        color: var(--opal-color-on-surface-variant, #555);
+        line-height: 1.5;
+        max-width: 260px;
+      }
+
+      .timeline {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        width: 100%;
+        max-width: 280px;
+      }
+      .timeline-point {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+      .timeline-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid var(--agent-color, #2d6a4f);
+        background: var(--opal-color-surface, #fff);
+      }
+      .timeline-dot.filled {
+        background: var(--agent-color, #2d6a4f);
+      }
+      .timeline-label {
+        font-size: 11px;
+        color: var(--opal-color-on-surface-variant, #888);
+        white-space: nowrap;
+      }
+      .timeline-track {
+        flex: 1;
+        height: 2px;
+        background: var(--opal-color-border-subtle, #ddd);
+        margin: 0 -1px;
+        margin-bottom: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="icon-ring">
+        <span class="g-icon">build</span>
+      </div>
+
+      <div>
+        <div class="schedule-time">2:00 AM — 4:00 AM</div>
+        <div class="schedule-date">Tonight</div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-point">
+          <div class="timeline-dot filled"></div>
+          <span class="timeline-label">Start</span>
+        </div>
+        <div class="timeline-track"></div>
+        <div class="timeline-point">
+          <div class="timeline-dot"></div>
+          <span class="timeline-label">Sync pause</span>
+        </div>
+        <div class="timeline-track"></div>
+        <div class="timeline-point">
+          <div class="timeline-dot"></div>
+          <span class="timeline-label">Complete</span>
+        </div>
+      </div>
+
+      <p class="impact">Brief interruptions to sync service expected.
+        All other services will remain available.</p>
+    </div>
+  </body>
+</html>

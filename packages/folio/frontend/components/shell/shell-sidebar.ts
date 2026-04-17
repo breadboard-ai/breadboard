@@ -23,7 +23,7 @@ export class ShellSidebar extends SignalWatcher(LitElement) {
     :host {
       display: flex;
       flex-direction: column;
-      width: var(--opal-width-sidebar);
+      width: var(--opal-layout-sidebar-width);
       padding: 0 var(--opal-grid-4);
       box-sizing: border-box;
       color: var(--opal-color-on-surface);
@@ -49,11 +49,12 @@ export class ShellSidebar extends SignalWatcher(LitElement) {
     const currentAgentId = url.page === "agent" ? url.agentId : undefined;
 
     return map(configs, (config) => {
+      const count = config.tasks.filter((t) => t.digest).length;
       return html`<o-primitive-avatar
         .bgColor=${config.bgColor}
         .fgColor=${config.fgColor}
         ?selected=${config.id === currentAgentId}
-        .count=${config.count}
+        .count=${count}
         @click=${() => this.#onClick(config.id)}
       ></o-primitive-avatar>`;
     });

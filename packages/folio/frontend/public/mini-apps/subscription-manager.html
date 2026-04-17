@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Subscription Manager</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(--opal-font-display, "Google Sans", sans-serif);
+        color: var(--opal-color-on-surface, #1a1a1a);
+        height: 100%;
+      }
+
+      .container {
+        padding: var(--opal-grid-4, 16px) var(--opal-grid-5, 20px);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-5, 20px);
+      }
+
+      /* ── Usage Chart ── */
+      .chart-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-2, 8px);
+        min-height: 0;
+      }
+
+      .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+
+      .chart-label {
+        font-size: var(--opal-label-medium-size, 12px);
+        color: var(--opal-color-on-surface-variant, #666);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .chart-highlight {
+        font-size: var(--opal-label-medium-size, 12px);
+        color: var(--opal-color-on-surface-variant, #666);
+      }
+
+      .chart-highlight strong {
+        color: var(--opal-color-on-surface, #1a1a1a);
+      }
+
+      .chart-area {
+        flex: 1;
+        min-height: 80px;
+        position: relative;
+      }
+
+      .chart-area svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .chart-months {
+        display: flex;
+        justify-content: space-between;
+        padding: 0 2px;
+      }
+
+      .chart-months span {
+        font-size: 10px;
+        color: var(--opal-color-on-surface-variant, #999);
+      }
+
+      /* ── Stats Row ── */
+      .stats-row {
+        display: flex;
+        gap: var(--opal-grid-3, 12px);
+      }
+
+      .stat {
+        flex: 1;
+        padding: var(--opal-grid-3, 12px);
+        background: var(--opal-color-surface, #fff);
+        border: 1px solid var(--opal-color-border-subtle, #e8e8e8);
+        border-radius: var(--opal-radius-8, 8px);
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .stat-value {
+        font-size: var(--opal-headline-small-size, 20px);
+        font-weight: 500;
+        line-height: 1;
+      }
+
+      .stat-label {
+        font-size: 11px;
+        color: var(--opal-color-on-surface-variant, #666);
+      }
+
+      .stat-value.savings {
+        color: var(--agent-color, #2d6a4f);
+      }
+
+      /* ── Bar Chart ── */
+      .bar-chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        height: 100%;
+        padding-bottom: 2px;
+      }
+
+      .bar-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        height: 100%;
+        justify-content: flex-end;
+      }
+
+      .bar {
+        width: 100%;
+        border-radius: 4px 4px 2px 2px;
+        background: var(--agent-color, #2d6a4f);
+        opacity: 0.25;
+        transition: opacity 0.3s ease;
+        min-height: 4px;
+      }
+
+      .bar.active {
+        opacity: 0.6;
+      }
+
+      .bar.current {
+        opacity: 1;
+      }
+
+      .bar.empty {
+        background: var(--opal-color-surface-tinted, #eee);
+        opacity: 1;
+      }
+
+      .bar-label {
+        font-size: 9px;
+        color: var(--opal-color-on-surface-variant, #999);
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .bar-value {
+        font-size: 9px;
+        font-weight: 500;
+        color: var(--opal-color-on-surface-variant, #888);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="chart-section">
+        <div class="chart-header">
+          <span class="chart-label">Sessions per month</span>
+          <span class="chart-highlight">Last 6 months</span>
+        </div>
+        <div class="chart-area">
+          <div class="bar-chart">
+            <div class="bar-group">
+              <span class="bar-value">14</span>
+              <div class="bar active" style="height: 70%"></div>
+              <span class="bar-label">Oct</span>
+            </div>
+            <div class="bar-group">
+              <span class="bar-value">11</span>
+              <div class="bar active" style="height: 55%"></div>
+              <span class="bar-label">Nov</span>
+            </div>
+            <div class="bar-group">
+              <span class="bar-value">8</span>
+              <div class="bar" style="height: 40%"></div>
+              <span class="bar-label">Dec</span>
+            </div>
+            <div class="bar-group">
+              <span class="bar-value">3</span>
+              <div class="bar" style="height: 15%"></div>
+              <span class="bar-label">Jan</span>
+            </div>
+            <div class="bar-group">
+              <span class="bar-value">1</span>
+              <div class="bar" style="height: 5%"></div>
+              <span class="bar-label">Feb</span>
+            </div>
+            <div class="bar-group">
+              <span class="bar-value">0</span>
+              <div class="bar empty" style="height: 4px"></div>
+              <span class="bar-label">Mar</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat">
+          <span class="stat-value">$54.99</span>
+          <span class="stat-label">per month</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value savings">$329</span>
+          <span class="stat-label">saved if paused 6mo</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Mock SDK interaction
+      document.querySelectorAll(".agent").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (window.opalSDK) {
+            window.opalSDK.emit("subscription:pause", {
+              status: "simulated",
+            });
+          } else {
+            console.log("SDK not found, would emit subscription:pause");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

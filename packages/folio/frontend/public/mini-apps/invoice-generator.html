@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generate Invoice</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: var(--opal-font-display, "Google Sans", sans-serif);
+        color: var(--opal-color-on-surface, #1a1a1a);
+        height: 100%;
+      }
+      .container {
+        padding: var(--opal-grid-4, 16px) var(--opal-grid-5, 20px);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-5, 20px);
+      }
+
+      .tab-bar {
+        display: flex;
+        gap: var(--opal-grid-2, 8px);
+      }
+      .tab {
+        padding: 6px 16px;
+        border-radius: 20px;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: var(--opal-label-large-size, 14px);
+        font-weight: 500;
+      }
+      .tab.active {
+        background: var(--agent-color, #2d6a4f);
+        color: var(--agent-text-color, #fff);
+      }
+      .tab.inactive {
+        background: var(--opal-color-surface, #fff);
+        border: 1px solid var(--opal-color-border-subtle, #e0e0e0);
+        color: var(--opal-color-on-surface, #333);
+      }
+
+      .prompt {
+        text-align: center;
+        color: var(--opal-color-on-surface-variant, #555);
+        font-size: var(--opal-body-medium-size, 14px);
+        margin-top: var(--opal-grid-2, 8px);
+      }
+
+      .clients {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--opal-grid-3, 12px);
+        justify-content: center;
+        padding: var(--opal-grid-2, 8px) 0;
+      }
+
+      .client-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px 6px 6px;
+        border-radius: 24px;
+        border: 1px solid var(--opal-color-border-subtle, #e0e0e0);
+        background: var(--opal-color-surface, #fff);
+        font-size: var(--opal-label-large-size, 14px);
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .client-chip:hover {
+        background: var(--opal-color-interactive-surface, #f0f0f0);
+      }
+
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 12px;
+        color: #fff;
+      }
+
+      .avatar.sc { background: #e8b4b8; color: #6b2c35; }
+      .avatar.bl { background: #b4c9e8; color: #2c4a6b; }
+      .avatar.op { background: #b8e8b4; color: #2c6b35; }
+      .avatar.wo { background: #e8d4b4; color: #6b4a2c; }
+      .avatar.jw { background: #d4b4e8; color: #4a2c6b; }
+      .avatar.add { background: transparent; border: 1.5px dashed var(--opal-color-border-subtle, #ccc); color: var(--opal-color-on-surface-variant, #888); }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="tab-bar">
+        <button class="tab active">Create new</button>
+        <button class="tab inactive">Upcoming</button>
+      </div>
+
+      <p class="prompt">Who is this invoice for?</p>
+
+      <div class="clients">
+        <div class="client-chip">
+          <div class="avatar sc">SC</div>
+          Sarah Chen
+        </div>
+        <div class="client-chip">
+          <div class="avatar bl">B</div>
+          Brooklinen
+        </div>
+        <div class="client-chip">
+          <div class="avatar op">OP</div>
+          Our Place
+        </div>
+        <div class="client-chip">
+          <div class="avatar wo">WO</div>
+          Wild One
+        </div>
+        <div class="client-chip">
+          <div class="avatar jw">JW</div>
+          John Wang
+        </div>
+        <div class="client-chip">
+          <div class="avatar add">+</div>
+          Add Client
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

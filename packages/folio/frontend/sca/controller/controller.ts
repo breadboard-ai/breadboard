@@ -9,6 +9,7 @@ import { RouterController } from "./subcontrollers/router/router-controller.js";
 import { RootController } from "./subcontrollers/root-controller.js";
 import { ThemeController } from "./subcontrollers/global/theme-controller.js";
 import { AgentController } from "./subcontrollers/agent/agent-controller.js";
+import { AccountController } from "./subcontrollers/account/account-controller.js";
 
 /**
  * The root application controller for Folio.
@@ -18,6 +19,7 @@ class Controller extends RootController implements AppController {
   router: RouterController;
   theme: ThemeController;
   agent: AgentController;
+  account: AccountController;
 
   constructor(_env: AppEnvironment) {
     super("App", "AppController");
@@ -25,6 +27,7 @@ class Controller extends RootController implements AppController {
     this.router = new RouterController();
     this.theme = new ThemeController();
     this.agent = new AgentController();
+    this.account = new AccountController();
   }
 }
 

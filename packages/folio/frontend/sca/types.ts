@@ -24,15 +24,27 @@ import type { GlobalController } from "./controller/subcontrollers/global/global
 import type { RouterController } from "./controller/subcontrollers/router/router-controller.js";
 import type { ThemeController } from "./controller/subcontrollers/global/theme-controller.js";
 import type { AgentController } from "./controller/subcontrollers/agent/agent-controller.js";
+import type { AccountController } from "./controller/subcontrollers/account/account-controller.js";
 
 export type pending = typeof PENDING_HYDRATION;
+
+export interface MenuItem {
+  name: string;
+  title: string;
+  icon?: string;
+}
 
 export interface FolioBlock {
   id: string;
   type: string;
   status: string;
-  content: unknown;
+  title: string;
+  subtitle?: string;
+  content: string | Record<string, unknown>;
+  actions?: MenuItem[];
   timestamp?: number;
+  displayHint?: "low" | "normal" | "high";
+  borderless?: boolean;
 }
 
 export interface AgentProjection {
@@ -127,9 +139,8 @@ export interface Storage {
   delete(name: string): Promise<void>;
 }
 
-export interface AgentCard {
-  id: string;
-  header: string;
+export interface DigestItem {
+  title: string;
   content: string;
   cta?: {
     title: string;
@@ -141,13 +152,20 @@ export interface AgentCard {
   };
 }
 
+export interface Task {
+  id: string;
+  type: string;
+  status: string;
+  digest?: DigestItem;
+  block: FolioBlock;
+}
+
 export interface Agent {
   id: string;
   name: string;
   bgColor: string;
   fgColor: string;
-  count: number;
-  cards: AgentCard[];
+  tasks: Task[];
 }
 
 export interface AppController extends HydratedController {
@@ -155,6 +173,7 @@ export interface AppController extends HydratedController {
   theme: ThemeController;
   router: RouterController;
   agent: AgentController;
+  account: AccountController;
 }
 
 export interface HydratedController {

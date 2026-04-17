@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weekly Operations Digest</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: var(--opal-font-display, "Google Sans", sans-serif);
+        color: var(--opal-color-on-surface, #1a1a1a);
+        height: 100%;
+      }
+      .container {
+        padding: var(--opal-grid-4, 16px) var(--opal-grid-5, 20px);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-4, 16px);
+      }
+
+      .metrics {
+        display: flex;
+        flex-direction: column;
+        gap: var(--opal-grid-3, 12px);
+      }
+
+      .metric {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--opal-grid-3, 12px) var(--opal-grid-4, 16px);
+        background: var(--opal-color-surface, #fff);
+        border: 1px solid var(--opal-color-border-subtle, #e8e8e8);
+        border-radius: var(--opal-radius-8, 8px);
+      }
+      .metric-left {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .metric-label {
+        font-size: 12px;
+        color: var(--opal-color-on-surface-variant, #666);
+      }
+      .metric-value {
+        font-size: var(--opal-headline-small-size, 22px);
+        font-weight: 500;
+        line-height: 1;
+      }
+      .metric-change {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .metric-change.positive {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .metric-change.negative {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .metric-change .arrow {
+        font-size: 14px;
+      }
+
+      .section-label {
+        font-size: var(--opal-label-medium-size, 12px);
+        color: var(--opal-color-on-surface-variant, #666);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .mini-chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        height: 32px;
+      }
+      .mini-chart-bar {
+        flex: 1;
+        border-radius: 2px 2px 0 0;
+        background: var(--agent-color, #2d6a4f);
+        opacity: 0.2;
+      }
+      .mini-chart-bar.recent { opacity: 0.5; }
+      .mini-chart-bar.today { opacity: 0.9; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-left">
+            <span class="metric-label">Tickets Closed</span>
+            <span class="metric-value">145</span>
+          </div>
+          <span class="metric-change positive">
+            <span class="arrow">↑</span> 12%
+          </span>
+        </div>
+        <div class="metric">
+          <div class="metric-left">
+            <span class="metric-label">Avg Response Time</span>
+            <span class="metric-value">2.4h</span>
+          </div>
+          <span class="metric-change negative">
+            <span class="arrow">↓</span> 15%
+          </span>
+        </div>
+        <div class="metric">
+          <div class="metric-left">
+            <span class="metric-label">Uptime</span>
+            <span class="metric-value">99.98%</span>
+          </div>
+          <span class="metric-change positive">
+            <span class="arrow">↑</span> 0.05%
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <span class="section-label">Tickets this week</span>
+        <div class="mini-chart">
+          <div class="mini-chart-bar" style="height: 45%"></div>
+          <div class="mini-chart-bar" style="height: 62%"></div>
+          <div class="mini-chart-bar" style="height: 38%"></div>
+          <div class="mini-chart-bar" style="height: 55%"></div>
+          <div class="mini-chart-bar" style="height: 71%"></div>
+          <div class="mini-chart-bar recent" style="height: 88%"></div>
+          <div class="mini-chart-bar recent" style="height: 78%"></div>
+          <div class="mini-chart-bar recent" style="height: 92%"></div>
+          <div class="mini-chart-bar today" style="height: 100%"></div>
+          <div class="mini-chart-bar today" style="height: 85%"></div>
+          <div class="mini-chart-bar" style="height: 42%"></div>
+          <div class="mini-chart-bar" style="height: 56%"></div>
+          <div class="mini-chart-bar" style="height: 68%"></div>
+          <div class="mini-chart-bar recent" style="height: 75%"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
