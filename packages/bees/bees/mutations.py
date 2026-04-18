@@ -324,6 +324,11 @@ class MutationManager:
                 continue
 
             for child in subdir.iterdir():
+                # Preserve the box-active sentinel — the box is still
+                # running, and removing it would signal hivetool that
+                # the box has stopped.
+                if child.name == BOX_ACTIVE_SENTINEL:
+                    continue
                 if child.is_dir():
                     shutil.rmtree(child)
                 else:
