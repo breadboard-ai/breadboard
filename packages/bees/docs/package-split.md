@@ -322,12 +322,16 @@ with conformance tests, then migrate imports.
 | `SuspendError`    | `opal_backend.suspend.SuspendError` | ✅        | ✅     | ✅       |
 | `AgentResult`     | `opal_backend.events.AgentResult`   | ✅        | ✅     | ✅       |
 | `SessionTerminator` | `opal_backend.loop.LoopController`| ✅        | ✅     | ✅       |
+| `SUSPEND_TYPES`   | `opal_backend.events.SUSPEND_TYPES` | ✅        | ✅     | ✅       |
+| `PAUSE_TYPES`     | `opal_backend.events.PAUSE_TYPES`   | ✅        | ✅     | ✅       |
+| `SessionResult`   | (relocation to protocols)           | ✅        | ✅     | ✅       |
 | `SessionRunner`   | Implicit contract in `session.py`   | Pending   | —      | —        |
 
 See [spec/function-types.md](../spec/function-types.md) for the function types
 spec, [spec/filesystem.md](../spec/filesystem.md) for the filesystem types spec,
-and [spec/handler-types.md](../spec/handler-types.md) for the handler types spec
-and conformance tests.
+[spec/handler-types.md](../spec/handler-types.md) for the handler types spec,
+and [spec/session-observation.md](../spec/session-observation.md) for the
+session observation types spec and conformance tests.
 
 ### Migration steps
 

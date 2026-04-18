@@ -261,7 +261,7 @@ def test_eval_collector_detects_paused():
 
 def test_update_metadata_paused(mock_clients):
     """Paused result → task status 'paused', completed_at is None."""
-    from bees.session import SessionResult
+    from bees.protocols.session import SessionResult
 
     _, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
@@ -287,7 +287,7 @@ def test_update_metadata_paused(mock_clients):
 
 def test_handle_pause_sets_status(mock_clients):
     """_handle_pause sets task status to 'paused', assignee to None."""
-    from bees.session import SessionResult
+    from bees.protocols.session import SessionResult
 
     _, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, backend=backend)
