@@ -77,11 +77,21 @@ class FileData:
         return {"path": self.path, "content": self.content}
 
 
+# Transitional coupling: the session loop (still in opal_backend) checks
+# isinstance(result, AgentResult) using opal's class. Until the loop moves
+# to bees-gemini, bees' AgentResult must pass that check. Inheriting from
+# the opal class makes isinstance() work across the boundary.
+# This import is removed when the session loop migrates.
+from opal_backend.events import AgentResult as _OpalAgentResult
+
+
 @dataclass
-class AgentResult:
+class AgentResult(_OpalAgentResult):
     """Result of an agent loop run.
 
-    Mirrors ``opal_backend.events.AgentResult``.
+    Subclasses ``opal_backend.events.AgentResult`` so the session loop
+    (which still lives in opal_backend) recognizes it via isinstance().
+    When the loop migrates to bees-gemini, this becomes standalone.
     """
 
     success: bool
@@ -205,15 +215,20 @@ SuspendEvent = Union[WaitForInputEvent, WaitForChoiceEvent]
 # SuspendError
 # ---------------------------------------------------------------------------
 
+# Transitional coupling: the session loop (still in opal_backend) catches
+# opal_backend.suspend.SuspendError. Until the loop moves to bees-gemini,
+# bees' SuspendError must be catchable by those except clauses. Inheriting
+# from the opal class makes isinstance() and except work across the boundary.
+# This import is removed when the session loop migrates.
+from opal_backend.suspend import SuspendError as _OpalSuspendError
 
-class SuspendError(Exception):
+
+class SuspendError(_OpalSuspendError):
     """Raised by function handlers that need client input.
 
-    Mirrors ``opal_backend.suspend.SuspendError``.
-
-    The function handler constructs a suspend event (e.g.,
-    ``WaitForInputEvent``) and raises this exception. The loop catches it,
-    saves state, and returns a ``SuspendResult``.
+    Subclasses ``opal_backend.suspend.SuspendError`` so the session loop
+    (which still lives in opal_backend) catches it. When the loop migrates
+    to bees-gemini, this becomes a standalone Exception subclass.
 
     Args:
         event: The typed suspend event to send to the client.
@@ -238,4 +253,7 @@ class SuspendError(Exception):
         # Populated by FunctionCaller.get_results() with results from
         # sibling function calls that completed before this suspend.
         self.completed_responses: list = []
-        super().__init__(f"Suspend: {getattr(event, 'type', 'unknown')}")
+        # Call Exception.__init__ directly — we don't want the parent
+        # class to re-initialize fields.
+        Exception.__init__(self, f"Suspend: {getattr(event, 'type', 'unknown')}")
+

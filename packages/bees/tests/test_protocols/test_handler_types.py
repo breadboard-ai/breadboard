@@ -335,6 +335,46 @@ class TestSuspendError:
         err = SuspendError(ev)
         assert "waitForChoice" in str(err)
 
+    def test_subclasses_opal_suspend_error(self) -> None:
+        """Bees SuspendError must be a subclass of opal's.
+
+        The session loop (in opal_backend) catches
+        ``opal_backend.suspend.SuspendError``.  If bees' version isn't a
+        subclass, ``except`` clauses won't match and suspend/resume breaks
+        silently — the agent resumes immediately instead of waiting.
+        """
+        from opal_backend.suspend import SuspendError as OpalSuspendError
+
+        assert issubclass(SuspendError, OpalSuspendError)
+
+    def test_caught_by_opal_except_clause(self) -> None:
+        """Verify bees' SuspendError is caught by ``except OpalSuspendError``."""
+        from opal_backend.suspend import SuspendError as OpalSuspendError
+
+        ev = WaitForInputEvent(request_id="r1")
+        bees_err = SuspendError(ev)
+
+        caught = False
+        try:
+            raise bees_err
+        except OpalSuspendError:
+            caught = True
+
+        assert caught, "opal's except clause did not catch bees' SuspendError"
+
+    def test_isinstance_matches_opal(self) -> None:
+        """Verify isinstance() works across the boundary.
+
+        ``FunctionCaller.get_results()`` uses
+        ``isinstance(r, SuspendError)`` with the opal class.
+        """
+        from opal_backend.suspend import SuspendError as OpalSuspendError
+
+        ev = WaitForInputEvent(request_id="r1")
+        bees_err = SuspendError(ev)
+
+        assert isinstance(bees_err, OpalSuspendError)
+
 
 # ---------------------------------------------------------------------------
 # 8. SessionTerminator protocol
@@ -371,3 +411,60 @@ class TestSessionTerminator:
         ar = AgentResult(success=True, outcomes={"parts": [{"text": "done"}]})
         t.terminate(ar)
         assert t.result is ar
+
+
+# ---------------------------------------------------------------------------
+# 9. AgentResult isinstance conformance
+# ---------------------------------------------------------------------------
+
+
+class TestAgentResultIsinstance:
+    """Verify bees AgentResult passes opal isinstance checks.
+
+    The session loop (``opal_backend/run.py`` L852) checks
+    ``isinstance(result, AgentResult)`` using opal's class. Bees'
+    AgentResult must pass that check or the loop reports
+    ``"Unexpected result"`` errors.
+    """
+
+    def test_subclasses_opal_agent_result(self) -> None:
+        """Structural: bees AgentResult is a subclass of opal's."""
+        from opal_backend.events import AgentResult as OpalAgentResult
+
+        assert issubclass(AgentResult, OpalAgentResult)
+
+    def test_isinstance_matches_opal(self) -> None:
+        """Runtime: an instance of bees AgentResult passes isinstance."""
+        from opal_backend.events import AgentResult as OpalAgentResult
+
+        result = AgentResult(success=True, outcomes={"parts": [{"text": "ok"}]})
+        assert isinstance(result, OpalAgentResult)
+
+    def test_to_dict_matches_opal(self) -> None:
+        """Wire format: to_dict() output is identical."""
+        from opal_backend.events import AgentResult as OpalAgentResult
+        from opal_backend.events import FileData as OpalFileData
+
+        bees_fd = FileData(
+            path="test.md",
+            content={"parts": [{"text": "hello"}]},
+        )
+        bees_result = AgentResult(
+            success=True,
+            href="/test",
+            outcomes={"parts": [{"text": "done"}], "role": "user"},
+            intermediate=[bees_fd],
+        )
+
+        opal_fd = OpalFileData(
+            path="test.md",
+            content={"parts": [{"text": "hello"}]},
+        )
+        opal_result = OpalAgentResult(
+            success=True,
+            href="/test",
+            outcomes={"parts": [{"text": "done"}], "role": "user"},
+            intermediate=[opal_fd],
+        )
+
+        assert bees_result.to_dict() == opal_result.to_dict()

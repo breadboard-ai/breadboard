@@ -77,6 +77,7 @@ def _make_chat_log_writer(ticket_dir: Path) -> Callable[[str, str], None]:
 
     def writer(role: str, content: str) -> None:
         log_path = ticket_dir / CHAT_LOG_FILENAME
+        log_path.parent.mkdir(parents=True, exist_ok=True)
         entries: list[dict[str, str]] = []
         if log_path.exists():
             try:
