@@ -15,7 +15,6 @@ import base64
 import json
 import os
 import sys
-import tempfile
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -38,18 +37,10 @@ from opal_backend.sessions.api import (
     update_context,
 )
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
-from bees.functions.skills import get_skills_function_group
-from bees.functions.simple_files import get_simple_files_function_group_factory
-from bees.functions.system import get_system_function_group_factory
-from bees.functions.sandbox import get_sandbox_function_group_factory
-from bees.functions.chat import get_chat_function_group_factory
-from bees.functions.events import get_events_function_group_factory
-from bees.functions.tasks import get_tasks_function_group_factory
 from bees.context_updates import updates_to_context_parts
-from bees.config import HIVE_DIR, PACKAGE_DIR
-from bees.disk_file_system import DiskFileSystem
+from bees.config import HIVE_DIR
 from bees.subagent_scope import SubagentScope
-from bees.skill_filter import filter_skills, merge_function_filter
+from bees.provisioner import provision_session
 
 CHAT_LOG_FILENAME = "chat_log.json"
 
@@ -399,6 +390,26 @@ async def run_session(
     If ``ticket_dir`` is provided, session state is persisted on
     suspend so it can be resumed later.
     """
+    if segments is None:
+        segments = [{"type": "text", "text": text}]
+
+    config = provision_session(
+        segments=segments,
+        ticket_id=ticket_id,
+        ticket_dir=ticket_dir,
+        fs_dir=fs_dir,
+        function_filter=function_filter,
+        allowed_skills=allowed_skills,
+        model=model,
+        on_events_broadcast=on_events_broadcast,
+        deliver_to_parent=deliver_to_parent,
+        scope=scope,
+        scheduler=scheduler,
+        hive_dir=hive_dir,
+        mcp_factories=mcp_factories,
+        on_chat_entry=_make_chat_log_writer(ticket_dir) if ticket_dir else None,
+    )
+
     if hive_dir is None:
         if ticket_dir:
             hive_dir = ticket_dir.parent.parent
@@ -412,70 +423,20 @@ async def run_session(
     subscribers = Subscribers()
 
     session_id = str(uuid.uuid4())
-    if segments is None:
-        segments = [{"type": "text", "text": text}]
-
-    date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    log_prefix = f"bees-{ticket_id[:8]}" if ticket_id else "bees-session"
-    out_dir = hive_dir / "logs"
-    out_path = out_dir / f"{log_prefix}-{date_stamp}.log.json"
-
-    session_listing, session_files, skill_tools = filter_skills(
-        allowed_skills, hive_dir
-    )
-
-    function_filter = merge_function_filter(
-        function_filter, skill_tools, allowed_skills,
-    )
-
-    # Create disk-backed file system.
-    work_dir = fs_dir or (ticket_dir / "filesystem" if ticket_dir else Path(tempfile.mkdtemp(prefix="bees-fs-")))
-    disk_fs = DiskFileSystem(work_dir)
-
-    # Seed initial files (skills) directly to disk.
-    for name, content in session_files.items():
-        disk_fs.write(name, content)
-
-    workspace_root_id = scope.workspace_root_id if scope else None
+    out_path = config.log_path
 
     await new_session(
         session_id=session_id,
-        segments=segments,
+        segments=config.segments,
         store=session_store,
         backend=backend,
         interaction_store=interaction_store,
         flags={},
         graph={},
-        extra_groups=[
-            get_system_function_group_factory(),
-            get_simple_files_function_group_factory(scope=scope),
-            get_skills_function_group(available_skills=session_listing),
-            get_sandbox_function_group_factory(
-                work_dir=work_dir,
-                scope=scope,
-            ),
-            get_events_function_group_factory(
-                on_events_broadcast=on_events_broadcast,
-                deliver_to_parent=deliver_to_parent,
-                ticket_id=ticket_id,
-                scope=scope,
-                scheduler=scheduler,
-            ),
-            get_tasks_function_group_factory(
-                scope=scope,
-                caller_ticket_id=ticket_id,
-                scheduler=scheduler,
-                ticket_id=ticket_id,
-            ),
-            get_chat_function_group_factory(
-                on_chat_entry=_make_chat_log_writer(ticket_dir) if ticket_dir else None,
-                workspace_root_id=workspace_root_id,
-                scheduler=scheduler,
-            ),
-        ] + (mcp_factories or []),
-        function_filter=function_filter,
-        model=model,
-        file_system=disk_fs,
+        extra_groups=config.function_groups,
+        function_filter=config.function_filter,
+        model=config.model,
+        file_system=config.file_system,
         context_queue=context_queue,
     )
 
@@ -596,18 +557,9 @@ async def resume_session(
     session_id = context["session_id"]
     interaction_id = context["interaction_id"]
 
-    date_stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    log_prefix = f"bees-{ticket_id[:8]}" if ticket_id else "bees-session"
-    out_dir = hive_dir / "logs"
-    out_path = out_dir / f"{log_prefix}-{date_stamp}.log.json"
-
     interaction_state = InteractionState.from_dict(context["interaction_state"])
 
-    session_store = InMemorySessionStore()
-    interaction_store = InMemoryInteractionStore()
-    subscribers = Subscribers()
-
-    # Load allowed skills from ticket metadata
+    # Load allowed skills from ticket metadata.
     metadata_path = ticket_dir / "metadata.json"
     allowed_skills = None
     function_filter: list[str] | None = None
@@ -619,59 +571,42 @@ async def resume_session(
         except Exception:
             pass
 
-    session_listing, _, skill_tools = filter_skills(allowed_skills, hive_dir)
-
-    function_filter = merge_function_filter(
-        function_filter, skill_tools, allowed_skills,
+    config = provision_session(
+        segments=[],  # Not used for resume.
+        ticket_id=ticket_id,
+        ticket_dir=ticket_dir,
+        fs_dir=fs_dir,
+        function_filter=function_filter,
+        allowed_skills=allowed_skills,
+        on_events_broadcast=on_events_broadcast,
+        deliver_to_parent=deliver_to_parent,
+        scope=scope,
+        scheduler=scheduler,
+        hive_dir=hive_dir,
+        mcp_factories=mcp_factories,
+        on_chat_entry=_make_chat_log_writer(ticket_dir),
+        seed_files=False,  # Files already on disk from previous run.
     )
 
-    # Create disk-backed file system — files are already on disk from
-    # the previous run, so no seeding needed.
-    work_dir = fs_dir or ticket_dir / "filesystem"
-    disk_fs = DiskFileSystem(work_dir)
+    session_store = InMemorySessionStore()
+    interaction_store = InMemoryInteractionStore()
+    subscribers = Subscribers()
+    out_path = config.log_path
 
     # new_session creates the _SessionContext entry and a fresh session.
     # We must set resume_id/status AFTER this call because create()
     # replaces any existing session state.
-    workspace_root_id = scope.workspace_root_id if scope else None
-
     await new_session(
         session_id=session_id,
-        segments=[],  # Not used for resume.
+        segments=config.segments,
         store=session_store,
         backend=backend,
         interaction_store=interaction_store,
         flags={},
         graph={},
-        extra_groups=[
-            get_system_function_group_factory(),
-            get_simple_files_function_group_factory(scope=scope),
-            get_skills_function_group(available_skills=session_listing),
-            get_sandbox_function_group_factory(
-                work_dir=work_dir,
-                scope=scope,
-            ),
-            get_events_function_group_factory(
-                on_events_broadcast=on_events_broadcast,
-                deliver_to_parent=deliver_to_parent,
-                ticket_id=ticket_id,
-                scope=scope,
-                scheduler=scheduler,
-            ),
-            get_tasks_function_group_factory(
-                scope=scope,
-                caller_ticket_id=ticket_id,
-                scheduler=scheduler,
-                ticket_id=ticket_id,
-            ),
-            get_chat_function_group_factory(
-                on_chat_entry=_make_chat_log_writer(ticket_dir),
-                workspace_root_id=workspace_root_id,
-                scheduler=scheduler,
-            ),
-        ] + (mcp_factories or []),
-        function_filter=function_filter,
-        file_system=disk_fs,
+        extra_groups=config.function_groups,
+        function_filter=config.function_filter,
+        file_system=config.file_system,
         context_queue=context_queue,
     )
 
