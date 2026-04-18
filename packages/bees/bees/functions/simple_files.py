@@ -7,6 +7,10 @@ Provides file operation functions (write, list, read, list-dir) using bees-local
 declarations. With ``DiskFileSystem`` the paths are already bare
 (relative to ``work_dir``) — no ``/mnt/`` translation is needed.
 
+The handler bodies are inlined from ``opal_backend.functions.system``,
+using bees-native types from ``bees.protocols`` and pidgin resolution
+from ``bees.pidgin``. See ``spec/handler-bodies.md`` for rationale.
+
 This uses the ``FunctionGroupFactory`` pattern to late-bind against the
 session's file system via ``SessionHooks``.
 """
@@ -15,8 +19,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
+from bees.pidgin import from_pidgin_string
 from bees.protocols.functions import (
     FunctionGroup,
     FunctionGroupFactory,
@@ -24,7 +29,6 @@ from bees.protocols.functions import (
     assemble_function_group,
     load_declarations,
 )
-from opal_backend.functions.system import _make_handlers
 
 from bees.subagent_scope import SubagentScope
 
@@ -39,6 +43,72 @@ _LOADED = load_declarations("simple-files", declarations_dir=_DECLARATIONS_DIR)
 _BINARY_SNIFF_BYTES = 8 * 1024
 _MAX_LINE_COUNT_SIZE = 10 * 1024 * 1024  # 10 MB
 _SKIP_NAMES = {"node_modules", "__pycache__"}
+
+
+# ---------------------------------------------------------------------------
+# Handlers
+# ---------------------------------------------------------------------------
+
+
+def _make_file_handlers(
+    *,
+    file_system: Any,
+) -> dict[str, Any]:
+    """Build handler map for bees file operation functions.
+
+    Only file operations are included — termination and task tree
+    handlers are separate concerns.
+
+    Args:
+        file_system: A ``FileSystem``-compatible object.
+    """
+
+    async def system_list_files(
+        args: dict[str, Any], status_cb: Any
+    ) -> dict[str, Any]:
+        status_update = args.get("status_update")
+        if status_cb and status_update:
+            status_cb(status_update)
+        elif status_cb:
+            status_cb("Getting a list of files")
+        return {"list": await file_system.list_files()}
+
+    async def system_write_file(
+        args: dict[str, Any], status_cb: Any
+    ) -> dict[str, Any]:
+        file_name = args.get("file_name", "")
+        content = args.get("content", "")
+
+        # Resolve <file> tags in the content via pidgin translator.
+        translated = await from_pidgin_string(content, file_system)
+        if isinstance(translated, dict) and "$error" in translated:
+            return {"error": translated["$error"]}
+
+        # Extract text from the translated content parts.
+        translated_dict = cast(dict[str, Any], translated)
+        text_parts = []
+        for part in translated_dict.get("parts", []):
+            if "text" in part:
+                text_parts.append(part["text"])
+        resolved_content = "\n".join(text_parts) if text_parts else content
+
+        file_path = file_system.write(file_name, resolved_content)
+        return {"file_path": file_path}
+
+    async def system_read_text_from_file(
+        args: dict[str, Any], status_cb: Any
+    ) -> dict[str, Any]:
+        file_path = args.get("file_path", "")
+        text = await file_system.read_text(file_path)
+        if isinstance(text, dict) and "$error" in text:
+            return {"error": text["$error"]}
+        return {"text": text}
+
+    return {
+        "system_list_files": system_list_files,
+        "system_write_file": system_write_file,
+        "system_read_text_from_file": system_read_text_from_file,
+    }
 
 
 def _make_list_dir_handler(work_dir: Path) -> Any:
@@ -97,22 +167,25 @@ def _make_list_dir_handler(work_dir: Path) -> Any:
     return system_list_dir
 
 
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+
 def get_simple_files_function_group_factory(scope: SubagentScope | None = None) -> FunctionGroupFactory:
     """Return a factory that builds the simple-files function group.
 
     The returned callable accepts ``SessionHooks`` and produces a
-    ``FunctionGroup`` named ``"simple-files"`` with the three file
-    operation functions.
+    ``FunctionGroup`` named ``"simple-files"`` with file operation
+    functions. Handler bodies are inlined from opal_backend.
 
     With ``DiskFileSystem``, paths are bare (relative to work_dir) —
     no path translation is needed.
     """
 
     def factory(hooks: SessionHooks) -> FunctionGroup:
-        handlers = _make_handlers(
-            hooks.controller,
+        handlers = _make_file_handlers(
             file_system=hooks.file_system,
-            task_tree_manager=hooks.task_tree_manager,
         )
 
         # Add bees-local handlers.

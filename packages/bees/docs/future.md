@@ -66,8 +66,28 @@ copies of `SuspendError`, `WaitForInputEvent`, `WaitForChoiceEvent`,
 `ChoiceItem`, `AgentResult`, `FileData`, `SessionTerminator` protocol,
 `CONTEXT_PARTS_KEY`, and `ChatEntryCallback` live in
 `bees/protocols/handler_types.py`. These are the types that function handlers use
-for suspend/resume, session termination, and context injection. Prerequisite for
-inlining handler bodies.
+for suspend/resume, session termination, and context injection.
+
+**Handler bodies** ([spec](../spec/handler-bodies.md)) — ✅ complete. Handler
+logic from `opal_backend.functions.{chat,system}._make_handlers` is inlined
+into bees' three function modules (`system.py`, `chat.py`, `simple_files.py`).
+All imports come from `bees.protocols` and `bees.pidgin`. Task tree management
+(`TaskTreeManager`, `set_in_progress` calls) stays in opal_backend — it's not a
+bees concern. The `bees/functions/` directory has **zero** `opal_backend`
+imports.
+
+> **Transitional back-imports.** Two types in `bees/protocols/handler_types.py`
+> subclass their `opal_backend` counterparts:
+>
+> | Bees type       | Inherits from                      | Why                                      |
+> | --------------- | ---------------------------------- | ---------------------------------------- |
+> | `SuspendError`  | `opal_backend.suspend.SuspendError`| Session loop catches via `except`        |
+> | `AgentResult`   | `opal_backend.events.AgentResult`  | Session loop checks via `isinstance`     |
+>
+> The session loop (`opal_backend/run.py`) uses `except SuspendError` and
+> `isinstance(result, AgentResult)` with opal's classes. Until the loop moves
+> to `bees-gemini`, bees' versions must inherit so these checks pass. Both
+> imports are removed when the session loop migrates.
 
 **Remaining protocols** from the [package-split inventory](./package-split.md):
 
@@ -75,22 +95,16 @@ inlining handler bodies.
 | --------------- | ------- |
 | `SessionRunner` | Pending |
 
-**Remaining `opal_backend` imports** in `bees/` after the four completed
-migrations:
+**Remaining `opal_backend` imports** in `bees/`:
 
 | Module             | Imports                                                    | Category           |
 | ------------------ | ---------------------------------------------------------- | ------------------ |
 | `session.py`       | Session runtime (`new_session`, `start_session`, stores…)  | SessionRunner      |
 | `scheduler.py`     | `HttpBackendClient` (type annotation only)                 | SessionRunner      |
 | `box.py`           | `HttpBackendClient`, `app.auth`, `app.config`              | SessionRunner      |
-| `functions/chat.py`| `_make_handlers`, `CONTEXT_PARTS_KEY`, `ChatEntryCallback`, `SuspendError` | Handler bodies |\
-| `functions/simple_files.py` | `_make_handlers`                                  | Handler bodies |
-| `functions/system.py`       | `_make_handlers`                                  | Handler bodies |
 
 The "SessionRunner" category disappears when `session.py` moves to
-`bees-gemini`. The "Handler bodies" category is the final spec: inlining
-`_make_handlers` using bees-native pidgin + handler types. All type dependencies
-are now satisfied — only the handler logic itself remains to be copied.
+`bees-gemini`.
 
 ## The Consumption API
 
