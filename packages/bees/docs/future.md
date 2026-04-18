@@ -97,6 +97,15 @@ backward compatibility. `task_runner.py`, `scheduler.py`, and tests now import
 `SessionResult` from `bees.protocols.session`. `EvalCollector` and
 `_print_event_summary` are now fully opal-free.
 
+**Session configuration** ([spec](../spec/session-configuration.md)) — ✅
+complete. `SessionConfiguration` (provisioning output), `SessionStream`
+(async iterable event stream with back-channel), and `SessionEvent` (type
+alias) are specified and tested in `bees/protocols/session.py`. The
+`provision_session` function in `bees/provisioner.py` extracts provisioning
+logic from `run_session()` and `resume_session()`, both of which now delegate
+to it. `session.py`'s remaining imports are purely execution (opal_backend
+session API) — ready for the `SessionRunner` migration.
+
 **Remaining protocols** from the [package-split inventory](./package-split.md):
 
 | Protocol        | Status  |

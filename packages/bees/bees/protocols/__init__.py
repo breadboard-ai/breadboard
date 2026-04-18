@@ -54,7 +54,10 @@ from bees.protocols.handler_types import (
 from bees.protocols.session import (
     PAUSE_TYPES,
     SUSPEND_TYPES,
+    SessionConfiguration,
+    SessionEvent,
     SessionResult,
+    SessionStream,
 )
 
 __all__ = [
@@ -95,8 +98,11 @@ __all__ = [
     "SuspendEvent",
     "WaitForChoiceEvent",
     "WaitForInputEvent",
-    # session observation
+    # session
     "PAUSE_TYPES",
     "SUSPEND_TYPES",
+    "SessionConfiguration",
+    "SessionEvent",
     "SessionResult",
+    "SessionStream",
 ]
