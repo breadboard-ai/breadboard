@@ -27,7 +27,7 @@ import httpx
 
 from opal_backend.local.backend_client_impl import HttpBackendClient
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
-from opal_backend.events import PAUSE_TYPES, SUSPEND_TYPES
+from bees.protocols.session import PAUSE_TYPES, SUSPEND_TYPES, SessionResult
 from opal_backend.interaction_store import InteractionState
 from opal_backend.sessions.api import (
     Subscribers,
@@ -97,30 +97,9 @@ def append_chat_log(ticket_dir: Path, role: str, text: str) -> None:
     _make_chat_log_writer(ticket_dir)(role, text)
 
 
-# ---------------------------------------------------------------------------
-# Session result
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class SessionResult:
-    """Result of a completed or suspended session."""
-
-    session_id: str
-    status: str
-    events: int
-    output: str
-    turns: int = 0
-    thoughts: int = 0
-    outcome: str | None = None
-    error: str | None = None
-    files: list[dict[str, str]] = field(default_factory=list)
-    intermediate: list[dict[str, Any]] | None = None
-    suspended: bool = False
-    suspend_event: dict[str, Any] | None = None
-    outcome_content: dict[str, Any] | None = None
-    paused: bool = False
-    paused_event: dict[str, Any] | None = None
+# SessionResult is defined in bees.protocols.session and re-exported here
+# for backward compatibility.
+__all__ = ["SessionResult"]
 
 
 # ---------------------------------------------------------------------------

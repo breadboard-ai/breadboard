@@ -18,9 +18,9 @@ import sys
 from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
 
+from bees.protocols.session import SessionResult
 from bees.segments import resolve_segments
 from bees.session import (
-    SessionResult,
     append_chat_log,
     clear_session_state,
     extract_files,

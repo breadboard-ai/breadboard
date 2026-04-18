@@ -45,7 +45,7 @@ from typing import Any, Awaitable, Callable
 
 from bees.coordination import route_coordination_task
 from bees.playbook import run_task_done_hooks, load_system_config, run_playbook
-from bees.session import SessionResult
+from bees.protocols.session import SessionResult
 from bees.task_runner import TaskRunner
 from bees.ticket import Ticket
 from bees.task_store import TaskStore
