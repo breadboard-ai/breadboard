@@ -348,12 +348,137 @@ def extract_files(
 
 
 # ---------------------------------------------------------------------------
-# Shared auth setup
+# Session draining — the composition point
 # ---------------------------------------------------------------------------
 
 
+async def drain_session(
+    stream: "SessionStream",
+    *,
+    config: "SessionConfiguration",
+    ticket_id: str | None = None,
+    on_event: Any | None = None,
+) -> SessionResult:
+    """Drain a session stream into a ``SessionResult``.
+
+    Iterates the stream, collects events via :class:`EvalCollector`, writes
+    eval logs at turn boundaries, prints event summaries, and builds the
+    final ``SessionResult``.
+
+    The caller is responsible for:
+
+    - Mid-session context injection via ``stream.send_context()``.
+    - Persisting ``stream.resume_state()`` after this returns.
+
+    Args:
+        stream: A running session's event stream.
+        config: The provisioned session configuration (used for
+            label and log_path).
+        ticket_id: Task identifier for log tagging.
+        on_event: Optional async callback invoked for each event.
+    """
+    from bees.protocols.session import SessionConfiguration, SessionStream
+
+    prefix = f"[{config.label}] " if config.label else ""
+    log_path = config.log_path
+    collector = EvalCollector()
+    event_count = 0
+
+    try:
+        async for event in stream:
+            collector.collect(event)
+            event_count += 1
+            _print_event_summary(event, prefix=prefix)
+
+            # Write log at turn boundaries.
+            if log_path and (
+                "sendRequest" in event
+                or "usageMetadata" in event
+                or "complete" in event
+                or "error" in event
+                or "paused" in event
+                or any(k in event for k in SUSPEND_TYPES)
+            ):
+                _write_eval_log(
+                    log_path,
+                    collector.to_eval_file_data(ticket_id=ticket_id),
+                )
+
+            if on_event:
+                await on_event(event)
+    finally:
+        # Final log write — captures any events since the last boundary.
+        if log_path:
+            _write_eval_log(
+                log_path,
+                collector.to_eval_file_data(ticket_id=ticket_id),
+            )
+
+    # Derive status from collector state.
+    if collector.suspended:
+        status = "suspended"
+    elif collector.paused:
+        status = "paused"
+    elif collector.error:
+        status = "failed"
+    else:
+        status = "completed"
+
+    return SessionResult(
+        session_id=ticket_id or "",
+        status=status,
+        events=event_count,
+        output=str(log_path) if log_path else "",
+        turns=collector.turn_count,
+        thoughts=collector.total_thoughts,
+        outcome=collector.outcome_text(),
+        error=collector.error,
+        files=[],
+        intermediate=collector.intermediate,
+        suspended=collector.suspended,
+        suspend_event=collector.suspend_event,
+        outcome_content=collector.outcome_llm_content(),
+        paused=collector.paused,
+        paused_event=collector.paused_event,
+    )
 
 
+# ---------------------------------------------------------------------------
+# Resume state persistence
+# ---------------------------------------------------------------------------
+
+RESUME_STATE_FILENAME = "resume_state.bin"
+
+
+def save_resume_state(ticket_dir: Path, state: bytes) -> None:
+    """Persist opaque resume state to the ticket directory.
+
+    The state is written as raw bytes — bees does not interpret the
+    contents.  The runner deserializes its own state on resume.
+    """
+    state_path = ticket_dir / RESUME_STATE_FILENAME
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_bytes(state)
+
+
+def load_resume_state(ticket_dir: Path) -> bytes | None:
+    """Load saved resume state, or ``None`` if not found."""
+    state_path = ticket_dir / RESUME_STATE_FILENAME
+    if not state_path.exists():
+        return None
+    return state_path.read_bytes()
+
+
+def clear_resume_state(ticket_dir: Path) -> None:
+    """Remove saved resume state (after successful resume)."""
+    state_path = ticket_dir / RESUME_STATE_FILENAME
+    if state_path.exists():
+        state_path.unlink()
+
+
+# ---------------------------------------------------------------------------
+# Core session runner
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
