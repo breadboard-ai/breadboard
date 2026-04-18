@@ -108,9 +108,16 @@ session API) — ready for the `SessionRunner` migration.
 
 **Remaining protocols** from the [package-split inventory](./package-split.md):
 
-| Protocol        | Status  |
-| --------------- | ------- |
-| `SessionRunner` | Pending |
+| Protocol        | Status    |
+| --------------- | --------- |
+| `SessionRunner` | Specified |
+
+**SessionRunner** ([spec](../spec/session-runner.md)) — specified + tested.
+`SessionRunner` protocol, `drain_session` composition function, and opaque
+resume state persistence (`save_resume_state` / `load_resume_state` /
+`clear_resume_state`) live in `bees/protocols/session.py` and `bees/session.py`.
+The migration (creating `GeminiRunner`, restructuring `task_runner.py`, removing
+`run_session` / `resume_session`) is the next spec.
 
 **Remaining `opal_backend` imports** in `bees/`:
 

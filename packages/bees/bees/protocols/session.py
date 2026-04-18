@@ -1,7 +1,7 @@
 # Copyright 2026 Google LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Session types — observation, configuration, and stream protocols.
+"""Session types — observation, configuration, stream, and runner protocols.
 
 Defines the types that sit at the session boundary:
 
@@ -19,6 +19,10 @@ Defines the types that sit at the session boundary:
 **Stream** (runner return type):
 
 - ``SessionStream`` — async iterable of events with back-channel methods.
+
+**Runner** (execution contract):
+
+- ``SessionRunner`` — the contract between bees and a model provider.
 """
 
 from __future__ import annotations
@@ -37,6 +41,7 @@ __all__ = [
     "SessionConfiguration",
     "SessionEvent",
     "SessionResult",
+    "SessionRunner",
     "SessionStream",
 ]
 
@@ -218,5 +223,58 @@ class SessionStream(Protocol):
         opaque blob and hands it back on resume.  For the batch runner
         this is serialized ``opal_backend`` ``InteractionState``.  For
         the Live runner this would be a session resumption token.
+        """
+        ...
+
+
+# ---------------------------------------------------------------------------
+# Session runner
+# ---------------------------------------------------------------------------
+
+
+@runtime_checkable
+class SessionRunner(Protocol):
+    """Contract: execute a session and return an event stream.
+
+    The runner owns the model interaction — API calls, turn management,
+    function dispatch.  It receives a provisioned configuration (function
+    groups, file system, segments) and returns a stream of events.
+
+    The framework (bees) owns observation (``EvalCollector``), orchestration
+    (``Scheduler``), and persistence (resume state to disk).
+    """
+
+    async def run(
+        self,
+        config: SessionConfiguration,
+    ) -> SessionStream:
+        """Start a new session and return an event stream.
+
+        The stream yields events until the run ends (completion,
+        suspension, pause, or error).  After the stream exhausts,
+        ``stream.resume_state()`` provides the opaque blob needed
+        to resume (or ``None`` if the run completed).
+        """
+        ...
+
+    async def resume(
+        self,
+        config: SessionConfiguration,
+        *,
+        state: bytes,
+        response: dict[str, Any],
+        context_parts: list[dict[str, Any]] | None = None,
+    ) -> SessionStream:
+        """Resume a suspended session.
+
+        Args:
+            config: Same provisioned configuration as ``run()``.
+            state: Opaque resume state from a previous
+                ``stream.resume_state()`` call.
+            response: The user's response dict (text, structured data).
+            context_parts: Pre-formatted context parts to inject at
+                the start of the resumed session.  Assembled by bees
+                from ``response.context_updates`` and
+                ``pending_context_updates`` in task metadata.
         """
         ...

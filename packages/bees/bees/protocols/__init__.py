@@ -57,6 +57,7 @@ from bees.protocols.session import (
     SessionConfiguration,
     SessionEvent,
     SessionResult,
+    SessionRunner,
     SessionStream,
 )
 
@@ -104,5 +105,6 @@ __all__ = [
     "SessionConfiguration",
     "SessionEvent",
     "SessionResult",
+    "SessionRunner",
     "SessionStream",
 ]
