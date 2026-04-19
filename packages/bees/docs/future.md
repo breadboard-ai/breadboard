@@ -106,96 +106,36 @@ logic from `run_session()` and `resume_session()`, both of which now delegate
 to it. `session.py`'s remaining imports are purely execution (opal_backend
 session API) — ready for the `SessionRunner` migration.
 
-**Remaining protocols** from the [package-split inventory](./package-split.md):
-
-| Protocol        | Status    |
-| --------------- | --------- |
-| `SessionRunner` | Specified |
-
-**SessionRunner** ([spec](../spec/session-runner.md)) — specified + tested.
+**SessionRunner** ([spec](../spec/session-runner.md)) — ✅ specified + tested.
 `SessionRunner` protocol, `drain_session` composition function, and opaque
 resume state persistence (`save_resume_state` / `load_resume_state` /
 `clear_resume_state`) live in `bees/protocols/session.py` and `bees/session.py`.
-The migration (creating `GeminiRunner`, restructuring `task_runner.py`, removing
-`run_session` / `resume_session`) is the next spec.
+
+### Migration phases
+
+With all protocols specified, the remaining work is the **migration** — creating
+the concrete `GeminiRunner`, rewiring consumers, and removing dead code. Each
+phase is independently shippable.
+
+| #   | Spec                     | What changes                                                                            | Status  |
+| --- | ------------------------ | --------------------------------------------------------------------------------------- | ------- |
+| 1   | `gemini-runner`          | `GeminiRunner` + `GeminiStream` in `bees/runners/gemini.py`. Wraps opal session API.    | ✅      |
+| 2   | `runner-migration`       | `TaskRunner` / `Scheduler` / `Bees` accept `SessionRunner`. `box.py` constructs `GeminiRunner`. Uses `runner.run()` + `drain_session()`. | Pending |
+| 3   | `session-cleanup`        | Remove `run_session`, `resume_session`, legacy state, transitional back-imports.         | —       |
+| 4   | `bees-gemini-package`    | Move runner to `bees-gemini` package. Zero `opal_backend` imports in `bees/`.            | —       |
+
+**Phase 1** is pure additive code — nothing breaks. Phase 2 is the full
+substitution from construction (`box.py`) to consumption (`TaskRunner`).
+Phase 3 is deletion. Phase 4 is the payoff.
 
 **Remaining `opal_backend` imports** in `bees/`:
 
-| Module             | Imports                                                    | Category           |
-| ------------------ | ---------------------------------------------------------- | ------------------ |
-| `session.py`       | Session runtime (`new_session`, `start_session`, stores…)  | SessionRunner      |
-| `scheduler.py`     | `HttpBackendClient` (type annotation only)                 | SessionRunner      |
-| `box.py`           | `HttpBackendClient`, `app.auth`, `app.config`              | SessionRunner      |
-
-The "SessionRunner" category disappears when `session.py` moves to
-`bees-gemini`.
-
-### Anatomy of `session.py`
-
-`session.py` (≈940 lines) conflates three concerns that need to be separated
-before the `SessionRunner` protocol can be defined:
-
-| Concern              | ~Lines | opal deps?                              | Stays in bees? |
-| -------------------- | ------ | --------------------------------------- | -------------- |
-| **Observation types** | 25    | `SUSPEND_TYPES`, `PAUSE_TYPES` (constants) | Yes — protocols |
-| **Task utilities**    | 80    | None                                    | Yes            |
-| **Event collection**  | 200   | `SUSPEND_TYPES` only                    | Yes            |
-| **Session execution** | 400   | Deep (5 opal imports: stores, session API) | No — becomes runner |
-
-**Observation types** — `SessionResult` (already bees-native dataclass),
-`SUSPEND_TYPES`, `PAUSE_TYPES`. These define the output contract: what the
-orchestrator learns from a session. `SessionResult` is used by `task_runner.py`,
-`scheduler.py`, and tests. The event constants are the shared vocabulary between
-runner (produces events) and orchestrator (categorizes them).
-
-**Task utilities** — `extract_files`, `append_chat_log`,
-`load_session_state`, `clear_session_state`. Pure filesystem operations for
-task bookkeeping. No opal deps. Used by `task_runner.py`. These stay in bees
-regardless of where session execution lives.
-
-**Event collection** — `EvalCollector`, `_print_event_summary`,
-`_write_eval_log`. Process the event stream into structured logs and metrics.
-`EvalCollector`'s only opal dependency is `SUSPEND_TYPES` (string constants).
-Once the observation types are extracted, these components become fully
-opal-free.
-
-**Session execution** — `run_session()`, `resume_session()`,
-`_save_session_state()`. The actual model interaction: assembling function
-groups, calling `opal_backend`'s session API (`new_session`, `start_session`),
-draining the event queue. This is the `SessionRunner` implementation. It also
-does **provisioning** (assembling everything the session needs from the task) —
-that provisioning logic stays in bees when the execution moves to the runner.
-
-### What `task_runner.py` imports from `session.py`
-
-```python
-from bees.session import (
-    SessionResult,        # observation type — no opal deps
-    append_chat_log,      # task utility — no opal deps
-    clear_session_state,  # task utility — no opal deps
-    extract_files,        # task utility — no opal deps
-    load_session_state,   # task utility — no opal deps
-    resume_session,       # session execution — deep opal
-    run_session,          # session execution — deep opal
-)
-```
-
-5 of 7 imports are pure orchestration utilities. Only the last two are the
-actual session execution that becomes the `SessionRunner` protocol.
-
-### Incremental path
-
-The `SessionRunner` protocol decomposes into two specs:
-
-1. **Session observation types** ([spec](../spec/session-observation.md)) —
-   extract `SUSPEND_TYPES`, `PAUSE_TYPES`, and `SessionResult` into
-   `bees/protocols/session.py`. This is the leaf: no dependencies on other
-   unextracted types. Makes `EvalCollector` fully opal-free and establishes the
-   output contract before defining the runner protocol.
-
-2. **SessionRunner protocol** — define the `run(configuration, channel) →
-   SessionResult` contract, separating provisioning (stays in bees) from
-   execution (moves to runner). Depends on step 1 for the `SessionResult` type.
+| Module             | Imports                                                    | Removed in |
+| ------------------ | ---------------------------------------------------------- | ---------- |
+| `session.py`       | Session runtime (`new_session`, `start_session`, stores…)  | Phase 3    |
+| `scheduler.py`     | `HttpBackendClient` (type annotation only)                 | Phase 2    |
+| `box.py`           | `HttpBackendClient`, `app.auth`, `app.config`              | Phase 2/4  |
+| `handler_types.py` | Transitional back-imports (`SuspendError`, `AgentResult`)  | Phase 3    |
 
 ## The Consumption API
 

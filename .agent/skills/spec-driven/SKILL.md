@@ -226,3 +226,12 @@ that the abstraction boundary exists. Don't try to do both at once. During
 brainstorm, you'll spot simplifications ("bees doesn't need pidgin" — wrong;
 "bees could use a simpler API for X" — maybe, but later). Record them as
 follow-up work, not spec items.
+
+**Every PR leaves the system working.** When decomposing a migration into
+phases, draw boundaries at points where the running system is fully functional —
+not where it's half-wired. A phase that changes a consumer's interface without
+also updating the callers that construct it leaves the code in a non-working
+state between PRs. If "implement the adapter" and "wire it through the call
+chain" can't be separated without breaking the build, they're one phase. Additive
+code (new modules, new tests) is always safe to ship alone. Substitutions should
+include the full path from construction to consumption.
