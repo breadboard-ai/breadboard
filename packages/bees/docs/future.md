@@ -121,7 +121,7 @@ phase is independently shippable.
 | --- | ------------------------ | --------------------------------------------------------------------------------------- | ------- |
 | 1   | `gemini-runner`          | `GeminiRunner` + `GeminiStream` in `bees/runners/gemini.py`. Wraps opal session API.    | ✅      |
 | 2   | `runner-migration`       | `TaskRunner` / `Scheduler` / `Bees` accept `SessionRunner`. `box.py` constructs `GeminiRunner`. Uses `runner.run()` + `drain_session()`. | ✅      |
-| 3   | `session-cleanup`        | Remove `run_session`, `resume_session`, legacy state, transitional back-imports.         | —       |
+| 3   | `session-cleanup`        | Remove `run_session`, `resume_session`, legacy state, dead imports from `session.py`.    | ✅      |
 | 4   | `bees-gemini-package`    | Move runner to `bees-gemini` package. Zero `opal_backend` imports in `bees/`.            | —       |
 
 **Phase 1** is pure additive code — nothing breaks. Phase 2 is the full
@@ -132,9 +132,8 @@ Phase 3 is deletion. Phase 4 is the payoff.
 
 | Module             | Imports                                                    | Removed in |
 | ------------------ | ---------------------------------------------------------- | ---------- |
-| `session.py`       | Session runtime (`new_session`, `start_session`, stores…)  | Phase 3    |
 | `box.py`           | `HttpBackendClient`, `app.auth`, `app.config`              | Phase 4    |
-| `handler_types.py` | Transitional back-imports (`SuspendError`, `AgentResult`)  | Phase 3    |
+| `handler_types.py` | Transitional back-imports (`SuspendError`, `AgentResult`)  | Phase 4    |
 
 ## The Consumption API
 
