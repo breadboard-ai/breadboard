@@ -45,13 +45,12 @@ from typing import Any, Awaitable, Callable
 
 from bees.coordination import route_coordination_task
 from bees.playbook import run_task_done_hooks, load_system_config, run_playbook
-from bees.protocols.session import SessionResult
+from bees.protocols.session import SessionResult, SessionRunner, SessionStream
 from bees.task_runner import TaskRunner
 from bees.ticket import Ticket
 from bees.task_store import TaskStore
 from bees.functions.mcp_bridge import MCPRegistry
 from bees.context_updates import updates_to_context_parts
-from opal_backend.local.backend_client_impl import HttpBackendClient
 
 logger = logging.getLogger(__name__)
 
@@ -161,11 +160,10 @@ class Scheduler:
     def __init__(
         self,
         *,
-        backend: HttpBackendClient,
+        runner: SessionRunner,
         store: TaskStore,
         hooks: SchedulerHooks | None = None,
     ) -> None:
-        self._backend = backend
         self._hooks = hooks or SchedulerHooks()
         self.store = store
         self._trigger = asyncio.Event()
@@ -173,14 +171,14 @@ class Scheduler:
         self._running_tasks: set[str] = set()
         self._completion_events: dict[str, asyncio.Event] = {}
         self._active_tasks: dict[str, asyncio.Task] = {}
-        self._context_queues: dict[str, asyncio.Queue] = {}
+        self._active_streams: dict[str, SessionStream] = {}
         self._mcp_registry: MCPRegistry | None = None
 
-        self._runner = TaskRunner(
-            backend=self._backend,
+        self._task_runner = TaskRunner(
+            runner=runner,
             store=self.store,
             scheduler_ref=self,
-            context_queues=self._context_queues,
+            active_streams=self._active_streams,
             get_mcp_factories=lambda: (
                 self._mcp_registry.get_factories()
                 if self._mcp_registry else None
@@ -382,11 +380,11 @@ class Scheduler:
            batch mode).  Append to ``pending_context_updates`` in
            metadata for later drain.
         """
-        # Path 1: mid-stream injection via live queue.
-        queue = self._context_queues.get(target_id)
-        if queue is not None:
+        # Path 1: mid-stream injection via live stream.
+        stream = self._active_streams.get(target_id)
+        if stream is not None:
             parts = updates_to_context_parts([update])
-            queue.put_nowait(parts)
+            asyncio.create_task(stream.send_context(parts))
             logger.info("Context update injected mid-stream for %s", target_id)
             return
 
@@ -557,10 +555,10 @@ class Scheduler:
             )
 
             coros = [
-                self._runner.run_task(item)
+                self._task_runner.run_task(item)
                 for item in items
             ] + [
-                self._runner.resume_task(item)
+                self._task_runner.resume_task(item)
                 for item in resumable
             ]
             results = await asyncio.gather(*coros, return_exceptions=True)
@@ -676,7 +674,7 @@ class Scheduler:
                 if item.id in self._running_tasks:
                     continue
                 self._running_tasks.add(item.id)
-                coro = self._runner.run_task(item)
+                coro = self._task_runner.run_task(item)
                 async_task = asyncio.create_task(self._wrap_execution(item, coro))
                 self._active_tasks[item.id] = async_task
 
@@ -684,7 +682,7 @@ class Scheduler:
                 if item.id in self._running_tasks:
                     continue
                 self._running_tasks.add(item.id)
-                coro = self._runner.resume_task(item)
+                coro = self._task_runner.resume_task(item)
                 async_task = asyncio.create_task(self._wrap_execution(item, coro))
                 self._active_tasks[item.id] = async_task
 

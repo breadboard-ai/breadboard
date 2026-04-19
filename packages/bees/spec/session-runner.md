@@ -230,9 +230,9 @@ def load_resume_state(ticket_dir: Path) -> bytes | None:
 ```
 
 These replace the existing `save_session_state` / `load_session_state` pair.
-The file format changes from structured JSON (`session_state.json`) to an
-opaque blob (`resume_state.bin`).  `clear_session_state` becomes
-`clear_resume_state` for symmetry.
+The API changes from structured `dict` to opaque `bytes`, but the file
+remains `session_state.json` — no filename change, no backward compatibility
+concern.  `clear_session_state` becomes `clear_resume_state` for symmetry.
 
 ## Migration Notes
 

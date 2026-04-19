@@ -100,16 +100,21 @@ class GeminiStream:
         if event is None:
             self._exhausted = True
             await self._task
-            await self._capture_resume_state()
             raise StopAsyncIteration
 
-        # Track suspend/pause events — needed for resume state capture.
+        # Track suspend/pause events and capture resume state eagerly.
+        # Track suspend/pause events and capture resume state eagerly.
+        # The interaction store's load() is destructive (pop semantics),
+        # so we must do exactly one load that serves both enrichment and
+        # resume state capture.
         if "paused" in event:
             self._suspend_event = event
+            await self._capture_resume_state()
         else:
             for suspend_type in SUSPEND_TYPES:
                 if suspend_type in event:
                     self._suspend_event = event
+                    await self._capture_resume_state()
                     break
 
         return event
@@ -138,18 +143,18 @@ class GeminiStream:
     # -- internal ----------------------------------------------------------
 
     async def _capture_resume_state(self) -> None:
-        """Extract resume state from opal stores after the stream exhausts.
+        """Extract resume state from the interaction store.
 
-        Mirrors the logic from ``session.py._save_session_state``: find
-        the interaction_id (from the suspend event or session store), load
-        the ``InteractionState``, and serialize to a JSON blob.
+        Called eagerly when a suspend/pause event is detected — the store
+        uses pop semantics (``load`` consumes the entry), so this is the
+        single point where the state is read.
 
-        The blob also includes ``function_name`` extracted from the
-        ``InteractionState.function_call_part`` — this lets the consumer
-        annotate suspend events without interpreting the interaction state.
+        Also enriches the suspend event with ``function_name`` extracted
+        from the interaction state, so bees can differentiate suspend
+        reasons without interpreting the opaque blob.
         """
         if self._suspend_event is None:
-            return  # Completed normally — no resume needed.
+            return
 
         # Extract interaction_id from the suspend/pause event.
         interaction_id: str | None = None
@@ -176,7 +181,7 @@ class GeminiStream:
         if not interaction_id:
             return
 
-        # Load interaction state saved by the opal session loop.
+        # Single load — load() is destructive (pops the entry).
         state = await self._interaction_store.load(interaction_id)
         if state is None:
             return
@@ -199,6 +204,12 @@ class GeminiStream:
         self._resume_blob = json.dumps(
             blob, ensure_ascii=False,
         ).encode("utf-8")
+
+        # Enrich the suspend event with function_name so bees can
+        # differentiate (e.g., await_context_update vs request_user_input)
+        # without parsing the resume blob.
+        if function_name:
+            self._suspend_event["function_name"] = function_name
 
 
 # ---------------------------------------------------------------------------

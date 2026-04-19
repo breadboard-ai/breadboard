@@ -31,6 +31,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.auth import load_gemini_key
 from app.config import load_hive_dir
 from bees import Task, Bees
+from bees.runners.gemini import GeminiRunner
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
 logger = logging.getLogger(__name__)
@@ -158,7 +159,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         gemini_key=gemini_key,
     )
 
-    bees = Bees(hive_dir, backend)
+    runner = GeminiRunner(backend)
+    bees = Bees(hive_dir, runner)
 
     bees.on("task_added", _on_task_added)
     bees.on("cycle_start", _on_cycle_start)

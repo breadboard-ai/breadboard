@@ -16,9 +16,8 @@ class Bees:
     Acts like the 'Document' in the DOM analogy.
     """
 
-    def __init__(self, hive_dir: Path, backend):
+    def __init__(self, hive_dir: Path, runner):
         self._store = TaskStore(hive_dir)
-        self._backend = backend
         self._events = defaultdict(list)
         self._loop_task = None
         
@@ -30,7 +29,7 @@ class Bees:
             on_task_done=lambda t: self._emit("task_done", t),
             on_cycle_complete=lambda c: self._emit("cycle_complete", c),
         )
-        self._scheduler = Scheduler(backend=backend, hooks=hooks, store=self._store)
+        self._scheduler = Scheduler(runner=runner, hooks=hooks, store=self._store)
 
     async def _emit(self, event_name: str, *args):
         for callback in self._events[event_name]:
