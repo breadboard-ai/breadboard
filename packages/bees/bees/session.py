@@ -447,7 +447,7 @@ async def drain_session(
 # Resume state persistence
 # ---------------------------------------------------------------------------
 
-RESUME_STATE_FILENAME = "resume_state.bin"
+RESUME_STATE_FILENAME = "session_state.json"
 
 
 def save_resume_state(ticket_dir: Path, state: bytes) -> None:

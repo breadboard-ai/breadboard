@@ -18,15 +18,17 @@ import sys
 from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
 
-from bees.protocols.session import SessionResult
+from bees.context_updates import updates_to_context_parts
+from bees.protocols.session import SessionResult, SessionRunner, SessionStream
+from bees.provisioner import provision_session
 from bees.segments import resolve_segments
 from bees.session import (
     append_chat_log,
-    clear_session_state,
+    clear_resume_state,
+    drain_session,
     extract_files,
-    load_session_state,
-    resume_session,
-    run_session,
+    load_resume_state,
+    save_resume_state,
 )
 from bees.subagent_scope import SubagentScope
 from bees.task_store import TaskStore
@@ -48,20 +50,20 @@ class TaskRunner:
     def __init__(
         self,
         *,
-        backend: Any,
+        runner: SessionRunner,
         store: TaskStore,
         scheduler_ref: Any,
-        context_queues: dict[str, asyncio.Queue],
+        active_streams: dict[str, SessionStream],
         get_mcp_factories: Callable[[], list | None],
         deliver_context_update: Callable[[str, dict[str, Any]], None],
         on_events_broadcast: Callable[[Ticket], None],
         on_task_start: Callable[[Ticket], Awaitable[None]] | None = None,
         on_task_event: Callable[[str, dict], Awaitable[None]] | None = None,
     ) -> None:
-        self._backend = backend
+        self._runner = runner
         self._store = store
         self._scheduler_ref = scheduler_ref
-        self._context_queues = context_queues
+        self._active_streams = active_streams
         self._get_mcp_factories = get_mcp_factories
         self._deliver_context_update = deliver_context_update
         self._on_events_broadcast = on_events_broadcast
@@ -91,18 +93,13 @@ class TaskRunner:
         print(f"▶ [{label}] {task.objective!r}", file=sys.stderr)
 
         try:
-            ctx_queue: asyncio.Queue = asyncio.Queue()
-            self._context_queues[task.id] = ctx_queue
             segments = resolve_segments(task, self._store)
             scope = SubagentScope.for_ticket(task)
-            result = await run_session(
+            config = provision_session(
                 segments=segments,
-                backend=self._backend,
-                label=label,
                 ticket_id=task.id,
                 ticket_dir=task.dir,
                 fs_dir=task.fs_dir,
-                on_event=self._make_on_event(task.id),
                 function_filter=task.metadata.functions,
                 allowed_skills=task.metadata.skills,
                 model=task.metadata.model,
@@ -110,9 +107,27 @@ class TaskRunner:
                 deliver_to_parent=self._make_deliver_to_parent(task),
                 scope=scope,
                 scheduler=self._scheduler_ref,
-                context_queue=ctx_queue,
                 mcp_factories=self._get_mcp_factories(),
+                on_chat_entry=lambda role, text: append_chat_log(
+                    task.dir, role, text,
+                ),
             )
+
+            stream = await self._runner.run(config)
+            self._active_streams[task.id] = stream
+            try:
+                result = await drain_session(
+                    stream,
+                    config=config,
+                    ticket_id=task.id,
+                    on_event=self._make_on_event(task.id),
+                )
+            finally:
+                self._active_streams.pop(task.id, None)
+
+            resume_state = stream.resume_state()
+            if resume_state:
+                save_resume_state(task.dir, resume_state)
         except Exception as exc:
             task.metadata.status = "failed"
             task.metadata.completed_at = datetime.now(timezone.utc).isoformat()
@@ -126,8 +141,6 @@ class TaskRunner:
                 output="",
                 error=str(exc),
             )
-        finally:
-            self._context_queues.pop(task.id, None)
 
         self._update_metadata(task, result)
         self._handle_suspend(task, result)
@@ -165,6 +178,20 @@ class TaskRunner:
         if user_text:
             append_chat_log(task.dir, "user", user_text)
 
+        # Load opaque resume state from previous suspend.
+        state = load_resume_state(task.dir)
+        if state is None:
+            task.metadata.status = "failed"
+            task.metadata.error = "No saved session state found"
+            self._store.save_metadata(task)
+            return SessionResult(
+                session_id="",
+                status="failed",
+                events=0,
+                output="",
+                error="No saved session state found",
+            )
+
         task.metadata.status = "running"
         task.metadata.assignee = "agent"
         self._store.save_metadata(task)
@@ -172,24 +199,68 @@ class TaskRunner:
             await self._on_task_start(task)
 
         try:
+            # Assemble context updates from both sources:
+            #   1. response.json may contain context_updates (from delivery)
+            #   2. ticket metadata may have pending_context_updates (buffered)
+            all_updates: list = []
+            response_updates = response.pop("context_updates", None)
+            if response_updates:
+                all_updates.extend(response_updates)
+
+            if task.metadata.pending_context_updates:
+                all_updates.extend(task.metadata.pending_context_updates)
+                task.metadata.pending_context_updates = []
+                self._store.save_metadata(task)
+
+            context_parts = (
+                updates_to_context_parts(all_updates)
+                if all_updates
+                else None
+            )
+
             scope = SubagentScope.for_ticket(task)
-            ctx_queue: asyncio.Queue = asyncio.Queue()
-            self._context_queues[task.id] = ctx_queue
-            result = await resume_session(
+            config = provision_session(
+                segments=[],  # Not used for resume.
                 ticket_id=task.id,
                 ticket_dir=task.dir,
                 fs_dir=task.fs_dir,
-                response=response,
-                backend=self._backend,
-                label=label,
-                on_event=self._make_on_event(task.id),
+                function_filter=task.metadata.functions,
+                allowed_skills=task.metadata.skills,
                 on_events_broadcast=self._on_events_broadcast,
                 deliver_to_parent=self._make_deliver_to_parent(task),
                 scope=scope,
                 scheduler=self._scheduler_ref,
-                context_queue=ctx_queue,
                 mcp_factories=self._get_mcp_factories(),
+                on_chat_entry=lambda role, text: append_chat_log(
+                    task.dir, role, text,
+                ),
+                seed_files=False,  # Files already on disk from previous run.
             )
+
+            stream = await self._runner.resume(
+                config,
+                state=state,
+                response=response,
+                context_parts=context_parts,
+            )
+            self._active_streams[task.id] = stream
+            try:
+                result = await drain_session(
+                    stream,
+                    config=config,
+                    ticket_id=task.id,
+                    on_event=self._make_on_event(task.id),
+                )
+            finally:
+                self._active_streams.pop(task.id, None)
+
+            resume_state = stream.resume_state()
+            if resume_state:
+                save_resume_state(task.dir, resume_state)
+            else:
+                clear_resume_state(task.dir)
+                # Clean up response file.
+                response_path.unlink(missing_ok=True)
         except Exception as exc:
             task.metadata.status = "failed"
             task.metadata.completed_at = datetime.now(timezone.utc).isoformat()
@@ -203,17 +274,10 @@ class TaskRunner:
                 output="",
                 error=str(exc),
             )
-        finally:
-            self._context_queues.pop(task.id, None)
 
         self._update_metadata(task, result, accumulate=True)
         self._handle_suspend(task, result)
         self._handle_pause(task, result)
-
-        if not result.suspended and not result.paused:
-            clear_session_state(task.dir)
-            # Clean up response file.
-            response_path.unlink(missing_ok=True)
 
         self._store.save_metadata(task)
         return result
@@ -278,16 +342,9 @@ class TaskRunner:
                 if fresh.metadata.title != task.metadata.title:
                     task.metadata.title = fresh.metadata.title
 
-            # Annotate suspend_event with the triggering function name
-            # so the UI can differentiate (e.g., await_context_update
-            # vs. request_user_input). Read from saved session state.
+            # function_name is already in suspend_event — enriched by
+            # the runner before yielding.
             suspend_event = dict(result.suspend_event) if result.suspend_event else {}
-            state = load_session_state(task.dir)
-            if state:
-                fcp = state.get("interaction_state", {}).get("function_call_part", {})
-                fn_name = fcp.get("functionCall", {}).get("name")
-                if fn_name:
-                    suspend_event["function_name"] = fn_name
 
             if getattr(task.metadata, "queued_updates", None):
                 update = task.metadata.queued_updates.pop(0)
