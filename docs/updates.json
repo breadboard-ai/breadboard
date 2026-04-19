@@ -1,5 +1,10 @@
 [
   {
+    "date": "2026-03-10",
+    "type": "info",
+    "text": "New Syntax Documentation Available: Comprehensive guide to the new Breadboard syntax featuring improved APIs for board definition, node configuration, and type safety"
+  },
+  {
     "date": "2026-03-09",
     "type": "info",
     "text": "All systems green. If you see any problems, please use the \"Send feedback\" link in the gear menu."
