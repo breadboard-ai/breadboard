@@ -14,8 +14,8 @@ With the previous seven specs complete, `session.py` has been separated into:
 - **Observation types** (`protocols/session.py`) — `SessionResult`,
   `SUSPEND_TYPES`, `PAUSE_TYPES`, `SessionConfiguration`, `SessionStream`,
   `SessionEvent`. ✅
-- **Event collection** (`session.py`) — `EvalCollector`,
-  `_print_event_summary`. Opal-free. ✅
+- **Event collection** (`session.py`) — `EvalCollector`, `_print_event_summary`.
+  Opal-free. ✅
 - **Execution** (`session.py`) — `run_session()`, `resume_session()`. Deep opal
   deps. ← **this spec**
 
@@ -25,12 +25,12 @@ below (model API calls, event generation) moves to the runner.
 
 ### Remaining `opal_backend` imports after this spec
 
-| Module             | Current imports                                        | After this spec        |
-| ------------------ | ------------------------------------------------------ | ---------------------- |
+| Module             | Current imports                                                                                                                                                               | After this spec               |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
 | `session.py`       | `HttpBackendClient`, `InMemoryInteractionStore`, `InteractionState`, `new_session`, `start_session`, `resume_session`, `Subscribers`, `InMemorySessionStore`, `register_task` | Same (migration is next spec) |
-| `scheduler.py`     | `HttpBackendClient` (type annotation)                  | Same                   |
-| `box.py`           | `HttpBackendClient`, `app.auth`, `app.config`          | Same                   |
-| `handler_types.py` | Transitional back-imports (`SuspendError`, `AgentResult`) | Same                 |
+| `scheduler.py`     | `HttpBackendClient` (type annotation)                                                                                                                                         | Same                          |
+| `box.py`           | `HttpBackendClient`, `app.auth`, `app.config`                                                                                                                                 | Same                          |
+| `handler_types.py` | Transitional back-imports (`SuspendError`, `AgentResult`)                                                                                                                     | Same                          |
 
 This spec **specifies and tests** the boundary. The migration (restructuring
 `task_runner.py`, creating `GeminiRunner`, removing opal imports) is the
@@ -51,14 +51,14 @@ resume requires opaque state from the previous run plus the user's response.
 ### Both methods are async
 
 `run` and `resume` are `async def` — they may perform async setup (creating
-stores, calling API initialization) before returning the stream.
-Initialization errors raise directly from `run()`/`resume()`. Execution
-errors come through the event stream as `{"error": {...}}` events.
+stores, calling API initialization) before returning the stream. Initialization
+errors raise directly from `run()`/`resume()`. Execution errors come through the
+event stream as `{"error": {...}}` events.
 
 ### Resume state is opaque bytes
 
-`stream.resume_state()` returns `bytes | None`. Bees persists it to disk
-without interpretation. On resume, bees reads the blob and passes it to
+`stream.resume_state()` returns `bytes | None`. Bees persists it to disk without
+interpretation. On resume, bees reads the blob and passes it to
 `runner.resume()`.
 
 For the batch `GeminiRunner`, this blob is serialized JSON containing
@@ -81,8 +81,8 @@ runner manages its own internal queue.
 
 Currently `task_runner._handle_suspend` peeks into persisted `InteractionState`
 to extract `function_call_part.functionCall.name`. With opaque resume state, the
-runner must include `function_name` in the suspend event dict before yielding it.
-This is metadata enrichment — the runner knows which function triggered the
+runner must include `function_name` in the suspend event dict before yielding
+it. This is metadata enrichment — the runner knows which function triggered the
 suspend because it processed the function call.
 
 > **Mirror, then evolve.** The initial `GeminiRunner` can either (a) include
@@ -92,8 +92,8 @@ suspend because it processed the function call.
 
 ### `drain_session` is the composition point
 
-A new function encapsulates the bees-side event loop — the duplicated pattern
-in both `run_session()` and `resume_session()`:
+A new function encapsulates the bees-side event loop — the duplicated pattern in
+both `run_session()` and `resume_session()`:
 
 ```
 subscribe → create collector → drain events → write logs → build SessionResult
@@ -123,23 +123,24 @@ observe, persist.
 Currently `Bees.__init__`, `Scheduler.__init__`, and `TaskRunner.__init__` all
 accept/pass `backend: HttpBackendClient`. After migration, they accept
 `runner: SessionRunner`. The `HttpBackendClient` lives entirely inside
-`bees-gemini`, constructed by the application layer (`box.py` or the web app).
+`gemini-runners`, constructed by the application layer (`box.py` or the web
+app).
 
 ### `drain_session` lives in `session.py`
 
 `session.py` already holds `EvalCollector`, `_print_event_summary`, and
-`_write_eval_log` — all observation concerns. `drain_session` composes them. After
-migration, `run_session()` and `resume_session()` are removed and `session.py`
-becomes purely the observation module.
+`_write_eval_log` — all observation concerns. `drain_session` composes them.
+After migration, `run_session()` and `resume_session()` are removed and
+`session.py` becomes purely the observation module.
 
 ## Protocol Inventory
 
-| Type / Function         | Status             | Category |
-| ----------------------- | ------------------ | -------- |
-| `SessionRunner`         | ✅ Spec'd + Tested | Specify  |
-| `drain_session`         | ✅ Implemented     | Specify  |
-| `save_resume_state`     | ✅ Implemented     | Specify  |
-| `load_resume_state`     | ✅ Implemented     | Specify  |
+| Type / Function     | Status             | Category |
+| ------------------- | ------------------ | -------- |
+| `SessionRunner`     | ✅ Spec'd + Tested | Specify  |
+| `drain_session`     | ✅ Implemented     | Specify  |
+| `save_resume_state` | ✅ Implemented     | Specify  |
+| `load_resume_state` | ✅ Implemented     | Specify  |
 
 ## Protocol Shapes
 
@@ -229,10 +230,10 @@ def load_resume_state(ticket_dir: Path) -> bytes | None:
     ...
 ```
 
-These replace the existing `save_session_state` / `load_session_state` pair.
-The API changes from structured `dict` to opaque `bytes`, but the file
-remains `session_state.json` — no filename change, no backward compatibility
-concern.  `clear_session_state` becomes `clear_resume_state` for symmetry.
+These replace the existing `save_session_state` / `load_session_state` pair. The
+API changes from structured `dict` to opaque `bytes`, but the file remains
+`session_state.json` — no filename change, no backward compatibility concern.
+`clear_session_state` becomes `clear_resume_state` for symmetry.
 
 ## Migration Notes
 
@@ -247,9 +248,8 @@ concern.  `clear_session_state` becomes `clear_resume_state` for symmetry.
 
 ### Next spec (Phase 2: Migrate)
 
-1. Create `GeminiRunner` in `bees-gemini` wrapping opal's session API.
-2. Restructure `task_runner.py` to use
-   `runner.run(config)` + `drain_session()`.
+1. Create `GeminiRunner` in `gemini-runners` wrapping opal's session API.
+2. Restructure `task_runner.py` to use `runner.run(config)` + `drain_session()`.
 3. Change `Scheduler.__init__` / `Bees.__init__` to accept `SessionRunner`
    instead of `HttpBackendClient`.
 4. Change `box.py` to construct `GeminiRunner` and pass to `Bees`.
@@ -264,16 +264,16 @@ state to annotate suspend events with the triggering function's name. With
 opaque resume state, this information must come from elsewhere.
 
 **Resolution (deferred to Phase 2):** The `GeminiRunner` includes
-`function_name` in suspend event dicts before yielding them.  This is a
-one-line enrichment inside the runner, and it keeps resume state truly opaque.
+`function_name` in suspend event dicts before yielding them. This is a one-line
+enrichment inside the runner, and it keeps resume state truly opaque.
 
 ### Friction: `_save_session_state` extracts interaction_id from suspend events
 
 The current `_save_session_state` (lines 759–802) does complex extraction:
 finding `interaction_id` from the suspend event, falling back to the session
-store, then loading the InteractionState.  With the runner protocol, all of
-this is replaced by `stream.resume_state()` — the runner knows its own
-resumption needs.
+store, then loading the InteractionState. With the runner protocol, all of this
+is replaced by `stream.resume_state()` — the runner knows its own resumption
+needs.
 
 ### Friction: `box.py` imports `app.auth` and `app.config`
 
@@ -293,11 +293,11 @@ credentials and passes it to `Bees`.
    expected `turns`, `thoughts`, `outcome`, etc.
 
 3. **`drain_session` with suspend**: mock stream yields a `waitForInput` event
-   then exhausts.  Verify `result.suspended` is `True` and
-   `result.suspend_event` contains the event.
+   then exhausts. Verify `result.suspended` is `True` and `result.suspend_event`
+   contains the event.
 
-4. **`drain_session` with pause**: mock stream yields a `paused` event.
-   Verify `result.paused` is `True` and `result.error` is set.
+4. **`drain_session` with pause**: mock stream yields a `paused` event. Verify
+   `result.paused` is `True` and `result.error` is set.
 
 5. **Resume state round-trip**: `save_resume_state` / `load_resume_state`
    correctly persist and recover arbitrary bytes.

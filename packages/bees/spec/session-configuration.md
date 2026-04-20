@@ -2,9 +2,9 @@
 
 **Goal**: Extract the provisioning logic from `session.py` — the code that
 assembles everything a session needs from a task — into a named concept
-(`SessionConfiguration`) and a standalone function, so that `session.py`
-becomes purely session execution and the `SessionRunner` protocol has a
-well-defined input type.
+(`SessionConfiguration`) and a standalone function, so that `session.py` becomes
+purely session execution and the `SessionRunner` protocol has a well-defined
+input type.
 
 ## Context
 
@@ -18,7 +18,7 @@ conflate two concerns:
    `start_session`), draining the event queue. This is the runner.
 
 The provisioning logic stays in bees permanently. The execution logic moves to
-`bees-gemini`. This spec extracts concern #1 into a named type and function,
+`gemini-runners`. This spec extracts concern #1 into a named type and function,
 creating the clean cut line for the `SessionRunner` protocol.
 
 ### What provisioning does today
@@ -47,22 +47,22 @@ boundary here; there's one way to provision a session. Contrast with
 
 ### Function groups are `FunctionGroupFactory` instances
 
-The runner receives factories, not assembled groups. Assembly happens inside
-the runner because `opal_backend`'s `new_session` expects factories. This
-matches the current call signature and avoids premature assembly.
+The runner receives factories, not assembled groups. Assembly happens inside the
+runner because `opal_backend`'s `new_session` expects factories. This matches
+the current call signature and avoids premature assembly.
 
 ### The provisioning function takes a `Ticket`, not raw parameters
 
 Today `run_session` takes ~15 keyword arguments threaded from `task_runner.py`.
-Most of these are derived from the ticket. The provisioning function should
-take the `Ticket` (plus a few infrastructure dependencies) and produce the
+Most of these are derived from the ticket. The provisioning function should take
+the `Ticket` (plus a few infrastructure dependencies) and produce the
 configuration. This eliminates the parameter-threading.
 
 ### Event observation stays outside the runner
 
 The `EvalCollector` and `_print_event_summary` — event observation logic — are
-bees framework concerns. They consume the event stream that the runner
-produces. In the async iterator model, bees drives the event loop:
+bees framework concerns. They consume the event stream that the runner produces.
+In the async iterator model, bees drives the event loop:
 
 ```python
 async for event in stream:
@@ -78,8 +78,8 @@ reusable across any runner.
 ### `SessionStream` is the runner's return type
 
 The runner returns a `SessionStream` — an async iterable of events with
-back-channel methods for tool responses and context injection. This
-accommodates both batch and Live runners:
+back-channel methods for tool responses and context injection. This accommodates
+both batch and Live runners:
 
 - **Batch runner**: yields observation events (thought, functionCall,
   usageMetadata, complete). Tool dispatch is internal; `send_tool_response` is
@@ -100,18 +100,18 @@ runner doesn't need to know about it.
 
 > **Open question**: Should the runner signal completion with a final event
 > (e.g. `{"complete": {...}}`), or should it just stop yielding? The current
-> batch model uses a sentinel `None` on the queue. For the async iterator
-> model, `StopAsyncIteration` (normal iterator exhaustion) is the natural
-> signal. The runner raises it when the session ends; bees sees the `async for`
-> loop exit and constructs `SessionResult` from the collector.
+> batch model uses a sentinel `None` on the queue. For the async iterator model,
+> `StopAsyncIteration` (normal iterator exhaustion) is the natural signal. The
+> runner raises it when the session ends; bees sees the `async for` loop exit
+> and constructs `SessionResult` from the collector.
 
 ### Resume is a separate runner method, not a separate provisioning path
 
 Resume needs the same `SessionConfiguration` (function groups, file system,
 skills — unchanged between runs) plus two additional inputs:
 
-1. **Resume state** — the opaque blob from `stream.resume_state()`, persisted
-   by bees between runs. The runner deserializes its own state.
+1. **Resume state** — the opaque blob from `stream.resume_state()`, persisted by
+   bees between runs. The runner deserializes its own state.
 2. **User response** — the `response.json` content (text, context updates).
 
 The runner has two entry points:
@@ -125,26 +125,26 @@ class SessionRunner(Protocol):
     ) -> SessionStream: ...
 ```
 
-Both return a `SessionStream` (one run). The provisioning function produces
-the same `SessionConfiguration` for both — the only difference is which
-runner method is called.
+Both return a `SessionStream` (one run). The provisioning function produces the
+same `SessionConfiguration` for both — the only difference is which runner
+method is called.
 
 This means `task_runner.py` no longer imports `InteractionState` or calls
 `_save_session_state` with opal internals. It stores/retrieves an opaque blob.
-The batch runner (`bees-gemini`) internalizes opal serialization; a future
+The batch runner (`gemini-runners`) internalizes opal serialization; a future
 Live runner internalizes token-based resumption.
 
-**The full `SessionRunner` protocol is deferred to its own spec**, which
-builds on the types defined here.
+**The full `SessionRunner` protocol is deferred to its own spec**, which builds
+on the types defined here.
 
 ## Protocol Inventory
 
-| Type / Function             | Status    | Category     |
-| --------------------------- | --------- | ------------ |
-| `SessionConfiguration`      | ✅ Spec'd + Tested | Specify      |
-| `SessionStream`             | ✅ Spec'd + Tested | Specify      |
-| `SessionEvent`              | ✅ Spec'd + Tested | Specify      |
-| `provision_session`          | ✅ Implemented    | Migrate      |
+| Type / Function        | Status             | Category |
+| ---------------------- | ------------------ | -------- |
+| `SessionConfiguration` | ✅ Spec'd + Tested | Specify  |
+| `SessionStream`        | ✅ Spec'd + Tested | Specify  |
+| `SessionEvent`         | ✅ Spec'd + Tested | Specify  |
+| `provision_session`    | ✅ Implemented     | Migrate  |
 
 ## Protocol Shapes
 
@@ -185,17 +185,17 @@ class SessionConfiguration:
     """Optional callback for chat log entries."""
 ```
 
-> **Future concern: Observation.** `label`, `log_path`, and `on_chat_entry`
-> feel like observation concerns rather than runner inputs. A future spec may
-> extract an `ObservationConfig` that bees wires into its event-draining loop
-> separately from the runner's configuration. For now they stay here because
-> provisioning currently assembles them.
+> **Future concern: Observation.** `label`, `log_path`, and `on_chat_entry` feel
+> like observation concerns rather than runner inputs. A future spec may extract
+> an `ObservationConfig` that bees wires into its event-draining loop separately
+> from the runner's configuration. For now they stay here because provisioning
+> currently assembles them.
 
 ### `SessionStream`
 
-A `SessionStream` represents **one run** — a sequence of turns that starts
-fresh or resumes and ends when the model terminates, suspends, or pauses.
-Using the terminology from [architecture.md](../docs/architecture.md):
+A `SessionStream` represents **one run** — a sequence of turns that starts fresh
+or resumes and ends when the model terminates, suspends, or pauses. Using the
+terminology from [architecture.md](../docs/architecture.md):
 
 - A **turn** is a single LLM call with response.
 - A **run** is a sequence of turns. Ends on termination, suspension, or pause.
@@ -261,9 +261,9 @@ class SessionStream(Protocol):
 SessionEvent = dict[str, Any]
 ```
 
-A session event is a dict with a single key naming the event type. This
-mirrors the current event format used by `EvalCollector` and throughout the
-codebase. Event types include:
+A session event is a dict with a single key naming the event type. This mirrors
+the current event format used by `EvalCollector` and throughout the codebase.
+Event types include:
 
 - `sendRequest` — turn boundary (new model request)
 - `thought` — model thinking
@@ -302,10 +302,10 @@ async def provision_session(
 
 ### Target files
 
-- `bees/protocols/session.py` — add `SessionConfiguration`,
-  `SessionStream`, `SessionEvent` type alias.
-- `bees/provisioner.py` — new module, `provision_session` function
-  extracted from `run_session()`'s provisioning steps.
+- `bees/protocols/session.py` — add `SessionConfiguration`, `SessionStream`,
+  `SessionEvent` type alias.
+- `bees/provisioner.py` — new module, `provision_session` function extracted
+  from `run_session()`'s provisioning steps.
 
 ### What this enables
 
@@ -361,8 +361,8 @@ All dependencies are already extracted. This spec is a leaf.
 
 ### Relationship to `SessionRunner`
 
-This spec defines the runner's **input** (`SessionConfiguration`) and
-**output shape** (`SessionStream`). The `SessionRunner` protocol itself — the
+This spec defines the runner's **input** (`SessionConfiguration`) and **output
+shape** (`SessionStream`). The `SessionRunner` protocol itself — the
 `run(config) -> SessionStream` contract — is a follow-up spec that builds on
 these types. It also addresses resume configuration and how the runner is
 injected into `Scheduler` / `TaskRunner`.

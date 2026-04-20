@@ -79,7 +79,7 @@ class FileData:
 
 # Transitional coupling: the session loop (still in opal_backend) checks
 # isinstance(result, AgentResult) using opal's class. Until the loop moves
-# to bees-gemini, bees' AgentResult must pass that check. Inheriting from
+# to gemini-runners, bees' AgentResult must pass that check. Inheriting from
 # the opal class makes isinstance() work across the boundary.
 # This import is removed when the session loop migrates.
 from opal_backend.events import AgentResult as _OpalAgentResult
@@ -91,7 +91,7 @@ class AgentResult(_OpalAgentResult):
 
     Subclasses ``opal_backend.events.AgentResult`` so the session loop
     (which still lives in opal_backend) recognizes it via isinstance().
-    When the loop migrates to bees-gemini, this becomes standalone.
+    When the loop migrates to gemini-runners, this becomes standalone.
     """
 
     success: bool
@@ -207,7 +207,7 @@ class WaitForChoiceEvent:
 
 # Union of suspend event types that bees handlers construct.
 # Narrower than opal's SuspendEvent — graph-editing events belong in
-# bees-gemini.
+# gemini-runners.
 SuspendEvent = Union[WaitForInputEvent, WaitForChoiceEvent]
 
 
@@ -216,7 +216,7 @@ SuspendEvent = Union[WaitForInputEvent, WaitForChoiceEvent]
 # ---------------------------------------------------------------------------
 
 # Transitional coupling: the session loop (still in opal_backend) catches
-# opal_backend.suspend.SuspendError. Until the loop moves to bees-gemini,
+# opal_backend.suspend.SuspendError. Until the loop moves to gemini-runners,
 # bees' SuspendError must be catchable by those except clauses. Inheriting
 # from the opal class makes isinstance() and except work across the boundary.
 # This import is removed when the session loop migrates.
@@ -228,7 +228,7 @@ class SuspendError(_OpalSuspendError):
 
     Subclasses ``opal_backend.suspend.SuspendError`` so the session loop
     (which still lives in opal_backend) catches it. When the loop migrates
-    to bees-gemini, this becomes a standalone Exception subclass.
+    to gemini-runners, this becomes a standalone Exception subclass.
 
     Args:
         event: The typed suspend event to send to the client.

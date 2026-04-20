@@ -8,11 +8,11 @@ injection — so that handler bodies can eventually be inlined without any
 ## Context
 
 Three bees function modules (`chat.py`, `simple_files.py`, `system.py`) delegate
-to `opal_backend`'s `_make_handlers`. Those handler factories use internal types:
-`SuspendError`, suspend event dataclasses, `AgentResult`, `LoopController`,
-`CONTEXT_PARTS_KEY`, and `ChatEntryCallback`.
+to `opal_backend`'s `_make_handlers`. Those handler factories use internal
+types: `SuspendError`, suspend event dataclasses, `AgentResult`,
+`LoopController`, `CONTEXT_PARTS_KEY`, and `ChatEntryCallback`.
 
-Before the handler *bodies* can be inlined into bees (eliminating the
+Before the handler _bodies_ can be inlined into bees (eliminating the
 `_make_handlers` imports), bees needs its own copies of these types. This spec
 extracts the types as an independent step. The handler inlining is a separate,
 later spec that builds on this one.
@@ -62,18 +62,18 @@ clarity.
 
 ## Protocol Inventory
 
-| Type / Constant       | Replaces                                     | Specified | Tested | Migrated |
-| --------------------- | -------------------------------------------- | --------- | ------ | -------- |
-| `SuspendError`        | `opal_backend.suspend.SuspendError`          | ✅        | ✅     | ✅       |
-| `WaitForInputEvent`   | `opal_backend.events.WaitForInputEvent`      | ✅        | ✅     | ✅       |
-| `WaitForChoiceEvent`  | `opal_backend.events.WaitForChoiceEvent`     | ✅        | ✅     | ✅       |
-| `ChoiceItem`          | `opal_backend.events.ChoiceItem`             | ✅        | ✅     | ✅       |
-| `AgentResult`         | `opal_backend.events.AgentResult`            | ✅        | ✅     | ✅       |
-| `FileData`            | `opal_backend.events.FileData`               | ✅        | ✅     | ✅       |
-| `SessionTerminator`   | `opal_backend.loop.LoopController`           | ✅        | ✅     | ✅       |
-| `CONTEXT_PARTS_KEY`   | `opal_backend.function_caller.CONTEXT_PARTS_KEY` | ✅    | ✅     | ✅       |
-| `ChatEntryCallback`   | `opal_backend.functions.chat.ChatEntryCallback`  | ✅    | ✅     | ✅       |
-| `LLMContent`          | `opal_backend.events.LLMContent`             | ✅        | ✅     | ✅       |
+| Type / Constant      | Replaces                                         | Specified | Tested | Migrated |
+| -------------------- | ------------------------------------------------ | --------- | ------ | -------- |
+| `SuspendError`       | `opal_backend.suspend.SuspendError`              | ✅        | ✅     | ✅       |
+| `WaitForInputEvent`  | `opal_backend.events.WaitForInputEvent`          | ✅        | ✅     | ✅       |
+| `WaitForChoiceEvent` | `opal_backend.events.WaitForChoiceEvent`         | ✅        | ✅     | ✅       |
+| `ChoiceItem`         | `opal_backend.events.ChoiceItem`                 | ✅        | ✅     | ✅       |
+| `AgentResult`        | `opal_backend.events.AgentResult`                | ✅        | ✅     | ✅       |
+| `FileData`           | `opal_backend.events.FileData`                   | ✅        | ✅     | ✅       |
+| `SessionTerminator`  | `opal_backend.loop.LoopController`               | ✅        | ✅     | ✅       |
+| `CONTEXT_PARTS_KEY`  | `opal_backend.function_caller.CONTEXT_PARTS_KEY` | ✅        | ✅     | ✅       |
+| `ChatEntryCallback`  | `opal_backend.functions.chat.ChatEntryCallback`  | ✅        | ✅     | ✅       |
+| `LLMContent`         | `opal_backend.events.LLMContent`                 | ✅        | ✅     | ✅       |
 
 ## Protocol Shapes
 
@@ -187,9 +187,9 @@ SuspendEvent = WaitForInputEvent | WaitForChoiceEvent
 ```
 
 Note: `SuspendEvent` in bees is narrower than opal's — only the two types that
-bees handlers actually construct. The graph-editing events
-(`ReadGraphEvent`, `InspectNodeEvent`, etc.) are session-level concerns that
-belong in `bees-gemini`.
+bees handlers actually construct. The graph-editing events (`ReadGraphEvent`,
+`InspectNodeEvent`, etc.) are session-level concerns that belong in
+`gemini-runners`.
 
 ## Migration Notes
 
@@ -222,8 +222,8 @@ And then inline the handler bodies using these types + bees-native pidgin.
 ### This spec does not change `_make_handlers` imports
 
 It migrates the type imports (`SuspendError`, `ChatEntryCallback`,
-`CONTEXT_PARTS_KEY`) to bees-native sources. The `_make_handlers` imports
-remain — they're the handler bodies spec.
+`CONTEXT_PARTS_KEY`) to bees-native sources. The `_make_handlers` imports remain
+— they're the handler bodies spec.
 
 ### Migrated files
 
@@ -238,10 +238,10 @@ the handler bodies spec will use them when inlining `_make_handlers`.
 
 ### Conformance testing strategy
 
-1. **Structural conformance**: verify bees' dataclasses have the same fields
-   and defaults as opal's.
-2. **`to_dict()` conformance**: verify identical wire serialization for the
-   same field values.
+1. **Structural conformance**: verify bees' dataclasses have the same fields and
+   defaults as opal's.
+2. **`to_dict()` conformance**: verify identical wire serialization for the same
+   field values.
 3. **`SuspendError` behavior**: verify same exception properties and
    `interaction_id` assignment.
 4. **`SessionTerminator` protocol**: verify `LoopController` satisfies it
