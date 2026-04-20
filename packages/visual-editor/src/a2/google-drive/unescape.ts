@@ -12,6 +12,11 @@ const namedEntities: Record<string, string> = {
   // add more as needed
 };
 
+/**
+ * WARNING: This function decodes HTML entities including `<`, `>`, and `&`.
+ * The output must NEVER be inserted into the DOM via innerHTML without
+ * sanitization. Use textContent or a sanitization library like DOMPurify.
+ */
 function unescape(html: string): string {
   return html.replace(unescapeTest, (_, n) => {
     n = n.toLowerCase();

@@ -17,8 +17,8 @@ export function makeShareLinkFromTemplate({
 }: MakeShareLinkFromTemplate): string {
   const url = new URL(
     urlTemplate
-      .replaceAll("{fileId}", fileId)
-      .replaceAll("{resourceKey}", resourceKey ?? "")
+      .replaceAll("{fileId}", encodeURIComponent(fileId))
+      .replaceAll("{resourceKey}", resourceKey ? encodeURIComponent(resourceKey) : "")
   );
   // Remove any empty parameters. A slightly hacky way to clean up resourceKey
   // parameters when there is no resourceKey.
