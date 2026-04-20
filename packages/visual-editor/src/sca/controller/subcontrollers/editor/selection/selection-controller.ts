@@ -102,6 +102,16 @@ export class SelectionController extends RootController {
     }
   }
 
+  /**
+   * Clear the current selection and select the given assets.
+   */
+  selectAssets(ids: AssetIdentifier[]) {
+    this.deselectAll();
+    for (const id of ids) {
+      this.addAsset(id);
+    }
+  }
+
   addEdge(id: EdgeIdentifier) {
     this._selectionId++;
     this._selection.edges.add(id);
