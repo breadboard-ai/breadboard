@@ -13,7 +13,7 @@ async iterator over the session's event queue with back-channel methods
 for context injection and resume state capture.
 
 This module lives temporarily in ``bees/runners/`` during the migration.
-Phase 5 (``bees-gemini-package``) moves it to the ``bees-gemini`` package.
+Phase 5 (``gemini-runners-package``) moves it to the ``gemini-runners`` package.
 """
 
 from __future__ import annotations

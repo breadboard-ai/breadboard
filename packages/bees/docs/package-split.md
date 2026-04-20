@@ -14,7 +14,7 @@ the two together.
 ```
 opal_backend (standalone, owns Gemini session runtime)
          ↑
-bees-gemini (depends on bees + opal_backend)
+gemini-runners (depends on bees + opal_backend)
   ├── runners/streaming.py  (wraps opal_backend Loop)
   ├── runners/live.py       (Gemini Live API, future)
   └── adapter.py            (bridges bees ↔ opal_backend FunctionGroup)
@@ -29,12 +29,12 @@ bees (zero external deps)
 
 Four packages, four responsibilities:
 
-| Package           | What it is                        | External deps                       |
-| ----------------- | --------------------------------- | ----------------------------------- |
-| **`bees`**        | Orchestration library + functions | None (stdlib only)                  |
-| **`bees-gemini`** | Gemini model provider             | `google-genai`, `httpx`             |
-| **`box`**         | Filesystem-driven CLI runner      | `bees`, `bees-gemini`, `watchfiles` |
-| **`app`**         | Reference web application         | `bees`, `bees-gemini`, `fastapi`    |
+| Package              | What it is                        | External deps                          |
+| -------------------- | --------------------------------- | -------------------------------------- |
+| **`bees`**           | Orchestration library + functions | None (stdlib only)                     |
+| **`gemini-runners`** | Gemini model provider             | `google-genai`, `httpx`                |
+| **`box`**            | Filesystem-driven CLI runner      | `bees`, `gemini-runners`, `watchfiles` |
+| **`app`**            | Reference web application         | `bees`, `gemini-runners`, `fastapi`    |
 
 ## What each package owns
 
@@ -62,13 +62,13 @@ session and report back."
 **Dependencies**: None beyond stdlib. Pure `pathlib`, `json`, `asyncio`,
 `dataclasses`. This is what makes `pip install bees` lightweight and safe.
 
-### `bees-gemini` — the model provider
+### `gemini-runners` — the model provider
 
 **Owns**: The Gemini-specific session runners. Wraps `opal_backend`'s session
 runtime behind bees' `SessionRunner` protocol.
 
 ```
-bees-gemini/
+gemini-runners/
   runners/
     streaming.py     # Wraps opal_backend Loop + GenerateContent
     live.py          # Gemini Live API WebSocket (future)
@@ -97,7 +97,7 @@ bees = Bees(hive_dir, runner=runner)
 (Loop, streaming, GenerateContent, interaction stores). It's used in production
 by an older version of the system and has consumers outside the bees ecosystem.
 
-`bees-gemini` depends on `opal_backend` for its `StreamingRunner`
+`gemini-runners` depends on `opal_backend` for its `StreamingRunner`
 implementation. `bees` itself never imports from `opal_backend` — the runner
 package is the only bridge.
 
@@ -106,7 +106,7 @@ package is the only bridge.
 **Owns**: The filesystem-driven development mode. Watches the hive directory,
 manages the box-active sentinel, classifies changes, handles the restart loop.
 
-**Is**: A thin shell that wires `bees` + `bees-gemini` + config together:
+**Is**: A thin shell that wires `bees` + `gemini-runners` + config together:
 
 ```python
 runner = StreamingRunner(api_key=load_gemini_key(), ...)
@@ -150,7 +150,7 @@ class SessionRunner(Protocol):
     ) -> SessionResult: ...
 ```
 
-`bees` defines this protocol. `bees-gemini` implements it. `box` and `app`
+`bees` defines this protocol. `gemini-runners` implements it. `box` and `app`
 instantiate the implementation and hand it to `Bees`.
 
 ## The function protocol bridge
@@ -174,7 +174,7 @@ class FunctionHooks(Protocol): ...
 Since these protocols match `opal_backend`'s existing types in shape, Python's
 structural subtyping means `opal_backend`'s `FunctionGroup` satisfies bees'
 `FunctionGroup` protocol _without any changes to `opal_backend`_. The adapter in
-`bees-gemini` doesn't need translation logic — it just passes through.
+`gemini-runners` doesn't need translation logic — it just passes through.
 
 This also opens a future path: if `opal_backend` eventually wants to drop its
 own types and implement bees' protocols directly, that's a non-breaking change.
@@ -189,13 +189,13 @@ runner's side.
 
 ## What moves where
 
-### Out of `bees/` → into `bees-gemini`
+### Out of `bees/` → into `gemini-runners`
 
-| Current location           | New home                           | Why                         |
-| -------------------------- | ---------------------------------- | --------------------------- |
-| `bees/session.py`          | `bees-gemini/runners/streaming.py` | Model connection, streaming |
-| `bees/disk_file_system.py` | `bees-gemini/` or `bees/`          | Depends on design of VFS    |
-| `opal_backend` imports     | `bees-gemini/` only                | Provider-specific types     |
+| Current location           | New home                              | Why                         |
+| -------------------------- | ------------------------------------- | --------------------------- |
+| `bees/session.py`          | `gemini-runners/runners/streaming.py` | Model connection, streaming |
+| `bees/disk_file_system.py` | `gemini-runners/` or `bees/`          | Depends on design of VFS    |
+| `opal_backend` imports     | `gemini-runners/` only                | Provider-specific types     |
 
 ### Out of `bees/` → into `box`
 
@@ -257,7 +257,7 @@ no network stubs, no API keys in CI.
 
 Tracing the actual `opal_backend` imports in `bees/` reveals three categories:
 
-### Clean today (moves to `bees-gemini` wholesale)
+### Clean today (moves to `gemini-runners` wholesale)
 
 `session.py` (940 lines) is where bees and `opal_backend` are deeply entangled.
 It imports `new_session`, `start_session`, `resume_session`, `Subscribers`,
@@ -313,19 +313,19 @@ with conformance tests, then migrate imports.
 
 ### Protocol inventory
 
-| Protocol          | Replaces                            | Specified | Tested | Migrated |
-| ----------------- | ----------------------------------- | --------- | ------ | -------- |
-| `FunctionGroup`   | `opal_backend.FunctionGroup`        | ✅        | ✅     | ✅       |
-| `FunctionFactory` | `opal_backend.FunctionGroupFactory` | ✅        | ✅     | ✅       |
-| `FunctionHooks`   | `opal_backend.SessionHooks`         | ✅        | ✅     | ✅       |
-| `FileSystem`      | `opal_backend.FileSystemProtocol`   | ✅        | ✅     | ✅       |
-| `SuspendError`    | `opal_backend.suspend.SuspendError` | ✅        | ✅     | ✅       |
-| `AgentResult`     | `opal_backend.events.AgentResult`   | ✅        | ✅     | ✅       |
-| `SessionTerminator` | `opal_backend.loop.LoopController`| ✅        | ✅     | ✅       |
-| `SUSPEND_TYPES`   | `opal_backend.events.SUSPEND_TYPES` | ✅        | ✅     | ✅       |
-| `PAUSE_TYPES`     | `opal_backend.events.PAUSE_TYPES`   | ✅        | ✅     | ✅       |
-| `SessionResult`   | (relocation to protocols)           | ✅        | ✅     | ✅       |
-| `SessionRunner`   | Implicit contract in `session.py`   | Pending   | —      | —        |
+| Protocol            | Replaces                            | Specified | Tested | Migrated |
+| ------------------- | ----------------------------------- | --------- | ------ | -------- |
+| `FunctionGroup`     | `opal_backend.FunctionGroup`        | ✅        | ✅     | ✅       |
+| `FunctionFactory`   | `opal_backend.FunctionGroupFactory` | ✅        | ✅     | ✅       |
+| `FunctionHooks`     | `opal_backend.SessionHooks`         | ✅        | ✅     | ✅       |
+| `FileSystem`        | `opal_backend.FileSystemProtocol`   | ✅        | ✅     | ✅       |
+| `SuspendError`      | `opal_backend.suspend.SuspendError` | ✅        | ✅     | ✅       |
+| `AgentResult`       | `opal_backend.events.AgentResult`   | ✅        | ✅     | ✅       |
+| `SessionTerminator` | `opal_backend.loop.LoopController`  | ✅        | ✅     | ✅       |
+| `SUSPEND_TYPES`     | `opal_backend.events.SUSPEND_TYPES` | ✅        | ✅     | ✅       |
+| `PAUSE_TYPES`       | `opal_backend.events.PAUSE_TYPES`   | ✅        | ✅     | ✅       |
+| `SessionResult`     | (relocation to protocols)           | ✅        | ✅     | ✅       |
+| `SessionRunner`     | Implicit contract in `session.py`   | Pending   | —      | —        |
 
 See [spec/function-types.md](../spec/function-types.md) for the function types
 spec, [spec/filesystem.md](../spec/filesystem.md) for the filesystem types spec,
@@ -339,7 +339,7 @@ session observation types spec and conformance tests.
    shapes).
 2. Define `SessionRunner` protocol.
 3. Migrate `bees/functions/` to import from `bees/protocols.py`.
-4. Create `bees-gemini` with `StreamingRunner` (wraps `session.py` +
+4. Create `gemini-runners` with `StreamingRunner` (wraps `session.py` +
    `opal_backend`).
 5. Move `box.py` into its own package.
 6. Remove `opal_backend` imports from `bees/`.

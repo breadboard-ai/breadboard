@@ -11,8 +11,8 @@ observation side of the session boundary is cleanly bees-native before the
 `session.py` currently conflates session execution (calling `opal_backend`'s
 session API) with session observation (interpreting events, producing results).
 When the `SessionRunner` protocol is defined, `session.py`'s execution code
-moves to `bees-gemini`. The observation types stay in bees — they're the output
-contract that any runner must satisfy.
+moves to `gemini-runners`. The observation types stay in bees — they're the
+output contract that any runner must satisfy.
 
 Three items cross this boundary today:
 
@@ -32,8 +32,8 @@ All three are leaves: zero dependencies on other unextracted types.
 
 ### Verbatim copies of the constants
 
-`SUSPEND_TYPES` and `PAUSE_TYPES` are `frozenset[str]` — event type strings
-that match dict keys in the event stream. The bees copies are identical values.
+`SUSPEND_TYPES` and `PAUSE_TYPES` are `frozenset[str]` — event type strings that
+match dict keys in the event stream. The bees copies are identical values.
 Conformance test verifies they match the opal originals.
 
 ### `SessionResult` stays a concrete dataclass
@@ -46,11 +46,11 @@ a relocation to the protocols module so that consumers (`task_runner.py`,
 ### Event constants are the shared vocabulary
 
 The event stream is a sequence of `dict[str, Any]` where each dict has a single
-key naming the event type (e.g. `{"waitForInput": {...}}`, `{"complete": {...}}`).
-`SUSPEND_TYPES` and `PAUSE_TYPES` define which keys signal suspension and pause
-respectively. This vocabulary is shared between the runner (which produces
-events) and the orchestrator (which categorizes them). Making it bees-native
-establishes it as part of the framework contract.
+key naming the event type (e.g. `{"waitForInput": {...}}`,
+`{"complete": {...}}`). `SUSPEND_TYPES` and `PAUSE_TYPES` define which keys
+signal suspension and pause respectively. This vocabulary is shared between the
+runner (which produces events) and the orchestrator (which categorizes them).
+Making it bees-native establishes it as part of the framework contract.
 
 ### No changes to `EvalCollector` in this spec
 
@@ -61,11 +61,11 @@ depends on.
 
 ## Protocol Inventory
 
-| Type / Constant  | Replaces                          | Specified | Tested  | Migrated |
-| ---------------- | --------------------------------- | --------- | ------- | -------- |
-| `SUSPEND_TYPES`  | `opal_backend.events.SUSPEND_TYPES` | ✅      | ✅      | ✅       |
-| `PAUSE_TYPES`    | `opal_backend.events.PAUSE_TYPES`   | ✅      | ✅      | ✅       |
-| `SessionResult`  | (already bees-native, relocation)   | ✅      | ✅      | ✅       |
+| Type / Constant | Replaces                            | Specified | Tested | Migrated |
+| --------------- | ----------------------------------- | --------- | ------ | -------- |
+| `SUSPEND_TYPES` | `opal_backend.events.SUSPEND_TYPES` | ✅        | ✅     | ✅       |
+| `PAUSE_TYPES`   | `opal_backend.events.PAUSE_TYPES`   | ✅        | ✅     | ✅       |
+| `SessionResult` | (already bees-native, relocation)   | ✅        | ✅     | ✅       |
 
 ## Protocol Shapes
 
@@ -82,9 +82,9 @@ SUSPEND_TYPES: frozenset[str] = frozenset({
 })
 ```
 
-All six suspend event type strings from
-`opal_backend.events`. The orchestrator uses these to detect when a session has
-suspended (the event stream contains a dict with one of these keys).
+All six suspend event type strings from `opal_backend.events`. The orchestrator
+uses these to detect when a session has suspended (the event stream contains a
+dict with one of these keys).
 
 ### `PAUSE_TYPES`
 

@@ -8,11 +8,11 @@ code, nothing else changes.
 
 The `SessionRunner` protocol and supporting types (`SessionStream`,
 `SessionConfiguration`, `drain_session`) are specified and tested. What's
-missing is the concrete implementation — the adapter between bees' protocol
-and opal's session API (`new_session`, `start_session`, `resume_session`).
+missing is the concrete implementation — the adapter between bees' protocol and
+opal's session API (`new_session`, `start_session`, `resume_session`).
 
-Today, `session.py`'s `run_session()` and `resume_session()` inline this
-logic directly. Phase 1 extracts it into a standalone class that satisfies the
+Today, `session.py`'s `run_session()` and `resume_session()` inline this logic
+directly. Phase 1 extracts it into a standalone class that satisfies the
 `SessionRunner` protocol, without touching the existing call sites.
 
 ### What `run_session()` does (the pattern to wrap)
@@ -68,21 +68,22 @@ Opal's event delivery is queue-based: `Subscribers.subscribe()` returns an
 back-channel methods).
 
 The stream handles:
+
 - `__aiter__` / `__anext__`: drain the queue, raise `StopAsyncIteration` on
   `None`.
-- `send_context(parts)`: push to the internal context queue (same queue
-  passed to `new_session`).
+- `send_context(parts)`: push to the internal context queue (same queue passed
+  to `new_session`).
 - `send_tool_response(responses)`: no-op for the batch API (opal dispatches
   tools internally). Satisfies the protocol signature.
 - `resume_state()`: returns the opaque blob captured when the stream exhausts.
 
 ### Resume state capture happens eagerly
 
-`resume_state()` is sync (per the `SessionStream` protocol). The state
-capture (reading from opal's interaction store) is async. So the stream
-captures the state eagerly inside `__anext__` when it receives the `None`
-sentinel, before raising `StopAsyncIteration`. The sync `resume_state()` then
-returns the pre-captured blob.
+`resume_state()` is sync (per the `SessionStream` protocol). The state capture
+(reading from opal's interaction store) is async. So the stream captures the
+state eagerly inside `__anext__` when it receives the `None` sentinel, before
+raising `StopAsyncIteration`. The sync `resume_state()` then returns the
+pre-captured blob.
 
 ### Resume state blob format
 
@@ -107,25 +108,25 @@ the friction noted in the session-runner spec (task_runner currently peeks into
 
 Each `run()` / `resume()` call creates its own `InMemorySessionStore`,
 `InMemoryInteractionStore`, `Subscribers`, and context queue. These are
-short-lived — they exist for the duration of one session run. The runner
-holds only the `HttpBackendClient` (shared across sessions).
+short-lived — they exist for the duration of one session run. The runner holds
+only the `HttpBackendClient` (shared across sessions).
 
 ### Temporary home in `bees/runners/`
 
 The runner lives in `bees/runners/gemini.py` temporarily. It imports from
 `opal_backend` — that's expected, since it IS the opal adapter. Phase 5
-(`bees-gemini-package`) moves it out. For now, having it in `bees/` keeps
+(`gemini-runners-package`) moves it out. For now, having it in `bees/` keeps
 iteration fast and avoids premature packaging.
 
 ### Context queue wiring
 
-Currently, `run_session()` receives `context_queue` as a parameter and passes
-it to `new_session`. Mid-session context injection works by the scheduler
-pushing parts to this queue.
+Currently, `run_session()` receives `context_queue` as a parameter and passes it
+to `new_session`. Mid-session context injection works by the scheduler pushing
+parts to this queue.
 
-In the `GeminiRunner`, the stream creates its own internal context queue,
-passes it to `new_session`, and exposes `send_context()` to push to it. The
-caller (eventually `task_runner`) holds a reference to the stream and calls
+In the `GeminiRunner`, the stream creates its own internal context queue, passes
+it to `new_session`, and exposes `send_context()` to push to it. The caller
+(eventually `task_runner`) holds a reference to the stream and calls
 `stream.send_context()` instead of pushing to an external queue.
 
 This inverts the control: today the queue is created externally and threaded
@@ -133,10 +134,10 @@ through; after migration, the stream owns the queue and exposes a method.
 
 ## Protocol Inventory
 
-| Type / Function  | Status  | Category |
-| ---------------- | ------- | -------- |
-| `GeminiStream`   | Pending | Specify  |
-| `GeminiRunner`   | Pending | Specify  |
+| Type / Function | Status  | Category |
+| --------------- | ------- | -------- |
+| `GeminiStream`  | Pending | Specify  |
+| `GeminiRunner`  | Pending | Specify  |
 
 ## Protocol Shapes
 
@@ -255,27 +256,26 @@ The current `_save_session_state` (session.py lines 884–927) does:
 2. Load `InteractionState` from interaction store
 3. Serialize to JSON and write to disk
 
-Steps 1–2 move into `GeminiStream._capture_resume_state()`. Step 3 (disk
-write) stays in the caller — `save_resume_state()` already exists for that.
-The stream captures but doesn't persist; the caller (eventually task_runner)
-calls `save_resume_state(ticket_dir, stream.resume_state())`.
+Steps 1–2 move into `GeminiStream._capture_resume_state()`. Step 3 (disk write)
+stays in the caller — `save_resume_state()` already exists for that. The stream
+captures but doesn't persist; the caller (eventually task_runner) calls
+`save_resume_state(ticket_dir, stream.resume_state())`.
 
 ### Friction: `context_queue` parameter threading
 
 `run_session()` accepts `context_queue` from the caller and passes it to
-`new_session()`. In the runner model, the stream owns its own context queue.
-The caller uses `stream.send_context()` instead of pushing to an external
-queue. This is a control inversion — the scheduler's `_deliver_context_update`
-must change from `queue.put_nowait(parts)` to
-`stream.send_context(parts)`. That change happens in Phase 2
-(task-runner-rewiring), not here.
+`new_session()`. In the runner model, the stream owns its own context queue. The
+caller uses `stream.send_context()` instead of pushing to an external queue.
+This is a control inversion — the scheduler's `_deliver_context_update` must
+change from `queue.put_nowait(parts)` to `stream.send_context(parts)`. That
+change happens in Phase 2 (task-runner-rewiring), not here.
 
 ### Not in scope
 
 - Rewiring `TaskRunner` to use the runner (Phase 2).
 - Changing `Scheduler` / `Bees` constructors (Phase 3).
 - Removing `run_session` / `resume_session` (Phase 4).
-- Creating `bees-gemini` package (Phase 5).
+- Creating `gemini-runners` package (Phase 5).
 
 ## Conformance Testing Strategy
 
@@ -288,21 +288,21 @@ must change from `queue.put_nowait(parts)` to
    `StopAsyncIteration` is raised.
 
 4. **`GeminiStream.resume_state()` capture**: After stream exhausts, verify
-   `resume_state()` returns the expected blob (requires mocking the opal
-   stores with a pre-saved `InteractionState`).
+   `resume_state()` returns the expected blob (requires mocking the opal stores
+   with a pre-saved `InteractionState`).
 
-5. **`GeminiStream.resume_state()` returns `None` for completed sessions**:
-   When no suspend/pause occurred, `resume_state()` is `None`.
+5. **`GeminiStream.resume_state()` returns `None` for completed sessions**: When
+   no suspend/pause occurred, `resume_state()` is `None`.
 
 6. **`GeminiStream.send_context()`**: Verify parts are pushed to the internal
    queue.
 
 7. **`GeminiRunner.run()` integration**: Mock `HttpBackendClient` and opal
-   session API. Verify `new_session` and `start_session` are called with
-   correct arguments. Verify returned stream is iterable.
+   session API. Verify `new_session` and `start_session` are called with correct
+   arguments. Verify returned stream is iterable.
 
-8. **`GeminiRunner.resume()` integration**: Mock opal API. Verify
-   `new_session`, store setup, and `api_resume_session` are called correctly.
+8. **`GeminiRunner.resume()` integration**: Mock opal API. Verify `new_session`,
+   store setup, and `api_resume_session` are called correctly.
 
 ## Dependencies
 

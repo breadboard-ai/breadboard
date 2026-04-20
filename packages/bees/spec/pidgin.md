@@ -7,11 +7,11 @@ originals are untouched.
 
 ## Context
 
-Pidgin is a micro-language (`<file src="..." />`, `<a href="...">`,
-`<content>`, `<asset>`) for passing files around in LLM context. The model
-writes pidgin markup in its outputs (e.g. referencing a file it created), and
-function handlers call `from_pidgin_string` to resolve those tags back to data
-parts from the file system.
+Pidgin is a micro-language (`<file src="..." />`, `<a href="...">`, `<content>`,
+`<asset>`) for passing files around in LLM context. The model writes pidgin
+markup in its outputs (e.g. referencing a file it created), and function
+handlers call `from_pidgin_string` to resolve those tags back to data parts from
+the file system.
 
 Today, three bees function modules (`chat.py`, `system.py`, `simple_files.py`)
 delegate to `opal_backend`'s `_make_handlers`, which internally calls
@@ -33,7 +33,7 @@ The opal pidgin module has two directions:
 
 Bees only needs `from_pidgin_string` for now. The `to_pidgin` direction is used
 during session setup in `session.py`, which is in the `SessionRunner` category
-and will move to `bees-gemini`. No need to copy it.
+and will move to `gemini-runners`. No need to copy it.
 
 ### Verbatim copy, different import
 
@@ -51,9 +51,9 @@ belongs in the same module.
 ### No new concepts
 
 Both functions already exist in `opal_backend.pidgin`. The bees copies mirror
-them exactly. Python's structural subtyping means bees' `FileSystem` protocol
-is satisfied by both `DiskFileSystem` and opal's `AgentFileSystem` — the
-same function works with either.
+them exactly. Python's structural subtyping means bees' `FileSystem` protocol is
+satisfied by both `DiskFileSystem` and opal's `AgentFileSystem` — the same
+function works with either.
 
 ## Protocol Inventory
 
@@ -84,10 +84,12 @@ async def from_pidgin_string(
 ```
 
 Depends on:
+
 - `FileSystem` protocol (from `bees.protocols.filesystem`) — for `get()` calls
   to resolve file references
 
 Internal constants (copied verbatim):
+
 - `_SPLIT_REGEX` — splits pidgin text into segments
 - `_FILE_PARSE_REGEX` — matches `<file src="..." />`
 - `_LINK_PARSE_REGEX` — matches `<a href="...">title</a>`
@@ -110,8 +112,7 @@ Pure function. No dependencies.
 
 ### Target file
 
-`bees/pidgin.py` — new module, alongside the existing `bees/protocols/`
-package.
+`bees/pidgin.py` — new module, alongside the existing `bees/protocols/` package.
 
 ### Import change (for future handler inlining)
 
@@ -122,27 +123,27 @@ When handlers are later inlined into bees, they'll import:
 +from bees.pidgin import from_pidgin_string
 ```
 
-This spec doesn't change any existing imports — it just creates the module.
-The handler inlining spec will do the import rewrite.
+This spec doesn't change any existing imports — it just creates the module. The
+handler inlining spec will do the import rewrite.
 
 ### Conformance testing strategy
 
 1. **Behavioral conformance**: verify bees' `from_pidgin_string` produces the
-   same output as opal's for identical inputs — plain text, `<file>` tags,
-   `<a>` tags, mixed content, error cases.
+   same output as opal's for identical inputs — plain text, `<file>` tags, `<a>`
+   tags, mixed content, error cases.
 2. **`merge_text_parts` conformance**: verify identical merging behavior —
    consecutive text parts merged, non-text parts preserved, separator applied.
-3. **Regex conformance**: verify the split/parse patterns match the same
-   strings as opal's.
+3. **Regex conformance**: verify the split/parse patterns match the same strings
+   as opal's.
 
 ### What this enables
 
-With `bees/pidgin.py` in place, the handler delegation work decomposes into
-two remaining specs:
+With `bees/pidgin.py` in place, the handler delegation work decomposes into two
+remaining specs:
 
-1. **Handler types** — bees-native copies of `SuspendError`, suspend event
-   types (`WaitForInputEvent`, `WaitForChoiceEvent`, `ChoiceItem`),
-   `AgentResult`, `FileData`, `SessionTerminator` protocol, `CONTEXT_PARTS_KEY`,
+1. **Handler types** — bees-native copies of `SuspendError`, suspend event types
+   (`WaitForInputEvent`, `WaitForChoiceEvent`, `ChoiceItem`), `AgentResult`,
+   `FileData`, `SessionTerminator` protocol, `CONTEXT_PARTS_KEY`,
    `ChatEntryCallback`.
 2. **Handler bodies** — inline `_make_handlers` from
    `opal_backend.functions.chat` and `opal_backend.functions.system` into bees,
