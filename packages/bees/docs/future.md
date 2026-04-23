@@ -122,18 +122,27 @@ phase is independently shippable.
 | 1   | `gemini-runner`          | `GeminiRunner` + `GeminiStream` in `bees/runners/gemini.py`. Wraps opal session API.                                                     | ✅     |
 | 2   | `runner-migration`       | `TaskRunner` / `Scheduler` / `Bees` accept `SessionRunner`. `box.py` constructs `GeminiRunner`. Uses `runner.run()` + `drain_session()`. | ✅     |
 | 3   | `session-cleanup`        | Remove `run_session`, `resume_session`, legacy state, dead imports from `session.py`.                                                    | ✅     |
-| 4   | `gemini-runners-package` | Move runner to `gemini-runners` package. Zero `opal_backend` imports in `bees/`.                                                         | —      |
+| 4   | `gemini-runners-package` | Move runner to `gemini-runners` package. `box.py` moves to `box` package.                                                                | —      |
 
 **Phase 1** is pure additive code — nothing breaks. Phase 2 is the full
 substitution from construction (`box.py`) to consumption (`TaskRunner`). Phase 3
-is deletion. Phase 4 is the payoff.
+is deletion. Phase 4 is packaging.
 
 **Remaining `opal_backend` imports** in `bees/`:
 
-| Module             | Imports                                                   | Removed in |
-| ------------------ | --------------------------------------------------------- | ---------- |
-| `box.py`           | `HttpBackendClient`, `app.auth`, `app.config`             | Phase 4    |
-| `handler_types.py` | Transitional back-imports (`SuspendError`, `AgentResult`) | Phase 4    |
+| Module             | Imports                                                   | Removed in                |
+| ------------------ | --------------------------------------------------------- | ------------------------- |
+| `box.py`           | `HttpBackendClient`, `app.auth`, `app.config`             | Phase 4 (moves to `box`)  |
+| `handler_types.py` | Transitional back-imports (`SuspendError`, `AgentResult`) | Accepted — see note below |
+
+> **Transitional back-imports are accepted.** The opal session loop
+> (`opal_backend/run.py`) catches `SuspendError` and checks
+> `isinstance(result, AgentResult)` using opal's classes. Migrating the loop to
+> eliminate these two imports would risk losing battle-hardened retry logic,
+> exponential backoff, and other Chesterton's fences. The back-imports are
+> documented, harmless, and expire naturally when a new session path (e.g.,
+> Gemini Live API) replaces the opal loop. The cost — two type-level imports in
+> one file — is not worth the risk of rewriting the loop.
 
 ## The Consumption API
 
@@ -158,6 +167,10 @@ typed event stream rather than positional callbacks, and cleanly separate
 read-only observation from write-side interaction. The reference app's SSE
 `Broadcaster` is evidence of the pattern — it already fans out to multiple
 clients. The framework should do the same at the scheduler level.
+
+**Active spec**: [spec/observation.md](../spec/observation.md) — typed event
+dataclasses replacing `SchedulerHooks`, with `EventEmitter` callback threading
+through `Scheduler` → `TaskRunner`.
 
 ### Hive Abstraction
 

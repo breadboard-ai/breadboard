@@ -5,9 +5,17 @@ from __future__ import annotations
 import asyncio
 from collections import defaultdict
 from pathlib import Path
+from typing import Any, Awaitable, Callable, TypeVar
+
+from bees.protocols.events import SchedulerEvent
 from bees.task_store import TaskStore
 from bees.task_node import TaskNode
-from bees.scheduler import Scheduler, SchedulerHooks
+from bees.scheduler import Scheduler
+
+T = TypeVar("T", bound=SchedulerEvent)
+
+# Callback type for typed event listeners.
+EventCallback = Callable[..., Any]
 
 
 class Bees:
@@ -18,28 +26,29 @@ class Bees:
 
     def __init__(self, hive_dir: Path, runner):
         self._store = TaskStore(hive_dir)
-        self._events = defaultdict(list)
+        self._observers: dict[type[SchedulerEvent], list[EventCallback]] = defaultdict(list)
         self._loop_task = None
-        
-        hooks = SchedulerHooks(
-            on_task_added=lambda t: self._emit("task_added", t),
-            on_cycle_start=lambda c, a, r: self._emit("cycle_start", c, a, r),
-            on_task_event=lambda t, e: self._emit("task_event", t, e),
-            on_task_start=lambda t: self._emit("task_start", t),
-            on_task_done=lambda t: self._emit("task_done", t),
-            on_cycle_complete=lambda c: self._emit("cycle_complete", c),
-        )
-        self._scheduler = Scheduler(runner=runner, hooks=hooks, store=self._store)
 
-    async def _emit(self, event_name: str, *args):
-        for callback in self._events[event_name]:
-            res = callback(*args)
+        self._scheduler = Scheduler(
+            runner=runner, emit=self._emit, store=self._store,
+        )
+
+    async def _emit(self, event: SchedulerEvent) -> None:
+        """Dispatch a typed event to all registered observers."""
+        # Dispatch to observers registered for this specific event type.
+        for callback in self._observers.get(type(event), []):
+            res = callback(event)
             if asyncio.iscoroutine(res):
                 await res
 
-    def on(self, event_name: str, callback):
-        """Registers an event listener."""
-        self._events[event_name].append(callback)
+    def on(self, event_type: type[T], callback: Callable[[T], Any]) -> None:
+        """Register a typed event listener.
+
+        Example::
+
+            bees.on(TaskDone, lambda e: print(f"Done: {e.task.id}"))
+        """
+        self._observers[event_type].append(callback)
 
     def pause_all(self) -> int:
         """Pause all non-terminal tasks.
@@ -112,4 +121,3 @@ class Bees:
         """Creates a root task."""
         task = await self._scheduler.create_task(objective, **kwargs)
         return TaskNode(task, self)
-

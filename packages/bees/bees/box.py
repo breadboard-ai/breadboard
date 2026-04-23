@@ -42,6 +42,14 @@ from watchfiles import awatch, Change
 from app.auth import load_gemini_key
 from app.config import load_hive_dir
 from bees import Bees
+from bees.protocols.events import (
+    CycleComplete,
+    CycleStarted,
+    TaskAdded,
+    TaskDone,
+    TaskEvent,
+    TaskStarted,
+)
 from bees.runners.gemini import GeminiRunner
 from bees.ticket import Ticket
 from opal_backend.local.backend_client_impl import HttpBackendClient
@@ -103,29 +111,32 @@ def classify_change(path: Path, hive_dir: Path) -> ChangeKind:
 # ---------------------------------------------------------------------------
 
 
-async def _on_task_added(task: Ticket) -> None:
+async def _on_task_added(event: TaskAdded) -> None:
+    task = event.task
     logger.info("Agent added: %s (%s)", task.metadata.title or task.id[:8], task.id[:8])
 
 
-async def _on_cycle_start(cycle: int, new: int, resumable: int) -> None:
+async def _on_cycle_start(event: CycleStarted) -> None:
     logger.info(
         "Cycle %d: %d new + %d resumable",
-        cycle, new, resumable,
+        event.cycle, event.available, event.resumable,
     )
 
 
-async def _on_task_event(task_id: str, event: dict) -> None:
-    logger.debug("Event [%s]: %s", task_id[:8], event.get("type", "unknown"))
+async def _on_task_event(event: TaskEvent) -> None:
+    logger.debug("Event [%s]: %s", event.task_id[:8], event.event.get("type", "unknown"))
 
 
-async def _on_task_start(task: Ticket) -> None:
+async def _on_task_start(event: TaskStarted) -> None:
+    task = event.task
     logger.info(
         "Agent running: %s (%s)",
         task.metadata.title or task.id[:8], task.id[:8],
     )
 
 
-async def _on_task_done(task: Ticket) -> None:
+async def _on_task_done(event: TaskDone) -> None:
+    task = event.task
     logger.info(
         "Agent %s: %s (%s)",
         task.metadata.status,
@@ -134,8 +145,8 @@ async def _on_task_done(task: Ticket) -> None:
     )
 
 
-async def _on_cycle_complete(cycles: int) -> None:
-    logger.info("All cycles complete (%d total)", cycles)
+async def _on_cycle_complete(event: CycleComplete) -> None:
+    logger.info("All cycles complete (%d total)", event.total_cycles)
 
 
 # ---------------------------------------------------------------------------
@@ -172,12 +183,12 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
     while True:
         bees = Bees(hive_dir, runner)
 
-        bees.on("task_added", _on_task_added)
-        bees.on("cycle_start", _on_cycle_start)
-        bees.on("task_event", _on_task_event)
-        bees.on("task_start", _on_task_start)
-        bees.on("task_done", _on_task_done)
-        bees.on("cycle_complete", _on_cycle_complete)
+        bees.on(TaskAdded, _on_task_added)
+        bees.on(CycleStarted, _on_cycle_start)
+        bees.on(TaskEvent, _on_task_event)
+        bees.on(TaskStarted, _on_task_start)
+        bees.on(TaskDone, _on_task_done)
+        bees.on(CycleComplete, _on_cycle_complete)
 
         await bees.listen()
         logger.info("Bees started — watching for changes")

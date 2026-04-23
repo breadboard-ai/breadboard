@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
 
 from bees.playbook import run_event_hooks
+from bees.protocols.events import EventEmitter, TaskDone
 from bees.task_store import TaskStore
 from bees.ticket import Ticket
 
@@ -31,7 +32,7 @@ async def route_coordination_task(
     task: Ticket,
     store: TaskStore,
     running_tasks: set[str],
-    on_task_done: Callable[[Ticket], Awaitable[None]] | None = None,
+    emit: EventEmitter,
 ) -> None:
     """Route a coordination task's signal to matching subscribers.
 
@@ -135,5 +136,4 @@ async def route_coordination_task(
     store.save_metadata(task)
 
     # Broadcast the updated coordination task to the UI.
-    if on_task_done:
-        await on_task_done(task)
+    await emit(TaskDone(task=task))
