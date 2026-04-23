@@ -376,6 +376,27 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
       }
       .live-btn.disconnect:hover { background: #1c1917; }
 
+      .live-btn.mic {
+        background: transparent;
+        color: #94a3b8;
+        border-color: #334155;
+      }
+      .live-btn.mic:hover { background: #1e293b; color: #e2e8f0; }
+      .live-btn.mic.active {
+        background: #065f4633;
+        color: #34d399;
+        border-color: #10b981;
+      }
+      .live-btn.mic.active:hover { background: #065f4666; }
+
+      .live-mic-bar {
+        padding: 8px 14px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        border-top: 1px solid #1e293b;
+      }
+
       .live-transcript {
         padding: 10px 14px;
         max-height: 200px;
@@ -1134,6 +1155,16 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
                 </button>`
               : nothing}
         </div>
+        ${status === "connected"
+          ? html`<div class="live-mic-bar">
+              <button
+                class="live-btn mic ${this.#liveClient?.micActive.get() ? "active" : ""}"
+                @click=${() => this.handleMicToggle()}
+              >
+                ${this.#liveClient?.micActive.get() ? "🔇 Mute" : "🎤 Unmute"}
+              </button>
+            </div>`
+          : nothing}
         ${transcript
           ? html`<div class="live-transcript">${transcript}</div>`
           : isConnected
@@ -1177,6 +1208,20 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
     if (!this.#liveClient) return;
     this.#liveClient.disconnect();
     this.#liveClient = null;
+  }
+
+  private async handleMicToggle(): Promise<void> {
+    if (!this.#liveClient) return;
+
+    if (this.#liveClient.micActive.get()) {
+      this.#liveClient.stopMic();
+    } else {
+      try {
+        await this.#liveClient.startMic();
+      } catch (e) {
+        console.error("Failed to start microphone:", e);
+      }
+    }
   }
 }
 
