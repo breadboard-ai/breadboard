@@ -28,6 +28,8 @@ TicketStatus = Literal[
 
 TicketKind = Literal["work", "coordination"]
 
+RunnerType = Literal["generate", "live"]
+
 
 
 
@@ -67,6 +69,9 @@ class TicketMetadata:
     pending_context_updates: list[dict[str, Any]] | None = None
     paused_from: str | None = None
     """The status this task had before it was paused (set by pause-all / pause-task)."""
+
+    runner: RunnerType = "generate"
+    """Which session runner to use: ``generate`` (batch) or ``live`` (Gemini Live API)."""
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -109,6 +114,7 @@ class TicketMetadata:
             slug=data.get("slug"),
             pending_context_updates=data.get("pending_context_updates"),
             paused_from=data.get("paused_from"),
+            runner=data.get("runner", "generate"),
         )
 
 

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, TypeVar
 
 from bees.protocols.events import SchedulerEvent
+from bees.protocols.session import SessionRunner
 from bees.task_store import TaskStore
 from bees.task_node import TaskNode
 from bees.scheduler import Scheduler
@@ -24,13 +25,13 @@ class Bees:
     Acts like the 'Document' in the DOM analogy.
     """
 
-    def __init__(self, hive_dir: Path, runner):
+    def __init__(self, hive_dir: Path, runners: dict[str, SessionRunner]):
         self._store = TaskStore(hive_dir)
         self._observers: dict[type[SchedulerEvent], list[EventCallback]] = defaultdict(list)
         self._loop_task = None
 
         self._scheduler = Scheduler(
-            runner=runner, emit=self._emit, store=self._store,
+            runners=runners, emit=self._emit, store=self._store,
         )
 
     async def _emit(self, event: SchedulerEvent) -> None:

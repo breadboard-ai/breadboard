@@ -136,7 +136,7 @@ class Scheduler:
     def __init__(
         self,
         *,
-        runner: SessionRunner,
+        runners: dict[str, SessionRunner],
         store: TaskStore,
         emit: EventEmitter | None = None,
     ) -> None:
@@ -151,7 +151,7 @@ class Scheduler:
         self._mcp_registry: MCPRegistry | None = None
 
         self._task_runner = TaskRunner(
-            runner=runner,
+            runners=runners,
             store=self.store,
             scheduler_ref=self,
             active_streams=self._active_streams,

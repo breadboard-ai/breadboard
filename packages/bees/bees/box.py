@@ -179,9 +179,10 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
     startup_manager.activate()
 
     runner = GeminiRunner(backend)
+    runners = {"generate": runner}
 
     while True:
-        bees = Bees(hive_dir, runner)
+        bees = Bees(hive_dir, runners)
 
         bees.on(TaskAdded, _on_task_added)
         bees.on(CycleStarted, _on_cycle_start)

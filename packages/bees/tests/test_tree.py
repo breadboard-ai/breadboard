@@ -16,7 +16,7 @@ def temp_hive():
 
 
 def test_tree_traversal(temp_hive):
-    bees = Bees(temp_hive, runner=Mock())
+    bees = Bees(temp_hive, runners={"generate": Mock()})
     store = bees._store
 
     # Create a tree structure
@@ -70,13 +70,13 @@ def test_tree_traversal(temp_hive):
 
 
 def test_empty_store(temp_hive):
-    bees = Bees(temp_hive, runner=Mock())
+    bees = Bees(temp_hive, runners={"generate": Mock()})
     assert len(bees.children) == 0
     assert bees.get_by_id("non-existent") is None
 
 
 def test_query_by_tags(temp_hive):
-    bees = Bees(temp_hive, runner=Mock())
+    bees = Bees(temp_hive, runners={"generate": Mock()})
     store = bees._store
 
     # Create tasks with tags
@@ -109,7 +109,7 @@ def test_query_by_tags(temp_hive):
 
 @pytest.mark.asyncio
 async def test_bees_create_child(temp_hive):
-    bees = Bees(temp_hive, runner=Mock())
+    bees = Bees(temp_hive, runners={"generate": Mock()})
     bees._scheduler = Mock()
     
     mock_ticket = Mock()
@@ -126,7 +126,7 @@ async def test_bees_create_child(temp_hive):
 
 @pytest.mark.asyncio
 async def test_task_node_create_child(temp_hive):
-    bees = Bees(temp_hive, runner=Mock())
+    bees = Bees(temp_hive, runners={"generate": Mock()})
     bees._scheduler = Mock()
     
     mock_ticket = Mock()
@@ -149,7 +149,7 @@ async def test_task_node_create_child(temp_hive):
 
 
 def test_task_node_respond(temp_hive):
-    bees = Bees(temp_hive, runner=Mock())
+    bees = Bees(temp_hive, runners={"generate": Mock()})
     store_mock = Mock()
     bees._store = store_mock
     
@@ -163,7 +163,7 @@ def test_task_node_respond(temp_hive):
 
 
 def test_task_node_respond_with_text_kwarg(temp_hive):
-    bees = Bees(temp_hive, runner=Mock())
+    bees = Bees(temp_hive, runners={"generate": Mock()})
     store_mock = Mock()
     bees._store = store_mock
     
@@ -177,7 +177,7 @@ def test_task_node_respond_with_text_kwarg(temp_hive):
 
 
 def test_task_node_respond_with_selected_ids_kwarg(temp_hive):
-    bees = Bees(temp_hive, runner=Mock())
+    bees = Bees(temp_hive, runners={"generate": Mock()})
     store_mock = Mock()
     bees._store = store_mock
     
@@ -191,7 +191,7 @@ def test_task_node_respond_with_selected_ids_kwarg(temp_hive):
 
 
 def test_task_node_respond_mutually_exclusive_kwargs(temp_hive):
-    bees = Bees(temp_hive, runner=Mock())
+    bees = Bees(temp_hive, runners={"generate": Mock()})
     ticket = Mock()
     ticket.id = "task1"
     node = TaskNode(ticket, bees)
@@ -201,7 +201,7 @@ def test_task_node_respond_mutually_exclusive_kwargs(temp_hive):
 
 
 def test_task_node_respond_missing_kwargs(temp_hive):
-    bees = Bees(temp_hive, runner=Mock())
+    bees = Bees(temp_hive, runners={"generate": Mock()})
     ticket = Mock()
     ticket.id = "task1"
     node = TaskNode(ticket, bees)
@@ -211,7 +211,7 @@ def test_task_node_respond_missing_kwargs(temp_hive):
 
 
 def test_task_node_respond_dict_and_kwargs_conflict(temp_hive):
-    bees = Bees(temp_hive, runner=Mock())
+    bees = Bees(temp_hive, runners={"generate": Mock()})
     ticket = Mock()
     ticket.id = "task1"
     node = TaskNode(ticket, bees)
@@ -221,7 +221,7 @@ def test_task_node_respond_dict_and_kwargs_conflict(temp_hive):
 
 
 def test_task_node_awaiting_response(temp_hive):
-    bees = Bees(temp_hive, runner=Mock())
+    bees = Bees(temp_hive, runners={"generate": Mock()})
     
     ticket = Mock()
     ticket.metadata = Mock()
@@ -250,7 +250,7 @@ def test_task_node_awaiting_response(temp_hive):
 
 
 def test_bees_all(temp_hive):
-    bees = Bees(temp_hive, runner=Mock())
+    bees = Bees(temp_hive, runners={"generate": Mock()})
     store_mock = Mock()
     bees._store = store_mock
     

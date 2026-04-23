@@ -55,7 +55,7 @@ class TaskRunner:
     def __init__(
         self,
         *,
-        runner: SessionRunner,
+        runners: dict[str, SessionRunner],
         store: TaskStore,
         scheduler_ref: Any,
         active_streams: dict[str, SessionStream],
@@ -64,7 +64,7 @@ class TaskRunner:
         on_events_broadcast: Callable[[Ticket], None],
         emit: EventEmitter,
     ) -> None:
-        self._runner = runner
+        self._runners = runners
         self._store = store
         self._scheduler_ref = scheduler_ref
         self._active_streams = active_streams
@@ -115,7 +115,7 @@ class TaskRunner:
                 ),
             )
 
-            stream = await self._runner.run(config)
+            stream = await self._runner_for(task).run(config)
             self._active_streams[task.id] = stream
             try:
                 result = await drain_session(
@@ -238,7 +238,7 @@ class TaskRunner:
                 seed_files=False,  # Files already on disk from previous run.
             )
 
-            stream = await self._runner.resume(
+            stream = await self._runner_for(task).resume(
                 config,
                 state=state,
                 response=response,
@@ -394,3 +394,15 @@ class TaskRunner:
             await emit(TaskEvent(task_id=task_id, event=event))
 
         return on_event
+
+    def _runner_for(self, task: Ticket) -> SessionRunner:
+        """Select the session runner for a task based on its metadata."""
+        runner_type = task.metadata.runner
+        runner = self._runners.get(runner_type)
+        if runner is None:
+            available = ", ".join(sorted(self._runners.keys()))
+            raise ValueError(
+                f"No runner registered for type {runner_type!r} "
+                f"(available: {available})"
+            )
+        return runner

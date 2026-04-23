@@ -147,6 +147,12 @@ class SessionConfiguration:
     file_system: FileSystem
     """Disk-backed file system for the session's workspace."""
 
+    ticket_id: str | None = None
+    """Unique identifier for the task being executed."""
+
+    ticket_dir: Path | None = None
+    """Path to the task's directory on disk."""
+
     label: str = ""
     """Short label for log prefixes (usually ``ticket_id[:8]``)."""
 

@@ -150,6 +150,7 @@ def run_playbook(
         owning_task_id=owning_task_id,
         context=context,
         slug=slug,
+        runner=data.get("runner", "generate"),
     )
 
     # Autostart: stamp child tasks declared in the template.

@@ -168,7 +168,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
 
     runner = GeminiRunner(backend)
-    bees = Bees(hive_dir, runner)
+    runners = {"generate": runner}
+    bees = Bees(hive_dir, runners)
 
     bees.on(TaskAdded, _on_task_added)
     bees.on(CycleStarted, _on_cycle_start)
