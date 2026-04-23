@@ -331,3 +331,8 @@
     - system.*
     - events.*
     - simple-files.*
+
+- name: live-session
+  runner: live
+  title: Live Session
+  description: A simple live session.

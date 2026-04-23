@@ -40,6 +40,7 @@ from bees.protocols.events import (
     TaskStarted,
 )
 from bees.runners.gemini import GeminiRunner
+from bees.runners.live import LiveRunner
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
 logger = logging.getLogger(__name__)
@@ -168,7 +169,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
 
     runner = GeminiRunner(backend)
-    runners = {"generate": runner}
+    runners = {
+        "generate": runner,
+        "live": LiveRunner(api_key=gemini_key),
+    }
     bees = Bees(hive_dir, runners)
 
     bees.on(TaskAdded, _on_task_added)

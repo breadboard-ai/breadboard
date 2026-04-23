@@ -312,6 +312,8 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
     chips.push({ label: "name", value: template.name, cls: "playbook" });
     if (template.model)
       chips.push({ label: "model", value: template.model, cls: "model" });
+    if (template.runner && template.runner !== "generate")
+      chips.push({ label: "runner", value: template.runner });
 
     const allTemplates = this.templateStore!.templates.get();
     const templateNames = new Set(allTemplates.map((t) => t.name));
@@ -574,6 +576,16 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
                 placeholder="e.g. gemini-3.1-pro-preview"
                 @change=${(e: CustomEvent) =>
                   this.updateDraft({ model: e.detail.value })}
+              ></bees-editable-field>
+              <bees-editable-field
+                label="Runner"
+                .value=${draft.runner ?? "generate"}
+                editing
+                placeholder="generate"
+                @change=${(e: CustomEvent) =>
+                  this.updateDraft({
+                    runner: e.detail.value === "live" ? "live" : "generate",
+                  })}
               ></bees-editable-field>
             </div>
 
@@ -909,6 +921,7 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
         tags: template.tags,
         tasks: template.tasks,
         model: template.model,
+        runner: template.runner,
         context,
         watch_events: template.watch_events,
       });
