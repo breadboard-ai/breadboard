@@ -12,11 +12,12 @@
  * and manages the session lifecycle.  On completion or error, writes
  * `live_result.json` for the box's `LiveStream` to pick up.
  *
- * This module handles WebSocket messaging only — audio I/O and tool
- * dispatch are separate concerns added in later phases.
+ * This module handles WebSocket messaging and audio I/O. Tool
+ * dispatch is a separate concern added in Phase 4.
  */
 
 import { Signal } from "signal-polyfill";
+import { AudioInput, AudioOutput } from "./audio-handler.js";
 
 export { LiveSessionClient };
 export type { LiveSessionBundle, SessionStatus };
@@ -72,12 +73,17 @@ class LiveSessionClient {
   /** Reactive transcript — appended as text arrives from the model. */
   readonly transcript = new Signal.State<string>("");
 
+  /** Whether the microphone is currently active. */
+  readonly micActive = new Signal.State<boolean>(false);
+
   /** The task ID this session belongs to. */
   readonly taskId: string;
 
   #ws: WebSocket | null = null;
   #bundle: LiveSessionBundle;
   #ticketDir: FileSystemDirectoryHandle;
+  #audioInput: AudioInput | null = null;
+  #audioOutput = new AudioOutput();
 
   constructor(
     bundle: LiveSessionBundle,
@@ -157,9 +163,42 @@ class LiveSessionClient {
 
   /** Gracefully close the session. */
   disconnect(): void {
+    this.stopMic();
+    this.#audioOutput.dispose();
     if (!this.#ws) return;
     this.#ws.close(1000, "Client disconnect");
     this.#ws = null;
+  }
+
+  // ── Audio ──
+
+  /** Start capturing microphone audio and streaming to the Live API. */
+  async startMic(): Promise<void> {
+    if (this.#audioInput?.running) return;
+    if (this.status.get() !== "connected") return;
+
+    this.#audioInput = new AudioInput((base64Pcm: string) => {
+      this.send({
+        realtimeInput: {
+          audio: {
+            data: base64Pcm,
+            mimeType: "audio/pcm;rate=16000",
+          },
+        },
+      });
+    });
+
+    await this.#audioInput.start();
+    this.micActive.set(true);
+  }
+
+  /** Stop microphone capture. */
+  stopMic(): void {
+    if (this.#audioInput) {
+      this.#audioInput.stop();
+      this.#audioInput = null;
+    }
+    this.micActive.set(false);
   }
 
   /** Send raw data over the WebSocket (for audio chunks, etc.). */
@@ -170,17 +209,26 @@ class LiveSessionClient {
 
   // ── Message handling ──
 
-  #handleMessage(data: string | Blob | ArrayBuffer): void {
-    // Binary frames are audio data — Phase 3 will handle these.
-    if (typeof data !== "string") return;
+  async #handleMessage(data: string | Blob | ArrayBuffer): Promise<void> {
+    // The Live API sends all frames as binary. Decode to text first.
+    let text: string;
+    if (typeof data === "string") {
+      text = data;
+    } else if (data instanceof Blob) {
+      text = await data.text();
+    } else if (data instanceof ArrayBuffer) {
+      text = new TextDecoder().decode(data);
+    } else {
+      return;
+    }
 
     let message: ServerMessage;
     try {
-      message = JSON.parse(data) as ServerMessage;
+      message = JSON.parse(text) as ServerMessage;
     } catch {
       console.warn(
         `[live:${this.taskId.slice(0, 8)}] Unparseable message:`,
-        data.slice(0, 100),
+        text.slice(0, 100),
       );
       return;
     }
@@ -194,13 +242,15 @@ class LiveSessionClient {
       return;
     }
 
-    // Model text output — append to transcript.
+    // Model content — text goes to transcript, audio goes to speakers.
     if (message.serverContent?.modelTurn?.parts) {
       for (const part of message.serverContent.modelTurn.parts) {
         if (part.text) {
           this.transcript.set(this.transcript.get() + part.text);
         }
-        // Audio parts (inlineData) will be handled by AudioHandler in Phase 3.
+        if (part.inlineData?.data) {
+          this.#audioOutput.play(part.inlineData.data);
+        }
       }
     }
 

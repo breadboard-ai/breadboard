@@ -103,7 +103,7 @@ Disconnecting writes `live_result.json`, and the box's LiveStream unblocks.
 
 ---
 
-## Phase 3 — Audio I/O
+## Phase 3 — Audio I/O ✅
 
 ### 🎯 Objective
 
@@ -116,15 +116,17 @@ low-latency.
 
 ### Changes
 
-- [ ] `hivetool/src/data/audio-handler.ts` — **[NEW]** `AudioInput` (mic →
+- [x] `hivetool/src/data/audio-handler.ts` — **[NEW]** `AudioInput` (mic →
       PCM → base64 → WS) and `AudioOutput` (WS → PCM → AudioContext →
       speakers).
-- [ ] `AudioInput` — `navigator.mediaDevices.getUserMedia()`, `AudioWorklet`
-      or `ScriptProcessorNode` for PCM capture at 16kHz mono.
-- [ ] `AudioOutput` — decode base64 PCM, queue into `AudioContext` playback
-      buffer, handle barge-in (stop playback when user speaks).
-- [ ] Wire audio handler into `LiveSessionClient` message loop.
-- [ ] Mic toggle button in ticket detail UI.
+- [x] `AudioInput` — `navigator.mediaDevices.getUserMedia()`, `AudioWorklet`
+      for PCM capture at 16kHz mono.
+- [x] `AudioOutput` — decode base64 PCM, queue into `AudioContext` playback
+      buffer.
+- [x] Wire audio handler into `LiveSessionClient` message loop.
+- [x] Mic toggle button in ticket detail UI.
+- [x] Fix binary Blob frame decoding (`#handleMessage`) — the Live API sends
+      all frames as binary, not text.
 
 ---
 
