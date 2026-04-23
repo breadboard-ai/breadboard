@@ -15,6 +15,7 @@
 import { Signal } from "signal-polyfill";
 import type { StateAccess } from "./state-access.js";
 import type { TicketData } from "./types.js";
+import { LiveSessionClient } from "./live-session.js";
 
 export { TicketStore };
 export type { FileTreeNode };
@@ -37,6 +38,9 @@ class TicketStore {
     if (!id) return null;
     return this.tickets.get().find((t) => t.id === id) ?? null;
   });
+
+  /** Set of ticket IDs with active (unresolved) live session bundles. */
+  readonly activeLiveSessions = new Signal.State<Set<string>>(new Set());
 
   #ticketsHandle: FileSystemDirectoryHandle | null = null;
   #observer: { disconnect(): void } | null = null;
@@ -95,6 +99,9 @@ class TicketStore {
     });
 
     this.tickets.set(entries);
+
+    // Detect active live sessions.
+    await this.#detectLiveSessions(entries);
   }
 
   selectTicket(id: string): void {
@@ -110,6 +117,7 @@ class TicketStore {
     this.tickets.set([]);
     this.selectedTicketId.set(null);
     this.recentlyUpdatedTicket.set(null);
+    this.activeLiveSessions.set(new Set());
   }
 
   /** Clean up the observer. */
@@ -136,6 +144,7 @@ class TicketStore {
     tags?: string[];
     tasks?: string[];
     model?: string;
+    runner?: "generate" | "live";
     context?: string;
     watch_events?: Array<{ type: string }>;
   }): Promise<string> {
@@ -168,6 +177,7 @@ class TicketStore {
     if (opts.tags?.length) metadata.tags = opts.tags;
     if (opts.tasks?.length) metadata.tasks = opts.tasks;
     if (opts.model) metadata.model = opts.model;
+    if (opts.runner) metadata.runner = opts.runner;
     if (opts.context) metadata.context = opts.context;
     if (opts.watch_events?.length) metadata.watch_events = opts.watch_events;
 
@@ -270,6 +280,59 @@ class TicketStore {
       return await file.text();
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * Get the `FileSystemDirectoryHandle` for a ticket.
+   *
+   * Used by `LiveSessionClient.fromTicketDir()` to read the session bundle.
+   */
+  async getTicketDirHandle(
+    ticketId: string,
+  ): Promise<FileSystemDirectoryHandle | null> {
+    if (!this.#ticketsHandle) return null;
+    try {
+      return await this.#ticketsHandle.getDirectoryHandle(ticketId);
+    } catch {
+      return null;
+    }
+  }
+
+  // ── Live session detection ──
+
+  async #detectLiveSessions(tickets: TicketData[]): Promise<void> {
+    if (!this.#ticketsHandle) return;
+
+    const liveTickets = tickets.filter((t) => t.runner === "live");
+    if (liveTickets.length === 0) {
+      if (this.activeLiveSessions.get().size > 0) {
+        this.activeLiveSessions.set(new Set());
+      }
+      return;
+    }
+
+    const activeIds = new Set<string>();
+    for (const ticket of liveTickets) {
+      try {
+        const ticketDir = await this.#ticketsHandle.getDirectoryHandle(
+          ticket.id,
+        );
+        if (await LiveSessionClient.hasActiveSession(ticketDir)) {
+          activeIds.add(ticket.id);
+        }
+      } catch {
+        // Directory not accessible — skip.
+      }
+    }
+
+    // Only update signal if the set changed.
+    const current = this.activeLiveSessions.get();
+    if (
+      activeIds.size !== current.size ||
+      ![...activeIds].every((id) => current.has(id))
+    ) {
+      this.activeLiveSessions.set(activeIds);
     }
   }
 

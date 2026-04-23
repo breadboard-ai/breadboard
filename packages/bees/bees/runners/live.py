@@ -46,10 +46,10 @@ RESULT_FILENAME = "live_result.json"
 LIVE_API_ENDPOINT = (
     "wss://generativelanguage.googleapis.com/ws/"
     "google.ai.generativelanguage.v1alpha."
-    "GenerativeService.BidiGenerateContent"
+    "GenerativeService.BidiGenerateContentConstrained"
 )
 
-DEFAULT_MODEL = "models/gemini-2.5-flash-preview-native-audio-dialog"
+DEFAULT_MODEL = "models/gemini-3.1-flash-live-preview"
 
 
 # ---------------------------------------------------------------------------
@@ -62,8 +62,13 @@ class _NullHooks:
 
     Bees' function group factories receive ``SessionHooks`` by signature
     but capture their real dependencies through closures.  This stub
-    satisfies the structural contract without providing real services.
+    satisfies the structural contract while forwarding the file system
+    from the provisioned config (some factories access it at
+    construction time).
     """
+
+    def __init__(self, file_system: Any = None) -> None:
+        self._file_system = file_system
 
     @property
     def controller(self) -> Any:
@@ -71,14 +76,11 @@ class _NullHooks:
 
     @property
     def file_system(self) -> Any:
-        return None
+        return self._file_system
 
     @property
     def task_tree_manager(self) -> Any:
         return None
-
-
-_NULL_HOOKS = _NullHooks()
 
 
 # ---------------------------------------------------------------------------
@@ -89,6 +91,7 @@ _NULL_HOOKS = _NullHooks()
 def _extract_declarations(
     factories: list[FunctionGroupFactory],
     function_filter: list[str] | None,
+    file_system: Any = None,
 ) -> tuple[list[dict[str, Any]], str]:
     """Call factories and collect tool declarations and instructions.
 
@@ -96,11 +99,18 @@ def _extract_declarations(
     *function_filter* is non-empty, only declarations whose name
     matches a filter entry are included.
     """
+    hooks = _NullHooks(file_system)
     all_declarations: list[dict[str, Any]] = []
     instructions: list[str] = []
 
-    for factory in factories:
-        group: FunctionGroup = factory(_NULL_HOOKS)
+    for item in factories:
+        # The provisioner list is a mix of factories (callables that
+        # return FunctionGroup) and already-constructed FunctionGroup
+        # instances (e.g. skills).  Distinguish by checking callable.
+        if callable(item) and not isinstance(item, FunctionGroup):
+            group: FunctionGroup = item(hooks)
+        else:
+            group = item
 
         if group.instruction:
             instructions.append(group.instruction)
@@ -323,11 +333,15 @@ class LiveRunner:
         """Request a short-lived ephemeral token from the Gemini API.
 
         Uses ``google-genai`` SDK to create a single-use token
-        that expires after 30 minutes.
+        that expires after 30 minutes.  The auth_tokens API is only
+        available on the ``v1alpha`` endpoint.
         """
         from google import genai
 
-        client = genai.Client(api_key=self._api_key)
+        client = genai.Client(
+            api_key=self._api_key,
+            http_options={"api_version": "v1alpha"},
+        )
         expire_time = (
             datetime.now(timezone.utc) + timedelta(minutes=30)
         ).isoformat()
@@ -337,6 +351,7 @@ class LiveRunner:
             config={
                 "uses": 1,
                 "expire_time": expire_time,
+                "http_options": {"api_version": "v1alpha"},
             },
         )
 
@@ -366,6 +381,7 @@ class LiveRunner:
         declarations, tool_instruction = _extract_declarations(
             config.function_groups,
             config.function_filter,
+            file_system=config.file_system,
         )
         logger.info(
             "[%s] Extracted %d tool declarations for live session",

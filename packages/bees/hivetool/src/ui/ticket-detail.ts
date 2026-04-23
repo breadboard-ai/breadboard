@@ -20,6 +20,7 @@ import type { TicketStore, FileTreeNode } from "../data/ticket-store.js";
 import type { MutationClient } from "../data/mutation-client.js";
 import type { TemplateStore } from "../data/template-store.js";
 import type { SkillStore } from "../data/skill-store.js";
+import { LiveSessionClient } from "../data/live-session.js";
 import { sharedStyles } from "./shared-styles.js";
 import { renderJson } from "./json-tree.js";
 import { jsonTreeStyles } from "./json-tree.styles.js";
@@ -304,6 +305,93 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
         flex: 1;
         line-height: 1.4;
       }
+
+      /* ── Live session panel ── */
+
+      .live-panel {
+        border: 1px solid #1e3a5f;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .live-panel-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: #0c1929;
+        border-bottom: 1px solid #1e3a5f;
+      }
+
+      .live-status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        transition: background 0.3s;
+      }
+
+      .live-status-dot.idle { background: #475569; }
+      .live-status-dot.connecting { background: #f59e0b; animation: pulse 1s infinite; }
+      .live-status-dot.connected { background: #22c55e; animation: pulse 2s infinite; }
+      .live-status-dot.disconnected { background: #64748b; }
+      .live-status-dot.error { background: #ef4444; }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      .live-status-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94a3b8;
+        flex: 1;
+      }
+
+      .live-btn {
+        padding: 4px 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.15s;
+        border: 1px solid;
+      }
+
+      .live-btn.connect {
+        background: #1d4ed8;
+        color: #dbeafe;
+        border-color: #2563eb;
+      }
+      .live-btn.connect:hover { background: #2563eb; }
+
+      .live-btn.disconnect {
+        background: transparent;
+        color: #f87171;
+        border-color: #991b1b;
+      }
+      .live-btn.disconnect:hover { background: #1c1917; }
+
+      .live-transcript {
+        padding: 10px 14px;
+        max-height: 200px;
+        overflow-y: auto;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        color: #cbd5e1;
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: #0a0f1a;
+      }
+
+      .live-transcript-empty {
+        color: #475569;
+        font-style: italic;
+      }
     `,
   ];
 
@@ -330,6 +418,9 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
   @state() accessor replyText = "";
   @state() accessor selectedChoiceIds = new Set<string>();
   @state() accessor responding = false;
+
+  // ── Live session state ──
+  #liveClient: LiveSessionClient | null = null;
 
   /** Track the ticket ID we loaded the tree for. */
   #treeLoadedFor: string | null = null;
@@ -560,6 +651,9 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
                   <div class="block-content">${ticket.error}</div>
                 </div>
               `
+            : nothing}
+          ${ticket.runner === "live"
+            ? this.renderLiveSessionPanel(ticket.id)
             : nothing}
           ${ticket.status === "suspended" && ticket.suspend_event
             ? this.renderSuspendedBlock(ticket.id, ticket.suspend_event, ticket.assignee)
@@ -1002,6 +1096,87 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
     } finally {
       this.responding = false;
     }
+  }
+
+  // ── Live session ──
+
+  private renderLiveSessionPanel(ticketId: string) {
+    const hasActive = this.ticketStore?.activeLiveSessions
+      .get()
+      .has(ticketId);
+
+    const status = this.#liveClient?.status.get() ?? "idle";
+    const transcript = this.#liveClient?.transcript.get() ?? "";
+
+    if (!hasActive && status === "idle") return nothing;
+
+    const isConnected =
+      status === "connected" || status === "connecting";
+
+    return html`
+      <div class="block live-panel">
+        <div class="live-panel-header">
+          <span class="live-status-dot ${status}"></span>
+          <span class="live-status-label">Live Session — ${status}</span>
+          ${isConnected
+            ? html`<button
+                class="live-btn disconnect"
+                @click=${() => this.handleLiveDisconnect()}
+              >
+                Disconnect
+              </button>`
+            : hasActive
+              ? html`<button
+                  class="live-btn connect"
+                  @click=${() => this.handleLiveConnect(ticketId)}
+                >
+                  Connect
+                </button>`
+              : nothing}
+        </div>
+        ${transcript
+          ? html`<div class="live-transcript">${transcript}</div>`
+          : isConnected
+            ? html`<div class="live-transcript">
+                <span class="live-transcript-empty"
+                  >Waiting for agent response…</span
+                >
+              </div>`
+            : nothing}
+      </div>
+    `;
+  }
+
+  private async handleLiveConnect(ticketId: string): Promise<void> {
+    if (this.#liveClient) return;
+    if (!this.ticketStore) return;
+
+    const dirHandle = await this.ticketStore.getTicketDirHandle(ticketId);
+    if (!dirHandle) {
+      console.error("Could not get directory handle for ticket", ticketId);
+      return;
+    }
+
+    const client = await LiveSessionClient.fromTicketDir(dirHandle);
+    if (!client) {
+      console.error("Could not create LiveSessionClient for", ticketId);
+      return;
+    }
+
+    this.#liveClient = client;
+
+    try {
+      await client.connect();
+    } catch (e) {
+      console.error("Live session connection failed:", e);
+      this.#liveClient = null;
+    }
+  }
+
+  private handleLiveDisconnect(): void {
+    if (!this.#liveClient) return;
+    this.#liveClient.disconnect();
+    this.#liveClient = null;
   }
 }
 

@@ -32,6 +32,7 @@ interface TemplateData {
   watch_events?: Array<{ type: string }>;
   tasks?: string[];
   autostart?: string[];
+  runner?: "generate" | "live";
 }
 
 class TemplateStore {

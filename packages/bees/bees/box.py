@@ -51,6 +51,7 @@ from bees.protocols.events import (
     TaskStarted,
 )
 from bees.runners.gemini import GeminiRunner
+from bees.runners.live import LiveRunner
 from bees.ticket import Ticket
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
@@ -154,7 +155,9 @@ async def _on_cycle_complete(event: CycleComplete) -> None:
 # ---------------------------------------------------------------------------
 
 
-async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
+async def run(
+    hive_dir: Path, backend: HttpBackendClient, *, gemini_key: str,
+) -> None:
     """Run the box — outer restart loop + inner file-watch loop.
 
     This function runs indefinitely until cancelled or interrupted.
@@ -179,7 +182,10 @@ async def run(hive_dir: Path, backend: HttpBackendClient) -> None:
     startup_manager.activate()
 
     runner = GeminiRunner(backend)
-    runners = {"generate": runner}
+    runners = {
+        "generate": runner,
+        "live": LiveRunner(api_key=gemini_key),
+    }
 
     while True:
         bees = Bees(hive_dir, runners)
@@ -286,7 +292,7 @@ def main() -> None:
 
     async def _run() -> None:
         try:
-            await run(hive_dir, backend)
+            await run(hive_dir, backend, gemini_key=gemini_key)
         finally:
             await http_client.aclose()
 
