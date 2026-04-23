@@ -31,6 +31,14 @@ from sse_starlette.sse import EventSourceResponse
 from app.auth import load_gemini_key
 from app.config import load_hive_dir
 from bees import Task, Bees
+from bees.protocols.events import (
+    CycleComplete,
+    CycleStarted,
+    TaskAdded,
+    TaskDone,
+    TaskEvent,
+    TaskStarted,
+)
 from bees.runners.gemini import GeminiRunner
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
@@ -73,50 +81,50 @@ bees: Bees | None = None
 # ---------------------------------------------------------------------------
 
 
-async def _on_task_added(task: Task) -> None:
+async def _on_task_added(event: TaskAdded) -> None:
     """Broadcast a newly added agent."""
     await broadcaster.broadcast({
         "type": "agent:added",
-        "agent": _agent_to_dict(task),
+        "agent": _agent_to_dict(event.task),
     })
 
 
-async def _on_cycle_start(cycle: int, new: int, resumable: int) -> None:
+async def _on_cycle_start(event: CycleStarted) -> None:
     await broadcaster.broadcast({
         "type": "scheduler:started",
-        "wave": cycle,
-        "new": new,
-        "resumable": resumable,
+        "wave": event.cycle,
+        "new": event.available,
+        "resumable": event.resumable,
     })
 
 
-async def _on_task_event(task_id: str, event: dict[str, Any]) -> None:
+async def _on_task_event(event: TaskEvent) -> None:
     await broadcaster.broadcast({
         "type": "session:event",
-        "task_id": task_id,
-        "event": event,
+        "task_id": event.task_id,
+        "event": event.event,
     })
 
 
-async def _on_task_start(task: Task) -> None:
+async def _on_task_start(event: TaskStarted) -> None:
     """Broadcast when an agent transitions to running."""
     await broadcaster.broadcast({
         "type": "agent:updated",
-        "agent": _agent_to_dict(task),
+        "agent": _agent_to_dict(event.task),
     })
 
 
-async def _on_task_done(task: Task) -> None:
+async def _on_task_done(event: TaskDone) -> None:
     """Post-completion hook: broadcast updated agent state."""
     await broadcaster.broadcast({
         "type": "agent:updated",
-        "agent": _agent_to_dict(task),
+        "agent": _agent_to_dict(event.task),
     })
 
 
 
-async def _on_cycle_complete(cycles: int) -> None:
-    await broadcaster.broadcast({"type": "scheduler:stopped", "waves": cycles})
+async def _on_cycle_complete(event: CycleComplete) -> None:
+    await broadcaster.broadcast({"type": "scheduler:stopped", "waves": event.total_cycles})
 
 
 # ---------------------------------------------------------------------------
@@ -162,12 +170,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     runner = GeminiRunner(backend)
     bees = Bees(hive_dir, runner)
 
-    bees.on("task_added", _on_task_added)
-    bees.on("cycle_start", _on_cycle_start)
-    bees.on("task_event", _on_task_event)
-    bees.on("task_start", _on_task_start)
-    bees.on("task_done", _on_task_done)
-    bees.on("cycle_complete", _on_cycle_complete)
+    bees.on(TaskAdded, _on_task_added)
+    bees.on(CycleStarted, _on_cycle_start)
+    bees.on(TaskEvent, _on_task_event)
+    bees.on(TaskStarted, _on_task_start)
+    bees.on(TaskDone, _on_task_done)
+    bees.on(CycleComplete, _on_cycle_complete)
 
     await bees.listen()
 

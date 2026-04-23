@@ -6,7 +6,7 @@ Scheduler — unified task lifecycle and orchestration.
 
 Owns the decisions of *what runs when* and the metadata bookkeeping
 around each task's execution.  Consumers (server, CLI) plug in
-behaviour via ``SchedulerHooks``.
+behaviour via typed ``SchedulerEvent`` callbacks (see ``bees.protocols.events``).
 
 The Concept of a Cycle
 ----------------------
@@ -40,11 +40,19 @@ from __future__ import annotations
 import asyncio
 import logging
 import sys
-from dataclasses import dataclass
 from typing import Any, Awaitable, Callable
 
 from bees.coordination import route_coordination_task
 from bees.playbook import run_task_done_hooks, load_system_config, run_playbook
+from bees.protocols.events import (
+    CycleComplete,
+    CycleStarted,
+    EventEmitter,
+    TaskAdded,
+    TaskDone,
+    TaskEvent,
+    TaskStarted,
+)
 from bees.protocols.session import SessionResult, SessionRunner, SessionStream
 from bees.task_runner import TaskRunner
 from bees.ticket import Ticket
@@ -56,44 +64,12 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Lifecycle hooks
+# No-op emitter (default when no observer is registered)
 # ---------------------------------------------------------------------------
 
 
-@dataclass
-class SchedulerHooks:
-    """Optional callbacks that consumers register to react to scheduler events.
-    """
-
-    on_startup: Callable[[list[Ticket]], Awaitable[None]] | None = None
-    """Called once after recovery, with the full task list."""
-
-    on_task_added: Callable[[Ticket], Awaitable[None]] | None = None
-    """Called when a new task is created."""
-
-    on_cycle_start: Callable[[int, int, int], Awaitable[None]] | None = None
-    """Called at the start of each cycle.
-
-    Arguments passed to the callback:
-    - cycle_number: The sequence number of the current cycle (1-based).
-    - available_count: The number of new ('available') tasks being processed.
-    - resumable_count: The number of suspended tasks being resumed.
-    """
-
-    on_task_event: Callable[[str, dict], Awaitable[None]] | None = None
-    """Called when a running session emits an event (task_id, event_dict)."""
-
-    on_task_start: Callable[[Ticket], Awaitable[None]] | None = None
-    """Called when a task transitions to running (for UI updates)."""
-
-    on_task_done: Callable[[Ticket], Awaitable[None]] | None = None
-    """Called when a task reaches a resting state (completed/failed/suspended/paused)."""
-
-    on_events_broadcast: Callable[[Ticket], None] | None = None
-    """Called when an agent broadcasts an event mid-session."""
-
-    on_cycle_complete: Callable[[int], Awaitable[None]] | None = None
-    """Called when there is no more work (total_cycles)."""
+async def _noop_emit(event: Any) -> None:
+    """Default emitter that discards events."""
 
 
 # ---------------------------------------------------------------------------
@@ -162,9 +138,9 @@ class Scheduler:
         *,
         runner: SessionRunner,
         store: TaskStore,
-        hooks: SchedulerHooks | None = None,
+        emit: EventEmitter | None = None,
     ) -> None:
-        self._hooks = hooks or SchedulerHooks()
+        self._emit = emit or _noop_emit
         self.store = store
         self._trigger = asyncio.Event()
         self._running = False
@@ -185,8 +161,7 @@ class Scheduler:
             ),
             deliver_context_update=self._deliver_context_update,
             on_events_broadcast=self._on_events_broadcast_internal,
-            on_task_start=self._hooks.on_task_start,
-            on_task_event=self._hooks.on_task_event,
+            emit=self._emit,
         )
 
     # -- public API --------------------------------------------------------
@@ -196,7 +171,7 @@ class Scheduler:
         self._trigger.set()
 
     async def startup(self) -> Ticket | None:
-        """Recover stuck tasks, boot root template if needed, and fire startup hook."""
+        """Recover stuck tasks, boot root template if needed."""
         tasks = await self.recover_stuck_tasks()
 
         # Connect to MCP servers declared in SYSTEM.yaml.
@@ -209,10 +184,7 @@ class Scheduler:
         root_task = await self._boot_root_template(tasks)
         if root_task:
             tasks.append(root_task)
-            
-        if self._hooks.on_startup:
-            await self._hooks.on_startup(tasks)
-            
+
         return root_task
 
     async def shutdown(self) -> None:
@@ -222,12 +194,9 @@ class Scheduler:
             self._mcp_registry = None
 
     async def create_task(self, objective: str, **kwargs) -> Ticket:
-        """Create a new task and notify hooks."""
+        """Create a new task and emit TaskAdded."""
         task = self.store.create(objective, **kwargs)
-        
-        if self._hooks.on_task_added:
-            await self._hooks.on_task_added(task)
-            
+        await self._emit(TaskAdded(task=task))
         self.trigger()
         return task
 
@@ -246,10 +215,7 @@ class Scheduler:
 
         logger.info("Booting root template '%s'", root)
         task = run_playbook(root, store=self.store)
-        
-        if self._hooks.on_task_added:
-            await self._hooks.on_task_added(task)
-            
+        await self._emit(TaskAdded(task=task))
         return task
 
     async def wait_for_task(self, task_id: str, timeout_ms: float) -> str:
@@ -514,7 +480,7 @@ class Scheduler:
             for t in coordination:
                 await route_coordination_task(
                     t, self.store, self._running_tasks,
-                    self._hooks.on_task_done,
+                    self._emit,
                 )
 
             items = [
@@ -545,8 +511,9 @@ class Scheduler:
             cycle += 1
             total = len(items) + len(resumable)
 
-            if self._hooks.on_cycle_start:
-                await self._hooks.on_cycle_start(cycle, len(items), len(resumable))
+            await self._emit(CycleStarted(
+                cycle=cycle, available=len(items), resumable=len(resumable),
+            ))
 
             print(
                 f"Cycle {cycle}: {len(items)} new + {len(resumable)} "
@@ -579,18 +546,14 @@ class Scheduler:
                         "output": result.output,
                     })
 
-        if self._hooks.on_cycle_complete:
-            await self._hooks.on_cycle_complete(cycle)
+        await self._emit(CycleComplete(total_cycles=cycle))
 
         return all_summaries
 
     # -- internal ----------------------------------------------------------
 
     def _on_events_broadcast_internal(self, task: Ticket) -> None:
-        if self._hooks.on_events_broadcast:
-            self._hooks.on_events_broadcast(task)
-        if self._hooks.on_task_added:
-            asyncio.create_task(self._hooks.on_task_added(task))
+        asyncio.create_task(self._emit(TaskAdded(task=task)))
         self.trigger()
 
     async def _wrap_execution(
@@ -620,10 +583,9 @@ class Scheduler:
                 self._deliver_context_update(parent_id, update)
 
             enriched = self._enrich_parent_tags(updated)
-            if enriched and self._hooks.on_task_done:
-                await self._hooks.on_task_done(enriched)
-            if self._hooks.on_task_done:
-                await self._hooks.on_task_done(updated)
+            if enriched:
+                await self._emit(TaskDone(task=enriched))
+            await self._emit(TaskDone(task=updated))
 
             self.trigger()
 
@@ -648,7 +610,7 @@ class Scheduler:
             for t in coordination:
                 await route_coordination_task(
                     t, self.store, self._running_tasks,
-                    self._hooks.on_task_done,
+                    self._emit,
                 )
 
             items = [
@@ -665,10 +627,9 @@ class Scheduler:
 
             cycle += 1
 
-            if self._hooks.on_cycle_start:
-                await self._hooks.on_cycle_start(
-                    cycle, len(items), len(resumable),
-                )
+            await self._emit(CycleStarted(
+                cycle=cycle, available=len(items), resumable=len(resumable),
+            ))
 
             for item in items:
                 if item.id in self._running_tasks:
@@ -688,5 +649,4 @@ class Scheduler:
 
             await asyncio.sleep(1)
 
-        if self._hooks.on_cycle_complete:
-            await self._hooks.on_cycle_complete(cycle)
+        await self._emit(CycleComplete(total_cycles=cycle))

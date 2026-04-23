@@ -19,6 +19,11 @@ from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
 
 from bees.context_updates import updates_to_context_parts
+from bees.protocols.events import (
+    EventEmitter,
+    TaskEvent,
+    TaskStarted,
+)
 from bees.protocols.session import SessionResult, SessionRunner, SessionStream
 from bees.provisioner import provision_session
 from bees.segments import resolve_segments
@@ -57,8 +62,7 @@ class TaskRunner:
         get_mcp_factories: Callable[[], list | None],
         deliver_context_update: Callable[[str, dict[str, Any]], None],
         on_events_broadcast: Callable[[Ticket], None],
-        on_task_start: Callable[[Ticket], Awaitable[None]] | None = None,
-        on_task_event: Callable[[str, dict], Awaitable[None]] | None = None,
+        emit: EventEmitter,
     ) -> None:
         self._runner = runner
         self._store = store
@@ -67,8 +71,7 @@ class TaskRunner:
         self._get_mcp_factories = get_mcp_factories
         self._deliver_context_update = deliver_context_update
         self._on_events_broadcast = on_events_broadcast
-        self._on_task_start = on_task_start
-        self._on_task_event = on_task_event
+        self._emit = emit
 
     # -- public API --------------------------------------------------------
 
@@ -86,8 +89,7 @@ class TaskRunner:
 
         task.metadata.status = "running"
         self._store.save_metadata(task)
-        if self._on_task_start:
-            await self._on_task_start(task)
+        await self._emit(TaskStarted(task=task))
 
         label = task.id[:8]
         print(f"▶ [{label}] {task.objective!r}", file=sys.stderr)
@@ -195,8 +197,7 @@ class TaskRunner:
         task.metadata.status = "running"
         task.metadata.assignee = "agent"
         self._store.save_metadata(task)
-        if self._on_task_start:
-            await self._on_task_start(task)
+        await self._emit(TaskStarted(task=task))
 
         try:
             # Assemble context updates from both sources:
@@ -386,11 +387,10 @@ class TaskRunner:
         return deliver
 
     def _make_on_event(self, task_id: str):
-        """Create an event callback wired to the task-event hook."""
-        hook = self._on_task_event
+        """Create an event callback wired to the emit system."""
+        emit = self._emit
 
         async def on_event(event: dict[str, Any]):
-            if hook:
-                await hook(task_id, event)
+            await emit(TaskEvent(task_id=task_id, event=event))
 
         return on_event
