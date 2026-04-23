@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from bees.ticket import Ticket, TicketMetadata, TicketStatus, TicketKind
+from bees.ticket import Ticket, TicketMetadata, TicketStatus, TicketKind, RunnerType
 
 
 # Matches {{ticket-id-prefix}} references in objectives.
@@ -125,6 +125,7 @@ class TaskStore:
         kind: TicketKind = "work",
         signal_type: str | None = None,
         slug: str | None = None,
+        runner: RunnerType = "generate",
     ) -> Ticket:
         """Create a new task.
 
@@ -175,6 +176,7 @@ class TaskStore:
                 kind=kind,
                 signal_type=signal_type,
                 slug=slug,
+                runner=runner,
             ),
         )
         self.save(ticket)

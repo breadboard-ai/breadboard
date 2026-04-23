@@ -52,7 +52,7 @@ def write_template(tmp_path):
 @pytest.mark.asyncio
 async def test_wait_for_task_already_completed(mock_clients):
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
     
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.status = "completed"
@@ -65,7 +65,7 @@ async def test_wait_for_task_already_completed(mock_clients):
 @pytest.mark.asyncio
 async def test_wait_for_task_blocks_and_completes(mock_clients):
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
     
     ticket = GLOBAL_STORE.create("Objective")
     
@@ -86,7 +86,7 @@ async def test_wait_for_task_blocks_and_completes(mock_clients):
 @pytest.mark.asyncio
 async def test_wait_for_task_timeout(mock_clients):
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
     
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.status = "running"
@@ -99,7 +99,7 @@ async def test_wait_for_task_timeout(mock_clients):
 @pytest.mark.asyncio
 async def test_wait_for_task_returns_early_on_suspend(mock_clients):
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
     
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.status = "running"
@@ -121,7 +121,7 @@ async def test_wait_for_task_returns_early_on_suspend(mock_clients):
 @pytest.mark.asyncio
 async def test_wait_for_task_returns_early_on_fail(mock_clients):
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
     
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.status = "running"
@@ -143,7 +143,7 @@ async def test_wait_for_task_returns_early_on_fail(mock_clients):
 @pytest.mark.asyncio
 async def test_deliver_context_update_immediate(mock_clients):
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
     
     creator = GLOBAL_STORE.create("Parent Objective")
     creator.metadata.status = "suspended"
@@ -174,7 +174,7 @@ async def test_deliver_context_update_immediate(mock_clients):
 async def test_enrich_parent_tags_merges(mock_clients):
     """Child tags are merged (union) into the parent's existing tags."""
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
 
     parent = GLOBAL_STORE.create("Parent", tags=["b", "c"])
     child = GLOBAL_STORE.create("Child", tags=["a", "b"])
@@ -193,7 +193,7 @@ async def test_enrich_parent_tags_merges(mock_clients):
 async def test_enrich_parent_tags_no_parent(mock_clients):
     """No crash when parent_task_id points to a nonexistent task."""
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
 
     child = GLOBAL_STORE.create("Child", tags=["a"])
     child.metadata.parent_task_id = "nonexistent-id"
@@ -207,7 +207,7 @@ async def test_enrich_parent_tags_no_parent(mock_clients):
 async def test_enrich_parent_tags_no_tags(mock_clients):
     """Parent is unchanged when the child has no tags."""
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
 
     parent = GLOBAL_STORE.create("Parent", tags=["x"])
     child = GLOBAL_STORE.create("Child")  # No tags.
@@ -224,7 +224,7 @@ async def test_enrich_parent_tags_no_tags(mock_clients):
 async def test_enrich_parent_tags_parent_has_no_tags(mock_clients):
     """Parent with None tags receives the child's tags."""
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
 
     parent = GLOBAL_STORE.create("Parent")  # tags=None
     child = GLOBAL_STORE.create("Child", tags=["a"])
@@ -264,7 +264,7 @@ def test_update_metadata_paused(mock_clients):
     from bees.protocols.session import SessionResult
 
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
 
     ticket = GLOBAL_STORE.create("Objective")
     result = SessionResult(
@@ -290,7 +290,7 @@ def test_handle_pause_sets_status(mock_clients):
     from bees.protocols.session import SessionResult
 
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
 
     ticket = GLOBAL_STORE.create("Objective")
     ticket.metadata.status = "running"
@@ -340,7 +340,7 @@ async def test_boots_when_no_root_ticket_exists(mock_clients, write_template, tm
     system_path.write_text(yaml.dump({"root": "opie"}))
 
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
 
     ticket = await scheduler._boot_root_template([])
 
@@ -358,7 +358,7 @@ async def test_skips_when_root_already_booted(mock_clients, write_template, tmp_
     existing = run_playbook("opie", store=GLOBAL_STORE)
     
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
 
     ticket = await scheduler._boot_root_template([existing])
 
@@ -372,7 +372,7 @@ async def test_returns_none_when_no_root_configured(mock_clients, tmp_path, monk
     system_path.write_text(yaml.dump({"title": "My Hive"}))
 
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
 
     ticket = await scheduler._boot_root_template([])
     assert ticket is None
@@ -382,7 +382,7 @@ async def test_returns_none_when_no_root_configured(mock_clients, tmp_path, monk
 async def test_returns_none_when_no_system_yaml(mock_clients, tmp_path):
     
     _, backend = mock_clients
-    scheduler = Scheduler(store=GLOBAL_STORE, runner=backend)
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
 
     ticket = await scheduler._boot_root_template([])
     assert ticket is None

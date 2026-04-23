@@ -155,6 +155,8 @@ def provision_session(
         function_filter=function_filter,
         model=model,
         file_system=disk_fs,
+        ticket_id=ticket_id,
+        ticket_dir=ticket_dir,
         label=label,
         log_path=log_path,
         on_chat_entry=on_chat_entry,

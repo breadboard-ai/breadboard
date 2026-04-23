@@ -82,6 +82,8 @@ class TestSessionConfigurationConformance(unittest.TestCase):
             "function_filter",
             "model",
             "file_system",
+            "ticket_id",
+            "ticket_dir",
             "label",
             "log_path",
             "on_chat_entry",
