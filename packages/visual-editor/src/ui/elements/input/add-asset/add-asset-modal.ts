@@ -451,6 +451,7 @@ export class AddAssetModal extends LitElement {
             id="add-drive-proxy"
             ${ref(this.#addDriveInputRef)}
             .autoTrigger=${true}
+            .allowedMimeTypes=${this.allowedMimeTypes}
             @bbinputcancel=${() => {
               this.dispatchEvent(new OverlayDismissedEvent());
             }}
