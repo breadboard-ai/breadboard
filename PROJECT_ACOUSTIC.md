@@ -130,7 +130,7 @@ low-latency.
 
 ---
 
-## Phase 4 — Tool Dispatch Relay
+## Phase 4 — Tool Dispatch Relay ✅
 
 ### 🎯 Objective
 
@@ -146,13 +146,21 @@ file listing.
 
 ### Changes
 
-- [ ] `LiveSessionClient` — write `tool_dispatch/{call_id}.json` on
-      `toolCall` message. Watch for `.result.json`. Send `toolResponse` on WS.
-- [ ] `bees/runners/live.py` — `ToolDispatchWatcher`: async loop using
-      `awatch` on `tool_dispatch/` directory. Reads call JSON, looks up handler
-      via `TrampolineRegistry`, writes result JSON.
-- [ ] Wire watcher into `LiveStream` or `LiveRunner` lifecycle.
-- [ ] Handle dispatch timeout and error cases.
+- [x] `bees/runners/live.py` — refactored `_extract_declarations` to return
+      handler map alongside declarations.
+- [x] `bees/runners/live.py` — `ToolDispatchWatcher`: poll-based async loop
+      on `tool_dispatch/` directory. Reads call JSON (wire format), looks up
+      handler in provisioned function groups, writes result JSON.
+- [x] `LiveRunner.run()` — starts `ToolDispatchWatcher` as background task.
+      `LiveStream` cancels it on session end.
+- [x] `LiveSessionClient` — write `tool_dispatch/{call_id}.json` on
+      `toolCall` message. Observe with `FileSystemObserver` for `.result.json`.
+      Send `toolResponse` on WS. Polling fallback when observer unavailable.
+- [x] Dispatch files use Gemini wire format (`functionCall`/`functionResponse`
+      envelopes) for observability.
+- [x] Error handling: unknown handlers, handler exceptions, and 60s timeout
+      all write error results to prevent hangs.
+- [x] 28 tests passing (8 new for watcher, handler extraction, and lifecycle).
 
 ---
 
