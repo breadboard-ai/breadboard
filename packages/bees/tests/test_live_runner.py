@@ -21,9 +21,11 @@ from bees.protocols.session import SessionConfiguration
 from bees.runners.live import (
     BUNDLE_FILENAME,
     RESULT_FILENAME,
+    TOOL_DISPATCH_DIR,
     LiveRunner,
     LiveStream,
-    _NullHooks,
+    ToolDispatchWatcher,
+    _LiveHooks,
     _assemble_system_instruction,
     _extract_declarations,
     _matches_filter,
@@ -100,10 +102,10 @@ def _make_config(
 # ---------------------------------------------------------------------------
 
 
-def test_null_hooks_satisfies_protocol():
-    """_NullHooks can be used where SessionHooks is expected."""
-    hooks = _NullHooks()
-    assert hooks.controller is None
+def test_live_hooks_satisfies_protocol(temp_dir):
+    """_LiveHooks can be used where SessionHooks is expected."""
+    hooks = _LiveHooks(temp_dir)
+    assert hooks.controller is not None
     assert hooks.file_system is None
     assert hooks.task_tree_manager is None
 
@@ -142,7 +144,7 @@ def test_extract_declarations_no_filter():
         {"name": "tool_b", "description": "B"},
     ], instruction="Use these tools wisely.")
 
-    decls, instruction = _extract_declarations([factory], None)
+    decls, instruction, handlers = _extract_declarations([factory], None)
 
     assert len(decls) == 2
     assert decls[0]["name"] == "tool_a"
@@ -155,7 +157,7 @@ def test_extract_declarations_with_filter():
         {"name": "tool_b", "description": "B"},
     ])
 
-    decls, _ = _extract_declarations([factory], ["tool_a"])
+    decls, _, handlers = _extract_declarations([factory], ["tool_a"])
 
     assert len(decls) == 1
     assert decls[0]["name"] == "tool_a"
@@ -169,11 +171,40 @@ def test_extract_declarations_multiple_groups():
         {"name": "g2_fn", "description": "G2"},
     ], instruction="Group 2 instructions.")
 
-    decls, instruction = _extract_declarations([f1, f2], None)
+    decls, instruction, handlers = _extract_declarations([f1, f2], None)
 
     assert len(decls) == 2
     assert "Group 1 instructions." in instruction
     assert "Group 2 instructions." in instruction
+
+
+def test_extract_declarations_returns_handlers():
+    """Handler map contains handlers for all included declarations."""
+    factory = _make_test_factory("tools", [
+        {"name": "tool_a", "description": "A"},
+        {"name": "tool_b", "description": "B"},
+    ])
+
+    decls, _, handlers = _extract_declarations([factory], None)
+
+    assert len(handlers) == 2
+    assert "tool_a" in handlers
+    assert "tool_b" in handlers
+    assert callable(handlers["tool_a"])
+
+
+def test_extract_declarations_handlers_respect_filter():
+    """Handler map only includes declarations that pass the filter."""
+    factory = _make_test_factory("tools", [
+        {"name": "tool_a", "description": "A"},
+        {"name": "tool_b", "description": "B"},
+    ])
+
+    _, _, handlers = _extract_declarations([factory], ["tool_a"])
+
+    assert len(handlers) == 1
+    assert "tool_a" in handlers
+    assert "tool_b" not in handlers
 
 
 # ---------------------------------------------------------------------------
@@ -395,3 +426,197 @@ async def test_live_runner_resume_raises():
 
     with pytest.raises(NotImplementedError, match="cannot be resumed"):
         await runner.resume(config, state=b"")
+
+
+# ---------------------------------------------------------------------------
+# ToolDispatchWatcher
+# ---------------------------------------------------------------------------
+
+
+def _make_handler_map(handlers: dict[str, any]):
+    """Create a handler map from simple sync functions."""
+    result = {}
+    for name, fn in handlers.items():
+        async def _handler(args, status, _fn=fn):
+            return _fn(args)
+        result[name] = _handler
+    return result
+
+
+@pytest.mark.asyncio
+async def test_tool_dispatch_watcher_processes_call(temp_dir):
+    """Watcher reads a call file, executes the handler, writes the result."""
+    dispatch_dir = temp_dir / TOOL_DISPATCH_DIR
+    dispatch_dir.mkdir()
+
+    handler_map = _make_handler_map({
+        "list_files": lambda args: {"files": ["a.txt", "b.txt"]},
+    })
+
+    watcher = ToolDispatchWatcher(dispatch_dir, handler_map, poll_interval=0.05)
+
+    # Write a call file.
+    call_path = dispatch_dir / "call-001.json"
+    call_path.write_text(json.dumps({
+        "functionCall": {
+            "id": "call-001",
+            "name": "list_files",
+            "args": {"path": "/"},
+        },
+    }))
+
+    # Run one scan cycle.
+    await watcher._scan_once()
+
+    # Verify the result file was written.
+    result_path = dispatch_dir / "call-001.result.json"
+    assert result_path.exists()
+
+    result = json.loads(result_path.read_text())
+    assert result["functionResponse"]["id"] == "call-001"
+    assert result["functionResponse"]["name"] == "list_files"
+    assert result["functionResponse"]["response"]["files"] == ["a.txt", "b.txt"]
+
+
+@pytest.mark.asyncio
+async def test_tool_dispatch_watcher_handles_error(temp_dir):
+    """Watcher writes an error result when the handler raises."""
+    dispatch_dir = temp_dir / TOOL_DISPATCH_DIR
+    dispatch_dir.mkdir()
+
+    def _failing_handler(args):
+        raise RuntimeError("disk full")
+
+    handler_map = _make_handler_map({"fail_fn": _failing_handler})
+    watcher = ToolDispatchWatcher(dispatch_dir, handler_map, poll_interval=0.05)
+
+    call_path = dispatch_dir / "call-err.json"
+    call_path.write_text(json.dumps({
+        "functionCall": {
+            "id": "call-err",
+            "name": "fail_fn",
+            "args": {},
+        },
+    }))
+
+    await watcher._scan_once()
+
+    result_path = dispatch_dir / "call-err.result.json"
+    assert result_path.exists()
+
+    result = json.loads(result_path.read_text())
+    assert "disk full" in result["functionResponse"]["response"]["error"]
+
+
+@pytest.mark.asyncio
+async def test_tool_dispatch_watcher_unknown_handler(temp_dir):
+    """Watcher writes error for unknown function names."""
+    dispatch_dir = temp_dir / TOOL_DISPATCH_DIR
+    dispatch_dir.mkdir()
+
+    watcher = ToolDispatchWatcher(dispatch_dir, {}, poll_interval=0.05)
+
+    call_path = dispatch_dir / "call-unknown.json"
+    call_path.write_text(json.dumps({
+        "functionCall": {
+            "id": "call-unknown",
+            "name": "nonexistent_fn",
+            "args": {},
+        },
+    }))
+
+    await watcher._scan_once()
+
+    result_path = dispatch_dir / "call-unknown.result.json"
+    assert result_path.exists()
+
+    result = json.loads(result_path.read_text())
+    assert "Unknown function" in result["functionResponse"]["response"]["error"]
+
+
+@pytest.mark.asyncio
+async def test_tool_dispatch_watcher_skips_processed(temp_dir):
+    """Watcher skips calls that already have a result file."""
+    dispatch_dir = temp_dir / TOOL_DISPATCH_DIR
+    dispatch_dir.mkdir()
+
+    call_count = 0
+
+    def _counting_handler(args):
+        nonlocal call_count
+        call_count += 1
+        return {"ok": True}
+
+    handler_map = _make_handler_map({"count_fn": _counting_handler})
+    watcher = ToolDispatchWatcher(dispatch_dir, handler_map, poll_interval=0.05)
+
+    # Write call and pre-existing result.
+    call_path = dispatch_dir / "call-skip.json"
+    call_path.write_text(json.dumps({
+        "functionCall": {
+            "id": "call-skip",
+            "name": "count_fn",
+            "args": {},
+        },
+    }))
+    result_path = dispatch_dir / "call-skip.result.json"
+    result_path.write_text(json.dumps({
+        "functionResponse": {
+            "id": "call-skip",
+            "name": "count_fn",
+            "response": {"ok": True},
+        },
+    }))
+
+    await watcher._scan_once()
+
+    assert call_count == 0, "Handler should not be called for pre-processed calls"
+
+
+@pytest.mark.asyncio
+async def test_tool_dispatch_watcher_stops_on_cancel(temp_dir):
+    """Watcher run() terminates cleanly on cancellation."""
+    dispatch_dir = temp_dir / TOOL_DISPATCH_DIR
+
+    watcher = ToolDispatchWatcher(dispatch_dir, {}, poll_interval=0.02)
+    task = asyncio.create_task(watcher.run())
+
+    # Let it run a few cycles.
+    await asyncio.sleep(0.1)
+    assert not task.done()
+
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+
+@pytest.mark.asyncio
+async def test_live_stream_cancels_watcher(temp_dir):
+    """LiveStream cancels the watcher task when the stream exhausts."""
+    # Create a dummy watcher task.
+    async def _dummy_watcher():
+        try:
+            while True:
+                await asyncio.sleep(0.01)
+        except asyncio.CancelledError:
+            raise
+
+    watcher_task = asyncio.create_task(_dummy_watcher())
+
+    stream = LiveStream(temp_dir, poll_interval=0.05, watcher_task=watcher_task)
+
+    # Write the result file immediately.
+    result_path = temp_dir / RESULT_FILENAME
+    result_path.write_text(json.dumps({"status": "completed"}))
+
+    # Drain the stream.
+    events = []
+    async for event in stream:
+        events.append(event)
+
+    assert len(events) == 1
+    assert "complete" in events[0]
+
+    # Give a tick for the cancellation to propagate.
+    await asyncio.sleep(0.05)
+    assert watcher_task.cancelled() or watcher_task.done()

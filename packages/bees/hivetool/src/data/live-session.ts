@@ -84,6 +84,7 @@ class LiveSessionClient {
   #ticketDir: FileSystemDirectoryHandle;
   #audioInput: AudioInput | null = null;
   #audioOutput = new AudioOutput();
+  #dispatchObserver: { disconnect(): void } | null = null;
 
   constructor(
     bundle: LiveSessionBundle,
@@ -165,6 +166,8 @@ class LiveSessionClient {
   disconnect(): void {
     this.stopMic();
     this.#audioOutput.dispose();
+    this.#dispatchObserver?.disconnect();
+    this.#dispatchObserver = null;
     if (!this.#ws) return;
     this.#ws.close(1000, "Client disconnect");
     this.#ws = null;
@@ -254,13 +257,228 @@ class LiveSessionClient {
       }
     }
 
-    // Tool calls — Phase 4 will handle these.
+    // Tool calls — dispatch via filesystem and relay results.
     if (message.toolCall) {
+      const calls = message.toolCall.functionCalls;
       console.log(
         `[live:${this.taskId.slice(0, 8)}] Tool call:`,
-        message.toolCall.functionCalls.map((fc) => fc.name).join(", "),
+        calls.map((fc) => fc.name).join(", "),
       );
+      // Fire-and-forget — dispatches concurrently while audio continues.
+      void this.#dispatchToolCalls(calls);
     }
+  }
+
+  // ── Tool dispatch ──
+
+  /**
+   * Dispatch tool calls through the filesystem and relay results.
+   *
+   * 1. Write each call as `tool_dispatch/{id}.json` (wire format).
+   * 2. Observe the directory with `FileSystemObserver` for `.result.json` files.
+   * 3. When all results arrive, send a single `toolResponse` on the WebSocket.
+   */
+  async #dispatchToolCalls(
+    calls: Array<{ id: string; name: string; args: Record<string, unknown> }>,
+  ): Promise<void> {
+    const tag = `[live:${this.taskId.slice(0, 8)}]`;
+
+    let dispatchDir: FileSystemDirectoryHandle;
+    try {
+      dispatchDir = await this.#ticketDir.getDirectoryHandle(
+        "tool_dispatch",
+        { create: true },
+      );
+    } catch (e) {
+      console.error(`${tag} Failed to create tool_dispatch dir:`, e);
+      return;
+    }
+
+    // Write all call files.
+    for (const call of calls) {
+      const callData = {
+        functionCall: { id: call.id, name: call.name, args: call.args },
+      };
+      try {
+        const fh = await dispatchDir.getFileHandle(
+          `${call.id}.json`,
+          { create: true },
+        );
+        const w = await fh.createWritable();
+        await w.write(JSON.stringify(callData, null, 2) + "\n");
+        await w.close();
+      } catch (e) {
+        console.error(`${tag} Failed to write call file for ${call.id}:`, e);
+      }
+    }
+
+    // Collect results — one per call.
+    const pending = new Map<
+      string,
+      { name: string; resolve: (result: Record<string, unknown>) => void }
+    >();
+    const resultPromises: Array<Promise<Record<string, unknown>>> = [];
+
+    for (const call of calls) {
+      const p = new Promise<Record<string, unknown>>((resolve) => {
+        pending.set(call.id, { name: call.name, resolve });
+      });
+      resultPromises.push(p);
+    }
+
+    // Try to read results that may already exist (fast handler).
+    for (const call of calls) {
+      if (await this.#tryReadResult(dispatchDir, call.id, pending)) {
+        // Already resolved.
+      }
+    }
+
+    // If all resolved immediately, send response and return.
+    if (pending.size === 0) {
+      const results = await Promise.all(resultPromises);
+      this.#sendToolResponse(results);
+      return;
+    }
+
+    // Observe for remaining results via FileSystemObserver.
+    if ("FileSystemObserver" in globalThis) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const Ctor = (globalThis as any).FileSystemObserver;
+
+      const observer = new Ctor(async (records: unknown[]) => {
+        for (const record of records) {
+          const r = record as {
+            relativePathComponents?: string[];
+            type?: string;
+          };
+          const parts = r.relativePathComponents;
+          if (!parts || parts.length === 0) continue;
+
+          const filename = parts[parts.length - 1];
+          if (!filename.endsWith(".result.json")) continue;
+
+          const callId = filename.replace(".result.json", "");
+          if (!pending.has(callId)) continue;
+
+          await this.#tryReadResult(dispatchDir, callId, pending);
+        }
+
+        // All results collected — send response.
+        if (pending.size === 0) {
+          observer.disconnect();
+          const results = await Promise.all(resultPromises);
+          this.#sendToolResponse(results);
+        }
+      });
+
+      observer.observe(dispatchDir, { recursive: false });
+
+      // Store for cleanup on disconnect.
+      this.#dispatchObserver?.disconnect();
+      this.#dispatchObserver = observer;
+
+      // Timeout: 60s safety net.
+      setTimeout(() => {
+        if (pending.size > 0) {
+          console.warn(
+            `${tag} Tool dispatch timeout — ${pending.size} calls pending`,
+          );
+          for (const [id, entry] of pending) {
+            entry.resolve({
+              id,
+              name: entry.name,
+              response: { error: "Dispatch timeout" },
+            });
+          }
+          pending.clear();
+          observer.disconnect();
+          void Promise.all(resultPromises).then((results) =>
+            this.#sendToolResponse(results),
+          );
+        }
+      }, 60_000);
+    } else {
+      // Fallback: poll-based (if FileSystemObserver unavailable).
+      const POLL_MS = 300;
+      const TIMEOUT_MS = 60_000;
+      const start = Date.now();
+
+      const poll = async () => {
+        while (pending.size > 0 && Date.now() - start < TIMEOUT_MS) {
+          for (const callId of [...pending.keys()]) {
+            await this.#tryReadResult(dispatchDir, callId, pending);
+          }
+          if (pending.size > 0) {
+            await new Promise((r) => setTimeout(r, POLL_MS));
+          }
+        }
+
+        // Timeout any remaining.
+        for (const [id, entry] of pending) {
+          entry.resolve({
+            id,
+            name: entry.name,
+            response: { error: "Dispatch timeout" },
+          });
+        }
+        pending.clear();
+
+        const results = await Promise.all(resultPromises);
+        this.#sendToolResponse(results);
+      };
+
+      void poll();
+    }
+  }
+
+  /** Try to read a result file; resolve the pending entry if found. */
+  async #tryReadResult(
+    dispatchDir: FileSystemDirectoryHandle,
+    callId: string,
+    pending: Map<
+      string,
+      { name: string; resolve: (result: Record<string, unknown>) => void }
+    >,
+  ): Promise<boolean> {
+    try {
+      const fh = await dispatchDir.getFileHandle(`${callId}.result.json`);
+      const file = await fh.getFile();
+      const text = await file.text();
+      const data = JSON.parse(text) as {
+        functionResponse?: {
+          id: string;
+          name: string;
+          response: Record<string, unknown>;
+        };
+      };
+
+      const entry = pending.get(callId);
+      if (entry && data.functionResponse) {
+        entry.resolve(data.functionResponse);
+        pending.delete(callId);
+        return true;
+      }
+    } catch {
+      // File doesn't exist yet — expected.
+    }
+    return false;
+  }
+
+  /** Send tool response on the WebSocket. */
+  #sendToolResponse(
+    responses: Array<Record<string, unknown>>,
+  ): void {
+    const tag = `[live:${this.taskId.slice(0, 8)}]`;
+    console.log(
+      `${tag} Sending tool response for`,
+      responses.length,
+      "calls",
+    );
+    this.send({
+      toolResponse: {
+        functionResponses: responses,
+      },
+    });
   }
 
   // ── Result writing ──

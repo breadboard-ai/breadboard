@@ -338,6 +338,4 @@
   description: A simple live session.
   functions:
     - system.*
-  objective: >-
-    Engage with user with in a causal conversation. You are done when the user
-    says "good night".
+  objective: List files and tell the user if there are any. Otherwise, say "no files"
