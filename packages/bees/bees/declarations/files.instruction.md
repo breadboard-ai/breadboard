@@ -6,7 +6,7 @@ no path prefix is needed. Use snake_case. Examples: `robot_poem.txt`,
 
 You can embed files in your output using the `<file src="filename.ext" />` syntax.
 
-Only reference files that you know to exist. Call `system_list_files`
+Only reference files that you know to exist. Call `files_list_files`
 to confirm their existence. Do NOT make hypothetical file tags — they
 will cause processing errors.
 

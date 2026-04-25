@@ -7,7 +7,7 @@ injection — so that handler bodies can eventually be inlined without any
 
 ## Context
 
-Three bees function modules (`chat.py`, `simple_files.py`, `system.py`) delegate
+Three bees function modules (`chat.py`, `files.py`, `system.py`) delegate
 to `opal_backend`'s `_make_handlers`. Those handler factories use internal
 types: `SuspendError`, suspend event dataclasses, `AgentResult`,
 `LoopController`, `CONTEXT_PARTS_KEY`, and `ChatEntryCallback`.

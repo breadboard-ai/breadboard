@@ -1,6 +1,6 @@
 [
   {
-    "name": "system_list_files",
+    "name": "files_list_files",
     "description": "Lists all files",
     "parametersJsonSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -32,7 +32,7 @@
     }
   },
   {
-    "name": "system_write_file",
+    "name": "files_write_file",
     "description": "Writes the provided text to a file",
     "parametersJsonSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -70,7 +70,7 @@
     }
   },
   {
-    "name": "system_read_text_from_file",
+    "name": "files_read_text_from_file",
     "description": "Reads text from a file and return text as string. If the file does not contain text or is not supported, an error will be returned. Google Drive files may contain images and other non-textual content. Please use \"generate_text\" to read them at full fidelity.",
     "parametersJsonSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -103,7 +103,7 @@
     }
   },
   {
-    "name": "system_list_dir",
+    "name": "files_list_dir",
     "description": "Lists the contents of a directory, showing files and subdirectories with their sizes. Text files also include a line count.",
     "parametersJsonSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

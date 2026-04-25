@@ -30,7 +30,7 @@ Tracing `run_session()`, the provisioning steps are:
    `merge_function_filter`).
 3. Create `DiskFileSystem` backed by `fs_dir` or `ticket_dir/filesystem`.
 4. Seed skill files into the file system.
-5. Assemble function group factories (system, simple_files, skills, sandbox,
+5. Assemble function group factories (system, files, skills, sandbox,
    events, tasks, chat) plus MCP factories.
 6. Resolve the model name and log path.
 

@@ -696,19 +696,15 @@ class LiveStream:
             # User's speech transcribed by the Live API.
             text = data.get("text", "")
             if text:
-                self._context.append({
-                    "role": "user",
-                    "parts": [{"text": text}],
-                })
+                self._coalesce_transcript("user", text)
 
         elif event_type == "outputTranscript":
             # Model's audio output transcribed by the Live API.
+            # The Live API sends these word-by-word; coalescing
+            # prevents ~80 context entries per sentence.
             text = data.get("text", "")
             if text:
-                self._context.append({
-                    "role": "model",
-                    "parts": [{"text": text}],
-                })
+                self._coalesce_transcript("model", text)
 
         elif event_type == "sessionEnd":
             # Session complete — flush remaining context, cancel
@@ -730,6 +726,21 @@ class LiveStream:
                     },
                 }})
             self._done = True
+
+    def _coalesce_transcript(self, role: str, text: str) -> None:
+        """Append transcript text, merging with the last same-role entry.
+
+        The Live API sends ``outputTranscription`` (and sometimes
+        ``inputTranscription``) word-by-word.  Without coalescing,
+        a single sentence produces ~80 separate context entries.
+        This merges consecutive same-role fragments into one entry.
+        """
+        if self._context and self._context[-1].get("role") == role:
+            last_parts = self._context[-1].get("parts", [])
+            if last_parts and "text" in last_parts[-1]:
+                last_parts[-1]["text"] += text
+                return
+        self._context.append({"role": role, "parts": [{"text": text}]})
 
     def _flush_final_context(self) -> None:
         """Emit a final sendRequest to capture any pending context.

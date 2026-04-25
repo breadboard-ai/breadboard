@@ -6,7 +6,7 @@ description:
   mini-app. Segments are separated by LLM decision points where the orchestrator
   decides what comes next.
 allowed-tools:
-  - simple-files.*
+  - files.*
 ---
 
 # App Architect

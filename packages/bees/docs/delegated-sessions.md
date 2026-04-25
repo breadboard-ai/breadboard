@@ -60,7 +60,7 @@ A template opts into delegated execution via `session_type`:
   skills:
     - persona
   functions:
-    - simple-files.*
+    - files.*
     - tasks.*
 ```
 

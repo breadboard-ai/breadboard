@@ -117,13 +117,13 @@ The built-in functions are:
 | -------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `system`       | `system.*`       | Termination: `system_objective_fulfilled`, `system_failed_to_fulfill_objective`.                                                                                 |
 | `chat`         | `chat.*`         | Resume/suspend: `chat_request_user_input`, `chat_present_choices`, `chat_await_context_update`.                                                                  |
-| `simple-files` | `simple-files.*` | File I/O: `system_write_text_to_file`, `system_list_files`, `system_read_text_from_file`.                                                                        |
+| `files` | `files.*` | File I/O: `files_write_file`, `files_list_files`, `files_read_text_from_file`.                                                                        |
 | `sandbox`      | `sandbox.*`      | `execute_bash` - Sandboxed bash execution in the task's working directory                                                                                        |
 | `generate`     | `generate.*`     | Multimodal content generation and search grounding `generate_text`, `generate_images`, `generate_video`, `generate_speech_from_text`, `generate_music_from_text` |
 
 #### The file system
 
-Each session has its own file system. The `simple-files.*` functions allow the
+Each session has its own file system. The `files.*` functions allow the
 agent to read and write files in the session's working directory. It is
 implemented as a VFS (Virtual File System) that can be backed by different
 storage mechanisms. Currently, the file system is backed by the disk, but it can
@@ -153,9 +153,9 @@ expected to run to completion without human intervention.
 | Configuration                                 | Example                                                                                             |
 | --------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | `chat.*`                                      | A typical conversational chat bot with no additional capabilities                                   |
-| `system.*`, `simple-files.*`                  | Context window compaction subagent: reads current context logs then summarizes them                 |
-| `system.*`, `generate.text`, `simple-files.*` | A researcher that uses search grounding capabilities of `generate_text` functions to write a report |
-| `chat.*`, `sandbox.*`, `simple-files.*`       | A conversational coding agent                                                                       |
+| `system.*`, `files.*`                  | Context window compaction subagent: reads current context logs then summarizes them                 |
+| `system.*`, `generate.text`, `files.*` | A researcher that uses search grounding capabilities of `generate_text` functions to write a report |
+| `chat.*`, `sandbox.*`, `files.*`       | A conversational coding agent                                                                       |
 
 ---
 
@@ -272,13 +272,13 @@ Here's the full table of all templates:
 
 | Template             | Skills           | Functions                                             | Can create                                                             | Effect                                                                                                                                                                                                                |
 | -------------------- | ---------------- | ----------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `assistant`          | `persona`        | `simple-files.*`, `tasks.*`, `chat.*`                 | `journey-manager`, `knowledge`                                         | A conversational executive assistant. Chats with users, delegates all real work to the `journey-manager` sub-agent. Never does complex work itself to keep the conversation open. Auto-starts a `knowledge` gatherer. |
-| `journey-manager`    | `interview-user` | `simple-files.*`, `tasks.*`, `chat.*`                 | `researcher`, `ui-generator`, `journey-designer`, `digest-tile-writer` | A project manager. Interviews the user, then orchestrates a pipeline of research → design → build → iterate. Uses the same "delegate to keep the conversation open" pattern as `assistant`.                           |
-| `researcher`         | —                | `system.*`, `simple-files.*`, `generate.text`         | —                                                                      | A headless worker. Uses search grounding to research a topic, writes findings to files, terminates.                                                                                                                   |
+| `assistant`          | `persona`        | `files.*`, `tasks.*`, `chat.*`                 | `journey-manager`, `knowledge`                                         | A conversational executive assistant. Chats with users, delegates all real work to the `journey-manager` sub-agent. Never does complex work itself to keep the conversation open. Auto-starts a `knowledge` gatherer. |
+| `journey-manager`    | `interview-user` | `files.*`, `tasks.*`, `chat.*`                 | `researcher`, `ui-generator`, `journey-designer`, `digest-tile-writer` | A project manager. Interviews the user, then orchestrates a pipeline of research → design → build → iterate. Uses the same "delegate to keep the conversation open" pattern as `assistant`.                           |
+| `researcher`         | —                | `system.*`, `files.*`, `generate.text`         | —                                                                      | A headless worker. Uses search grounding to research a topic, writes findings to files, terminates.                                                                                                                   |
 | `journey-designer`   | `app-architect`  | `system.*`                                            | —                                                                      | A headless worker. Reads a skill for the spec, produces a `journey.json` blueprint, terminates. No file I/O beyond what the skill provides.                                                                           |
-| `ui-generator`       | `ui-generator`   | `sandbox.*`, `simple-files.*`, `events.*`, `system.*` | —                                                                      | A headless worker. Reads journey specs, generates React components, runs a bundler via sandbox, broadcasts an `app_update` event when done.                                                                           |
-| `knowledge`          | —                | `chat.await_context_update`, `simple-files.*`         | —                                                                      | An infinite observer. Watches for `digest_ready` events, reads the shared filesystem, synthesizes knowledge files. Never terminates — `chat.await_context_update` without `system.*`.                                 |
-| `digest-tile-writer` | —                | `system.*`, `events.*`, `simple-files.*`              | —                                                                      | Fire-and-forget headless worker. Writes a digest JSON, broadcasts `digest_ready`, terminates.                                                                                                                         |
+| `ui-generator`       | `ui-generator`   | `sandbox.*`, `files.*`, `events.*`, `system.*` | —                                                                      | A headless worker. Reads journey specs, generates React components, runs a bundler via sandbox, broadcasts an `app_update` event when done.                                                                           |
+| `knowledge`          | —                | `chat.await_context_update`, `files.*`         | —                                                                      | An infinite observer. Watches for `digest_ready` events, reads the shared filesystem, synthesizes knowledge files. Never terminates — `chat.await_context_update` without `system.*`.                                 |
+| `digest-tile-writer` | —                | `system.*`, `events.*`, `files.*`              | —                                                                      | Fire-and-forget headless worker. Writes a digest JSON, broadcasts `digest_ready`, terminates.                                                                                                                         |
 
 ### Scheduler built-in functions
 

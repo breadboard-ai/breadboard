@@ -52,7 +52,7 @@ The functions in `bees/functions/` are framework capabilities:
 | `skills.py`       | Load skill instructions    | No               |
 | `chat.py`         | Conversation control       | No               |
 | `system.py`       | Workspace file operations  | No               |
-| `simple_files.py` | File I/O                   | No               |
+| `files.py` | File I/O                   | No               |
 | `mcp_bridge.py`   | MCP server forwarding      | No               |
 | `sandbox.py`      | Sandboxed code execution   | No               |
 
@@ -281,7 +281,7 @@ All 8 function modules import `opal_backend.function_definition` for:
 - `FunctionGroup`, `FunctionGroupFactory`, `SessionHooks` (types)
 - `assemble_function_group`, `load_declarations` (assembly utilities)
 
-Additionally, `chat.py` and `simple_files.py` import `_make_handlers` from
+Additionally, `chat.py` and `files.py` import `_make_handlers` from
 `opal_backend.functions.*` — these delegate to `opal_backend`'s built-in
 handlers for file I/O and chat.
 
@@ -301,7 +301,7 @@ bees-native `FileSystem` protocol that mirrors the shape.
 the split, bees manages MCP connections as framework infrastructure (since
 `mcp_bridge.py` stays in bees). The runner doesn't need to know about MCP.
 
-**`_make_handlers` delegation.** `chat.py` and `simple_files.py` import handler
+**`_make_handlers` delegation.** `chat.py` and `files.py` import handler
 factories from `opal_backend.functions.*`. These need to either move into bees
 (if the logic is framework-level) or be injected by the runner (if they're
 provider-specific). Needs investigation.

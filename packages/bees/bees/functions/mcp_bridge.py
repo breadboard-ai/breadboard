@@ -42,7 +42,7 @@ from bees.protocols.functions import (
 logger = logging.getLogger(__name__)
 
 _BUILTIN_GROUP_NAMES = frozenset({
-    "system", "chat", "simple-files", "sandbox",
+    "system", "chat", "files", "sandbox",
     "events", "tasks", "skills", "generate",
 })
 

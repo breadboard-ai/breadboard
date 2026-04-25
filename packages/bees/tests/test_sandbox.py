@@ -57,13 +57,13 @@ async def test_sandbox_restricts_writes_to_slug(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_simple_files_restricts_writes_to_slug():
-    from bees.functions.simple_files import get_simple_files_function_group_factory
+async def test_files_restricts_writes_to_slug():
+    from bees.functions.files import get_files_function_group_factory
     from unittest.mock import MagicMock
     
     slug = "my-slug"
     scope = SubagentScope(workspace_root_id="r", slug_path=slug)
-    factory = get_simple_files_function_group_factory(scope=scope)
+    factory = get_files_function_group_factory(scope=scope)
     
     mock_hooks = MagicMock()
     mock_hooks.file_system = MagicMock()
@@ -71,10 +71,10 @@ async def test_simple_files_restricts_writes_to_slug():
     
     fg = factory(mock_hooks)
     
-    # Find system_write_file handler
+    # Find files_write_file handler
     write_handler = None
     for name, defn in fg.definitions:
-        if name == "system_write_file":
+        if name == "files_write_file":
             write_handler = defn.handler
             break
             

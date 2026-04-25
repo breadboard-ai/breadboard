@@ -13,12 +13,12 @@ class TestMergeFunctionFilter:
     def test_template_filter_plus_skill_tools(self):
         """Template functions + skill allowed-tools → union of both."""
         result = merge_function_filter(
-            function_filter=["simple-files.*", "tasks.*"],
+            function_filter=["files.*", "tasks.*"],
             skill_tools=["sandbox.*", "events.*"],
             allowed_skills=["ui-generator"],
         )
         assert result == [
-            "simple-files.*", "tasks.*", "sandbox.*", "events.*", "skills.*",
+            "files.*", "tasks.*", "sandbox.*", "events.*", "skills.*",
         ]
 
     def test_no_template_filter_with_skill_tools(self):
@@ -29,13 +29,13 @@ class TestMergeFunctionFilter:
         """
         result = merge_function_filter(
             function_filter=None,
-            skill_tools=["sandbox.*", "simple-files.*", "events.*", "system.*"],
+            skill_tools=["sandbox.*", "files.*", "events.*", "system.*"],
             allowed_skills=["ui-generator"],
         )
         assert result is not None, "Must not be None — would allow all functions"
         assert "skills.*" in result
         assert "sandbox.*" in result
-        assert "simple-files.*" in result
+        assert "files.*" in result
 
     def test_no_skills_no_filter_stays_none(self):
         """No skills, no filter → None (allow everything)."""

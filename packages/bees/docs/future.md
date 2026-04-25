@@ -47,7 +47,7 @@ Bees-native copies of `FunctionGroup`, `FunctionDefinition`, `SessionHooks`,
 `load_declarations`, and `assemble_function_group` live in
 `bees/protocols/functions.py`. All 8 function modules now import from
 `bees.protocols` instead of `opal_backend.function_definition`. Remaining
-`opal_backend` imports in `chat.py`, `simple_files.py`, and `system.py` are
+`opal_backend` imports in `chat.py`, `files.py`, and `system.py` are
 handler-level (`_make_handlers`) — a separate spec.
 
 **FileSystem types** ([spec](../spec/filesystem.md)) — ✅ complete. Bees-native
@@ -70,7 +70,7 @@ use for suspend/resume, session termination, and context injection.
 
 **Handler bodies** ([spec](../spec/handler-bodies.md)) — ✅ complete. Handler
 logic from `opal_backend.functions.{chat,system}._make_handlers` is inlined into
-bees' three function modules (`system.py`, `chat.py`, `simple_files.py`). All
+bees' three function modules (`system.py`, `chat.py`, `files.py`). All
 imports come from `bees.protocols` and `bees.pidgin`. Task tree management
 (`TaskTreeManager`, `set_in_progress` calls) stays in opal_backend — it's not a
 bees concern. The `bees/functions/` directory has **zero** `opal_backend`

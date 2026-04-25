@@ -236,7 +236,7 @@ agent to fulfill, persisted as a directory on disk.
 | `title`        | string   | no       | Human-readable title shown in UI and task type listings.                                                                                                                      |
 | `description`  | string   | no       | Short summary shown in task type listings.                                                                                                                                    |
 | `objective`    | string   | no       | The agent's instructions (natural-language prompt). Supports `{{system.context}}` and `{{system.ticket_id}}` interpolation.                                                   |
-| `functions`    | string[] | no       | Function filter globs controlling which tools the agent can use. Empty/omitted = all functions available. Examples: `"simple-files.*"`, `"tasks.*"`, `"system.*"`.            |
+| `functions`    | string[] | no       | Function filter globs controlling which tools the agent can use. Empty/omitted = all functions available. Examples: `"files.*"`, `"tasks.*"`, `"system.*"`.            |
 | `skills`       | string[] | no       | Names of skill directories to load into the session. Each name must match a subdirectory of `hive/skills/`.                                                                   |
 | `tags`         | string[] | no       | Metadata tags for UI routing, lifecycle hooks, and filtering. Special tags: `"chat"` enables persistent chat history; `"bundle"` marks templates that produce bundled output. |
 | `model`        | string   | no       | Override the default model (e.g., `"gemini-3.1-pro-preview"`).                                                                                                                |
@@ -256,7 +256,7 @@ Template objectives support placeholder interpolation:
 
 The `functions` field uses glob patterns to filter which tools are available:
 
-- `"simple-files.*"` — all functions in the `simple-files` group.
+- `"files.*"` — all functions in the `files` group.
 - `"system.*"` — all system functions (terminate, context access).
 - `"tasks.*"` — task delegation functions.
 - `"chat.*"` — chat functions (request user input, await context updates).
@@ -281,5 +281,5 @@ Omitting `functions` entirely grants access to all available functions.
     research-data.json or research-notes.md.
 
     Return the relative path of the file with research.
-  functions: ["system.*", "sandbox.*", "simple-files.*", "generate.text"]
+  functions: ["system.*", "sandbox.*", "files.*", "generate.text"]
 ```

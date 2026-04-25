@@ -12,7 +12,7 @@ File visibility
 ---------------
 When a ``DiskFileSystem`` is in use, the file system and bash share
 the same ``work_dir`` directory.  Files written by the agent via
-``system_write_file`` are immediately visible to bash, and files
+``files_write_file`` are immediately visible to bash, and files
 created by bash are immediately visible to the agent — no sync
 needed.
 """

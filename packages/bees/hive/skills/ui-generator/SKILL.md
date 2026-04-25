@@ -6,7 +6,7 @@ description:
   language descriptions.
 allowed-tools:
   - sandbox.*
-  - simple-files.*
+  - files.*
   - events.*
   - system.*
 ---
@@ -77,7 +77,7 @@ pipeline.
 
 You MUST save all generated files to the real filesystem in your working
 directory (`$HOME`) by using the `execute_bash` tool. **Do NOT use
-`system_write_file`**, because it writes to a virtual filesystem that the
+`files_write_file`**, because it writes to a virtual filesystem that the
 bundler cannot access.
 
 **CRITICAL STYLING RULES: NO TAILWIND!**
@@ -125,7 +125,7 @@ previous runs. Each subdirectory is a previous run, containing its `App.jsx` and
 
 **Reuse workflow:**
 
-1. Use `system_read_text_from_file` to list `library/` and browse available
+1. Use `files_read_text_from_file` to list `library/` and browse available
    components.
 2. If a component matches what you need (e.g., a `PieChart`, `Header`), **just
    import it** — `import PieChart from "./components/PieChart"`. You do NOT need
@@ -409,7 +409,7 @@ export default function SelectModels({ data = {}, onTransition }) {
   optimized `bundle.js` and `bundle.css` in your working directory, ready for
   the iframe to render.
 - Do NOT use hallucinated tools like `generate_and_execute_code` or
-  `system_write_file`. Ensure all operations happen on the real filesystem via
+  `files_write_file`. Ensure all operations happen on the real filesystem via
   `execute_bash`.
 
 ## Available Globals

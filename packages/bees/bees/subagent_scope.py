@@ -101,7 +101,7 @@ class SubagentScope:
             "Your current working directory is the root of the workspace.\n"
             f"You are assigned to work in the subdirectory: ./{self.slug_path}\n"
             f"CRITICAL: You must prefix all file paths with {self.slug_path}/ "
-            "when creating or writing files (e.g., using system_write_file or "
+            "when creating or writing files (e.g., using files_write_file or "
             "redirection in bash). Writes to the root directory or other "
             "directories will fail.\n"
             "You can read files from anywhere in the workspace.\n"
