@@ -20,7 +20,6 @@ import type { TicketStore, FileTreeNode } from "../data/ticket-store.js";
 import type { MutationClient } from "../data/mutation-client.js";
 import type { TemplateStore } from "../data/template-store.js";
 import type { SkillStore } from "../data/skill-store.js";
-import { LiveSessionClient } from "../data/live-session.js";
 import { sharedStyles } from "./shared-styles.js";
 import { renderJson } from "./json-tree.js";
 import { jsonTreeStyles } from "./json-tree.styles.js";
@@ -440,8 +439,8 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
   @state() accessor selectedChoiceIds = new Set<string>();
   @state() accessor responding = false;
 
-  // ── Live session state ──
-  #liveClient: LiveSessionClient | null = null;
+  // Live session state is owned by TicketStore.activeConnection —
+  // no local client reference needed.
 
   /** Track the ticket ID we loaded the tree for. */
   #treeLoadedFor: string | null = null;
@@ -1126,42 +1125,47 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
       .get()
       .has(ticketId);
 
-    const status = this.#liveClient?.status.get() ?? "idle";
-    const transcript = this.#liveClient?.transcript.get() ?? "";
+    const client = this.ticketStore?.activeConnection.get();
+    const isThisTicket = client?.taskId === ticketId;
+    const status = isThisTicket ? (client!.status.get()) : "idle";
+    const transcript = isThisTicket ? (client!.transcript.get()) : "";
+    const isTalking = isThisTicket ? (client!.talking.get()) : false;
 
     if (!hasActive && status === "idle") return nothing;
 
     const isConnected =
       status === "connected" || status === "connecting";
 
+    // Another ticket is currently connected.
+    const otherConnected = client && !isThisTicket;
+
     return html`
       <div class="block live-panel">
         <div class="live-panel-header">
           <span class="live-status-dot ${status}"></span>
           <span class="live-status-label">Live Session — ${status}</span>
-          ${isConnected
+          ${isThisTicket && isConnected
             ? html`<button
                 class="live-btn disconnect"
                 @click=${() => this.handleLiveDisconnect()}
               >
                 Disconnect
               </button>`
-            : hasActive
-              ? html`<button
-                  class="live-btn connect"
-                  @click=${() => this.handleLiveConnect(ticketId)}
-                >
-                  Connect
-                </button>`
-              : nothing}
+            : nothing}
         </div>
-        ${status === "connected"
+        ${hasActive
           ? html`<div class="live-mic-bar">
               <button
-                class="live-btn mic ${this.#liveClient?.micActive.get() ? "active" : ""}"
-                @click=${() => this.handleMicToggle()}
+                class="live-btn talk ${isTalking ? "active" : ""}"
+                @pointerdown=${() => this.handleTalkStart(ticketId)}
+                @pointerup=${() => this.handleTalkEnd()}
+                @pointerleave=${() => this.handleTalkEnd()}
               >
-                ${this.#liveClient?.micActive.get() ? "🔇 Mute" : "🎤 Unmute"}
+                ${otherConnected
+                  ? "🎤 Talk to switch"
+                  : isTalking
+                    ? "🔊 Talking…"
+                    : "🎤 Talk"}
               </button>
             </div>`
           : nothing}
@@ -1178,50 +1182,43 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
     `;
   }
 
-  private async handleLiveConnect(ticketId: string): Promise<void> {
-    if (this.#liveClient) return;
+  /**
+   * Handle Talk button press.
+   *
+   * First press connects (if not already connected to this ticket),
+   * then opens the audio gate.
+   */
+  private async handleTalkStart(ticketId: string): Promise<void> {
     if (!this.ticketStore) return;
 
-    const dirHandle = await this.ticketStore.getTicketDirHandle(ticketId);
-    if (!dirHandle) {
-      console.error("Could not get directory handle for ticket", ticketId);
-      return;
+    const client = this.ticketStore.activeConnection.get();
+
+    // Not connected to this ticket — connect first.
+    if (!client || client.taskId !== ticketId) {
+      await this.ticketStore.connectLiveSession(ticketId);
     }
 
-    const client = await LiveSessionClient.fromTicketDir(dirHandle);
-    if (!client) {
-      console.error("Could not create LiveSessionClient for", ticketId);
-      return;
+    // Now begin talking (opens the audio gate).
+    const activeClient = this.ticketStore.activeConnection.get();
+    if (activeClient?.status.get() === "connected") {
+      try {
+        await activeClient.beginTalking();
+      } catch (e) {
+        console.error("Failed to start talking:", e);
+      }
     }
+  }
 
-    this.#liveClient = client;
-
-    try {
-      await client.connect();
-    } catch (e) {
-      console.error("Live session connection failed:", e);
-      this.#liveClient = null;
+  /** Handle Talk button release — close the audio gate. */
+  private handleTalkEnd(): void {
+    const client = this.ticketStore?.activeConnection.get();
+    if (client?.talking.get()) {
+      client.endTalking();
     }
   }
 
   private handleLiveDisconnect(): void {
-    if (!this.#liveClient) return;
-    this.#liveClient.disconnect();
-    this.#liveClient = null;
-  }
-
-  private async handleMicToggle(): Promise<void> {
-    if (!this.#liveClient) return;
-
-    if (this.#liveClient.micActive.get()) {
-      this.#liveClient.stopMic();
-    } else {
-      try {
-        await this.#liveClient.startMic();
-      } catch (e) {
-        console.error("Failed to start microphone:", e);
-      }
-    }
+    this.ticketStore?.disconnectLiveSession();
   }
 }
 

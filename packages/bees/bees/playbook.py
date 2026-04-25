@@ -151,6 +151,7 @@ def run_playbook(
         context=context,
         slug=slug,
         runner=data.get("runner", "generate"),
+        voice=data.get("voice"),
     )
 
     # Autostart: stamp child tasks declared in the template.

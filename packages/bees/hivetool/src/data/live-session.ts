@@ -52,6 +52,7 @@ interface ServerMessage {
       }>;
     };
     turnComplete?: boolean;
+    interrupted?: boolean;
   };
   toolCall?: {
     functionCalls: Array<{
@@ -59,6 +60,9 @@ interface ServerMessage {
       name: string;
       args: Record<string, unknown>;
     }>;
+  };
+  toolCallCancellation?: {
+    ids: string[];
   };
 }
 
@@ -74,7 +78,8 @@ class LiveSessionClient {
   readonly transcript = new Signal.State<string>("");
 
   /** Whether the microphone is currently active. */
-  readonly micActive = new Signal.State<boolean>(false);
+  /** Whether the user is currently holding the Talk button. */
+  readonly talking = new Signal.State<boolean>(false);
 
   /** The task ID this session belongs to. */
   readonly taskId: string;
@@ -191,7 +196,7 @@ class LiveSessionClient {
 
   /** Gracefully close the session. */
   disconnect(): void {
-    this.stopMic();
+    this.#stopMic();
     this.#audioOutput.dispose();
     this.#dispatchObserver?.disconnect();
     this.#dispatchObserver = null;
@@ -204,35 +209,65 @@ class LiveSessionClient {
     this.#ws = null;
   }
 
-  // ── Audio ──
+  // ── Push-to-Talk ──
 
-  /** Start capturing microphone audio and streaming to the Live API. */
-  async startMic(): Promise<void> {
-    if (this.#audioInput?.running) return;
+  /**
+   * Begin talking — opens the audio gate so mic chunks flow to the API.
+   *
+   * On first call, starts the mic capture (getUserMedia). The mic stays
+   * running across talk presses to avoid latency. Subsequent calls just
+   * open the gate.
+   */
+  async beginTalking(): Promise<void> {
     if (this.status.get() !== "connected") return;
 
-    this.#audioInput = new AudioInput((base64Pcm: string) => {
-      this.send({
-        realtimeInput: {
-          audio: {
-            data: base64Pcm,
-            mimeType: "audio/pcm;rate=16000",
-          },
+    // Lazily start the mic on the first Talk press.
+    if (!this.#audioInput) {
+      this.#audioInput = new AudioInput(
+        // onChunk — forward PCM to the WebSocket.
+        (base64Pcm: string) => {
+          this.send({
+            realtimeInput: {
+              audio: {
+                data: base64Pcm,
+                mimeType: "audio/pcm;rate=16000",
+              },
+            },
+          });
         },
-      });
-    });
+        // onStreamEnd — send audioStreamEnd when the gate closes.
+        () => {
+          this.send({ realtimeInput: { audioStreamEnd: true } });
+        },
+      );
+      await this.#audioInput.start();
+    }
 
-    await this.#audioInput.start();
-    this.micActive.set(true);
+    this.#audioInput.openGate();
+    this.talking.set(true);
   }
 
-  /** Stop microphone capture. */
-  stopMic(): void {
+  /**
+   * End talking — closes the audio gate.
+   *
+   * The mic stays running (no getUserMedia teardown). The audio gate
+   * close triggers an `audioStreamEnd` message to the API, flushing
+   * any cached audio in the server's VAD.
+   */
+  endTalking(): void {
+    if (this.#audioInput && !this.#audioInput.gated) {
+      this.#audioInput.closeGate();
+    }
+    this.talking.set(false);
+  }
+
+  /** Stop mic capture entirely and release the MediaStream. */
+  #stopMic(): void {
     if (this.#audioInput) {
       this.#audioInput.stop();
       this.#audioInput = null;
     }
-    this.micActive.set(false);
+    this.talking.set(false);
   }
 
   /** Send raw data over the WebSocket (for audio chunks, etc.). */
@@ -293,6 +328,16 @@ class LiveSessionClient {
           this.#audioOutput.play(part.inlineData.data);
         }
       }
+    }
+
+    // Interruption — the user spoke over the model.
+    // Flush the audio playback queue and discard the partial turn.
+    if (message.serverContent?.interrupted) {
+      console.log(
+        `[live:${this.taskId.slice(0, 8)}] Model interrupted`,
+      );
+      this.#audioOutput.flush();
+      this.#currentTurnParts = [];
     }
 
     // Turn complete — write event with accumulated model text parts.
@@ -357,6 +402,18 @@ class LiveSessionClient {
       });
       // Fire-and-forget — dispatches concurrently while audio continues.
       void this.#dispatchToolCalls(calls);
+    }
+
+    // Tool call cancellation — the server cancelled pending calls
+    // (typically because the user interrupted during tool execution).
+    if (message.toolCallCancellation) {
+      const ids = message.toolCallCancellation.ids;
+      console.log(
+        `[live:${this.taskId.slice(0, 8)}] Tool calls cancelled:`,
+        ids.join(", "),
+      );
+      // Already-dispatched calls may still complete on the Python side.
+      // We log the cancellation; best-effort is sufficient here.
     }
   }
 

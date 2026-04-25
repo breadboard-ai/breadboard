@@ -87,6 +87,7 @@ class TestSessionConfigurationConformance(unittest.TestCase):
             "label",
             "log_path",
             "on_chat_entry",
+            "voice",
         }
         self.assertEqual(field_names, expected)
 

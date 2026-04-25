@@ -42,6 +42,15 @@ class TicketStore {
   /** Set of ticket IDs with active (unresolved) live session bundles. */
   readonly activeLiveSessions = new Signal.State<Set<string>>(new Set());
 
+  /**
+   * The single active live session connection.
+   *
+   * At most one WebSocket is open at a time.  The connection survives
+   * ticket selection changes — switching tickets in the sidebar does
+   * not tear it down.
+   */
+  readonly activeConnection = new Signal.State<LiveSessionClient | null>(null);
+
   #ticketsHandle: FileSystemDirectoryHandle | null = null;
   #observer: { disconnect(): void } | null = null;
   #activated = false;
@@ -118,6 +127,7 @@ class TicketStore {
     this.selectedTicketId.set(null);
     this.recentlyUpdatedTicket.set(null);
     this.activeLiveSessions.set(new Set());
+    this.disconnectLiveSession();
   }
 
   /** Clean up the observer. */
@@ -296,6 +306,57 @@ class TicketStore {
       return await this.#ticketsHandle.getDirectoryHandle(ticketId);
     } catch {
       return null;
+    }
+  }
+
+  // ── Live session connection management ──
+
+  /**
+   * Connect to a live session for the given ticket.
+   *
+   * Disconnects any existing session first (one connection at a time).
+   * Creates a `LiveSessionClient`, opens the WebSocket, and stores
+   * the client in `activeConnection`.
+   */
+  async connectLiveSession(ticketId: string): Promise<void> {
+    // Already connected to this ticket — nothing to do.
+    const current = this.activeConnection.get();
+    if (current?.taskId === ticketId) return;
+
+    // Disconnect any existing session.
+    if (current) {
+      current.disconnect();
+      this.activeConnection.set(null);
+    }
+
+    const dirHandle = await this.getTicketDirHandle(ticketId);
+    if (!dirHandle) {
+      console.error("Could not get directory handle for ticket", ticketId);
+      return;
+    }
+
+    const client = await LiveSessionClient.fromTicketDir(dirHandle);
+    if (!client) {
+      console.error("Could not create LiveSessionClient for", ticketId);
+      return;
+    }
+
+    this.activeConnection.set(client);
+
+    try {
+      await client.connect();
+    } catch (e) {
+      console.error("Live session connection failed:", e);
+      this.activeConnection.set(null);
+    }
+  }
+
+  /** Disconnect the active live session. */
+  disconnectLiveSession(): void {
+    const client = this.activeConnection.get();
+    if (client) {
+      client.disconnect();
+      this.activeConnection.set(null);
     }
   }
 

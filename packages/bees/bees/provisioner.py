@@ -53,6 +53,7 @@ def provision_session(
     mcp_factories: list | None = None,
     on_chat_entry: Callable[[str, str], None] | None = None,
     seed_files: bool = True,
+    voice: str | None = None,
 ) -> SessionConfiguration:
     """Assemble everything a session runner needs from task parameters.
 
@@ -162,4 +163,5 @@ def provision_session(
         label=label,
         log_path=log_path,
         on_chat_entry=on_chat_entry,
+        voice=voice,
     )

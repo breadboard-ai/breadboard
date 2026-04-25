@@ -83,6 +83,7 @@ def _make_config(
     factories: list | None = None,
     function_filter: list[str] | None = None,
     model: str | None = None,
+    voice: str | None = None,
 ) -> SessionConfiguration:
     """Create a minimal SessionConfiguration for testing."""
     fs = MagicMock()
@@ -95,6 +96,7 @@ def _make_config(
         ticket_id="test-task-id",
         ticket_dir=temp_dir,
         label="test",
+        voice=voice,
     )
 
 
@@ -279,6 +281,31 @@ def test_assemble_system_instruction_empty_tool_instruction():
     assert result == "Hello."
 
 
+def test_assemble_system_instruction_text_segments():
+    """Segments from resolve_segments use {"type": "text", "text": "..."} format."""
+    segments = [
+        {"type": "text", "text": "Act as a translator."},
+        {"type": "text", "text": "Be concise."},
+    ]
+    result = _assemble_system_instruction(segments, "Tool notes.")
+
+    assert "Act as a translator." in result
+    assert "Be concise." in result
+    assert "Tool notes." in result
+
+
+def test_assemble_system_instruction_mixed_formats():
+    """Both parts-based and direct text segments work together."""
+    segments = [
+        {"type": "text", "text": "Objective from resolve_segments."},
+        {"parts": [{"text": "Instruction from function group."}]},
+    ]
+    result = _assemble_system_instruction(segments, "")
+
+    assert "Objective from resolve_segments." in result
+    assert "Instruction from function group." in result
+
+
 # ---------------------------------------------------------------------------
 # _build_bundle
 # ---------------------------------------------------------------------------
@@ -310,6 +337,59 @@ def test_build_bundle_no_declarations(temp_dir):
         system_instruction="Hello.",
     )
     assert "tools" not in bundle.setup
+
+
+def test_build_bundle_includes_enhanced_capabilities(temp_dir):
+    """Setup includes VAD tuning, proactive audio, and affective dialog."""
+    config = _make_config(temp_dir)
+    bundle = _build_bundle(
+        config=config,
+        token="token",
+        declarations=[],
+        system_instruction="Hello.",
+    )
+    setup = bundle.setup
+
+    # VAD tuning.
+    vad = setup["realtimeInputConfig"]["automaticActivityDetection"]
+    assert vad["startOfSpeechSensitivity"] == "START_SENSITIVITY_LOW"
+    assert vad["endOfSpeechSensitivity"] == "END_SENSITIVITY_LOW"
+    assert vad["silenceDurationMs"] == 500
+
+    # Proactive audio (setup-level field).
+    assert setup["proactivity"]["proactiveAudio"] is True
+
+
+def test_build_bundle_voice_from_config(temp_dir):
+    """Voice name comes from SessionConfiguration.voice."""
+    config = _make_config(temp_dir, voice="Puck")
+    bundle = _build_bundle(
+        config=config,
+        token="token",
+        declarations=[],
+        system_instruction="Hello.",
+    )
+    voice_name = (
+        bundle.setup["generationConfig"]["speechConfig"]
+        ["voiceConfig"]["prebuiltVoiceConfig"]["voiceName"]
+    )
+    assert voice_name == "Puck"
+
+
+def test_build_bundle_voice_default(temp_dir):
+    """When no voice is set, defaults to Kore."""
+    config = _make_config(temp_dir)
+    bundle = _build_bundle(
+        config=config,
+        token="token",
+        declarations=[],
+        system_instruction="Hello.",
+    )
+    voice_name = (
+        bundle.setup["generationConfig"]["speechConfig"]
+        ["voiceConfig"]["prebuiltVoiceConfig"]["voiceName"]
+    )
+    assert voice_name == "Kore"
 
 
 # ---------------------------------------------------------------------------

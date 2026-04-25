@@ -113,6 +113,7 @@ class TaskRunner:
                 on_chat_entry=lambda role, text: append_chat_log(
                     task.dir, role, text,
                 ),
+                voice=task.metadata.voice,
             )
 
             stream = await self._runner_for(task).run(config)
@@ -236,6 +237,7 @@ class TaskRunner:
                     task.dir, role, text,
                 ),
                 seed_files=False,  # Files already on disk from previous run.
+                voice=task.metadata.voice,
             )
 
             stream = await self._runner_for(task).resume(

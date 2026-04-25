@@ -73,6 +73,9 @@ class TicketMetadata:
     runner: RunnerType = "generate"
     """Which session runner to use: ``generate`` (batch) or ``live`` (Gemini Live API)."""
 
+    voice: str | None = None
+    """Prebuilt voice name for Live API audio output (e.g. ``'Kore'``)."""
+
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
         # Omit None fields for cleaner JSON.
@@ -115,6 +118,7 @@ class TicketMetadata:
             pending_context_updates=data.get("pending_context_updates"),
             paused_from=data.get("paused_from"),
             runner=data.get("runner", "generate"),
+            voice=data.get("voice"),
         )
 
 

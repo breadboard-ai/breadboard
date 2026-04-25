@@ -29,6 +29,40 @@ import "./primitives/edit-controls.js";
 
 export { BeesTemplateDetail };
 
+/** Prebuilt voices available in the Gemini Live API. */
+const GEMINI_VOICES = [
+  "Kore",
+  "Puck",
+  "Charon",
+  "Aoede",
+  "Fenrir",
+  "Zephyr",
+  "Leda",
+  "Orus",
+  "Callirrhoe",
+  "Autonoe",
+  "Enceladus",
+  "Iapetus",
+  "Umbriel",
+  "Algieba",
+  "Despina",
+  "Erinome",
+  "Algenib",
+  "Rasalgethi",
+  "Laomedeia",
+  "Achernar",
+  "Alnilam",
+  "Schedar",
+  "Gacrux",
+  "Pulcherrima",
+  "Achird",
+  "Zubenelgenubi",
+  "Vindemiatrix",
+  "Sadachbia",
+  "Sadaltager",
+  "Sulafat",
+] as const;
+
 @customElement("bees-template-detail")
 class BeesTemplateDetail extends SignalWatcher(LitElement) {
   static styles = [
@@ -314,6 +348,8 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
       chips.push({ label: "model", value: template.model, cls: "model" });
     if (template.runner && template.runner !== "generate")
       chips.push({ label: "runner", value: template.runner });
+    if (template.voice)
+      chips.push({ label: "voice", value: template.voice });
 
     const allTemplates = this.templateStore!.templates.get();
     const templateNames = new Set(allTemplates.map((t) => t.name));
@@ -588,6 +624,42 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
                   })}
               ></bees-editable-field>
             </div>
+
+            ${draft.runner === "live"
+              ? html`
+                  <div class="edit-row">
+                    <div>
+                      <label
+                        style="display:block;font-size:0.7rem;color:#94a3b8;margin-bottom:4px"
+                        >Voice</label
+                      >
+                      <select
+                        style="
+                          width:100%;padding:6px 10px;background:#0b0c0f;
+                          border:1px solid #334155;border-radius:6px;
+                          color:#e2e8f0;font-family:inherit;font-size:0.85rem;
+                          outline:none;
+                        "
+                        @change=${(e: Event) => {
+                          const val = (e.target as HTMLSelectElement).value;
+                          this.updateDraft({ voice: val || undefined });
+                        }}
+                      >
+                        <option value="" ?selected=${!draft.voice}>
+                          Default (Kore)
+                        </option>
+                        ${GEMINI_VOICES.map(
+                          (v) => html`
+                            <option value=${v} ?selected=${draft.voice === v}>
+                              ${v}
+                            </option>
+                          `
+                        )}
+                      </select>
+                    </div>
+                  </div>
+                `
+              : nothing}
 
             <!-- Objective -->
             <bees-editable-textarea

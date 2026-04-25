@@ -126,6 +126,7 @@ class TaskStore:
         signal_type: str | None = None,
         slug: str | None = None,
         runner: RunnerType = "generate",
+        voice: str | None = None,
     ) -> Ticket:
         """Create a new task.
 
@@ -177,6 +178,7 @@ class TaskStore:
                 signal_type=signal_type,
                 slug=slug,
                 runner=runner,
+                voice=voice,
             ),
         )
         self.save(ticket)

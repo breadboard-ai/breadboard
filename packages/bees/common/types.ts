@@ -44,4 +44,5 @@ export interface TaskData {
   outcome_content?: Record<string, unknown>;
   files?: Array<{ path: string; mimeType: string; localPath: string }>;
   runner?: "generate" | "live";
+  voice?: string;
 }

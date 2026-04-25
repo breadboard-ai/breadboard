@@ -33,6 +33,7 @@ interface TemplateData {
   tasks?: string[];
   autostart?: string[];
   runner?: "generate" | "live";
+  voice?: string;
 }
 
 class TemplateStore {
