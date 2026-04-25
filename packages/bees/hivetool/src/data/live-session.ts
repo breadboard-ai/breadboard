@@ -85,6 +85,15 @@ class LiveSessionClient {
   #audioInput: AudioInput | null = null;
   #audioOutput = new AudioOutput();
   #dispatchObserver: { disconnect(): void } | null = null;
+  #contextObserver: { disconnect(): void } | null = null;
+
+  // Transcript state (for real-time UI display only).
+  #currentTurnParts: Array<{ text?: string }> = [];
+  #processedContextFiles = new Set<string>();
+
+  // Event channel state.
+  #eventSeq = 0;
+  #liveEventsDir: FileSystemDirectoryHandle | null = null;
 
   constructor(
     bundle: LiveSessionBundle,
@@ -107,6 +116,19 @@ class LiveSessionClient {
     if (this.#ws) return;
 
     this.status.set("connecting");
+
+    // Resolve the live_events/ directory for event writing.
+    try {
+      this.#liveEventsDir = await this.#ticketDir.getDirectoryHandle(
+        "live_events",
+        { create: true },
+      );
+    } catch (e) {
+      console.error(
+        `[live:${this.taskId.slice(0, 8)}] Failed to resolve live_events dir:`,
+        e,
+      );
+    }
 
     // Build the authenticated WebSocket URL.
     // Ephemeral tokens use access_token, not key.
@@ -141,6 +163,7 @@ class LiveSessionClient {
           reject(new Error(`WebSocket closed during setup: ${event.reason}`));
         } else {
           this.status.set("disconnected");
+          void this.#writeEvent("sessionEnd", { status: "completed" });
           this.#writeResult("completed");
         }
       });
@@ -154,6 +177,10 @@ class LiveSessionClient {
           reject(new Error("WebSocket connection failed"));
         } else {
           this.status.set("error");
+          void this.#writeEvent("sessionEnd", {
+            status: "failed",
+            error: "WebSocket error",
+          });
           this.#writeResult("failed", "WebSocket error");
         }
       });
@@ -168,6 +195,10 @@ class LiveSessionClient {
     this.#audioOutput.dispose();
     this.#dispatchObserver?.disconnect();
     this.#dispatchObserver = null;
+    this.#contextObserver?.disconnect();
+    this.#contextObserver = null;
+    // Write sessionEnd event for the box.
+    void this.#writeEvent("sessionEnd", { status: "completed" });
     if (!this.#ws) return;
     this.#ws.close(1000, "Client disconnect");
     this.#ws = null;
@@ -242,6 +273,12 @@ class LiveSessionClient {
         `[live:${this.taskId.slice(0, 8)}] Setup complete`,
       );
       this.status.set("connected");
+      // Write sessionStart event with the config.
+      void this.#writeEvent("sessionStart", {
+        config: this.#bundle.setup,
+      });
+      // Start watching for context updates from the box.
+      void this.#startContextObserver();
       return;
     }
 
@@ -250,11 +287,57 @@ class LiveSessionClient {
       for (const part of message.serverContent.modelTurn.parts) {
         if (part.text) {
           this.transcript.set(this.transcript.get() + part.text);
+          this.#currentTurnParts.push({ text: part.text });
         }
         if (part.inlineData?.data) {
           this.#audioOutput.play(part.inlineData.data);
         }
       }
+    }
+
+    // Turn complete — write event with accumulated model text parts.
+    if (message.serverContent?.turnComplete) {
+      const modelParts = this.#currentTurnParts
+        .filter((p) => p.text)
+        .map((p) => ({ text: p.text }));
+      void this.#writeEvent("turnComplete", { parts: modelParts });
+      this.#currentTurnParts = [];
+      // Add a newline separator between turns in the transcript.
+      const current = this.transcript.get();
+      if (current && !current.endsWith("\n")) {
+        this.transcript.set(current + "\n");
+      }
+    }
+
+    // Audio transcription — the API nests these inside serverContent
+    // when inputAudioTranscription / outputAudioTranscription are
+    // enabled in the setup config.
+    const serverContent = message.serverContent as
+      | (Record<string, unknown> & typeof message.serverContent)
+      | undefined;
+    if (serverContent?.inputTranscription) {
+      const { text } = serverContent.inputTranscription as { text?: string };
+      if (text) {
+        // Show user speech in the UI transcript.
+        this.transcript.set(this.transcript.get() + `\n> ${text}\n`);
+        void this.#writeEvent("inputTranscript", { text });
+      }
+    }
+    if (serverContent?.outputTranscription) {
+      const { text } = serverContent.outputTranscription as { text?: string };
+      if (text) {
+        void this.#writeEvent("outputTranscript", { text });
+      }
+    }
+
+    // Usage metadata — forward to event channel.
+    // The Live API can send usageMetadata alongside other fields
+    // on the BidiGenerateContentServerMessage.
+    const rawMessage = message as Record<string, unknown>;
+    if (rawMessage.usageMetadata) {
+      void this.#writeEvent("usageMetadata", {
+        metadata: rawMessage.usageMetadata,
+      });
     }
 
     // Tool calls — dispatch via filesystem and relay results.
@@ -264,6 +347,14 @@ class LiveSessionClient {
         `[live:${this.taskId.slice(0, 8)}] Tool call:`,
         calls.map((fc) => fc.name).join(", "),
       );
+      // Write toolCall event.
+      void this.#writeEvent("toolCall", {
+        functionCalls: calls.map((fc) => ({
+          name: fc.name,
+          args: fc.args,
+          id: fc.id,
+        })),
+      });
       // Fire-and-forget — dispatches concurrently while audio continues.
       void this.#dispatchToolCalls(calls);
     }
@@ -479,6 +570,172 @@ class LiveSessionClient {
         functionResponses: responses,
       },
     });
+
+    // Write toolResponse event for the box.
+    void this.#writeEvent("toolResponse", {
+      functionResponses: responses,
+    });
+  }
+
+  // ── Context update observer ──
+
+  /**
+   * Watch `context_updates/` for files written by `LiveStream.send_context()`.
+   *
+   * When a new `.json` file appears, reads it and injects the parts as
+   * `clientContent` on the WebSocket so the model receives context updates
+   * from subagent completions.
+   */
+  async #startContextObserver(): Promise<void> {
+    const tag = `[live:${this.taskId.slice(0, 8)}]`;
+
+    let contextDir: FileSystemDirectoryHandle;
+    try {
+      contextDir = await this.#ticketDir.getDirectoryHandle(
+        "context_updates",
+      );
+    } catch {
+      console.log(`${tag} No context_updates/ directory — skipping observer`);
+      return;
+    }
+
+    if ("FileSystemObserver" in globalThis) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const Ctor = (globalThis as any).FileSystemObserver;
+
+      const observer = new Ctor(async (records: unknown[]) => {
+        for (const record of records) {
+          const r = record as {
+            relativePathComponents?: string[];
+            type?: string;
+          };
+          const parts = r.relativePathComponents;
+          if (!parts || parts.length === 0) continue;
+
+          const filename = parts[parts.length - 1];
+          if (!filename.endsWith(".json")) continue;
+          if (this.#processedContextFiles.has(filename)) continue;
+
+          await this.#injectContextUpdate(contextDir, filename);
+        }
+      });
+
+      observer.observe(contextDir, { recursive: false });
+      this.#contextObserver = observer;
+      console.log(`${tag} Context update observer started`);
+    } else {
+      // Fallback: poll-based.
+      console.log(
+        `${tag} FileSystemObserver unavailable — polling context_updates/`,
+      );
+      this.#pollContextUpdates(contextDir);
+    }
+  }
+
+  /** Read and inject a single context update file. */
+  async #injectContextUpdate(
+    contextDir: FileSystemDirectoryHandle,
+    filename: string,
+  ): Promise<void> {
+    if (this.#processedContextFiles.has(filename)) return;
+    this.#processedContextFiles.add(filename);
+
+    const tag = `[live:${this.taskId.slice(0, 8)}]`;
+
+    try {
+      const fh = await contextDir.getFileHandle(filename);
+      const file = await fh.getFile();
+      const text = await file.text();
+      const data = JSON.parse(text) as { parts?: Array<{ text?: string }> };
+
+      if (!data.parts || data.parts.length === 0) return;
+
+      // Inject into the WebSocket as client content.
+      this.send({
+        clientContent: {
+          turns: [{ role: "user", parts: data.parts }],
+          turnComplete: true,
+        },
+      });
+
+      // Add context marker to transcript.
+      const summary = data.parts
+        .map((p) => p.text || "")
+        .join(" ")
+        .slice(0, 100);
+      this.transcript.set(
+        this.transcript.get() + `\n[Context update: ${summary}]\n`,
+      );
+
+      // Write contextUpdate event for the box.
+      void this.#writeEvent("contextUpdate", { parts: data.parts });
+
+      console.log(`${tag} Context update injected: ${filename}`);
+    } catch (e) {
+      console.error(`${tag} Failed to read context update ${filename}:`, e);
+    }
+  }
+
+  /** Poll-based fallback for context updates. */
+  #pollContextUpdates(
+    contextDir: FileSystemDirectoryHandle,
+  ): void {
+    const POLL_MS = 1000;
+
+    const poll = async () => {
+      while (this.status.get() === "connected") {
+        try {
+          for await (const [name] of contextDir.entries()) {
+            if (!name.endsWith(".json")) continue;
+            if (this.#processedContextFiles.has(name)) continue;
+            await this.#injectContextUpdate(contextDir, name);
+          }
+        } catch {
+          // Directory iteration error — ignore.
+        }
+        await new Promise((r) => setTimeout(r, POLL_MS));
+      }
+    };
+
+    void poll();
+  }
+
+  // ── Event channel writing ──
+
+  /**
+   * Write a structured event file to `live_events/` for the box to read.
+   *
+   * Files are named `{seq:06d}.json` with an incrementing sequence number.
+   * The box's `LiveStream` polls this directory and translates events
+   * into `EvalCollector`-compatible event dicts.
+   */
+  async #writeEvent(
+    type: string,
+    data: Record<string, unknown>,
+  ): Promise<void> {
+    if (!this.#liveEventsDir) return;
+
+    const seq = this.#eventSeq++;
+    const filename = `${String(seq).padStart(6, "0")}.json`;
+    const event = {
+      type,
+      ...data,
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      const fh = await this.#liveEventsDir.getFileHandle(filename, {
+        create: true,
+      });
+      const w = await fh.createWritable();
+      await w.write(JSON.stringify(event, null, 2) + "\n");
+      await w.close();
+    } catch (e) {
+      console.error(
+        `[live:${this.taskId.slice(0, 8)}] Failed to write event ${filename}:`,
+        e,
+      );
+    }
   }
 
   // ── Result writing ──

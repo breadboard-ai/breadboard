@@ -89,11 +89,12 @@ class StateAccess {
 
   /** Resolve a subdirectory from the hive handle. */
   async getSubdirectory(
-    name: string
+    name: string,
+    options?: { create?: boolean },
   ): Promise<FileSystemDirectoryHandle | null> {
     if (!this.#handle) return null;
     try {
-      return await this.#handle.getDirectoryHandle(name);
+      return await this.#handle.getDirectoryHandle(name, options);
     } catch {
       return null;
     }

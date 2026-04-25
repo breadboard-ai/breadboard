@@ -299,6 +299,9 @@ class TicketStore {
     }
   }
 
+
+
+
   // ── Live session detection ──
 
   async #detectLiveSessions(tickets: TicketData[]): Promise<void> {

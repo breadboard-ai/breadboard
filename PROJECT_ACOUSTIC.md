@@ -28,9 +28,10 @@ lifecycle management.
 ```
 
 Two processes, one filesystem. The box writes the session bundle; hivetool
-runs the audio loop. Tool calls bounce through `tool_dispatch/` files. The
-LiveStream blocks until `live_result.json` appears, then the scheduler resumes
-normal task lifecycle processing.
+runs the audio loop. Tool calls bounce through `tool_dispatch/` files. Live
+events flow back through `live_events/` files, which `LiveStream` polls and
+translates into `EvalCollector`-compatible events for `drain_session`.
+The `live_result.json` file serves as a fallback termination signal.
 
 ## Communication Protocol
 
@@ -40,11 +41,12 @@ shared filesystem:
 | File                        | Writer   | Reader   | Purpose                                    |
 | --------------------------- | -------- | -------- | ------------------------------------------ |
 | `live_session.json`         | Box      | Hivetool | Session bundle (token, endpoint, setup)    |
-| `live_result.json`          | Hivetool | Box      | Session completion signal                  |
+| `live_result.json`          | Hivetool | Box      | Session completion signal (fallback)       |
 | `tool_dispatch/{id}.json`   | Hivetool | Box      | Tool call request                          |
 | `tool_dispatch/{id}.result.json` | Box | Hivetool | Tool call response                         |
 | `context_updates/{ts}.json` | Box      | Hivetool | Context updates from subagent completions  |
-| `chat_log.json`             | Hivetool | Box      | Transcription log                          |
+| `live_events/{seq}.json`    | Hivetool | Box      | Structured session events (turns, tools, usage, end) |
+| `chat_log.json`             | Box      | Hivetool | Transcription log (written by `drain_session`) |
 
 ---
 
@@ -164,7 +166,7 @@ file listing.
 
 ---
 
-## Phase 5 — Context Updates & Transcription
+## Phase 5 — Context Updates & Transcription ✅
 
 ### 🎯 Objective
 
@@ -178,16 +180,70 @@ contains the full conversation transcript.
 
 ### Changes
 
-- [ ] `LiveSessionClient` — watch `context_updates/` directory. On new file,
-      read it and call `session.send(clientContent)` on the WebSocket.
-- [ ] `LiveSessionClient` — extract text transcriptions from server messages,
-      append to `chat_log.json`.
-- [ ] `LiveStream.send_context()` — already implemented (writes to
+- [x] `LiveRunner.run()` — creates `context_updates/` eagerly so the
+      browser observer can start immediately.
+- [x] `LiveSessionClient` — `FileSystemObserver` on `context_updates/`
+      directory. On new file, reads parts and sends as `clientContent` on WS.
+      Polling fallback when observer unavailable.
+- [x] Transcript is turn-delimited (newline on `turnComplete`) with
+      `[Context update: ...]` markers for injected updates.
+- [x] `LiveStream.send_context()` — already implemented (writes to
       `context_updates/` on box side).
 
 ---
 
-## Phase 6 — UI Polish
+## Phase 6 — Live Session Logging ✅
+
+### 🎯 Objective
+
+Live sessions produce the same `*.log.json` files as batch sessions, appearing
+in the existing log viewer alongside them. The box is the sole writer.
+
+**Observable proof:** After a live session ends, open the log viewer → the
+session appears in the sidebar. Click it → timeline shows turns, tool calls,
+system instruction, and context updates. Token bars show data if the Live API
+reported `usageMetadata`.
+
+### Architecture: Event Channel
+
+The browser writes structured event files to `live_events/` (sequenced
+`{seq:06d}.json`). The box's `LiveStream` polls these files and translates
+each into `EvalCollector`-compatible events. `drain_session` processes them
+normally, producing log files and `chat_log.json` — same as batch sessions.
+
+| Event type       | When written                    | EvalCollector translation                  |
+| ---------------- | ------------------------------- | ----------------------------------------- |
+| `sessionStart`   | After `setupComplete`          | Sets config. First `sendRequest` body.     |
+| `turnComplete`   | On `serverContent.turnComplete` | `sendRequest` event (with context so far)  |
+| `toolCall`       | On `toolCall` message          | `functionCall` event(s)                   |
+| `toolResponse`   | After dispatch result relayed   | Context entry (`user` + `functionResponse`) |
+| `usageMetadata`  | On `usageMetadata` message      | `usageMetadata` event                     |
+| `contextUpdate`  | On context injection            | Context entry (`user` + text parts)        |
+| `sessionEnd`     | On WS close / disconnect        | `complete` event                          |
+
+### Changes
+
+- [x] `LiveStream` — rewritten from single-shot poll to event channel reader.
+      Polls `live_events/` by sequence number, maintains context accumulator,
+      translates events to `EvalCollector` format. Falls back to
+      `live_result.json` for crash recovery.
+- [x] `LiveRunner.run()` — creates `live_events/` eagerly, passes `setup`
+      config to `LiveStream` constructor.
+- [x] `_clean_stale_artifacts()` — also cleans stale `live_events/`.
+- [x] `LiveSessionClient` — removed all browser-side log accumulation
+      (`#logContext`, `#logTurns`, `#writeSessionLog()`, `#chatLog`,
+      `#persistChatLog()`, `#logsDir`).
+- [x] `LiveSessionClient` — added `#writeEvent(type, data)` helper and
+      event writing at all turn boundaries.
+- [x] `ticket-detail.ts` — removed `logsDir` resolution and passing.
+- [x] `ticket-store.ts` — removed `getLogsDir()`.
+- [x] `ChatLogEntry` type removed (unused).
+- [x] 10 new tests for event channel (9 event types + context accumulation
+      across turns), 2 fallback tests preserved.
+
+---
+
+## Phase 7 — UI Polish
 
 ### 🎯 Objective
 
@@ -235,7 +291,7 @@ packages/bees/
       audio-handler.ts           ← [NEW] AudioInput, AudioOutput (Phase 3)
       ticket-store.ts            ← live session detection (Phase 2)
     ui/
-      ticket-detail.ts           ← live session panel (Phase 6)
+      ticket-detail.ts           ← live session panel (Phase 7)
   tests/
     test_live_runner.py          ← LiveRunner tests (Phase 1 ✅)
 ```
