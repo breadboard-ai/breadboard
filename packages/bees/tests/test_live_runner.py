@@ -234,8 +234,59 @@ def test_extract_declarations_filters_instructions():
     assert "Files instruction" not in instruction
 
 
-def test_extract_declarations_includes_instruction_only_groups():
-    """Instruction-only groups (no declarations) always include their instruction."""
+def test_extract_declarations_instruction_only_matches_filter():
+    """Instruction-only groups are included when their name matches the filter."""
+    live_group = FunctionGroup(
+        name="live",
+        declarations=[],
+        definitions=[],
+        instruction="Live instruction",
+    )
+    skills_group = FunctionGroup(
+        name="skills",
+        declarations=[],
+        definitions=[],
+        instruction="Skills instruction",
+    )
+
+    # Filter includes live.* but not skills.* — only live instruction appears.
+    _, instruction, _ = _extract_declarations(
+        [live_group, skills_group], ["live.*", "files.*"],
+    )
+
+    assert "Live instruction" in instruction
+    assert "Skills instruction" not in instruction
+
+
+def test_extract_declarations_instruction_only_no_filter():
+    """Without a filter, all instruction-only groups are included."""
+    live_group = FunctionGroup(
+        name="live",
+        declarations=[],
+        definitions=[],
+        instruction="Live instruction",
+    )
+    skills_group = FunctionGroup(
+        name="skills",
+        declarations=[],
+        definitions=[],
+        instruction="Skills instruction",
+    )
+
+    _, instruction, _ = _extract_declarations(
+        [live_group, skills_group], None,
+    )
+
+    assert "Live instruction" in instruction
+    assert "Skills instruction" in instruction
+
+
+def test_extract_declarations_skills_leak_regression():
+    """Skills instruction must not leak into live sessions (regression).
+
+    When the filter is [live.*, files.*], the skills group (instruction-only,
+    name='skills') should NOT have its instruction included.
+    """
     system_factory = _make_test_factory(
         "system",
         [{"name": "system_objective_fulfilled", "description": "done"}],
@@ -247,14 +298,23 @@ def test_extract_declarations_includes_instruction_only_groups():
         definitions=[],
         instruction="Live instruction",
     )
-
-    # Even with a filter, the live (instruction-only) group's instruction appears.
-    _, instruction, _ = _extract_declarations(
-        [system_factory, live_group], ["system.*"],
+    skills_group = FunctionGroup(
+        name="skills",
+        declarations=[],
+        definitions=[],
+        instruction="Skills instruction",
     )
 
-    assert "System instruction" in instruction
+    _, instruction, _ = _extract_declarations(
+        [system_factory, live_group, skills_group],
+        ["live.*", "files.*"],
+    )
+
     assert "Live instruction" in instruction
+    # system.* is not in the filter, so system instruction should be excluded.
+    assert "System instruction" not in instruction
+    # skills.* is not in the filter, so skills instruction should be excluded.
+    assert "Skills instruction" not in instruction
 
 
 # ---------------------------------------------------------------------------
