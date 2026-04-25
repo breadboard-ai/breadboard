@@ -240,7 +240,7 @@ producing log files and `chat_log.json` — same as batch sessions.
 
 ---
 
-## Phase 7 — Live Function Group
+## Phase 7 — Live Function Group ✅
 
 ### 🎯 Objective
 
@@ -290,25 +290,71 @@ declarations are entirely filtered out.
 
 ---
 
-## Phase 8 — UI Polish
+## Phase 8 — UX Polish ✅
 
 ### 🎯 Objective
 
-Live sessions have a dedicated UI panel in ticket detail: connection status, mic
-toggle, waveform visualizer, and live transcript.
+Live sessions feel voice-native: press a button to talk, release to stop. The
+model hears the template objective. Voice is configurable per template.
 
-**Observable proof:** Select a live-running task in hivetool. See a "Live
-Session" panel with a glowing dot for connection status, a mic button, and a
-scrolling transcript of the conversation.
+**Observable proof:** Select a live task. Hold the Talk button and speak. On
+release, the model responds in the selected voice. The system instruction in the
+bundle includes the template's objective text. Editing the template shows a
+voice dropdown with 30 Gemini prebuilt voices.
 
-### Changes
+### Push-to-Talk Interaction
 
-- [ ] `ticket-detail.ts` — render live session panel when
-      `ticket.runner === "live"` and session is active.
-- [ ] Connection status indicator (connecting / connected / disconnected).
-- [ ] Mic toggle button with visual feedback.
-- [ ] Audio level waveform or VU meter.
-- [ ] Live transcript display (from server-side text events).
+- [x] `audio-handler.ts` — audio gate (`openGate`/`closeGate`) on `AudioInput`.
+      Mic capture stays running across presses to avoid `getUserMedia` latency;
+      chunks only flow while the gate is open.
+- [x] `live-session.ts` — `beginTalking()`/`endTalking()` replace
+      `startMic()`/`stopMic()`. Gate close sends `audioStreamEnd` to flush the
+      server's VAD buffer. Handles `interrupted` and `toolCallCancellation`
+      server messages. Flushes audio playback on interruption.
+- [x] `ticket-detail.ts` — `pointerdown`/`pointerup` Talk button replaces
+      Connect + Mute toggle. "Talk to switch" label when another ticket is
+      connected.
+
+### Store-Owned Connection
+
+- [x] `ticket-store.ts` — `activeConnection` signal holds the single live
+      WebSocket. `connectLiveSession()`/`disconnectLiveSession()` manage
+      lifecycle. Connection survives ticket selection changes.
+- [x] `ticket-detail.ts` — removed local `#liveClient`; reads from
+      `ticketStore.activeConnection`.
+
+### Voice Selection (Full Stack)
+
+- [x] `TEMPLATES.yaml` — `voice: Kore` on `live-session` template.
+- [x] `ticket.py` — `voice: str | None` on `TicketMetadata` + `from_dict`.
+- [x] `playbook.py` → `task_store.py` → `provisioner.py` → `task_runner.py` —
+      thread `voice` through the provisioning pipeline.
+- [x] `protocols/session.py` — `voice: str | None` on `SessionConfiguration`.
+- [x] `runners/live.py` — `config.voice` in `_build_bundle` (default: `Kore`).
+- [x] `common/types.ts` — `voice` on `TaskData`.
+- [x] `template-store.ts` — `voice` on `TemplateData`.
+- [x] `template-detail.ts` — voice dropdown (30 Gemini prebuilt voices) in edit
+      mode; voice chip in view mode. Only visible when `runner === "live"`.
+
+### API Configuration
+
+- [x] VAD tuning — `realtimeInputConfig` with low start/end sensitivity and
+      500ms silence threshold.
+- [x] Proactive audio — `proactivity.proactiveAudio` at setup level.
+- [x] Removed `enableAffectiveDialog` (causes `1011 Internal error` on the
+      Constrained endpoint).
+
+### Bug Fix: Objective Dropped from System Instruction
+
+`_assemble_system_instruction` only handled `{"parts": [{"text": "..."}]}`
+segments, but `resolve_segments` produces `{"type": "text", "text": "..."}`. The
+task objective was silently ignored — the model only saw the live function
+group's boilerplate, never the template's actual objective.
+
+- [x] `runners/live.py` — handle both segment formats in
+      `_assemble_system_instruction`.
+- [x] 6 new tests (voice config, text segments, mixed formats, VAD, proactive
+      audio). 48 live runner tests total, 422 suite-wide.
 
 ---
 
@@ -318,8 +364,9 @@ scrolling transcript of the conversation.
   never touches audio data.
 - **Live API resume.** The Live API doesn't support session resume the same way
   batch does. A disconnected live session is a new session.
-- **Multi-user live sessions.** One browser tab per live session.
-- **Custom voice models.** Uses Gemini's built-in voice configuration.
+- **Simultaneous live connections.** Multiple live sessions can coexist (each
+  ticket gets its own bundle), but only one WebSocket is open at a time. The
+  Talk button seamlessly switches between them.
 
 ## File Map
 
@@ -327,18 +374,29 @@ scrolling transcript of the conversation.
 packages/bees/
   bees/
     runners/
-      live.py                    ← LiveRunner, LiveStream (Phase 1 ✅)
-    ticket.py                    ← RunnerType, runner field (Phase 1 ✅)
-    task_runner.py               ← _runner_for() dispatch (Phase 1 ✅)
+      live.py                    ← LiveRunner, LiveStream, _build_bundle
+    protocols/
+      session.py                 ← SessionConfiguration (voice field)
+    functions/
+      live.py                    ← live.* instruction-only group
+    declarations/
+      live.*                     ← Voice-native system prompt
+    ticket.py                    ← RunnerType, runner/voice fields
+    task_runner.py               ← _runner_for() dispatch, voice threading
+    provisioner.py               ← provision_session (voice param)
+    playbook.py                  ← voice from template → task creation
+    task_store.py                ← voice param in create()
   common/
-    types.ts                     ← runner field on TaskData (Phase 2)
+    types.ts                     ← runner, voice on TaskData
   hivetool/src/
     data/
-      live-session.ts            ← [NEW] LiveSessionClient (Phase 2)
-      audio-handler.ts           ← [NEW] AudioInput, AudioOutput (Phase 3)
-      ticket-store.ts            ← live session detection (Phase 2)
+      live-session.ts            ← LiveSessionClient (push-to-talk)
+      audio-handler.ts           ← AudioInput (gate), AudioOutput
+      ticket-store.ts            ← activeConnection, live session mgmt
+      template-store.ts          ← voice on TemplateData
     ui/
-      ticket-detail.ts           ← live session panel (Phase 7)
+      ticket-detail.ts           ← Talk button, live panel
+      template-detail.ts         ← Voice dropdown (30 voices)
   tests/
-    test_live_runner.py          ← LiveRunner tests (Phase 1 ✅)
+    test_live_runner.py          ← 48 tests
 ```
