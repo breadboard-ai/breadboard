@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 BUNDLE_FILENAME = "live_session.json"
 RESULT_FILENAME = "live_result.json"
 TOOL_DISPATCH_DIR = "tool_dispatch"
+LIVE_EVENTS_DIR = "live_events"
 
 LIVE_API_ENDPOINT = (
     "wss://generativelanguage.googleapis.com/ws/"
@@ -233,9 +234,9 @@ def _assemble_system_instruction(
 def _clean_stale_artifacts(ticket_dir: Path) -> None:
     """Remove leftover live session files from a previous run.
 
-    When the box restarts, old ``live_result.json`` and ``tool_dispatch/``
-    files would be picked up as pre-answered results.  This cleans the
-    slate so the new session starts fresh.
+    When the box restarts, old ``live_result.json``, ``tool_dispatch/``,
+    and ``live_events/`` files would be picked up as stale data.  This
+    cleans the slate so the new session starts fresh.
     """
     import shutil
 
@@ -244,10 +245,11 @@ def _clean_stale_artifacts(ticket_dir: Path) -> None:
         result_path.unlink()
         logger.debug("Cleaned stale %s", RESULT_FILENAME)
 
-    dispatch_dir = ticket_dir / TOOL_DISPATCH_DIR
-    if dispatch_dir.exists():
-        shutil.rmtree(dispatch_dir)
-        logger.debug("Cleaned stale %s/", TOOL_DISPATCH_DIR)
+    for subdir in (TOOL_DISPATCH_DIR, LIVE_EVENTS_DIR):
+        dirpath = ticket_dir / subdir
+        if dirpath.exists():
+            shutil.rmtree(dirpath)
+            logger.debug("Cleaned stale %s/", subdir)
 
 
 # ---------------------------------------------------------------------------
@@ -290,6 +292,12 @@ def _build_bundle(
         "systemInstruction": {
             "parts": [{"text": system_instruction}],
         },
+        # Enable server-side transcription of both user audio input
+        # and model audio output.  The API sends
+        # inputTranscription / outputTranscription messages with
+        # { text: string } payloads.
+        "inputAudioTranscription": {},
+        "outputAudioTranscription": {},
     }
 
     if declarations:
@@ -465,15 +473,20 @@ class ToolDispatchWatcher:
 
 
 # ---------------------------------------------------------------------------
-# LiveStream — the sparse SessionStream
+# LiveStream — event-driven SessionStream
 # ---------------------------------------------------------------------------
 
 
 class LiveStream:
-    """A session stream that blocks until the browser reports completion.
+    """Session stream that reads live events from the filesystem.
 
-    Implements ``SessionStream`` by polling for ``live_result.json``
-    in the task directory.  Yields at most a completion event.
+    The browser writes structured event files to ``live_events/``
+    in the ticket directory.  This stream polls for new files,
+    translates each event into ``EvalCollector``-compatible event
+    dicts, and yields them to ``drain_session``.
+
+    Falls back to ``live_result.json`` for crash recovery (if the
+    browser dies without writing a ``sessionEnd`` event).
 
     Optionally manages a ``ToolDispatchWatcher`` background task,
     cancelling it when the stream exhausts.
@@ -482,52 +495,274 @@ class LiveStream:
     def __init__(
         self,
         ticket_dir: Path,
+        *,
+        setup: dict[str, Any] | None = None,
         poll_interval: float = 0.5,
         watcher_task: asyncio.Task[None] | None = None,
     ) -> None:
         self._ticket_dir = ticket_dir
         self._poll_interval = poll_interval
         self._done = False
-        self._result: dict[str, Any] | None = None
         self._watcher_task = watcher_task
+        self._events_dir = ticket_dir / LIVE_EVENTS_DIR
+
+        # Read cursor: last processed sequence number.
+        self._cursor = -1
+
+        # Queue of translated events ready to yield.
+        self._pending: list[dict[str, Any]] = []
+
+        # Context accumulator — same shape as batch ``contents``.
+        self._context: list[dict[str, Any]] = []
+        self._config: dict[str, Any] | None = None
+
+        # Whether a sendRequest has been emitted for the current turn.
+        # The Live API may send toolCall without a preceding
+        # turnComplete; this flag lets us synthesize a turn boundary
+        # before the first functionCall event.
+        self._turn_emitted = False
+
+        # Build initial config from setup message (if available).
+        if setup:
+            self._config = {}
+            if setup.get("generationConfig"):
+                self._config["generationConfig"] = setup["generationConfig"]
+            if setup.get("tools"):
+                self._config["tools"] = setup["tools"]
+            if setup.get("systemInstruction"):
+                self._config["systemInstruction"] = setup["systemInstruction"]
+            else:
+                self._config["systemInstruction"] = {"parts": [{"text": ""}]}
 
     def __aiter__(self) -> "LiveStream":
         return self
 
     async def __anext__(self) -> dict[str, Any]:
+        # Drain pending events first.
+        if self._pending:
+            return self._pending.pop(0)
+
         if self._done:
             raise StopAsyncIteration
 
-        # Poll for the result file.
-        result_path = self._ticket_dir / RESULT_FILENAME
-        while not result_path.exists():
+        # Poll for new events or fallback result.
+        while not self._pending and not self._done:
+            self._scan_events()
+            if self._pending:
+                return self._pending.pop(0)
+
+            # Fallback: check for live_result.json (crash recovery).
+            # The result file is written by _LiveTerminator on the
+            # Python side, which runs *before* the browser has relayed
+            # the tool response and written the corresponding event
+            # file.  Wait one poll interval and re-scan to drain any
+            # in-flight events before processing the fallback.
+            result_path = self._ticket_dir / RESULT_FILENAME
+            if result_path.exists():
+                await asyncio.sleep(self._poll_interval)
+                self._scan_events()
+                if self._pending:
+                    return self._pending.pop(0)
+                self._handle_fallback_result(result_path)
+                if self._pending:
+                    return self._pending.pop(0)
+
             await asyncio.sleep(self._poll_interval)
 
-        # Session ended — cancel the watcher.
-        self._cancel_watcher()
+        if self._pending:
+            return self._pending.pop(0)
 
-        # Read and parse the result.
-        try:
-            self._result = json.loads(result_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+        raise StopAsyncIteration
+
+    def _scan_events(self) -> None:
+        """Scan ``live_events/`` for new event files past the cursor."""
+        if not self._events_dir.exists():
+            return
+
+        candidates: list[tuple[int, Path]] = []
+        for path in self._events_dir.iterdir():
+            if not path.name.endswith(".json"):
+                continue
+            try:
+                seq = int(path.stem)
+            except ValueError:
+                continue
+            if seq > self._cursor:
+                candidates.append((seq, path))
+
+        if not candidates:
+            return
+
+        # Process in sequence order.
+        for seq, path in sorted(candidates):
+            self._cursor = seq
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError) as exc:
+                logger.warning("Failed to read live event %s: %s", path, exc)
+                continue
+            self._translate_event(data)
+
+    def _translate_event(self, data: dict[str, Any]) -> None:
+        """Translate a browser event into EvalCollector-compatible events."""
+        event_type = data.get("type")
+
+        if event_type == "sessionStart":
+            # Browser confirmed setup — capture config.
+            config = data.get("config", {})
+            if config:
+                self._config = config
+                self._config.setdefault(
+                    "systemInstruction", {"parts": [{"text": ""}]},
+                )
+            # Emit initial sendRequest so EvalCollector captures the
+            # config (systemInstruction, tools, generationConfig) and
+            # starts the first turn.
+            body: dict[str, Any] = {"contents": list(self._context)}
+            if self._config:
+                body.update(self._config)
+            self._pending.append({"sendRequest": {"body": body}})
+            self._turn_emitted = True
+
+        elif event_type == "turnComplete":
+            # Flush accumulated model parts into context.
+            model_parts = data.get("parts", [])
+            if model_parts:
+                self._context.append({
+                    "role": "model",
+                    "parts": model_parts,
+                })
+
+            # Emit a synthetic sendRequest — this is how
+            # EvalCollector tracks turn boundaries.
+            body = {
+                "contents": list(self._context),
+            }
+            if self._config:
+                body.update(self._config)
+            self._pending.append({"sendRequest": {"body": body}})
+            self._turn_emitted = True
+
+        elif event_type == "toolCall":
+            # If the model called tools without a preceding
+            # turnComplete (common in the Live API), emit a
+            # synthetic sendRequest first so EvalCollector has
+            # a turn boundary before the functionCall events.
+            if not self._turn_emitted:
+                body = {"contents": list(self._context)}
+                if self._config:
+                    body.update(self._config)
+                self._pending.append({"sendRequest": {"body": body}})
+                self._turn_emitted = True
+
+            # Emit functionCall events.
+            for fc in data.get("functionCalls", []):
+                self._pending.append({"functionCall": fc})
+
+        elif event_type == "toolResponse":
+            # Add tool responses to context and reset the turn flag
+            # so the next tool call or turnComplete emits a new
+            # sendRequest (= new turn boundary).
+            responses = data.get("functionResponses", [])
+            if responses:
+                self._context.append({
+                    "role": "user",
+                    "parts": [
+                        {"functionResponse": r} for r in responses
+                    ],
+                })
+            self._turn_emitted = False
+
+        elif event_type == "usageMetadata":
+            metadata = data.get("metadata", {})
+            self._pending.append({"usageMetadata": {"metadata": metadata}})
+
+        elif event_type == "contextUpdate":
+            # Context injected from subagent completion.
+            parts = data.get("parts", [])
+            if parts:
+                self._context.append({"role": "user", "parts": parts})
+
+        elif event_type == "inputTranscript":
+            # User's speech transcribed by the Live API.
+            text = data.get("text", "")
+            if text:
+                self._context.append({
+                    "role": "user",
+                    "parts": [{"text": text}],
+                })
+
+        elif event_type == "outputTranscript":
+            # Model's audio output transcribed by the Live API.
+            text = data.get("text", "")
+            if text:
+                self._context.append({
+                    "role": "model",
+                    "parts": [{"text": text}],
+                })
+
+        elif event_type == "sessionEnd":
+            # Session complete — flush remaining context, cancel
+            # watcher, and emit the terminal event.
+            self._flush_final_context()
+            self._cancel_watcher()
+            status = data.get("status", "completed")
+            outcomes = data.get("outcomes", {})
+            if status == "failed":
+                error_msg = data.get("error", "Live session failed")
+                self._pending.append(
+                    {"error": {"message": error_msg}},
+                )
+            else:
+                self._pending.append({"complete": {
+                    "result": {
+                        "success": status == "completed",
+                        "outcomes": outcomes,
+                    },
+                }})
             self._done = True
-            return {"error": {"message": f"Failed to read live result: {exc}"}}
 
-        self._done = True
+    def _flush_final_context(self) -> None:
+        """Emit a final sendRequest to capture any pending context.
 
-        # Translate the browser's result into a completion event.
-        status = self._result.get("status", "completed")
+        After the last toolResponse there is no turn boundary event,
+        so EvalCollector would miss the final context entries.  This
+        emits one more sendRequest so the log includes the complete
+        conversation.
+        """
+        if not self._turn_emitted:
+            body: dict[str, Any] = {"contents": list(self._context)}
+            if self._config:
+                body.update(self._config)
+            self._pending.append({"sendRequest": {"body": body}})
+            self._turn_emitted = True
+
+    def _handle_fallback_result(self, result_path: Path) -> None:
+        """Handle crash-recovery via ``live_result.json``."""
+        self._flush_final_context()
+        self._cancel_watcher()
+        try:
+            result = json.loads(result_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            self._pending.append(
+                {"error": {"message": f"Failed to read live result: {exc}"}},
+            )
+            self._done = True
+            return
+
+        status = result.get("status", "completed")
         if status == "failed":
-            return {"error": {
-                "message": self._result.get("error", "Live session failed"),
-            }}
-
-        return {"complete": {
-            "result": {
-                "success": status == "completed",
-                "outcomes": self._result.get("outcomes", {}),
-            },
-        }}
+            self._pending.append({"error": {
+                "message": result.get("error", "Live session failed"),
+            }})
+        else:
+            self._pending.append({"complete": {
+                "result": {
+                    "success": status == "completed",
+                    "outcomes": result.get("outcomes", {}),
+                },
+            }})
+        self._done = True
 
     async def send_context(self, parts: list[dict[str, Any]]) -> None:
         """Write context update for the browser to pick up.
@@ -663,8 +898,17 @@ class LiveRunner:
         watcher = ToolDispatchWatcher(dispatch_dir, handler_map)
         watcher_task = asyncio.create_task(watcher.run())
 
-        # 6. Return a stream that waits for the browser to finish.
-        return LiveStream(ticket_dir, watcher_task=watcher_task)
+        # 6. Create directories eagerly so browser observers
+        #    can start watching immediately.
+        (ticket_dir / "context_updates").mkdir(parents=True, exist_ok=True)
+        (ticket_dir / LIVE_EVENTS_DIR).mkdir(parents=True, exist_ok=True)
+
+        # 7. Return a stream that reads events from the browser.
+        return LiveStream(
+            ticket_dir,
+            setup=bundle.setup,
+            watcher_task=watcher_task,
+        )
 
     async def resume(
         self,

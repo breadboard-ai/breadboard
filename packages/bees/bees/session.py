@@ -363,6 +363,9 @@ async def drain_session(
     collector = EvalCollector()
     event_count = 0
 
+    chat_entry = config.on_chat_entry if config else None
+    prev_context_len = 0
+
     try:
         async for event in stream:
             collector.collect(event)
@@ -382,6 +385,34 @@ async def drain_session(
                     log_path,
                     collector.to_eval_file_data(ticket_id=ticket_id),
                 )
+
+            # Extract conversation text for the chat log.
+            # For live sessions, sendRequest events carry the accumulated
+            # context (including model and user turns).  We scan for new
+            # entries since the last sendRequest and log their text.
+            if "sendRequest" in event and chat_entry:
+                contents = (
+                    event["sendRequest"]
+                    .get("body", {})
+                    .get("contents", [])
+                )
+                for entry in contents[prev_context_len:]:
+                    role = entry.get("role")
+                    parts = entry.get("parts", [])
+                    # Skip entries that are only tool responses.
+                    if all("functionResponse" in p for p in parts):
+                        continue
+                    text_parts = [
+                        p.get("text", "")
+                        for p in parts
+                        if "text" in p
+                    ]
+                    text = "".join(text_parts).strip()
+                    if text and role == "model":
+                        chat_entry("agent", text)
+                    elif text and role == "user":
+                        chat_entry("user", text)
+                prev_context_len = len(contents)
 
             if on_event:
                 await on_event(event)

@@ -20,6 +20,7 @@ from bees.protocols.functions import (
 from bees.protocols.session import SessionConfiguration
 from bees.runners.live import (
     BUNDLE_FILENAME,
+    LIVE_EVENTS_DIR,
     RESULT_FILENAME,
     TOOL_DISPATCH_DIR,
     LiveRunner,
@@ -288,13 +289,407 @@ def test_write_bundle(temp_dir):
 
 
 # ---------------------------------------------------------------------------
-# LiveStream
+# LiveStream — event channel
+# ---------------------------------------------------------------------------
+
+
+def _write_event(events_dir: Path, seq: int, data: dict) -> None:
+    """Write an event file to the live_events directory."""
+    filename = f"{seq:06d}.json"
+    (events_dir / filename).write_text(json.dumps(data))
+
+
+@pytest.mark.asyncio
+async def test_live_stream_session_start(temp_dir):
+    """sessionStart event emits initial sendRequest with config."""
+    events_dir = temp_dir / LIVE_EVENTS_DIR
+    events_dir.mkdir()
+
+    stream = LiveStream(temp_dir, poll_interval=0.05)
+
+    _write_event(events_dir, 0, {
+        "type": "sessionStart",
+        "config": {
+            "model": "test-model",
+            "systemInstruction": {"parts": [{"text": "Be helpful."}]},
+        },
+    })
+    _write_event(events_dir, 1, {
+        "type": "sessionEnd",
+        "status": "completed",
+    })
+
+    events = []
+    async for event in stream:
+        events.append(event)
+
+    # sessionStart yields an initial sendRequest + sessionEnd yields complete.
+    assert len(events) == 2
+    assert "sendRequest" in events[0]
+    body = events[0]["sendRequest"]["body"]
+    assert body["systemInstruction"]["parts"][0]["text"] == "Be helpful."
+    assert "complete" in events[1]
+
+
+@pytest.mark.asyncio
+async def test_live_stream_tool_call_without_turn_complete(temp_dir):
+    """toolCall without preceding turnComplete synthesizes a sendRequest."""
+    events_dir = temp_dir / LIVE_EVENTS_DIR
+    events_dir.mkdir()
+
+    _write_event(events_dir, 0, {
+        "type": "sessionStart",
+        "config": {
+            "systemInstruction": {"parts": [{"text": "Test."}]},
+        },
+    })
+    # Model goes straight to tool call — no turnComplete.
+    _write_event(events_dir, 1, {
+        "type": "toolCall",
+        "functionCalls": [
+            {"name": "list_files", "args": {}, "id": "c1"},
+        ],
+    })
+    _write_event(events_dir, 2, {
+        "type": "toolResponse",
+        "functionResponses": [
+            {"name": "list_files", "id": "c1", "response": {"files": []}},
+        ],
+    })
+    # Second tool call after tool response.
+    _write_event(events_dir, 3, {
+        "type": "toolCall",
+        "functionCalls": [
+            {"name": "done", "args": {"result": "ok"}, "id": "c2"},
+        ],
+    })
+    _write_event(events_dir, 4, {
+        "type": "toolResponse",
+        "functionResponses": [
+            {"name": "done", "id": "c2", "response": {}},
+        ],
+    })
+    _write_event(events_dir, 5, {
+        "type": "sessionEnd",
+        "status": "completed",
+    })
+
+    stream = LiveStream(temp_dir, poll_interval=0.05)
+    events = []
+    async for event in stream:
+        events.append(event)
+
+    # Expected: sendRequest(sessionStart) + functionCall(list_files)
+    #         + sendRequest(after toolResponse resets flag) + functionCall(done)
+    #         + sendRequest(final flush from sessionEnd) + complete
+    types = [list(e.keys())[0] for e in events]
+    assert types == [
+        "sendRequest",    # from sessionStart
+        "functionCall",   # list_files (no extra sendRequest — turn already emitted)
+        "sendRequest",    # synthesized because toolResponse reset the flag
+        "functionCall",   # done
+        "sendRequest",    # final flush — captures done's toolResponse
+        "complete",
+    ]
+    # Final sendRequest should have both tool responses in context.
+    final_body = events[4]["sendRequest"]["body"]
+    fn_response_count = sum(
+        1 for entry in final_body["contents"]
+        for p in entry.get("parts", [])
+        if "functionResponse" in p
+    )
+    assert fn_response_count == 2  # list_files + done
+
+
+@pytest.mark.asyncio
+async def test_live_stream_turn_complete(temp_dir):
+    """turnComplete yields a synthetic sendRequest event."""
+    events_dir = temp_dir / LIVE_EVENTS_DIR
+    events_dir.mkdir()
+
+    stream = LiveStream(temp_dir, poll_interval=0.05)
+
+    _write_event(events_dir, 0, {
+        "type": "turnComplete",
+        "parts": [{"text": "Hello, I can help!"}],
+    })
+    _write_event(events_dir, 1, {
+        "type": "sessionEnd",
+        "status": "completed",
+    })
+
+    events = []
+    async for event in stream:
+        events.append(event)
+
+    assert len(events) == 2  # sendRequest + complete
+    assert "sendRequest" in events[0]
+    body = events[0]["sendRequest"]["body"]
+    # Context should contain the model turn.
+    assert len(body["contents"]) == 1
+    assert body["contents"][0]["role"] == "model"
+    assert body["contents"][0]["parts"][0]["text"] == "Hello, I can help!"
+
+
+@pytest.mark.asyncio
+async def test_live_stream_tool_call(temp_dir):
+    """toolCall yields functionCall events."""
+    events_dir = temp_dir / LIVE_EVENTS_DIR
+    events_dir.mkdir()
+
+    _write_event(events_dir, 0, {
+        "type": "toolCall",
+        "functionCalls": [
+            {"name": "list_files", "args": {"path": "/"}, "id": "c1"},
+        ],
+    })
+    _write_event(events_dir, 1, {
+        "type": "sessionEnd",
+        "status": "completed",
+    })
+
+    stream = LiveStream(temp_dir, poll_interval=0.05)
+    events = []
+    async for event in stream:
+        events.append(event)
+
+    # sendRequest (synthesized for missing turn) + functionCall + complete
+    assert len(events) == 3
+    assert "sendRequest" in events[0]
+    assert "functionCall" in events[1]
+    assert events[1]["functionCall"]["name"] == "list_files"
+
+
+@pytest.mark.asyncio
+async def test_live_stream_tool_response_adds_context(temp_dir):
+    """toolResponse adds to context, visible in next turnComplete."""
+    events_dir = temp_dir / LIVE_EVENTS_DIR
+    events_dir.mkdir()
+
+    # Turn 1: model speaks, tool is called, tool responds.
+    _write_event(events_dir, 0, {
+        "type": "turnComplete",
+        "parts": [{"text": "Let me check."}],
+    })
+    _write_event(events_dir, 1, {
+        "type": "toolResponse",
+        "functionResponses": [
+            {"name": "list_files", "id": "c1", "response": {"files": ["a.txt"]}},
+        ],
+    })
+    # Turn 2: model responds after seeing tool output.
+    _write_event(events_dir, 2, {
+        "type": "turnComplete",
+        "parts": [{"text": "Found a.txt!"}],
+    })
+    _write_event(events_dir, 3, {
+        "type": "sessionEnd",
+        "status": "completed",
+    })
+
+    stream = LiveStream(temp_dir, poll_interval=0.05)
+    events = []
+    async for event in stream:
+        events.append(event)
+
+    # sendRequest(turn1) + sendRequest(turn2) + complete
+    assert len(events) == 3
+    # Second sendRequest should have tool response in context.
+    body2 = events[1]["sendRequest"]["body"]
+    assert len(body2["contents"]) == 3  # model, user(toolResponse), model
+    assert body2["contents"][1]["role"] == "user"
+    assert "functionResponse" in body2["contents"][1]["parts"][0]
+
+
+@pytest.mark.asyncio
+async def test_live_stream_usage_metadata(temp_dir):
+    """usageMetadata yields a usageMetadata event."""
+    events_dir = temp_dir / LIVE_EVENTS_DIR
+    events_dir.mkdir()
+
+    _write_event(events_dir, 0, {
+        "type": "usageMetadata",
+        "metadata": {
+            "promptTokenCount": 100,
+            "candidatesTokenCount": 50,
+            "totalTokenCount": 150,
+        },
+    })
+    _write_event(events_dir, 1, {
+        "type": "sessionEnd",
+        "status": "completed",
+    })
+
+    stream = LiveStream(temp_dir, poll_interval=0.05)
+    events = []
+    async for event in stream:
+        events.append(event)
+
+    assert len(events) == 3  # usageMetadata + sendRequest (flush) + complete
+    assert "usageMetadata" in events[0]
+    assert events[0]["usageMetadata"]["metadata"]["totalTokenCount"] == 150
+
+
+@pytest.mark.asyncio
+async def test_live_stream_context_update(temp_dir):
+    """contextUpdate adds to context, visible in next turnComplete."""
+    events_dir = temp_dir / LIVE_EVENTS_DIR
+    events_dir.mkdir()
+
+    _write_event(events_dir, 0, {
+        "type": "contextUpdate",
+        "parts": [{"text": "Subagent completed: report ready."}],
+    })
+    _write_event(events_dir, 1, {
+        "type": "turnComplete",
+        "parts": [{"text": "I see the report."}],
+    })
+    _write_event(events_dir, 2, {
+        "type": "sessionEnd",
+        "status": "completed",
+    })
+
+    stream = LiveStream(temp_dir, poll_interval=0.05)
+    events = []
+    async for event in stream:
+        events.append(event)
+
+    # sendRequest + complete
+    assert len(events) == 2
+    body = events[0]["sendRequest"]["body"]
+    # Context: user(contextUpdate) + model(turnComplete)
+    assert len(body["contents"]) == 2
+    assert body["contents"][0]["role"] == "user"
+    assert body["contents"][0]["parts"][0]["text"] == "Subagent completed: report ready."
+
+
+@pytest.mark.asyncio
+async def test_live_stream_input_transcript(temp_dir):
+    """inputTranscript adds user speech to context."""
+    events_dir = temp_dir / LIVE_EVENTS_DIR
+    events_dir.mkdir()
+
+    _write_event(events_dir, 0, {
+        "type": "inputTranscript",
+        "text": "How many files do I have?",
+    })
+    _write_event(events_dir, 1, {
+        "type": "turnComplete",
+        "parts": [{"text": "Let me check."}],
+    })
+    _write_event(events_dir, 2, {
+        "type": "sessionEnd",
+        "status": "completed",
+    })
+
+    stream = LiveStream(temp_dir, poll_interval=0.05)
+    events = []
+    async for event in stream:
+        events.append(event)
+
+    # sendRequest (from turnComplete) + complete
+    assert len(events) == 2
+    body = events[0]["sendRequest"]["body"]
+    # Context: user(transcript) + model(turnComplete)
+    assert len(body["contents"]) == 2
+    assert body["contents"][0]["role"] == "user"
+    assert body["contents"][0]["parts"][0]["text"] == "How many files do I have?"
+    assert body["contents"][1]["role"] == "model"
+
+
+@pytest.mark.asyncio
+async def test_live_stream_output_transcript(temp_dir):
+    """outputTranscript adds model speech to context."""
+    events_dir = temp_dir / LIVE_EVENTS_DIR
+    events_dir.mkdir()
+
+    _write_event(events_dir, 0, {
+        "type": "outputTranscript",
+        "text": "You have zero files.",
+    })
+    _write_event(events_dir, 1, {
+        "type": "sessionEnd",
+        "status": "completed",
+    })
+
+    stream = LiveStream(temp_dir, poll_interval=0.05)
+    events = []
+    async for event in stream:
+        events.append(event)
+
+    # sendRequest (flush) + complete
+    assert len(events) == 2
+    body = events[0]["sendRequest"]["body"]
+    assert len(body["contents"]) == 1
+    assert body["contents"][0]["role"] == "model"
+    assert body["contents"][0]["parts"][0]["text"] == "You have zero files."
+
+
+@pytest.mark.asyncio
+async def test_live_stream_session_end_failure(temp_dir):
+    """sessionEnd with failed status yields error event."""
+    events_dir = temp_dir / LIVE_EVENTS_DIR
+    events_dir.mkdir()
+
+    _write_event(events_dir, 0, {
+        "type": "sessionEnd",
+        "status": "failed",
+        "error": "Connection lost",
+    })
+
+    stream = LiveStream(temp_dir, poll_interval=0.05)
+    events = []
+    async for event in stream:
+        events.append(event)
+
+    # sendRequest (final flush) + error
+    assert len(events) == 2
+    assert "sendRequest" in events[0]
+    assert "error" in events[1]
+    assert "Connection lost" in events[1]["error"]["message"]
+
+
+@pytest.mark.asyncio
+async def test_live_stream_config_from_setup(temp_dir):
+    """LiveStream can receive initial config via constructor."""
+    events_dir = temp_dir / LIVE_EVENTS_DIR
+    events_dir.mkdir()
+
+    setup = {
+        "model": "models/gemini-test",
+        "systemInstruction": {"parts": [{"text": "You are helpful."}]},
+        "generationConfig": {"temperature": 0.7},
+    }
+
+    stream = LiveStream(temp_dir, setup=setup, poll_interval=0.05)
+
+    _write_event(events_dir, 0, {
+        "type": "turnComplete",
+        "parts": [{"text": "Hi there."}],
+    })
+    _write_event(events_dir, 1, {
+        "type": "sessionEnd",
+        "status": "completed",
+    })
+
+    events = []
+    async for event in stream:
+        events.append(event)
+
+    # sendRequest should include config from setup.
+    body = events[0]["sendRequest"]["body"]
+    assert body["systemInstruction"]["parts"][0]["text"] == "You are helpful."
+    assert body["generationConfig"]["temperature"] == 0.7
+
+
+# ---------------------------------------------------------------------------
+# LiveStream — fallback (crash recovery)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_live_stream_completes_on_result(temp_dir):
-    """LiveStream yields completion when live_result.json appears."""
+async def test_live_stream_fallback_completes_on_result(temp_dir):
+    """LiveStream yields completion via live_result.json fallback."""
     stream = LiveStream(temp_dir, poll_interval=0.05)
 
     # Write the result file after a short delay.
@@ -312,14 +707,15 @@ async def test_live_stream_completes_on_result(temp_dir):
     async for event in stream:
         events.append(event)
 
-    assert len(events) == 1
-    assert "complete" in events[0]
-    assert events[0]["complete"]["result"]["success"] is True
+    assert len(events) == 2  # sendRequest (flush) + complete
+    assert "sendRequest" in events[0]
+    assert "complete" in events[1]
+    assert events[1]["complete"]["result"]["success"] is True
 
 
 @pytest.mark.asyncio
-async def test_live_stream_handles_failure(temp_dir):
-    """LiveStream yields error event when result reports failure."""
+async def test_live_stream_fallback_handles_failure(temp_dir):
+    """LiveStream yields error event via live_result.json fallback."""
     stream = LiveStream(temp_dir, poll_interval=0.05)
 
     result_path = temp_dir / RESULT_FILENAME
@@ -332,9 +728,10 @@ async def test_live_stream_handles_failure(temp_dir):
     async for event in stream:
         events.append(event)
 
-    assert len(events) == 1
-    assert "error" in events[0]
-    assert "WebSocket disconnected" in events[0]["error"]["message"]
+    assert len(events) == 2  # sendRequest (flush) + error
+    assert "sendRequest" in events[0]
+    assert "error" in events[1]
+    assert "WebSocket disconnected" in events[1]["error"]["message"]
 
 
 @pytest.mark.asyncio
@@ -603,19 +1000,25 @@ async def test_live_stream_cancels_watcher(temp_dir):
 
     watcher_task = asyncio.create_task(_dummy_watcher())
 
+    events_dir = temp_dir / LIVE_EVENTS_DIR
+    events_dir.mkdir()
+
     stream = LiveStream(temp_dir, poll_interval=0.05, watcher_task=watcher_task)
 
-    # Write the result file immediately.
-    result_path = temp_dir / RESULT_FILENAME
-    result_path.write_text(json.dumps({"status": "completed"}))
+    # Write a sessionEnd event.
+    _write_event(events_dir, 0, {
+        "type": "sessionEnd",
+        "status": "completed",
+    })
 
     # Drain the stream.
     events = []
     async for event in stream:
         events.append(event)
 
-    assert len(events) == 1
-    assert "complete" in events[0]
+    assert len(events) == 2  # sendRequest (flush) + complete
+    assert "sendRequest" in events[0]
+    assert "complete" in events[1]
 
     # Give a tick for the cancellation to propagate.
     await asyncio.sleep(0.05)
