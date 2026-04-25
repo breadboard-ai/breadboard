@@ -25,6 +25,7 @@ from typing import Any, Callable
 from bees.disk_file_system import DiskFileSystem
 from bees.functions.chat import get_chat_function_group_factory
 from bees.functions.events import get_events_function_group_factory
+from bees.functions.live import get_live_function_group
 from bees.functions.sandbox import get_sandbox_function_group_factory
 from bees.functions.simple_files import get_simple_files_function_group_factory
 from bees.functions.skills import get_skills_function_group
@@ -114,6 +115,7 @@ def provision_session(
 
     function_groups = [
         get_system_function_group_factory(),
+        get_live_function_group(),
         get_simple_files_function_group_factory(scope=scope),
         get_skills_function_group(available_skills=session_listing),
         get_sandbox_function_group_factory(

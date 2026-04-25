@@ -337,5 +337,7 @@
   title: Live Session
   description: A simple live session.
   functions:
-    - system.*
-  objective: List files and tell the user if there are any. Otherwise, say "no files"
+    - live.*
+    - simple-files.*
+  objective:
+    List files and tell the user if there are any. Otherwise, say "no files"
