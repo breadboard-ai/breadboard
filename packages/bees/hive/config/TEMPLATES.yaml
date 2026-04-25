@@ -334,10 +334,14 @@
 
 - name: live-session
   runner: live
+  voice: Kore
   title: Live Session
   description: A simple live session.
   functions:
     - live.*
     - files.*
   objective:
-    List files and tell the user if there are any. Otherwise, say "no files"
+    Act as a translator. Detect the language from the first phrase the user
+    says. Then, when the user says something non-English, say it out loud in
+    English. When you hear the user say something in English, respond in the
+    detected language.

@@ -219,13 +219,25 @@ def _assemble_system_instruction(
     segments: list[dict[str, Any]],
     tool_instruction: str,
 ) -> str:
-    """Combine provisioned segments and tool instructions into one string."""
+    """Combine provisioned segments and tool instructions into one string.
+
+    Handles two segment formats:
+    - ``{"parts": [{"text": "..."}]}`` — the parts-based format.
+    - ``{"type": "text", "text": "..."}`` — from ``resolve_segments``.
+    """
     parts: list[str] = []
 
     for segment in segments:
+        # Parts-based format (e.g. from function groups).
         segment_parts = segment.get("parts", [])
         for part in segment_parts:
             text = part.get("text")
+            if text:
+                parts.append(text)
+
+        # Direct text format (from resolve_segments).
+        if not segment_parts:
+            text = segment.get("text")
             if text:
                 parts.append(text)
 
@@ -286,6 +298,8 @@ def _build_bundle(
     """Assemble the session bundle from provisioned configuration."""
     model = config.model or DEFAULT_MODEL
 
+    voice = config.voice or "Kore"
+
     setup: dict[str, Any] = {
         "model": model,
         "generationConfig": {
@@ -293,7 +307,7 @@ def _build_bundle(
             "speechConfig": {
                 "voiceConfig": {
                     "prebuiltVoiceConfig": {
-                        "voiceName": "Kore",
+                        "voiceName": voice,
                     },
                 },
             },
@@ -307,6 +321,21 @@ def _build_bundle(
         # { text: string } payloads.
         "inputAudioTranscription": {},
         "outputAudioTranscription": {},
+        # VAD tuning for tool-calling sessions: lower sensitivity and
+        # longer silence threshold to avoid cutting off users mid-thought
+        # before a tool call.  The client sends audioStreamEnd when the
+        # user releases the Talk button.
+        "realtimeInputConfig": {
+            "automaticActivityDetection": {
+                "startOfSpeechSensitivity": "START_SENSITIVITY_LOW",
+                "endOfSpeechSensitivity": "END_SENSITIVITY_LOW",
+                "silenceDurationMs": 500,
+            },
+        },
+        # Proactive audio — model can choose to stay silent when input
+        # is not directed at it.  This is a standard BidiGenerateContentSetup
+        # field that requires v1alpha (which we already use).
+        "proactivity": {"proactiveAudio": True},
     }
 
     if declarations:

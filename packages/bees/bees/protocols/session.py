@@ -170,6 +170,9 @@ class SessionConfiguration:
        ``ObservationConfig`` in a future spec.
     """
 
+    voice: str | None = None
+    """Prebuilt voice name for Live API audio output (e.g. ``'Kore'``)."""
+
 
 # ---------------------------------------------------------------------------
 # Session stream

@@ -49,19 +49,51 @@ function base64ToInt16(b64: string): Int16Array {
 /** Callback for each audio chunk ready to send over WebSocket. */
 type OnChunkCallback = (base64Pcm: string) => void;
 
+/** Called when the audio gate closes, signaling end of user speech. */
+type OnStreamEndCallback = () => void;
+
 class AudioInput {
   #context: AudioContext | null = null;
   #stream: MediaStream | null = null;
   #workletNode: AudioWorkletNode | null = null;
   #onChunk: OnChunkCallback;
+  #onStreamEnd: OnStreamEndCallback;
   #running = false;
 
-  constructor(onChunk: OnChunkCallback) {
+  /**
+   * When true (default), PCM chunks from the worklet are discarded.
+   * The mic capture stays running to avoid getUserMedia latency on
+   * each Talk press — we just gate whether chunks flow to the callback.
+   */
+  #gated = true;
+
+  constructor(onChunk: OnChunkCallback, onStreamEnd: OnStreamEndCallback) {
     this.#onChunk = onChunk;
+    this.#onStreamEnd = onStreamEnd;
   }
 
   get running(): boolean {
     return this.#running;
+  }
+
+  get gated(): boolean {
+    return this.#gated;
+  }
+
+  /** Open the gate — audio chunks start flowing to the callback. */
+  openGate(): void {
+    this.#gated = false;
+  }
+
+  /**
+   * Close the gate — audio chunks stop flowing.
+   * Fires the onStreamEnd callback so the caller can send audioStreamEnd.
+   */
+  closeGate(): void {
+    if (!this.#gated) {
+      this.#gated = true;
+      this.#onStreamEnd();
+    }
   }
 
   /** Start capturing microphone audio. */
@@ -97,6 +129,9 @@ class AudioInput {
     // Receive PCM chunks from the worklet thread.
     let chunkCount = 0;
     this.#workletNode.port.onmessage = (event: MessageEvent) => {
+      // Gate: discard chunks when the user isn't talking.
+      if (this.#gated) return;
+
       const pcm = event.data.pcm as Int16Array;
       if (pcm && pcm.length > 0) {
         chunkCount++;
@@ -127,6 +162,11 @@ class AudioInput {
   /** Stop capturing and release resources. */
   stop(): void {
     if (!this.#running) return;
+
+    // Close the gate if still open.
+    if (!this.#gated) {
+      this.#gated = true;
+    }
 
     this.#workletNode?.disconnect();
     this.#workletNode = null;
