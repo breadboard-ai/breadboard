@@ -1,20 +1,20 @@
 [
   {
-    "name": "system_list_files",
+    "name": "files_list_files",
     "icon": "folder"
   },
   {
-    "name": "system_write_file",
+    "name": "files_write_file",
     "icon": "edit",
     "title": "Writing to file"
   },
   {
-    "name": "system_read_text_from_file",
+    "name": "files_read_text_from_file",
     "icon": "description",
     "title": "Reading from file"
   },
   {
-    "name": "system_list_dir",
+    "name": "files_list_dir",
     "icon": "folder_open",
     "title": "Listing directory"
   }

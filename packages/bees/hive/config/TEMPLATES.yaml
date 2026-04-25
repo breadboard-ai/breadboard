@@ -19,7 +19,7 @@
     - opie
     - chat
   functions:
-    - simple-files.*
+    - files.*
     - tasks.*
   tasks:
     - journey-manager
@@ -94,7 +94,7 @@
     - Each subagent working on a task gets a clean LLM context. Be explicit in
     your task assignments. They know nothing about prior conversation.
   functions:
-    - simple-files.*
+    - files.*
     - tasks.*
   skills:
     - interview-user
@@ -209,7 +209,7 @@
     - type: digest_ready
   functions:
     - chat.await_context_update
-    - simple-files.*
+    - files.*
 
 - name: researcher
   title: Researcher
@@ -231,7 +231,7 @@
   functions:
     - system.*
     - sandbox.*
-    - simple-files.*
+    - files.*
     - generate.text
   tags:
     - worker
@@ -330,7 +330,7 @@
   functions:
     - system.*
     - events.*
-    - simple-files.*
+    - files.*
 
 - name: live-session
   runner: live
@@ -338,6 +338,6 @@
   description: A simple live session.
   functions:
     - live.*
-    - simple-files.*
+    - files.*
   objective:
     List files and tell the user if there are any. Otherwise, say "no files"

@@ -1,7 +1,7 @@
 # Copyright 2026 Google LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Simple-files function group for Bees.
+"""Files function group for Bees.
 
 Provides file operation functions (write, list, read, list-dir) using bees-local
 declarations. With ``DiskFileSystem`` the paths are already bare
@@ -32,12 +32,12 @@ from bees.protocols.functions import (
 
 from bees.subagent_scope import SubagentScope
 
-__all__ = ["get_simple_files_function_group_factory"]
+__all__ = ["get_files_function_group_factory"]
 
 _DECLARATIONS_DIR = Path(__file__).resolve().parent.parent / "declarations"
 
 # Load declarations once at module level.
-_LOADED = load_declarations("simple-files", declarations_dir=_DECLARATIONS_DIR)
+_LOADED = load_declarations("files", declarations_dir=_DECLARATIONS_DIR)
 
 # Binary detection & line-counting limits.
 _BINARY_SNIFF_BYTES = 8 * 1024
@@ -63,7 +63,7 @@ def _make_file_handlers(
         file_system: A ``FileSystem``-compatible object.
     """
 
-    async def system_list_files(
+    async def files_list_files(
         args: dict[str, Any], status_cb: Any
     ) -> dict[str, Any]:
         status_update = args.get("status_update")
@@ -73,7 +73,7 @@ def _make_file_handlers(
             status_cb("Getting a list of files")
         return {"list": await file_system.list_files()}
 
-    async def system_write_file(
+    async def files_write_file(
         args: dict[str, Any], status_cb: Any
     ) -> dict[str, Any]:
         file_name = args.get("file_name", "")
@@ -95,7 +95,7 @@ def _make_file_handlers(
         file_path = file_system.write(file_name, resolved_content)
         return {"file_path": file_path}
 
-    async def system_read_text_from_file(
+    async def files_read_text_from_file(
         args: dict[str, Any], status_cb: Any
     ) -> dict[str, Any]:
         file_path = args.get("file_path", "")
@@ -105,16 +105,16 @@ def _make_file_handlers(
         return {"text": text}
 
     return {
-        "system_list_files": system_list_files,
-        "system_write_file": system_write_file,
-        "system_read_text_from_file": system_read_text_from_file,
+        "files_list_files": files_list_files,
+        "files_write_file": files_write_file,
+        "files_read_text_from_file": files_read_text_from_file,
     }
 
 
 def _make_list_dir_handler(work_dir: Path) -> Any:
-    """Build a ``system_list_dir`` handler bound to *work_dir*."""
+    """Build a ``files_list_dir`` handler bound to *work_dir*."""
 
-    async def system_list_dir(
+    async def files_list_dir(
         args: dict[str, Any], status_cb: Any,
     ) -> dict[str, Any]:
         dir_rel = args.get("dir", ".")
@@ -164,7 +164,7 @@ def _make_list_dir_handler(work_dir: Path) -> Any:
 
         return {"entries": json.dumps(entries)}
 
-    return system_list_dir
+    return files_list_dir
 
 
 # ---------------------------------------------------------------------------
@@ -172,11 +172,11 @@ def _make_list_dir_handler(work_dir: Path) -> Any:
 # ---------------------------------------------------------------------------
 
 
-def get_simple_files_function_group_factory(scope: SubagentScope | None = None) -> FunctionGroupFactory:
-    """Return a factory that builds the simple-files function group.
+def get_files_function_group_factory(scope: SubagentScope | None = None) -> FunctionGroupFactory:
+    """Return a factory that builds the files function group.
 
     The returned callable accepts ``SessionHooks`` and produces a
-    ``FunctionGroup`` named ``"simple-files"`` with file operation
+    ``FunctionGroup`` named ``"files"`` with file operation
     functions. Handler bodies are inlined from opal_backend.
 
     With ``DiskFileSystem``, paths are bare (relative to work_dir) —
@@ -189,11 +189,11 @@ def get_simple_files_function_group_factory(scope: SubagentScope | None = None) 
         )
 
         # Add bees-local handlers.
-        handlers["system_list_dir"] = _make_list_dir_handler(hooks.file_system._work_dir)
+        handlers["files_list_dir"] = _make_list_dir_handler(hooks.file_system._work_dir)
 
         
         if scope and scope.slug_path:
-            original_write = handlers["system_write_file"]
+            original_write = handlers["files_write_file"]
             
             async def restricted_write_file(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
                 file_name = args.get("file_name", "")
@@ -201,7 +201,7 @@ def get_simple_files_function_group_factory(scope: SubagentScope | None = None) 
                     return {"error": f"You can only write files in the directory: {scope.slug_path}"}
                 return await original_write(args, status_cb)
                 
-            handlers["system_write_file"] = restricted_write_file
+            handlers["files_write_file"] = restricted_write_file
             
         return assemble_function_group(_LOADED, handlers)
 

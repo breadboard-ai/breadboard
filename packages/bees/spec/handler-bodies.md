@@ -9,7 +9,7 @@ the function layer.
 Three bees function modules delegate handler construction to opal_backend:
 
 ```python
-# system.py, simple_files.py
+# system.py, files.py
 from opal_backend.functions.system import _make_handlers
 
 # chat.py
@@ -35,11 +35,11 @@ opal_backend concern. Bees does not need it. Concretely:
 - `SessionHooks.task_tree_manager` remains in the protocol for now (opal still
   passes it), but no bees handler references it.
 
-### File operations come from the system module, not simple_files
+### File operations come from the system module, not files
 
-The upstream `simple_files.py` calls the _system_ module's `_make_handlers` for
-its file operation handlers (`system_write_file`, `system_read_text_from_file`,
-`system_list_files`). Bees inlines these directly — no intermediate delegation.
+The upstream `files.py` calls the _system_ module's `_make_handlers` for
+its file operation handlers (`files_write_file`, `files_read_text_from_file`,
+`files_list_files`). Bees inlines these directly — no intermediate delegation.
 
 ### Handler signatures are preserved
 
@@ -64,7 +64,7 @@ private implementation details, not protocol types.
 | ------------------ | ----------------- | ---------------------------------------------------------------------- | ----------- |
 | System termination | `system.py`       | `system_objective_fulfilled`, `system_failed_to_fulfill_objective`     | ✅ Complete |
 | Chat suspend       | `chat.py`         | `chat_request_user_input`, `chat_present_choices`                      | ✅ Complete |
-| File operations    | `simple_files.py` | `system_write_file`, `system_read_text_from_file`, `system_list_files` | ✅ Complete |
+| File operations    | `files.py` | `files_write_file`, `files_read_text_from_file`, `files_list_files` | ✅ Complete |
 
 ## Handler Sketches
 
@@ -132,7 +132,7 @@ Constants to copy:
 - `VALID_INPUT_TYPES`, `VALID_SELECTION_MODES`, `VALID_LAYOUTS`
 - `_INPUT_TYPE_TO_FORMAT` (input type → icon mapping)
 
-### File operation handlers (`simple_files.py`)
+### File operation handlers (`files.py`)
 
 Source: `opal_backend/functions/system.py` L154–197 (the file subset).
 
@@ -141,21 +141,21 @@ Dependencies (all bees-native):
 - `bees.protocols.filesystem.FileSystem` (via `hooks.file_system`)
 - `bees.pidgin.from_pidgin_string`
 
-`system_list_files`:
+`files_list_files`:
 
 - Calls `file_system.list_files()`
 
-`system_write_file`:
+`files_write_file`:
 
 - Resolves pidgin in content via `from_pidgin_string`
 - Extracts text parts from resolved content
 - Calls `file_system.write(file_name, resolved_content)`
 
-`system_read_text_from_file`:
+`files_read_text_from_file`:
 
 - Calls `file_system.read_text(file_path)`
 
-Note: bees already has a local `_make_list_dir_handler` in `simple_files.py`.
+Note: bees already has a local `_make_list_dir_handler` in `files.py`.
 This is additive — the inlined opal handlers sit alongside it.
 
 ## Migration Notes
@@ -163,7 +163,7 @@ This is additive — the inlined opal handlers sit alongside it.
 ### Execution order
 
 Start with `system.py` — fewest handlers, simplest logic, proves the pattern.
-Then `chat.py` — adds suspend/resume complexity. Then `simple_files.py` — the
+Then `chat.py` — adds suspend/resume complexity. Then `files.py` — the
 file operations.
 
 ### What changes in each file

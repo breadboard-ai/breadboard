@@ -1,7 +1,7 @@
 # Copyright 2026 Google LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for system_list_dir in the simple-files function group."""
+"""Tests for files_list_dir in the files function group."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from bees.functions.simple_files import _make_list_dir_handler
+from bees.functions.files import _make_list_dir_handler
 
 
 @pytest.fixture

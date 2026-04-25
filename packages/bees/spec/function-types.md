@@ -33,7 +33,7 @@ is a separate spec (see inventory).
 
 ### `_make_handlers` delegation is out of scope
 
-`chat.py`, `simple_files.py`, and `system.py` import `_make_handlers` from
+`chat.py`, `files.py`, and `system.py` import `_make_handlers` from
 `opal_backend.functions.*`. These are handler factories that delegate to
 opal-owned implementations (file I/O helpers, chat control). They're a separate
 concern — either the logic migrates into bees (if framework-level) or gets
@@ -134,7 +134,7 @@ After this migration, the following `opal_backend` imports will remain in
 
 - `chat.py`: `CONTEXT_PARTS_KEY`, `_make_handlers`, `ChatEntryCallback`,
   `SuspendError`
-- `simple_files.py`: `_make_handlers`
+- `files.py`: `_make_handlers`
 - `system.py`: `_make_handlers`
 
 These are a separate migration covered by a future spec.

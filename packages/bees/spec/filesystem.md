@@ -165,7 +165,7 @@ The broader `opal_backend` import inventory in `bees/` becomes:
 - `box.py` — `HttpBackendClient` + app config
 - `functions/chat.py` — `_make_handlers`, `CONTEXT_PARTS_KEY`,
   `ChatEntryCallback`, `SuspendError`
-- `functions/simple_files.py` — `_make_handlers`
+- `functions/files.py` — `_make_handlers`
 - `functions/system.py` — `_make_handlers`
 
 ### Follow-up: tighten `SessionHooks.file_system`

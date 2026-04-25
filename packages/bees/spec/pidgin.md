@@ -13,7 +13,7 @@ markup in its outputs (e.g. referencing a file it created), and function
 handlers call `from_pidgin_string` to resolve those tags back to data parts from
 the file system.
 
-Today, three bees function modules (`chat.py`, `system.py`, `simple_files.py`)
+Today, three bees function modules (`chat.py`, `system.py`, `files.py`)
 delegate to `opal_backend`'s `_make_handlers`, which internally calls
 `from_pidgin_string`. To eventually inline those handler bodies into bees
 (eliminating the `_make_handlers` imports), bees needs its own pidgin

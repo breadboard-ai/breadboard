@@ -103,7 +103,7 @@ The bees function groups:
 | Group          | Filter prefix    | Purpose                                                                                                                  |
 | -------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `system`       | `system.*`       | Termination: `system_objective_fulfilled`, `system_failed_to_fulfill_objective`.                                         |
-| `simple-files` | `simple-files.*` | File I/O: `system_write_file`, `system_list_files`, `system_read_text_from_file`.                                        |
+| `files` | `files.*` | File I/O: `files_write_file`, `files_list_files`, `files_read_text_from_file`.                                        |
 | `sandbox`      | `sandbox.*`      | Sandboxed bash execution in the task's working directory.                                                                |
 | `chat`         | `chat.*`         | User interaction: `chat_request_user_input`, `chat_present_choices`, `chat_await_context_update`.                        |
 | `events`       | `events.*`       | Cross-agent communication: `events_broadcast`, `events_send_to_parent`.                                                  |
@@ -114,7 +114,7 @@ The bees function groups:
 
 Template authors control what an agent can do by specifying `functions` globs on
 the template and `allowed-tools` in skill frontmatter. Both are lists of filter
-prefixes (e.g. `["system.*", "simple-files.*"]`). The session merges them at
+prefixes (e.g. `["system.*", "files.*"]`). The session merges them at
 construction time:
 
 ```python
@@ -143,7 +143,7 @@ Key characteristics:
 - **Binary support**: images and other binary files are base64-encoded for the
   model and written as raw bytes to disk.
 - **Skill seeding**: skill directories are written to the file system at session
-  start so the agent can read them via `system_read_text_from_file`.
+  start so the agent can read them via `files_read_text_from_file`.
 
 ## Context window
 

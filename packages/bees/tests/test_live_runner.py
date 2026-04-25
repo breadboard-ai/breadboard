@@ -216,7 +216,7 @@ def test_extract_declarations_filters_instructions():
         instruction="System instruction",
     )
     files_factory = _make_test_factory(
-        "simple-files",
+        "files",
         [{"name": "files_list", "description": "list"}],
         instruction="Files instruction",
     )
@@ -670,6 +670,56 @@ async def test_live_stream_output_transcript(temp_dir):
     assert len(body["contents"]) == 1
     assert body["contents"][0]["role"] == "model"
     assert body["contents"][0]["parts"][0]["text"] == "You have zero files."
+
+
+@pytest.mark.asyncio
+async def test_live_stream_coalesces_output_transcript(temp_dir):
+    """Consecutive outputTranscript fragments merge into one context entry."""
+    events_dir = temp_dir / LIVE_EVENTS_DIR
+    events_dir.mkdir()
+
+    # Simulate word-by-word transcription from the Live API.
+    _write_event(events_dir, 0, {"type": "outputTranscript", "text": "You "})
+    _write_event(events_dir, 1, {"type": "outputTranscript", "text": "have "})
+    _write_event(events_dir, 2, {"type": "outputTranscript", "text": "zero "})
+    _write_event(events_dir, 3, {"type": "outputTranscript", "text": "files."})
+    _write_event(events_dir, 4, {"type": "sessionEnd", "status": "completed"})
+
+    stream = LiveStream(temp_dir, poll_interval=0.05)
+    events = []
+    async for event in stream:
+        events.append(event)
+
+    body = events[0]["sendRequest"]["body"]
+    # All four fragments coalesce into a single model entry.
+    assert len(body["contents"]) == 1
+    assert body["contents"][0]["role"] == "model"
+    assert body["contents"][0]["parts"][0]["text"] == "You have zero files."
+
+
+@pytest.mark.asyncio
+async def test_live_stream_coalesces_input_transcript(temp_dir):
+    """Consecutive inputTranscript fragments merge into one context entry."""
+    events_dir = temp_dir / LIVE_EVENTS_DIR
+    events_dir.mkdir()
+
+    _write_event(events_dir, 0, {"type": "inputTranscript", "text": "List "})
+    _write_event(events_dir, 1, {"type": "inputTranscript", "text": "my files."})
+    _write_event(events_dir, 2, {"type": "outputTranscript", "text": "Sure!"})
+    _write_event(events_dir, 3, {"type": "sessionEnd", "status": "completed"})
+
+    stream = LiveStream(temp_dir, poll_interval=0.05)
+    events = []
+    async for event in stream:
+        events.append(event)
+
+    body = events[0]["sendRequest"]["body"]
+    # Input fragments coalesce, then a new entry for the model role.
+    assert len(body["contents"]) == 2
+    assert body["contents"][0]["role"] == "user"
+    assert body["contents"][0]["parts"][0]["text"] == "List my files."
+    assert body["contents"][1]["role"] == "model"
+    assert body["contents"][1]["parts"][0]["text"] == "Sure!"
 
 
 @pytest.mark.asyncio

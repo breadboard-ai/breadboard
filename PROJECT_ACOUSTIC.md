@@ -27,26 +27,26 @@ lifecycle management.
 └─────────────────────────────────────┘    └────────────────────────────────┘
 ```
 
-Two processes, one filesystem. The box writes the session bundle; hivetool
-runs the audio loop. Tool calls bounce through `tool_dispatch/` files. Live
-events flow back through `live_events/` files, which `LiveStream` polls and
-translates into `EvalCollector`-compatible events for `drain_session`.
-The `live_result.json` file serves as a fallback termination signal.
+Two processes, one filesystem. The box writes the session bundle; hivetool runs
+the audio loop. Tool calls bounce through `tool_dispatch/` files. Live events
+flow back through `live_events/` files, which `LiveStream` polls and translates
+into `EvalCollector`-compatible events for `drain_session`. The
+`live_result.json` file serves as a fallback termination signal.
 
 ## Communication Protocol
 
-All communication between box and browser uses the task directory on the
-shared filesystem:
+All communication between box and browser uses the task directory on the shared
+filesystem:
 
-| File                        | Writer   | Reader   | Purpose                                    |
-| --------------------------- | -------- | -------- | ------------------------------------------ |
-| `live_session.json`         | Box      | Hivetool | Session bundle (token, endpoint, setup)    |
-| `live_result.json`          | Hivetool | Box      | Session completion signal (fallback)       |
-| `tool_dispatch/{id}.json`   | Hivetool | Box      | Tool call request                          |
-| `tool_dispatch/{id}.result.json` | Box | Hivetool | Tool call response                         |
-| `context_updates/{ts}.json` | Box      | Hivetool | Context updates from subagent completions  |
-| `live_events/{seq}.json`    | Hivetool | Box      | Structured session events (turns, tools, usage, end) |
-| `chat_log.json`             | Box      | Hivetool | Transcription log (written by `drain_session`) |
+| File                             | Writer   | Reader   | Purpose                                              |
+| -------------------------------- | -------- | -------- | ---------------------------------------------------- |
+| `live_session.json`              | Box      | Hivetool | Session bundle (token, endpoint, setup)              |
+| `live_result.json`               | Hivetool | Box      | Session completion signal (fallback)                 |
+| `tool_dispatch/{id}.json`        | Hivetool | Box      | Tool call request                                    |
+| `tool_dispatch/{id}.result.json` | Box      | Hivetool | Tool call response                                   |
+| `context_updates/{ts}.json`      | Box      | Hivetool | Context updates from subagent completions            |
+| `live_events/{seq}.json`         | Hivetool | Box      | Structured session events (turns, tools, usage, end) |
+| `chat_log.json`                  | Box      | Hivetool | Transcription log (written by `drain_session`)       |
 
 ---
 
@@ -56,9 +56,9 @@ shared filesystem:
 
 A template with `runner: live` creates a task that is dispatched to a
 `LiveRunner` instead of the `GeminiRunner`. The runner extracts tool
-declarations, assembles the system instruction, acquires an ephemeral token,
-and writes `live_session.json` to the task directory. The `LiveStream` blocks
-until `live_result.json` appears.
+declarations, assembles the system instruction, acquires an ephemeral token, and
+writes `live_session.json` to the task directory. The `LiveStream` blocks until
+`live_result.json` appears.
 
 **Observable proof:** Create a task with `runner: live`. Observe
 `live_session.json` appear in the task directory containing the token, WebSocket
@@ -69,8 +69,8 @@ endpoint, and setup message with system instruction and tool declarations.
 - [x] `ticket.py` — `RunnerType = Literal["generate", "live"]`, `runner` field
       on `TicketMetadata`.
 - [x] `task_store.py`, `playbook.py` — wire `runner` through creation.
-- [x] `bees.py`, `scheduler.py`, `task_runner.py` — `runners: dict[str,
-      SessionRunner]` with `_runner_for(task)` dispatch.
+- [x] `bees.py`, `scheduler.py`, `task_runner.py` —
+      `runners: dict[str,     SessionRunner]` with `_runner_for(task)` dispatch.
 - [x] `box.py`, `server.py` — construct `{"generate": ..., "live": ...}`.
 - [x] `SessionConfiguration` — add `ticket_id`, `ticket_dir`.
 - [x] `bees/runners/live.py` — `LiveRunner`, `LiveStream`, declaration
@@ -94,9 +94,8 @@ Disconnecting writes `live_result.json`, and the box's LiveStream unblocks.
 ### Changes
 
 - [x] `common/types.ts` — add `runner?: string` to `TaskData`.
-- [x] `hivetool/src/data/live-session.ts` — **[NEW]** `LiveSessionClient`:
-      reads bundle, opens WebSocket, sends setup, handles messages, writes
-      result.
+- [x] `hivetool/src/data/live-session.ts` — **[NEW]** `LiveSessionClient`: reads
+      bundle, opens WebSocket, sends setup, handles messages, writes result.
 - [x] `hivetool/src/data/ticket-store.ts` — on scan, check for
       `live_session.json` and surface active live sessions via
       `activeLiveSessions` signal.
@@ -118,17 +117,16 @@ low-latency.
 
 ### Changes
 
-- [x] `hivetool/src/data/audio-handler.ts` — **[NEW]** `AudioInput` (mic →
-      PCM → base64 → WS) and `AudioOutput` (WS → PCM → AudioContext →
-      speakers).
-- [x] `AudioInput` — `navigator.mediaDevices.getUserMedia()`, `AudioWorklet`
-      for PCM capture at 16kHz mono.
+- [x] `hivetool/src/data/audio-handler.ts` — **[NEW]** `AudioInput` (mic → PCM →
+      base64 → WS) and `AudioOutput` (WS → PCM → AudioContext → speakers).
+- [x] `AudioInput` — `navigator.mediaDevices.getUserMedia()`, `AudioWorklet` for
+      PCM capture at 16kHz mono.
 - [x] `AudioOutput` — decode base64 PCM, queue into `AudioContext` playback
       buffer.
 - [x] Wire audio handler into `LiveSessionClient` message loop.
 - [x] Mic toggle button in ticket detail UI.
-- [x] Fix binary Blob frame decoding (`#handleMessage`) — the Live API sends
-      all frames as binary, not text.
+- [x] Fix binary Blob frame decoding (`#handleMessage`) — the Live API sends all
+      frames as binary, not text.
 
 ---
 
@@ -141,27 +139,26 @@ bounce through the filesystem to the box, which executes the handler and returns
 the result.
 
 **Observable proof:** Start a live audio session with an agent that has file
-tools. Ask the agent to list files. The tool call appears in
-`tool_dispatch/`, the box executes `simple_files_list_files`, the result is
-written back, hivetool relays it to the WebSocket, and the agent reports the
-file listing.
+tools. Ask the agent to list files. The tool call appears in `tool_dispatch/`,
+the box executes `simple_files_list_files`, the result is written back, hivetool
+relays it to the WebSocket, and the agent reports the file listing.
 
 ### Changes
 
 - [x] `bees/runners/live.py` — refactored `_extract_declarations` to return
       handler map alongside declarations.
-- [x] `bees/runners/live.py` — `ToolDispatchWatcher`: poll-based async loop
-      on `tool_dispatch/` directory. Reads call JSON (wire format), looks up
+- [x] `bees/runners/live.py` — `ToolDispatchWatcher`: poll-based async loop on
+      `tool_dispatch/` directory. Reads call JSON (wire format), looks up
       handler in provisioned function groups, writes result JSON.
 - [x] `LiveRunner.run()` — starts `ToolDispatchWatcher` as background task.
       `LiveStream` cancels it on session end.
-- [x] `LiveSessionClient` — write `tool_dispatch/{call_id}.json` on
-      `toolCall` message. Observe with `FileSystemObserver` for `.result.json`.
-      Send `toolResponse` on WS. Polling fallback when observer unavailable.
+- [x] `LiveSessionClient` — write `tool_dispatch/{call_id}.json` on `toolCall`
+      message. Observe with `FileSystemObserver` for `.result.json`. Send
+      `toolResponse` on WS. Polling fallback when observer unavailable.
 - [x] Dispatch files use Gemini wire format (`functionCall`/`functionResponse`
       envelopes) for observability.
-- [x] Error handling: unknown handlers, handler exceptions, and 60s timeout
-      all write error results to prevent hangs.
+- [x] Error handling: unknown handlers, handler exceptions, and 60s timeout all
+      write error results to prevent hangs.
 - [x] 28 tests passing (8 new for watcher, handler extraction, and lifecycle).
 
 ---
@@ -180,8 +177,8 @@ contains the full conversation transcript.
 
 ### Changes
 
-- [x] `LiveRunner.run()` — creates `context_updates/` eagerly so the
-      browser observer can start immediately.
+- [x] `LiveRunner.run()` — creates `context_updates/` eagerly so the browser
+      observer can start immediately.
 - [x] `LiveSessionClient` — `FileSystemObserver` on `context_updates/`
       directory. On new file, reads parts and sends as `clientContent` on WS.
       Polling fallback when observer unavailable.
@@ -207,19 +204,19 @@ reported `usageMetadata`.
 ### Architecture: Event Channel
 
 The browser writes structured event files to `live_events/` (sequenced
-`{seq:06d}.json`). The box's `LiveStream` polls these files and translates
-each into `EvalCollector`-compatible events. `drain_session` processes them
-normally, producing log files and `chat_log.json` — same as batch sessions.
+`{seq:06d}.json`). The box's `LiveStream` polls these files and translates each
+into `EvalCollector`-compatible events. `drain_session` processes them normally,
+producing log files and `chat_log.json` — same as batch sessions.
 
-| Event type       | When written                    | EvalCollector translation                  |
-| ---------------- | ------------------------------- | ----------------------------------------- |
-| `sessionStart`   | After `setupComplete`          | Sets config. First `sendRequest` body.     |
-| `turnComplete`   | On `serverContent.turnComplete` | `sendRequest` event (with context so far)  |
-| `toolCall`       | On `toolCall` message          | `functionCall` event(s)                   |
-| `toolResponse`   | After dispatch result relayed   | Context entry (`user` + `functionResponse`) |
-| `usageMetadata`  | On `usageMetadata` message      | `usageMetadata` event                     |
-| `contextUpdate`  | On context injection            | Context entry (`user` + text parts)        |
-| `sessionEnd`     | On WS close / disconnect        | `complete` event                          |
+| Event type      | When written                    | EvalCollector translation                   |
+| --------------- | ------------------------------- | ------------------------------------------- |
+| `sessionStart`  | After `setupComplete`           | Sets config. First `sendRequest` body.      |
+| `turnComplete`  | On `serverContent.turnComplete` | `sendRequest` event (with context so far)   |
+| `toolCall`      | On `toolCall` message           | `functionCall` event(s)                     |
+| `toolResponse`  | After dispatch result relayed   | Context entry (`user` + `functionResponse`) |
+| `usageMetadata` | On `usageMetadata` message      | `usageMetadata` event                       |
+| `contextUpdate` | On context injection            | Context entry (`user` + text parts)         |
+| `sessionEnd`    | On WS close / disconnect        | `complete` event                            |
 
 ### Changes
 
@@ -227,14 +224,14 @@ normally, producing log files and `chat_log.json` — same as batch sessions.
       Polls `live_events/` by sequence number, maintains context accumulator,
       translates events to `EvalCollector` format. Falls back to
       `live_result.json` for crash recovery.
-- [x] `LiveRunner.run()` — creates `live_events/` eagerly, passes `setup`
-      config to `LiveStream` constructor.
+- [x] `LiveRunner.run()` — creates `live_events/` eagerly, passes `setup` config
+      to `LiveStream` constructor.
 - [x] `_clean_stale_artifacts()` — also cleans stale `live_events/`.
 - [x] `LiveSessionClient` — removed all browser-side log accumulation
       (`#logContext`, `#logTurns`, `#writeSessionLog()`, `#chatLog`,
       `#persistChatLog()`, `#logsDir`).
-- [x] `LiveSessionClient` — added `#writeEvent(type, data)` helper and
-      event writing at all turn boundaries.
+- [x] `LiveSessionClient` — added `#writeEvent(type, data)` helper and event
+      writing at all turn boundaries.
 - [x] `ticket-detail.ts` — removed `logsDir` resolution and passing.
 - [x] `ticket-store.ts` — removed `getLogsDir()`.
 - [x] `ChatLogEntry` type removed (unused).
@@ -255,39 +252,41 @@ executor.
 **Observable proof:** Start a live session. The agent responds conversationally
 in a natural voice, uses tools when needed, and signals completion via
 `system_objective_fulfilled` — without the stilted Cynefin/meta-plan framing
-visible in its behavior. The system prompt in `log.json` shows only the
-`live.*` instruction, not `system.*`.
+visible in its behavior. The system prompt in `log.json` shows only the `live.*`
+instruction, not `system.*`.
 
 ### Bug Fix: Instruction Leak
 
-`provision_session()` constructs *all* function group factories (system,
-simple-files, skills, sandbox, events, tasks, chat) regardless of the
-template's `functions` filter. The filter only gates which *declarations* are
-sent to the API — every group's instruction text still gets concatenated into
-the system prompt. This means a `runner: live` template with
-`functions: [system.*]` still gets instructions for files, skills, sandbox,
-events, tasks, and chat.
+`provision_session()` constructs _all_ function group factories (system,
+simple-files, skills, sandbox, events, tasks, chat) regardless of the template's
+`functions` filter. The filter only gates which _declarations_ are sent to the
+API — every group's instruction text still gets concatenated into the system
+prompt. This means a `runner: live` template with `functions: [system.*]` still
+gets instructions for files, skills, sandbox, events, tasks, and chat.
 
 Fix: `_extract_declarations()` must skip instructions from groups whose
 declarations are entirely filtered out.
 
 ### Changes
 
-- [x] `bees/declarations/live.*` — **[NEW]** Instruction-only declaration
-      files: `live.instruction.md` (voice-native system prompt),
-      `live.functions.json` (empty `[]`), `live.metadata.json` (empty `{}`).
+- [x] `bees/declarations/live.*` — **[NEW]** Instruction-only declaration files:
+      `live.instruction.md` (voice-native system prompt), `live.functions.json`
+      (empty `[]`), `live.metadata.json` (empty `{}`).
 - [x] `bees/functions/live.py` — **[NEW]** `get_live_function_group()` —
       instruction-only `FunctionGroup` (same pattern as `skills.py`).
-- [x] `bees/provisioner.py` — add `get_live_function_group()` to the
-      function groups list.
+- [x] `bees/provisioner.py` — add `get_live_function_group()` to the function
+      groups list.
 - [x] `bees/runners/live.py` — fix `_extract_declarations()` to skip
       instructions from groups whose declarations are entirely filtered out.
 - [x] `TEMPLATES.yaml` — live-session template uses `live.*` instead of
       `system.*`.
 - [x] Tests for instruction filtering and live prompt assembly.
-- [ ] `live.*` should carry termination declarations + handlers so
-      `system.*` is not needed in the template. Currently blocked by
-      `simple-files` naming (all functions prefixed `system_`).
+- [x] Rename `simple-files` group to `files` and rename all `system_*` file
+      functions to `files_*` prefix, so `files.*` filter pattern matches
+      correctly in live sessions.
+- [x] Coalesce same-role transcript fragments in `LiveStream` before writing to
+      context (the Live API sends `outputTranscription` word-by-word, producing
+      ~80 context entries for a few sentences).
 
 ---
 
@@ -295,8 +294,8 @@ declarations are entirely filtered out.
 
 ### 🎯 Objective
 
-Live sessions have a dedicated UI panel in ticket detail: connection status,
-mic toggle, waveform visualizer, and live transcript.
+Live sessions have a dedicated UI panel in ticket detail: connection status, mic
+toggle, waveform visualizer, and live transcript.
 
 **Observable proof:** Select a live-running task in hivetool. See a "Live
 Session" panel with a glowing dot for connection status, a mic button, and a
@@ -310,18 +309,15 @@ scrolling transcript of the conversation.
 - [ ] Mic toggle button with visual feedback.
 - [ ] Audio level waveform or VU meter.
 - [ ] Live transcript display (from server-side text events).
-- [ ] Coalesce same-role transcript fragments in `LiveStream` before
-      writing to context (the Live API sends `outputTranscription`
-      word-by-word, producing ~80 context entries for a few sentences).
 
 ---
 
 ## Non-Goals
 
-- **Audio processing in Python.** Audio stays entirely in the browser.
-  The box never touches audio data.
-- **Live API resume.** The Live API doesn't support session resume the same
-  way batch does. A disconnected live session is a new session.
+- **Audio processing in Python.** Audio stays entirely in the browser. The box
+  never touches audio data.
+- **Live API resume.** The Live API doesn't support session resume the same way
+  batch does. A disconnected live session is a new session.
 - **Multi-user live sessions.** One browser tab per live session.
 - **Custom voice models.** Uses Gemini's built-in voice configuration.
 
