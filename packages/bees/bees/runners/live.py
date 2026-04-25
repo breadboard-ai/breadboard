@@ -164,22 +164,31 @@ def _extract_declarations(
         else:
             group = item
 
-        if group.instruction:
-            instructions.append(group.instruction)
-
         # Build a name → handler lookup from definitions.
         definitions_by_name: dict[str, FunctionHandler] = {
             name: defn.handler for name, defn in group.definitions
         }
 
+        # Collect declarations that survive the filter.
+        group_included: list[dict[str, Any]] = []
         for decl in group.declarations:
             name = decl.get("name", "")
             if function_filter and not _matches_filter(name, function_filter):
                 continue
-            all_declarations.append(decl)
+            group_included.append(decl)
             handler = definitions_by_name.get(name)
             if handler:
                 handler_map[name] = handler
+        all_declarations.extend(group_included)
+
+        # Include instructions only if: (a) the group is instruction-only
+        # (no declarations at all — e.g. skills, live), or (b) at least
+        # one declaration survived the filter.  This prevents unrelated
+        # groups from leaking their instructions into the system prompt.
+        if group.instruction:
+            is_instruction_only = len(group.declarations) == 0
+            if is_instruction_only or group_included:
+                instructions.append(group.instruction)
 
     return all_declarations, "\n\n".join(instructions), handler_map
 

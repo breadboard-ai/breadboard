@@ -243,7 +243,55 @@ normally, producing log files and `chat_log.json` — same as batch sessions.
 
 ---
 
-## Phase 7 — UI Polish
+## Phase 7 — Live Function Group
+
+### 🎯 Objective
+
+Live sessions use a voice-native system prompt instead of the batch-oriented
+`system.*` instruction. The live agent is a friendly conversational assistant
+that fulfills objectives through natural voice dialogue, not a rigid meta-plan
+executor.
+
+**Observable proof:** Start a live session. The agent responds conversationally
+in a natural voice, uses tools when needed, and signals completion via
+`system_objective_fulfilled` — without the stilted Cynefin/meta-plan framing
+visible in its behavior. The system prompt in `log.json` shows only the
+`live.*` instruction, not `system.*`.
+
+### Bug Fix: Instruction Leak
+
+`provision_session()` constructs *all* function group factories (system,
+simple-files, skills, sandbox, events, tasks, chat) regardless of the
+template's `functions` filter. The filter only gates which *declarations* are
+sent to the API — every group's instruction text still gets concatenated into
+the system prompt. This means a `runner: live` template with
+`functions: [system.*]` still gets instructions for files, skills, sandbox,
+events, tasks, and chat.
+
+Fix: `_extract_declarations()` must skip instructions from groups whose
+declarations are entirely filtered out.
+
+### Changes
+
+- [x] `bees/declarations/live.*` — **[NEW]** Instruction-only declaration
+      files: `live.instruction.md` (voice-native system prompt),
+      `live.functions.json` (empty `[]`), `live.metadata.json` (empty `{}`).
+- [x] `bees/functions/live.py` — **[NEW]** `get_live_function_group()` —
+      instruction-only `FunctionGroup` (same pattern as `skills.py`).
+- [x] `bees/provisioner.py` — add `get_live_function_group()` to the
+      function groups list.
+- [x] `bees/runners/live.py` — fix `_extract_declarations()` to skip
+      instructions from groups whose declarations are entirely filtered out.
+- [x] `TEMPLATES.yaml` — live-session template uses `live.*` instead of
+      `system.*`.
+- [x] Tests for instruction filtering and live prompt assembly.
+- [ ] `live.*` should carry termination declarations + handlers so
+      `system.*` is not needed in the template. Currently blocked by
+      `simple-files` naming (all functions prefixed `system_`).
+
+---
+
+## Phase 8 — UI Polish
 
 ### 🎯 Objective
 
@@ -262,6 +310,9 @@ scrolling transcript of the conversation.
 - [ ] Mic toggle button with visual feedback.
 - [ ] Audio level waveform or VU meter.
 - [ ] Live transcript display (from server-side text events).
+- [ ] Coalesce same-role transcript fragments in `LiveStream` before
+      writing to context (the Live API sends `outputTranscription`
+      word-by-word, producing ~80 context entries for a few sentences).
 
 ---
 

@@ -208,6 +208,53 @@ def test_extract_declarations_handlers_respect_filter():
     assert "tool_b" not in handlers
 
 
+def test_extract_declarations_filters_instructions():
+    """Instructions from groups with all declarations filtered out are excluded."""
+    system_factory = _make_test_factory(
+        "system",
+        [{"name": "system_objective_fulfilled", "description": "done"}],
+        instruction="System instruction",
+    )
+    files_factory = _make_test_factory(
+        "simple-files",
+        [{"name": "files_list", "description": "list"}],
+        instruction="Files instruction",
+    )
+
+    # Only system.* passes the filter — files instruction should be excluded.
+    decls, instruction, _ = _extract_declarations(
+        [system_factory, files_factory], ["system.*"],
+    )
+
+    assert len(decls) == 1
+    assert decls[0]["name"] == "system_objective_fulfilled"
+    assert "System instruction" in instruction
+    assert "Files instruction" not in instruction
+
+
+def test_extract_declarations_includes_instruction_only_groups():
+    """Instruction-only groups (no declarations) always include their instruction."""
+    system_factory = _make_test_factory(
+        "system",
+        [{"name": "system_objective_fulfilled", "description": "done"}],
+        instruction="System instruction",
+    )
+    live_group = FunctionGroup(
+        name="live",
+        declarations=[],
+        definitions=[],
+        instruction="Live instruction",
+    )
+
+    # Even with a filter, the live (instruction-only) group's instruction appears.
+    _, instruction, _ = _extract_declarations(
+        [system_factory, live_group], ["system.*"],
+    )
+
+    assert "System instruction" in instruction
+    assert "Live instruction" in instruction
+
+
 # ---------------------------------------------------------------------------
 # _assemble_system_instruction
 # ---------------------------------------------------------------------------
