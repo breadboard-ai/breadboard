@@ -181,14 +181,25 @@ def _extract_declarations(
                 handler_map[name] = handler
         all_declarations.extend(group_included)
 
-        # Include instructions only if: (a) the group is instruction-only
-        # (no declarations at all — e.g. skills, live), or (b) at least
-        # one declaration survived the filter.  This prevents unrelated
-        # groups from leaking their instructions into the system prompt.
+        # Include instructions only if at least one declaration survived
+        # the filter.  For instruction-only groups (no declarations at all,
+        # e.g. skills, live), check whether the group's *name* matches a
+        # filter pattern — this prevents unrelated instruction-only groups
+        # from leaking into the system prompt.
         if group.instruction:
-            is_instruction_only = len(group.declarations) == 0
-            if is_instruction_only or group_included:
-                instructions.append(group.instruction)
+            has_declarations = len(group.declarations) > 0
+            if has_declarations:
+                # Normal group: include instruction only if at least one
+                # declaration survived the filter.
+                if group_included:
+                    instructions.append(group.instruction)
+            else:
+                # Instruction-only group: include if no filter is set,
+                # or the group name matches a filter pattern.
+                if not function_filter or _group_matches_filter(
+                    group.name, function_filter,
+                ):
+                    instructions.append(group.instruction)
 
     return all_declarations, "\n\n".join(instructions), handler_map
 
@@ -206,6 +217,27 @@ def _matches_filter(name: str, patterns: list[str]) -> bool:
             if name.startswith(prefix + "_") or name == prefix:
                 return True
         elif name == pattern:
+            return True
+    return False
+
+
+def _group_matches_filter(
+    group_name: str | None,
+    patterns: list[str],
+) -> bool:
+    """Check whether an instruction-only group's name matches a filter pattern.
+
+    Group names are matched against the prefix of ``group.*`` patterns.
+    For example, group ``"skills"`` matches ``"skills.*"``.
+    """
+    if not group_name:
+        return False
+    for pattern in patterns:
+        if pattern.endswith(".*"):
+            prefix = pattern[:-2]
+            if group_name == prefix:
+                return True
+        elif group_name == pattern:
             return True
     return False
 
