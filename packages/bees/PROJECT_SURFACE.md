@@ -78,17 +78,26 @@ registered callback, and can push it to the client via SSE.
 
 ---
 
-## Phase 2 — Surface Schema
+## Phase 2 — Surface Schema ✅
 
-Define what goes in `surface.json`. Start minimal and let it evolve.
+Surface format specified in [docs/surface-schema.md](docs/surface-schema.md).
 
-- [ ] Sections with titles and content references? Flat list of items? Typed panels
-      (markdown, image, bundle)?
-- [ ] How does the schema handle updates — full replacement or incremental patches?
-- [ ] What metadata does each entry carry (name, type, path, timestamp)?
+- [x] Snapshot `surface.json` — agent overwrites on every change, with a
+      monotonic `version` counter for change detection. Rollback is consumer-side.
+- [x] Two flat entity types: **Sections** (declared groups with id, title,
+      description) and **Items** (typed content leaves with id, title, path,
+      description, render hint, role, section reference).
+- [x] Item types via MIME (inferred from file extension) + optional `render`
+      hint for cases like bundles.
+- [x] Content model: `description` (inline/preview) + `path` (file reference),
+      both optional but at least one required.
+- [x] Orchestrating agent is the view controller — curates sub-agent content
+      into its own surface. Bundles are leaves, not composition primitives.
+- [x] Array position determines ordering (sections and items). No explicit
+      `order` field.
 
 🎯 A written schema spec that an agent can follow and a consumer can render,
-validated by hand-writing a few example `surface.json` files.
+validated by the finance dashboard example in the schema doc.
 
 ---
 
