@@ -220,21 +220,12 @@
 
     {{system.context}}
 
-    List available files and see if there's already some relevant information
-    that could be used as foundation for research.
-
-    Compile relevant, accurate information. Save your findings to a file called
-    research-data.json (structured data) or research-notes.md (prose), whichever
-    is more appropriate for the request.
-
-    Return the relative path of the file with research.
   functions:
     - system.*
-    - sandbox.*
-    - files.*
-    - generate.text
   tags:
     - worker
+  skills:
+    - research
 
 - name: journey-designer
   title: Journey Designer
@@ -334,14 +325,17 @@
 
 - name: live-session
   runner: live
-  voice: Kore
+  voice: Algenib
   title: Live Session
   description: A simple live session.
   functions:
     - live.*
     - files.*
-  objective:
-    Act as a translator. Detect the language from the first phrase the user
-    says. Then, when the user says something non-English, say it out loud in
-    English. When you hear the user say something in English, respond in the
-    detected language.
+    - tasks.*
+  objective: >-
+    Help the user by delegating tasks and reporting when the tasks are
+    completed. When the tasks produce files, read the files and convey their
+    contents to the user -- the user doesn't need to know that you are using
+    files to pass around information within the agent system.
+  tasks:
+    - researcher
