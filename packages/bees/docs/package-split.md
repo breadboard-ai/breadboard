@@ -1,6 +1,9 @@
-> [!NOTE] This is a directional concept, not a finalized design. It captures the
-> packaging architecture that emerged from the delegated sessions exploration
-> and the "run from GitHub" question.
+> [!NOTE]
+> This is the remaining step in the library extraction. All protocols have been
+> specified, tested, and migrated. The `SessionRunner` protocol is implemented
+> with two concrete runners (`GeminiRunner`, `LiveRunner`). What remains is the
+> physical package split described below. See
+> [library-extraction.md](./library-extraction.md) for what's already done.
 
 # Package Split
 
@@ -253,97 +256,44 @@ of a hive populated by something else entirely).
 handlers with a `TestRunner` that returns scripted responses. No Gemini mocking,
 no network stubs, no API keys in CI.
 
-## Grounded in code: the import graph
+## Current import graph
 
-Tracing the actual `opal_backend` imports in `bees/` reveals three categories:
+The library extraction is complete at the protocol level. The remaining
+`opal_backend` imports are isolated to three modules:
 
-### Clean today (moves to `gemini-runners` wholesale)
+| Module             | Imports                                                   | Moves to             |
+| ------------------ | --------------------------------------------------------- | -------------------- |
+| `box.py`           | `HttpBackendClient`, `app.auth`, `app.config`             | `box` package        |
+| `runners/gemini.py`| `HttpBackendClient`, `InMemoryInteractionStore`,          | `gemini-runners`     |
+|                    | `InteractionState`, sessions API, `InMemorySessionStore`  | package              |
+| `handler_types.py` | Transitional back-imports (`SuspendError`, `AgentResult`) | Accepted (see below) |
 
-`session.py` (940 lines) is where bees and `opal_backend` are deeply entangled.
-It imports `new_session`, `start_session`, `resume_session`, `Subscribers`,
-`InMemorySessionStore`, `InteractionState` — all `opal_backend` session
-internals. It also assembles all function groups and calls `opal_backend`'s
-session API directly. This entire file _is_ the `StreamingRunner`.
+**Everything else is clean.** `session.py` (549 lines) contains only
+`drain_session`, `EvalCollector`, resume state persistence, and file extraction
+— pure framework code with zero `opal_backend` imports. All 10 function modules
+import exclusively from `bees.protocols`. `scheduler.py`, `task_runner.py`, and
+`provisioner.py` have zero `opal_backend` imports.
 
-### Clean today (trivial fix)
-
-`scheduler.py` imports `HttpBackendClient` only for type annotation. Replace
-with a protocol or `Any` and it's clean. `task_runner.py` already uses
-`backend: Any` — zero `opal_backend` imports.
-
-`box.py` imports `app.auth`, `app.config`, `HttpBackendClient`. All three become
-constructor parameters when it moves to its own package.
-
-### The friction: function modules
-
-All 8 function modules import `opal_backend.function_definition` for:
-
-- `FunctionGroup`, `FunctionGroupFactory`, `SessionHooks` (types)
-- `assemble_function_group`, `load_declarations` (assembly utilities)
-
-Additionally, `chat.py` and `files.py` import `_make_handlers` from
-`opal_backend.functions.*` — these delegate to `opal_backend`'s built-in
-handlers for file I/O and chat.
-
-**Resolution**: The tool protocol bridge (above) addresses the type imports. The
-`_make_handlers` delegations and `load_declarations`/`assemble_function_group`
-utilities need bees-native equivalents or thin wrappers in the protocols module.
-Since these are pure data assembly (JSON schema loading + handler map → group),
-the extraction is mechanical.
+> **Transitional back-imports** in `handler_types.py` are accepted. `SuspendError`
+> and `AgentResult` subclass their `opal_backend` counterparts so the opal session
+> loop's `except` / `isinstance` checks pass. The cost (two type-level imports in
+> one file) is not worth rewriting the loop's battle-hardened retry logic.
 
 ## Open questions
-
-**VFS layer.** `disk_file_system.py` depends on `opal_backend`'s
-`FileSystemProtocol`. Same protocol bridge approach applies — define a
-bees-native `FileSystem` protocol that mirrors the shape.
 
 **MCP lifecycle.** MCP connections are currently established per-session. Under
 the split, bees manages MCP connections as framework infrastructure (since
 `mcp_bridge.py` stays in bees). The runner doesn't need to know about MCP.
 
-**`_make_handlers` delegation.** `chat.py` and `files.py` import handler
-factories from `opal_backend.functions.*`. These need to either move into bees
-(if the logic is framework-level) or be injected by the runner (if they're
-provider-specific). Needs investigation.
+## What remains
 
-## Gradual migration
+All protocols are specified, tested, and migrated (see
+[library-extraction.md](./library-extraction.md) for the full inventory). The
+remaining work is the physical package split:
 
-This split follows Spec-Driven Development. Write protocols first, prove them
-with conformance tests, then migrate imports.
+1. Create `gemini-runners` package with `GeminiRunner` (wraps `bees/runners/gemini.py`).
+2. Move `box.py` into its own package.
+3. Remove remaining `opal_backend` imports from `bees/`.
+4. Drop all external deps from `bees/pyproject.toml`.
 
-### Protocol inventory
-
-| Protocol            | Replaces                            | Specified | Tested | Migrated |
-| ------------------- | ----------------------------------- | --------- | ------ | -------- |
-| `FunctionGroup`     | `opal_backend.FunctionGroup`        | ✅        | ✅     | ✅       |
-| `FunctionFactory`   | `opal_backend.FunctionGroupFactory` | ✅        | ✅     | ✅       |
-| `FunctionHooks`     | `opal_backend.SessionHooks`         | ✅        | ✅     | ✅       |
-| `FileSystem`        | `opal_backend.FileSystemProtocol`   | ✅        | ✅     | ✅       |
-| `SuspendError`      | `opal_backend.suspend.SuspendError` | ✅        | ✅     | ✅       |
-| `AgentResult`       | `opal_backend.events.AgentResult`   | ✅        | ✅     | ✅       |
-| `SessionTerminator` | `opal_backend.loop.LoopController`  | ✅        | ✅     | ✅       |
-| `SUSPEND_TYPES`     | `opal_backend.events.SUSPEND_TYPES` | ✅        | ✅     | ✅       |
-| `PAUSE_TYPES`       | `opal_backend.events.PAUSE_TYPES`   | ✅        | ✅     | ✅       |
-| `SessionResult`     | (relocation to protocols)           | ✅        | ✅     | ✅       |
-| `SessionRunner`     | Implicit contract in `session.py`   | Pending   | —      | —        |
-
-See [spec/function-types.md](../spec/function-types.md) for the function types
-spec, [spec/filesystem.md](../spec/filesystem.md) for the filesystem types spec,
-[spec/handler-types.md](../spec/handler-types.md) for the handler types spec,
-and [spec/session-observation.md](../spec/session-observation.md) for the
-session observation types spec and conformance tests.
-
-### Migration steps
-
-1. Define function protocols in `bees/protocols.py` (mirror `opal_backend`
-   shapes).
-2. Define `SessionRunner` protocol.
-3. Migrate `bees/functions/` to import from `bees/protocols.py`.
-4. Create `gemini-runners` with `StreamingRunner` (wraps `session.py` +
-   `opal_backend`).
-5. Move `box.py` into its own package.
-6. Remove `opal_backend` imports from `bees/`.
-7. Drop all external deps from `bees/pyproject.toml`.
-
-Each step is independently shippable — the existing code path continues to work
-throughout.
+Each step is independently shippable.

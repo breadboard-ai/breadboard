@@ -1,6 +1,10 @@
 > [!NOTE]
-> This is a conceptual exploration, not documentation of current capabilities.
-> Nothing described here is implemented yet.
+> This concept shipped as **Project Acoustic**
+> ([PROJECT_ACOUSTIC.md](../../PROJECT_ACOUSTIC.md)). The architecture diverged
+> from what's described here: the filesystem interchange pattern replaced the
+> REST APIs (`/session-bundle`, `/tool-dispatch`, `/session-status`), and
+> `session_type: delegated` became `runner: live`. The doc remains as a record
+> of the original design exploration.
 
 # Delegated Sessions
 

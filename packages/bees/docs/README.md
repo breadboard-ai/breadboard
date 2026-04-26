@@ -39,10 +39,26 @@
   the template schema reference (appendix).
 - [flux.md](flux.md) — Stability map classifying each subsystem as solid,
   settling, or fluid.
+- [library-extraction.md](library-extraction.md) — Record of the completed
+  library extraction: specs, migration phases, and remaining `opal_backend`
+  imports.
 - [interview-log.md](interview-log.md) — Raw architect insights captured during
   the Phase 3 design interview. Primary source material for patterns.md.
 
+## Concept explorations
+
+Design docs that traced the path to the current architecture. Each has been
+realized (with divergences noted in their banners) and is kept as a historical
+record.
+
+- [delegated-sessions.md](delegated-sessions.md) — What if session execution is
+  owned by the browser? Shipped as Project Acoustic.
+- [delegated-sessions-2.md](delegated-sessions-2.md) — What if _all_ sessions
+  are delegated? Led to the `SessionRunner` protocol.
+- [package-split.md](package-split.md) — The delegated sessions insight as a
+  packaging concern. Remaining step in the library extraction.
+
 ## Forward arrow
 
-- [future.md](future.md) — Short- to medium-term work: the consumption API,
-  hive abstraction, multi-hive support, event delivery, and naming migration.
+- [future.md](future.md) — What's next: the package split, consumption API,
+  and hive abstraction.
