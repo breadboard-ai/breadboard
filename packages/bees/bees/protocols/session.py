@@ -170,6 +170,16 @@ class SessionConfiguration:
        ``ObservationConfig`` in a future spec.
     """
 
+    extract_chat_from_context: bool = False
+    """Extract chat log entries from ``sendRequest`` context.
+
+    When ``True``, ``drain_session`` scans each ``sendRequest`` event for
+    new user/model text turns and writes them to the chat log via
+    ``on_chat_entry``.  Used by live sessions, which lack function-level
+    chat handlers.  Batch sessions leave this ``False`` — their chat
+    function handlers write log entries directly.
+    """
+
     voice: str | None = None
     """Prebuilt voice name for Live API audio output (e.g. ``'Kore'``)."""
 

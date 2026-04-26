@@ -390,7 +390,13 @@ async def drain_session(
             # For live sessions, sendRequest events carry the accumulated
             # context (including model and user turns).  We scan for new
             # entries since the last sendRequest and log their text.
-            if "sendRequest" in event and chat_entry:
+            # Batch sessions skip this — their chat function handlers
+            # write log entries directly.
+            if (
+                "sendRequest" in event
+                and chat_entry
+                and config.extract_chat_from_context
+            ):
                 contents = (
                     event["sendRequest"]
                     .get("body", {})

@@ -116,6 +116,11 @@ class TaskRunner:
                 voice=task.metadata.voice,
             )
 
+            # Live sessions need context-level chat extraction because
+            # they lack function-level chat handlers.
+            if task.metadata.runner == "live":
+                config.extract_chat_from_context = True
+
             stream = await self._runner_for(task).run(config)
             self._active_streams[task.id] = stream
             try:
@@ -239,6 +244,11 @@ class TaskRunner:
                 seed_files=False,  # Files already on disk from previous run.
                 voice=task.metadata.voice,
             )
+
+            # Live sessions need context-level chat extraction because
+            # they lack function-level chat handlers.
+            if task.metadata.runner == "live":
+                config.extract_chat_from_context = True
 
             stream = await self._runner_for(task).resume(
                 config,

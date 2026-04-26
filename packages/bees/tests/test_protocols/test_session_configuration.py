@@ -57,6 +57,7 @@ class TestSessionConfigurationConformance(unittest.TestCase):
         self.assertEqual(config.label, "")
         self.assertIsNone(config.log_path)
         self.assertIsNone(config.on_chat_entry)
+        self.assertFalse(config.extract_chat_from_context)
 
     def test_all_fields_settable(self):
         """All fields can be set explicitly."""
@@ -87,6 +88,7 @@ class TestSessionConfigurationConformance(unittest.TestCase):
             "label",
             "log_path",
             "on_chat_entry",
+            "extract_chat_from_context",
             "voice",
         }
         self.assertEqual(field_names, expected)
