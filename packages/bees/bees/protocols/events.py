@@ -22,6 +22,7 @@ from typing import Any, Awaitable, Callable, TypeVar
 from bees.ticket import Ticket
 
 __all__ = [
+    "BroadcastReceived",
     "CycleComplete",
     "CycleStarted",
     "EventEmitter",
@@ -111,6 +112,21 @@ class CycleComplete(SchedulerEvent):
 
     type: str = field(init=False, default="cycle_complete")
     total_cycles: int = 0
+
+
+@dataclass
+class BroadcastReceived(SchedulerEvent):
+    """An agent broadcast event was received during coordination routing.
+
+    Bridges agent-level broadcasts (``events_broadcast``) into the
+    framework's typed event pipeline so application consumers can
+    subscribe via ``bees.on(BroadcastReceived, ...)``.
+    """
+
+    type: str = field(init=False, default="broadcast_received")
+    signal_type: str = ""
+    message: str = ""
+    source_task_id: str = ""
 
 
 # ---------------------------------------------------------------------------

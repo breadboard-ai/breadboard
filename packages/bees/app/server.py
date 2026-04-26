@@ -32,6 +32,7 @@ from app.auth import load_gemini_key
 from app.config import load_hive_dir
 from bees import Task, Bees
 from bees.protocols.events import (
+    BroadcastReceived,
     CycleComplete,
     CycleStarted,
     TaskAdded,
@@ -128,6 +129,16 @@ async def _on_cycle_complete(event: CycleComplete) -> None:
     await broadcaster.broadcast({"type": "scheduler:stopped", "waves": event.total_cycles})
 
 
+async def _on_broadcast(event: BroadcastReceived) -> None:
+    """Push agent broadcast events to SSE clients."""
+    await broadcaster.broadcast({
+        "type": "broadcast:received",
+        "signal_type": event.signal_type,
+        "message": event.message,
+        "source_task_id": event.source_task_id,
+    })
+
+
 # ---------------------------------------------------------------------------
 # Request/response models
 # ---------------------------------------------------------------------------
@@ -181,6 +192,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     bees.on(TaskStarted, _on_task_start)
     bees.on(TaskDone, _on_task_done)
     bees.on(CycleComplete, _on_cycle_complete)
+    bees.on(BroadcastReceived, _on_broadcast)
 
     await bees.listen()
 
