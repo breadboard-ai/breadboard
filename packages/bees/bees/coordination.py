@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
 
 from bees.playbook import run_event_hooks
-from bees.protocols.events import EventEmitter, TaskDone
+from bees.protocols.events import BroadcastReceived, EventEmitter, TaskDone
 from bees.task_store import TaskStore
 from bees.ticket import Ticket
 
@@ -134,6 +134,13 @@ async def route_coordination_task(
         )
 
     store.save_metadata(task)
+
+    # Notify application consumers about the broadcast.
+    await emit(BroadcastReceived(
+        signal_type=signal_type,
+        message=payload,
+        source_task_id=task.id,
+    ))
 
     # Broadcast the updated coordination task to the UI.
     await emit(TaskDone(task=task))
