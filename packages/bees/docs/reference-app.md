@@ -34,8 +34,8 @@ The server has three responsibilities:
 
 ### 1. Boot the system
 
-On startup, the server creates a `Bees` instance with an `HttpBackendClient`
-and calls `bees.listen()`, which recovers stuck tasks, boots the root template
+On startup, the server creates a `Bees` instance with session runners and
+calls `bees.listen()`, which recovers stuck tasks, boots the root template
 from `SYSTEM.yaml`, and starts the scheduler loop.
 
 ### 2. Project the model as REST
@@ -77,16 +77,16 @@ parameter scopes the search to a subagent's subdirectory.
 The server uses a `Broadcaster` (fan-out queue) to deliver real-time state
 changes to all connected clients via Server-Sent Events.
 
-The wiring: each `Bees` event callback maps to an SSE event type.
+The wiring: each typed event maps to an SSE event type via `bees.on()`.
 
-| Bees hook             | SSE event type      | What happened                    |
+| Bees event type       | SSE event type      | What happened                    |
 | --------------------- | ------------------- | -------------------------------- |
-| `ticket_added`        | `agent:added`       | A new agent was created          |
-| `ticket_start`        | `agent:updated`     | Agent transitioned to running    |
-| `ticket_done`         | `agent:updated`     | Agent reached a resting state    |
-| `ticket_event`        | `session:event`     | Running session emitted an event |
-| `cycle_start`         | `scheduler:started` | Scheduler cycle beginning        |
-| `cycle_complete`      | `scheduler:stopped` | Scheduler has no more work       |
+| `TaskAdded`           | `agent:added`       | A new agent was created          |
+| `TaskStarted`         | `agent:updated`     | Agent transitioned to running    |
+| `TaskDone`            | `agent:updated`     | Agent reached a resting state    |
+| `TaskEvent`           | `session:event`     | Running session emitted an event |
+| `CycleStarted`        | `scheduler:started` | Scheduler cycle beginning        |
+| `CycleComplete`       | `scheduler:stopped` | Scheduler has no more work       |
 
 On initial connection, the SSE stream sends an `init` event with the full task
 list. After that, clients receive incremental updates. There is no REST endpoint
@@ -185,13 +185,12 @@ concretely here:
 
 ## What Would Change
 
-When the consumption API matures (see [flux.md](./flux.md)), the reference app
-would:
+When the consumption API matures (see [future.md](./future.md)), the reference
+app would:
 
 1. Stop editing task files directly in `/reply` and `/choose` — use a
    framework-provided interaction surface instead.
-2. Replace `Bees` event callbacks with a more principled observation API.
-3. Potentially extract into its own package, consuming bees as a library.
+2. Potentially extract into its own package, consuming bees as a library.
 
 The current implementation works but is tightly coupled to the framework's
 internals. The reference app is as much a test of the consumption API's limits

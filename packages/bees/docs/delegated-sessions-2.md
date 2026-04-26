@@ -1,6 +1,12 @@
-> [!NOTE] This is a conceptual exploration, not documentation of current
-> capabilities. Nothing described here is implemented yet. This builds on the
-> ideas in `delegated-sessions.md` and takes them to their logical conclusion.
+> [!NOTE]
+> The central thesis of this doc — bees as a pure orchestration and tooling
+> framework — is now reality. The `SessionRunner` protocol lives in
+> `bees/protocols/session.py`, with `GeminiRunner` and `LiveRunner` as concrete
+> implementations. Key differences from this proposal: `ContextChannel` was
+> absorbed into `SessionStream.send_context()`, and `dispatch.py` / `channel.py`
+> were never created as separate modules. See
+> [library-extraction.md](./library-extraction.md) for the current state and
+> [PROJECT_ACOUSTIC.md](../../PROJECT_ACOUSTIC.md) for the Live API integration.
 
 # Delegated Sessions — The General Case
 

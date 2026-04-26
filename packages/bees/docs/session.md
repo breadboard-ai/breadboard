@@ -33,43 +33,48 @@ creating a new run.
 
 ## Implementation split
 
-The session implementation lives in two places:
+The session implementation is layered across three concerns:
 
-| Module                         | Responsibility                                                                                                                                                                       |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `opal_backend/sessions/api.py` | The agent loop itself: `new_session`, `start_session`, `resume_session`. Handles turn-by-turn model invocation, function dispatch, state persistence.                                |
-| `bees/session.py`              | Bees' wrapper. Assembles function groups, wires up the disk-backed file system, manages eval logging, and translates between bees' task model and `opal_backend`'s session protocol. |
+| Module                     | Responsibility                                                                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bees/provisioner.py`      | Assembles a `SessionConfiguration` from task parameters: filters skills, creates the file system, wires function groups. Pure bees logic.  |
+| `bees/runners/*.py`        | Concrete `SessionRunner` implementations. `GeminiRunner` (batch text), `LiveRunner` (delegated live/voice).                                |
+| `bees/session.py`          | `drain_session` — consumes the event stream from a runner, writes eval logs, extracts files, and returns a `SessionResult`.                |
 
-From the session layer's perspective, `opal_backend` is an implementation
-detail. Consumers of the session layer see a unified surface: call `run_session`
-or `resume_session`, get back a `SessionResult`.
+The `SessionRunner` protocol (`bees/protocols/session.py`) defines the boundary:
 
-### `run_session`
+```python
+class SessionRunner(Protocol):
+    async def run(self, configuration: SessionConfiguration) -> SessionStream: ...
+    async def resume(self, configuration: SessionConfiguration) -> SessionStream: ...
+```
 
-The main entry point. It:
+`TaskRunner` orchestrates the full sequence:
 
-1. Filters skills and merges `allowed-tools` into the function filter.
-2. Creates a `DiskFileSystem` backed by the task's working directory.
-3. Seeds skill files into the file system.
-4. Calls `new_session()` with all function groups and config.
-5. Starts the agent loop (`start_session`) and collects events via a subscriber
-   queue.
-6. Writes structured eval logs at turn boundaries.
-7. On suspend or pause, persists session state to `session_state.json`.
-8. Returns a `SessionResult` with status, metrics, outcome, and file manifest.
+1. Calls `provision_session()` to assemble a `SessionConfiguration`.
+2. Calls `runner.run(config)` or `runner.resume(config)` to get a `SessionStream`.
+3. Calls `drain_session(stream, config)` to consume events and produce a `SessionResult`.
 
-### `resume_session`
+### Provisioning
 
-Picks up where a suspended or paused session left off:
+`provision_session()` is the pure-bees half. It:
 
-1. Loads saved state from `session_state.json`.
-2. Reconstructs all function groups (file system is already on disk — no seeding
-   needed).
-3. Restores the interaction state and sets the session to "suspended".
-4. Collects any pending context updates (from both `response.json` and
-   metadata).
-5. Calls `api_resume_session()` with the response and context parts.
-6. Event loop and logging proceed identically to `run_session`.
+1. Resolves the hive directory.
+2. Filters skills and merges `allowed-tools` into the function filter.
+3. Creates a `DiskFileSystem` backed by the task's working directory.
+4. Seeds skill files into the file system.
+5. Assembles all function group factories.
+6. Returns a `SessionConfiguration` with everything a runner needs.
+
+### Draining
+
+`drain_session()` consumes a `SessionStream` (an async iterable of events). It:
+
+1. Writes structured eval logs at turn boundaries.
+2. Tracks token usage, function calls, and thoughts.
+3. On suspend or pause, persists session state via `save_resume_state()`.
+4. Extracts files from the workspace on completion.
+5. Returns a `SessionResult` with status, metrics, outcome, and file manifest.
 
 ## Function Groups
 
@@ -88,17 +93,10 @@ group contains:
    construction time. This is how stateless declarations get wired to stateful
    runtime context (the file system, the scheduler, the scope).
 
-### Two kinds of function groups
+### Bees function groups
 
-- **opal_backend built-ins** — provided by the underlying platform. These
-  include `generate.*` (search-grounded text generation, image/video/audio
-  generation) and others. Bees passes these through to the session — template
-  authors can filter them in or out, but bees doesn't redeclare them.
-- **Bees function groups** — defined in `bees/functions/` and
-  `bees/declarations/`. Some override opal_backend groups (e.g. `system` and
-  `chat` provide bees-specific behavior while keeping the same group name).
-
-The bees function groups:
+All function groups are defined in `bees/functions/` and `bees/declarations/`,
+using bees-native protocols from `bees/protocols/`:
 
 | Group          | Filter prefix    | Purpose                                                                                                                  |
 | -------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
@@ -131,7 +129,8 @@ filter means all function groups are available.
 
 Each session has a disk-backed file system (`DiskFileSystem` in
 `bees/disk_file_system.py`). It satisfies the `FileSystem` protocol from
-`opal_backend` by reading and writing directly to a working directory on disk.
+`bees/protocols/filesystem.py` by reading and writing directly to a working
+directory on disk.
 
 Key characteristics:
 
@@ -215,8 +214,12 @@ Logs are written to `{hive}/logs/` at turn boundaries and on completion. A
 
 | File                       | Responsibility                                   |
 | -------------------------- | ------------------------------------------------ |
-| `bees/session.py`          | Session assembly, run/resume, eval collection    |
-| `bees/functions/`          | All bees-specific function group implementations |
+| `bees/provisioner.py`      | Session provisioning (pure bees logic)           |
+| `bees/session.py`          | `drain_session`, eval collection, resume state   |
+| `bees/runners/gemini.py`   | Batch text runner (wraps opal session API)        |
+| `bees/runners/live.py`     | Live voice runner (delegated to browser)          |
+| `bees/protocols/session.py`| `SessionRunner` protocol, `SessionConfiguration` |
+| `bees/functions/`          | All function group implementations               |
 | `bees/declarations/`       | Function schemas and instructions                |
 | `bees/disk_file_system.py` | Disk-backed VFS adapter                          |
 | `bees/context_updates.py`  | Event → context parts formatting                 |
@@ -224,9 +227,6 @@ Logs are written to `{hive}/logs/` at turn boundaries and on completion. A
 ---
 
 ## Gaps
-
-Code changes needed to reconcile the session layer with the aspirational
-architecture in `docs/architecture/index.md`.
 
 ### `skills.*` group exists only as a workaround
 
@@ -238,20 +238,3 @@ function group wrapper.
 **Gap**: The session layer needs a mechanism to inject system instruction
 fragments independently of function groups. Once that exists, the `skills.*`
 group can be removed.
-
-### Function naming: dots vs. underscores
-
-The architecture doc uses dot notation (`system.objective_fulfilled`) for both
-filter prefixes and function names. In practice, filter prefixes use dots
-(`system.*`) but actual function names use underscores
-(`system_objective_fulfilled`) because the Gemini API does not support dots in
-function names.
-
-This substitution is currently visible to users — template authors write
-`system.*` in filters but see `system_objective_fulfilled` in logs and
-responses.
-
-**Gap**: The dot↔underscore substitution should be invisible to the user.
-Function names displayed in the architecture doc should be the names users see
-everywhere. This likely requires a transparent translation layer at the
-declaration/dispatch boundary.

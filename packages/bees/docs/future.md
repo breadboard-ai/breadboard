@@ -1,31 +1,17 @@
 # Future Direction
 
 Short- to medium-term work needed to close gaps in the framework and bring about
-the vision described in [architecture.md](./architecture.md). Each concept doc
-explores a specific axis of the design space.
+the vision described in [architecture.md](./architecture.md).
 
-## The Library Extraction
+## Zero-Dependency `bees`
 
-The central architectural question: how does bees become a clean, installable
-library that applications `import` rather than fork?
+**Goal:** `pip install bees` works with no transitive dependencies. The
+framework owns orchestration and tools; model providers are pluggable packages
+that bring their own auth and API clients.
 
-Three concept docs trace the path:
-
-### [Delegated Sessions](./delegated-sessions.md)
-
-What if session execution is owned by an external party rather than the
-scheduler? The motivating use case is the Gemini Live API, but the insight
-generalizes.
-
-### [Delegated Sessions — The General Case](./delegated-sessions-2.md)
-
-What if _all_ sessions are delegated? Bees becomes a pure orchestration and
-tooling framework. Auth drops out of the core. Testing simplifies. The
-`SessionRunner` protocol emerges as the key abstraction.
-
-### [Package Split](./package-split.md)
-
-The delegated sessions insight, stated as a packaging concern. Four packages:
+The [library extraction](./library-extraction.md) decoupled bees from
+`opal_backend` at the protocol level. What remains is the physical split — four
+packages, four responsibilities:
 
 | Package              | What it is                    | External deps                          |
 | -------------------- | ----------------------------- | -------------------------------------- |
@@ -34,119 +20,11 @@ The delegated sessions insight, stated as a packaging concern. Four packages:
 | **`box`**            | Filesystem-driven CLI runner  | `bees`, `gemini-runners`, `watchfiles` |
 | **`app`**            | Reference web application     | `bees`, `gemini-runners`, `fastapi`    |
 
-The key refinement: functions (tool declarations + handlers) stay in `bees` as
-framework capabilities. They're orthogonal to the model provider.
-
-### Progress
-
-The library extraction follows [Spec-Driven Development](../spec/). Each
-protocol is specified, tested for conformance, then migrated.
-
-**Function types** ([spec](../spec/function-types.md)) — ✅ complete.
-Bees-native copies of `FunctionGroup`, `FunctionDefinition`, `SessionHooks`,
-`load_declarations`, and `assemble_function_group` live in
-`bees/protocols/functions.py`. All 8 function modules now import from
-`bees.protocols` instead of `opal_backend.function_definition`. Remaining
-`opal_backend` imports in `chat.py`, `files.py`, and `system.py` are
-handler-level (`_make_handlers`) — a separate spec.
-
-**FileSystem types** ([spec](../spec/filesystem.md)) — ✅ complete. Bees-native
-copies of `FileSystem`, `FileDescriptor`, `FileSystemSnapshot`,
-`SystemFileGetter`, `file_descriptor_to_part`, and constants live in
-`bees/protocols/filesystem.py`. `disk_file_system.py` now imports from
-`bees.protocols` instead of `opal_backend.file_system_protocol`.
-
-**Pidgin** ([spec](../spec/pidgin.md)) — ✅ complete. Bees-native copies of
-`from_pidgin_string` and `merge_text_parts` live in `bees/pidgin.py`. These
-resolve pidgin markup (`<file>`, `<a>` tags) in agent output back to data parts
-from the file system. Prerequisite for inlining handler bodies.
-
-**Handler types** ([spec](../spec/handler-types.md)) — ✅ complete. Bees-native
-copies of `SuspendError`, `WaitForInputEvent`, `WaitForChoiceEvent`,
-`ChoiceItem`, `AgentResult`, `FileData`, `SessionTerminator` protocol,
-`CONTEXT_PARTS_KEY`, and `ChatEntryCallback` live in
-`bees/protocols/handler_types.py`. These are the types that function handlers
-use for suspend/resume, session termination, and context injection.
-
-**Handler bodies** ([spec](../spec/handler-bodies.md)) — ✅ complete. Handler
-logic from `opal_backend.functions.{chat,system}._make_handlers` is inlined into
-bees' three function modules (`system.py`, `chat.py`, `files.py`). All
-imports come from `bees.protocols` and `bees.pidgin`. Task tree management
-(`TaskTreeManager`, `set_in_progress` calls) stays in opal_backend — it's not a
-bees concern. The `bees/functions/` directory has **zero** `opal_backend`
-imports.
-
-> **Transitional back-imports.** Two types in `bees/protocols/handler_types.py`
-> subclass their `opal_backend` counterparts:
->
-> | Bees type      | Inherits from                       | Why                                  |
-> | -------------- | ----------------------------------- | ------------------------------------ |
-> | `SuspendError` | `opal_backend.suspend.SuspendError` | Session loop catches via `except`    |
-> | `AgentResult`  | `opal_backend.events.AgentResult`   | Session loop checks via `isinstance` |
->
-> The session loop (`opal_backend/run.py`) uses `except SuspendError` and
-> `isinstance(result, AgentResult)` with opal's classes. Until the loop moves to
-> `gemini-runners`, bees' versions must inherit so these checks pass. Both
-> imports are removed when the session loop migrates.
-
-**Session observation types** ([spec](../spec/session-observation.md)) — ✅
-complete. Bees-native copies of `SUSPEND_TYPES` and `PAUSE_TYPES` live in
-`bees/protocols/session.py`. `SessionResult` relocated from `session.py` to
-`bees/protocols/session.py`. `session.py` re-exports `SessionResult` for
-backward compatibility. `task_runner.py`, `scheduler.py`, and tests now import
-`SessionResult` from `bees.protocols.session`. `EvalCollector` and
-`_print_event_summary` are now fully opal-free.
-
-**Session configuration** ([spec](../spec/session-configuration.md)) — ✅
-complete. `SessionConfiguration` (provisioning output), `SessionStream` (async
-iterable event stream with back-channel), and `SessionEvent` (type alias) are
-specified and tested in `bees/protocols/session.py`. The `provision_session`
-function in `bees/provisioner.py` extracts provisioning logic from
-`run_session()` and `resume_session()`, both of which now delegate to it.
-`session.py`'s remaining imports are purely execution (opal_backend session API)
-— ready for the `SessionRunner` migration.
-
-**SessionRunner** ([spec](../spec/session-runner.md)) — ✅ specified + tested.
-`SessionRunner` protocol, `drain_session` composition function, and opaque
-resume state persistence (`save_resume_state` / `load_resume_state` /
-`clear_resume_state`) live in `bees/protocols/session.py` and `bees/session.py`.
-
-### Migration phases
-
-With all protocols specified, the remaining work is the **migration** — creating
-the concrete `GeminiRunner`, rewiring consumers, and removing dead code. Each
-phase is independently shippable.
-
-| #   | Spec                     | What changes                                                                                                                             | Status |
-| --- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 1   | `gemini-runner`          | `GeminiRunner` + `GeminiStream` in `bees/runners/gemini.py`. Wraps opal session API.                                                     | ✅     |
-| 2   | `runner-migration`       | `TaskRunner` / `Scheduler` / `Bees` accept `SessionRunner`. `box.py` constructs `GeminiRunner`. Uses `runner.run()` + `drain_session()`. | ✅     |
-| 3   | `session-cleanup`        | Remove `run_session`, `resume_session`, legacy state, dead imports from `session.py`.                                                    | ✅     |
-| 4   | `gemini-runners-package` | Move runner to `gemini-runners` package. `box.py` moves to `box` package.                                                                | —      |
-
-**Phase 1** is pure additive code — nothing breaks. Phase 2 is the full
-substitution from construction (`box.py`) to consumption (`TaskRunner`). Phase 3
-is deletion. Phase 4 is packaging.
-
-**Remaining `opal_backend` imports** in `bees/`:
-
-| Module             | Imports                                                   | Removed in                |
-| ------------------ | --------------------------------------------------------- | ------------------------- |
-| `box.py`           | `HttpBackendClient`, `app.auth`, `app.config`             | Phase 4 (moves to `box`)  |
-| `handler_types.py` | Transitional back-imports (`SuspendError`, `AgentResult`) | Accepted — see note below |
-
-> **Transitional back-imports are accepted.** The opal session loop
-> (`opal_backend/run.py`) catches `SuspendError` and checks
-> `isinstance(result, AgentResult)` using opal's classes. Migrating the loop to
-> eliminate these two imports would risk losing battle-hardened retry logic,
-> exponential backoff, and other Chesterton's fences. The back-imports are
-> documented, harmless, and expire naturally when a new session path (e.g.,
-> Gemini Live API) replaces the opal loop. The cost — two type-level imports in
-> one file — is not worth the risk of rewriting the loop.
+See [package-split.md](./package-split.md) for the full design.
 
 ## The Consumption API
 
-With the library extraction as the goal, three sub-problems need to crystallize.
+With the library extraction as the goal, two sub-problems need to crystallize.
 
 ### The Interaction Surface
 
@@ -155,22 +33,6 @@ The controller side of the MVC model (see
 [mutations system](./mutations.md) provides an atomic interaction model for the
 filesystem-based hive. The library API should make responding to suspended tasks
 and creating task groups first-class operations on `Bees` or `TaskNode`.
-
-### The Observation API
-
-`SchedulerHooks` is a bag of callbacks with no lifecycle contract. It's invasive
-— the hooks reach deep into the scheduler's internals — and it only supports one
-consumer.
-
-**Direction**: The observation API should support multiple observers, provide a
-typed event stream rather than positional callbacks, and cleanly separate
-read-only observation from write-side interaction. The reference app's SSE
-`Broadcaster` is evidence of the pattern — it already fans out to multiple
-clients. The framework should do the same at the scheduler level.
-
-**Active spec**: [spec/observation.md](../spec/observation.md) — typed event
-dataclasses replacing `SchedulerHooks`, with `EventEmitter` callback threading
-through `Scheduler` → `TaskRunner`.
 
 ### Hive Abstraction
 
@@ -185,6 +47,103 @@ a protocol with at least two implementations:
 
 The configuration surface (templates, skills, system config) can remain
 file-based — it's the task runtime state that needs to scale.
+
+## Multi-Modal Sessions
+
+A task currently maps to a single session type. But a conversational task
+naturally switches modalities: the user pushes to talk (live session), then
+types a follow-up (text session). The task is the same — the session mode
+changes.
+
+This implies a task can have **multiple sequential sessions** of different
+types. The scheduler already handles suspend/resume across sessions, but the
+concept of switching runner type mid-task is new. Key questions:
+
+- **Session continuity.** When switching from live → text, does the text session
+  inherit the live session's context? The live session produces a transcript via
+  `chat_log.json` and `live_events/` — could these seed the text session's
+  initial context?
+- **Runner selection.** Currently `runner` is a static field on `TicketMetadata`
+  set at task creation. Multi-modal tasks need the runner to be chosen per
+  interaction — push-to-talk → `live`, text input → `generate`.
+- **UI affordance.** The Talk button and text input already coexist in hivetool.
+  The question is whether they target the same task or create separate sessions.
+
+## Agent Artifacts
+
+Agents need a common framework for presenting artifacts to the user — things the
+agent creates and wants to display, not just text output in the chat log.
+
+### What an agent can present
+
+Not an exhaustive list, but a starting point:
+
+- **Image** — generated or retrieved, displayed inline.
+- **Markdown** — structured text with formatting (reports, summaries, plans).
+- **Bundle** — a richer format, possibly HTML, for interactive or composed
+  artifacts.
+
+### Requirements
+
+- **Declarative.** The agent signals "show this to the user" through a function
+  call or file convention — not by encoding display logic.
+- **Persistent.** Artifacts survive the session. The app can load the current
+  set of artifacts for a task without replaying the session.
+- **Addressable.** Each artifact has an identity so the agent can update or
+  replace it.
+
+### Open design space
+
+This could be:
+
+- **A function group** (`artifacts.*`) — `artifacts_present_image`,
+  `artifacts_present_markdown`, etc. Explicit and discoverable, but adds
+  functions to every agent's toolbox.
+- **A convention conveyed through skills** — the skill instruction teaches the
+  agent to write files to a known directory (`artifacts/`) with metadata. No
+  special function group needed, but the convention is implicit.
+- **A hybrid** — a thin function group for signaling intent, backed by files on
+  disk for persistence.
+
+The persistence requirement points toward the filesystem — artifacts as files in
+the task directory, with a manifest that the app reads on load.
+
+## Shared Directories
+
+Templates could designate certain directories as shared across sibling agent
+sessions. A task tree often has multiple agents that need to coordinate through
+shared resources:
+
+- **Shared components** — a design system or code library that multiple agents
+  contribute to and consume.
+- **Accumulated state** — a research corpus, a knowledge base, or a running log
+  that grows across sessions.
+
+### The stomping problem
+
+Concurrent writers to the same files is a race condition. Possible mitigations:
+
+- **Append-only** — shared directories are append-only. Each agent writes new
+  files; no agent modifies another agent's files.
+- **Lock-free partitioning** — each agent gets a subdirectory within the shared
+  space. A merge step (manual or automated) reconciles.
+- **Explicit coordination** — agents use `events_send_to_sibling` to negotiate
+  writes. The shared directory is the _result_ of coordination, not the
+  _mechanism_.
+
+### Template surface
+
+```yaml
+- name: design-team
+  shared_directories:
+    - path: components/
+      mode: append-only
+    - path: design-tokens/
+      mode: partitioned
+```
+
+Not sure yet whether this belongs in the template schema, the task tree
+configuration, or the file system protocol.
 
 ## Further out
 

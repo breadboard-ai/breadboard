@@ -78,9 +78,16 @@ Changes to `logs/` and other directories outside `config/`, `skills/`, and
 ```python
 # Pseudocode — see bees/box.py for the real implementation.
 
-async def run(hive_dir, backend):
+async def run(hive_dir, *, gemini_key):
+    runners = {
+        "generate": GeminiRunner(backend),
+        "live": LiveRunner(api_key=gemini_key),
+    }
     while True:                          # Outer: cold restart loop
-        bees = Bees(hive_dir, backend)
+        bees = Bees(hive_dir, runners)
+        bees.on(TaskAdded, _on_task_added)
+        bees.on(TaskDone, _on_task_done)
+        # ...
         bees.listen()
 
         async for changes in awatch(hive_dir):   # Inner: file watch
@@ -131,8 +138,8 @@ locally without a server.
 
 ## Observability
 
-The box wires `SchedulerHooks` to Python's `logging` module. All lifecycle
-events appear on stderr:
+The box subscribes to typed scheduler events via `bees.on()` and logs them to
+stderr via Python's `logging` module:
 
 ```
 18:25:01 [INFO] bees.box: Box starting — watching /path/to/hive

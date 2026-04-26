@@ -1,7 +1,7 @@
 # Bees
 
-Agent swarm orchestration framework. Uses the opal-backend agent loop to run
-sessions, coordinated by a scheduler that manages tasks as a tree.
+Agent swarm orchestration framework. Manages tasks as a tree, with pluggable
+session runners for different modalities (batch text, live voice).
 
 For the full documentation, see [docs/README.md](docs/README.md).
 
@@ -11,8 +11,8 @@ For the full documentation, see [docs/README.md](docs/README.md).
 npm run setup -w packages/bees
 ```
 
-This creates a `.venv` and installs opal-backend (with its local deps) plus
-bees.
+This creates a `.venv` and installs dependencies (including `opal-backend` for
+the batch runner).
 
 ## Configuration
 
@@ -28,40 +28,40 @@ runtime state (templates, skills, tasks, logs). Defaults to `hive`.
 
 ## Running
 
-### Server
+### Box (filesystem-driven)
 
 ```bash
-npm run dev:server -w packages/bees
+npm run dev:box -w packages/bees
 ```
 
-Starts the FastAPI server on port 3200. The server boots the scheduler, recovers
-any stuck tasks, and begins draining. The web shell is served alongside it.
+Watches the hive directory for changes and drives the scheduler through
+filesystem events. Use with [hivetool](#hivetool) for a browser-based developer
+workbench. See [docs/box.md](docs/box.md) for the full documentation.
 
-See [docs/reference-app.md](docs/reference-app.md) for the full server and web
-shell documentation.
-
-### Single session (CLI)
+### Hivetool
 
 ```bash
-npm run session:start -w packages/bees -- "Your prompt here"
+npm run dev:hivetool -w packages/bees
 ```
 
-Events stream to stderr. The final result prints as JSON to stdout.
+Browser-based developer workbench for inspecting and editing hive configuration,
+templates, skills, and task state. Reads and writes hive files directly via the
+File System Access API. See [docs/hivetool.md](docs/hivetool.md).
 
-### Tickets (CLI)
+Also hosted at: https://breadboard-ai.github.io/breadboard/hivetool/
+
+### Server (reference app)
 
 ```bash
-# Create tickets
-npm run ticket:add -w packages/bees -- "Tell me a joke"
-
-# Drain the queue (run all available tickets)
-npm run ticket:drain -w packages/bees
+npm run dev -w packages/bees
 ```
 
-Each ticket becomes a directory under `hive/tickets/{uuid}/` containing
-`objective.md` and `metadata.json`.
+Starts the FastAPI server on port 3200 alongside the web shell. The server boots
+the scheduler, recovers any stuck tasks, and begins draining. See
+[docs/reference-app.md](docs/reference-app.md) for the full documentation.
 
 ## Output
 
-Session log files land in `hive/logs/` in the eval viewer's `EvalFileData`
-format (`bees-session-{date}.log.json`).
+Session log files land in `hive/logs/` as structured JSON
+(`bees-{task-id}-{date}.log.json`). These can be inspected in hivetool's
+Sessions tab.
