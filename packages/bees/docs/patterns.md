@@ -24,8 +24,8 @@ discovers what work needs to be done as it executes. The model that replaced it
 program calling subroutines. The workflow emerges at runtime, not at declaration
 time.
 
-Code fossils remain (`depends_on`, `blocked` status, `promote_blocked_tickets`,
-topological sort). These are mostly dead code, retained for now.
+Code fossils remain (`depends_on`, `blocked` status, topological sort). These
+are mostly dead code, retained for now.
 
 ### Isolated file systems
 
@@ -184,12 +184,12 @@ Today, the consumer has to edit the task directly — write `response.json`, fli
 `assignee`. This is reaching into the model's internals. A proper interaction
 surface is the main thing needed for the consumption API to mature.
 
-### SchedulerHooks (exploratory)
+### Typed Events
 
-`SchedulerHooks` is the closest thing to a plugin API for consumers, but it's
-undercooked and invasive. It's not clear this is the right abstraction. This
-area needs careful pattern examination before committing to a design — it's
-exploratory territory, not something to stabilize prematurely.
+Applications observe the scheduler through typed events via the `Bees` class
+(`bees.on(TaskDone, callback)`). Each event is a `@dataclass` subclassing
+`SchedulerEvent`. This replaced the earlier `SchedulerHooks` callback bag and
+is now settled — see [flux.md](./flux.md) for stability classification.
 
 ## The Hive
 
@@ -243,6 +243,9 @@ agent to fulfill, persisted as a directory on disk.
 | `watch_events` | object[] | no       | Subscribe to inter-agent coordination events. Each entry has a `type` field (e.g., `{type: "digest_ready"}`).                                                                 |
 | `tasks`        | string[] | no       | Allowlist of template names this agent can delegate to via `tasks_create_task`.                                                                                               |
 | `autostart`    | string[] | no       | Template names to stamp as child tasks automatically when this template is run. Each entry creates a subagent task linked to the parent.                                      |
+| `runner`       | string   | no       | Which session runner to use: `"generate"` (batch text, default) or `"live"` (Gemini Live API for voice sessions).                                                             |
+| `voice`        | string   | no       | Prebuilt voice name for Live API audio output (e.g., `"Kore"`). Only used with `runner: live`.                                                                                |
+| `assignee`     | string   | no       | Initial assignee: `"user"` (start suspended, waiting for input) or `"agent"` (start immediately). Default is `"agent"`.                                                        |
 
 ### Interpolation
 

@@ -101,12 +101,13 @@ using bees-native protocols from `bees/protocols/`:
 | Group          | Filter prefix    | Purpose                                                                                                                  |
 | -------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `system`       | `system.*`       | Termination: `system_objective_fulfilled`, `system_failed_to_fulfill_objective`.                                         |
-| `files` | `files.*` | File I/O: `files_write_file`, `files_list_files`, `files_read_text_from_file`.                                        |
+| `files`        | `files.*`        | File I/O: `files_write_file`, `files_list_files`, `files_read_text_from_file`, `files_list_dir`.                         |
 | `sandbox`      | `sandbox.*`      | Sandboxed bash execution in the task's working directory.                                                                |
 | `chat`         | `chat.*`         | User interaction: `chat_request_user_input`, `chat_present_choices`, `chat_await_context_update`.                        |
 | `events`       | `events.*`       | Cross-agent communication: `events_broadcast`, `events_send_to_parent`.                                                  |
 | `tasks`        | `tasks.*`        | Task management: `tasks_list_types`, `tasks_create_task`, `tasks_check_status`, `tasks_cancel_task`, `tasks_send_event`. |
 | `skills`       | `skills.*`       | Instruction-only: injects a system instruction listing available skills. No callable functions.                          |
+| `live`         | `live.*`         | Instruction-only: voice-native system instruction for `runner: live` sessions. No callable functions.                    |
 
 ### The function filter
 

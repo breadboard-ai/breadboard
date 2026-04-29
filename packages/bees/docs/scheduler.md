@@ -2,7 +2,7 @@
 
 The scheduler coordinates sessions into a swarm. It owns the decisions of _what
 runs when_ and the bookkeeping around each task's execution. Applications plug
-in behavior via `SchedulerHooks`.
+in behavior via typed events on the `Bees` class.
 
 This document traces how the scheduler actually works in the code.
 
@@ -75,69 +75,53 @@ for retry).
 
 The scheduler operates in waves. A cycle is one sweep through the work queue:
 
-1. **Promote** — `promote_blocked_tickets()` checks all `blocked` tasks. If all
-   dependencies are `completed`, promote to `available`. If any dependency
-   `failed`, fail the task.
+1. **Promote** — Check all `blocked` tasks. If all dependencies are
+   `completed`, promote to `available`. If any dependency `failed`, fail the
+   task.
 2. **Route** — Process `coordination` kind tasks (events). These carry no work,
    only event payloads. Route them to matching subscribers.
 3. **Collect** — Gather runnable work: new `available` tasks plus `suspended`
    tasks that have `assignee == "agent"` (responded to).
-4. **Execute** — Fire all collected tasks concurrently. In server mode, each
-   task is its own `asyncio.Task`. In batch mode (`run_all_waves`),
-   `asyncio.gather` runs them simultaneously.
+4. **Execute** — Fire all collected tasks concurrently. Each task runs as its
+   own `asyncio.Task`.
 5. **Settle** — Sessions run until they reach a resting state.
 6. **Trigger** — When any task settles, the scheduler wakes for the next cycle.
    If no work remains, it goes idle (server) or exits (CLI).
 
-### Server vs. batch mode
+### Observation
 
-The `Scheduler` class supports two execution modes:
+Applications observe the scheduler through typed events via the `Bees` class:
 
-- **`start_loop()`** — Background loop for server mode. Uses an `asyncio.Event`
-  trigger. Each ticket runs in its own task, enabling concurrent execution. The
-  loop sleeps between cycles and re-evaluates when triggered.
-- **`run_all_waves()`** — Synchronous batch mode for the CLI. Runs cycles
-  sequentially via `asyncio.gather`, collecting summaries until no work remains.
+```python
+bees.on(TaskAdded, callback)       # A new task was created or discovered.
+bees.on(CycleStarted, callback)    # A scheduling cycle is beginning.
+bees.on(TaskEvent, callback)       # A running session emitted a raw event.
+bees.on(TaskStarted, callback)     # A task transitioned to running.
+bees.on(TaskDone, callback)        # A task reached a resting state.
+bees.on(BroadcastReceived, callback) # An agent broadcast event was routed.
+bees.on(CycleComplete, callback)   # The scheduler has no more work.
+```
 
-### Hooks
-
-Applications wire into the scheduler via `SchedulerHooks`:
-
-| Hook                  | When it fires                                                |
-| --------------------- | ------------------------------------------------------------ |
-| `on_startup`          | After recovery, with the full task list.                     |
-| `on_cycle_start`      | Start of each cycle (cycle number, new count, resume count). |
-| `on_ticket_event`     | Running session emits an event.                              |
-| `on_ticket_start`     | Task transitions to `running`.                               |
-| `on_ticket_done`      | Task reaches a resting state.                                |
-| `on_events_broadcast` | Agent broadcasts an event mid-session.                       |
-| `on_cycle_complete`   | No more work (total cycles count).                           |
-
-The reference application (`app/server.py`) wires these hooks to SSE
-broadcasting.
+Each event is a `@dataclass` subclassing `SchedulerEvent` (defined in
+`bees/protocols/events.py`). The reference application wires these events to
+SSE broadcasting.
 
 ## Context delivery
 
 When events or updates need to reach a running or suspended agent, the scheduler
 uses three delivery paths (tried in order):
 
-1. **Mid-stream injection** — Guard: the target ticket has a live context queue
-   in `_context_queues`. This means the agent is inside a turn, waiting on a
-   model response. Push pre-formatted parts into the queue; the session layer
-   injects them at the next turn boundary. This is the scheduler's use of the
-   session layer's **dynamic steering** capability.
-2. **Immediate resume** — Guard: path 1 failed (no live queue) AND
-   `status == "suspended"` AND `assignee == "user"` AND
-   `target_id not in _running_tickets`. This means the agent is idle —
-   suspended, not being processed. Write `response.json` with `context_updates`
-   and flip `assignee` to `"agent"`. The scheduler picks it up on the next
-   cycle.
-3. **Buffer** — Guard: both path 1 and path 2 failed. This catches every other
-   case: the agent is running but between turns (no queue registered yet), or
-   the agent is suspended but currently being resumed (still in
-   `_running_tickets`), or the agent is in any non-suspended state. Append to
-   `pending_context_updates` in metadata. These drain on the next suspend →
-   resume transition.
+1. **Mid-stream injection** — If the target agent has a live session stream,
+   push pre-formatted parts into its context channel. The session layer injects
+   them at the next turn boundary. This is the scheduler's use of the session
+   layer's **dynamic steering** capability.
+2. **Immediate resume** — If the agent is idle (suspended, waiting for input,
+   and not currently being processed), write `response.json` with
+   `context_updates` and flip `assignee` to `"agent"`. The scheduler picks it
+   up on the next cycle.
+3. **Buffer** — If neither path works (agent is running between turns, being
+   resumed, or in a non-suspended state), append to `pending_context_updates`
+   in metadata. These drain on the next suspend → resume transition.
 
 This three-path model ensures updates are never lost, regardless of the target
 agent's state.
@@ -189,10 +173,10 @@ Read access is unrestricted — every agent can read the entire workspace.
 
 ### Directory creation
 
-When `stamp_child_ticket` creates a child task, it:
+When a child task is created (via `stamp_child_task`), it:
 
 1. Derives a `child_scope` from the parent scope + slug.
-2. Creates the task via `run_playbook`.
+2. Creates the task from the template.
 3. Creates the writable directory on the physical filesystem.
 4. Injects `<sandbox_environment>` instructions into the child's objective,
    telling it where it can write.
@@ -257,22 +241,22 @@ carry event payloads instead of work.
 ### Parent-child events
 
 `events_send_to_parent` and `tasks_send_event` use a different mechanism — they
-call `_deliver_context_update` directly, bypassing coordination tickets. This
-uses the three-path context delivery model described above.
+deliver context updates directly, bypassing coordination tickets. This uses the
+three-path context delivery model described above.
 
 ## Resilience
 
 ### Recovery
 
-On startup, `recover_stuck_tickets()` flips any `running` or `paused` tasks back
-to `available`. Since all session state is persisted on disk, the scheduler can
+On startup, the scheduler flips any `running` or `paused` tasks back to
+`available`. Since all session state is persisted on disk, the scheduler can
 safely restart and resume from the last checkpoint.
 
 ### Sub-agent completion notification
 
-When a child task completes or fails, the `wrap_run`/`wrap_resume` cleanup
-delivers a context update to the creator task with the status and outcome. This
-wakes the parent agent with:
+When a child task completes or fails, the scheduler delivers a context update
+to the creator task with the status and outcome. This wakes the parent agent
+with:
 
 ```
 <context_update>Task abc12345 completed: [outcome text]</context_update>
@@ -294,7 +278,7 @@ wakes the parent agent with:
 ## Gaps
 
 Code changes needed to reconcile the scheduler layer with the aspirational
-architecture in `docs/architecture/index.md`.
+architecture in `docs/architecture.md`.
 
 ### Coordination tickets should be replaced
 
@@ -310,9 +294,9 @@ creating database records that look like tasks.
 
 ### Tag enrichment: remove or design intentionally
 
-When a child task completes, `_enrich_creator_tags` merges the child's tags into
-the creator's tags. This was added as a convenience for UI routing but has no
-clear design rationale — it's an emergent side effect that may surprise users.
+When a child task completes, the scheduler merges the child's tags into the
+creator's tags. This was added as a convenience for UI routing but has no clear
+design rationale — it's an emergent side effect that may surprise users.
 
 **Gap**: Consider removing tag enrichment entirely. If it serves a real purpose,
 design it intentionally and document it. If not, delete the code.
