@@ -55,6 +55,7 @@ interface EditablePanel {
 class BeesApp extends SignalWatcher(LitElement) {
   @state() accessor activeTab: TabId = "tickets";
   @state() accessor selectedEventId: string | null = null;
+  @state() accessor hivePickerOpen = false;
 
   private stateAccess = new StateAccess();
   private logStore = new LogStore(this.stateAccess);
@@ -116,6 +117,7 @@ class BeesApp extends SignalWatcher(LitElement) {
       display: flex;
       align-items: center;
       gap: 10px;
+      position: relative;
     }
 
     .hive-name {
@@ -124,7 +126,7 @@ class BeesApp extends SignalWatcher(LitElement) {
       font-family: "Google Mono", "Roboto Mono", monospace;
     }
 
-    .switch-hive-btn {
+    .hive-picker-btn {
       padding: 4px 10px;
       font-size: 0.7rem;
       background: transparent;
@@ -133,12 +135,140 @@ class BeesApp extends SignalWatcher(LitElement) {
       border-radius: 4px;
       cursor: pointer;
       transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .switch-hive-btn:hover {
+    .hive-picker-btn:hover {
       color: #e2e8f0;
       border-color: #3b82f6;
       background: #1e293b;
+    }
+
+    .hive-picker-btn .chevron {
+      font-size: 0.6rem;
+      transition: transform 0.15s;
+    }
+
+    .hive-picker-btn .chevron.open {
+      transform: rotate(180deg);
+    }
+
+    /* --- Hive picker popover --- */
+    .hive-picker-popover {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      min-width: 260px;
+      background: #1a1e26;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .hive-picker-popover .picker-header {
+      padding: 10px 12px 6px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .hive-picker-popover .picker-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .hive-picker-popover .picker-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background 0.1s;
+      font-size: 0.75rem;
+      color: #cbd5e1;
+    }
+
+    .hive-picker-popover .picker-item:hover {
+      background: #252a34;
+    }
+
+    .hive-picker-popover .picker-item.active {
+      color: #f8fafc;
+      background: #1e293b;
+    }
+
+    .hive-picker-popover .picker-item .indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .hive-picker-popover .picker-item.active .indicator {
+      background: #3b82f6;
+    }
+
+    .hive-picker-popover .picker-item .item-name {
+      flex: 1;
+      font-family: "Google Mono", "Roboto Mono", monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .hive-picker-popover .picker-item .remove-btn {
+      padding: 0 4px;
+      font-size: 0.7rem;
+      color: #475569;
+      background: none;
+      border: none;
+      cursor: pointer;
+      border-radius: 3px;
+      line-height: 1;
+      opacity: 0;
+      transition: all 0.1s;
+    }
+
+    .hive-picker-popover .picker-item:hover .remove-btn {
+      opacity: 1;
+    }
+
+    .hive-picker-popover .picker-item .remove-btn:hover {
+      color: #f87171;
+      background: #991b1b33;
+    }
+
+    .hive-picker-popover .picker-divider {
+      height: 1px;
+      background: #334155;
+      margin: 2px 0;
+    }
+
+    .hive-picker-popover .picker-action {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      color: #3b82f6;
+      transition: background 0.1s;
+    }
+
+    .hive-picker-popover .picker-action:hover {
+      background: #252a34;
+    }
+
+    .hive-picker-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 99;
     }
 
     .top-bar-tabs {
@@ -321,9 +451,54 @@ class BeesApp extends SignalWatcher(LitElement) {
     this.mutationClient.startObserving();
   }
 
-  private async handleOpenDirectory(): Promise<void> {
-    await this.stateAccess.openDirectory();
+  private resetStores(): void {
+    this.logStore.reset();
+    this.ticketStore.reset();
+    this.templateStore.reset();
+    this.skillStore.reset();
+    this.systemStore.reset();
+    this.selectedEventId = null;
+  }
+
+  private async handleAddHive(): Promise<void> {
+    this.resetStores();
+    const added = await this.stateAccess.addHive();
+    if (added && this.stateAccess.accessState.get() === "ready") {
+      await this.activateStores();
+      this.restoreRoute();
+    }
+    this.hivePickerOpen = false;
+  }
+
+  private async handleSwitchToHive(id: string): Promise<void> {
+    if (id === this.stateAccess.activeHiveId.get()) {
+      this.hivePickerOpen = false;
+      return;
+    }
+    this.resetStores();
+    await this.stateAccess.switchToHive(id);
     if (this.stateAccess.accessState.get() === "ready") {
+      await this.activateStores();
+      this.restoreRoute();
+    }
+    this.hivePickerOpen = false;
+  }
+
+  private async handleRemoveHive(id: string): Promise<void> {
+    const entry = this.stateAccess.hives
+      .get()
+      .find((e) => e.id === id);
+    const confirmed = confirm(
+      `Remove "${entry?.name ?? id}" from remembered hives?`,
+    );
+    if (!confirmed) return;
+
+    const wasActive = id === this.stateAccess.activeHiveId.get();
+    if (wasActive) this.resetStores();
+
+    await this.stateAccess.removeHive(id);
+
+    if (wasActive && this.stateAccess.accessState.get() === "ready") {
       await this.activateStores();
       this.restoreRoute();
     }
@@ -331,20 +506,6 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   private async handleRequestAccess(): Promise<void> {
     await this.stateAccess.requestAccess();
-    if (this.stateAccess.accessState.get() === "ready") {
-      await this.activateStores();
-      this.restoreRoute();
-    }
-  }
-
-  private async handleSwitchHive(): Promise<void> {
-    this.logStore.reset();
-    this.ticketStore.reset();
-    this.templateStore.reset();
-    this.skillStore.reset();
-    this.systemStore.reset();
-    this.selectedEventId = null;
-    await this.stateAccess.openDirectory();
     if (this.stateAccess.accessState.get() === "ready") {
       await this.activateStores();
       this.restoreRoute();
@@ -531,11 +692,11 @@ class BeesApp extends SignalWatcher(LitElement) {
         >
           ${access === "none"
             ? html`
-                <button @click=${() => this.handleOpenDirectory()}>
+                <button @click=${() => this.handleAddHive()}>
                   📂 Open Hive Directory
                 </button>
                 <div style="font-size:0.75rem;color:#64748b">
-                  Select the <code>packages/bees/hive</code> directory
+                  Select a <code>hive/</code> directory to get started
                 </div>
               `
             : html`
@@ -569,15 +730,19 @@ class BeesApp extends SignalWatcher(LitElement) {
           <h1>${APP_ICON} ${APP_NAME} Hivetool</h1>
           <div class="hive-switcher">
             ${this.renderHiveControl()}
-            <span class="hive-name" title="Current hive directory">
-              📂 ${this.stateAccess.hiveName.get() ?? ""}
-            </span>
             <button
-              class="switch-hive-btn"
-              @click=${() => this.handleSwitchHive()}
+              class="hive-picker-btn"
+              @click=${() => {
+                this.hivePickerOpen = !this.hivePickerOpen;
+              }}
             >
-              Switch Hive
+              📂 ${this.stateAccess.hiveName.get() ?? ""}
+              <span
+                class="chevron ${this.hivePickerOpen ? "open" : ""}"
+                >▾</span
+              >
             </button>
+            ${this.hivePickerOpen ? this.renderHivePicker() : nothing}
           </div>
         </div>
         <div class="top-bar-tabs">
@@ -785,6 +950,59 @@ class BeesApp extends SignalWatcher(LitElement) {
           .mutationClient=${this.mutationClient}
         ></bees-system-detail>`;
     }
+  }
+
+  private renderHivePicker() {
+    const hives = this.stateAccess.hives.get();
+    const activeId = this.stateAccess.activeHiveId.get();
+
+    return html`
+      <div
+        class="hive-picker-backdrop"
+        @click=${() => {
+          this.hivePickerOpen = false;
+        }}
+      ></div>
+      <div class="hive-picker-popover">
+        ${hives.length > 0
+          ? html`
+              <div class="picker-header">Hives</div>
+              <div class="picker-list">
+                ${hives.map(
+                  (h) => html`
+                    <div
+                      class="picker-item ${h.id === activeId
+                        ? "active"
+                        : ""}"
+                      @click=${() => this.handleSwitchToHive(h.id)}
+                    >
+                      <span class="indicator"></span>
+                      <span class="item-name">${h.name}</span>
+                      <button
+                        class="remove-btn"
+                        title="Remove from list"
+                        @click=${(e: Event) => {
+                          e.stopPropagation();
+                          this.handleRemoveHive(h.id);
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  `,
+                )}
+              </div>
+              <div class="picker-divider"></div>
+            `
+          : nothing}
+        <div
+          class="picker-action"
+          @click=${() => this.handleAddHive()}
+        >
+          ＋ Add Hive…
+        </div>
+      </div>
+    `;
   }
 }
 
