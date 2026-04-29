@@ -101,14 +101,19 @@ validated by the finance dashboard example in the schema doc.
 
 ---
 
-## Phase 3 — Surface Skill
+## Phase 3 — Surface Skill ✅
 
 Teach agents to produce surfaces.
 
-- [ ] Write a skill that teaches the agent how to write `surface.json`.
-- [ ] The skill covers: writing content files, structuring the manifest, broadcasting
-      `surface_updated`.
-- [ ] Agent writes content files + `surface.json` + broadcasts `surface_updated`.
+- [x] Write a skill that teaches the agent how to write `surface.json`.
+      [SKILL.md](hive/skills/surface/SKILL.md)
+- [x] The skill covers: writing content files, structuring the manifest, broadcasting
+      `surface_updated`. Includes the core loop (write content → write surface.json →
+      broadcast), full format reference, and a worked example showing incremental
+      updates across three versions.
+- [x] Composable design: skill layers on top of any primary skill via
+      `allowed-tools: [files.*, events.*]`. Any template can add `surface` to
+      its `skills` list alongside existing skills.
 
 🎯 An agent with the surface skill writes a `surface.json` in its scope
 directory and broadcasts `surface_updated`. The event reaches a subscribed
