@@ -140,3 +140,34 @@ export interface MergedSessionView {
   totalFunctionCalls: number;
   totalTokens: number;
 }
+
+// ---------------------------------------------------------------------------
+// Surface schema types (from docs/surface-schema.md)
+// ---------------------------------------------------------------------------
+
+/** A named group within a surface manifest. */
+export interface SurfaceSection {
+  id: string;
+  title: string;
+  description?: string;
+}
+
+/** A content leaf in a surface manifest. */
+export interface SurfaceItem {
+  id: string;
+  title: string;
+  path?: string;
+  description?: string;
+  render?: string;
+  role?: string;
+  section?: string;
+}
+
+/** Parsed surface.json — the agent's curated presentation manifest. */
+export interface SurfaceManifest {
+  version: number;
+  title?: string;
+  sections?: SurfaceSection[];
+  items: SurfaceItem[];
+}
+

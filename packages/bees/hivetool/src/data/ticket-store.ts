@@ -14,7 +14,7 @@
 
 import { Signal } from "signal-polyfill";
 import type { StateAccess } from "./state-access.js";
-import type { TicketData } from "./types.js";
+import type { TicketData, SurfaceManifest } from "./types.js";
 import { LiveSessionClient } from "./live-session.js";
 
 export { TicketStore };
@@ -236,6 +236,28 @@ class TicketStore {
       const fileHandle = await dir.getFileHandle(filename);
       const file = await fileHandle.getFile();
       return await file.text();
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Read the root `surface.json` from a ticket's filesystem.
+   *
+   * Returns the parsed manifest, or `null` if no surface exists.
+   */
+  async readSurface(ticketId: string): Promise<SurfaceManifest | null> {
+    if (!this.#ticketsHandle) return null;
+    try {
+      const ticketDir = await this.#ticketsHandle.getDirectoryHandle(ticketId);
+      const fsDir = await ticketDir.getDirectoryHandle("filesystem");
+      const fileHandle = await fsDir.getFileHandle("surface.json");
+      const file = await fileHandle.getFile();
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      // Basic validation: must have items array.
+      if (!parsed || !Array.isArray(parsed.items)) return null;
+      return parsed as SurfaceManifest;
     } catch {
       return null;
     }
