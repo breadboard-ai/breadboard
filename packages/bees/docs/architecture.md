@@ -113,13 +113,14 @@ There are three kinds of function groups:
 
 The built-in functions are:
 
-| Group          | Filter prefix    | Purpose                                                                                                                                                          |
-| -------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `system`       | `system.*`       | Termination: `system_objective_fulfilled`, `system_failed_to_fulfill_objective`.                                                                                 |
-| `chat`         | `chat.*`         | Resume/suspend: `chat_request_user_input`, `chat_present_choices`, `chat_await_context_update`.                                                                  |
-| `files` | `files.*` | File I/O: `files_write_file`, `files_list_files`, `files_read_text_from_file`.                                                                        |
-| `sandbox`      | `sandbox.*`      | `execute_bash` - Sandboxed bash execution in the task's working directory                                                                                        |
-| `generate`     | `generate.*`     | Multimodal content generation and search grounding `generate_text`, `generate_images`, `generate_video`, `generate_speech_from_text`, `generate_music_from_text` |
+| Group          | Filter prefix    | Purpose                                                                                                                             |
+| -------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `system`       | `system.*`       | Termination: `system_objective_fulfilled`, `system_failed_to_fulfill_objective`.                                                     |
+| `chat`         | `chat.*`         | Resume/suspend: `chat_request_user_input`, `chat_present_choices`, `chat_await_context_update`.                                      |
+| `files`        | `files.*`        | File I/O: `files_write_file`, `files_list_files`, `files_read_text_from_file`, `files_list_dir`.                                     |
+| `sandbox`      | `sandbox.*`      | `execute_bash` — sandboxed bash execution in the task's working directory.                                                           |
+| `live`         | `live.*`         | Instruction-only: voice-native system instruction for `runner: live` sessions. No callable functions.                                |
+| `generate`     | `generate.*`     | _(Aspirational)_ Multimodal content generation. Currently provided by `opal_backend`, not bees. Will move into bees as a native group. |
 
 #### The file system
 
@@ -428,23 +429,35 @@ template if none exists.
 
 ## What sits on top
 
-The scheduler exposes methods (`trigger()`, `run_ticket()`,
-`recover_stuck_tickets()`) and hooks (`SchedulerHooks`) that applications wire
-into. An application can be anything that uses the scheduler layer: a CLI, or an
-entire web app, complete with backend and frontend.
+Applications interact with bees through the `Bees` class — the high-level entry
+point that wraps the scheduler and task store.
+
+```python
+bees = Bees(hive_dir, runners)
+bees.on(TaskDone, lambda e: print(f"Done: {e.task.id}"))
+await bees.listen()     # recover, boot root template, start scheduler loop
+bees.trigger()          # wake the scheduler to re-evaluate work
+await bees.shutdown()   # clean stop
+```
+
+`Bees` provides a typed event API (`bees.on(EventType, callback)`) for observing
+state changes, and query methods (`children`, `all`, `get_by_id`, `query`) for
+inspecting the task tree. The scheduler's internals are not part of the public
+API — applications interact exclusively through `Bees`.
 
 ### The reference application
 
 The current codebase includes a reference application:
 
 - **`app/server.py`** — A FastAPI server that projects scheduler state as REST
-  endpoints and SSE events. Every endpoint is a thin view: `GET /tickets`
-  queries the task list, `POST /tickets/{id}/respond` writes a response file and
-  triggers the scheduler.
+  endpoints and SSE events. Every endpoint is a thin view: queries the task
+  list, writes response files, and triggers the scheduler.
 - **`web/`** — A chat-based web shell that connects to the server via SSE.
   Renders agent conversations and iframe-hosted React apps.
 
-This reference application has been extracted from the core `bees` package into `app/`. Bees is designed to be an installable library; application authors will build their own frontends and backends on top of the scheduler.
+This reference application has been extracted from the core `bees` package into
+`app/`. Bees is designed to be an installable library; application authors build
+their own frontends and backends on top of the `Bees` API.
 
 ## Hivetool
 

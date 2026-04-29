@@ -13,14 +13,12 @@ The `bees` library is a framework for building agent swarm systems.
 
 The main entry point for interacting with a hive of tasks.
 
-#### `__init__(self, hive_dir: Path, *, http: httpx.AsyncClient, backend: HttpBackendClient, hooks: SchedulerHooks | None = None)`
+#### `__init__(self, hive_dir: Path, runners: dict[str, SessionRunner])`
 
 Initializes a new `Bees` instance.
 
 - **`hive_dir`**: The root directory of the hive where tasks are stored.
-- **`http`**: An async HTTP client for external requests.
-- **`backend`**: A client for interacting with the backend service.
-- **`hooks`**: Optional scheduler hooks.
+- **`runners`**: A dictionary mapping runner types to `SessionRunner` implementations (e.g., `{"generate": GeminiRunner(...), "live": LiveRunner(...)}`).
 
 #### `children`
 
@@ -56,12 +54,17 @@ Creates a new root task in the hive.
 - **`**kwargs`**: Additional arguments for task creation (e.g., `tags`).
 - **Returns**: A `TaskNode` representing the newly created task.
 
-#### `on(self, event_name: str, handler: Callable)`
+#### `on(self, event_type: type[T], callback: Callable[[T], Any])`
 
-Registers an event handler for the specified event.
+Registers a typed event listener.
 
-- **`event_name`**: The name of the event. Supported events: `task_added`, `cycle_start`, `task_event`, `task_start`, `task_done`, `cycle_complete`.
-- **`handler`**: The callback function to run when the event fires.
+- **`event_type`**: The event class to listen for. Available types: `TaskAdded`, `CycleStarted`, `TaskEvent`, `TaskStarted`, `TaskDone`, `BroadcastReceived`, `CycleComplete`.
+- **`callback`**: The callback function, receiving the typed event instance.
+
+Example:
+```python
+bees.on(TaskDone, lambda e: print(f"Done: {e.task.id}"))
+```
 
 #### `listen(self)` (Async)
 

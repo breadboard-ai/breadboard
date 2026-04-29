@@ -5,6 +5,8 @@
 - [architecture.md](architecture.md) — The two-layer model (Session →
   Scheduler), function groups, task trees, scoped filesystems, and the hive
   directory. The primary reference for how bees is built.
+- [api.md](api.md) — Reference for the `Bees` and `TaskNode` classes — the
+  public consumption surface for applications.
 
 ## Layer deep dives
 
@@ -29,6 +31,8 @@
 
 - [box.md](box.md) — The filesystem-driven orchestrator. Watches the hive for
   changes and drives the scheduler without an HTTP server.
+- [mutations.md](mutations.md) — The mutation log: atomic filesystem commands
+  for multi-step operations (reset, respond, batch task creation).
 - [hivetool.md](hivetool.md) — The built-in developer workbench for inspecting
   and editing hive configuration.
 

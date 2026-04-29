@@ -14,15 +14,16 @@ Stability runs from the core outward. The deeper into the framework you go, the
 more settled things are. The outermost layer — how applications consume bees —
 is where most future work lives.
 
-| Area               | Stability    | Summary                                           |
-| ------------------ | ------------ | ------------------------------------------------- |
-| Session layer      | **Solid**    | Contract settled. Internals may shift.            |
-| Scheduler core     | **Solid**    | Task lifecycle and cycle mechanics are permanent. |
-| Skills             | **Solid**    | Anchored to an external spec.                     |
-| Event delivery     | **Settling** | Shape is right, plumbing may change.              |
-| Filesystem sharing | **Settling** | Scoping model may evolve.                         |
-| Task templates     | **Settling** | Open questions around hooks, root, entry points.  |
-| Consumption API    | **Fluid**    | How apps build on bees is largely unanswered.     |
+| Area               | Stability    | Summary                                             |
+| ------------------ | ------------ | --------------------------------------------------- |
+| Session layer      | **Solid**    | Contract settled. Internals may shift.              |
+| Scheduler core     | **Solid**    | Task lifecycle and cycle mechanics are permanent.   |
+| Skills             | **Solid**    | Anchored to an external spec.                       |
+| Typed events       | **Solid**    | `Bees.on()` with `SchedulerEvent` subclasses.       |
+| Event delivery     | **Settling** | Shape is right, plumbing may change.                |
+| Filesystem sharing | **Settling** | Scoping model may evolve.                           |
+| Task templates     | **Settling** | Open questions around hooks, root, entry points.    |
+| Consumption API    | **Settling** | `Bees` class exists, but query surface is evolving. |
 
 ## Solid
 
@@ -33,11 +34,11 @@ care: changes here ripple outward.
 ### Session layer
 
 The session is the atom of bees: one LLM conversation with tools, suspend,
-resume, and pause. The contract — `run_session` / `resume_session` returning a
-`SessionResult` — is permanent. Internals will shift to better align with
-`architecture.md` (e.g. removing the `skills.*` function group workaround,
-cleaning up dot↔underscore naming), but the session concept and its consumer
-surface are not changing.
+resume, and pause. The contract — `SessionRunner.run()` / `.resume()` returning
+a `SessionStream`, consumed by `drain_session()` to produce a `SessionResult` —
+is permanent. Internals will shift (e.g. removing the `skills.*` function group
+workaround, cleaning up dot↔underscore naming), but the session concept and its
+consumer surface are not changing.
 
 ### Scheduler core
 
@@ -52,6 +53,14 @@ Skills are anchored to an external specification
 ([Agent Skills](https://agentskills.io)). The contract is small and clear: a
 `SKILL.md` with YAML frontmatter, an `allowed-tools` list, and directory
 mounting into the agent's file system. This is unlikely to change.
+
+### Typed events
+
+The observation API — `bees.on(EventType, callback)` with `SchedulerEvent`
+subclasses (`TaskAdded`, `TaskDone`, `CycleStarted`, etc.) — is settled. This
+replaced the earlier `SchedulerHooks` callback bag. The event types themselves
+may grow (new events for new scheduler capabilities), but the dispatch mechanism
+and the `Bees.on()` surface are permanent.
 
 ## Settling
 
@@ -81,34 +90,32 @@ The template concept is solid (a blueprint for a task, defined in
 `functions`, `skills`, `tasks`, `autostart`, `watch_events`). But several open
 questions remain:
 
-- **Hooks** — the `on_run_playbook` / `on_ticket_done` / `on_event` contract is
+- **Hooks** — the `on_run_playbook` / `on_task_done` / `on_event` contract is
   not well-defined. It's unclear whether hooks are the right abstraction or
   whether they should be replaced by something else entirely.
 - **Root template** — the `SYSTEM.yaml` → `boot_root_template` mechanism is
   awkward. Why isn't this just `autostart`? The root template bootstrapping
   feels like a special case that shouldn't be special.
 - **Top-level task creation** — there's no clean way to create a task from the
-  top (outside the framework). The entry points are `run_playbook` (code) and
-  the server endpoints, but neither is a crisp API for "start this work."
+  top (outside the framework). The `Bees.create_child()` method exists but
+  isn't well-tested or documented.
 
 The overall shape feels right. The details are in motion.
 
-## Fluid
-
-These areas are under active construction. Expect breaking changes, missing
-abstractions, and incomplete contracts.
-
 ### Consumption API
 
-This is the biggest open question in bees: **how do applications build on this
-framework?**
+The `Bees` class is the entry point: `Bees(hive_dir, runners)` wraps the
+scheduler and task store, provides typed event observation via `bees.on()`, and
+exposes query methods (`children`, `all`, `get_by_id`, `query`).
 
-Today, the answer is ad-hoc. `app/server.py` wires `SchedulerHooks` to SSE
-broadcasting and exposes REST endpoints. The web shell consumes those endpoints.
-But this isn't a designed API — it's the first thing that worked. The boundary
-between "bees the library" and "the application built on bees" is blurry:
+This is a significant improvement over the earlier ad-hoc wiring — applications
+no longer need to touch scheduler internals directly. But the query surface is
+still evolving: the `TaskNode` wrapper, tag-based queries, and `create_child()`
+are young. The box (`bees.box`) and reference application (`app/server.py`) are
+the two consumption patterns, and both work, but neither has been designed as a
+reusable pattern.
 
-- `SchedulerHooks` is the closest thing to a plugin API, but it's a bag of
-  callbacks with no lifecycle contract.
-- The server is tightly coupled to one application pattern (SSE + REST). There's
-  no way to build a different kind of application without forking the server.
+The boundary between "bees the library" and "the application built on bees" is
+much clearer than before but not yet crisp. The interaction model (how users
+respond to suspended agents) is still handled by direct file edits or the
+mutation system rather than a framework-provided interaction surface.
