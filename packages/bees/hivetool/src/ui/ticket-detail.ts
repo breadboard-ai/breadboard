@@ -20,10 +20,12 @@ import type { TicketStore, FileTreeNode } from "../data/ticket-store.js";
 import type { MutationClient } from "../data/mutation-client.js";
 import type { TemplateStore } from "../data/template-store.js";
 import type { SkillStore } from "../data/skill-store.js";
+import type { SurfaceManifest } from "../data/types.js";
 import { sharedStyles } from "./shared-styles.js";
 import { renderJson } from "./json-tree.js";
 import { jsonTreeStyles } from "./json-tree.styles.js";
 import "./truncated-text.js";
+import "./surface-view.js";
 
 export { BeesTicketDetail };
 
@@ -433,6 +435,7 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
 
   @state() accessor fileTree: FileTreeNode[] = [];
   @state() accessor fileContents: Record<string, string | null> = {};
+  @state() accessor surface: SurfaceManifest | null = null;
 
   // ── Response state ──
   @state() accessor replyText = "";
@@ -453,11 +456,13 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
         Select a ticket to view details
       </div>`;
 
-    // Reset file tree if ticket changed.
+    // Reset file tree and surface if ticket changed.
     if (this.#treeLoadedFor !== ticket.id) {
       this.fileTree = [];
       this.fileContents = {};
+      this.surface = null;
       this.#treeLoadedFor = ticket.id;
+      this.loadSurface(ticket.id);
     }
 
     const suspendFn =
@@ -725,6 +730,18 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
                 </div>
               `
             : nothing}
+          ${this.surface
+            ? html`
+                <div class="block">
+                  <div class="block-header">Surface</div>
+                  <div class="block-content">
+                    <bees-surface-view
+                      .surface=${this.surface}
+                    ></bees-surface-view>
+                  </div>
+                </div>
+              `
+            : nothing}
           ${this.renderFileTree(ticket.id)}
         </div>
       </div>
@@ -826,6 +843,14 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
     if (!this.ticketStore) return;
     const tree = await this.ticketStore.readTree(ticketId);
     this.fileTree = tree;
+    // Also refresh the surface — the observer triggers tree reloads on
+    // any filesystem change, so this keeps the surface in sync.
+    this.loadSurface(ticketId);
+  }
+
+  private async loadSurface(ticketId: string) {
+    if (!this.ticketStore) return;
+    this.surface = await this.ticketStore.readSurface(ticketId);
   }
 
   private async loadFileContent(

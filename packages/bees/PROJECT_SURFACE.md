@@ -50,9 +50,9 @@ application renders.
 - **Per-scope surfaces.** Each agent writes `{scope}/surface.json` within its
   writable area. The consumer walks the tree and aggregates. No cross-scope
   writing needed.
-- **Notification via `events_broadcast`.** The agent writes content files, writes
-  `surface.json`, then broadcasts `surface_updated`. No new function — reuses
-  existing infrastructure.
+- **Notification via `events_broadcast`.** The agent writes content files,
+  writes `surface.json`, then broadcasts `surface_updated`. No new function —
+  reuses existing infrastructure.
 - **Consumer event subscription.** A new extensibility point in the scheduler
   allows consumers (applications) to subscribe to broadcast events alongside
   agents. `surface_updated` is the first use case, but the mechanism is general.
@@ -83,7 +83,8 @@ registered callback, and can push it to the client via SSE.
 Surface format specified in [docs/surface-schema.md](docs/surface-schema.md).
 
 - [x] Snapshot `surface.json` — agent overwrites on every change, with a
-      monotonic `version` counter for change detection. Rollback is consumer-side.
+      monotonic `version` counter for change detection. Rollback is
+      consumer-side.
 - [x] Two flat entity types: **Sections** (declared groups with id, title,
       description) and **Items** (typed content leaves with id, title, path,
       description, render hint, role, section reference).
@@ -107,10 +108,10 @@ Teach agents to produce surfaces.
 
 - [x] Write a skill that teaches the agent how to write `surface.json`.
       [SKILL.md](hive/skills/surface/SKILL.md)
-- [x] The skill covers: writing content files, structuring the manifest, broadcasting
-      `surface_updated`. Includes the core loop (write content → write surface.json →
-      broadcast), full format reference, and a worked example showing incremental
-      updates across three versions.
+- [x] The skill covers: writing content files, structuring the manifest,
+      broadcasting `surface_updated`. Includes the core loop (write content →
+      write surface.json → broadcast), full format reference, and a worked
+      example showing incremental updates across three versions.
 - [x] Composable design: skill layers on top of any primary skill via
       `allowed-tools: [files.*, events.*]`. Any template can add `surface` to
       its `skills` list alongside existing skills.
@@ -121,33 +122,40 @@ consumer.
 
 ---
 
-## Phase 4 — Surface Aggregation
+## Phase 4 — Hivetool Surface Discovery
 
-When a root task has sub-agents each with their own surface, how does the
-consumer compose them?
+Minimal surface rendering in hivetool. New `<bees-surface-view>` component,
+root-scope `surface.json` only, plain text rendering.
 
-- [ ] Flat merge? Tree projection? Filtered by tags?
-- [ ] Per the MVC model, this is the consumer's decision — but the convention should
-      make aggregation natural.
-- [ ] Define how per-scope surfaces (`research/surface.json`, `app/surface.json`)
-      compose into a task-level view.
+- [x] Surface types in `hivetool/src/data/types.ts` (`SurfaceManifest`,
+      `SurfaceSection`, `SurfaceItem`).
+- [x] `readSurface(ticketId)` in `ticket-store.ts` — reads
+      `filesystem/surface.json` for a ticket.
+- [x] New `surface-view.ts` component — renders title, sections, items as plain
+      text cards. Status items as compact indicators.
+- [x] `ticket-detail.ts` — renders `<bees-surface-view>` above the file tree
+      when a surface exists. Re-reads on filesystem observer updates.
 
-🎯 A task with multiple sub-agents produces per-scope surfaces. A consumer can
-walk the tree and assemble a coherent composite view.
+🎯 In hivetool, selecting a task with a `surface.json` shows the surface content
+rendered as structured cards, and it updates in real time.
 
 ---
 
-## Phase 5 — Hivetool Surface Rendering
+## Phase 5 — Hivetool Full Surface View
 
-Hivetool discovers and renders surface files from the task's filesystem.
+Promote the surface to a full-pane view with rich rendering.
 
-- [ ] On `surface_updated` (or filesystem change), scan for `surface.json` files in
-      the task's filesystem tree.
-- [ ] Render the surface based on the manifest: markdown, images, structured panels.
-- [ ] Update live as the agent works.
+- [ ] Sub-tab layout in ticket detail: `Surface · Detail` tabs, surface as the
+      default when present. Each gets the full main pane area.
+- [ ] Markdown rendering for `.md` items (basic or library-backed).
+- [ ] Bundle rendering for `render: "bundle"` items (sandboxed iframe with blob
+      URLs from File System Access API reads).
+- [ ] Multi-scope surface discovery — walk the filesystem tree for all
+      `surface.json` files, scope selector when multiple exist.
+- [ ] File content preview for items with `path` (loaded on demand).
 
-🎯 In hivetool, selecting a task shows its surface — rendered from the agent's
-`surface.json` — and it updates in real time as the agent writes.
+🎯 The surface view is a full-pane peer to ticket detail, with rendered markdown,
+bundle iframes, and content previews.
 
 ---
 
@@ -164,16 +172,19 @@ conversation and updates live.
 
 ---
 
-## Phase 7 — Clean Workspace Boundary
+## Phase 7 — Reverse Side-Channel
 
-`skills/` currently gets seeded into `filesystem/`. These are system files
-leaked into the content store — wrong separation. Surface makes this more
-visible.
+Structured event dispatch from box → hivetool via a `notifications/` directory,
+mirroring the mutation path (hivetool → box via `mutations/`).
 
-- [ ] Move skill seeding out of the agent workspace (or into a hidden/system
-      namespace the agent can read but the consumer ignores).
-- [ ] Ensure the workspace contains only agent-produced content.
+- [ ] Box subscribes to `BroadcastReceived` and writes notification files to
+      `hive/notifications/{uuid}.json`.
+- [ ] Hivetool watches `notifications/` with `FileSystemObserver`, dispatches to
+      signal-backed handlers.
+- [ ] `surface_updated` is the first consumer, but the mechanism is general.
 
-🎯 A task's `filesystem/` directory contains only files the agent wrote —
-no system-seeded files pollute the surface or the file tree.
+🎯 Hivetool receives structured, typed events from the box through the filesystem
+side-channel, enabling targeted reactions (e.g., re-read only the affected
+surface) instead of coarse filesystem rescans.
 
+---
