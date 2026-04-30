@@ -5,11 +5,12 @@
  */
 
 /**
- * Detail panel for a selected ticket.
+ * Timeline content for a selected ticket — the "Detail" tab body.
  *
- * Renders ticket metadata, identity chips, context, objective, chat
- * history, outcome, error, suspend event, tags, functions, watch events,
- * and the ticket's file tree.
+ * Renders context, objective, chat history, outcome, error, suspend
+ * event, tags, functions, watch events, and the ticket's file tree.
+ * The header, identity chips, and tab bar are owned by
+ * `<bees-ticket-pane>`.
  */
 
 import { SignalWatcher } from "@lit-labs/signals";
@@ -18,14 +19,10 @@ import { customElement, property, state } from "lit/decorators.js";
 
 import type { TicketStore, FileTreeNode } from "../data/ticket-store.js";
 import type { MutationClient } from "../data/mutation-client.js";
-import type { TemplateStore } from "../data/template-store.js";
-import type { SkillStore } from "../data/skill-store.js";
-import type { SurfaceManifest } from "../data/types.js";
 import { sharedStyles } from "./shared-styles.js";
 import { renderJson } from "./json-tree.js";
 import { jsonTreeStyles } from "./json-tree.styles.js";
 import "./truncated-text.js";
-import "./surface-view.js";
 
 export { BeesTicketDetail };
 
@@ -423,19 +420,12 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor mutationClient: MutationClient | null = null;
 
-  @property({ attribute: false })
-  accessor templateStore: TemplateStore | null = null;
-
-  @property({ attribute: false })
-  accessor skillStore: SkillStore | null = null;
-
   /** ID of a recently updated ticket (for flash animation). */
   @property({ attribute: false })
   accessor flashTicketId: string | null = null;
 
   @state() accessor fileTree: FileTreeNode[] = [];
   @state() accessor fileContents: Record<string, string | null> = {};
-  @state() accessor surface: SurfaceManifest | null = null;
 
   // ── Response state ──
   @state() accessor replyText = "";
@@ -456,83 +446,11 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
         Select a ticket to view details
       </div>`;
 
-    // Reset file tree and surface if ticket changed.
+    // Reset file tree if ticket changed.
     if (this.#treeLoadedFor !== ticket.id) {
       this.fileTree = [];
       this.fileContents = {};
-      this.surface = null;
       this.#treeLoadedFor = ticket.id;
-      this.loadSurface(ticket.id);
-    }
-
-    const suspendFn =
-      ticket.suspend_event?.function_name as string | undefined;
-    const statusLabel =
-      ticket.status === "suspended" &&
-      ticket.assignee === "user" &&
-      suspendFn !== "chat_await_context_update"
-        ? "waiting for user"
-        : ticket.status === "suspended"
-          ? "waiting for event"
-          : ticket.status;
-
-    // Collect identity chips.
-    const identityChips: Array<{
-      label: string;
-      value: string;
-      cls?: string;
-      onclick?: () => void;
-    }> = [];
-    if (ticket.model)
-      identityChips.push({
-        label: "model",
-        value: ticket.model,
-        cls: "model",
-      });
-    if (ticket.playbook_id) {
-      const templateNames = new Set(
-        (this.templateStore?.templates.get() ?? []).map((t) => t.name)
-      );
-      const exists = templateNames.has(ticket.playbook_id);
-      identityChips.push({
-        label: "template",
-        value: ticket.playbook_id,
-        cls: "playbook",
-        onclick: exists
-          ? () => this.navigate("templates", ticket.playbook_id!)
-          : undefined,
-      });
-    }
-    if (ticket.creator_ticket_id)
-      identityChips.push({
-        label: "parent",
-        value: ticket.creator_ticket_id.slice(0, 8),
-        onclick: () => this.navigate("tickets", ticket.creator_ticket_id!),
-      });
-    if (ticket.owning_task_id)
-      identityChips.push({
-        label: "fs owner",
-        value: ticket.owning_task_id.slice(0, 8),
-        onclick: () => this.navigate("tickets", ticket.owning_task_id!),
-      });
-    identityChips.push({
-      label: "session",
-      value: ticket.id.slice(0, 8),
-      onclick: () => this.navigate("logs", ticket.id),
-    });
-    if (ticket.skills && ticket.skills.length > 0) {
-      const skillDirs = new Set(
-        (this.skillStore?.skills.get() ?? []).map((sk) => sk.dirName)
-      );
-      for (const s of ticket.skills)
-        identityChips.push({
-          label: "skill",
-          value: s,
-          cls: "skill",
-          onclick: skillDirs.has(s)
-            ? () => this.navigate("skills", s)
-            : undefined,
-        });
     }
 
     const chatHistory = (ticket.chat_history ?? []).filter(
@@ -540,210 +458,136 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
     );
 
     return html`
-      <div
-        class="job-detail ${this.flashTicketId === ticket.id
-          ? "lightning-flash"
-          : ""}"
-      >
-        <div class="job-detail-header">
-          <div class="job-detail-header-top">
-            <h2 class="job-detail-title">${ticket.title || "Ticket"}</h2>
-            <div style="display:flex;align-items:center;gap:8px">
-              ${this.renderTaskControl(ticket.id, ticket.status)}
-              <div class="job-detail-badge ${ticket.status}">${statusLabel}</div>
-            </div>
-          </div>
-          <div class="job-detail-meta">
-            <span
-              >ID: <code class="mono">${ticket.id.slice(0, 13)}...</code></span
-            >
-            <span
-              >Created:
-              ${new Date(ticket.created_at ?? "").toLocaleString()}</span
-            >
-            ${ticket.completed_at
-              ? html`<span
-                  >Completed:
-                  ${new Date(ticket.completed_at).toLocaleString()}</span
-                >`
-              : nothing}
-            ${ticket.turns
-              ? html`<span>${ticket.turns} turns</span>`
-              : nothing}
-            ${ticket.thoughts
-              ? html`<span>${ticket.thoughts} thoughts</span>`
-              : nothing}
-          </div>
-        </div>
-
-        <div class="timeline">
-          ${identityChips.length > 0
-            ? html`
-                <div class="identity-row">
-                  ${identityChips.map(
-                    (c) => html`
-                      <span
-                        class="identity-chip ${c.cls ?? ""} ${c.onclick
-                          ? "linkable"
-                          : ""}"
-                        @click=${c.onclick ?? nothing}
+      <div class="timeline">
+        ${ticket.context
+          ? html`
+              <div class="context-card">
+                <div class="context-label">Context</div>
+                <bees-truncated-text
+                  threshold="300"
+                  max-height="150"
+                  fadeBg="#111827"
+                  >${ticket.context}</bees-truncated-text
+                >
+              </div>
+            `
+          : nothing}
+        ${ticket.objective &&
+        ticket.objective.trim() !== (ticket.context ?? "").trim()
+          ? html`
+              <div class="block">
+                <div class="block-header">Objective</div>
+                <div class="block-content">
+                  <bees-truncated-text
+                    threshold="500"
+                    max-height="200"
+                    fadeBg="#0f1115"
+                    >${ticket.objective}</bees-truncated-text
+                  >
+                </div>
+              </div>
+            `
+          : nothing}
+        ${chatHistory.length > 0
+          ? html`
+              <div class="block">
+                <div class="block-header">
+                  Chat (${chatHistory.length} messages)
+                </div>
+                <div class="chat-log">
+                  ${chatHistory.map(
+                    (m) => html`
+                      <div
+                        class="chat-turn ${m.role === "user"
+                          ? "user"
+                          : "agent"}"
                       >
-                        <span class="identity-label">${c.label}</span>
-                        ${c.value}
-                      </span>
+                        <div class="chat-role">${m.role}</div>
+                        <div class="chat-text">${m.text}</div>
+                      </div>
                     `
                   )}
-                  ${ticket.playbook_run_id
-                    ? html`<span class="identity-chip">
-                        <span class="identity-label">run</span>
-                        ${ticket.playbook_run_id.slice(0, 8)}
-                      </span>`
-                    : nothing}
                 </div>
-              `
-            : nothing}
-          ${ticket.context
-            ? html`
-                <div class="context-card">
-                  <div class="context-label">Context</div>
+              </div>
+            `
+          : nothing}
+        ${ticket.outcome
+          ? html`
+              <div class="block outcome">
+                <div class="block-header">Outcome</div>
+                <div class="block-content">
                   <bees-truncated-text
                     threshold="300"
                     max-height="150"
-                    fadeBg="#111827"
-                    >${ticket.context}</bees-truncated-text
+                    fadeBg="#0f1115"
+                    >${ticket.outcome}</bees-truncated-text
                   >
                 </div>
-              `
-            : nothing}
-          ${ticket.objective &&
-          ticket.objective.trim() !== (ticket.context ?? "").trim()
-            ? html`
-                <div class="block">
-                  <div class="block-header">Objective</div>
-                  <div class="block-content">
-                    <bees-truncated-text
-                      threshold="500"
-                      max-height="200"
-                      fadeBg="#0f1115"
-                      >${ticket.objective}</bees-truncated-text
-                    >
-                  </div>
+              </div>
+            `
+          : nothing}
+        ${ticket.error
+          ? html`
+              <div class="block error">
+                <div class="block-header">Error</div>
+                <div class="block-content">${ticket.error}</div>
+              </div>
+            `
+          : nothing}
+        ${ticket.runner === "live"
+          ? this.renderLiveSessionPanel(ticket.id)
+          : nothing}
+        ${ticket.status === "suspended" && ticket.suspend_event
+          ? this.renderSuspendedBlock(ticket.id, ticket.suspend_event, ticket.assignee)
+          : nothing}
+        ${ticket.tags && ticket.tags.length > 0
+          ? html`
+              <div class="block">
+                <div class="block-header">Tags</div>
+                <div class="block-content">
+                  ${ticket.tags.map(
+                    (tag) =>
+                      html`<span class="tool-badge" style="margin-right:6px"
+                        >${tag}</span
+                      >`
+                  )}
                 </div>
-              `
-            : nothing}
-          ${chatHistory.length > 0
-            ? html`
-                <div class="block">
-                  <div class="block-header">
-                    Chat (${chatHistory.length} messages)
-                  </div>
-                  <div class="chat-log">
-                    ${chatHistory.map(
-                      (m) => html`
-                        <div
-                          class="chat-turn ${m.role === "user"
-                            ? "user"
-                            : "agent"}"
-                        >
-                          <div class="chat-role">${m.role}</div>
-                          <div class="chat-text">${m.text}</div>
-                        </div>
-                      `
-                    )}
-                  </div>
+              </div>
+            `
+          : nothing}
+        ${ticket.functions && ticket.functions.length > 0
+          ? html`
+              <div class="block">
+                <div class="block-header">Functions</div>
+                <div class="block-content">
+                  ${ticket.functions.map(
+                    (fn) =>
+                      html`<span class="tool-badge" style="margin-right:6px"
+                        >${fn}</span
+                      >`
+                  )}
                 </div>
-              `
-            : nothing}
-          ${ticket.outcome
-            ? html`
-                <div class="block outcome">
-                  <div class="block-header">Outcome</div>
-                  <div class="block-content">
-                    <bees-truncated-text
-                      threshold="300"
-                      max-height="150"
-                      fadeBg="#0f1115"
-                      >${ticket.outcome}</bees-truncated-text
-                    >
-                  </div>
+              </div>
+            `
+          : nothing}
+        ${ticket.watch_events && ticket.watch_events.length > 0
+          ? html`
+              <div class="block">
+                <div class="block-header">Listening For</div>
+                <div class="block-content">
+                  ${ticket.watch_events.map(
+                    (ev) =>
+                      html`<span
+                        class="signal-chip"
+                        style="margin-right:6px"
+                        >${ev.type}</span
+                      >`
+                  )}
                 </div>
-              `
-            : nothing}
-          ${ticket.error
-            ? html`
-                <div class="block error">
-                  <div class="block-header">Error</div>
-                  <div class="block-content">${ticket.error}</div>
-                </div>
-              `
-            : nothing}
-          ${ticket.runner === "live"
-            ? this.renderLiveSessionPanel(ticket.id)
-            : nothing}
-          ${ticket.status === "suspended" && ticket.suspend_event
-            ? this.renderSuspendedBlock(ticket.id, ticket.suspend_event, ticket.assignee)
-            : nothing}
-          ${ticket.tags && ticket.tags.length > 0
-            ? html`
-                <div class="block">
-                  <div class="block-header">Tags</div>
-                  <div class="block-content">
-                    ${ticket.tags.map(
-                      (tag) =>
-                        html`<span class="tool-badge" style="margin-right:6px"
-                          >${tag}</span
-                        >`
-                    )}
-                  </div>
-                </div>
-              `
-            : nothing}
-          ${ticket.functions && ticket.functions.length > 0
-            ? html`
-                <div class="block">
-                  <div class="block-header">Functions</div>
-                  <div class="block-content">
-                    ${ticket.functions.map(
-                      (fn) =>
-                        html`<span class="tool-badge" style="margin-right:6px"
-                          >${fn}</span
-                        >`
-                    )}
-                  </div>
-                </div>
-              `
-            : nothing}
-          ${ticket.watch_events && ticket.watch_events.length > 0
-            ? html`
-                <div class="block">
-                  <div class="block-header">Listening For</div>
-                  <div class="block-content">
-                    ${ticket.watch_events.map(
-                      (ev) =>
-                        html`<span
-                          class="signal-chip"
-                          style="margin-right:6px"
-                          >${ev.type}</span
-                        >`
-                    )}
-                  </div>
-                </div>
-              `
-            : nothing}
-          ${this.surface
-            ? html`
-                <div class="block">
-                  <div class="block-header">Surface</div>
-                  <div class="block-content">
-                    <bees-surface-view
-                      .surface=${this.surface}
-                    ></bees-surface-view>
-                  </div>
-                </div>
-              `
-            : nothing}
-          ${this.renderFileTree(ticket.id)}
-        </div>
+              </div>
+            `
+          : nothing}
+        ${this.renderFileTree(ticket.id)}
       </div>
     `;
   }
@@ -843,14 +687,6 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
     if (!this.ticketStore) return;
     const tree = await this.ticketStore.readTree(ticketId);
     this.fileTree = tree;
-    // Also refresh the surface — the observer triggers tree reloads on
-    // any filesystem change, so this keeps the surface in sync.
-    this.loadSurface(ticketId);
-  }
-
-  private async loadSurface(ticketId: string) {
-    if (!this.ticketStore) return;
-    this.surface = await this.ticketStore.readSurface(ticketId);
   }
 
   private async loadFileContent(
@@ -864,72 +700,6 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
       ...this.fileContents,
       [pathKey]: content,
     };
-  }
-
-  private navigate(tab: string, id: string) {
-    this.dispatchEvent(
-      new CustomEvent("navigate", {
-        detail: { tab, id },
-        bubbles: true,
-      })
-    );
-  }
-
-  // ── Per-task pause / resume ──
-
-  private renderTaskControl(taskId: string, status: string) {
-    // Only show when the box is actively listening for mutations.
-    if (!this.mutationClient?.boxActive.get()) return nothing;
-
-    const ACTIVE = new Set(["running", "available", "suspended", "blocked"]);
-
-    if (ACTIVE.has(status)) {
-      return html`
-        <button
-          style="padding:3px 10px;font-size:0.65rem;font-weight:600;
-                 background:transparent;color:#f87171;border:1px solid #991b1b;
-                 border-radius:4px;cursor:pointer;font-family:inherit;
-                 transition:all 0.15s"
-          @click=${() => this.handlePauseTask(taskId)}
-        >
-          ⏸ Pause
-        </button>
-      `;
-    }
-
-    if (status === "paused") {
-      return html`
-        <button
-          style="padding:3px 10px;font-size:0.65rem;font-weight:600;
-                 background:transparent;color:#4ade80;border:1px solid #166534;
-                 border-radius:4px;cursor:pointer;font-family:inherit;
-                 transition:all 0.15s"
-          @click=${() => this.handleResumeTask(taskId)}
-        >
-          ▶ Resume
-        </button>
-      `;
-    }
-
-    return nothing;
-  }
-
-  private async handlePauseTask(taskId: string) {
-    if (!this.mutationClient) return;
-    try {
-      await this.mutationClient.pauseTask(taskId);
-    } catch (e) {
-      console.error("Failed to pause task:", e);
-    }
-  }
-
-  private async handleResumeTask(taskId: string) {
-    if (!this.mutationClient) return;
-    try {
-      await this.mutationClient.resumeTask(taskId);
-    } catch (e) {
-      console.error("Failed to resume task:", e);
-    }
   }
 
   // ── Suspend / Response ──
