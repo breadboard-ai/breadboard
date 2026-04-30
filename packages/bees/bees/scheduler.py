@@ -139,8 +139,10 @@ class Scheduler:
         runners: dict[str, SessionRunner],
         store: TaskStore,
         emit: EventEmitter | None = None,
+        root_override: str | None = None,
     ) -> None:
         self._emit = emit or _noop_emit
+        self._root_override = root_override
         self.store = store
         self._trigger = asyncio.Event()
         self._running = False
@@ -203,12 +205,15 @@ class Scheduler:
     async def _boot_root_template(self, tickets: list[Ticket]) -> Ticket | None:
         """Boot the root template if it isn't already running."""
         config = load_system_config(self.store.hive_dir / "config")
-        root = config.get("root")
+        root = self._root_override or config.get("root")
         if not root:
             return None
 
+        _TERMINAL = {"completed", "failed", "cancelled"}
         already_booted = any(
-            t.metadata.playbook_id == root for t in tickets
+            t.metadata.playbook_id == root
+            and t.metadata.status not in _TERMINAL
+            for t in tickets
         )
         if already_booted:
             return None

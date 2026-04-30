@@ -108,6 +108,8 @@ async def run_set(
     eval_set_dir: Path,
     output_dir: Path,
     gemini_key: str,
+    *,
+    root_task: str | None = None,
 ) -> list[CaseResult]:
     """Run all eval cases in a set directory.
 
@@ -118,6 +120,7 @@ async def run_set(
         eval_set_dir: Directory containing eval cases.
         output_dir: Root output directory for results.
         gemini_key: Gemini API key for model calls.
+        root_task: Override the root template from SYSTEM.yaml.
 
     Returns:
         A list of ``CaseResult`` objects, one per case.
@@ -146,6 +149,7 @@ async def run_set(
             case_output,
             gemini_key,
             case_name=case_name,
+            root_task=root_task,
         )
         results.append(result)
 

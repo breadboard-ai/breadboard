@@ -159,6 +159,7 @@ async def run_case(
     gemini_key: str,
     *,
     case_name: str | None = None,
+    root_task: str | None = None,
 ) -> CaseResult:
     """Run a single eval case.
 
@@ -172,6 +173,7 @@ async def run_case(
         gemini_key: Gemini API key for model calls.
         case_name: Human-readable name for this case (defaults to
             the hive directory name).
+        root_task: Override the root template from SYSTEM.yaml.
     """
     name = case_name or hive_dir.name
 
@@ -187,7 +189,7 @@ async def run_case(
     start = time.monotonic()
 
     try:
-        bees = Bees(work_dir, runners)
+        bees = Bees(work_dir, runners, root_override=root_task)
 
         # Wire event observers for logging.
         bees.on(TaskAdded, _on_task_added)

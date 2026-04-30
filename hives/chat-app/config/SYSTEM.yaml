@@ -1,0 +1,7 @@
+# Hive system configuration.
+#
+# title       — Display name for this hive instance.
+# description — Short summary shown in UI.
+# root        — Template name to auto-boot at startup. Leave blank to start idle.
+title: chat-app
+description: "A chat app"

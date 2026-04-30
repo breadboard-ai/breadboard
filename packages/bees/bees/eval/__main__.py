@@ -65,6 +65,12 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Output directory (default: results/<timestamp>).",
     )
+    run_parser.add_argument(
+        "--root",
+        type=str,
+        default=None,
+        help="Override the root template from SYSTEM.yaml.",
+    )
 
     # -- run-set (batch) ---------------------------------------------------
     set_parser = sub.add_parser(
@@ -82,14 +88,23 @@ def _build_parser() -> argparse.ArgumentParser:
         required=True,
         help="Output directory for results.",
     )
+    set_parser.add_argument(
+        "--root",
+        type=str,
+        default=None,
+        help="Override the root template from SYSTEM.yaml.",
+    )
 
     return parser
 
 
-async def _run_single(hive_dir: Path, output_dir: Path, key: str) -> None:
+async def _run_single(
+    hive_dir: Path, output_dir: Path, key: str,
+    *, root_task: str | None = None,
+) -> None:
     from bees.eval.runner import run_case
 
-    result = await run_case(hive_dir, output_dir, key)
+    result = await run_case(hive_dir, output_dir, key, root_task=root_task)
 
     print(
         f"\n{'─' * 40}",
@@ -106,10 +121,15 @@ async def _run_single(hive_dir: Path, output_dir: Path, key: str) -> None:
     print(f"Output: {output_dir}", file=sys.stderr)
 
 
-async def _run_set(eval_set_dir: Path, output_dir: Path, key: str) -> None:
+async def _run_set(
+    eval_set_dir: Path, output_dir: Path, key: str,
+    *, root_task: str | None = None,
+) -> None:
     from bees.eval.batch import run_set
 
-    results = await run_set(eval_set_dir, output_dir, key)
+    results = await run_set(
+        eval_set_dir, output_dir, key, root_task=root_task,
+    )
 
     if not results:
         sys.exit(1)
@@ -154,7 +174,7 @@ def main() -> None:
             output_dir = Path(f"results/{stamp}")
         output_dir = output_dir.resolve()
 
-        asyncio.run(_run_single(hive_dir, output_dir, key))
+        asyncio.run(_run_single(hive_dir, output_dir, key, root_task=args.root))
 
     elif args.command == "run-set":
         eval_set_dir = args.eval_set_dir.resolve()
@@ -166,7 +186,7 @@ def main() -> None:
             sys.exit(1)
 
         output_dir = args.output.resolve()
-        asyncio.run(_run_set(eval_set_dir, output_dir, key))
+        asyncio.run(_run_set(eval_set_dir, output_dir, key, root_task=args.root))
 
 
 if __name__ == "__main__":
