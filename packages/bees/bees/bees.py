@@ -73,6 +73,20 @@ class Bees:
             count += 1
         return count
 
+    async def run(self) -> list[dict]:
+        """Run the hive to completion (batch mode).
+
+        Boots the root template, recovers stuck tasks, then runs
+        cycles until no work remains.  Returns per-task summaries.
+
+        Counterpart to :meth:`listen` — one-shot vs. reactive.
+        """
+        await self._scheduler.startup()
+        try:
+            return await self._scheduler.run_all_waves()
+        finally:
+            await self._scheduler.shutdown()
+
     async def listen(self):
         """Starts the scheduler loop."""
         await self._scheduler.startup()
