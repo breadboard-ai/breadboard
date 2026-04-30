@@ -9,4 +9,9 @@ Skills are defined in the `./skills` directory, and each skill is a directory
 containing a `SKILL.md` file along with any other scripts or assets needed to
 perform the skill.
 
+The `SKILL.md` files may reference scripts or assets with markdown hyperlinks,
+relative to the skill file. Resolve the paths accordingly. For example, if the
+skill `./skills/foo/SKILL.md` contains a reference to `./scripts/bar.py`, to
+read that file, resolve its path as `./skills/foo/scripts/bar.py`.
+
 {{available_skills}}
