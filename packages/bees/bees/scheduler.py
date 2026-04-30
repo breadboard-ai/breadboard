@@ -546,6 +546,32 @@ class Scheduler:
                         "output": result.output,
                     })
 
+            # Post-completion coordination: mirror _wrap_execution's hooks
+            # so that parent tasks waiting for children get woken up.
+            for item in all_items_in_cycle:
+                updated = self.store.get(item.id) or item
+                run_task_done_hooks(updated)
+
+                parent_id = updated.metadata.parent_task_id
+                if parent_id and updated.metadata.status in (
+                    "completed", "failed",
+                ):
+                    update = {
+                        "task_id": updated.id,
+                        "status": updated.metadata.status,
+                        "outcome": (
+                            updated.metadata.outcome
+                            or updated.metadata.error
+                            or "(no outcome)"
+                        ),
+                    }
+                    self._deliver_context_update(parent_id, update)
+
+                enriched = self._enrich_parent_tags(updated)
+                if enriched:
+                    await self._emit(TaskDone(task=enriched))
+                await self._emit(TaskDone(task=updated))
+
         await self._emit(CycleComplete(total_cycles=cycle))
 
         return all_summaries

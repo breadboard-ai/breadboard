@@ -37,6 +37,7 @@ packages/bees/
       TEMPLATES.yaml     # All task templates
       hooks/             # Python lifecycle hooks per template
     skills/              # Agent skill documents (SKILL.md + assets)
+    eval/                # Eval-specific config (persona.md for simulated user)
     tickets/             # Runtime task state (on-disk)
     logs/                # Session logs
   web/                   # Reference web shell (React, will be extracted)
@@ -96,5 +97,6 @@ See [docs/README.md](docs/README.md) for the full documentation index.
 | Hivetool         | [docs/hivetool.md](docs/hivetool.md)           |
 | Design patterns  | [docs/patterns.md](docs/patterns.md)           |
 | Stability map    | [docs/flux.md](docs/flux.md)                   |
+| Eval framework   | [docs/eval.md](docs/eval.md)                   |
 | Future direction | [docs/future.md](docs/future.md)               |
 | Interview log    | [docs/interview-log.md](docs/interview-log.md) |

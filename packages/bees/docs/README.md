@@ -35,6 +35,8 @@
   for multi-step operations (reset, respond, batch task creation).
 - [hivetool.md](hivetool.md) — The built-in developer workbench for inspecting
   and editing hive configuration.
+- [eval.md](eval.md) — Batch evaluation framework: `Bees.run()`, eval sets,
+  the `eval/` hive subdirectory, and the CLI.
 
 ## Design knowledge
 

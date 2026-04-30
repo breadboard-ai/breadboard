@@ -56,33 +56,35 @@ Run pre-configured hives from the command line. No simulated user yet — runs
 exit when tasks suspend waiting for user input, or when all tasks complete.
 This phase proves the plumbing.
 
-- [ ] **Eval set format.** A directory of eval cases, each containing a hive
-      and a persona:
+- [x] **Eval set format.** A directory of hives, each identified by having
+      `config/SYSTEM.yaml`. Eval-specific config lives in an `eval/`
+      subdirectory inside each hive:
       ```
       eval_set/
-        case-01/
-          hive/
-            config/
-              SYSTEM.yaml
-              TEMPLATES.yaml
-            skills/...
-          persona.md
-        case-02/
-          hive/...
-          persona.md
+        my-hive/                # A complete hive
+          config/
+            SYSTEM.yaml
+            TEMPLATES.yaml
+          skills/...
+          eval/                 # Eval-specific config
+            persona.md
+        another-hive/
+          config/...
+          eval/
+            persona.md
       ```
-- [ ] **Eval runner module** (`bees/eval/runner.py`). Takes one hive directory
+- [x] **Eval runner module** (`bees/eval/runner.py`). Takes one hive directory
       path. Copies it to a working directory (preserving the original). Creates
-      `Bees(work_dir, runners)`, calls `bees.listen()` (boots root template,
-      recovers stuck tasks), runs `scheduler.run_all_waves()`, returns. The
-      runner is a thin wrapper — `Bees` and `Scheduler` do the real work.
-- [ ] **Batch runner** (`bees/eval/batch.py`). Iterates eval cases in a set
+      `Bees(work_dir, runners)`, calls `bees.run()` (boots root template,
+      recovers stuck tasks, runs batch drain), returns. The runner is a thin
+      wrapper — `Bees` and `Scheduler` do the real work.
+- [x] **Batch runner** (`bees/eval/batch.py`). Iterates hives in an eval set
       directory, runs each sequentially, reports per-case status (completed,
       suspended, failed, duration).
-- [ ] **CLI entry point** (`bees/eval/__main__.py`).
+- [x] **CLI entry point** (`bees/eval/__main__.py`).
       `npm run eval -- run <hive_dir>` — single hive.
       `npm run eval -- run-set <eval_set_dir> --output results/` — batch.
-- [ ] **npm script** in `package.json`:
+- [x] **npm script** in `package.json`:
       `"eval": ".venv/bin/python -m bees.eval"`.
 
 🎯 `npm run eval -- run-set eval_set/ --output results/` copies N hives to
@@ -108,7 +110,7 @@ suspensions to completion.
       user → write `response.json` via `store.respond()` → re-run. Loop exits
       when all tasks are terminal (completed/failed) or a max-iterations
       safety limit is hit.
-- [ ] **Persona loading.** The runner reads `persona.md` from the eval case
+- [ ] **Persona loading.** The runner reads `eval/persona.md` from the hive
       directory and passes it to the simulated user.
 - [ ] **Interaction logging.** Each simulated user response is logged
       (agent question + user response + task context) for later analysis.
