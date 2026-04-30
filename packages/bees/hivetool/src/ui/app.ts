@@ -31,7 +31,7 @@ import "./template-detail.js";
 import "./skill-list.js";
 import "./skill-detail.js";
 import "./ticket-list.js";
-import "./ticket-detail.js";
+import "./ticket-pane.js";
 import "./event-list.js";
 import "./event-detail.js";
 import "./log-list.js";
@@ -915,13 +915,13 @@ class BeesApp extends SignalWatcher(LitElement) {
   private renderMain(flashTicketId: string | null) {
     switch (this.activeTab) {
       case "tickets":
-        return html`<bees-ticket-detail
+        return html`<bees-ticket-pane
           .ticketStore=${this.ticketStore}
           .mutationClient=${this.mutationClient}
           .templateStore=${this.templateStore}
           .skillStore=${this.skillStore}
           .flashTicketId=${flashTicketId}
-        ></bees-ticket-detail>`;
+        ></bees-ticket-pane>`;
       case "events":
         return html`<bees-event-detail
           .ticketStore=${this.ticketStore}

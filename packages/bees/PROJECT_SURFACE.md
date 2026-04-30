@@ -141,21 +141,74 @@ rendered as structured cards, and it updates in real time.
 
 ---
 
-## Phase 5 — Hivetool Full Surface View
+## Phase 5a — Surface / Detail Tab Layout
 
-Promote the surface to a full-pane view with rich rendering.
+Extract ticket detail into two panes behind a tab bar. New wrapper component
+`<bees-ticket-pane>` owns the header, tab bar, and view switching. The existing
+`<bees-ticket-detail>` becomes the "Detail" tab content (timeline only, header
+removed). A new `<bees-surface-pane>` component gets the full main area for
+the "Surface" tab.
 
-- [ ] Sub-tab layout in ticket detail: `Surface · Detail` tabs, surface as the
-      default when present. Each gets the full main pane area.
-- [ ] Markdown rendering for `.md` items (basic or library-backed).
-- [ ] Bundle rendering for `render: "bundle"` items (sandboxed iframe with blob
-      URLs from File System Access API reads).
-- [ ] Multi-scope surface discovery — walk the filesystem tree for all
-      `surface.json` files, scope selector when multiple exist.
-- [ ] File content preview for items with `path` (loaded on demand).
+- [x] New `ticket-pane.ts` — owns ticket header, status badge, identity chips,
+      and a `Surface · Detail` tab bar. Composes `<bees-surface-pane>` and
+      `<bees-ticket-detail>` as tab bodies.
+- [x] Refactor `ticket-detail.ts` — strip the header; render only the timeline
+      content (context, objective, chat, outcome, suspend, tags, files).
+- [x] New `surface-pane.ts` — full-pane surface view. Receives the ticket ID,
+      reads root `surface.json`, renders the existing `<bees-surface-view>`.
+- [x] `app.ts` — swap `<bees-ticket-detail>` for `<bees-ticket-pane>` in the
+      tickets tab main area.
+- [x] Default to Surface tab when a surface exists, Detail otherwise.
 
-🎯 The surface view is a full-pane peer to ticket detail, with rendered markdown,
-bundle iframes, and content previews.
+🎯 Selecting a task shows a `Surface · Detail` tab bar below the header. Surface
+is the default when present. Each tab gets the full main pane.
+
+---
+
+## Phase 5b — Bundle Rendering
+
+Surface items with `render: "bundle"` render in a sandboxed iframe.
+
+- [ ] `surface-pane.ts` — detect `render: "bundle"` items. Read the JS file
+      (and conventionally-discovered CSS by same stem) via
+      `TicketStore.readFileContent`. Construct blob URLs and render in a
+      sandboxed iframe (`sandbox="allow-scripts"`).
+- [ ] Revoke blob URLs on disconnect / item change.
+- [ ] Update `<bees-surface-view>` (or `surface-pane`) to render bundle items
+      as interactive iframes instead of static cards.
+
+🎯 A surface item with `render: "bundle"` displays as a live, sandboxed iframe
+in the surface pane.
+
+---
+
+## Phase 5c — Markdown Rendering and Content Preview
+
+Rich rendering for markdown items and on-demand content preview.
+
+- [ ] Add `markdown-it` dependency to `hivetool/package.json`.
+- [ ] Port the `markdown` Lit directive from `bees/web/src/directives/markdown.ts`
+      (or extract to a shared location).
+- [ ] Surface pane renders `.md` items as formatted markdown (not raw text).
+- [ ] Items with `path` show a content preview area, loaded on demand when the
+      item is expanded or selected.
+
+🎯 Markdown surface items render as formatted HTML. Items with file paths show
+on-demand content previews.
+
+---
+
+## Phase 5d — Multi-Scope Surface Discovery
+
+Walk the filesystem tree for all `surface.json` files, aggregate across scopes.
+
+- [ ] `TicketStore.readAllSurfaces(ticketId)` — recursively walk
+      `filesystem/` for all `surface.json` files, return keyed by scope path.
+- [ ] Surface pane shows a scope selector when multiple surfaces exist.
+- [ ] Default to root scope; sub-scope surfaces accessible via selector.
+
+🎯 When a task has sub-agent scopes with their own surfaces, all are
+discoverable and individually viewable in the surface pane.
 
 ---
 
