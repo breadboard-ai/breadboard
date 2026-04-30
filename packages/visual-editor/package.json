@@ -272,7 +272,7 @@
     "prettier": "^3.8.1",
     "tsx": "^4.20.6",
     "tweakpane": "^4.0.5",
-    "typescript": "^5.8.3",
+    "typescript": "^6.0.2",
     "vite": "^7.3.2",
     "vite-plugin-compression2": "^2.2.0",
     "wireit": "^0.15.0-pre.2"
