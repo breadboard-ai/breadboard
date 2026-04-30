@@ -1,0 +1,13 @@
+# Ticket templates — see docs/patterns.md for the field reference.
+
+- name: builder
+  title: React App Builder
+  description: Builds a high-quality React App
+  objective: |-
+    Build a high-quality React app according to this specification:
+
+    {{system.context}}
+  model: gemini-3.1-pro-preview
+  skills:
+    - build-react-apps
+    - run-in-sandbox
