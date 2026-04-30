@@ -126,6 +126,7 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
         ${hasNonBundles
           ? html`<bees-surface-view
               .surface=${nonBundleSurface}
+              .contentLoader=${this.#contentLoader}
             ></bees-surface-view>`
           : nothing}
       </div>
@@ -242,6 +243,13 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
 
     return handlers;
   }
+
+  /** Load file content by path — passed to surface-view as contentLoader. */
+  #contentLoader = async (path: string): Promise<string | null> => {
+    if (!this.ticketStore || !this.ticketId) return null;
+    const segments = path.split("/").filter(Boolean);
+    return this.ticketStore.readFileContent(this.ticketId, segments);
+  };
 }
 
 declare global {

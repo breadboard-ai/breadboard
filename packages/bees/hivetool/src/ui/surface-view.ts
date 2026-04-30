@@ -10,14 +10,25 @@
  * Displays the structured content from `surface.json`: title, sections
  * as labeled groups, items as cards with title and description text.
  * Status items render as compact inline indicators.
+ *
+ * Items with a `path` are expandable — clicking toggles an on-demand
+ * content preview area. Markdown files render as formatted HTML via
+ * the shared markdown directive; other text files render as `<pre>`.
  */
 
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 
 import type { SurfaceManifest, SurfaceItem } from "../data/types.js";
+import { markdown } from "../../../common/markdown.js";
 
 export { BeesSurfaceView };
+
+/**
+ * Callback for loading file content on demand.
+ * Accepts a path string, returns the text content or null.
+ */
+export type ContentLoader = (path: string) => Promise<string | null>;
 
 @customElement("bees-surface-view")
 class BeesSurfaceView extends LitElement {
@@ -88,6 +99,32 @@ class BeesSurfaceView extends LitElement {
       border-left: 3px solid #3b82f6;
     }
 
+    .item-card.expandable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .item-card.expanded {
+      border-color: #334155;
+    }
+
+    .item-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .expand-indicator {
+      font-size: 0.6rem;
+      color: #64748b;
+      transition: transform 0.15s;
+      flex-shrink: 0;
+    }
+
+    .expand-indicator.open {
+      transform: rotate(90deg);
+    }
+
     .item-title {
       font-size: 0.8rem;
       font-weight: 600;
@@ -155,10 +192,145 @@ class BeesSurfaceView extends LitElement {
       background: #22c55e;
       flex-shrink: 0;
     }
+
+    /* ── Content preview ── */
+    .content-preview {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #1e293b;
+    }
+
+    .content-loading {
+      font-size: 0.7rem;
+      color: #64748b;
+      font-style: italic;
+    }
+
+    .content-error {
+      font-size: 0.7rem;
+      color: #f87171;
+    }
+
+    .content-raw {
+      margin: 0;
+      font-size: 0.75rem;
+      font-family: "Google Mono", "Roboto Mono", monospace;
+      color: #cbd5e1;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 400px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #334155 transparent;
+    }
+
+    .content-markdown {
+      font-size: 0.8rem;
+      color: #e2e8f0;
+      line-height: 1.6;
+      max-height: 600px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #334155 transparent;
+    }
+
+    .content-markdown h1,
+    .content-markdown h2,
+    .content-markdown h3 {
+      color: #f8fafc;
+      margin: 0.6em 0 0.3em;
+      line-height: 1.3;
+    }
+
+    .content-markdown h1 { font-size: 1.1rem; }
+    .content-markdown h2 { font-size: 0.95rem; }
+    .content-markdown h3 { font-size: 0.85rem; }
+
+    .content-markdown h1:first-child {
+      margin-top: 0;
+    }
+
+    .content-markdown p {
+      margin: 0.4em 0;
+    }
+
+    .content-markdown ul,
+    .content-markdown ol {
+      margin: 0.4em 0;
+      padding-left: 1.5em;
+    }
+
+    .content-markdown code {
+      background: #1e293b;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-family: "Google Mono", "Roboto Mono", monospace;
+      font-size: 0.85em;
+    }
+
+    .content-markdown pre {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 4px;
+      padding: 8px 12px;
+      overflow-x: auto;
+      margin: 0.5em 0;
+    }
+
+    .content-markdown pre code {
+      background: none;
+      padding: 0;
+      font-size: 0.8rem;
+    }
+
+    .content-markdown a {
+      color: #60a5fa;
+    }
+
+    .content-markdown blockquote {
+      border-left: 3px solid #334155;
+      margin: 0.5em 0;
+      padding: 0 0 0 12px;
+      color: #94a3b8;
+    }
+
+    .content-markdown table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 0.5em 0;
+      font-size: 0.75rem;
+    }
+
+    .content-markdown th,
+    .content-markdown td {
+      border: 1px solid #1e293b;
+      padding: 4px 8px;
+      text-align: left;
+    }
+
+    .content-markdown th {
+      background: #14171c;
+      color: #94a3b8;
+      font-weight: 600;
+    }
   `;
 
   @property({ attribute: false })
   accessor surface: SurfaceManifest | null = null;
+
+  /** Optional loader for on-demand content preview. */
+  @property({ attribute: false })
+  accessor contentLoader: ContentLoader | null = null;
+
+  /** Set of item IDs whose content preview is expanded. */
+  @state() accessor expandedItems: Set<string> = new Set();
+
+  /** Cache of loaded content keyed by item ID. */
+  #contentCache = new Map<string, string | null>();
+
+  /** Set of item IDs currently loading. */
+  #loadingItems = new Set<string>();
 
   render() {
     if (!this.surface) return nothing;
@@ -248,10 +420,25 @@ class BeesSurfaceView extends LitElement {
 
   private renderItem(item: SurfaceItem) {
     const roleClass = item.role === "primary" ? "primary" : "";
+    const canExpand = !!item.path && !!this.contentLoader;
+    const isExpanded = this.expandedItems.has(item.id);
+    const expandClass = canExpand ? "expandable" : "";
+    const expandedClass = isExpanded ? "expanded" : "";
 
     return html`
-      <div class="item-card ${roleClass}">
-        <div class="item-title">${item.title}</div>
+      <div
+        class="item-card ${roleClass} ${expandClass} ${expandedClass}"
+        @click=${canExpand ? () => this.#toggleItem(item) : nothing}
+      >
+        <div class="item-header">
+          ${canExpand
+            ? html`<span
+                class="expand-indicator ${isExpanded ? "open" : ""}"
+                >▶</span
+              >`
+            : nothing}
+          <span class="item-title">${item.title}</span>
+        </div>
         ${item.description
           ? html`<div class="item-description">${item.description}</div>`
           : nothing}
@@ -268,8 +455,69 @@ class BeesSurfaceView extends LitElement {
                 : nothing}
             </div>`
           : nothing}
+        ${isExpanded ? this.#renderContentPreview(item) : nothing}
       </div>
     `;
+  }
+
+  #toggleItem(item: SurfaceItem) {
+    const next = new Set(this.expandedItems);
+    if (next.has(item.id)) {
+      next.delete(item.id);
+    } else {
+      next.add(item.id);
+      this.#loadContent(item);
+    }
+    this.expandedItems = next;
+  }
+
+  async #loadContent(item: SurfaceItem) {
+    if (!item.path || !this.contentLoader) return;
+    if (this.#contentCache.has(item.id)) return;
+    if (this.#loadingItems.has(item.id)) return;
+
+    this.#loadingItems.add(item.id);
+    this.requestUpdate();
+
+    try {
+      const content = await this.contentLoader(item.path);
+      this.#contentCache.set(item.id, content);
+    } catch {
+      this.#contentCache.set(item.id, null);
+    } finally {
+      this.#loadingItems.delete(item.id);
+      this.requestUpdate();
+    }
+  }
+
+  #renderContentPreview(item: SurfaceItem) {
+    if (this.#loadingItems.has(item.id)) {
+      return html`<div class="content-preview">
+        <span class="content-loading">Loading…</span>
+      </div>`;
+    }
+
+    const content = this.#contentCache.get(item.id);
+    if (content === undefined) {
+      // Not yet loaded — trigger load.
+      this.#loadContent(item);
+      return html`<div class="content-preview">
+        <span class="content-loading">Loading…</span>
+      </div>`;
+    }
+
+    if (content === null) {
+      return html`<div class="content-preview">
+        <span class="content-error">Could not load content</span>
+      </div>`;
+    }
+
+    const isMarkdown = item.path?.endsWith(".md");
+    return html`<div class="content-preview">
+      ${isMarkdown
+        ? html`<div class="content-markdown">${markdown(content)}</div>`
+        : html`<pre class="content-raw">${content}</pre>`}
+    </div>`;
   }
 }
 
