@@ -12,8 +12,10 @@
   "dependencies": {
     "@lit-labs/signals": "^0.2.0",
     "@types/js-yaml": "^4.0.9",
+    "@types/markdown-it": "^14.1.2",
     "js-yaml": "^4.1.1",
     "lit": "^3.3.2",
+    "markdown-it": "^14.1.1",
     "signal-polyfill": "^0.2.2"
   },
   "devDependencies": {

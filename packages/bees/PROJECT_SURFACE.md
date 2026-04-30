@@ -210,16 +210,22 @@ handler on the host — no changes to `iframe-runtime.ts` or `bundle-types.ts`.
 
 ---
 
-## Phase 5d — Markdown Rendering and Content Preview
+## Phase 5d — Markdown Rendering and Content Preview ✅
 
 Rich rendering for markdown items and on-demand content preview.
 
-- [ ] Add `markdown-it` dependency to `hivetool/package.json`.
-- [ ] Port the `markdown` Lit directive from `bees/web/src/directives/markdown.ts`
-      (or extract to a shared location).
-- [ ] Surface pane renders `.md` items as formatted markdown (not raw text).
-- [ ] Items with `path` show a content preview area, loaded on demand when the
-      item is expanded or selected.
+- [x] Add `markdown-it` dependency to `hivetool/package.json`.
+- [x] Extract the `markdown` Lit directive to `common/markdown.ts` (shared
+      between `web` and `hivetool`). `web/src/directives/markdown.ts`
+      re-exports from common.
+- [x] Surface view renders `.md` items as formatted markdown (not raw text)
+      via the shared `markdown` directive, with full styling for headings,
+      code blocks, tables, blockquotes, and links.
+- [x] Items with `path` show an expandable content preview area, loaded on
+      demand when clicked. Content is cached after first load. Non-markdown
+      files render as preformatted text.
+- [x] `surface-pane.ts` passes a `contentLoader` callback to `surface-view`
+      that delegates to `TicketStore.readFileContent`.
 
 🎯 Markdown surface items render as formatted HTML. Items with file paths show
 on-demand content previews.
