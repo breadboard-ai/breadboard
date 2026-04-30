@@ -25,13 +25,20 @@ class Bees:
     Acts like the 'Document' in the DOM analogy.
     """
 
-    def __init__(self, hive_dir: Path, runners: dict[str, SessionRunner]):
+    def __init__(
+        self,
+        hive_dir: Path,
+        runners: dict[str, SessionRunner],
+        *,
+        root_override: str | None = None,
+    ):
         self._store = TaskStore(hive_dir)
         self._observers: dict[type[SchedulerEvent], list[EventCallback]] = defaultdict(list)
         self._loop_task = None
 
         self._scheduler = Scheduler(
             runners=runners, emit=self._emit, store=self._store,
+            root_override=root_override,
         )
 
     async def _emit(self, event: SchedulerEvent) -> None:

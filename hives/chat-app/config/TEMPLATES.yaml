@@ -1,0 +1,19 @@
+# Ticket templates — see docs/patterns.md for the field reference.
+
+- name: chat-app-builder
+  title: React App Builder
+  description: Builds a high-quality React App
+  objective: >-
+    Build a high-quality React app according to this specification:
+
+
+    A chat app that uses opal SDK bridge to route user messages to the agent and
+    route agent messages to the user
+
+
+    Add a surface to display this app as a single primary item.
+  model: gemini-3.1-pro-preview
+  skills:
+    - build-react-apps
+    - run-in-sandbox
+    - surface
