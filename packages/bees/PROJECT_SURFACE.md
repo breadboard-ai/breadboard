@@ -165,24 +165,52 @@ is the default when present. Each tab gets the full main pane.
 
 ---
 
-## Phase 5b — Bundle Rendering
+## Phase 5b — Bundle Rendering ✅
 
 Surface items with `render: "bundle"` render in a sandboxed iframe.
 
-- [ ] `surface-pane.ts` — detect `render: "bundle"` items. Read the JS file
-      (and conventionally-discovered CSS by same stem) via
-      `TicketStore.readFileContent`. Construct blob URLs and render in a
-      sandboxed iframe (`sandbox="allow-scripts"`).
-- [ ] Revoke blob URLs on disconnect / item change.
-- [ ] Update `<bees-surface-view>` (or `surface-pane`) to render bundle items
-      as interactive iframes instead of static cards.
+- [x] Shared code in `common/`: `bundle-types.ts` (message protocol),
+      `message-bridge.ts` (host↔iframe postMessage bridge),
+      `iframe-runtime.ts` (self-contained HTML generator with inline React
+      UMD, CJS require shim, `window.opalSDK` proxy, error boundary).
+- [x] `<bees-bundle-frame>` component — hosts a single sandboxed iframe.
+      Manages MessageBridge lifecycle, relays `readFile` requests to
+      `TicketStore.readFileContent`, displays component errors.
+- [x] `react-cache.ts` — fetches React 18 UMD from unpkg once per session,
+      builds and caches the iframe blob URL shared across all frames.
+- [x] `surface-pane.ts` — detects `render: "bundle"` items, reads JS/CSS
+      from the ticket filesystem, renders each as a `<bees-bundle-frame>`
+      card. Non-bundle items render as before. Blob URL revoked on dispose.
 
 🎯 A surface item with `render: "bundle"` displays as a live, sandboxed iframe
 in the surface pane.
 
 ---
 
-## Phase 5c — Markdown Rendering and Content Preview
+## Phase 5c — SDK Extensibility ✅
+
+Make `window.opalSDK` a generic RPC proxy so that adding new SDK methods
+is a host-side-only concern. The iframe runtime becomes closed to modification.
+
+- [x] Replace the hardcoded `opalSDK` object in `iframe-runtime.ts` with a
+      `Proxy` that forwards any method call as a generic
+      `{ type: "sdk.call", method, args, requestId }` message. Every call
+      returns a `Promise` (fire-and-forget methods resolve immediately on
+      the host).
+- [x] Add `sdk.call` / `sdk.call.response` message types to `bundle-types.ts`.
+      Removed per-method types (`readFile`, `navigate`, `emit`). Added
+      `SdkHandlers` type for the host-side registry.
+- [x] In `bundle-frame.ts`, replaced the inline `readFile` relay with a
+      generic `#handleSdkCall` dispatcher backed by `sdkHandlers: SdkHandlers`.
+- [x] In `surface-pane.ts`, `#makeSdkHandlers()` builds the registry with
+      `readFile`, `navigateTo`, and `emit` handlers.
+
+🎯 Adding a new `window.opalSDK.foo()` method requires only registering a
+handler on the host — no changes to `iframe-runtime.ts` or `bundle-types.ts`.
+
+---
+
+## Phase 5d — Markdown Rendering and Content Preview
 
 Rich rendering for markdown items and on-demand content preview.
 
@@ -198,7 +226,7 @@ on-demand content previews.
 
 ---
 
-## Phase 5d — Multi-Scope Surface Discovery
+## Phase 5e — Multi-Scope Surface Discovery
 
 Walk the filesystem tree for all `surface.json` files, aggregate across scopes.
 
