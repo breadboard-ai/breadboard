@@ -119,7 +119,7 @@ class BeesBundleFrame extends LitElement {
           ? html`<div class="loading">Loading component…</div>`
           : nothing}
         <iframe
-          sandbox="allow-scripts"
+          sandbox="allow-scripts allow-forms"
           style=${this.loading ? "position:absolute;opacity:0;pointer-events:none" : ""}
         ></iframe>
       </div>
