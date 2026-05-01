@@ -33,6 +33,18 @@ class TicketStore {
   readonly tickets = new Signal.State<TicketData[]>([]);
   readonly selectedTicketId = new Signal.State<string | null>(null);
   readonly recentlyUpdatedTicket = new Signal.State<{ id: string; at: number } | null>(null);
+
+  /**
+   * Fires when a file inside a ticket's `filesystem/` directory changes.
+   *
+   * Consumers (e.g. surface-pane) use this to push `filechange` events
+   * to sandboxed bundle iframes via the opalSDK EventTarget bridge.
+   */
+  readonly filesystemChange = new Signal.State<{
+    ticketId: string;
+    paths: string[];
+    at: number;
+  } | null>(null);
   readonly selectedTicket = new Signal.Computed(() => {
     const id = this.selectedTicketId.get();
     if (!id) return null;
@@ -126,6 +138,7 @@ class TicketStore {
     this.tickets.set([]);
     this.selectedTicketId.set(null);
     this.recentlyUpdatedTicket.set(null);
+    this.filesystemChange.set(null);
     this.activeLiveSessions.set(new Set());
     this.disconnectLiveSession();
   }
@@ -436,25 +449,42 @@ class TicketStore {
             relativePathComponents?: string[];
             relativePath?: string;
           }
+
+          let updatedTicketId: string | null = null;
+          const fsChanges = new Map<string, string[]>();
+
           for (const record of records) {
             const r = record as FileSystemChangeRecord;
-            const pathSegments = r.relativePathComponents;
-            const relativePath = r.relativePath;
-            let ticketId: string | null = null;
-            
-            if (Array.isArray(pathSegments) && pathSegments.length > 0) {
-              ticketId = pathSegments[0];
-            } else if (typeof relativePath === "string") {
-              const segments = relativePath.split("/");
-              if (segments.length > 0) {
-                ticketId = segments[0];
-              }
+            let segments: string[];
+
+            if (Array.isArray(r.relativePathComponents) && r.relativePathComponents.length > 0) {
+              segments = r.relativePathComponents;
+            } else if (typeof r.relativePath === "string") {
+              segments = r.relativePath.split("/").filter(Boolean);
+            } else {
+              continue;
             }
 
-            if (ticketId) {
-              this.recentlyUpdatedTicket.set({ id: ticketId, at: Date.now() });
-              break;
+            if (segments.length === 0) continue;
+
+            const ticketId = segments[0];
+            if (!updatedTicketId) updatedTicketId = ticketId;
+
+            // Filesystem changes: [ticketId, "filesystem", ...path]
+            if (segments.length >= 3 && segments[1] === "filesystem") {
+              const fsPath = segments.slice(2).join("/");
+              if (!fsChanges.has(ticketId)) fsChanges.set(ticketId, []);
+              fsChanges.get(ticketId)!.push(fsPath);
             }
+          }
+
+          if (updatedTicketId) {
+            this.recentlyUpdatedTicket.set({ id: updatedTicketId, at: Date.now() });
+          }
+
+          const now = Date.now();
+          for (const [ticketId, paths] of fsChanges) {
+            this.filesystemChange.set({ ticketId, paths, at: now });
           }
         }
       });

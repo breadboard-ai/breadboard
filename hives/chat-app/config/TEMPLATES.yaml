@@ -4,16 +4,22 @@
   title: React App Builder
   description: Builds a high-quality React App
   objective: >-
-    Build a high-quality React app according to this specification:
+    Create a weather data file named weather_data.json, showing weather for a
+    location. Simulate the weather data for Los Altos, CA.
 
 
-    A chat app that uses opal SDK bridge to route user messages to the agent and
-    route agent messages to the user
+    Then, build a high-quality React app according to this specification:
 
 
-    Add a surface to display this app as a single primary item.
+    - A weather widget that loads from weather_data.json and displays it
+
+    - Anytime the file changes, use the opal SDK to read and update the display.
+
+
+    Finally, add a surface to display this app as a single primary item.
   model: gemini-3.1-pro-preview
   skills:
     - build-react-apps
     - run-in-sandbox
     - surface
+    - use-opal-sdk

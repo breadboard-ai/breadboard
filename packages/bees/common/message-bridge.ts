@@ -77,6 +77,19 @@ class MessageBridge {
     return this.#ready;
   }
 
+  /**
+   * Push an event to the iframe.
+   *
+   * The iframe component receives it via the standard DOM event API:
+   *
+   *   window.opalSDK.addEventListener("ticketUpdated", (e) => {
+   *     console.log(e.detail);
+   *   });
+   */
+  async emit(event: string, detail?: unknown): Promise<void> {
+    await this.send({ type: "sdk.event", event, detail });
+  }
+
   /** Clean up the message listener. */
   dispose(): void {
     window.removeEventListener("message", this.#handler);
