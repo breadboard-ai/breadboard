@@ -27,6 +27,7 @@ import { getIframeBlobUrl } from "./react-cache.js";
 import { sharedStyles } from "./shared-styles.js";
 import "./surface-view.js";
 import "./bundle-frame.js";
+import type { BeesBundleFrame } from "./bundle-frame.js";
 
 export { BeesSurfacePane };
 
@@ -94,6 +95,9 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
   /** Track which ticket ID we last loaded for. */
   #loadedFor: string | null = null;
 
+  /** Deduplicate filesystem change processing. */
+  #lastFsChangeAt = 0;
+
   render() {
     if (!this.ticketStore || !this.ticketId) {
       return html`<div class="empty-state">No surface available</div>`;
@@ -104,7 +108,27 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
       this.surface = null;
       this.resolvedBundles = [];
       this.#loadedFor = this.ticketId;
+      this.#lastFsChangeAt = 0;
       this.loadSurface();
+    }
+
+    // React to filesystem changes for the current ticket.
+    const fsChange = this.ticketStore?.filesystemChange.get();
+    if (
+      fsChange &&
+      fsChange.ticketId === this.ticketId &&
+      fsChange.at > this.#lastFsChangeAt
+    ) {
+      this.#lastFsChangeAt = fsChange.at;
+      if (fsChange.paths.includes("surface.json")) {
+        this.loadSurface();
+      }
+      // Forward file changes to bundle iframes after the DOM updates.
+      this.updateComplete.then(() => {
+        for (const path of fsChange.paths) {
+          this.#emitToFrames("filechange", { path });
+        }
+      });
     }
 
     if (!this.surface) return nothing;
@@ -250,6 +274,15 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
     const segments = path.split("/").filter(Boolean);
     return this.ticketStore.readFileContent(this.ticketId, segments);
   };
+
+  /** Push an event to all active bundle frames in this surface. */
+  #emitToFrames(event: string, detail?: unknown): void {
+    const frames =
+      this.renderRoot.querySelectorAll<BeesBundleFrame>("bees-bundle-frame");
+    for (const frame of frames) {
+      frame.emit(event, detail);
+    }
+  }
 }
 
 declare global {

@@ -138,21 +138,20 @@ try {
               normalized = normalized.replace(/^\.\//, "");
             }
 
-            // CSS?
-            const cssKey =
-              findFileKey(normalized, [".css"]) ??
-              findFileKey(normalized + ".css", []);
-            if (cssKey) {
-              return { path: cssKey, namespace: "virtual-css" };
-            }
+            // Resolve to any known file, then assign namespace by extension.
+            const jsExts = [".jsx", ".js"];
+            const cssExts = [".css"];
+            const allExts = [...jsExts, ...cssExts];
 
-            // JSX/JS?
-            const jsxKey =
-              findFileKey(normalized, [".jsx", ".js"]) ??
+            const key =
+              findFileKey(normalized, allExts) ??
               findFileKey(normalized + ".jsx", []) ??
-              findFileKey(normalized + ".js", []);
-            if (jsxKey) {
-              return { path: jsxKey, namespace: "virtual-jsx" };
+              findFileKey(normalized + ".js", []) ??
+              findFileKey(normalized + ".css", []);
+
+            if (key) {
+              const ns = key.endsWith(".css") ? "virtual-css" : "virtual-jsx";
+              return { path: key, namespace: ns };
             }
 
             return undefined;

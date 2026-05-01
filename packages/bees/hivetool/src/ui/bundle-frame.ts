@@ -29,6 +29,7 @@ import { sharedStyles } from "./shared-styles.js";
 
 export { BeesBundleFrame };
 
+
 @customElement("bees-bundle-frame")
 class BeesBundleFrame extends LitElement {
   static styles = [
@@ -214,6 +215,11 @@ class BeesBundleFrame extends LitElement {
         error: (e as Error).message,
       });
     }
+  }
+
+  /** Push an event to the sandboxed iframe via the bridge. */
+  async emit(event: string, detail?: unknown): Promise<void> {
+    await this.#bridge?.emit(event, detail);
   }
 
   #dispose(): void {

@@ -199,18 +199,32 @@ function buildIframeHtml(reactSource: string, reactDomSource: string): string {
       return {};
     }
 
-    // ── Opal SDK (Generic RPC Proxy) ──
-    // Every method call on window.opalSDK is forwarded to the host as
-    // { type: "sdk.call", method, args, requestId }. The host responds
-    // with { type: "sdk.call.response", requestId, result?, error? }.
-    // Adding new SDK methods requires only a host-side handler.
+    // ── Opal SDK (EventTarget + RPC Proxy) ──
+    // The SDK is backed by a real EventTarget so that components can
+    // subscribe to host-pushed events via the standard DOM API:
+    //
+    //   window.opalSDK.addEventListener("ticketUpdated", (e) => { ... });
+    //
+    // Any other property access returns an RPC function that forwards
+    // { type: "sdk.call", method, args, requestId } to the host.
+    // Adding new SDK methods requires only a host-side handler;
+    // adding new events requires only a host-side bridge.emit() call.
     var pendingCalls = new Map();
+    var sdkTarget = new EventTarget();
 
-    window.opalSDK = new Proxy({}, {
+    window.opalSDK = new Proxy(sdkTarget, {
       get: function(target, prop) {
         if (typeof prop !== "string") return undefined;
         // Standard object protocol — don't intercept.
         if (prop === "then" || prop === "toJSON") return undefined;
+
+        // EventTarget methods — delegate to the real object.
+        if (prop in target) {
+          var val = target[prop];
+          return typeof val === "function" ? val.bind(target) : val;
+        }
+
+        // Everything else — RPC proxy.
         return function() {
           var args = Array.prototype.slice.call(arguments);
           var requestId = crypto.randomUUID();
@@ -365,6 +379,11 @@ function buildIframeHtml(reactSource: string, reactDomSource: string): string {
               pending.resolve(data.result);
             }
           }
+          break;
+        case "sdk.event":
+          sdkTarget.dispatchEvent(
+            new CustomEvent(data.event, { detail: data.detail })
+          );
           break;
       }
     }

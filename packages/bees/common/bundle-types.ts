@@ -28,7 +28,8 @@ type HostMessage =
       requestId: string;
       result?: unknown;
       error?: string;
-    };
+    }
+  | { type: "sdk.event"; event: string; detail?: unknown };
 
 /** Messages the iframe sends TO the host. */
 type IframeMessage =
@@ -41,9 +42,16 @@ type IframeMessage =
       args: unknown[];
     };
 
-/** The SDK exposed as `window.opalSDK` inside the sandboxed iframe. */
-interface OpalSDK {
-  [method: string]: (...args: unknown[]) => Promise<unknown>;
+/**
+ * The SDK exposed as `window.opalSDK` inside the sandboxed iframe.
+ *
+ * Extends EventTarget so components can subscribe to host-pushed events
+ * via the standard `addEventListener` / `removeEventListener` API.
+ * All other property accesses are RPC proxy calls that return Promises.
+ */
+interface OpalSDK extends EventTarget {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [method: string]: (...args: any[]) => any;
 }
 
 /**
