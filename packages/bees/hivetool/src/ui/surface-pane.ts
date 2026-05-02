@@ -7,13 +7,18 @@
 /**
  * Full-pane surface view — the "Surface" tab body.
  *
- * Receives a ticket ID, reads root `surface.json` via the ticket store,
- * and renders the surface. Items with `render: "bundle"` are rendered
- * as live sandboxed iframes via `<bees-bundle-frame>`. Other items
- * render as static cards via `<bees-surface-view>`.
+ * Composes agent-declared surface items and the built-in chat panel
+ * using a CSS grid with bento box layout rules:
  *
- * Re-reads surface data when the ticket ID changes or the filesystem
- * observer fires.
+ *   - 2 columns × N rows
+ *   - Chat takes the left half when present
+ *   - Content blocks fill the right half (or full width without chat)
+ *   - Primary bundles expand to full width when no chat
+ *   - Single block expands to full width
+ *
+ * Items with `render: "bundle"` render as sandboxed iframes via
+ * `<bees-bundle-frame>`. Other items render as static cards via
+ * `<bees-surface-view>`.
  */
 
 import { SignalWatcher } from "@lit-labs/signals";
@@ -21,12 +26,15 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 
 import type { TicketStore } from "../data/ticket-store.js";
+import type { MutationClient } from "../data/mutation-client.js";
 import type { SurfaceManifest, SurfaceItem } from "../data/types.js";
 import type { SdkHandlers } from "../../../common/bundle-types.js";
+import { hasChatContent } from "./chat-panel.js";
 import { getIframeBlobUrl } from "./react-cache.js";
 import { sharedStyles } from "./shared-styles.js";
 import "./surface-view.js";
 import "./bundle-frame.js";
+import "./chat-panel.js";
 import type { BeesBundleFrame } from "./bundle-frame.js";
 
 export { BeesSurfacePane };
@@ -50,18 +58,72 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
         overflow-y: auto;
       }
 
-      .surface-container {
+      /* ── Bento grid ── */
+
+      .surface-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
         padding: 24px 32px;
-        max-width: 960px;
-        margin: 0 auto;
-        width: 100%;
+        flex: 1;
+        min-height: 0;
       }
 
-      .bundle-section {
+      .surface-grid.with-chat {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      /* Chat cell: left column. */
+      .chat-cell {
+        grid-column: 1;
+        min-height: 300px;
+        max-height: calc(100vh - 200px);
+        background: #0f1115;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      /* When chat is the only content, go full width. */
+      .surface-grid.chat-only .chat-cell {
+        grid-column: 1 / -1;
+        max-height: none;
+      }
+
+      /* Content column wraps bundles + surface-view. */
+      .content-column {
         display: flex;
         flex-direction: column;
         gap: 16px;
-        margin-bottom: 16px;
+        min-width: 0;
+      }
+
+      .surface-grid.with-chat .content-column {
+        grid-column: 2;
+      }
+
+      .surface-grid:not(.with-chat) .content-column {
+        grid-column: 1 / -1;
+      }
+
+      /* ── Bundles within content column ── */
+
+      .bundle-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .bundle-cell {
+        min-width: 0;
+      }
+
+      .bundle-cell.primary {
+        grid-column: 1 / -1;
+      }
+
+      .bundle-cell.solo {
+        grid-column: 1 / -1;
       }
 
       .bundle-label {
@@ -84,6 +146,9 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
 
   @property({ attribute: false })
   accessor ticketStore: TicketStore | null = null;
+
+  @property({ attribute: false })
+  accessor mutationClient: MutationClient | null = null;
 
   @property({ type: String })
   accessor ticketId: string | null = null;
@@ -131,27 +196,51 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
       });
     }
 
-    if (!this.surface) return nothing;
+    // Determine what we have.
+    const ticket = this.ticketStore.selectedTicket.get();
+    const showChat = !!ticket && hasChatContent(ticket);
+    const hasSurfaceItems = !!this.surface && this.surface.items.length > 0;
+
+    if (!showChat && !hasSurfaceItems) return nothing;
 
     // Split items into bundles and non-bundles.
-    const nonBundleItems = this.surface.items.filter(
-      (i) => i.render !== "bundle"
-    );
-    const nonBundleSurface: SurfaceManifest = {
-      ...this.surface,
-      items: nonBundleItems,
-    };
+    const nonBundleItems = this.surface
+      ? this.surface.items.filter((i) => i.render !== "bundle")
+      : [];
+    const nonBundleSurface: SurfaceManifest | null =
+      nonBundleItems.length > 0 && this.surface
+        ? { ...this.surface, items: nonBundleItems }
+        : null;
     const hasBundles = this.resolvedBundles.length > 0;
-    const hasNonBundles = nonBundleItems.length > 0;
+    const hasContentItems = hasBundles || nonBundleSurface;
+
+    const gridClass = showChat
+      ? hasContentItems
+        ? "with-chat"
+        : "chat-only"
+      : "";
 
     return html`
-      <div class="surface-container">
-        ${hasBundles ? this.renderBundles() : nothing}
-        ${hasNonBundles
-          ? html`<bees-surface-view
-              .surface=${nonBundleSurface}
-              .contentLoader=${this.#contentLoader}
-            ></bees-surface-view>`
+      <div class="surface-grid ${gridClass}">
+        ${showChat
+          ? html`<bees-chat-panel
+              class="chat-cell"
+              .ticketStore=${this.ticketStore}
+              .mutationClient=${this.mutationClient}
+            ></bees-chat-panel>`
+          : nothing}
+        ${hasContentItems
+          ? html`
+              <div class="content-column">
+                ${hasBundles ? this.renderBundles() : nothing}
+                ${nonBundleSurface
+                  ? html`<bees-surface-view
+                      .surface=${nonBundleSurface}
+                      .contentLoader=${this.#contentLoader}
+                    ></bees-surface-view>`
+                  : nothing}
+              </div>
+            `
           : nothing}
       </div>
     `;
@@ -159,12 +248,15 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
 
   private renderBundles() {
     const handlers = this.#makeSdkHandlers();
+    const solo = this.resolvedBundles.length === 1;
 
     return html`
       <div class="bundle-section">
-        ${this.resolvedBundles.map(
-          (bundle) => html`
-            <div>
+        ${this.resolvedBundles.map((bundle) => {
+          const isPrimary = bundle.item.role === "primary";
+          const cellClass = solo ? "solo" : isPrimary ? "primary" : "";
+          return html`
+            <div class="bundle-cell ${cellClass}">
               <div class="bundle-label">${bundle.item.title}</div>
               <bees-bundle-frame
                 .iframeBlobUrl=${this.iframeBlobUrl}
@@ -173,8 +265,8 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
                 .sdkHandlers=${handlers}
               ></bees-bundle-frame>
             </div>
-          `
-        )}
+          `;
+        })}
       </div>
     `;
   }

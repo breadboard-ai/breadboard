@@ -180,11 +180,14 @@ class TaskRunner:
 
         response = json.loads(response_path.read_text())
 
-        # Log user's reply to the chat log (only actual user text,
-        # not context-update-only responses).
+        # Log user's reply to the chat log.
+        # Text replies carry "text"; choice replies carry "selectedIds".
         user_text = response.get("text", "")
         if user_text:
             append_chat_log(task.dir, "user", user_text)
+        elif "selectedIds" in response:
+            ids = response["selectedIds"]
+            append_chat_log(task.dir, "user", ", ".join(ids))
 
         # Load opaque resume state from previous suspend.
         state = load_resume_state(task.dir)
