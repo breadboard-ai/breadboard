@@ -12,8 +12,8 @@
  * shared across both tabs. Below it sits a `Surface · Detail` tab bar.
  * Each tab body gets the remaining vertical space.
  *
- * Defaults to the Surface tab when a surface exists for the selected
- * ticket, and to the Detail tab otherwise.
+ * Defaults to the Surface tab when a surface or chat content exists
+ * for the selected ticket, and to the Detail tab otherwise.
  */
 
 import { SignalWatcher } from "@lit-labs/signals";
@@ -25,6 +25,7 @@ import type { MutationClient } from "../data/mutation-client.js";
 import type { TemplateStore } from "../data/template-store.js";
 import type { SkillStore } from "../data/skill-store.js";
 import { sharedStyles } from "./shared-styles.js";
+import { hasChatContent } from "./chat-panel.js";
 import "./ticket-detail.js";
 import "./surface-pane.js";
 
@@ -78,7 +79,7 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
         flex: 1;
         display: flex;
         flex-direction: column;
-        overflow: hidden;
+        overflow: auto;
       }
     `,
   ];
@@ -280,6 +281,7 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
                 ${this.activePane === "surface"
                   ? html`<bees-surface-pane
                       .ticketStore=${this.ticketStore}
+                      .mutationClient=${this.mutationClient}
                       .ticketId=${ticket.id}
                     ></bees-surface-pane>`
                   : html`<bees-ticket-detail
@@ -362,11 +364,16 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
 
   private async probeSurface(ticketId: string): Promise<void> {
     if (!this.ticketStore) return;
+
     const surface = await this.ticketStore.readSurface(ticketId);
+    const ticket = this.ticketStore.selectedTicket.get();
+    const chatActive = !!ticket && hasChatContent(ticket);
+    const showSurface = surface !== null || chatActive;
+
     // Only apply if we're still looking at the same ticket.
     if (this.#probedFor === ticketId) {
-      this.hasSurface = surface !== null;
-      this.activePane = surface ? "surface" : "detail";
+      this.hasSurface = showSurface;
+      this.activePane = showSurface ? "surface" : "detail";
     }
   }
 

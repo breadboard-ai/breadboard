@@ -246,6 +246,31 @@ discoverable and individually viewable in the surface pane.
 
 ---
 
+## Phase 5f — Chat in Surface (Bento Grid Layout)
+
+Chat UI (log + input) rendered as a built-in surface item inside a CSS grid
+with bento box layout rules.
+
+- [x] New `chat-panel.ts` — `<bees-chat-panel>` extracted from
+      `ticket-detail.ts`. Combines chat log and interactive input UI
+      (text reply, choice cards) into a single component. Renders
+      conditionally based on chat history and suspend state.
+- [x] `surface-pane.ts` — bento grid layout. Composes `<bees-chat-panel>`
+      alongside agent-declared surface items. Chat takes the left half
+      when present; content blocks (bundles + surface-view) fill the
+      right half or full width without chat.
+- [x] `ticket-detail.ts` — stripped chat log, reply/choice forms, and
+      related state/styles. Non-interactive suspend fallback preserved.
+- [x] `ticket-pane.ts` — Surface tab shown when surface OR chat content
+      exists. `probeSurface` checks both conditions.
+- [x] Exported `hasChatContent(ticket)` utility for reuse by parent
+      components (tab visibility probing).
+
+🎯 Selecting a task with chat history shows the Surface tab with a bento
+grid layout — chat on the left half, surface items on the right.
+
+---
+
 ## Phase 6 — Reference App Surface Rendering
 
 The reference web app renders surfaces for chat-tagged tasks.
