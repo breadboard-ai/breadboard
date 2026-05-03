@@ -9,28 +9,27 @@ a server named ``weather`` with tool ``get_forecast`` becomes the
 function group ``weather`` containing ``weather_get_forecast``.
 
 Lifecycle:
-- ``MCPRegistry.connect_all()`` at scheduler startup
+- ``MCPRegistry.discover_all()`` at scheduler startup (brief connect
+  for tool discovery, then disconnect — no long-lived transports)
 - ``MCPRegistry.get_factories()`` for each session
+- ``MCPConnection.call_tool()`` lazily connects on first use
 - ``MCPRegistry.disconnect_all()`` at scheduler shutdown
 
-Connections are shared across agent sessions.  MCP uses JSON-RPC with
-unique request IDs, so concurrent tool calls from parallel agents are
-multiplexed correctly.
-
-.. note::
-   Stateful MCP servers that assume sequential usage may behave
-   unexpectedly in a parallel swarm.  TODO: add a ``stateful`` flag
-   that forces per-agent connections.
+Each connection owns its transport lifecycle in an isolated
+``asyncio.Task``, so transport crashes are contained and cannot
+reach the box's main loop.  Failed calls are retried with
+exponential backoff before reporting errors to the agent.
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
 import re
 from contextlib import AsyncExitStack
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -197,20 +196,504 @@ class HiveTokenStorage:
         data["client_info"] = client_info.model_dump()
         self._write(data)
 
+# ---------------------------------------------------------------------------
+# Refreshable OAuth auth for httpx
+# ---------------------------------------------------------------------------
+
+GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
+
+
+import httpx
+
+
+class _RefreshableOAuthAuth(httpx.Auth):
+    """``httpx.Auth`` handler with transparent refresh-token support.
+
+    On each request:
+
+    1. Attach the stored ``access_token`` as a Bearer header.
+    2. If the server responds with 401, exchange the ``refresh_token``
+       for a new ``access_token`` via Google's token endpoint and retry.
+    3. Persist the updated tokens so the next startup has a fresh token.
+
+    This replaces the MCP SDK's ``OAuthClientProvider`` which requires
+    an interactive browser flow for re-auth — unsuitable for the
+    headless box.
+    """
+
+    def __init__(
+        self,
+        storage: HiveTokenStorage,
+        client_id: str,
+        client_secret: str,
+    ) -> None:
+        self._storage = storage
+        self._client_id = client_id
+        self._client_secret = client_secret
+        self._access_token: str | None = None
+        self._refresh_token: str | None = None
+        self._loaded = False
+
+    async def _load_tokens(self) -> None:
+        """Load tokens from storage on first use."""
+        if self._loaded:
+            return
+        tokens = await self._storage.get_tokens()
+        if tokens:
+            self._access_token = getattr(tokens, "access_token", None)
+            self._refresh_token = getattr(tokens, "refresh_token", None)
+        self._loaded = True
+
+    async def _refresh(self) -> bool:
+        """Exchange the refresh token for a new access token.
+
+        Returns True if the refresh succeeded.
+        """
+        import httpx
+
+        if not self._refresh_token:
+            logger.warning("No refresh token available — cannot refresh")
+            return False
+
+        logger.info("Refreshing OAuth access token")
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    GOOGLE_TOKEN_ENDPOINT,
+                    data={
+                        "grant_type": "refresh_token",
+                        "refresh_token": self._refresh_token,
+                        "client_id": self._client_id,
+                        "client_secret": self._client_secret,
+                    },
+                )
+            if response.status_code != 200:
+                logger.warning(
+                    "Token refresh failed (%d): %s",
+                    response.status_code, response.text,
+                )
+                return False
+
+            token_data = response.json()
+            self._access_token = token_data.get("access_token")
+
+            # Persist updated tokens (preserve refresh_token if not
+            # returned — Google only sends it on initial consent).
+            from mcp.shared.auth import OAuthToken
+
+            updated = OAuthToken(
+                access_token=self._access_token or "",
+                token_type=token_data.get("token_type", "Bearer"),
+                expires_in=token_data.get("expires_in"),
+                refresh_token=(
+                    token_data.get("refresh_token") or self._refresh_token
+                ),
+                scope=token_data.get("scope"),
+            )
+            await self._storage.set_tokens(updated)
+            logger.info("OAuth access token refreshed successfully")
+            return True
+
+        except Exception as exc:
+            logger.warning("Token refresh error: %s", exc)
+            return False
+
+    # -- httpx.Auth protocol -------------------------------------------
+
+    requires_response_body = False
+
+    async def async_auth_flow(
+        self, request: Any,
+    ) -> Any:  # AsyncGenerator[Request, Response]
+        """httpx auth flow: attach token, refresh on 401."""
+        import httpx
+
+        await self._load_tokens()
+
+        if self._access_token:
+            request.headers["Authorization"] = (
+                f"Bearer {self._access_token}"
+            )
+        response = yield request
+
+        if response.status_code == 401 and await self._refresh():
+            request.headers["Authorization"] = (
+                f"Bearer {self._access_token}"
+            )
+            yield request
+
 
 # ---------------------------------------------------------------------------
-# MCP connection
+# MCP connection — lifecycle owner with lazy connect and auto-reconnect
 # ---------------------------------------------------------------------------
 
 
-@dataclass
 class MCPConnection:
-    """A live connection to a single MCP server."""
+    """A resilient connection to a single MCP server.
 
-    name: str
-    description: str
-    tools: list[dict[str, Any]]
-    session: Any  # mcp.ClientSession
+    Owns its transport lifecycle independently.  Connects lazily on
+    first tool call, retries with exponential backoff on failure, and
+    auto-reconnects when the transport dies.
+
+    The transport context runs in an isolated ``asyncio.Task`` so its
+    anyio cancel scope can never reach the box's main loop or other
+    connections.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        config: dict[str, Any],
+        hive_dir: Path | None = None,
+    ) -> None:
+        self.name = name
+        self.description = description
+        self.config = config
+        self.hive_dir = hive_dir
+        self.tools: list[dict[str, Any]] = []
+
+        self._session: Any = None
+        self._lifecycle_task: asyncio.Task | None = None
+        self._ready = asyncio.Event()
+        self._dead = asyncio.Event()
+        self._shutdown = asyncio.Event()
+        self._lock = asyncio.Lock()
+
+    @property
+    def connected(self) -> bool:
+        return self._session is not None and self._ready.is_set()
+
+    # -- tool discovery (brief connect at startup) -------------------------
+
+    async def discover_tools(self) -> None:
+        """Connect briefly to discover tools, then disconnect.
+
+        Called once at startup.  Failures are logged and the server
+        is skipped (no tools registered).
+        """
+        stack = AsyncExitStack()
+        try:
+            session = await self._enter_transport(stack)
+            if session is None:
+                return
+            tools_result = await session.list_tools()
+            seen: set[str] = set()
+            for t in tools_result.tools:
+                if t.name in seen:
+                    continue
+                seen.add(t.name)
+                self.tools.append({
+                    "name": t.name,
+                    "description": getattr(t, "description", ""),
+                    "inputSchema": (
+                        t.inputSchema if hasattr(t, "inputSchema")
+                        else {}
+                    ),
+                })
+            if len(seen) < len(tools_result.tools):
+                logger.warning(
+                    "MCP server '%s' returned duplicate tools — "
+                    "deduplicated %d → %d",
+                    self.name, len(tools_result.tools), len(seen),
+                )
+            tool_names = [t["name"] for t in self.tools]
+            logger.info(
+                "MCP server '%s' discovered: %d tools (%s)",
+                self.name, len(self.tools),
+                ", ".join(tool_names[:10]),
+            )
+        except Exception as exc:
+            logger.warning(
+                "MCP server '%s' tool discovery failed: %s — skipping",
+                self.name, exc,
+            )
+        finally:
+            try:
+                await asyncio.wait_for(stack.aclose(), timeout=5.0)
+            except (TimeoutError, asyncio.TimeoutError, BaseException):
+                pass
+
+    # -- lazy connection ---------------------------------------------------
+
+    async def connect(self) -> None:
+        """Establish a long-lived connection in an isolated task."""
+        async with self._lock:
+            if self.connected:
+                return
+            self._shutdown.clear()
+            self._ready.clear()
+            self._dead.clear()
+            self._lifecycle_task = asyncio.create_task(
+                self._lifecycle(), name=f"mcp-{self.name}",
+            )
+            try:
+                await asyncio.wait_for(self._ready.wait(), timeout=30.0)
+            except (TimeoutError, asyncio.TimeoutError):
+                logger.warning(
+                    "MCP server '%s' connection timed out", self.name,
+                )
+                await self.disconnect()
+
+    async def disconnect(self) -> None:
+        """Shut down the connection."""
+        self._shutdown.set()
+        if self._lifecycle_task and not self._lifecycle_task.done():
+            self._lifecycle_task.cancel()
+            try:
+                await self._lifecycle_task
+            except (asyncio.CancelledError, BaseException):
+                pass
+        self._lifecycle_task = None
+        self._session = None
+        self._ready.clear()
+
+    async def _lifecycle(self) -> None:
+        """Run the transport context in an isolated task.
+
+        The anyio cancel scope from ``streamable_http_client`` is
+        contained to this task.  If the transport crashes, only this
+        task is affected.
+        """
+        stack = AsyncExitStack()
+        try:
+            session = await self._enter_transport(stack)
+            if session is None:
+                return
+            self._session = session
+            self._ready.set()
+            logger.info("MCP server '%s' connected", self.name)
+            # Block until shutdown is requested.
+            await self._shutdown.wait()
+        except asyncio.CancelledError:
+            pass
+        except Exception as exc:
+            logger.warning(
+                "MCP server '%s' transport crashed: %s", self.name, exc,
+            )
+        finally:
+            self._session = None
+            self._ready.clear()
+            self._dead.set()
+            try:
+                await asyncio.wait_for(stack.aclose(), timeout=5.0)
+            except (TimeoutError, asyncio.TimeoutError, BaseException):
+                pass
+
+    async def _enter_transport(self, stack: AsyncExitStack) -> Any:
+        """Enter the appropriate transport context and return a session.
+
+        Handles stdio, HTTP, and OAuth HTTP based on config.
+        """
+        from mcp import ClientSession
+
+        has_oauth = bool(self.config.get("oauth"))
+        has_url = bool(self.config.get("url"))
+
+        if has_oauth:
+            return await self._enter_oauth_transport(stack)
+        elif has_url:
+            return await self._enter_http_transport(stack)
+        else:
+            return await self._enter_stdio_transport(stack)
+
+    async def _enter_stdio_transport(self, stack: AsyncExitStack) -> Any:
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+
+        command = self.config["command"]
+        parts = command.split()
+        env = _expand_env_values(self.config.get("env"))
+        server_params = StdioServerParameters(
+            command=parts[0],
+            args=parts[1:] if len(parts) > 1 else [],
+            env=env,
+        )
+        transport = await stack.enter_async_context(
+            stdio_client(server_params),
+        )
+        read_stream, write_stream = transport
+        session = await stack.enter_async_context(
+            ClientSession(read_stream, write_stream),
+        )
+        await session.initialize()
+        return session
+
+    async def _enter_http_transport(self, stack: AsyncExitStack) -> Any:
+        import httpx
+        from mcp import ClientSession
+        from mcp.client.streamable_http import streamable_http_client
+
+        url = self.config["url"]
+        headers = _expand_env_values(self.config.get("headers"))
+        http_client = (
+            httpx.AsyncClient(headers=headers) if headers else None
+        )
+        transport = await stack.enter_async_context(
+            streamable_http_client(url=url, http_client=http_client),
+        )
+        read_stream, write_stream, _ = transport
+        session = await stack.enter_async_context(
+            ClientSession(read_stream, write_stream),
+        )
+        await session.initialize()
+        return session
+
+    async def _enter_oauth_transport(self, stack: AsyncExitStack) -> Any:
+        import httpx
+        from mcp import ClientSession
+        from mcp.client.streamable_http import streamable_http_client
+
+        url = self.config["url"]
+        oauth_config = _parse_oauth_config(self.config.get("oauth"))
+        if not oauth_config:
+            logger.warning(
+                "MCP server '%s' has empty oauth config", self.name,
+            )
+            return None
+
+        expanded = _expand_env_values({
+            "client_id": oauth_config.client_id,
+            "client_secret": oauth_config.client_secret,
+        })
+        assert expanded is not None
+        client_id = expanded["client_id"]
+        client_secret = expanded["client_secret"]
+
+        if not client_id:
+            logger.warning(
+                "MCP server '%s': OAuth client_id is empty", self.name,
+            )
+            return None
+
+        assert self.hive_dir is not None
+        storage = HiveTokenStorage(self.hive_dir, self.name)
+        existing_tokens = await storage.get_tokens()
+        if not existing_tokens:
+            logger.warning(
+                "MCP server '%s' requires OAuth but no tokens found. "
+                "Authenticate via hivetool.",
+                self.name,
+            )
+            return None
+
+        auth = _RefreshableOAuthAuth(
+            storage=storage,
+            client_id=client_id,
+            client_secret=client_secret,
+        )
+        http_client = httpx.AsyncClient(auth=auth)
+        transport = await stack.enter_async_context(
+            streamable_http_client(url=url, http_client=http_client),
+        )
+        read_stream, write_stream, _ = transport
+        session = await stack.enter_async_context(
+            ClientSession(read_stream, write_stream),
+        )
+        await session.initialize()
+        return session
+
+    # -- resilient tool calls ----------------------------------------------
+
+    async def call_tool(
+        self,
+        tool_name: str,
+        args: dict[str, Any],
+        *,
+        retries: int = 2,
+        backoff: float = 1.0,
+    ) -> Any:
+        """Call a tool with automatic retry and reconnect.
+
+        On transient failure: disconnect, wait with exponential backoff,
+        reconnect, retry.  On permanent failure (HTTP 4xx): fail
+        immediately.  After exhausting retries, raise.
+
+        The call is raced against a "transport died" event so that
+        transport crashes (e.g. HTTP 403 killing the anyio TaskGroup)
+        are detected instantly instead of hanging forever.
+        """
+        for attempt in range(retries + 1):
+            if not self.connected:
+                await self.connect()
+            if not self.connected:
+                raise ConnectionError(
+                    f"MCP server '{self.name}' could not connect"
+                )
+            try:
+                return await self._race_call_vs_death(
+                    self._session.call_tool(tool_name, arguments=args),
+                )
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                logger.warning(
+                    "MCP call %s on '%s' failed (attempt %d/%d): %s",
+                    tool_name, self.name, attempt + 1, retries + 1, exc,
+                )
+                # Don't retry permanent failures (4xx HTTP errors).
+                if _is_permanent_failure(exc):
+                    raise
+                try:
+                    await self.disconnect()
+                except BaseException:
+                    pass
+                if attempt < retries:
+                    wait = backoff * (2 ** attempt)
+                    logger.info(
+                        "Retrying %s on '%s' in %.1fs",
+                        tool_name, self.name, wait,
+                    )
+                    await asyncio.sleep(wait)
+                else:
+                    raise
+
+    async def _race_call_vs_death(self, coro: Any) -> Any:
+        """Race a coroutine against transport death.
+
+        If the transport dies (lifecycle task exits), the ``_dead``
+        event fires and we raise ``ConnectionError`` immediately
+        instead of hanging on a response that will never arrive.
+        """
+        call_task = asyncio.ensure_future(coro)
+        death_task = asyncio.ensure_future(self._dead.wait())
+
+        done, pending = await asyncio.wait(
+            [call_task, death_task],
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+
+        for t in pending:
+            t.cancel()
+            try:
+                await t
+            except (asyncio.CancelledError, Exception):
+                pass
+
+        if call_task in done:
+            return call_task.result()
+
+        raise ConnectionError(
+            f"MCP transport for '{self.name}' crashed during call"
+        )
+
+
+def _is_permanent_failure(exc: BaseException) -> bool:
+    """Check if an exception indicates a permanent, non-retryable failure.
+
+    HTTP 4xx errors (except 401, 408, 429) are permanent — the request
+    is wrong and retrying won't help.
+    """
+    # httpx.HTTPStatusError carries the status code.
+    status = getattr(getattr(exc, "response", None), "status_code", None)
+    if status is not None and 400 <= status < 500:
+        # 401 (auth), 408 (timeout), 429 (rate limit) are retryable.
+        return status not in (401, 408, 429)
+    # ExceptionGroup may wrap the real error.
+    if isinstance(exc, BaseExceptionGroup):
+        return any(_is_permanent_failure(e) for e in exc.exceptions)
+    return False
+
 
 
 # ---------------------------------------------------------------------------
@@ -238,10 +721,13 @@ def _mcp_tool_to_declaration(
     return decl
 
 
-def _make_proxy_handler(
-    session: Any, tool_name: str, server_name: str,
-):
-    """Create an async handler that proxies a tool call to the MCP server."""
+def _make_proxy_handler(conn: MCPConnection, tool_name: str):
+    """Create an async handler that proxies a tool call via the connection.
+
+    Uses ``conn.call_tool()`` which handles retry, reconnect, and
+    backoff transparently.
+    """
+    server_name = conn.name
 
     async def handler(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
         prefixed = f"{server_name}_{tool_name}"
@@ -249,7 +735,7 @@ def _make_proxy_handler(
             status_cb(f"Calling {prefixed}")
 
         try:
-            result = await session.call_tool(tool_name, arguments=args)
+            result = await conn.call_tool(tool_name, args)
         except Exception as exc:
             logger.error(
                 "MCP tool call failed: %s on %s: %s",
@@ -257,7 +743,12 @@ def _make_proxy_handler(
             )
             if status_cb:
                 status_cb(None, None)
-            return {"error": f"MCP tool call failed: {exc}"}
+            return {
+                "error": (
+                    f"MCP server '{server_name}' unavailable "
+                    f"after retries: {exc}"
+                ),
+            }
 
         if status_cb:
             status_cb(None, None)
@@ -284,7 +775,7 @@ def _make_proxy_handler(
 
 
 def _build_function_group(conn: MCPConnection) -> FunctionGroup:
-    """Build a FunctionGroup from a live MCP connection."""
+    """Build a FunctionGroup from an MCP connection's cached tools."""
     definitions: list[FunctionDefinition] = []
     declarations: list[dict[str, Any]] = []
 
@@ -295,9 +786,7 @@ def _build_function_group(conn: MCPConnection) -> FunctionGroup:
         func_def = FunctionDefinition(
             name=decl["name"],
             description=decl.get("description", ""),
-            handler=_make_proxy_handler(
-                conn.session, tool["name"], conn.name,
-            ),
+            handler=_make_proxy_handler(conn, tool["name"]),
             parameters_json_schema=decl.get("parametersJsonSchema"),
         )
         definitions.append(func_def)
@@ -333,55 +822,78 @@ def _mcp_function_group_factory(conn: MCPConnection) -> FunctionGroupFactory:
 
 
 # ---------------------------------------------------------------------------
-# Registry
+# Registry — thin coordinator
 # ---------------------------------------------------------------------------
 
 
 class MCPRegistry:
     """Manages the lifecycle of all registered MCP server connections.
 
+    Each connection owns its own transport lifecycle independently.
+    The registry validates configs, creates connections, and coordinates
+    discovery and shutdown.
+
     Usage::
 
         registry = MCPRegistry()
-        await registry.connect_all(configs)  # at startup
-        factories = registry.get_factories()  # per session
-        await registry.disconnect_all()       # at shutdown
+        await registry.discover_all(configs)   # at startup (brief connect)
+        factories = registry.get_factories()   # per session
+        await registry.disconnect_all()        # at shutdown
     """
 
     def __init__(self) -> None:
         self._connections: list[MCPConnection] = []
         self._factories: list[FunctionGroupFactory] = []
-        self._exit_stack = AsyncExitStack()
 
-    async def connect_all(
+    async def discover_all(
         self,
         configs: list[dict[str, Any]],
         *,
         hive_dir: Path | None = None,
     ) -> None:
-        """Connect to all MCP servers described in the config list.
+        """Discover tools from all MCP servers.
 
-        Each config dict has:
-        - ``name``: server name (becomes the function group name)
-        - ``description``: optional system instruction fragment
-        - ``command``: shell command for stdio transport
-        - ``url``: URL for Streamable HTTP transport
-        - ``headers``: optional HTTP headers (values support ``${ENV_VAR}``)
-        - ``env``: optional environment variables for stdio (values support
-          ``${ENV_VAR}``)
-        - ``oauth``: optional OAuth 2.0 configuration (mutually exclusive
-          with ``headers``)
-
-        Exactly one of ``command`` or ``url`` must be provided.
-        Raises on connection failure (fail-fast at startup), except for
-        OAuth servers with missing tokens which are skipped gracefully.
+        Connects briefly to each server, calls ``list_tools()``,
+        caches the declarations, then disconnects.  No long-lived
+        transports are left open.
 
         Args:
             configs: List of MCP server configurations.
             hive_dir: Path to the hive directory. Required when any
                 server uses OAuth (for token storage).
         """
-        # Validate all configs before connecting.
+        self._validate_configs(configs, hive_dir=hive_dir)
+
+        for config in configs:
+            name = config["name"]
+            conn = MCPConnection(
+                name=name,
+                description=config.get("description", ""),
+                config=config,
+                hive_dir=hive_dir,
+            )
+            await conn.discover_tools()
+            if conn.tools:
+                self._connections.append(conn)
+                self._factories.append(_mcp_function_group_factory(conn))
+
+    # Keep connect_all as alias for backward compatibility.
+    async def connect_all(
+        self,
+        configs: list[dict[str, Any]],
+        *,
+        hive_dir: Path | None = None,
+    ) -> None:
+        """Alias for ``discover_all()`` (backward compatibility)."""
+        await self.discover_all(configs, hive_dir=hive_dir)
+
+    def _validate_configs(
+        self,
+        configs: list[dict[str, Any]],
+        *,
+        hive_dir: Path | None = None,
+    ) -> None:
+        """Validate all configs before creating connections."""
         for config in configs:
             name = config.get("name", "")
             if not name:
@@ -422,245 +934,26 @@ class MCPRegistry:
                     f"was provided for token storage."
                 )
 
-        for config in configs:
-            name = config["name"]
-            has_oauth = bool(config.get("oauth"))
-            has_url = bool(config.get("url"))
-
-            if has_oauth:
-                assert hive_dir is not None
-                await self._connect_http_oauth(config, hive_dir)
-            elif has_url:
-                await self._connect_http(config)
-            else:
-                await self._connect_stdio(config)
-
-    async def _connect_stdio(self, config: dict[str, Any]) -> None:
-        """Connect to an MCP server via stdio transport."""
-        from mcp import ClientSession, StdioServerParameters
-        from mcp.client.stdio import stdio_client
-
-        name = config["name"]
-        command = config["command"]
-
-        # Parse command into executable + args.
-        parts = command.split()
-        env = _expand_env_values(config.get("env"))
-
-        server_params = StdioServerParameters(
-            command=parts[0],
-            args=parts[1:] if len(parts) > 1 else [],
-            env=env,
-        )
-
-        logger.info("Connecting to MCP server '%s' (stdio): %s", name, command)
-
-        transport = await self._exit_stack.enter_async_context(
-            stdio_client(server_params)
-        )
-        read_stream, write_stream = transport
-
-        session = await self._exit_stack.enter_async_context(
-            ClientSession(read_stream, write_stream)
-        )
-        await session.initialize()
-        await self._register_connection(config, session)
-
-    async def _connect_http(self, config: dict[str, Any]) -> None:
-        """Connect to an MCP server via Streamable HTTP transport."""
-        import httpx
-        from mcp import ClientSession
-        from mcp.client.streamable_http import streamable_http_client
-
-        name = config["name"]
-        url = config["url"]
-        headers = _expand_env_values(config.get("headers"))
-
-        logger.info("Connecting to MCP server '%s' (HTTP): %s", name, url)
-
-        # Headers are passed via a custom httpx client.
-        http_client = httpx.AsyncClient(headers=headers) if headers else None
-
-        transport = await self._exit_stack.enter_async_context(
-            streamable_http_client(url=url, http_client=http_client)
-        )
-        read_stream, write_stream, _ = transport
-
-        session = await self._exit_stack.enter_async_context(
-            ClientSession(read_stream, write_stream)
-        )
-        await session.initialize()
-        await self._register_connection(config, session)
-
-    async def _connect_http_oauth(
-        self, config: dict[str, Any], hive_dir: Path,
-    ) -> None:
-        """Connect to an MCP server using OAuth 2.0 authentication.
-
-        Uses the MCP SDK's ``OAuthClientProvider`` as an ``httpx.Auth``
-        handler.  Tokens are stored at ``hive/.mcp-tokens/<name>.json``.
-
-        If tokens don't exist yet, the connection is skipped gracefully
-        with a warning — the user must authenticate via hivetool first.
-        """
-        from mcp import ClientSession
-        from mcp.client.streamable_http import streamable_http_client
-        from mcp.client.auth.oauth2 import OAuthClientProvider
-        from mcp.shared.auth import OAuthClientMetadata
-
-        import httpx
-
-        name = config["name"]
-        url = config["url"]
-        oauth_config = _parse_oauth_config(config.get("oauth"))
-
-        if not oauth_config:
-            logger.warning(
-                "MCP server '%s' has empty oauth config — skipping", name,
-            )
-            return
-
-        # Expand env var references in credentials.
-        expanded = _expand_env_values({
-            "client_id": oauth_config.client_id,
-            "client_secret": oauth_config.client_secret,
-        })
-        assert expanded is not None
-        client_id = expanded["client_id"]
-        client_secret = expanded["client_secret"]
-
-        if not client_id:
-            logger.warning(
-                "MCP server '%s': OAuth client_id is empty after "
-                "env expansion — skipping",
-                name,
-            )
-            return
-
-        storage = HiveTokenStorage(hive_dir, name)
-
-        # Pre-seed client_info so the SDK doesn't attempt dynamic
-        # client registration (Google Workspace doesn't support it).
-        existing_client_info = await storage.get_client_info()
-        if not existing_client_info:
-            from mcp.shared.auth import OAuthClientInformationFull
-
-            client_info = OAuthClientInformationFull(
-                client_id=client_id,
-                client_secret=client_secret,
-                redirect_uris=None,
-            )
-            await storage.set_client_info(client_info)
-
-        # Check if tokens exist.  Without tokens AND without a
-        # redirect/callback handler, the SDK will raise OAuthFlowError
-        # on 401.  Better to skip gracefully now.
-        existing_tokens = await storage.get_tokens()
-        if not existing_tokens:
-            logger.warning(
-                "MCP server '%s' requires OAuth but no tokens found at %s. "
-                "Authenticate via hivetool to connect.",
-                name, storage._path,
-            )
-            return
-
-        scope_str = " ".join(oauth_config.scopes)
-
-        client_metadata = OAuthClientMetadata(
-            client_name=f"bees-{name}",
-            redirect_uris=None,
-            scope=scope_str if scope_str else None,
-        )
-
-        provider = OAuthClientProvider(
-            server_url=url,
-            client_metadata=client_metadata,
-            storage=storage,
-        )
-
-        logger.info(
-            "Connecting to MCP server '%s' (OAuth HTTP): %s", name, url,
-        )
-
-        http_client = httpx.AsyncClient(auth=provider)
-
-        try:
-            transport = await self._exit_stack.enter_async_context(
-                streamable_http_client(url=url, http_client=http_client)
-            )
-            read_stream, write_stream, _ = transport
-
-            session = await self._exit_stack.enter_async_context(
-                ClientSession(read_stream, write_stream)
-            )
-            await session.initialize()
-            await self._register_connection(config, session)
-        except Exception as exc:
-            logger.warning(
-                "MCP server '%s' OAuth connection failed: %s. "
-                "Re-authenticate via hivetool.",
-                name, exc,
-            )
-            # Graceful skip — don't bring down the whole scheduler.
-            return
-
-    async def _register_connection(
-        self, config: dict[str, Any], session: Any,
-    ) -> None:
-        """Discover tools and register the connection."""
-        name = config["name"]
-
-        tools_result = await session.list_tools()
-        tools = [
-            {
-                "name": t.name,
-                "description": getattr(t, "description", ""),
-                "inputSchema": (
-                    t.inputSchema if hasattr(t, "inputSchema")
-                    else {}
-                ),
-            }
-            for t in tools_result.tools
-        ]
-
-        conn = MCPConnection(
-            name=name,
-            description=config.get("description", ""),
-            tools=tools,
-            session=session,
-        )
-        self._connections.append(conn)
-        self._factories.append(_mcp_function_group_factory(conn))
-
-        tool_names = [t["name"] for t in tools]
-        logger.info(
-            "MCP server '%s' connected: %d tools (%s)",
-            name, len(tools), ", ".join(tool_names[:10]),
-        )
-
     def get_factories(self) -> list[FunctionGroupFactory]:
-        """Return function group factories for all connected MCP servers."""
+        """Return function group factories for all discovered MCP servers."""
         return list(self._factories)
 
     async def disconnect_all(self) -> None:
-        """Disconnect from all MCP servers and clean up.
+        """Disconnect all MCP server connections.
 
-        Shielded from cancellation so that a second SIGINT doesn't
-        strand the process in a half-closed state.
+        Delegates to each connection's ``disconnect()`` method.
+        Each connection manages its own transport cleanup.
         """
-        import asyncio
-
-        logger.info("Disconnecting from %d MCP server(s)", len(self._connections))
-        try:
-            await asyncio.wait_for(
-                asyncio.shield(self._exit_stack.aclose()),
-                timeout=5.0,
-            )
-        except (TimeoutError, asyncio.TimeoutError):
-            logger.warning(
-                "MCP disconnect timed out after 5s — forcing shutdown"
-            )
-        except (asyncio.CancelledError, Exception) as exc:
-            logger.warning("MCP disconnect interrupted: %s", exc)
+        logger.info(
+            "Disconnecting from %d MCP server(s)", len(self._connections),
+        )
+        for conn in self._connections:
+            try:
+                await conn.disconnect()
+            except BaseException as exc:
+                logger.warning(
+                    "MCP server '%s' disconnect error: %s", conn.name, exc,
+                )
         self._connections.clear()
         self._factories.clear()
+
