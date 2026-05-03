@@ -70,11 +70,10 @@ Follow these rules strictly.
    `IndexedDB`, or any Web Storage APIs. The iframe environment may not have
    storage access due to origin restrictions. All state lives in React component
    state or is passed via props and the SDK.
-10. **Respect the host theme.** We use a light theme. Do not set
-    `background: black`, `background: #000`, `color: #fff`, or any dark-theme
-    values. All backgrounds must use `var(--cg-color-surface*)` tokens and all
-    text must use `var(--cg-color-on-surface*)` tokens. The tokens will natively
-    map to their light theme variants.
+10. **Respect the host theme.** Use design tokens. Backgrounds must use
+    `var(--cg-color-surface*)` tokens and all text must use
+    `var(--cg-color-on-surface*)` tokens. The tokens will natively map to their
+    theme variants.
 11. **Use `flex-wrap: wrap`** on any flex container with multiple children that
     should stack on narrow screens.
 12. **Use CSS Grid with `auto-fit` / `minmax`** for multi-column layouts:
@@ -220,11 +219,6 @@ next. This means:
 
 - **Don't brand it.** No app names, no splash screens, no taglines. The host
   application provides the chrome and framing. Start with the task UI.
-- **Emit your data.** The last view in your segment MUST call `ark.emit()` to
-  hand collected data back to the orchestrator. Without this, the journey
-  stalls.
-- **Receive context.** Your segment may receive data from prior segments as
-  props. Use it to personalize the experience.
 
 ### File Structure
 
@@ -237,73 +231,6 @@ Each state gets its own component file named after the state:
 - `views/DecisionReport.jsx`
 - `components/*.jsx` — shared sub-components (reusable across views)
 - `styles.css` — shared styles
-
-### Navigation
-
-**Within** the segment, views navigate using `window.opalSDK.navigateTo`. At the
-**boundary** (the segment's final view), use `window.opalSDK.emit` to send data
-back to the orchestrator.
-
-The **SDK** is available as `window.opalSDK`. It has three methods:
-
-```jsx
-// Navigate to another view WITHIN this segment.
-window.opalSDK.navigateTo("select_models", { teamProfile });
-
-// Send data BACK TO THE ORCHESTRATOR (segment boundary).
-// Use on the final view's CTA — this is what connects segments.
-window.opalSDK.emit("journey:result", { decision, comparisonSet });
-
-// Read a file from the shared workspace (async, returns text or null).
-const data = await window.opalSDK.readFile("groceries.json");
-```
-
-**Do not call any other methods on `window.opalSDK`.** There is no
-`onNavigation`, `subscribe`, or event listener API. Navigation state is managed
-internally by your App component (e.g. `useState` + switch statement), not by
-the SDK.
-
-### Data Loading with `readFile`
-
-Use `readFile` to load data files from the shared workspace at runtime instead
-of hardcoding data into your component. Paths are relative to the workspace
-root. You can read files written by any agent in the workspace — for example, a
-menu planner can read files produced by a diet researcher.
-
-```jsx
-import React, { useState, useEffect } from "react";
-
-export default function GroceryList() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    window.opalSDK.readFile("groceries.json").then((text) => {
-      if (text) {
-        setItems(JSON.parse(text));
-      }
-      setLoading(false);
-    });
-  }, []);
-
-  if (loading) return <div>Loading…</div>;
-  return (
-    <ul>
-      {items.map((item, i) => (
-        <li key={i}>{item}</li>
-      ))}
-    </ul>
-  );
-}
-```
-
-**Rules for `readFile`:**
-
-- Returns `Promise<string | null>`. `null` means the file was not found.
-- Paths are workspace-relative (e.g. `"analysis/results.json"`,
-  `"diet_research/notes.md"`).
-- Always handle the `null` case gracefully — the file may not exist yet.
-- Show a loading state while data is being fetched.
 
 ### View Contract
 
@@ -333,10 +260,7 @@ export default function SelectModels({ data = {}, onTransition }) {
    across multiple views should be extracted.
 4. **Context flows forward.** Each transition carries the data the next view
    needs. Views may also use `readFile` to load shared workspace data.
-5. **Final view emits.** The last view must include a CTA that calls
-   `window.opalSDK.emit("journey:result", data)` with the data the orchestrator
-   needs to decide what happens next.
-6. **Responsive.** The user may view this UI on a mobile device, so ensure that
+5. **Responsive.** The user may view this UI on a mobile device, so ensure that
    you make every component and the app itself responsive.
 
 ## Available Globals

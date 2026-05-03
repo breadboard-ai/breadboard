@@ -100,7 +100,7 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
   accessor flashTicketId: string | null = null;
 
   @state() accessor activePane: PaneTab = "detail";
-  @state() accessor hasSurface = false;
+  @state() accessor hasSurfaceManifest = false;
 
   /**
    * Track the ticket ID for which we last probed,
@@ -116,12 +116,21 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
         Select a ticket to view details
       </div>`;
 
-    // Probe for surface on ticket change.
+    // Probe for surface.json on ticket change (async, once per ticket).
     if (this.#probedFor !== ticket.id) {
       this.#probedFor = ticket.id;
-      this.hasSurface = false;
+      this.hasSurfaceManifest = false;
       this.activePane = "detail";
       this.probeSurface(ticket.id);
+    }
+
+    // Chat content is signal-derived — check reactively every render.
+    const chatActive = hasChatContent(ticket);
+    const showSurface = this.hasSurfaceManifest || chatActive;
+
+    // Auto-switch to Surface tab when content first appears.
+    if (showSurface && this.activePane === "detail" && !this.hasSurfaceManifest) {
+      this.activePane = "surface";
     }
 
     const suspendFn =
@@ -260,7 +269,7 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
             `
           : nothing}
 
-        ${this.hasSurface
+        ${showSurface
           ? html`
               <div class="pane-tabs">
                 <div
@@ -366,14 +375,13 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
     if (!this.ticketStore) return;
 
     const surface = await this.ticketStore.readSurface(ticketId);
-    const ticket = this.ticketStore.selectedTicket.get();
-    const chatActive = !!ticket && hasChatContent(ticket);
-    const showSurface = surface !== null || chatActive;
 
     // Only apply if we're still looking at the same ticket.
     if (this.#probedFor === ticketId) {
-      this.hasSurface = showSurface;
-      this.activePane = showSurface ? "surface" : "detail";
+      this.hasSurfaceManifest = surface !== null;
+      if (surface !== null) {
+        this.activePane = "surface";
+      }
     }
   }
 

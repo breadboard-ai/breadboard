@@ -82,7 +82,7 @@ class BeesLogDetail extends LitElement {
             class="link-chip"
             @click=${() => this.#dispatchNavigate("ticket", d.sessionId)}
           >
-            <span class="link-chip-label">ticket</span>
+            <span class="link-chip-label">task</span>
             ${d.sessionId.slice(0, 8)}
           </span>
           ${d.segments.length > 1

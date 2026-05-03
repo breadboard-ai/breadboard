@@ -46,7 +46,7 @@ class BeesBundleFrame extends LitElement {
         border: 1px solid #1e293b;
         border-radius: 8px;
         overflow: hidden;
-        background: #ffffff;
+        background: #0f1115;
       }
 
       iframe {
@@ -109,6 +109,10 @@ class BeesBundleFrame extends LitElement {
   #bridge: MessageBridge | null = null;
   #wired = false;
 
+  /** Track the code that was last sent to the iframe. */
+  #renderedCode: string | null = null;
+  #renderedCss: string | null = null;
+
   render() {
     if (!this.iframeBlobUrl || !this.code) {
       return html`<div class="loading">Preparing bundle…</div>`;
@@ -133,36 +137,49 @@ class BeesBundleFrame extends LitElement {
   /**
    * Wire the bridge as soon as the iframe element exists in the shadow DOM,
    * BEFORE setting its src. This ensures we catch the "ready" message.
+   *
+   * After the initial wire-up, detect code/CSS changes and re-send
+   * the render message to the existing iframe.
    */
   protected updated(): void {
-    if (this.#wired) return;
     if (!this.iframeBlobUrl || !this.code) return;
 
-    const iframe = this.renderRoot.querySelector("iframe");
-    if (!iframe) return;
+    if (!this.#wired) {
+      const iframe = this.renderRoot.querySelector("iframe");
+      if (!iframe) return;
 
-    this.#wired = true;
+      this.#wired = true;
 
-    // Set up the bridge first — it listens for "ready" via window message.
-    const bridge = new MessageBridge(iframe);
-    this.#bridge = bridge;
+      // Set up the bridge first — it listens for "ready" via window message.
+      const bridge = new MessageBridge(iframe);
+      this.#bridge = bridge;
 
-    bridge.onMessage((msg: IframeMessage) => {
-      switch (msg.type) {
-        case "sdk.call":
-          this.#handleSdkCall(msg.requestId, msg.method, msg.args);
-          break;
-        case "error":
-          this.error = msg.message + (msg.stack ? "\n\n" + msg.stack : "");
-          break;
-      }
-    });
+      bridge.onMessage((msg: IframeMessage) => {
+        switch (msg.type) {
+          case "sdk.call":
+            this.#handleSdkCall(msg.requestId, msg.method, msg.args);
+            break;
+          case "error":
+            this.error = msg.message + (msg.stack ? "\n\n" + msg.stack : "");
+            break;
+        }
+      });
 
-    // NOW set the src — the bridge listener is already in place.
-    iframe.src = this.iframeBlobUrl;
+      // NOW set the src — the bridge listener is already in place.
+      iframe.src = this.iframeBlobUrl;
 
-    // Send render once bridge is ready (iframe signals "ready").
-    this.#sendRender(bridge);
+      // Send render once bridge is ready (iframe signals "ready").
+      this.#sendRender(bridge);
+      return;
+    }
+
+    // Bridge already wired — re-send render if code or CSS changed.
+    if (
+      this.#bridge &&
+      (this.code !== this.#renderedCode || this.bundleCss !== this.#renderedCss)
+    ) {
+      this.#sendRender(this.#bridge);
+    }
   }
 
   disconnectedCallback(): void {
@@ -180,6 +197,8 @@ class BeesBundleFrame extends LitElement {
       props: {},
     });
 
+    this.#renderedCode = this.code;
+    this.#renderedCss = this.bundleCss;
     this.loading = false;
     this.error = null;
   }
@@ -226,6 +245,8 @@ class BeesBundleFrame extends LitElement {
     this.#bridge?.dispose();
     this.#bridge = null;
     this.#wired = false;
+    this.#renderedCode = null;
+    this.#renderedCss = null;
   }
 }
 

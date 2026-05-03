@@ -72,7 +72,7 @@ class TicketStore {
     if (this.#activated) return;
     if (this.access.accessState.get() !== "ready") return;
 
-    const ticketsHandle = await this.access.getSubdirectory("tickets");
+    const ticketsHandle = await this.access.getSubdirectory("tickets", { create: true });
     if (!ticketsHandle) {
       console.warn("Could not find tickets/ subdirectory in hive/");
       return;
