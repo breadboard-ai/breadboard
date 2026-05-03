@@ -320,6 +320,18 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
 
     const ACTIVE = new Set(["running", "available", "suspended", "blocked"]);
 
+    const deleteBtn = html`
+      <button
+        style="padding:3px 10px;font-size:0.65rem;font-weight:600;
+               background:transparent;color:#64748b;border:1px solid #334155;
+               border-radius:4px;cursor:pointer;font-family:inherit;
+               transition:all 0.15s"
+        @click=${() => this.handleDeleteTask(taskId)}
+      >
+        🗑 Delete
+      </button>
+    `;
+
     if (ACTIVE.has(status)) {
       return html`
         <button
@@ -331,6 +343,7 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
         >
           ⏸ Pause
         </button>
+        ${deleteBtn}
       `;
     }
 
@@ -345,10 +358,11 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
         >
           ▶ Resume
         </button>
+        ${deleteBtn}
       `;
     }
 
-    return nothing;
+    return deleteBtn;
   }
 
   private async handlePauseTask(taskId: string) {
@@ -366,6 +380,24 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
       await this.mutationClient.resumeTask(taskId);
     } catch (e) {
       console.error("Failed to resume task:", e);
+    }
+  }
+
+  private async handleDeleteTask(taskId: string) {
+    if (!this.mutationClient) return;
+
+    const confirmed = confirm(
+      "Delete this task and all its children? This removes the task, " +
+      "its session logs, and all descendant tasks."
+    );
+    if (!confirmed) return;
+
+    try {
+      await this.mutationClient.deleteTask(taskId);
+      // Deselect the ticket — it no longer exists.
+      this.ticketStore?.selectTicket(null);
+    } catch (e) {
+      console.error("Failed to delete task:", e);
     }
   }
 

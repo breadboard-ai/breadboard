@@ -34,6 +34,8 @@ Supported mutation types:
   to their pre-pause status.
 - **pause-task** (hot) — Pauses a single task by ID.
 - **resume-task** (hot) — Resumes a single paused task by ID.
+- **delete-task** (hot) — Deletes a task and all its descendants,
+  including ticket directories and session logs.
 """
 
 from __future__ import annotations
@@ -286,6 +288,8 @@ class MutationManager:
                     extra = self._handle_pause_task(mutation)
                 case "resume-task":
                     extra = self._handle_resume_task(mutation)
+                case "delete-task":
+                    extra = self._handle_delete_task(mutation)
                 case _:
                     self._write_result(
                         mutation.result_path,
@@ -525,6 +529,65 @@ class MutationManager:
             )
 
         return {"resumed": resumed}
+
+    def _handle_delete_task(self, mutation: PendingMutation) -> dict[str, Any]:
+        """Delete a task and all its descendants.
+
+        Delegates to ``Bees.delete_task()`` when available (cancels
+        in-flight asyncio tasks, marks deleted IDs so post-completion
+        cleanup is skipped).  Falls back to filesystem-only deletion
+        via ``TaskStore`` at startup.
+        """
+        task_id = mutation.data.get("task_id")
+        if not task_id:
+            raise ValueError("delete-task mutation missing 'task_id'")
+
+        if self._bees:
+            deleted = self._bees.delete_task(task_id)
+        else:
+            deleted = self._delete_task_filesystem(task_id)
+
+        logger.info(
+            "Deleted %d task(s): %s",
+            len(deleted),
+            ", ".join(tid[:8] for tid in deleted),
+        )
+        return {"deleted": deleted}
+
+    def _delete_task_filesystem(self, task_id: str) -> list[str]:
+        """Delete a task tree using only filesystem operations.
+
+        Used at startup when no Bees instance is running.
+        """
+        store = TaskStore(self._hive_dir)
+        deleted: list[str] = []
+        self._delete_fs_recursive(task_id, store, deleted)
+        return deleted
+
+    def _delete_fs_recursive(
+        self, task_id: str, store: TaskStore, deleted: list[str],
+    ) -> None:
+        """Recursively delete a task and its children from disk."""
+        # Recurse into children first.
+        children = store.get_children(task_id)
+        for child in children:
+            self._delete_fs_recursive(child.id, store, deleted)
+
+        # Remove ticket directory.
+        ticket_dir = store.tickets_dir / task_id
+        if ticket_dir.exists():
+            shutil.rmtree(ticket_dir)
+
+        # Remove matching session logs.
+        logs_dir = self._hive_dir / "logs"
+        if logs_dir.exists():
+            prefix = f"bees-{task_id[:8]}-"
+            for log_file in logs_dir.iterdir():
+                if log_file.name.startswith(prefix):
+                    log_file.unlink(missing_ok=True)
+
+        deleted.append(task_id)
+        logger.info("Deleted task %s", task_id[:8])
 
     # -- Utilities ---------------------------------------------------------
 

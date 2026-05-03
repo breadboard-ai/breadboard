@@ -174,6 +174,18 @@ class MutationClient {
     return this.#writeMutation({ type: "resume-task", task_id: taskId });
   }
 
+  /**
+   * Delete a task and all its descendants.
+   *
+   * Hot mutation: the box cancels in-flight work, removes ticket
+   * directories and session logs, and ensures that any LLM calls
+   * or tool invocations completing after deletion are silently
+   * discarded.
+   */
+  async deleteTask(taskId: string): Promise<string> {
+    return this.#writeMutation({ type: "delete-task", task_id: taskId });
+  }
+
   // -- internal -----------------------------------------------------------
 
   async #writeMutation(data: Record<string, unknown>): Promise<string> {

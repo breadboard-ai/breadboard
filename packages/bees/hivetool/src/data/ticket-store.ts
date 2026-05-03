@@ -125,7 +125,7 @@ class TicketStore {
     await this.#detectLiveSessions(entries);
   }
 
-  selectTicket(id: string): void {
+  selectTicket(id: string | null): void {
     this.selectedTicketId.set(id);
   }
 
