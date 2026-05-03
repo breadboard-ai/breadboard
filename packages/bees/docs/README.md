@@ -27,6 +27,12 @@
   identity, root template, and MCP server registration (transports, env var
   expansion, runtime behavior).
 
+## Guides
+
+- [oauth-setup.md](oauth-setup.md) — Step-by-step: create a Google OAuth
+  client, configure credentials, authenticate in hivetool, and connect
+  Google Workspace MCP servers (Gmail, Drive, Calendar, etc.).
+
 ## Tooling
 
 - [box.md](box.md) — The filesystem-driven orchestrator. Watches the hive for

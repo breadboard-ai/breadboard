@@ -948,6 +948,7 @@ class BeesApp extends SignalWatcher(LitElement) {
           .systemStore=${this.systemStore}
           .templateStore=${this.templateStore}
           .mutationClient=${this.mutationClient}
+          .stateAccess=${this.stateAccess}
         ></bees-system-detail>`;
     }
   }

@@ -25,11 +25,13 @@ multiplexed correctly.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import re
 from contextlib import AsyncExitStack
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from bees.protocols.functions import (
@@ -45,6 +47,7 @@ _BUILTIN_GROUP_NAMES = frozenset({
     "system", "chat", "files", "sandbox",
     "events", "tasks", "skills", "generate",
 })
+MCP_TOKENS_DIR = ".mcp-tokens"
 
 
 # ---------------------------------------------------------------------------
@@ -80,6 +83,119 @@ def _expand_env_values(
         key: _ENV_VAR_PATTERN.sub(_replace, val)
         for key, val in mapping.items()
     }
+
+
+# ---------------------------------------------------------------------------
+# OAuth configuration
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class OAuthConfig:
+    """OAuth 2.0 configuration parsed from SYSTEM.yaml.
+
+    Client credentials are always ``${ENV_VAR}`` references, expanded
+    at connect time via ``_expand_env_values``.
+    """
+
+    client_id: str
+    client_secret: str
+    scopes: list[str]
+
+
+def _parse_oauth_config(
+    raw: dict[str, Any] | None,
+) -> OAuthConfig | None:
+    """Parse an ``oauth`` block from an MCP server config entry.
+
+    Returns ``None`` if the block is absent or empty.
+    """
+    if not raw:
+        return None
+    return OAuthConfig(
+        client_id=str(raw.get("client_id", "")),
+        client_secret=str(raw.get("client_secret", "")),
+        scopes=[str(s) for s in raw.get("scopes", [])],
+    )
+
+
+# ---------------------------------------------------------------------------
+# Token storage (filesystem-backed)
+# ---------------------------------------------------------------------------
+
+
+class HiveTokenStorage:
+    """Persist OAuth tokens at ``hive/.mcp-tokens/<server>.json``.
+
+    Implements the MCP SDK's ``TokenStorage`` protocol.  The ``.mcp-tokens``
+    directory sits at the hive root, outside ``config/``, so writes do
+    not trigger cold restarts in the box's file watcher.
+    """
+
+    def __init__(self, hive_dir: Path, server_name: str) -> None:
+        self._dir = hive_dir / MCP_TOKENS_DIR
+        self._path = self._dir / f"{server_name}.json"
+
+    def _read(self) -> dict[str, Any]:
+        """Read the token file, returning an empty dict if missing."""
+        if not self._path.exists():
+            return {}
+        try:
+            return json.loads(self._path.read_text())
+        except (json.JSONDecodeError, OSError) as exc:
+            logger.warning(
+                "Failed to read token file %s: %s", self._path, exc,
+            )
+            return {}
+
+    def _write(self, data: dict[str, Any]) -> None:
+        """Write the token file, creating the directory if needed."""
+        self._dir.mkdir(parents=True, exist_ok=True)
+        self._path.write_text(
+            json.dumps(data, indent=2, default=str) + "\n",
+        )
+
+    # -- TokenStorage protocol -----------------------------------------
+
+    async def get_tokens(self) -> Any:
+        """Get stored OAuth tokens."""
+        from mcp.shared.auth import OAuthToken
+
+        data = self._read()
+        tokens = data.get("tokens")
+        if not tokens:
+            return None
+        try:
+            return OAuthToken(**tokens)
+        except Exception:
+            logger.warning("Invalid token data in %s", self._path)
+            return None
+
+    async def set_tokens(self, tokens: Any) -> None:
+        """Store OAuth tokens."""
+        data = self._read()
+        data["tokens"] = tokens.model_dump()
+        self._write(data)
+
+    async def get_client_info(self) -> Any:
+        """Get stored client information."""
+        from mcp.shared.auth import OAuthClientInformationFull
+
+        data = self._read()
+        client_info = data.get("client_info")
+        if not client_info:
+            return None
+        try:
+            return OAuthClientInformationFull(**client_info)
+        except Exception:
+            logger.warning("Invalid client info in %s", self._path)
+            return None
+
+    async def set_client_info(self, client_info: Any) -> None:
+        """Store client information."""
+        data = self._read()
+        data["client_info"] = client_info.model_dump()
+        self._write(data)
 
 
 # ---------------------------------------------------------------------------
@@ -237,7 +353,12 @@ class MCPRegistry:
         self._factories: list[FunctionGroupFactory] = []
         self._exit_stack = AsyncExitStack()
 
-    async def connect_all(self, configs: list[dict[str, Any]]) -> None:
+    async def connect_all(
+        self,
+        configs: list[dict[str, Any]],
+        *,
+        hive_dir: Path | None = None,
+    ) -> None:
         """Connect to all MCP servers described in the config list.
 
         Each config dict has:
@@ -248,9 +369,17 @@ class MCPRegistry:
         - ``headers``: optional HTTP headers (values support ``${ENV_VAR}``)
         - ``env``: optional environment variables for stdio (values support
           ``${ENV_VAR}``)
+        - ``oauth``: optional OAuth 2.0 configuration (mutually exclusive
+          with ``headers``)
 
         Exactly one of ``command`` or ``url`` must be provided.
-        Raises on connection failure (fail-fast at startup).
+        Raises on connection failure (fail-fast at startup), except for
+        OAuth servers with missing tokens which are skipped gracefully.
+
+        Args:
+            configs: List of MCP server configurations.
+            hive_dir: Path to the hive directory. Required when any
+                server uses OAuth (for token storage).
         """
         # Validate all configs before connecting.
         for config in configs:
@@ -266,17 +395,42 @@ class MCPRegistry:
 
             has_command = bool(config.get("command"))
             has_url = bool(config.get("url"))
+            has_oauth = bool(config.get("oauth"))
+            has_headers = bool(config.get("headers"))
+
             if not has_command and not has_url:
                 raise ValueError(
                     f"MCP server '{name}' requires either 'command' "
                     f"(stdio) or 'url' (HTTP)."
                 )
 
+            if has_oauth and has_headers:
+                raise ValueError(
+                    f"MCP server '{name}' has both 'oauth' and 'headers'. "
+                    f"These are mutually exclusive."
+                )
+
+            if has_oauth and not has_url:
+                raise ValueError(
+                    f"MCP server '{name}' has 'oauth' but no 'url'. "
+                    f"OAuth requires HTTP transport."
+                )
+
+            if has_oauth and not hive_dir:
+                raise ValueError(
+                    f"MCP server '{name}' uses OAuth but no hive_dir "
+                    f"was provided for token storage."
+                )
+
         for config in configs:
             name = config["name"]
-            url = config.get("url")
+            has_oauth = bool(config.get("oauth"))
+            has_url = bool(config.get("url"))
 
-            if url:
+            if has_oauth:
+                assert hive_dir is not None
+                await self._connect_http_oauth(config, hive_dir)
+            elif has_url:
                 await self._connect_http(config)
             else:
                 await self._connect_stdio(config)
@@ -338,6 +492,118 @@ class MCPRegistry:
         await session.initialize()
         await self._register_connection(config, session)
 
+    async def _connect_http_oauth(
+        self, config: dict[str, Any], hive_dir: Path,
+    ) -> None:
+        """Connect to an MCP server using OAuth 2.0 authentication.
+
+        Uses the MCP SDK's ``OAuthClientProvider`` as an ``httpx.Auth``
+        handler.  Tokens are stored at ``hive/.mcp-tokens/<name>.json``.
+
+        If tokens don't exist yet, the connection is skipped gracefully
+        with a warning — the user must authenticate via hivetool first.
+        """
+        from mcp import ClientSession
+        from mcp.client.streamable_http import streamable_http_client
+        from mcp.client.auth.oauth2 import OAuthClientProvider
+        from mcp.shared.auth import OAuthClientMetadata
+
+        import httpx
+
+        name = config["name"]
+        url = config["url"]
+        oauth_config = _parse_oauth_config(config.get("oauth"))
+
+        if not oauth_config:
+            logger.warning(
+                "MCP server '%s' has empty oauth config — skipping", name,
+            )
+            return
+
+        # Expand env var references in credentials.
+        expanded = _expand_env_values({
+            "client_id": oauth_config.client_id,
+            "client_secret": oauth_config.client_secret,
+        })
+        assert expanded is not None
+        client_id = expanded["client_id"]
+        client_secret = expanded["client_secret"]
+
+        if not client_id:
+            logger.warning(
+                "MCP server '%s': OAuth client_id is empty after "
+                "env expansion — skipping",
+                name,
+            )
+            return
+
+        storage = HiveTokenStorage(hive_dir, name)
+
+        # Pre-seed client_info so the SDK doesn't attempt dynamic
+        # client registration (Google Workspace doesn't support it).
+        existing_client_info = await storage.get_client_info()
+        if not existing_client_info:
+            from mcp.shared.auth import OAuthClientInformationFull
+
+            client_info = OAuthClientInformationFull(
+                client_id=client_id,
+                client_secret=client_secret,
+                redirect_uris=None,
+            )
+            await storage.set_client_info(client_info)
+
+        # Check if tokens exist.  Without tokens AND without a
+        # redirect/callback handler, the SDK will raise OAuthFlowError
+        # on 401.  Better to skip gracefully now.
+        existing_tokens = await storage.get_tokens()
+        if not existing_tokens:
+            logger.warning(
+                "MCP server '%s' requires OAuth but no tokens found at %s. "
+                "Authenticate via hivetool to connect.",
+                name, storage._path,
+            )
+            return
+
+        scope_str = " ".join(oauth_config.scopes)
+
+        client_metadata = OAuthClientMetadata(
+            client_name=f"bees-{name}",
+            redirect_uris=None,
+            scope=scope_str if scope_str else None,
+        )
+
+        provider = OAuthClientProvider(
+            server_url=url,
+            client_metadata=client_metadata,
+            storage=storage,
+        )
+
+        logger.info(
+            "Connecting to MCP server '%s' (OAuth HTTP): %s", name, url,
+        )
+
+        http_client = httpx.AsyncClient(auth=provider)
+
+        try:
+            transport = await self._exit_stack.enter_async_context(
+                streamable_http_client(url=url, http_client=http_client)
+            )
+            read_stream, write_stream, _ = transport
+
+            session = await self._exit_stack.enter_async_context(
+                ClientSession(read_stream, write_stream)
+            )
+            await session.initialize()
+            await self._register_connection(config, session)
+        except Exception as exc:
+            logger.warning(
+                "MCP server '%s' OAuth connection failed: %s. "
+                "Re-authenticate via hivetool.",
+                name, exc,
+            )
+            # Graceful skip — don't bring down the whole scheduler.
+            return
+
     async def _register_connection(
         self, config: dict[str, Any], session: Any,
     ) -> None:
@@ -377,8 +643,24 @@ class MCPRegistry:
         return list(self._factories)
 
     async def disconnect_all(self) -> None:
-        """Disconnect from all MCP servers and clean up."""
+        """Disconnect from all MCP servers and clean up.
+
+        Shielded from cancellation so that a second SIGINT doesn't
+        strand the process in a half-closed state.
+        """
+        import asyncio
+
         logger.info("Disconnecting from %d MCP server(s)", len(self._connections))
-        await self._exit_stack.aclose()
+        try:
+            await asyncio.wait_for(
+                asyncio.shield(self._exit_stack.aclose()),
+                timeout=5.0,
+            )
+        except (TimeoutError, asyncio.TimeoutError):
+            logger.warning(
+                "MCP disconnect timed out after 5s — forcing shutdown"
+            )
+        except (asyncio.CancelledError, Exception) as exc:
+            logger.warning("MCP disconnect interrupted: %s", exc)
         self._connections.clear()
         self._factories.clear()

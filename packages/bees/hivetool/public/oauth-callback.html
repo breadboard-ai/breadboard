@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>OAuth Callback</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      text-align: center;
+      padding: 2rem;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      background: #1e293b;
+      max-width: 400px;
+    }
+    h2 { margin: 0 0 0.5rem; }
+    p { color: #94a3b8; margin: 0; }
+    .error { color: #f87171; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2 id="title">Authenticating…</h2>
+    <p id="message">Sending credentials back to hivetool.</p>
+  </div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const state = params.get("state");
+    const error = params.get("error");
+
+    if (error) {
+      document.getElementById("title").textContent = "Authentication Failed";
+      document.getElementById("message").textContent = error;
+      document.getElementById("message").classList.add("error");
+    } else if (code && window.opener) {
+      window.opener.postMessage(
+        { type: "oauth-callback", code, state },
+        window.location.origin
+      );
+      document.getElementById("title").textContent = "Authenticated ✓";
+      document.getElementById("message").textContent =
+        "You can close this window.";
+      // Auto-close after a brief delay so the user sees the success state.
+      setTimeout(() => window.close(), 1500);
+    } else {
+      document.getElementById("title").textContent = "Error";
+      document.getElementById("message").textContent =
+        "No authorization code received. Please try again.";
+      document.getElementById("message").classList.add("error");
+    }
+  </script>
+</body>
+</html>

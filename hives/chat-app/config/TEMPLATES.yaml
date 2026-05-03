@@ -69,3 +69,11 @@
   functions:
     - chat.*
     - generate.text
+
+- name: workspace-test
+  title: Test Workspace MCP
+  description: Tests workspace MCP integration
+  objective: Chat with the user and fulfill their requests with the tools that you have.
+  functions:
+    - chat.*
+    - drive.*

@@ -181,7 +181,9 @@ class Scheduler:
         mcp_configs = config.get("mcp", [])
         if mcp_configs:
             self._mcp_registry = MCPRegistry()
-            await self._mcp_registry.connect_all(mcp_configs)
+            await self._mcp_registry.connect_all(
+                mcp_configs, hive_dir=self.store.hive_dir,
+            )
 
         root_task = await self._boot_root_template(tasks)
         if root_task:

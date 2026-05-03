@@ -17,7 +17,17 @@ import yaml from "js-yaml";
 import type { StateAccess } from "./state-access.js";
 
 export { SystemStore };
-export type { SystemData, MCPServerConfig };
+export type { SystemData, MCPServerConfig, OAuthConfig };
+
+/** OAuth 2.0 configuration for an MCP server. */
+interface OAuthConfig {
+  /** ${ENV_VAR} reference to the OAuth client ID. */
+  client_id: string;
+  /** ${ENV_VAR} reference to the OAuth client secret. */
+  client_secret: string;
+  /** OAuth scopes to request during consent. */
+  scopes: string[];
+}
 
 /** A single MCP server registration in SYSTEM.yaml. */
 interface MCPServerConfig {
@@ -31,6 +41,8 @@ interface MCPServerConfig {
   headers?: Record<string, string>;
   /** Environment variables for stdio (values may contain ${ENV_VAR}). */
   env?: Record<string, string>;
+  /** OAuth 2.0 configuration. Mutually exclusive with headers. */
+  oauth?: OAuthConfig;
 }
 
 /** The shape of SYSTEM.yaml. */
@@ -102,6 +114,23 @@ class SystemStore {
                 )
               )
             : undefined,
+          oauth: entry.oauth && typeof entry.oauth === "object"
+            ? {
+                client_id: String(
+                  (entry.oauth as Record<string, unknown>).client_id ?? ""
+                ),
+                client_secret: String(
+                  (entry.oauth as Record<string, unknown>).client_secret ?? ""
+                ),
+                scopes: Array.isArray(
+                  (entry.oauth as Record<string, unknown>).scopes
+                )
+                  ? ((entry.oauth as Record<string, unknown>).scopes as unknown[]).map(
+                      (s) => String(s)
+                    )
+                  : [],
+              }
+            : undefined,
         })),
       });
     } catch (e) {
@@ -146,6 +175,13 @@ class SystemStore {
         }
         if (server.env && Object.keys(server.env).length > 0) {
           entry.env = server.env;
+        }
+        if (server.oauth) {
+          entry.oauth = {
+            client_id: server.oauth.client_id,
+            client_secret: server.oauth.client_secret,
+            scopes: server.oauth.scopes,
+          };
         }
         return entry;
       });
