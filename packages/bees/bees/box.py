@@ -280,6 +280,13 @@ def main() -> None:
     gemini_key = load_gemini_key()
     hive_dir = load_hive_dir()
 
+    # Load hive-specific .env (e.g. OAuth credentials).
+    # Runs after load_hive_dir so we know where the hive is.
+    hive_env = hive_dir / ".env"
+    if hive_env.is_file():
+        load_dotenv(hive_env, override=True)
+        logger.info("Loaded hive .env from %s", hive_env)
+
     http_client = httpx.AsyncClient(timeout=httpx.Timeout(300.0))
     backend = HttpBackendClient(
         upstream_base="",
@@ -306,8 +313,31 @@ def main() -> None:
         loop.close()
 
 
+_shutdown_time: float = 0
+
+
 def _cancel_all(loop: asyncio.AbstractEventLoop) -> None:
-    """Cancel all running tasks for clean shutdown."""
+    """Cancel all running tasks for clean shutdown.
+
+    npm forwards Ctrl+C as both SIGINT and SIGTERM nearly
+    simultaneously, so we debounce: signals within 1 s of the first
+    are treated as duplicates.  A genuinely separate press (>1 s later)
+    force-exits.
+    """
+    import time
+
+    global _shutdown_time
+    now = time.monotonic()
+
+    if _shutdown_time:
+        if now - _shutdown_time < 1.0:
+            return  # Duplicate from npm — ignore.
+        # Genuine second press — force exit.
+        logger.warning("Force-quitting (second signal)")
+        import os
+        os._exit(1)
+
+    _shutdown_time = now
     for task in asyncio.all_tasks(loop):
         task.cancel()
 

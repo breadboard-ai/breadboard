@@ -22,8 +22,15 @@ import type {
   SystemStore,
   SystemData,
   MCPServerConfig,
+  OAuthConfig,
 } from "../data/system-store.js";
+import type { StateAccess } from "../data/state-access.js";
 import type { TemplateStore } from "../data/template-store.js";
+import {
+  startOAuthFlow,
+  checkTokenStatus,
+  type OAuthFlowResult,
+} from "../data/oauth-flow.js";
 import { sharedStyles } from "./shared-styles.js";
 import "./primitives/editable-field.js";
 import "./primitives/editable-textarea.js";
@@ -161,6 +168,100 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
         font-size: 0.75rem;
         color: #64748b;
         margin-bottom: 4px;
+      }
+
+      .mcp-oauth-badge {
+        font-size: 0.6rem;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: #7c3aed22;
+        color: #a78bfa;
+        border: 1px solid #7c3aed55;
+      }
+
+      .mcp-scopes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 6px;
+      }
+
+      .mcp-scope-chip {
+        font-family: "Google Mono", "Roboto Mono", monospace;
+        font-size: 0.65rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background: #1e293b;
+        color: #94a3b8;
+        border: 1px solid #334155;
+        word-break: break-all;
+      }
+
+      .mcp-auth-ref {
+        font-family: "Google Mono", "Roboto Mono", monospace;
+        font-size: 0.7rem;
+        color: #64748b;
+        margin-top: 4px;
+      }
+
+      .mcp-auth-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .auth-btn {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: 6px;
+        border: 1px solid #7c3aed55;
+        background: #7c3aed22;
+        color: #a78bfa;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .auth-btn:hover {
+        background: #7c3aed44;
+        border-color: #7c3aed88;
+      }
+      .auth-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .token-status {
+        font-size: 0.65rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .token-status.authenticated {
+        background: #16a34a22;
+        color: #4ade80;
+        border: 1px solid #16a34a55;
+      }
+      .token-status.none {
+        background: #eab30822;
+        color: #fbbf24;
+        border: 1px solid #eab30855;
+      }
+      .token-status.pending {
+        background: #3b82f622;
+        color: #60a5fa;
+        border: 1px solid #3b82f655;
+      }
+
+      .auth-error {
+        font-size: 0.7rem;
+        color: #f87171;
+        margin-top: 4px;
       }
 
       .kv-table {
@@ -409,11 +510,17 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor mutationClient: MutationClient | null = null;
 
+  @property({ attribute: false })
+  accessor stateAccess: StateAccess | null = null;
+
   // ── Edit state ──
   @state() accessor editing = false;
   @state() accessor saving = false;
   @state() accessor error: string | null = null;
   @state() accessor draft: SystemData | null = null;
+
+  /** Per-server token status: "authenticated" | "none" | "pending". */
+  @state() accessor tokenStatuses: Record<string, string> = {};
 
   #original: SystemData | null = null;
 
@@ -426,7 +533,37 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
       return this.renderEditMode(this.draft);
     }
 
+    // Refresh token statuses for OAuth servers (async, non-blocking).
+    this.#refreshTokenStatuses(config);
+
     return this.renderViewMode(config);
+  }
+
+  #tokenRefreshPending = false;
+
+  async #refreshTokenStatuses(config: SystemData): Promise<void> {
+    if (this.#tokenRefreshPending) return;
+    const handle = this.stateAccess?.handle;
+    if (!handle) return;
+
+    const oauthServers = config.mcp.filter((s) => s.oauth);
+    if (oauthServers.length === 0) return;
+
+    this.#tokenRefreshPending = true;
+    try {
+      const statuses: Record<string, string> = { ...this.tokenStatuses };
+      let changed = false;
+      for (const server of oauthServers) {
+        const status = await checkTokenStatus(handle, server.name);
+        if (statuses[server.name] !== status) {
+          statuses[server.name] = status;
+          changed = true;
+        }
+      }
+      if (changed) this.tokenStatuses = statuses;
+    } finally {
+      this.#tokenRefreshPending = false;
+    }
   }
 
   // ── View Mode ──
@@ -537,6 +674,9 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
           <span class="mcp-transport ${isHttp ? "http" : "stdio"}">
             ${isHttp ? "HTTP" : "stdio"}
           </span>
+          ${server.oauth
+            ? html`<span class="mcp-oauth-badge">OAuth</span>`
+            : nothing}
         </div>
         ${server.description
           ? html`<div class="mcp-desc">${server.description}</div>`
@@ -544,6 +684,48 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
         ${server.url ? html`<div class="mcp-url">${server.url}</div>` : nothing}
         ${server.command
           ? html`<div class="mcp-command">${server.command}</div>`
+          : nothing}
+        ${server.oauth
+          ? html`
+              <div class="mcp-auth-ref">
+                client: ${server.oauth.client_id}
+              </div>
+              ${server.oauth.scopes.length > 0
+                ? html`
+                    <div class="mcp-scopes">
+                      ${server.oauth.scopes.map(
+                        (scope) => html`
+                          <span class="mcp-scope-chip">${scope}</span>
+                        `
+                      )}
+                    </div>
+                  `
+                : nothing}
+              <div class="mcp-auth-actions">
+                <button
+                  class="auth-btn"
+                  ?disabled=${this.tokenStatuses[server.name] === "pending"}
+                  @click=${() => this.handleAuthenticate(server)}
+                >
+                  ${this.tokenStatuses[server.name] === "pending"
+                    ? "Authenticating…"
+                    : this.tokenStatuses[server.name] === "authenticated"
+                      ? "Re-authenticate"
+                      : "Authenticate"}
+                </button>
+                ${this.tokenStatuses[server.name] === "authenticated"
+                  ? html`<span class="token-status authenticated"
+                      >Connected</span
+                    >`
+                  : this.tokenStatuses[server.name] === "pending"
+                    ? html`<span class="token-status pending"
+                        >Pending</span
+                      >`
+                    : html`<span class="token-status none"
+                        >Not Authenticated</span
+                      >`}
+              </div>
+            `
           : nothing}
         ${kvEntries.length > 0
           ? html`
@@ -662,6 +844,7 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
 
   private renderMCPEditCard(server: MCPServerConfig, index: number) {
     const isHttp = server.command === undefined;
+    const hasOAuth = !!server.oauth;
 
     return html`
       <div class="mcp-edit-card">
@@ -718,6 +901,7 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
                   command: server.command ?? "",
                   url: undefined,
                   headers: undefined,
+                  oauth: undefined,
                 })}
             >
               Local
@@ -737,11 +921,44 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
                     })}
                 ></bees-editable-field>
 
-                ${this.renderKVEditor(
-                  "Headers",
-                  server.headers ?? {},
-                  (headers) => this.updateMCPServer(index, { headers })
-                )}
+                <!-- Auth mode chooser -->
+                <div>
+                  <div class="kv-label">Authentication</div>
+                  <div class="transport-toggle">
+                    <button
+                      class="http ${!hasOAuth ? "active" : ""}"
+                      @click=${() =>
+                        this.updateMCPServer(index, {
+                          oauth: undefined,
+                          headers: server.headers ?? {},
+                        })}
+                    >
+                      Headers
+                    </button>
+                    <button
+                      class="local ${hasOAuth ? "active" : ""}"
+                      @click=${() =>
+                        this.updateMCPServer(index, {
+                          headers: undefined,
+                          oauth: server.oauth ?? {
+                            client_id: "",
+                            client_secret: "",
+                            scopes: [],
+                          },
+                        })}
+                    >
+                      OAuth
+                    </button>
+                  </div>
+                </div>
+
+                ${hasOAuth
+                  ? this.renderOAuthEditor(server.oauth!, index)
+                  : this.renderKVEditor(
+                      "Headers",
+                      server.headers ?? {},
+                      (headers) => this.updateMCPServer(index, { headers })
+                    )}
               `
             : html`
                 <bees-editable-field
@@ -761,6 +978,78 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
                   (env) => this.updateMCPServer(index, { env })
                 )}
               `}
+        </div>
+      </div>
+    `;
+  }
+
+  // ── OAuth Editor ──
+
+  private renderOAuthEditor(oauth: OAuthConfig, serverIndex: number) {
+    return html`
+      <div class="mcp-edit-fields" style="gap: 8px">
+        <div class="mcp-edit-row">
+          <bees-editable-field
+            label="Client ID (env var)"
+            .value=${oauth.client_id}
+            editing
+            placeholder="\${GOOGLE_OAUTH_CLIENT_ID}"
+            @change=${(e: CustomEvent) =>
+              this.updateMCPServerOAuth(serverIndex, {
+                client_id: e.detail.value,
+              })}
+          ></bees-editable-field>
+
+          <bees-editable-field
+            label="Client Secret (env var)"
+            .value=${oauth.client_secret}
+            editing
+            placeholder="\${GOOGLE_OAUTH_CLIENT_SECRET}"
+            @change=${(e: CustomEvent) =>
+              this.updateMCPServerOAuth(serverIndex, {
+                client_secret: e.detail.value,
+              })}
+          ></bees-editable-field>
+        </div>
+
+        <div>
+          <div class="kv-label">Scopes</div>
+          <div class="kv-edit-table">
+            ${oauth.scopes.map(
+              (scope, i) => html`
+                <div class="kv-edit-row" style="grid-template-columns: 1fr auto">
+                  <input
+                    .value=${scope}
+                    placeholder="https://www.googleapis.com/auth/..."
+                    @input=${(e: InputEvent) => {
+                      const newVal = (e.currentTarget as HTMLInputElement).value;
+                      const scopes = [...oauth.scopes];
+                      scopes[i] = newVal;
+                      this.updateMCPServerOAuth(serverIndex, { scopes });
+                    }}
+                  />
+                  <span
+                    class="kv-remove"
+                    @click=${() => {
+                      const scopes = oauth.scopes.filter((_, j) => j !== i);
+                      this.updateMCPServerOAuth(serverIndex, { scopes });
+                    }}
+                    title="Remove scope"
+                    >✕</span
+                  >
+                </div>
+              `
+            )}
+            <button
+              class="kv-add-btn"
+              @click=${() => {
+                const scopes = [...oauth.scopes, ""];
+                this.updateMCPServerOAuth(serverIndex, { scopes });
+              }}
+            >
+              + Add Scope
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -888,6 +1177,18 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
     this.draft = { ...this.draft, mcp };
   }
 
+  private updateMCPServerOAuth(
+    index: number,
+    partial: Partial<OAuthConfig>,
+  ) {
+    if (!this.draft) return;
+    const server = this.draft.mcp[index];
+    if (!server?.oauth) return;
+    this.updateMCPServer(index, {
+      oauth: { ...server.oauth, ...partial },
+    });
+  }
+
   private isDirty(): boolean {
     if (!this.draft || !this.#original) return false;
     return JSON.stringify(this.#original) !== JSON.stringify(this.draft);
@@ -915,6 +1216,14 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
         this.error = `MCP server "${server.name}" needs either a URL or command.`;
         return;
       }
+      if (server.oauth && server.headers) {
+        this.error = `MCP server "${server.name}" cannot have both OAuth and headers.`;
+        return;
+      }
+      if (server.oauth && !server.url) {
+        this.error = `MCP server "${server.name}" uses OAuth, which requires HTTP (URL).`;
+        return;
+      }
     }
 
     this.saving = true;
@@ -936,6 +1245,36 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
       console.error("System config save error:", e);
     } finally {
       this.saving = false;
+    }
+  }
+
+  // ── OAuth flow ──
+
+  private async handleAuthenticate(server: MCPServerConfig) {
+    if (!server.oauth || !this.stateAccess?.handle) return;
+
+    const name = server.name;
+    this.tokenStatuses = { ...this.tokenStatuses, [name]: "pending" };
+
+    try {
+      const result = await startOAuthFlow(
+        this.stateAccess.handle,
+        name,
+        server.oauth,
+      );
+
+      if (result.success) {
+        this.tokenStatuses = {
+          ...this.tokenStatuses,
+          [name]: "authenticated",
+        };
+      } else {
+        this.tokenStatuses = { ...this.tokenStatuses, [name]: "none" };
+        this.error = result.error ?? "Authentication failed.";
+      }
+    } catch (e) {
+      this.tokenStatuses = { ...this.tokenStatuses, [name]: "none" };
+      this.error = e instanceof Error ? e.message : "Authentication failed.";
     }
   }
 

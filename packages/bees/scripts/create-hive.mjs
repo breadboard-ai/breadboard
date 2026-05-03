@@ -52,6 +52,8 @@ const GITIGNORE = `\
 tickets/
 logs/
 mutations/
+.env
+.mcp-tokens/
 `;
 
 async function main() {

@@ -159,6 +159,47 @@ logged at startup.
 - **No resource or prompt support.** Only the MCP `tools` capability is
   used; `resources` and `prompts` are not surfaced.
 
+### OAuth authentication
+
+Some remote MCP servers — notably the Google Workspace servers (Gmail,
+Drive, Calendar, Chat, People) — require OAuth 2.0 authentication instead
+of static API keys. Add an `oauth` block to use this mode:
+
+```yaml
+mcp:
+  - name: gmail
+    description: Gmail MCP Server
+    url: https://gmailmcp.googleapis.com/mcp/v1
+    oauth:
+      client_id: "${GOOGLE_OAUTH_CLIENT_ID}"
+      client_secret: "${GOOGLE_OAUTH_CLIENT_SECRET}"
+      scopes:
+        - https://www.googleapis.com/auth/gmail.readonly
+        - https://www.googleapis.com/auth/gmail.compose
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `oauth.client_id` | string | yes | `${ENV_VAR}` reference to the OAuth client ID. |
+| `oauth.client_secret` | string | yes | `${ENV_VAR}` reference to the OAuth client secret. |
+| `oauth.scopes` | list | yes | OAuth scopes to request during consent. |
+
+**Rules:**
+
+- `oauth` and `headers` are mutually exclusive on the same server.
+- `oauth` requires `url` (HTTP transport) — stdio servers cannot use OAuth.
+- Client credentials must be `${ENV_VAR}` references, not inline values.
+
+**Token storage.** Tokens are persisted at `hive/.mcp-tokens/<name>.json`,
+outside the `config/` directory, so creating or updating tokens does not
+trigger cold restarts. The box reads these files at startup. If tokens
+are missing, the server is skipped gracefully with a log message directing
+the user to authenticate via hivetool.
+
+**Multiple servers, shared client.** Multiple MCP servers can reference the
+same OAuth client credentials (same env vars) with different scopes. Each
+server gets its own token file.
+
 ### Editing in HiveTool
 
 The HiveTool workbench (System tab) provides a visual editor for MCP server
@@ -181,7 +222,18 @@ mcp:
     headers:
       x-consumer-api-key: "${COMPOSIO_API_KEY}"
 
+  - name: gmail
+    description: Gmail MCP Server
+    url: https://gmailmcp.googleapis.com/mcp/v1
+    oauth:
+      client_id: "${GOOGLE_OAUTH_CLIENT_ID}"
+      client_secret: "${GOOGLE_OAUTH_CLIENT_SECRET}"
+      scopes:
+        - https://www.googleapis.com/auth/gmail.readonly
+        - https://www.googleapis.com/auth/gmail.compose
+
   - name: filesystem
     description: Local filesystem tools
     command: npx -y @modelcontextprotocol/server-filesystem /tmp/workspace
 ```
+

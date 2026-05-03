@@ -2,3 +2,5 @@
 tickets/
 logs/
 mutations/
+.env
+.mcp-tokens/
