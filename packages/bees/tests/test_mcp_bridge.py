@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -74,8 +75,23 @@ class TestSchemaTranslation:
 
 
 # ---------------------------------------------------------------------------
-# Proxy handler
+# Helpers
 # ---------------------------------------------------------------------------
+
+
+def _make_conn(
+    name: str = "weather",
+    description: str = "",
+    tools: list[dict] | None = None,
+) -> MCPConnection:
+    """Create an MCPConnection with tools pre-populated (skipping discovery)."""
+    conn = MCPConnection(
+        name=name,
+        description=description,
+        config={"name": name, "url": "https://example.com/mcp"},
+    )
+    conn.tools = tools or []
+    return conn
 
 
 @dataclass
@@ -90,73 +106,91 @@ class FakeToolResult:
     isError: bool = False
 
 
+# ---------------------------------------------------------------------------
+# Proxy handler
+# ---------------------------------------------------------------------------
+
+
 class TestProxyHandler:
     """Test the proxy handler that calls MCP tools."""
 
     @pytest.mark.asyncio
     async def test_successful_call(self):
-        session = AsyncMock()
-        session.call_tool.return_value = FakeToolResult(
+        conn = _make_conn()
+        conn._session = AsyncMock()
+        conn._session.call_tool.return_value = FakeToolResult(
             content=[FakeContent(text="72°F, partly cloudy")],
         )
+        conn._ready.set()
 
-        handler = _make_proxy_handler(session, "get_forecast", "weather")
+        handler = _make_proxy_handler(conn, "get_forecast")
         result = await handler({"location": "NYC"}, None)
 
-        session.call_tool.assert_called_once_with(
+        conn._session.call_tool.assert_called_once_with(
             "get_forecast", arguments={"location": "NYC"},
         )
         assert result == {"result": "72°F, partly cloudy"}
 
     @pytest.mark.asyncio
     async def test_multiple_content_items(self):
-        session = AsyncMock()
-        session.call_tool.return_value = FakeToolResult(
+        conn = _make_conn(name="srv")
+        conn._session = AsyncMock()
+        conn._session.call_tool.return_value = FakeToolResult(
             content=[
                 FakeContent(text="Line 1"),
                 FakeContent(text="Line 2"),
             ],
         )
+        conn._ready.set()
 
-        handler = _make_proxy_handler(session, "multi", "srv")
+        handler = _make_proxy_handler(conn, "multi")
         result = await handler({}, None)
 
         assert result == {"result": "Line 1\nLine 2"}
 
     @pytest.mark.asyncio
     async def test_error_result(self):
-        session = AsyncMock()
-        session.call_tool.return_value = FakeToolResult(
+        conn = _make_conn(name="api")
+        conn._session = AsyncMock()
+        conn._session.call_tool.return_value = FakeToolResult(
             content=[FakeContent(text="Rate limit exceeded")],
             isError=True,
         )
+        conn._ready.set()
 
-        handler = _make_proxy_handler(session, "fetch", "api")
+        handler = _make_proxy_handler(conn, "fetch")
         result = await handler({}, None)
 
         assert "error" in result
         assert "Rate limit" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_exception_during_call(self):
-        session = AsyncMock()
-        session.call_tool.side_effect = ConnectionError("Server down")
+    async def test_exception_returns_error(self):
+        """When all retries fail, the handler returns an error dict."""
+        conn = _make_conn(name="broken")
+        conn._session = AsyncMock()
+        conn._session.call_tool.side_effect = ConnectionError("Server down")
+        conn._ready.set()
 
-        handler = _make_proxy_handler(session, "call", "broken")
+        handler = _make_proxy_handler(conn, "call")
+        # Use 0 retries via the conn's call_tool default, but the handler
+        # catches the final exception and returns an error dict.
         result = await handler({}, None)
 
         assert "error" in result
-        assert "Server down" in result["error"]
+        assert "unavailable" in result["error"]
 
     @pytest.mark.asyncio
     async def test_status_callback(self):
-        session = AsyncMock()
-        session.call_tool.return_value = FakeToolResult(
+        conn = _make_conn(name="srv")
+        conn._session = AsyncMock()
+        conn._session.call_tool.return_value = FakeToolResult(
             content=[FakeContent(text="ok")],
         )
+        conn._ready.set()
         status_cb = MagicMock()
 
-        handler = _make_proxy_handler(session, "tool", "srv")
+        handler = _make_proxy_handler(conn, "tool")
         await handler({}, status_cb)
 
         # Called with status message, then cleared.
@@ -166,13 +200,77 @@ class TestProxyHandler:
 
     @pytest.mark.asyncio
     async def test_empty_content(self):
-        session = AsyncMock()
-        session.call_tool.return_value = FakeToolResult(content=[])
+        conn = _make_conn(name="srv")
+        conn._session = AsyncMock()
+        conn._session.call_tool.return_value = FakeToolResult(content=[])
+        conn._ready.set()
 
-        handler = _make_proxy_handler(session, "quiet", "srv")
+        handler = _make_proxy_handler(conn, "quiet")
         result = await handler({}, None)
 
         assert result == {"result": "(no output)"}
+
+
+# ---------------------------------------------------------------------------
+# MCPConnection call_tool retry logic
+# ---------------------------------------------------------------------------
+
+
+class TestCallToolRetry:
+    """Test MCPConnection's retry and reconnect behavior."""
+
+    @pytest.mark.asyncio
+    async def test_retry_on_failure(self):
+        """call_tool retries after a failure."""
+        conn = _make_conn()
+        conn._session = AsyncMock()
+        # Fail first, succeed second.
+        conn._session.call_tool.side_effect = [
+            ConnectionError("dropped"),
+            FakeToolResult(content=[FakeContent(text="ok")]),
+        ]
+        conn._ready.set()
+
+        # Patch disconnect/connect to be no-ops that keep session alive.
+        async def fake_disconnect():
+            pass
+        async def fake_connect():
+            conn._ready.set()
+        conn.disconnect = fake_disconnect
+        conn.connect = fake_connect
+
+        result = await conn.call_tool("test", {}, retries=1, backoff=0.01)
+        assert result.content[0].text == "ok"
+
+    @pytest.mark.asyncio
+    async def test_raises_after_retries_exhausted(self):
+        """call_tool raises after all retries fail."""
+        conn = _make_conn()
+        conn._session = AsyncMock()
+        conn._session.call_tool.side_effect = ConnectionError("always fails")
+        conn._ready.set()
+
+        async def fake_disconnect():
+            pass
+        async def fake_connect():
+            conn._ready.set()
+        conn.disconnect = fake_disconnect
+        conn.connect = fake_connect
+
+        with pytest.raises(ConnectionError, match="always fails"):
+            await conn.call_tool("test", {}, retries=1, backoff=0.01)
+
+    @pytest.mark.asyncio
+    async def test_raises_when_not_connected(self):
+        """call_tool raises ConnectionError when connect fails."""
+        conn = _make_conn()
+        # Never set _ready — connection always fails.
+        async def fake_connect():
+            pass  # Don't set _ready
+        conn.connect = fake_connect
+
+        with pytest.raises(ConnectionError, match="could not connect"):
+            await conn.call_tool("test", {}, retries=0)
 
 
 # ---------------------------------------------------------------------------
@@ -184,67 +282,46 @@ class TestFunctionGroup:
     """Test building a FunctionGroup from an MCPConnection."""
 
     def test_group_name(self):
-        conn = MCPConnection(
+        conn = _make_conn(
             name="weather",
-            description="Weather tools",
-            tools=[
-                {
-                    "name": "get_forecast",
-                    "description": "Forecast",
-                    "inputSchema": {"type": "object"},
-                },
-            ],
-            session=MagicMock(),
+            tools=[{
+                "name": "get_forecast",
+                "description": "Forecast",
+                "inputSchema": {"type": "object"},
+            }],
         )
         group = _build_function_group(conn)
-
         assert group.name == "weather"
 
     def test_instruction_from_description(self):
-        conn = MCPConnection(
+        conn = _make_conn(
             name="weather",
             description="Weather data and forecasts",
-            tools=[],
-            session=MagicMock(),
         )
         group = _build_function_group(conn)
-
         assert group.instruction == "## weather\n\nWeather data and forecasts"
 
     def test_no_instruction_when_no_description(self):
-        conn = MCPConnection(
-            name="weather",
-            description="",
-            tools=[],
-            session=MagicMock(),
-        )
+        conn = _make_conn(name="weather", description="")
         group = _build_function_group(conn)
-
         assert group.instruction is None
 
     def test_declarations_match_tools(self):
-        conn = MCPConnection(
+        conn = _make_conn(
             name="srv",
-            description="",
             tools=[
                 {"name": "a", "description": "Tool A", "inputSchema": {}},
                 {"name": "b", "description": "Tool B"},
             ],
-            session=MagicMock(),
         )
         group = _build_function_group(conn)
-
         names = [d["name"] for d in group.declarations]
         assert names == ["srv_a", "srv_b"]
 
     def test_definitions_have_handlers(self):
-        conn = MCPConnection(
+        conn = _make_conn(
             name="srv",
-            description="",
-            tools=[
-                {"name": "a", "description": "Tool A"},
-            ],
-            session=MagicMock(),
+            tools=[{"name": "a", "description": "Tool A"}],
         )
         group = _build_function_group(conn)
 
@@ -551,28 +628,25 @@ class TestRegistryOAuthValidation:
         assert registry.get_factories() == []
 
     @pytest.mark.asyncio
-    async def test_oauth_seeds_client_info(self, tmp_path, monkeypatch):
-        """OAuth connect should pre-seed client_info in token storage."""
-        monkeypatch.setenv("CID", "my-client-id")
-        monkeypatch.setenv("CS", "my-secret")
+    async def test_refreshable_auth_loads_tokens(self, tmp_path, monkeypatch):
+        """_RefreshableOAuthAuth should load tokens from storage."""
+        from bees.functions.mcp_bridge import _RefreshableOAuthAuth
 
-        registry = MCPRegistry()
-        configs = [{
-            "name": "gmail",
-            "url": "https://gmailmcp.googleapis.com/mcp/v1",
-            "oauth": {
-                "client_id": "${CID}",
-                "client_secret": "${CS}",
-                "scopes": ["email"],
-            },
-        }]
-
-        await registry.connect_all(configs, hive_dir=tmp_path)
-
-        # Token file should have client_info even though we skipped
-        # (no tokens).
         storage = HiveTokenStorage(tmp_path, "gmail")
-        info = await storage.get_client_info()
-        assert info is not None
-        assert info.client_id == "my-client-id"
-        assert info.client_secret == "my-secret"
+        from mcp.shared.auth import OAuthToken
+        await storage.set_tokens(OAuthToken(
+            access_token="test-access",
+            token_type="Bearer",
+            refresh_token="test-refresh",
+        ))
+
+        auth = _RefreshableOAuthAuth(
+            storage=storage,
+            client_id="cid",
+            client_secret="cs",
+        )
+
+        # Simulate loading.
+        await auth._load_tokens()
+        assert auth._access_token == "test-access"
+        assert auth._refresh_token == "test-refresh"
