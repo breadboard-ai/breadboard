@@ -179,3 +179,11 @@ class TaskNode:
         self.save()
         self._bees.trigger()
         return True
+
+    def delete(self) -> list[str]:
+        """Delete this task and all its descendants.
+
+        Cancels in-flight work, removes ticket directories and session
+        logs.  Returns a list of all deleted task IDs.
+        """
+        return self._bees.delete_task(self.id)

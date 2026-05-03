@@ -37,6 +37,8 @@ while sequential dependencies are strictly preserved without blocking the system
 
 from __future__ import annotations
 
+import shutil
+
 import asyncio
 import logging
 import sys
@@ -150,6 +152,7 @@ class Scheduler:
         self._completion_events: dict[str, asyncio.Event] = {}
         self._active_tasks: dict[str, asyncio.Task] = {}
         self._active_streams: dict[str, SessionStream] = {}
+        self._deleted_tasks: set[str] = set()
         self._mcp_registry: MCPRegistry | None = None
 
         self._task_runner = TaskRunner(
@@ -265,6 +268,54 @@ class Scheduler:
             cancelled = True
             
         return cancelled
+
+    def delete_task(self, task_id: str) -> list[str]:
+        """Delete a task and all its descendants.
+
+        Cancels the asyncio task if running, removes the ticket
+        directory and all matching session logs.  Recurses into child
+        tasks (any task whose ``parent_task_id`` matches).
+
+        Marks the task ID in ``_deleted_tasks`` so that
+        ``_wrap_execution``'s finally block skips post-completion
+        cleanup for in-flight work that completes after deletion.
+
+        Returns a list of all deleted task IDs.
+        """
+        deleted: list[str] = []
+        self._delete_recursive(task_id, deleted)
+        return deleted
+
+    def _delete_recursive(self, task_id: str, deleted: list[str]) -> None:
+        """Recursively delete a task and its children."""
+        # Recurse into children first.
+        children = self.store.get_children(task_id)
+        for child in children:
+            self._delete_recursive(child.id, deleted)
+
+        # Cancel in-flight asyncio task.
+        if task_id in self._active_tasks:
+            self._active_tasks[task_id].cancel()
+
+        # Mark as deleted so _wrap_execution skips cleanup.
+        self._deleted_tasks.add(task_id)
+        self._running_tasks.discard(task_id)
+
+        # Remove ticket directory.
+        ticket_dir = self.store.tickets_dir / task_id
+        if ticket_dir.exists():
+            shutil.rmtree(ticket_dir)
+
+        # Remove matching session logs.
+        logs_dir = self.store.hive_dir / "logs"
+        if logs_dir.exists():
+            prefix = f"bees-{task_id[:8]}-"
+            for log_file in logs_dir.iterdir():
+                if log_file.name.startswith(prefix):
+                    log_file.unlink(missing_ok=True)
+
+        deleted.append(task_id)
+        logger.info("Deleted task %s", task_id[:8])
 
     def pause_all_tasks(self) -> int:
         """Pause all running, available, suspended, blocked, and paused tasks.
@@ -598,6 +649,14 @@ class Scheduler:
         finally:
             self._running_tasks.discard(task.id)
             self._active_tasks.pop(task.id, None)
+
+            # If the task was deleted while in-flight, skip all
+            # post-completion work — the ticket directory is gone,
+            # and we must not deliver ghost events or context updates.
+            if task.id in self._deleted_tasks:
+                self._deleted_tasks.discard(task.id)
+                return
+
             updated = self.store.get(task.id) or task
             run_task_done_hooks(updated)
             self._notify_task_done(task.id)

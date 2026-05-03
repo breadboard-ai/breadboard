@@ -80,6 +80,18 @@ class Bees:
             count += 1
         return count
 
+    def delete_task(self, task_id: str) -> list[str]:
+        """Delete a task and all its descendants.
+
+        Cancels in-flight work, removes ticket directories and session
+        logs, and marks the task so that post-completion cleanup is
+        skipped for any LLM calls or tool invocations that complete
+        after deletion.
+
+        Returns a list of all deleted task IDs.
+        """
+        return self._scheduler.delete_task(task_id)
+
     async def run(self) -> list[dict]:
         """Run the hive to completion (batch mode).
 
