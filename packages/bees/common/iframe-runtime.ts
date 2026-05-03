@@ -48,7 +48,7 @@ function buildIframeHtml(reactSource: string, reactDomSource: string): string {
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
 
   <style>
-    /* ── MD3 Design Tokens ──────────────────────────────────────────────── */
+    /* ── MD3 Design Tokens (Dark — Slate) ────────────────────────────────── */
     :root {
       --cg-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
       --cg-font-mono: 'JetBrains Mono', ui-monospace, monospace;
@@ -67,34 +67,34 @@ function buildIframeHtml(reactSource: string, reactDomSource: string): string {
       --cg-text-label-lg-size: 14px;  --cg-text-label-lg-line-height: 20px;  --cg-text-label-lg-weight: 500;
       --cg-text-label-md-size: 12px;  --cg-text-label-md-line-height: 16px;  --cg-text-label-md-weight: 500;
       --cg-text-label-sm-size: 11px;  --cg-text-label-sm-line-height: 16px;  --cg-text-label-sm-weight: 500;
-      --cg-color-surface-dim: #f5f3f0;
-      --cg-color-surface: #fdfcfa;
-      --cg-color-surface-bright: #ffffff;
-      --cg-color-surface-container-lowest: #ffffff;
-      --cg-color-surface-container-low: #f8f6f3;
-      --cg-color-surface-container: #f0eeeb;
-      --cg-color-surface-container-high: #eae8e5;
-      --cg-color-surface-container-highest: #e4e2df;
-      --cg-color-on-surface: #1c1b1f;
-      --cg-color-on-surface-muted: #79757f;
-      --cg-color-primary: #3b5fc0;
-      --cg-color-primary-container: #dbe1f9;
+      --cg-color-surface-dim: #0b0c0f;
+      --cg-color-surface: #0f1115;
+      --cg-color-surface-bright: #14171c;
+      --cg-color-surface-container-lowest: #0b0c0f;
+      --cg-color-surface-container-low: #0f1115;
+      --cg-color-surface-container: #14171c;
+      --cg-color-surface-container-high: #1e293b;
+      --cg-color-surface-container-highest: #253347;
+      --cg-color-on-surface: #e2e8f0;
+      --cg-color-on-surface-muted: #94a3b8;
+      --cg-color-primary: #3b82f6;
+      --cg-color-primary-container: #1e3a5f;
       --cg-color-on-primary: #ffffff;
-      --cg-color-on-primary-container: #0f1b3d;
-      --cg-color-secondary: #bec6dc;
-      --cg-color-secondary-container: #3b4358;
-      --cg-color-on-secondary: #283141;
-      --cg-color-on-secondary-container: #d8e0f8;
-      --cg-color-tertiary: #d4bfff;
-      --cg-color-tertiary-container: #3f2e6e;
-      --cg-color-on-tertiary: #2a1a51;
-      --cg-color-on-tertiary-container: #eedcff;
-      --cg-color-error: #ba1a1a;
-      --cg-color-error-container: #ffdad6;
+      --cg-color-on-primary-container: #93c5fd;
+      --cg-color-secondary: #94a3b8;
+      --cg-color-secondary-container: #1e293b;
+      --cg-color-on-secondary: #e2e8f0;
+      --cg-color-on-secondary-container: #cbd5e1;
+      --cg-color-tertiary: #c4b5fd;
+      --cg-color-tertiary-container: #2d2540;
+      --cg-color-on-tertiary: #ede9fe;
+      --cg-color-on-tertiary-container: #e9d5ff;
+      --cg-color-error: #ef4444;
+      --cg-color-error-container: #450a0a;
       --cg-color-on-error: #ffffff;
-      --cg-color-on-error-container: #410e0b;
-      --cg-color-outline: #7a767e;
-      --cg-color-outline-variant: #e0ddd9;
+      --cg-color-on-error-container: #fca5a5;
+      --cg-color-outline: #334155;
+      --cg-color-outline-variant: #1e293b;
       --cg-sp-0: 0px;    --cg-sp-1: 4px;    --cg-sp-2: 8px;
       --cg-sp-3: 12px;   --cg-sp-4: 16px;   --cg-sp-5: 20px;
       --cg-sp-6: 24px;   --cg-sp-7: 28px;   --cg-sp-8: 32px;

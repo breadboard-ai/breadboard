@@ -39,6 +39,7 @@ const logDetailBaseStyles = css`
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
     margin-bottom: 8px;
   }
 
@@ -514,6 +515,7 @@ const logDetailBaseStyles = css`
     border: 1px solid #334155;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s, color 0.15s;
+    margin-left: auto;
   }
 
   .link-chip:hover {
