@@ -8,13 +8,12 @@
  * Full-pane surface view — the "Surface" tab body.
  *
  * Composes agent-declared surface items and the built-in chat panel
- * using a CSS grid with bento box layout rules:
+ * using a CSS grid layout:
  *
- *   - 2 columns × N rows
  *   - Chat takes the left half when present
- *   - Content blocks fill the right half (or full width without chat)
- *   - Primary bundles expand to full width when no chat
- *   - Single block expands to full width
+ *   - Content blocks stack vertically in the right half (or full width
+ *     without chat)
+ *   - Primary bundles are distinguished by a blue left border accent
  *
  * Items with `render: "bundle"` render as sandboxed iframes via
  * `<bees-bundle-frame>`. Other items render as static cards via
@@ -27,7 +26,7 @@ import { customElement, property, state } from "lit/decorators.js";
 
 import type { TicketStore } from "../data/ticket-store.js";
 import type { MutationClient } from "../data/mutation-client.js";
-import type { SurfaceManifest, SurfaceItem } from "../data/types.js";
+import type { SurfaceManifest, SurfaceItem, SurfaceSection } from "../data/types.js";
 import type { SdkHandlers } from "../../../common/bundle-types.js";
 import { hasChatContent } from "./chat-panel.js";
 import { getIframeBlobUrl } from "./react-cache.js";
@@ -109,21 +108,54 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
       /* ── Bundles within content column ── */
 
       .bundle-section {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .section-tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid #1e293b;
+        flex-shrink: 0;
+        padding: 0 4px;
+      }
+
+      .section-tab {
+        padding: 6px 14px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748b;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: color 0.15s;
+        user-select: none;
+      }
+
+      .section-tab.active {
+        color: #f8fafc;
+        border-bottom-color: #3b82f6;
+      }
+
+      .section-tab:hover:not(.active) {
+        color: #cbd5e1;
+      }
+
+      .bundle-body {
+        display: flex;
+        flex-direction: column;
         gap: 16px;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding-top: 8px;
       }
 
       .bundle-cell {
         min-width: 0;
-      }
-
-      .bundle-cell.primary {
-        grid-column: 1 / -1;
-      }
-
-      .bundle-cell.solo {
-        grid-column: 1 / -1;
+        flex: 1;
+        min-height: 300px;
       }
 
       .bundle-label {
@@ -156,6 +188,7 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
   @state() accessor surface: SurfaceManifest | null = null;
   @state() accessor resolvedBundles: ResolvedBundle[] = [];
   @state() accessor iframeBlobUrl: string | null = null;
+  @state() accessor activeSection: string | null = null;
 
   /** Track which ticket ID we last loaded for. */
   #loadedFor: string | null = null;
@@ -172,6 +205,7 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
     if (this.#loadedFor !== this.ticketId) {
       this.surface = null;
       this.resolvedBundles = [];
+      this.activeSection = null;
       this.#loadedFor = this.ticketId;
       this.#lastFsChangeAt = 0;
       this.loadSurface();
@@ -248,16 +282,69 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
 
   private renderBundles() {
     const handlers = this.#makeSdkHandlers();
-    const solo = this.resolvedBundles.length === 1;
+    const sections = this.surface?.sections ?? [];
+
+    // Group bundles by section id (undefined = default section).
+    const grouped = new Map<string | undefined, ResolvedBundle[]>();
+    for (const bundle of this.resolvedBundles) {
+      const key = bundle.item.section;
+      const group = grouped.get(key) ?? [];
+      group.push(bundle);
+      grouped.set(key, group);
+    }
+
+    // Build tab entries: only sections that have bundles.
+    const tabEntries: Array<{ id: string; title: string }> = [];
+    for (const section of sections) {
+      if (grouped.has(section.id)) {
+        tabEntries.push({ id: section.id, title: section.title });
+      }
+    }
+    // Default section (ungrouped bundles).
+    if (grouped.has(undefined)) {
+      tabEntries.push({ id: "__default__", title: "General" });
+    }
+
+    // Resolve active tab.
+    const hasTabs = tabEntries.length > 1;
+    let activeId = this.activeSection;
+    if (!activeId || !tabEntries.some((t) => t.id === activeId)) {
+      // Use the section marked `active`, or fall back to first tab.
+      const activeSection = sections.find((s) => s.active);
+      activeId = activeSection && tabEntries.some((t) => t.id === activeSection.id)
+        ? activeSection.id
+        : tabEntries[0]?.id ?? null;
+    }
+
+    // Get bundles for the active tab.
+    const activeBundles = activeId === "__default__"
+      ? grouped.get(undefined) ?? []
+      : grouped.get(activeId!) ?? [];
 
     return html`
       <div class="bundle-section">
-        ${this.resolvedBundles.map((bundle) => {
-          const isPrimary = bundle.item.role === "primary";
-          const cellClass = solo ? "solo" : isPrimary ? "primary" : "";
-          return html`
-            <div class="bundle-cell ${cellClass}">
-              <div class="bundle-label">${bundle.item.title}</div>
+        ${hasTabs
+          ? html`
+            <div class="section-tabs">
+              ${tabEntries.map(
+                (tab) => html`
+                  <div
+                    class="section-tab ${activeId === tab.id ? "active" : ""}"
+                    @click=${() => { this.activeSection = tab.id; }}
+                  >
+                    ${tab.title}
+                  </div>
+                `
+              )}
+            </div>
+          `
+          : nothing}
+        <div class="bundle-body">
+          ${activeBundles.map((bundle) => html`
+            <div class="bundle-cell">
+              ${hasTabs
+                ? nothing
+                : html`<div class="bundle-label">${bundle.item.title}</div>`}
               <bees-bundle-frame
                 .iframeBlobUrl=${this.iframeBlobUrl}
                 .code=${bundle.code}
@@ -265,8 +352,8 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
                 .sdkHandlers=${handlers}
               ></bees-bundle-frame>
             </div>
-          `;
-        })}
+          `)}
+        </div>
       </div>
     `;
   }

@@ -5,7 +5,6 @@ description: Produce high-quality React apps from natural language descriptions.
 allowed-tools:
   - files.*
   - sandbox.*
-  - system.*
 ---
 
 # How to build high-quality React apps
@@ -152,11 +151,11 @@ spacing, type, radii, shadows — MUST use `--cg-` tokens. No exceptions.
 `--cg-color-outline-variant`
 
 **Typography:** `--cg-font-sans`, `--cg-font-mono`,
-`--cg-text-display-{lg,md,sm}-{size,line-height,weight}`,
-`--cg-text-headline-{lg,md,sm}-{size,line-height,weight}`,
-`--cg-text-title-{lg,md,sm}-{size,line-height,weight}`,
-`--cg-text-body-{lg,md,sm}-{size,line-height,weight}`,
-`--cg-text-label-{lg,md,sm}-{size,line-height,weight}`
+`--cg-text-display-{lg,md,sm}-{size,weight}`,
+`--cg-text-headline-{lg,md,sm}-{size,weight}`,
+`--cg-text-title-{lg,md,sm}-{size,weight}`,
+`--cg-text-body-{lg,md,sm}-{size,weight}`,
+`--cg-text-label-{lg,md,sm}-{size,weight}`
 
 **Spacing (4px grid):** `--cg-sp-0` through `--cg-sp-16`
 

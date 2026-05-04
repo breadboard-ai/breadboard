@@ -332,6 +332,15 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
   @state() accessor selectedChoiceIds = new Set<string>();
   @state() accessor responding = false;
 
+  /** Track message count to detect new arrivals. */
+  #lastMessageCount = 0;
+
+  /**
+   * Whether the user was scrolled near the bottom before the last
+   * render. If true, we auto-scroll after rendering new messages.
+   */
+  #wasNearBottom = true;
+
   /**
    * Whether this panel has visible content — chat messages or pending
    * user input. Used by the parent to decide grid layout.
@@ -351,8 +360,26 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
       (m) => m.text.trim() !== ""
     );
 
+    // Snapshot scroll position before re-render.
+    const chatLog = this.renderRoot.querySelector(".chat-log");
+    if (chatLog) {
+      const { scrollTop, scrollHeight, clientHeight } = chatLog;
+      this.#wasNearBottom = scrollHeight - scrollTop - clientHeight < 60;
+    }
+
+    // Detect new messages.
+    const messageCount = chatHistory.length;
+    const hasNewMessages = messageCount > this.#lastMessageCount;
+    this.#lastMessageCount = messageCount;
+
     const inputUi = this.renderInputUi(ticket);
     if (chatHistory.length === 0 && !inputUi) return nothing;
+
+    // Schedule auto-scroll after render if there are new messages
+    // and the user was near the bottom.
+    if (hasNewMessages && this.#wasNearBottom) {
+      this.updateComplete.then(() => this.#scrollToBottom());
+    }
 
     // When the input panel is showing, the agent's prompt text duplicates
     // the last agent message in the log. Drop it to avoid the echo.
@@ -574,6 +601,14 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
       }
     }
     return history;
+  }
+
+  /** Scroll the chat log container to the bottom. */
+  #scrollToBottom() {
+    const chatLog = this.renderRoot.querySelector(".chat-log");
+    if (chatLog) {
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
   }
 }
 

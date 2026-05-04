@@ -150,6 +150,8 @@ export interface SurfaceSection {
   id: string;
   title: string;
   description?: string;
+  /** When true, this section is selected by default in tabbed views. */
+  active?: boolean;
 }
 
 /** A content leaf in a surface manifest. */
