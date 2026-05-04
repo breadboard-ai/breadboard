@@ -95,10 +95,6 @@ class BeesSurfaceView extends LitElement {
       border-color: #334155;
     }
 
-    .item-card.primary {
-      border-left: 3px solid #3b82f6;
-    }
-
     .item-card.expandable {
       cursor: pointer;
       user-select: none;
@@ -419,7 +415,6 @@ class BeesSurfaceView extends LitElement {
   }
 
   private renderItem(item: SurfaceItem) {
-    const roleClass = item.role === "primary" ? "primary" : "";
     const canExpand = !!item.path && !!this.contentLoader;
     const isExpanded = this.expandedItems.has(item.id);
     const expandClass = canExpand ? "expandable" : "";
@@ -427,7 +422,7 @@ class BeesSurfaceView extends LitElement {
 
     return html`
       <div
-        class="item-card ${roleClass} ${expandClass} ${expandedClass}"
+        class="item-card ${expandClass} ${expandedClass}"
         @click=${canExpand ? () => this.#toggleItem(item) : nothing}
       >
         <div class="item-header">

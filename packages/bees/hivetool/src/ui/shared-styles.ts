@@ -47,6 +47,21 @@ const sharedStyles = css`
     box-sizing: border-box;
   }
 
+  a {
+    color: #60a5fa;
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  a:hover {
+    color: #93c5fd;
+    text-decoration: underline;
+  }
+
+  a:visited {
+    color: #818cf8;
+  }
+
   .mono {
     font-family: "Google Mono", "Roboto Mono", monospace;
   }

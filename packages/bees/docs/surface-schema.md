@@ -178,11 +178,12 @@ change detection trivial. The agent increments it on every write.
 }
 ```
 
-| Field         | Type   | Required | Description                                                     |
-| ------------- | ------ | -------- | --------------------------------------------------------------- |
-| `id`          | string | **yes**  | Stable identifier. Items reference this via their `section` field. |
-| `title`       | string | **yes**  | Human-readable section heading.                                 |
-| `description` | string | no       | Brief description of the section's purpose.                     |
+| Field         | Type    | Required | Description                                                     |
+| ------------- | ------- | -------- | --------------------------------------------------------------- |
+| `id`          | string  | **yes**  | Stable identifier. Items reference this via their `section` field. |
+| `title`       | string  | **yes**  | Human-readable section heading.                                 |
+| `description` | string  | no       | Brief description of the section's purpose.                     |
+| `active`      | boolean | no       | When `true`, this section is selected by default in tabbed views. At most one section should be marked active. |
 
 Section order is determined by array position in `sections`.
 
@@ -221,7 +222,7 @@ declared sections, unless the consumer chooses otherwise.
   "version": 3,
   "title": "Personal Finance",
   "sections": [
-    {"id": "overview", "title": "Overview"},
+    {"id": "overview", "title": "Overview", "active": true},
     {"id": "activity", "title": "Recent Activity"}
   ],
   "items": [

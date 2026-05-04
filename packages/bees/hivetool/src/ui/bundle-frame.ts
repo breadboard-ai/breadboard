@@ -36,23 +36,32 @@ class BeesBundleFrame extends LitElement {
     sharedStyles,
     css`
       :host {
-        display: block;
+        display: flex;
+        flex-direction: column;
         position: relative;
+        flex: 1;
+        min-height: 0;
+        height: 100%;
       }
 
       .frame-container {
         position: relative;
         width: 100%;
+        flex: 1;
+        min-height: 0;
         border: 1px solid #1e293b;
         border-radius: 8px;
         overflow: hidden;
         background: #0f1115;
+        display: flex;
+        flex-direction: column;
       }
 
       iframe {
         display: block;
         width: 100%;
-        height: 400px;
+        flex: 1;
+        min-height: 0;
         border: none;
       }
 

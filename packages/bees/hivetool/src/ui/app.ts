@@ -56,6 +56,7 @@ class BeesApp extends SignalWatcher(LitElement) {
   @state() accessor activeTab: TabId = "tickets";
   @state() accessor selectedEventId: string | null = null;
   @state() accessor hivePickerOpen = false;
+  @state() accessor maximized = false;
 
   private stateAccess = new StateAccess();
   private logStore = new LogStore(this.stateAccess);
@@ -654,8 +655,13 @@ class BeesApp extends SignalWatcher(LitElement) {
       }
     }
 
-    // Escape → cancel active editor.
+    // Escape → cancel active editor, or exit maximize mode.
     if (e.key === "Escape") {
+      if (this.maximized) {
+        e.preventDefault();
+        this.maximized = false;
+        return;
+      }
       const editor = this.#getActiveEditor();
       if (editor?.isEditing) {
         e.preventDefault();
@@ -725,6 +731,7 @@ class BeesApp extends SignalWatcher(LitElement) {
         : null;
 
     return html`
+      ${this.maximized ? nothing : html`
       <div class="top-bar">
         <div class="top-bar-header">
           <h1>${APP_ICON} ${APP_NAME} Hivetool</h1>
@@ -763,20 +770,24 @@ class BeesApp extends SignalWatcher(LitElement) {
                   : ""} ${flash ? "lightning-flash" : ""}"
                 @click=${() => this.switchTab(id)}
               >
-                ${label}
+              ${label}
               </div>
             `
           )}
         </div>
       </div>
+      `}
 
       <div
         class="content-row"
         @navigate=${(e: CustomEvent) => this.handleNavigate(e)}
+        @toggle-maximize=${() => { this.maximized = !this.maximized; }}
       >
+        ${this.maximized ? nothing : html`
         <div class="sidebar">
           ${this.renderSidebar(flashTicketId, flashLogId)}
         </div>
+        `}
         <div class="main">${this.renderMain(flashTicketId)}</div>
       </div>
     `;
@@ -921,6 +932,7 @@ class BeesApp extends SignalWatcher(LitElement) {
           .templateStore=${this.templateStore}
           .skillStore=${this.skillStore}
           .flashTicketId=${flashTicketId}
+          .maximized=${this.maximized}
         ></bees-ticket-pane>`;
       case "events":
         return html`<bees-event-detail

@@ -48,10 +48,34 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
       /* ── Tab bar ── */
       .pane-tabs {
         display: flex;
+        align-items: center;
         padding: 0 32px;
         border-bottom: 1px solid #1e293b;
         background: #0f1115;
         flex-shrink: 0;
+      }
+
+      .maximize-btn {
+        margin-left: auto;
+        padding: 4px 6px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #64748b;
+        font-size: 0.85rem;
+        line-height: 1;
+        border-radius: 4px;
+        transition: color 0.15s, background 0.15s;
+      }
+
+      .maximize-btn:hover {
+        color: #e2e8f0;
+        background: #1e293b;
+      }
+
+      .maximize-btn.active {
+        color: #60a5fa;
+        background: #1e3a5f33;
       }
 
       .pane-tab {
@@ -98,6 +122,9 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
 
   @property({ attribute: false })
   accessor flashTicketId: string | null = null;
+
+  @property({ type: Boolean })
+  accessor maximized = false;
 
   @state() accessor activePane: PaneTab = "detail";
   @state() accessor hasSurfaceManifest = false;
@@ -209,6 +236,7 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
           ? "lightning-flash"
           : ""}"
       >
+        ${this.maximized ? nothing : html`
         <div class="job-detail-header">
           <div class="job-detail-header-top">
             <h2 class="job-detail-title">${ticket.title || "Ticket"}</h2>
@@ -268,6 +296,7 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
               </div>
             `
           : nothing}
+        `}
 
         ${showSurface
           ? html`
@@ -284,6 +313,11 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
                 >
                   Detail
                 </div>
+                <button
+                  class="maximize-btn ${this.maximized ? "active" : ""}"
+                  title="Toggle maximize"
+                  @click=${() => this.#toggleMaximize()}
+                >⛶</button>
               </div>
 
               <div class="tab-body">
@@ -301,6 +335,13 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
               </div>
             `
           : html`
+              <div class="pane-tabs">
+                <button
+                  class="maximize-btn ${this.maximized ? "active" : ""}"
+                  title="Toggle maximize"
+                  @click=${() => this.#toggleMaximize()}
+                >⛶</button>
+              </div>
               <div class="tab-body">
                 <bees-ticket-detail
                   .ticketStore=${this.ticketStore}
@@ -415,6 +456,14 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
         this.activePane = "surface";
       }
     }
+  }
+
+  // ── Maximize ──
+
+  #toggleMaximize() {
+    this.dispatchEvent(
+      new CustomEvent("toggle-maximize", { bubbles: true })
+    );
   }
 
   // ── Navigation ──

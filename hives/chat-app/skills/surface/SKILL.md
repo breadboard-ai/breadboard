@@ -64,11 +64,12 @@ steps:
 
 Sections are optional named groups. Items reference them by `id`.
 
-| Field         | Required | Description                             |
-| ------------- | -------- | --------------------------------------- |
-| `id`          | **yes**  | Stable identifier, referenced by items. |
-| `title`       | **yes**  | Human-readable heading.                 |
-| `description` | no       | Brief description of the section.       |
+| Field         | Required | Description                                                                                          |
+| ------------- | -------- | ---------------------------------------------------------------------------------------------------- |
+| `id`          | **yes**  | Stable identifier, referenced by items.                                                              |
+| `title`       | **yes**  | Human-readable heading.                                                                              |
+| `description` | no       | Brief description of the section.                                                                    |
+| `active`      | no       | When `true`, this section is selected by default in tabbed views. At most one section should be active. |
 
 ## Items
 
