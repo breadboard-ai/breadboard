@@ -99,21 +99,18 @@ tickets, logs, and agent files.
 Add an LLM-driven user that responds when agents suspend. Runs now go past
 suspensions to completion.
 
-- [ ] **Simulated user module** (`bees/eval/simulated_user.py`). Takes a
-      persona prompt (markdown string) and a Gemini API key. Method:
-      `respond(suspend_event, chat_history) → response_dict`. Makes a single
-      Gemini API call with the persona as system instruction and the chat
-      history + agent question as context. Returns `{"text": "..."}` for
-      `waitForInput`.
-- [ ] **Runner integration.** The eval runner wraps `run_all_waves()` in a
-      loop: run → check for user-suspended tasks → feed each to simulated
-      user → write `response.json` via `store.respond()` → re-run. Loop exits
-      when all tasks are terminal (completed/failed) or a max-iterations
-      safety limit is hit.
-- [ ] **Persona loading.** The runner reads `eval/persona.md` from the hive
-      directory and passes it to the simulated user.
-- [ ] **Interaction logging.** Each simulated user response is logged
-      (agent question + user response + task context) for later analysis.
+- [x] **Harness-driven simulation.** Instead of a separate API wrapper, the simulated
+      user is implemented as a native `Bees` work task with `functions=["chat.*"]` and
+      the `eval-persistent-user` tag, using standard session state resumption memory.
+- [x] **Runner integration.** The eval runner wraps `bees.run()` in an orchestration
+      loop. When business tasks suspend for the user, the runner handles the turn-by-turn
+      handoff via `store.respond()` to alternate execution between the agent and the
+      simulated user task.
+- [x] **Persona loading.** The runner reads `eval/persona.md` from the case directory
+      and maps it directly into the simulation task's objective instructions.
+- [x] **Interaction logging.** Since the simulated user runs as a regular `Ticket`,
+      all its turns, metrics, and complete thought logs are automatically saved natively
+      in the `hive/tickets/` directory.
 
 🎯 `npm run eval -- run path/to/case` runs the hive's root template to
 completion, with the simulated user answering all `waitForInput` prompts in

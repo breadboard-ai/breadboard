@@ -198,7 +198,140 @@ async def run_case(
         bees.on(TaskDone, _on_task_done)
         bees.on(CycleComplete, _on_cycle_complete)
 
-        summaries = await bees.run()
+        # Load case config from eval/config.yaml.
+        import yaml
+        config_path = work_dir / "eval" / "config.yaml"
+        config_data = {}
+        max_iterations = 20
+        if config_path.is_file():
+            try:
+                config_data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+                if isinstance(config_data, dict):
+                    max_iterations = config_data.get("max_iterations", 20)
+            except Exception as e:
+                logger.warning("Failed to parse eval/config.yaml: %s", e)
+
+        from bees.task_store import TaskStore
+        store = TaskStore(work_dir)
+
+        iteration = 0
+        all_summaries = []
+
+        while iteration < max_iterations:
+            iteration += 1
+            logger.info("Eval iteration %d for case '%s'", iteration, name)
+            summaries = await bees.run()
+            if summaries:
+                all_summaries.extend(summaries)
+
+            # Check for tasks suspended waiting for user input.
+            user_suspended_tasks = [
+                t for t in store.query_all()
+                if t.metadata.status == "suspended" and t.metadata.assignee == "user"
+                and not (t.metadata.tags and "eval-persistent-user" in t.metadata.tags)
+            ]
+
+            if not user_suspended_tasks:
+                break
+
+            # Find an active persistent simulated user task by its tag.
+            all_tasks = store.query_all()
+            sim_user_task = None
+            for t in all_tasks:
+                if t.metadata.tags and "eval-persistent-user" in t.metadata.tags:
+                    if t.metadata.status not in ("completed", "failed", "cancelled"):
+                        sim_user_task = t
+                        break
+
+            for task_a in user_suspended_tasks:
+                suspend_event = task_a.metadata.suspend_event or {}
+                agent_question = ""
+                
+                # Extract prompt text.
+                if "waitForInput" in suspend_event:
+                    prompt_dict = suspend_event["waitForInput"].get("prompt", {})
+                    parts = prompt_dict.get("parts", [])
+                    agent_question = "".join([p["text"] for p in parts if "text" in p])
+                elif "waitForChoice" in suspend_event:
+                    prompt_dict = suspend_event["waitForChoice"].get("prompt", {})
+                    parts = prompt_dict.get("parts", [])
+                    agent_question = "".join([p["text"] for p in parts if "text" in p])
+                    choices = suspend_event["waitForChoice"].get("choices", [])
+                    choice_lines = []
+                    for c in choices:
+                        c_id = c.get("id", "")
+                        c_parts = c.get("content", {}).get("parts", [])
+                        c_text = "".join([p["text"] for p in c_parts if "text" in p])
+                        choice_lines.append(f"  * [{c_id}]: {c_text}")
+                    if choice_lines:
+                        agent_question += "\n\nAvailable options:\n" + "\n".join(choice_lines)
+
+                if not agent_question:
+                    agent_question = "Please respond."
+
+                if sim_user_task is None:
+                    # Strict declarative configuration checking — fail loudly if missing or incomplete.
+                    if "simulated_user" not in config_data:
+                        raise ValueError(
+                            f"Evaluation configuration missing 'simulated_user' section in {config_path}. "
+                            f"Task '{task_a.id[:8]}' is suspended waiting for user input, but no user specification was provided."
+                        )
+                    user_spec = config_data["simulated_user"]
+                    if not isinstance(user_spec, dict) or "objective" not in user_spec:
+                        raise ValueError(
+                            f"Missing required 'objective' prompt string inside 'simulated_user' config section in {config_path}."
+                        )
+                    if "functions" not in user_spec:
+                        raise ValueError(
+                            f"Missing required 'functions' allowlist array inside 'simulated_user' config section in {config_path}."
+                        )
+
+                    # Turn 1: Combine persona objective and first question cleanly without preamble boilerplate.
+                    objective_str = f"{user_spec['objective']}\n\n<inquiry>\n{agent_question}\n</inquiry>"
+                    sim_user_task = store.create(
+                        objective=objective_str,
+                        title=user_spec.get("title", "Simulated User for conversation"),
+                        functions=user_spec["functions"],
+                        model=user_spec.get("model"),
+                        tags=["eval-persistent-user"],
+                    )
+                    logger.info("Created stateful simulated user task: %s", sim_user_task.id[:8])
+                else:
+                    # Turn 2+: Pass follow-up question to the existing suspended simulated user session.
+                    logger.info("Handing off question to simulated user task: %s", sim_user_task.id[:8])
+                    store.respond(sim_user_task.id, {"text": agent_question})
+
+            # Run waves again to let the simulated user compute its response turn.
+            sim_summaries = await bees.run()
+            if sim_summaries:
+                all_summaries.extend(sim_summaries)
+
+            # Now collect the user replies from the simulated user task and deliver them back to the original tasks.
+            if sim_user_task:
+                sim_user_task = store.get(sim_user_task.id)
+
+            if sim_user_task and sim_user_task.metadata.status == "completed":
+                logger.info("Simulated user has autonomously concluded the conversation via system tools.")
+                break
+
+            if sim_user_task and sim_user_task.metadata.status == "suspended":
+                sim_event = sim_user_task.metadata.suspend_event or {}
+                user_reply = ""
+                if "waitForInput" in sim_event:
+                    prompt_dict = sim_event.get("waitForInput", {}).get("prompt", {})
+                    parts = prompt_dict.get("parts", [])
+                    user_reply = "".join([p["text"] for p in parts if "text" in p])
+
+                if not user_reply:
+                    user_reply = "Yes."
+
+                logger.info("Simulated user replied: %r", user_reply)
+
+                # Feed the user response back to each original task waiting for it.
+                for task_a in user_suspended_tasks:
+                    store.respond(task_a.id, {"text": user_reply})
+
+        summaries = all_summaries
     except Exception as exc:
         duration = time.monotonic() - start
         logger.error("Case '%s' failed: %s", name, exc)
@@ -230,6 +363,7 @@ async def run_case(
             outcome=t.metadata.outcome,
         )
         for t in all_tasks
+        if not (t.metadata.tags and "eval-persistent-user" in t.metadata.tags)
     ]
 
     status = _derive_status(task_summaries)

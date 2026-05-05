@@ -302,3 +302,101 @@ def test_derive_status_empty():
     from bees.eval.runner import _derive_status
 
     assert _derive_status([]) == "completed"
+
+
+@pytest.mark.asyncio
+async def test_run_case_stateful_simulated_user_loop(tmp_path):
+    """run_case orchestrates the stateful simulated user loop on task suspension."""
+    from bees.eval.runner import run_case
+    from bees.task_store import TaskStore
+    from unittest.mock import patch
+
+    # Create a minimal hive directory.
+    hive_dir = tmp_path / "my-case"
+    config_dir = hive_dir / "config"
+    config_dir.mkdir(parents=True)
+    (config_dir / "SYSTEM.yaml").write_text("title: Test case\nroot: simple")
+    (config_dir / "TEMPLATES.yaml").write_text("- name: simple\n  objective: Ask user.")
+    
+    # Create eval/config.yaml matching the TEMPLATES.yaml format layout spec.
+    eval_dir = hive_dir / "eval"
+    eval_dir.mkdir()
+    config_yaml = (
+        "max_iterations: 5\n"
+        "simulated_user:\n"
+        "  title: Mock User Persona\n"
+        "  objective: Be assertive.\n"
+        "  functions:\n"
+        "    - chat.chat_request_user_input\n"
+        "    - system.*\n"
+    )
+    (eval_dir / "config.yaml").write_text(config_yaml)
+
+    # We mock Bees.run to simulate the conversation turns:
+    # Turn 1: The main task starts and suspends.
+    # Turn 2: The simulation user task runs and suspends with its reply prompt.
+    # Turn 3: The main task resumes and completes.
+    call_count = 0
+
+    async def mock_bees_run(self):
+        nonlocal call_count
+        call_count += 1
+        store = self._store
+        
+        if call_count == 1:
+            # Main task suspends waiting for user input.
+            t = store.create("Ask user.")
+            t.metadata.status = "suspended"
+            t.metadata.assignee = "user"
+            t.metadata.suspend_event = {
+                "waitForInput": {
+                    "requestId": "r1",
+                    "prompt": {"parts": [{"text": "What do you want?"}]}
+                }
+            }
+            store.save_metadata(t)
+            return [{"ticket": t.id, "status": "suspended"}]
+            
+        elif call_count == 2:
+            # Simulated user task runs and suspends calling chat tool.
+            all_tasks = store.query_all()
+            sim_tasks = [t for t in all_tasks if t.metadata.tags and "eval-persistent-user" in t.metadata.tags]
+            assert len(sim_tasks) == 1
+            sim_task = sim_tasks[0]
+            sim_task.metadata.status = "suspended"
+            sim_task.metadata.assignee = "user"
+            sim_task.metadata.suspend_event = {
+                "waitForInput": {
+                    "requestId": "r2",
+                    "prompt": {"parts": [{"text": "I want a React app."}]}
+                }
+            }
+            store.save_metadata(sim_task)
+            return [{"ticket": sim_task.id, "status": "suspended"}]
+            
+        elif call_count == 3:
+            # Main task resumes with response.json, completes.
+            all_tasks = store.query_all()
+            main_tasks = [t for t in all_tasks if not t.metadata.tags or "eval-persistent-user" not in t.metadata.tags]
+            main_task = main_tasks[0]
+            
+            # Check that response.json was fed correctly.
+            response_file = main_task.dir / "response.json"
+            assert response_file.is_file()
+            assert json.loads(response_file.read_text()) == {"text": "I want a React app."}
+            
+            main_task.metadata.status = "completed"
+            main_task.metadata.outcome = "App built successfully."
+            store.save_metadata(main_task)
+            return [{"ticket": main_task.id, "status": "completed"}]
+
+        return []
+
+    output_dir = tmp_path / "results"
+
+    with patch("bees.Bees.run", mock_bees_run):
+        result = await run_case(hive_dir, output_dir, "fake-key", case_name="test-case")
+
+    assert result.status == "completed"
+    assert call_count == 3
+
