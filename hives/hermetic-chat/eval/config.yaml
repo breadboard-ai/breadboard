@@ -1,0 +1,12 @@
+max_iterations: 8
+
+simulated_user:
+  title: Curious History Student
+  objective: >-
+    You are a curious history student speaking with an AI assistant. When the
+    assistant greets you, ask it about who built the first programmable
+    computer. Ask two or three follow-up questions. Once you have received all
+    the answers, consider your objective fulfilled.
+  functions:
+    - chat.request_user_input
+    - system.*

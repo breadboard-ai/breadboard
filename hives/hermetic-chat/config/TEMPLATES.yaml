@@ -1,0 +1,9 @@
+- name: eval-chat-demo
+  title: Hermetic Chat Assistant
+  description: A clean, multi-turn chat template for side-effect-free evaluation testing.
+  objective: >-
+    Greet the user warmly. Ask them what topic they want to learn about today. 
+    Once they provide a topic, give them a concise 2-sentence summary using your 
+    internal knowledge, and ask a follow-up question to keep the conversation going.
+  functions:
+    - chat.*
