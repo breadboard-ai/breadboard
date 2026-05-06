@@ -204,6 +204,23 @@ class BeesApp extends SignalWatcher(LitElement) {
       background: #1e293b;
     }
 
+    .hive-picker-popover .picker-item.sub-item {
+      padding-left: 24px;
+      font-size: 0.7rem;
+      color: #94a3b8;
+      border-left: 2px solid #334155;
+    }
+
+    .hive-picker-popover .picker-item.sub-item:hover {
+      background: #252a34;
+    }
+
+    .hive-picker-popover .picker-item.sub-item.active {
+      color: #3b82f6;
+      border-left-color: #3b82f6;
+      background: #1e293b;
+    }
+
     .hive-picker-popover .picker-item .indicator {
       width: 6px;
       height: 6px;
@@ -478,6 +495,20 @@ class BeesApp extends SignalWatcher(LitElement) {
     }
     this.resetStores();
     await this.stateAccess.switchToHive(id);
+    if (this.stateAccess.accessState.get() === "ready") {
+      await this.activateStores();
+      this.restoreRoute();
+    }
+    this.hivePickerOpen = false;
+  }
+
+  private async handleSwitchToCase(id: string): Promise<void> {
+    if (id === this.stateAccess.activeCaseId.get()) {
+      this.hivePickerOpen = false;
+      return;
+    }
+    this.resetStores();
+    await this.stateAccess.switchToCase(id);
     if (this.stateAccess.accessState.get() === "ready") {
       await this.activateStores();
       this.restoreRoute();
@@ -981,15 +1012,23 @@ class BeesApp extends SignalWatcher(LitElement) {
           ? html`
               <div class="picker-header">Hives</div>
               <div class="picker-list">
-                ${hives.map(
-                  (h) => html`
+                ${hives.map((h) => {
+                  const isActive = h.id === activeId;
+                  const isMulti = isActive && this.stateAccess.isMultiHive.get();
+                  const subCases = isMulti ? this.stateAccess.cases.get() : [];
+                  const activeCaseId = isMulti ? this.stateAccess.activeCaseId.get() : null;
+
+                  return html`
                     <div
-                      class="picker-item ${h.id === activeId
-                        ? "active"
-                        : ""}"
-                      @click=${() => this.handleSwitchToHive(h.id)}
+                      class="picker-item ${isActive && !isMulti ? 'active' : ''}"
+                      style="${isMulti ? 'font-weight: bold; cursor: default; background: transparent;' : ''}"
+                      @click=${() => {
+                        if (!isMulti) {
+                          this.handleSwitchToHive(h.id);
+                        }
+                      }}
                     >
-                      <span class="indicator"></span>
+                      <span class="indicator" style="${isMulti ? 'background: #64748b;' : ''}"></span>
                       <span class="item-name">${h.name}</span>
                       <button
                         class="remove-btn"
@@ -1002,8 +1041,18 @@ class BeesApp extends SignalWatcher(LitElement) {
                         ✕
                       </button>
                     </div>
-                  `,
-                )}
+                    ${subCases.map(
+                      (c) => html`
+                        <div
+                          class="picker-item sub-item ${c.id === activeCaseId ? 'active' : ''}"
+                          @click=${() => this.handleSwitchToCase(c.id)}
+                        >
+                          <span class="item-name">${c.name}</span>
+                        </div>
+                      `
+                    )}
+                  `;
+                })}
               </div>
               <div class="picker-divider"></div>
             `

@@ -24,6 +24,8 @@ interface HiveEntry {
   readonly id: string;
   readonly name: string;
   readonly addedAt: number;
+  readonly isMultiHive?: boolean;
+  readonly cases?: Array<{ id: string; name: string }>;
 }
 
 const DB_NAME = "bees-hive-handles";
@@ -44,7 +46,12 @@ class StateAccess {
   /** ID of the currently active hive. */
   readonly activeHiveId = new Signal.State<string | null>(null);
 
+  readonly isMultiHive = new Signal.State<boolean>(false);
+  readonly cases = new Signal.State<Array<{ id: string; name: string }>>([]);
+  readonly activeCaseId = new Signal.State<string | null>(null);
+
   #handle: FileSystemDirectoryHandle | null = null;
+  #resultsRootHandle: FileSystemDirectoryHandle | null = null;
 
   /** The root `hive/` directory handle, available when access is "ready". */
   get handle(): FileSystemDirectoryHandle | null {
@@ -98,10 +105,7 @@ class StateAccess {
       const entry: HiveEntry = { id, name: handle.name, addedAt };
       this.hives.set([...this.hives.get(), entry]);
 
-      this.#handle = handle;
-      this.hiveName.set(handle.name);
-      this.activeHiveId.set(id);
-      this.accessState.set("ready");
+      await this.#activate(entry);
       return true;
     } catch {
       // User cancelled the picker.
@@ -142,12 +146,12 @@ class StateAccess {
     const handle = await this.#loadHandle(activeId);
     if (!handle) return;
 
-    const granted = await this.#checkPermission(handle);
-    if (!granted) return;
-
-    this.#handle = handle;
-    this.hiveName.set(handle.name);
-    this.accessState.set("ready");
+    const entry = this.hives.get().find((h) => h.id === activeId) ?? {
+      id: activeId,
+      name: handle.name,
+      addedAt: Date.now()
+    };
+    await this.#activate(entry);
   }
 
   /** Resolve a subdirectory from the hive handle. */
@@ -182,9 +186,100 @@ class StateAccess {
       return;
     }
 
-    this.#handle = handle;
     this.hiveName.set(entry.name);
+    await this._detectAndLoadCases(handle);
     this.accessState.set("ready");
+  }
+
+  async _detectAndLoadCases(handle: FileSystemDirectoryHandle): Promise<void> {
+    let isSingleHive = false;
+    try {
+      const configHandle = await handle.getDirectoryHandle("config");
+      await configHandle.getFileHandle("SYSTEM.yaml");
+      isSingleHive = true;
+    } catch {
+      // Not a single hive.
+    }
+
+    if (isSingleHive) {
+      this.isMultiHive.set(false);
+      this.cases.set([]);
+      this.activeCaseId.set(null);
+      this.#resultsRootHandle = null;
+      this.#handle = handle;
+    } else {
+      this.isMultiHive.set(true);
+      this.#resultsRootHandle = handle;
+
+      const discovered = await this._discoverHives(handle);
+      this.cases.set(discovered);
+
+      if (discovered.length > 0) {
+        await this.switchToCase(discovered[0].id);
+      } else {
+        this.#handle = null;
+        this.activeCaseId.set(null);
+      }
+    }
+  }
+
+  async _discoverHives(
+    dirHandle: FileSystemDirectoryHandle,
+    relativeParts: string[] = []
+  ): Promise<Array<{ id: string; name: string }>> {
+    const found: Array<{ id: string; name: string }> = [];
+
+    let isHive = false;
+    try {
+      const configHandle = await dirHandle.getDirectoryHandle("config");
+      await configHandle.getFileHandle("SYSTEM.yaml");
+      isHive = true;
+    } catch {
+      // Not a hive.
+    }
+
+    if (isHive) {
+      const pathStr = relativeParts.join("/");
+      found.push({
+        id: pathStr || dirHandle.name,
+        name: pathStr || dirHandle.name,
+      });
+      return found;
+    }
+
+    if (relativeParts.length >= 3) {
+      return found;
+    }
+
+    try {
+      for await (const [name, handle] of dirHandle.entries()) {
+        if (handle.kind === "directory") {
+          if (name.startsWith(".") || name === "node_modules" || name === "dist") continue;
+          const childCases = await this._discoverHives(handle as FileSystemDirectoryHandle, [...relativeParts, name]);
+          found.push(...childCases);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to read directory entries:", e);
+    }
+
+    return found;
+  }
+
+  async switchToCase(caseId: string): Promise<void> {
+    if (!this.#resultsRootHandle) return;
+    try {
+      const parts = caseId.split("/");
+      let current = this.#resultsRootHandle;
+      for (const part of parts) {
+        if (!part) continue;
+        current = await current.getDirectoryHandle(part);
+      }
+      this.#handle = current;
+      this.activeCaseId.set(caseId);
+    } catch (e) {
+      console.error(`Failed to switch to case ${caseId}:`, e);
+    }
   }
 
   // ── Legacy migration ──
