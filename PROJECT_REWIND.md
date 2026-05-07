@@ -511,7 +511,7 @@ and inspectable in hivetool.
 
 ---
 
-## Phase 5 — Session Clean Up
+## Phase 5 — Session Clean Up ✅
 
 ### 🎯 Objective
 
@@ -519,10 +519,10 @@ Eliminate the session dual-identity by making the persistent session store (`tic
 
 ### Changes
 
-- [ ] **LogStore scanning refactor**: Scan the `tickets/` task subdirectories instead of the legacy `logs/` leftover directory. Load each task's metadata and all its session UUID subdirectories.
-- [ ] **Sidebar task-grouped rendering**: Renders task headers (task title + status badge) with nested, clickable session cards in `log-list.ts`.
-- [ ] **Prune leftover logs**: Drop the deprecated `logs/` folder and its `.log.json` parsing code entirely from Hivetool's data store and observer path.
-- [ ] **Unify routing & selection highlights**:
+- [x] **LogStore scanning refactor**: Scan the `tickets/` task subdirectories instead of the legacy `logs/` leftover directory. Load each task's metadata and all its session UUID subdirectories.
+- [x] **Sidebar task-grouped rendering**: Renders task headers (task title + status badge) with nested, clickable session cards in `log-list.ts`.
+- [x] **Prune leftover logs**: Drop the deprecated `logs/` folder and its `.log.json` parsing code entirely from Hivetool's data store and observer path.
+- [x] **Unify routing & selection highlights**:
   - Update the `"session"` chip in task details ([ticket-pane.ts](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/hivetool/src/ui/ticket-pane.ts)) to display and route using the **actual active session UUID** instead of the `ticket.id`.
   - Highlight the parent task card correctly in the Sessions sidebar when inspecting any of its session UUIDs or superseded ancestor lineages.
 

@@ -973,7 +973,6 @@ class BeesApp extends SignalWatcher(LitElement) {
         ></bees-event-detail>`;
       case "logs":
         return html`<bees-log-detail
-          .data=${this.logStore.selectedView.get()}
           .stateAccess=${this.stateAccess}
           .ticketStore=${this.ticketStore}
           .mutationClient=${this.mutationClient}

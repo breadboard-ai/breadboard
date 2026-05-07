@@ -5,241 +5,183 @@
  */
 
 /**
- * Signal-backed reactive store for log files.
+ * Signal-backed reactive store for session files grouped by parent tasks.
  *
- * Resolves the `hive/logs/` subdirectory via a shared StateAccess,
+ * Resolves the `hive/tickets/` subdirectory via a shared StateAccess,
  * uses FileSystemObserver for live updates, and manages session grouping.
  */
 
 import { Signal } from "signal-polyfill";
 import type { StateAccess } from "./state-access.js";
 import type {
-  LogRunEntry,
-  LogFileInfo,
-  LogSession,
-  MergedSessionView,
-  SessionSegment,
-  TurnGroup,
+  TaskGroupedSessions,
+  SidebarSessionInfo,
 } from "./types.js";
 
 export { LogStore };
 
+interface LineageJson {
+  forked_from?: { session: string; at_turn: number };
+  forked_to?: { session: string; at_turn: number };
+}
+
 class LogStore {
   constructor(private access: StateAccess) {}
 
-  // ── Public reactive state (read via .get() in SignalWatcher renders) ──
+  // ── Public reactive state (read via .get() in render methods) ──
 
-  readonly sessions = new Signal.State<LogSession[]>([]);
+  readonly taskGroups = new Signal.State<TaskGroupedSessions[]>([]);
   readonly selectedSessionId = new Signal.State<string | null>(null);
-  readonly selectedView = new Signal.State<MergedSessionView | null>(null);
   readonly recentlyUpdatedSession = new Signal.State<{ id: string; at: number } | null>(null);
+
+  /** Resolved active task for the currently selected session. */
+  readonly selectedTaskId = new Signal.Computed(() => {
+    const selectedSid = this.selectedSessionId.get();
+    if (!selectedSid) return null;
+    for (const group of this.taskGroups.get()) {
+      if (group.taskId === selectedSid) return group.taskId; // selected by ticket ID fallback
+      if (group.sessions.some((s) => s.sessionId === selectedSid)) {
+        return group.taskId;
+      }
+    }
+    return null;
+  });
 
   // ── Private ──
 
-  /** The ``hive/logs/`` subdirectory. */
-  #logsHandle: FileSystemDirectoryHandle | null = null;
+  #ticketsHandle: FileSystemDirectoryHandle | null = null;
   #observer: { disconnect(): void } | null = null;
-  #cache = new Map<string, { data: LogRunEntry; lastModified: number }>();
   #activated = false;
-
 
   // ── Lifecycle ──
 
-  /** Activate the store — resolves logs/ subdir, scans, observes. */
+  /** Activate the store — resolves tickets/ subdir, scans, observes. */
   async activate(): Promise<void> {
     if (this.#activated) return;
     if (this.access.accessState.get() !== "ready") return;
 
-    const logsHandle = await this.access.getSubdirectory("logs");
-    if (!logsHandle) {
-      console.warn("Could not find logs/ subdirectory in hive/");
+    const ticketsHandle = await this.access.getSubdirectory("tickets");
+    if (!ticketsHandle) {
+      console.warn("Could not find tickets/ subdirectory in hive/");
       return;
     }
 
-    this.#logsHandle = logsHandle;
+    this.#ticketsHandle = ticketsHandle;
     this.#activated = true;
     await this.scan();
     this.#startObserver();
   }
 
-  /** Scan the logs subdirectory and rebuild sessions. */
+  /** Scan the tickets subdirectory, load tasks metadata and their sessions. */
   async scan(): Promise<void> {
-    if (!this.#logsHandle) return;
+    if (!this.#ticketsHandle) return;
 
-    const filenames: string[] = [];
-    for await (const [name, entry] of (
-      this.#logsHandle as FileSystemDirectoryHandle & {
-        entries(): AsyncIterable<[string, FileSystemHandle]>;
-      }
-    ).entries()) {
-      if (entry.kind === "file" && name.endsWith(".log.json")) {
-        filenames.push(name);
-      }
-    }
+    const groups: TaskGroupedSessions[] = [];
 
-    let cacheUpdated = false;
+    try {
+      for await (const [name, entry] of (
+        this.#ticketsHandle as FileSystemDirectoryHandle & {
+          entries(): AsyncIterable<[string, FileSystemHandle]>;
+        }
+      ).entries()) {
+        if (entry.kind !== "directory") continue;
 
-    for (const filename of filenames) {
-      const fileHandle = await this.#logsHandle.getFileHandle(filename);
-      const file = await fileHandle.getFile();
-      const cached = this.#cache.get(filename);
+        const ticketDir = await this.#ticketsHandle.getDirectoryHandle(name);
+        const metadata = await this.#readJson(ticketDir, "metadata.json") as Record<string, unknown> | null;
+        if (!metadata) continue;
+        if (metadata.kind === "coordination") continue;
 
-      if (!cached || cached.lastModified < file.lastModified) {
-        const data = await this.#readFile(filename);
-        if (!data) continue;
-        const runEntry = (data as Array<Record<string, unknown>>).find(
-          (e) => e.type === "run"
-        ) as LogRunEntry | undefined;
-        if (runEntry) {
-          this.#cache.set(filename, { data: runEntry, lastModified: file.lastModified });
-          cacheUpdated = true;
-          if (this.#observer) {
-            this.recentlyUpdatedSession.set({ id: runEntry.sessionId, at: Date.now() });
+        const title = (metadata.title as string) || `Task ${name.slice(0, 8)}`;
+        const status = (metadata.status as string) || "unknown";
+        const activeSessionId = (metadata.active_session as string) || null;
+
+        const sessions: SidebarSessionInfo[] = [];
+        try {
+          const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+          for await (const [sName, sEntry] of (
+            sessionsDir as FileSystemDirectoryHandle & {
+              entries(): AsyncIterable<[string, FileSystemHandle]>;
+            }
+          ).entries()) {
+            if (sEntry.kind !== "directory") continue;
+
+            const sessionDir = await sessionsDir.getDirectoryHandle(sName);
+            const sStatus = (await this.#readText(sessionDir, "status"))?.trim() ?? "unknown";
+            const lineage = await this.#readJson(sessionDir, "lineage.json") as LineageJson | null;
+
+            let eventCount = 0;
+            let lastModified = 0;
+
+            try {
+              const eventsHandle = await sessionDir.getFileHandle("events.jsonl");
+              const eventsFile = await eventsHandle.getFile();
+              lastModified = eventsFile.lastModified;
+              const eventsText = await eventsFile.text();
+              if (eventsText) {
+                eventCount = eventsText.split("\n").filter(Boolean).length;
+              }
+            } catch {
+              try {
+                const statusHandle = await sessionDir.getFileHandle("status");
+                const statusFile = await statusHandle.getFile();
+                lastModified = statusFile.lastModified;
+              } catch {
+                // Ignore missing status file
+              }
+            }
+
+            sessions.push({
+              sessionId: sName,
+              status: sStatus,
+              eventCount,
+              lastModified,
+              isForked: !!lineage?.forked_from,
+              forkedFrom: lineage?.forked_from,
+              forkedTo: lineage?.forked_to,
+            });
           }
+        } catch {
+          // No sessions directory yet
         }
-      }
-    }
 
-    // Prune deleted files.
-    for (const key of this.#cache.keys()) {
-      if (!filenames.includes(key)) {
-        this.#cache.delete(key);
-        cacheUpdated = true;
-      }
-    }
+        // Sort sessions by lastModified descending (most recently updated first)
+        sessions.sort((a, b) => b.lastModified - a.lastModified);
 
-    if (cacheUpdated) {
-      this.#rebuildSessions();
-      const selectedId = this.selectedSessionId.get();
-      if (selectedId) {
-        this.selectedView.set(this.#computeMergedView(selectedId));
-      }
-    }
-  }
-
-
-  /** Select a session — computes the merged timeline view. */
-  selectSession(sessionId: string): void {
-    this.selectedSessionId.set(sessionId);
-    this.selectedView.set(this.#computeMergedView(sessionId));
-  }
-
-  #computeMergedView(sessionId: string): MergedSessionView | null {
-    // Gather all cached entries for this session.
-    const entries: { filename: string; data: LogRunEntry }[] = [];
-    for (const [filename, entry] of this.#cache) {
-      if (entry.data.sessionId === sessionId) {
-        entries.push({ filename, data: entry.data });
-      }
-    }
-
-    if (entries.length === 0) return null;
-
-    // Sort oldest-first.
-    entries.sort((a, b) =>
-      a.data.startedDateTime.localeCompare(b.data.startedDateTime)
-    );
-
-    const segments: SessionSegment[] = [];
-
-    for (let i = 0; i < entries.length; i++) {
-      const { filename, data } = entries[i];
-      const ctx = data.context;
-      const turns = data.turns;
-
-      // Build per-turn groups from the structured turn boundaries.
-      // Function response entries are input to the turn whose sendRequest
-      // carries them, so scan backward to pull them into the right group.
-      const turnGroups: TurnGroup[] = [];
-
-      // First pass: compute adjusted starts.
-      const starts: number[] = [];
-      for (let t = 0; t < turns.length; t++) {
-        let start = turns[t].contextLengthAtStart;
-        // Pull in preceding function response entries.
-        while (start > 0) {
-          const prev = ctx[start - 1];
-          if (
-            prev?.role === "user" &&
-            prev.parts?.some((p) => "functionResponse" in p)
-          ) {
-            start--;
-          } else {
-            break;
-          }
-        }
-        // For the first turn, include the user prompt if the scan
-        // didn't already pull in a function response.
-        if (
-          t === 0 &&
-          start === turns[t].contextLengthAtStart &&
-          start > 0
-        ) {
-          start--;
-        }
-        starts.push(start);
-      }
-
-      // Second pass: build groups using adjusted starts.
-      for (let t = 0; t < turns.length; t++) {
-        const start = starts[t];
-        const end =
-          t < turns.length - 1 ? starts[t + 1] : ctx.length;
-        turnGroups.push({
-          turnIndex: t,
-          entries: ctx.slice(start, end),
-          tokenMetadata: turns[t].tokenMetadata,
+        groups.push({
+          taskId: name,
+          title,
+          status,
+          activeSessionId,
+          sessions,
         });
       }
-
-      segments.push({
-        filename,
-        segmentIndex: i,
-        startedDateTime: data.startedDateTime,
-        totalDurationMs: data.totalDurationMs,
-        turnCount: data.turnCount,
-        turnGroups,
-        totalThoughts: data.totalThoughts,
-        totalFunctionCalls: data.totalFunctionCalls,
-        totalTokens: data.tokenMetadata?.totalTokens ?? 0,
-        config: data.config,
-        tokenMetadata: data.tokenMetadata,
-      });
+    } catch (e) {
+      console.error("Failed to scan tickets/ sessions:", e);
     }
 
-    return {
-      sessionId,
-      segments,
-      totalDurationMs: entries.reduce(
-        (s, e) => s + e.data.totalDurationMs,
-        0
-      ),
-      totalTurns: entries.reduce((s, e) => s + e.data.turnCount, 0),
-      totalThoughts: entries.reduce(
-        (s, e) => s + e.data.totalThoughts,
-        0
-      ),
-      totalFunctionCalls: entries.reduce(
-        (s, e) => s + e.data.totalFunctionCalls,
-        0
-      ),
-      totalTokens: entries.reduce(
-        (s, e) => s + (e.data.tokenMetadata?.totalTokens ?? 0),
-        0
-      ),
-    };
+    // Sort taskGroups by their most recently updated session's lastModified, descending
+    groups.sort((a, b) => {
+      const aMax = a.sessions.length > 0 ? Math.max(...a.sessions.map((s) => s.lastModified)) : 0;
+      const bMax = b.sessions.length > 0 ? Math.max(...b.sessions.map((s) => s.lastModified)) : 0;
+      return bMax - aMax;
+    });
+
+    this.taskGroups.set(groups);
+  }
+
+  /** Select a session ID. */
+  selectSession(sessionId: string): void {
+    this.selectedSessionId.set(sessionId);
   }
 
   /** Tear down all state so the store can be re-activated against a new hive. */
   reset(): void {
     this.#observer?.disconnect();
     this.#observer = null;
-    this.#logsHandle = null;
-    this.#cache.clear();
+    this.#ticketsHandle = null;
     this.#activated = false;
-    this.sessions.set([]);
+    this.taskGroups.set([]);
     this.selectedSessionId.set(null);
-    this.selectedView.set(null);
     this.recentlyUpdatedSession.set(null);
   }
 
@@ -251,44 +193,12 @@ class LogStore {
 
   // ── Private helpers ──
 
-  #rebuildSessions(): void {
-    const sessionMap = new Map<string, LogFileInfo[]>();
-    for (const [filename, entry] of this.#cache) {
-      const sid = entry.data.sessionId || "unknown";
-      if (!sessionMap.has(sid)) sessionMap.set(sid, []);
-      sessionMap.get(sid)!.push({
-        filename,
-        sessionId: sid,
-        startedDateTime: entry.data.startedDateTime,
-        totalDurationMs: entry.data.totalDurationMs,
-        turnCount: entry.data.turnCount,
-        totalThoughts: entry.data.totalThoughts,
-        totalFunctionCalls: entry.data.totalFunctionCalls,
-        totalTokens: entry.data.tokenMetadata?.totalTokens ?? 0,
-      });
-    }
-
-
-    const sessions = Array.from(sessionMap.entries())
-      .map(([sessionId, files]) => ({
-        sessionId,
-        files: files.sort((a, b) =>
-          b.startedDateTime.localeCompare(a.startedDateTime)
-        ),
-      }))
-      .sort((a, b) => {
-        const aLatest = a.files.at(-1)?.startedDateTime ?? "";
-        const bLatest = b.files.at(-1)?.startedDateTime ?? "";
-        return bLatest.localeCompare(aLatest);
-      });
-
-    this.sessions.set(sessions);
-  }
-
-  async #readFile(filename: string): Promise<unknown[] | null> {
-    if (!this.#logsHandle) return null;
+  async #readJson(
+    dir: FileSystemDirectoryHandle,
+    filename: string
+  ): Promise<unknown | null> {
     try {
-      const fileHandle = await this.#logsHandle.getFileHandle(filename);
+      const fileHandle = await dir.getFileHandle(filename);
       const file = await fileHandle.getFile();
       const text = await file.text();
       return JSON.parse(text);
@@ -297,17 +207,51 @@ class LogStore {
     }
   }
 
+  async #readText(
+    dir: FileSystemDirectoryHandle,
+    filename: string
+  ): Promise<string | null> {
+    try {
+      const fileHandle = await dir.getFileHandle(filename);
+      const file = await fileHandle.getFile();
+      return await file.text();
+    } catch {
+      return null;
+    }
+  }
+
   #startObserver(): void {
-    if (!this.#logsHandle) return;
+    if (!this.#ticketsHandle) return;
     if (!("FileSystemObserver" in globalThis)) return;
     try {
-      // FileSystemObserver is experimental — access via dynamic typing.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const Ctor = (globalThis as any).FileSystemObserver;
       const observer = new Ctor((records: unknown[]) => {
-        if (records.length > 0) this.scan();
+        if (records.length > 0) {
+          this.scan();
+          
+          // Fire recentlyUpdatedSession animation trigger if we can resolve a sessionId
+          interface FileSystemChangeRecord {
+            relativePathComponents?: string[];
+            relativePath?: string;
+          }
+          for (const record of records) {
+            const r = record as FileSystemChangeRecord;
+            let segments: string[] = [];
+            if (Array.isArray(r.relativePathComponents)) {
+              segments = r.relativePathComponents;
+            } else if (typeof r.relativePath === "string") {
+              segments = r.relativePath.split("/").filter(Boolean);
+            }
+            // [ticketId, "sessions", sessionId, ...]
+            if (segments.length >= 3 && segments[1] === "sessions") {
+              this.recentlyUpdatedSession.set({ id: segments[2], at: Date.now() });
+              break;
+            }
+          }
+        }
       });
-      observer.observe(this.#logsHandle, { recursive: false });
+      observer.observe(this.#ticketsHandle, { recursive: true });
       this.#observer = observer;
     } catch (e) {
       console.warn("FileSystemObserver not available:", e);

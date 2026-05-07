@@ -90,22 +90,22 @@ export interface LogPart {
   thoughtSignature?: string;
 }
 
-/** Summary info extracted from a log file (for sidebar display). */
-export interface LogFileInfo {
-  filename: string;
+export interface SidebarSessionInfo {
   sessionId: string;
-  startedDateTime: string;
-  totalDurationMs: number;
-  turnCount: number;
-  totalThoughts: number;
-  totalFunctionCalls: number;
-  totalTokens: number;
+  status: string;
+  eventCount: number;
+  lastModified: number;
+  isForked: boolean;
+  forkedFrom?: { session: string; at_turn: number };
+  forkedTo?: { session: string; at_turn: number };
 }
 
-/** A group of log files sharing the same session/ticket ID. */
-export interface LogSession {
-  sessionId: string;
-  files: LogFileInfo[];
+export interface TaskGroupedSessions {
+  taskId: string;
+  title: string;
+  status: string;
+  activeSessionId: string | null;
+  sessions: SidebarSessionInfo[];
 }
 
 /** A single API turn within a segment — its conversation entries + token data. */
