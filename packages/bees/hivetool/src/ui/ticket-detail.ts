@@ -19,6 +19,9 @@ import { customElement, property, state } from "lit/decorators.js";
 
 import type { TicketStore, FileTreeNode } from "../data/ticket-store.js";
 import type { MutationClient } from "../data/mutation-client.js";
+import { SessionStoreReader, type SessionLineageInfo } from "../data/session-store-reader.js";
+import type { StateAccess } from "../data/state-access.js";
+import "./session-lineage.js";
 import { sharedStyles } from "./shared-styles.js";
 import { renderJson } from "./json-tree.js";
 import { jsonTreeStyles } from "./json-tree.styles.js";
@@ -239,12 +242,30 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
 
   @state() accessor fileTree: FileTreeNode[] = [];
   @state() accessor fileContents: Record<string, string | null> = {};
+  @state() accessor lineage: SessionLineageInfo[] = [];
+  @state() accessor selectedSessionId: string | null = null;
 
-  // Live session state is owned by TicketStore.activeConnection —
-  // no local client reference needed.
+  @property({ attribute: false })
+  accessor stateAccess: StateAccess | null = null;
+
+  #sessionReader: SessionStoreReader | null = null;
+
+  get sessionReader() {
+    if (!this.#sessionReader && this.stateAccess) {
+      this.#sessionReader = new SessionStoreReader(this.stateAccess);
+    }
+    return this.#sessionReader;
+  }
 
   /** Track the ticket ID we loaded the tree for. */
   #treeLoadedFor: string | null = null;
+  #lastLoadedAt = 0;
+
+  private async loadLineage(ticketId: string) {
+    if (!this.sessionReader) return;
+    const lineage = await this.sessionReader.readLineage(ticketId);
+    this.lineage = lineage;
+  }
 
   render() {
     if (!this.ticketStore) return nothing;
@@ -254,11 +275,22 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
         Select a ticket to view details
       </div>`;
 
-    // Reset file tree if ticket changed.
-    if (this.#treeLoadedFor !== ticket.id) {
+    const recentUpdate = this.ticketStore.recentlyUpdatedTicket.get();
+
+    // Reload if selected ticket ID changed, OR if a disk update was observed for this ticket
+    const idChanged = this.#treeLoadedFor !== ticket.id;
+    const diskUpdated = recentUpdate && recentUpdate.id === ticket.id && recentUpdate.at > this.#lastLoadedAt;
+
+    if (idChanged || diskUpdated) {
       this.fileTree = [];
       this.fileContents = {};
+      this.lineage = [];
+      this.selectedSessionId = null;
       this.#treeLoadedFor = ticket.id;
+      this.#lastLoadedAt = Date.now();
+      
+      this.loadLineage(ticket.id);
+      this.loadFileTree(ticket.id);
     }
 
 
@@ -369,6 +401,25 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
                   )}
                 </div>
               </div>
+            `
+          : nothing}
+        ${this.lineage.length > 0
+          ? html`
+              <bees-session-lineage
+                .lineage=${this.lineage}
+                .activeSessionId=${ticket.active_session}
+                .selectedSessionId=${this.selectedSessionId}
+                @select-session=${(e: CustomEvent) => {
+                  this.selectedSessionId = e.detail.sessionId;
+                  this.dispatchEvent(
+                    new CustomEvent("navigate", {
+                      detail: { tab: "logs", id: e.detail.sessionId },
+                      bubbles: true,
+                      composed: true,
+                    })
+                  );
+                }}
+              ></bees-session-lineage>
             `
           : nothing}
         ${this.renderFileTree(ticket.id)}

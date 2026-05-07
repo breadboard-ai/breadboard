@@ -24,6 +24,7 @@ import type { TicketStore } from "../data/ticket-store.js";
 import type { MutationClient } from "../data/mutation-client.js";
 import type { TemplateStore } from "../data/template-store.js";
 import type { SkillStore } from "../data/skill-store.js";
+import type { StateAccess } from "../data/state-access.js";
 import { sharedStyles } from "./shared-styles.js";
 import { hasChatContent } from "./chat-panel.js";
 import "./ticket-detail.js";
@@ -110,6 +111,9 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
 
   @property({ attribute: false })
   accessor ticketStore: TicketStore | null = null;
+
+  @property({ attribute: false })
+  accessor stateAccess: StateAccess | null = null;
 
   @property({ attribute: false })
   accessor mutationClient: MutationClient | null = null;
@@ -329,6 +333,7 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
                     ></bees-surface-pane>`
                   : html`<bees-ticket-detail
                       .ticketStore=${this.ticketStore}
+                      .stateAccess=${this.stateAccess}
                       .mutationClient=${this.mutationClient}
                       .flashTicketId=${this.flashTicketId}
                     ></bees-ticket-detail>`}
@@ -345,6 +350,7 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
               <div class="tab-body">
                 <bees-ticket-detail
                   .ticketStore=${this.ticketStore}
+                  .stateAccess=${this.stateAccess}
                   .mutationClient=${this.mutationClient}
                   .flashTicketId=${this.flashTicketId}
                 ></bees-ticket-detail>

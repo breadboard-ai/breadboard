@@ -112,6 +112,7 @@ async def run(
     model: str | None = None,
     file_system: FileSystem | None = None,
     context_queue: asyncio.Queue | None = None,
+    session_id: str | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Start a new agent run.
 
@@ -192,7 +193,8 @@ async def run(
         file_system.set_sheet_manager(sheet_manager)
 
     # Set up the chat log manager for sheet persistence and system file.
-    session_id = str(uuid.uuid4())
+    if session_id is None:
+        session_id = str(uuid.uuid4())
     chat_mgr = ChatLogManager(sheet_manager, session_id=session_id)
     await chat_mgr.seed()
     run_contents: list[dict] = [objective]

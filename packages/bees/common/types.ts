@@ -45,4 +45,5 @@ export interface TaskData {
   files?: Array<{ path: string; mimeType: string; localPath: string }>;
   runner?: "generate" | "live";
   voice?: string;
+  active_session?: string;
 }

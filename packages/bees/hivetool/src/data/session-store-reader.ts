@@ -1,0 +1,262 @@
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import type { StateAccess } from "./state-access.js";
+
+import type { SessionSegment, TurnGroup, LogTurnTokenMetadata, LogConfig } from "./types.js";
+
+export { SessionStoreReader, compileEventsToSegment };
+export type { SessionLineageInfo };
+
+interface SessionLineageInfo {
+  sessionId: string;
+  status: string;
+  eventCount: number;
+  forkedFrom?: { session: string; at_turn: number };
+  forkedTo?: { session: string; at_turn: number };
+}
+
+interface LineageJson {
+  forked_from?: { session: string; at_turn: number };
+  forked_to?: { session: string; at_turn: number };
+}
+
+function compileEventsToSegment(sessionId: string, events: Record<string, unknown>[]): SessionSegment {
+  let turnCount = 0;
+  let totalThoughts = 0;
+  let totalFunctionCalls = 0;
+  let totalTokens = 0;
+  
+  let systemInstruction: LogConfig["systemInstruction"] = undefined;
+  let tools: LogConfig["tools"] = [];
+  const turnGroups: TurnGroup[] = [];
+  
+  let currentTurnGroup: TurnGroup | null = null;
+  let currentTurnIndex = 0;
+
+  for (const event of events) {
+    if ("sendRequest" in event) {
+      const sendRequest = event.sendRequest as Record<string, unknown> || {};
+      const body = sendRequest.body as Record<string, unknown> || {};
+      
+      const config = { ...body };
+      delete config.contents;
+      if (config.systemInstruction) {
+        systemInstruction = config.systemInstruction as LogConfig["systemInstruction"];
+      }
+      if (config.tools) {
+        tools = config.tools as LogConfig["tools"];
+      }
+      
+      currentTurnGroup = {
+        turnIndex: currentTurnIndex++,
+        entries: [],
+        tokenMetadata: null
+      };
+      turnGroups.push(currentTurnGroup);
+      turnCount++;
+    }
+    
+    if (currentTurnGroup) {
+      if ("thought" in event) {
+        const thought = event.thought as Record<string, unknown> || {};
+        const text = thought.text as string || "";
+        currentTurnGroup.entries.push({
+          role: "model",
+          parts: [{ text, thought: true }]
+        });
+        totalThoughts++;
+      }
+      
+      if ("functionCall" in event) {
+        const fc = event.functionCall as Record<string, unknown> || {};
+        currentTurnGroup.entries.push({
+          role: "model",
+          parts: [{
+            functionCall: {
+              name: fc.name as string || "",
+              args: fc.args as Record<string, unknown> || {},
+              id: fc.id as string
+            }
+          }]
+        });
+        totalFunctionCalls++;
+      }
+
+      if ("functionResponse" in event) {
+        const fr = event.functionResponse as Record<string, unknown> || {};
+        currentTurnGroup.entries.push({
+          role: "user",
+          parts: [{
+            functionResponse: {
+              name: fr.name as string || "",
+              response: fr.response as Record<string, unknown> || {}
+            }
+          }]
+        });
+      }
+      
+      if ("usageMetadata" in event) {
+        const usageMetadata = event.usageMetadata as Record<string, unknown> || {};
+        const metadata = usageMetadata.metadata as Record<string, unknown> || {};
+        currentTurnGroup.tokenMetadata = metadata as unknown as LogTurnTokenMetadata;
+        totalTokens += metadata.totalTokenCount as number || 0;
+      }
+    }
+  }
+
+  return {
+    filename: "events.jsonl",
+    segmentIndex: 0,
+    startedDateTime: new Date().toISOString(),
+    totalDurationMs: 0,
+    turnCount,
+    turnGroups,
+    totalThoughts,
+    totalFunctionCalls,
+    totalTokens,
+    config: {
+      systemInstruction,
+      tools
+    },
+    tokenMetadata: {
+      totalPromptTokens: 0,
+      totalCandidatesTokens: 0,
+      totalThoughtsTokens: 0,
+      totalCachedTokens: 0,
+      totalTokens
+    }
+  };
+}
+
+class SessionStoreReader {
+  constructor(private access: StateAccess) {}
+
+  async findTicketForSession(sessionId: string): Promise<string | null> {
+    const ticketsHandle = await this.access.getSubdirectory("tickets");
+    if (!ticketsHandle) return null;
+    try {
+      for await (const [name, entry] of (
+        ticketsHandle as FileSystemDirectoryHandle & {
+          entries(): AsyncIterable<[string, FileSystemHandle]>;
+        }
+      ).entries()) {
+        if (entry.kind !== "directory") continue;
+        const ticketDir = await ticketsHandle.getDirectoryHandle(name);
+        try {
+          const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+          await sessionsDir.getDirectoryHandle(sessionId);
+          return name;
+        } catch {
+          // Not in this ticket
+        }
+      }
+    } catch {
+      // Ignore scanning errors
+    }
+    return null;
+  }
+
+  async readLineage(ticketId: string): Promise<SessionLineageInfo[]> {
+    const ticketsHandle = await this.access.getSubdirectory("tickets");
+    if (!ticketsHandle) return [];
+
+    try {
+      const ticketDir = await ticketsHandle.getDirectoryHandle(ticketId);
+      const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+      const result: SessionLineageInfo[] = [];
+
+      for await (const [name, entry] of (
+        sessionsDir as FileSystemDirectoryHandle & {
+          entries(): AsyncIterable<[string, FileSystemHandle]>;
+        }
+      ).entries()) {
+        if (entry.kind !== "directory") continue;
+        const sessionDir = await sessionsDir.getDirectoryHandle(name);
+        
+        const status = (await this.#readText(sessionDir, "status"))?.trim() ?? "unknown";
+        const lineage = await this.#readJson(sessionDir, "lineage.json") as LineageJson | null;
+        
+        let eventCount = 0;
+        try {
+          const eventsText = await this.#readText(sessionDir, "events.jsonl");
+          if (eventsText) {
+            eventCount = eventsText.split("\n").filter(Boolean).length;
+          }
+        } catch {
+          // Ignore read errors for event count
+        }
+
+        result.push({
+          sessionId: name,
+          status,
+          eventCount,
+          forkedFrom: lineage?.forked_from,
+          forkedTo: lineage?.forked_to,
+        });
+      }
+
+      return result;
+    } catch {
+      return [];
+    }
+  }
+
+  async readEvents(ticketId: string, sessionId: string): Promise<unknown[]> {
+    const ticketsHandle = await this.access.getSubdirectory("tickets");
+    if (!ticketsHandle) return [];
+    try {
+      const ticketDir = await ticketsHandle.getDirectoryHandle(ticketId);
+      const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+      const sessionDir = await sessionsDir.getDirectoryHandle(sessionId);
+      const text = await this.#readText(sessionDir, "events.jsonl");
+      if (!text) return [];
+      return text.split("\n").filter(Boolean).map((line) => JSON.parse(line));
+    } catch {
+      return [];
+    }
+  }
+
+  async readInteraction(ticketId: string, sessionId: string): Promise<unknown | null> {
+    const ticketsHandle = await this.access.getSubdirectory("tickets");
+    if (!ticketsHandle) return null;
+    try {
+      const ticketDir = await ticketsHandle.getDirectoryHandle(ticketId);
+      const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+      const sessionDir = await sessionsDir.getDirectoryHandle(sessionId);
+      return await this.#readJson(sessionDir, "interaction.json");
+    } catch {
+      return null;
+    }
+  }
+
+  async #readJson(
+    dir: FileSystemDirectoryHandle,
+    filename: string
+  ): Promise<unknown | null> {
+    try {
+      const fileHandle = await dir.getFileHandle(filename);
+      const file = await fileHandle.getFile();
+      const text = await file.text();
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
+  }
+
+  async #readText(
+    dir: FileSystemDirectoryHandle,
+    filename: string
+  ): Promise<string | null> {
+    try {
+      const fileHandle = await dir.getFileHandle(filename);
+      const file = await fileHandle.getFile();
+      return await file.text();
+    } catch {
+      return null;
+    }
+  }
+}

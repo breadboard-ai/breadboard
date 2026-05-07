@@ -176,15 +176,30 @@ class GeminiStream:
 
         if not interaction_id:
             # Fallback: read from session store.
-            interaction_id = await self._session_store.get_resume_id(
-                self._session_id,
-            )
+            if isinstance(self._session_store, FileBasedSessionStore):
+                resume_id_file = self._session_store._session_dir(self._session_id) / "resume_id"
+                if resume_id_file.exists():
+                    interaction_id = resume_id_file.read_text(encoding="utf-8").strip()
+            else:
+                interaction_id = await self._session_store.get_resume_id(
+                    self._session_id,
+                )
 
-        if not interaction_id:
-            return
+        # Pure-read interaction snapshot to prevent destructive unlink during stream capture
+        if isinstance(self._interaction_store, FileBasedSessionStore):
+            sdir = self._interaction_store.base_dir / self._session_id
+            int_file = sdir / "interaction.json"
+            if int_file.exists():
+                try:
+                    data = json.loads(int_file.read_text(encoding="utf-8"))
+                    state = InteractionState.from_dict(data)
+                except Exception:
+                    state = None
+            else:
+                state = None
+        else:
+            state = await self._interaction_store.load(interaction_id)
 
-        # Single load — load() is destructive (pops the entry).
-        state = await self._interaction_store.load(interaction_id)
         if state is None:
             return
 
