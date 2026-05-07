@@ -13,8 +13,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from ..agent_file_system import FileSystemSnapshot
 from ..interaction_store import InteractionState
-from .store import SessionStatus, SessionStore
+from .store import SessionStatus, SessionStore, TurnCheckpoint
 
 __all__ = ["InMemorySessionStore"]
 
@@ -27,6 +28,8 @@ class _Session:
     events: list[dict[str, Any]] = field(default_factory=list)
     interaction: InteractionState | None = None
     resume_id: str | None = None
+    checkpoints: list[TurnCheckpoint] = field(default_factory=list)
+
 
 
 class InMemorySessionStore:
@@ -119,3 +122,48 @@ class InMemorySessionStore:
             if session.resume_id == interaction_id:
                 return sid
         return None
+
+    async def record_turn_boundary(
+        self,
+        session_id: str,
+        turn_index: int,
+        context_length: int,
+        file_system: FileSystemSnapshot | None,
+        token_metadata: dict[str, Any] | None = None,
+    ) -> None:
+        """Record a turn boundary checkpoint."""
+        session = self._sessions.get(session_id)
+        if not session:
+            raise KeyError(f"Session not found: {session_id}")
+
+        # Find if the checkpoint already exists for this turn
+        existing = None
+        for cp in session.checkpoints:
+            if cp["turn"] == turn_index:
+                existing = cp
+                break
+
+        if existing is not None:
+            # Update existing
+            if context_length > 0:
+                existing["context_length"] = context_length
+            if file_system is not None:
+                existing["file_system"] = file_system
+            if token_metadata is not None:
+                existing["token_metadata"] = token_metadata
+        else:
+            checkpoint: TurnCheckpoint = {
+                "turn": turn_index,
+                "context_length": context_length,
+                "file_system": file_system,
+                "token_metadata": token_metadata,
+            }
+            session.checkpoints.append(checkpoint)
+
+    async def get_turn_boundaries(self, session_id: str) -> list[TurnCheckpoint]:
+        """Retrieve the recorded checkpoints for a session."""
+        session = self._sessions.get(session_id)
+        if not session:
+            return []
+        return list(session.checkpoints)
+

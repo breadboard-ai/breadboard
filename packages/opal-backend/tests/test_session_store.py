@@ -159,3 +159,53 @@ async def test_save_interaction_overwrites(store):
 @pytest.mark.asyncio
 async def test_load_interaction_not_found(store):
     assert await store.load_interaction("nonexistent") is None
+
+
+# ── Turn Checkpoints ──
+
+
+@pytest.mark.asyncio
+async def test_turn_checkpoints(store):
+    await store.create("sess-1")
+    fs_snap = FileSystemSnapshot(files={}, routes={}, file_count=0)
+    await store.record_turn_boundary(
+        session_id="sess-1",
+        turn_index=0,
+        context_length=12,
+        file_system=fs_snap,
+        token_metadata={"promptTokenCount": 5},
+    )
+    await store.record_turn_boundary(
+        session_id="sess-1",
+        turn_index=1,
+        context_length=25,
+        file_system=None,
+    )
+
+    checkpoints = await store.get_turn_boundaries("sess-1")
+    assert len(checkpoints) == 2
+    assert checkpoints[0]["turn"] == 0
+    assert checkpoints[0]["context_length"] == 12
+    assert checkpoints[0]["file_system"] is not None
+    assert checkpoints[0]["token_metadata"] == {"promptTokenCount": 5}
+
+    assert checkpoints[1]["turn"] == 1
+    assert checkpoints[1]["context_length"] == 25
+    assert checkpoints[1]["file_system"] is None
+    assert checkpoints[1]["token_metadata"] is None
+
+    # Test update
+    await store.record_turn_boundary(
+        session_id="sess-1",
+        turn_index=1,
+        context_length=0,
+        file_system=None,
+        token_metadata={"totalTokens": 42},
+    )
+    checkpoints2 = await store.get_turn_boundaries("sess-1")
+    assert len(checkpoints2) == 2
+    assert checkpoints2[1]["turn"] == 1
+    assert checkpoints2[1]["context_length"] == 25  # Unchanged since 0 was passed
+    assert checkpoints2[1]["token_metadata"] == {"totalTokens": 42}  # Updated
+
+

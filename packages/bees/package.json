@@ -14,7 +14,8 @@
     "dev:hivetool": "cd hivetool && npm run dev",
     "create-hive": "node scripts/create-hive.mjs",
     "test:python": ".venv/bin/python -m pytest tests/ -v",
-    "eval": ".venv/bin/python -m bees.eval"
+    "eval": ".venv/bin/python -m bees.eval",
+    "lint": "cd hivetool && npm run lint"
   },
   "wireit": {
     "setup": {

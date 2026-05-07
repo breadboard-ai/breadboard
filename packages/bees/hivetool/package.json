@@ -7,7 +7,8 @@
     "build": "vite build",
     "build:test": "tsc -p tsconfig.test.json",
     "test": "npm run build:test && node --test './dist/tsc/hivetool/tests/**/*.test.js'",
-    "test:python": "echo 'No python tests in hivetool'"
+    "test:python": "echo 'No python tests in hivetool'",
+    "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {
     "@lit-labs/signals": "^0.2.0",
