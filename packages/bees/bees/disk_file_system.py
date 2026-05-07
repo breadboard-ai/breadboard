@@ -341,6 +341,42 @@ class DiskFileSystem:
             file_count=len(files),
         )
 
+    def hydrate_from_snapshot(self, snapshot: FileSystemSnapshot) -> None:
+        """Hydrate the disk workspace from a snapshot.
+
+        Clears any existing files on disk before writing snapshot files.
+        """
+        # Clear existing files on disk (excluding hidden files or skipped directories)
+        if self._work_dir.exists():
+            for item in self._work_dir.rglob("*"):
+                if item.is_file():
+                    rel = item.relative_to(self._work_dir)
+                    if not any(part.startswith(".") or part in _SKIP_DIRS for part in rel.parts):
+                        item.unlink(missing_ok=True)
+
+            # Clean up empty directories
+            for item in sorted(self._work_dir.rglob("*"), key=lambda p: len(p.parts), reverse=True):
+                if item.is_dir():
+                    try:
+                        item.rmdir()
+                    except OSError:
+                        pass  # skip if not empty
+
+        # Re-create files from snapshot
+        for path, desc in snapshot.files.items():
+            disk_path = self._work_dir / path
+            disk_path.parent.mkdir(parents=True, exist_ok=True)
+
+            if desc.type == "inlineData":
+                raw = base64.b64decode(desc.data)
+                disk_path.write_bytes(raw)
+            else:
+                disk_path.write_text(desc.data, encoding="utf-8")
+
+        # Restore memory state
+        self._routes = dict(snapshot.routes)
+        self._file_count = snapshot.file_count
+
     # ---- Private helpers ----
 
     def _resolve_write(self, name: str) -> tuple[str, str]:

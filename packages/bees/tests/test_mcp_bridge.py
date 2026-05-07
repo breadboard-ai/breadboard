@@ -172,6 +172,14 @@ class TestProxyHandler:
         conn._session.call_tool.side_effect = ConnectionError("Server down")
         conn._ready.set()
 
+        # Patch disconnect/connect to be no-ops that keep session alive.
+        async def fake_disconnect():
+            pass
+        async def fake_connect():
+            conn._ready.set()
+        conn.disconnect = fake_disconnect
+        conn.connect = fake_connect
+
         handler = _make_proxy_handler(conn, "call")
         # Use 0 retries via the conn's call_tool default, but the handler
         # catches the final exception and returns an error dict.

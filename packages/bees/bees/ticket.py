@@ -70,6 +70,9 @@ class TicketMetadata:
     paused_from: str | None = None
     """The status this task had before it was paused (set by pause-all / pause-task)."""
 
+    active_session: str | None = None
+    """The UUID of the active session for this task."""
+
     runner: RunnerType = "generate"
     """Which session runner to use: ``generate`` (batch) or ``live`` (Gemini Live API)."""
 
@@ -117,6 +120,7 @@ class TicketMetadata:
             slug=data.get("slug"),
             pending_context_updates=data.get("pending_context_updates"),
             paused_from=data.get("paused_from"),
+            active_session=data.get("active_session"),
             runner=data.get("runner", "generate"),
             voice=data.get("voice"),
         )
@@ -136,17 +140,25 @@ class Ticket:
         """The working filesystem directory for this ticket.
 
         If ``owning_task_id`` is set, the ticket shares its parent's
-        workspace at ``tickets/{owning_task_id}/filesystem``.
-        Otherwise it uses its own directory.
+        workspace. Otherwise it uses its own directory.
         """
         parent = self.metadata.owning_task_id
-        
-        if parent:
-            base = self.dir.parent / parent / "filesystem"
-        else:
-            base = self.dir / "filesystem"
-            
-        return base
+        target_dir = self.dir.parent / parent if parent else self.dir
+
+        # Read metadata.json from target_dir to check active_session
+        metadata_file = target_dir / "metadata.json"
+        active_session = None
+        if metadata_file.is_file():
+            try:
+                mdata = json.loads(metadata_file.read_text(encoding="utf-8"))
+                active_session = mdata.get("active_session")
+            except Exception:
+                pass
+
+        if active_session:
+            return target_dir / "sessions" / active_session / "workspace"
+
+        return target_dir / "filesystem"
 
     @property
     def objective_path(self) -> Path:

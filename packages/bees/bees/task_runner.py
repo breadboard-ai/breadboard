@@ -15,6 +15,7 @@ import asyncio
 import json
 import logging
 import sys
+import uuid
 from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
 
@@ -29,12 +30,10 @@ from bees.provisioner import provision_session
 from bees.segments import resolve_segments
 from bees.session import (
     append_chat_log,
-    clear_resume_state,
     drain_session,
     extract_files,
-    load_resume_state,
-    save_resume_state,
 )
+from opal_backend.sessions.file_store import FileBasedSessionStore
 from bees.subagent_scope import SubagentScope
 from bees.task_store import TaskStore
 from bees.ticket import Ticket
@@ -87,6 +86,10 @@ class TaskRunner:
         if fresh and fresh.metadata.title != task.metadata.title:
             task.metadata.title = fresh.metadata.title
 
+        # Set active_session on first run
+        if task.metadata.active_session is None:
+            task.metadata.active_session = str(uuid.uuid4())
+
         task.metadata.status = "running"
         self._store.save_metadata(task)
         await self._emit(TaskStarted(task=task))
@@ -102,6 +105,7 @@ class TaskRunner:
                 ticket_id=task.id,
                 ticket_dir=task.dir,
                 fs_dir=task.fs_dir,
+                session_id=task.metadata.active_session,
                 function_filter=task.metadata.functions,
                 allowed_skills=task.metadata.skills,
                 model=task.metadata.model,
@@ -133,9 +137,6 @@ class TaskRunner:
             finally:
                 self._active_streams.pop(task.id, None)
 
-            resume_state = stream.resume_state()
-            if resume_state:
-                save_resume_state(task.dir, resume_state)
         except Exception as exc:
             task.metadata.status = "failed"
             task.metadata.completed_at = datetime.now(timezone.utc).isoformat()
@@ -189,19 +190,105 @@ class TaskRunner:
             ids = response["selectedIds"]
             append_chat_log(task.dir, "user", ", ".join(ids))
 
-        # Load opaque resume state from previous suspend.
-        state = load_resume_state(task.dir)
-        if state is None:
-            task.metadata.status = "failed"
-            task.metadata.error = "No saved session state found"
-            self._store.save_metadata(task)
-            return SessionResult(
-                session_id="",
-                status="failed",
-                events=0,
-                output="",
-                error="No saved session state found",
-            )
+        # Dynamic inline migration for legacy tasks
+        if task.metadata.active_session is None:
+            state_path = task.dir / "session_state.json"
+            if not state_path.exists():
+                task.metadata.status = "failed"
+                task.metadata.error = "No saved session state or active session found"
+                self._store.save_metadata(task)
+                return SessionResult(
+                    session_id="",
+                    status="failed",
+                    events=0,
+                    output="",
+                    error="No saved session state found",
+                )
+            try:
+                state_bytes = state_path.read_bytes()
+                state_data = json.loads(state_bytes.decode("utf-8"))
+                session_id = state_data["session_id"]
+                interaction_id = state_data["interaction_id"]
+                interaction_state = state_data["interaction_state"]
+
+                logger.info("Migrating legacy task %s to session-specific path...", task.id[:8])
+
+                # Initialize session directory
+                sdir = task.dir / "sessions" / session_id
+                sdir.mkdir(parents=True, exist_ok=True)
+
+                # Write status, resume_id, interaction.json
+                (sdir / "status").write_text("suspended", encoding="utf-8")
+                (sdir / "resume_id").write_text(interaction_id, encoding="utf-8")
+                (sdir / "interaction.json").write_text(
+                    json.dumps(interaction_state, ensure_ascii=False, indent=2),
+                    encoding="utf-8"
+                )
+
+                # Migrate filesystem workspace
+                legacy_fs = task.dir / "filesystem"
+                if legacy_fs.exists():
+                    new_ws = sdir / "workspace"
+                    new_ws.parent.mkdir(parents=True, exist_ok=True)
+                    legacy_fs.rename(new_ws)
+
+                # Update task metadata
+                task.metadata.active_session = session_id
+                self._store.save_metadata(task)
+
+                # Clean up legacy file
+                state_path.unlink(missing_ok=True)
+                state = state_bytes
+            except Exception as e:
+                task.metadata.status = "failed"
+                task.metadata.error = f"Migration failed: {e}"
+                self._store.save_metadata(task)
+                return SessionResult(
+                    session_id="",
+                    status="failed",
+                    events=0,
+                    output="",
+                    error=f"Migration failed: {e}",
+                )
+        else:
+            # Load and construct state bytes dynamically from the persistent session store
+            session_id = task.metadata.active_session
+            sdir = task.dir / "sessions" / session_id
+            resume_id_file = sdir / "resume_id"
+            int_file = sdir / "interaction.json"
+
+            if not resume_id_file.exists() or not int_file.exists():
+                task.metadata.status = "failed"
+                task.metadata.error = "No active resume session files found"
+                self._store.save_metadata(task)
+                return SessionResult(
+                    session_id="",
+                    status="failed",
+                    events=0,
+                    output="",
+                    error="No active resume session files found",
+                )
+
+            try:
+                interaction_id = resume_id_file.read_text(encoding="utf-8").strip()
+                int_data = json.loads(int_file.read_text(encoding="utf-8"))
+                state_dict = {
+                    "session_id": session_id,
+                    "interaction_id": interaction_id,
+                    "interaction_state": int_data,
+                }
+                state = json.dumps(state_dict, ensure_ascii=False).encode("utf-8")
+            except Exception as e:
+                task.metadata.status = "failed"
+                task.metadata.error = f"Failed to load session files: {e}"
+                self._store.save_metadata(task)
+                return SessionResult(
+                    session_id="",
+                    status="failed",
+                    events=0,
+                    output="",
+                    error=f"Failed to load session files: {e}",
+                )
 
         task.metadata.status = "running"
         task.metadata.assignee = "agent"
@@ -234,6 +321,7 @@ class TaskRunner:
                 ticket_id=task.id,
                 ticket_dir=task.dir,
                 fs_dir=task.fs_dir,
+                session_id=task.metadata.active_session,
                 function_filter=task.metadata.functions,
                 allowed_skills=task.metadata.skills,
                 on_events_broadcast=self._on_events_broadcast,
@@ -270,13 +358,8 @@ class TaskRunner:
             finally:
                 self._active_streams.pop(task.id, None)
 
-            resume_state = stream.resume_state()
-            if resume_state:
-                save_resume_state(task.dir, resume_state)
-            else:
-                clear_resume_state(task.dir)
-                # Clean up response file.
-                response_path.unlink(missing_ok=True)
+            # Clean up response file.
+            response_path.unlink(missing_ok=True)
         except Exception as exc:
             task.metadata.status = "failed"
             task.metadata.completed_at = datetime.now(timezone.utc).isoformat()

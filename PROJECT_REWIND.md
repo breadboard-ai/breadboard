@@ -210,7 +210,7 @@ GeminiRunner.run()
 
 ---
 
-## Phase 1 — FileBasedSessionStore
+## Phase 1 — FileBasedSessionStore ✅
 
 ### 🎯 Objective
 
@@ -231,7 +231,7 @@ directory with status, events.jsonl, interaction.json (containing a
 
 #### opal-backend
 
-- [ ] `FileBasedSessionStore` — new `SessionStore` implementation in
+- [x] `FileBasedSessionStore` — new `SessionStore` implementation in
       `opal_backend/sessions/file_store.py`. Implements **both** the
       `SessionStore` and `InteractionStore` protocols — in the file-based path,
       there's no reason for two separate stores mapping to the same directory.
@@ -241,50 +241,50 @@ directory with status, events.jsonl, interaction.json (containing a
   - `interaction.json` — durable `InteractionState.to_dict()` snapshot
     (includes `file_system: FileSystemSnapshot`). Persists for inspection.
   - `resume_id` — plain text file
-- [ ] **Pop semantics resolution**: `SessionStore.save_interaction()` writes the
+- [x] **Pop semantics resolution**: `SessionStore.save_interaction()` writes the
       durable `interaction.json` (persists forever for inspection). The
       `InteractionStore.load()` pop semantics are handled via a separate
       ephemeral marker — `load()` clears the `resume_id` file (marking the
       resume as consumed) but does **not** delete `interaction.json`. This
       preserves both the protocol contract and the durability requirement.
-- [ ] Add `SUPERSEDED = "superseded"` to the `SessionStatus` enum in
+- [x] Add `SUPERSEDED = "superseded"` to the `SessionStatus` enum in
       `store.py`. This is a protocol-level addition.
-- [ ] Tests following `tests/test_session_store.py` pattern.
+- [x] Tests following `tests/test_session_store.py` pattern.
 
 #### bees — session store wiring
 
-- [ ] `GeminiRunner` — accept store factories instead of hardcoding
+- [x] `GeminiRunner` — accept store factories instead of hardcoding
       `InMemorySessionStore()`. Default to in-memory for backward compat.
-- [ ] `SessionConfiguration` — add optional `session_id: str | None` field.
+- [x] `SessionConfiguration` — add optional `session_id: str | None` field.
       When provided, `GeminiRunner.run()` uses this ID instead of generating
       a new UUID. Required for the fork code path (Phase 4), where the mutation
       handler pre-creates the session directory with a known ID.
-- [ ] `TaskRunner` — provide file-backed store factories rooted at
+- [x] `TaskRunner` — provide file-backed store factories rooted at
       `tickets/{id}/sessions/{session-id}/`. Track the active session ID in task
       metadata.
-- [ ] Task metadata — add `active_session` field to `TicketMetadata`. First run
+- [x] Task metadata — add `active_session` field to `TicketMetadata`. First run
       generates a session ID; subsequent resumes reuse it.
-- [ ] Remove `save_resume_state()` / `load_resume_state()` /
+- [x] Remove `save_resume_state()` / `load_resume_state()` /
       `clear_resume_state()` from `bees/session.py`. The file-based store
       handles this.
-- [ ] `resume_task()` — load resume state from the file-based store instead of
+- [x] `resume_task()` — load resume state from the file-based store instead of
       reading `session_state.json`. The `GeminiRunner.resume()` method reads
       from the interaction store directly rather than receiving opaque bytes.
-- [ ] Migration: handle existing `session_state.json` files gracefully (convert
+- [x] Migration: handle existing `session_state.json` files gracefully (convert
       on first access or fall back).
 
 #### bees — filesystem as session state
 
-- [ ] `DiskFileSystem` — capture `FileSystemSnapshot` into the
+- [x] `DiskFileSystem` — capture `FileSystemSnapshot` into the
       `InteractionState` at suspend points. The `file_system` field is no longer
       `None` for disk-backed systems.
-- [ ] On resume, hydrate the `DiskFileSystem` from the `InteractionState`'s
+- [x] On resume, hydrate the `DiskFileSystem` from the `InteractionState`s
       `file_system` snapshot instead of relying on leftover disk state.
-- [ ] Rework `Ticket.fs_dir` — the runtime workspace moves from
+- [x] Rework `Ticket.fs_dir` — the runtime workspace moves from
       `tickets/{id}/filesystem/` to `tickets/{id}/sessions/{session-id}/workspace/`.
       On session switch (fork, re-activation), the workspace is hydrated from
       the new session's `FileSystemSnapshot`.
-- [ ] **Subtask filesystem sharing**: The current `owning_task_id` pattern
+- [x] **Subtask filesystem sharing**: The current `owning_task_id` pattern
       (ticket.py:145) lets subtasks share a parent's `filesystem/`. With
       per-session filesystem ownership, subtasks need to share the parent
       _session's_ workspace, not just the parent task's directory. Fix:
@@ -324,6 +324,10 @@ the status is live.
 
 ### Changes
 
+#### common
+
+- [ ] `TaskData` — add optional `active_session?: string` field to the shared `TaskData` interface in `common/types.ts` to propagate the active session UUID reactively.
+
 #### hivetool
 
 - [ ] `SessionStoreReader` — new data layer in `hivetool/src/data/` that reads
@@ -332,6 +336,8 @@ the status is live.
   - Reads each session's `status`, `events.jsonl`, `interaction.json`, and
     `lineage.json`.
   - Provides a signal-backed view of the active session and lineage.
+- [ ] `TicketStore` workspace resolution — rework `readTree()`, `readFileContent()`, and `readSurface()` to dynamically resolve filesystem directory handles from `sessions/{active_session}/workspace/` when `active_session` is present in metadata, with a fallback to the legacy `filesystem/` directory.
+- [ ] `TicketStore` observer path translation — rework `#startObserver()` to parse new session-specific change events with prefix `[ticketId, "sessions", sessionId, "workspace", ...path]` and map them correctly to `filesystemChange` signals.
 - [ ] Session lineage view — show the session list for a task: active session
       highlighted, superseded sessions listed with fork-point info.
 - [ ] Session detail — render the active session's conversation from
