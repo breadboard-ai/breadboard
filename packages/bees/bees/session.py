@@ -459,37 +459,7 @@ async def drain_session(
     )
 
 
-# ---------------------------------------------------------------------------
-# Resume state persistence
-# ---------------------------------------------------------------------------
 
-RESUME_STATE_FILENAME = "session_state.json"
-
-
-def save_resume_state(ticket_dir: Path, state: bytes) -> None:
-    """Persist opaque resume state to the ticket directory.
-
-    The state is written as raw bytes — bees does not interpret the
-    contents.  The runner deserializes its own state on resume.
-    """
-    state_path = ticket_dir / RESUME_STATE_FILENAME
-    state_path.parent.mkdir(parents=True, exist_ok=True)
-    state_path.write_bytes(state)
-
-
-def load_resume_state(ticket_dir: Path) -> bytes | None:
-    """Load saved resume state, or ``None`` if not found."""
-    state_path = ticket_dir / RESUME_STATE_FILENAME
-    if not state_path.exists():
-        return None
-    return state_path.read_bytes()
-
-
-def clear_resume_state(ticket_dir: Path) -> None:
-    """Remove saved resume state (after successful resume)."""
-    state_path = ticket_dir / RESUME_STATE_FILENAME
-    if state_path.exists():
-        state_path.unlink()
 
 
 

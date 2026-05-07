@@ -84,6 +84,7 @@ class TestSessionConfigurationConformance(unittest.TestCase):
             "model",
             "file_system",
             "ticket_id",
+            "session_id",
             "ticket_dir",
             "label",
             "log_path",

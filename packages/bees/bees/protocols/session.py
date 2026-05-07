@@ -150,6 +150,9 @@ class SessionConfiguration:
     ticket_id: str | None = None
     """Unique identifier for the task being executed."""
 
+    session_id: str | None = None
+    """Unique identifier for the active session."""
+
     ticket_dir: Path | None = None
     """Path to the task's directory on disk."""
 

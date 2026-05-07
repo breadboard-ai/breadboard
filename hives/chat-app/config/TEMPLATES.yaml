@@ -23,6 +23,8 @@
     - run-in-sandbox
     - surface
     - use-opal-sdk
+  functions:
+    - system.*
 
 - name: chat-chat
   title: Chat Chat

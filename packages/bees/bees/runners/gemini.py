@@ -22,11 +22,11 @@ import asyncio
 import json
 import uuid
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Any, Callable
 
 from opal_backend.local.backend_client_impl import HttpBackendClient
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
-from opal_backend.interaction_store import InteractionState
+from opal_backend.interaction_store import InteractionState, InteractionStore
 from opal_backend.sessions.api import (
     Subscribers,
     new_session,
@@ -35,6 +35,8 @@ from opal_backend.sessions.api import (
     start_session,
 )
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
+from opal_backend.sessions.store import SessionStore
+from opal_backend.sessions.file_store import FileBasedSessionStore
 
 from bees.protocols.session import (
     SUSPEND_TYPES,
@@ -72,8 +74,8 @@ class GeminiStream:
         task: asyncio.Task[None],
         context_queue: asyncio.Queue[list[dict[str, Any]]],
         session_id: str,
-        session_store: InMemorySessionStore,
-        interaction_store: InMemoryInteractionStore,
+        session_store: SessionStore,
+        interaction_store: InteractionStore,
     ) -> None:
         self._queue = queue
         self._task = task
@@ -227,8 +229,15 @@ class GeminiRunner:
     The runner holds only the ``HttpBackendClient`` — shared across sessions.
     """
 
-    def __init__(self, backend: HttpBackendClient) -> None:
+    def __init__(
+        self,
+        backend: HttpBackendClient,
+        session_store_factory: Callable[[SessionConfiguration], SessionStore] | None = None,
+        interaction_store_factory: Callable[[SessionConfiguration], InteractionStore] | None = None,
+    ) -> None:
         self._backend = backend
+        self._session_store_factory = session_store_factory
+        self._interaction_store_factory = interaction_store_factory
 
     async def run(
         self,
@@ -242,12 +251,24 @@ class GeminiRunner:
         4. Start ``start_session()`` as a background task.
         5. Return a ``GeminiStream`` wrapping the queue.
         """
-        session_store = InMemorySessionStore()
-        interaction_store = InMemoryInteractionStore()
+        if self._session_store_factory:
+            session_store = self._session_store_factory(config)
+        elif config.ticket_dir:
+            session_store = FileBasedSessionStore(config.ticket_dir / "sessions")
+        else:
+            session_store = InMemorySessionStore()
+
+        if self._interaction_store_factory:
+            interaction_store = self._interaction_store_factory(config)
+        elif config.ticket_dir:
+            interaction_store = FileBasedSessionStore(config.ticket_dir / "sessions")
+        else:
+            interaction_store = InMemoryInteractionStore()
+
         subscribers = Subscribers()
         context_queue: asyncio.Queue[list[dict[str, Any]]] = asyncio.Queue()
 
-        session_id = str(uuid.uuid4())
+        session_id = config.session_id or str(uuid.uuid4())
 
         await new_session(
             session_id=session_id,
@@ -308,8 +329,27 @@ class GeminiRunner:
             state_data["interaction_state"],
         )
 
-        session_store = InMemorySessionStore()
-        interaction_store = InMemoryInteractionStore()
+        # Hydrate the disk workspace from the captured snapshot on resume.
+        if (
+            interaction_state.file_system is not None
+            and hasattr(config.file_system, "hydrate_from_snapshot")
+        ):
+            config.file_system.hydrate_from_snapshot(interaction_state.file_system)
+
+        if self._session_store_factory:
+            session_store = self._session_store_factory(config)
+        elif config.ticket_dir:
+            session_store = FileBasedSessionStore(config.ticket_dir / "sessions")
+        else:
+            session_store = InMemorySessionStore()
+
+        if self._interaction_store_factory:
+            interaction_store = self._interaction_store_factory(config)
+        elif config.ticket_dir:
+            interaction_store = FileBasedSessionStore(config.ticket_dir / "sessions")
+        else:
+            interaction_store = InMemoryInteractionStore()
+
         subscribers = Subscribers()
         context_queue: asyncio.Queue[list[dict[str, Any]]] = asyncio.Queue()
 
