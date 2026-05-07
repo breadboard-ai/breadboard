@@ -975,6 +975,8 @@ class BeesApp extends SignalWatcher(LitElement) {
         return html`<bees-log-detail
           .data=${this.logStore.selectedView.get()}
           .stateAccess=${this.stateAccess}
+          .ticketStore=${this.ticketStore}
+          .mutationClient=${this.mutationClient}
           .sessionId=${this.logStore.selectedSessionId.get()}
         ></bees-log-detail>`;
       case "templates":

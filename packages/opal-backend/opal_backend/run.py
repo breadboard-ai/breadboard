@@ -143,18 +143,35 @@ async def run(
     Yields:
         Typed ``AgentEvent`` instances.
     """
-    resolved_flags = flags or {}
+    state = None
+    if session_id and hasattr(store, "load_interaction"):
+        state = await store.load_interaction(session_id)
 
-    if file_system is None:
-        file_system = AgentFileSystem()
+    if state:
+        resolved_flags = state.flags
+        run_contents = state.contents
+        if file_system is None:
+            file_system = AgentFileSystem.from_snapshot(state.file_system)
+        elif state.file_system is not None and hasattr(file_system, "hydrate_from_snapshot"):
+            file_system.hydrate_from_snapshot(state.file_system)
+        task_tree_manager = TaskTreeManager.from_snapshot(
+            state.task_tree, file_system
+        )
+        consents_granted = state.consents_granted
+    else:
+        resolved_flags = dict(flags or {})
+        if file_system is None:
+            file_system = AgentFileSystem()
 
-    # Seed the file system with any initial files provided by the caller
-    # (e.g. skill definitions placed at /mnt/skills/*).
-    if initial_files:
-        for name, content in initial_files.items():
-            file_system.write(name, content)
+        # Seed the file system with any initial files provided by the caller
+        # (e.g. skill definitions placed at /mnt/skills/*).
+        if initial_files:
+            for name, content in initial_files.items():
+                file_system.write(name, content)
 
-    task_tree_manager = TaskTreeManager(file_system)
+        task_tree_manager = TaskTreeManager(file_system)
+        consents_granted = None
+
     controller = LoopController()
 
     # Convert segments to pidgin text using the loop's own file system.
@@ -197,7 +214,8 @@ async def run(
         session_id = str(uuid.uuid4())
     chat_mgr = ChatLogManager(sheet_manager, session_id=session_id)
     await chat_mgr.seed()
-    run_contents: list[dict] = [objective]
+    if not state:
+        run_contents = [objective]
     file_system.add_system_file(
         CHAT_LOG_PATH, lambda: chat_mgr.get_chat_log(run_contents),
     )
@@ -210,6 +228,7 @@ async def run(
         flags=resolved_flags,
         sheet_manager=sheet_manager,
         on_chat_entry=chat_mgr.on_chat_entry,
+        consents_granted=consents_granted,
         graph_url=graph.get("url", ""),
         extra_groups=extra_groups,
         function_filter=function_filter,
@@ -226,6 +245,7 @@ async def run(
     run_args = AgentRunArgs(
         objective=objective,
         function_groups=function_groups,
+        contents=run_contents,
         singleton_cached_content_name=cached_name,
         model=model,
         context_queue=context_queue,
@@ -241,10 +261,12 @@ async def run(
         flags=resolved_flags,
         graph=graph,
         session_id=session_id,
+        consents_granted=consents_granted,
         function_filter=function_filter,
         model=model,
     ):
         yield event
+
 
 
 async def resume(

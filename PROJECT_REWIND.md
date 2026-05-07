@@ -457,7 +457,7 @@ and inspectable in hivetool.
 
 #### bees
 
-- [ ] New hot mutation type: `rollback-to-turn`
+- [x] New hot mutation type: `rollback-to-turn`
   - Payload: `{type: "rollback-to-turn", task_id: str, turn_index: int}`
   - Handler in `mutations.py`:
     0. **Guard**: reject if `metadata.status != "suspended"`. Rollback on a
@@ -492,22 +492,55 @@ and inspectable in hivetool.
 
 #### GeminiRunner
 
-- [ ] `run()` — when the store already contains an `InteractionState` (seeded by
+- [x] `run()` — when the store already contains an `InteractionState` (seeded by
       the fork), use its `contents` as the initial context and hydrate the
       `DiskFileSystem` from its `file_system` snapshot. This is the "fork" code
       path.
 
 #### hivetool UI
 
-- [ ] `log-detail.ts` — add a ⏪ button in `renderTurnHeader()`. On click,
+- [x] `log-detail.ts` — add a ⏪ button in `renderTurnHeader()`. On click,
       dispatch a `rollback-to-turn` mutation with the absolute turn index.
-- [ ] Confirm dialog: "Fork at turn N? A new session will be created and turns
+- [x] Confirm dialog: "Fork at turn N? A new session will be created and turns
       N+1 through M will be preserved in the superseded session."
-- [ ] Disable rollback buttons when the box is not active (no mutation
+- [x] Disable rollback buttons when the box is not active (no mutation
       processing).
-- [ ] Visual feedback: session lineage updates to show the new active session
+- [x] Visual feedback: session lineage updates to show the new active session
       and the superseded ancestor.
-- [ ] Wire `rollback-to-turn` mutation type in `mutation-client.ts`.
+- [x] Wire `rollback-to-turn` mutation type in `mutation-client.ts`.
+
+---
+
+## Phase 5 — Session Clean Up
+
+### 🎯 Objective
+
+Eliminate the session dual-identity by making the persistent session store (`tickets/*/sessions/*`) Hivetool's authoritative logs source, deprecating leftover eval log file scanning, and grouping session runs by tasks in Hivetool's left Sessions sidebar.
+
+### Changes
+
+- [ ] **LogStore scanning refactor**: Scan the `tickets/` task subdirectories instead of the legacy `logs/` leftover directory. Load each task's metadata and all its session UUID subdirectories.
+- [ ] **Sidebar task-grouped rendering**: Renders task headers (task title + status badge) with nested, clickable session cards in `log-list.ts`.
+- [ ] **Prune leftover logs**: Drop the deprecated `logs/` folder and its `.log.json` parsing code entirely from Hivetool's data store and observer path.
+- [ ] **Unify routing & selection highlights**:
+  - Update the `"session"` chip in task details ([ticket-pane.ts](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/hivetool/src/ui/ticket-pane.ts)) to display and route using the **actual active session UUID** instead of the `ticket.id`.
+  - Highlight the parent task card correctly in the Sessions sidebar when inspecting any of its session UUIDs or superseded ancestor lineages.
+
+---
+
+## Phase 6 — UI Polish
+
+### 🎯 Objective
+
+Smooth out and polish all user interactions and visual components of the session fork tree, lineage records, and rollback timeline transitions to ensure a premium, state-of-the-art developer experience in Hivetool.
+
+### Changes
+
+- [ ] **Rewind Button Presentation & Positioning**: Styling of the `⏪` button next to turn labels to look premium, aligning with Hivetool's dark-mode styling.
+- [ ] **Session Lineage Tree Visuals**: Enhance the lineage component to render clear icons and visual badges for different session states (e.g., `"active"`, `"superseded"`).
+- [ ] **Inherited Turns Visual Cue**: Render a subtle visual indicator or badge next to turns that were cloned from an ancestor session, making the origin of the history clear.
+- [ ] **Premium Dialog Confirmation**: Replace the default browser `confirm()` prompt with a custom, elegant Lit modal confirmation dialog to prevent freezing the main UI thread.
+- [ ] **Timeline Navigation Focus**: Auto-navigate the timeline and select the newly forked active session after the rollback completes.
 
 ---
 

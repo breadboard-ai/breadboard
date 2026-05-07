@@ -182,13 +182,22 @@ class TaskRunner:
         response = json.loads(response_path.read_text())
 
         # Log user's reply to the chat log.
-        # Text replies carry "text"; choice replies carry "selectedIds".
-        user_text = response.get("text", "")
+        # Read from structured "input" (text) or "selected" (choice) response payload formats.
+        user_text = ""
+        llm_content = response.get("input")
+        if isinstance(llm_content, dict):
+            parts = llm_content.get("parts", [])
+            user_text = next((p.get("text", "") for p in parts if "text" in p), "")
+        
+        selected_obj = response.get("selected")
+        selected_ids = []
+        if isinstance(selected_obj, dict) and "ids" in selected_obj:
+            selected_ids = selected_obj["ids"]
+
         if user_text:
             append_chat_log(task.dir, "user", user_text)
-        elif "selectedIds" in response:
-            ids = response["selectedIds"]
-            append_chat_log(task.dir, "user", ", ".join(ids))
+        elif selected_ids:
+            append_chat_log(task.dir, "user", ", ".join(selected_ids))
 
         # Dynamic inline migration for legacy tasks
         if task.metadata.active_session is None:

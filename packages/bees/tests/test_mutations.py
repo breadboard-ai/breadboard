@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import pytest
 from pathlib import Path
@@ -108,7 +109,7 @@ class TestReset:
 
         _write_mutation(hive, {"type": "reset"})
         manager = MutationManager(hive)
-        manager.process_all()
+        asyncio.run(manager.process_all())
 
         assert list((hive / "tickets").iterdir()) == []
         assert list((hive / "logs").iterdir()) == []
@@ -116,7 +117,7 @@ class TestReset:
     def test_reset_is_cold(self, hive):
         _write_mutation(hive, {"type": "reset"})
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
         assert outcome.cold_pending is True
         assert outcome.hot_processed == 0
 
@@ -141,7 +142,7 @@ class TestRespond:
             "response": {"text": "hello"},
         })
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
 
         assert outcome.hot_processed == 1
 
@@ -158,7 +159,7 @@ class TestRespond:
             "response": {"text": "hello"},
         })
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
 
         # Should fail gracefully.
         assert outcome.hot_processed == 0
@@ -170,7 +171,7 @@ class TestRespond:
             "task_id": task_id,
         })
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
 
         assert outcome.hot_processed == 0
 
@@ -192,7 +193,7 @@ class TestCreateGroup:
             ],
         })
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
 
         assert outcome.hot_processed == 1
         assert "a" in outcome.created_tasks
@@ -216,7 +217,7 @@ class TestCreateGroup:
             ],
         })
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
 
         assert outcome.hot_processed == 1
         store = TaskStore(hive)
@@ -236,7 +237,7 @@ class TestCreateGroup:
             ],
         })
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
 
         assert outcome.hot_processed == 0
 
@@ -257,7 +258,7 @@ class TestPauseAll:
 
         _write_mutation(hive, {"type": "pause-all"})
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
 
         assert outcome.hot_processed == 1
 
@@ -283,7 +284,7 @@ class TestPauseAll:
 
         _write_mutation(hive, {"type": "resume-paused"})
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
 
         assert outcome.hot_processed == 1
 
@@ -297,7 +298,7 @@ class TestPauseAll:
 
         _write_mutation(hive, {"type": "cancel-all"})
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
 
         assert outcome.hot_processed == 1
 
@@ -310,7 +311,7 @@ class TestPauseAll:
 
         _write_mutation(hive, {"type": "resume-cancelled"})
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
 
         assert outcome.hot_processed == 1
         assert store.get(id1).metadata.status == "running"
@@ -330,7 +331,7 @@ class TestPauseTask:
 
         _write_mutation(hive, {"type": "pause-task", "task_id": id1})
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
 
         assert outcome.hot_processed == 1
         assert store.get(id1).metadata.status == "paused"
@@ -343,7 +344,7 @@ class TestPauseTask:
 
         _write_mutation(hive, {"type": "pause-task", "task_id": id1})
         manager = MutationManager(hive)
-        manager.process_inline()
+        asyncio.run(manager.process_inline())
 
         # Should remain completed.
         assert store.get(id1).metadata.status == "completed"
@@ -356,7 +357,7 @@ class TestPauseTask:
 
         _write_mutation(hive, {"type": "resume-task", "task_id": id1})
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
 
         assert outcome.hot_processed == 1
         assert store.get(id1).metadata.status == "suspended"
@@ -367,7 +368,7 @@ class TestPauseTask:
 
         _write_mutation(hive, {"type": "resume-task", "task_id": id1})
         manager = MutationManager(hive)
-        manager.process_inline()
+        asyncio.run(manager.process_inline())
 
         # Should remain available.
         assert store.get(id1).metadata.status == "available"
@@ -375,8 +376,163 @@ class TestPauseTask:
     def test_pause_task_missing_id(self, hive):
         _write_mutation(hive, {"type": "pause-task"})
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
         assert outcome.hot_processed == 0
+
+
+# ---------------------------------------------------------------------------
+# Rollback to Turn
+# ---------------------------------------------------------------------------
+
+
+class TestRollbackToTurn:
+    """rollback-to-turn mutation forks a session at a prior turn boundary."""
+
+    def test_rollback_guard_rejects_non_suspended(self, hive, store):
+        task_id = _create_task(store, status="available")
+        
+        _write_mutation(hive, {
+            "type": "rollback-to-turn",
+            "task_id": task_id,
+            "turn_index": 1,
+        })
+        manager = MutationManager(hive)
+        outcome = asyncio.run(manager.process_inline())
+
+        assert outcome.hot_processed == 0
+        
+        # Task should remain available
+        assert store.get(task_id).metadata.status == "available"
+
+    def test_rollback_successful_fork(self, hive, store):
+        # Create a suspended task
+        task_id = _create_task(store, status="suspended")
+        task = store.get(task_id)
+        
+        # Set active session ID
+        session_id = "test-session-123"
+        task.metadata.active_session = session_id
+        store.save_metadata(task)
+
+        # Setup the active session directory
+        sdir = hive / "tickets" / task_id / "sessions" / session_id
+        sdir.mkdir(parents=True, exist_ok=True)
+
+        # Create workspace directory
+        (sdir / "workspace").mkdir(parents=True, exist_ok=True)
+        (sdir / "workspace" / "notes.md").write_text("hello world")
+
+        # Create a mock events.jsonl with two turns
+        events_lines = [
+            json.dumps({"sendRequest": {"body": {"contents": [{"parts": [{"text": "Objective"}], "role": "user"}]}}}),
+            json.dumps({"thought": {"text": "Thought 1"}}),
+            json.dumps({"functionCall": {"name": "chat_request_user_input", "args": {"user_message": "hi"}}}),
+            json.dumps({"sendRequest": {"body": {"contents": [{"parts": [{"text": "Objective"}], "role": "user"}, {"parts": [{"text": "Thought 1"}], "role": "model"}]}}}),
+            json.dumps({"thought": {"text": "Thought 2"}})
+        ]
+        (sdir / "events.jsonl").write_text("\n".join(events_lines) + "\n", encoding="utf-8")
+
+        # Setup turn checkpoints
+        turns_data = [
+            {
+                "turn": 0,
+                "context_length": 1,
+                "file_system": None,
+                "token_metadata": None
+            },
+            {
+                "turn": 1,
+                "context_length": 3,
+                "file_system": {
+                    "files": {
+                        "notes.md": {
+                            "data": "hello",
+                            "mime_type": "text/plain",
+                            "type": "text"
+                        }
+                    },
+                    "routes": {},
+                    "file_count": 1
+                },
+                "token_metadata": None
+            }
+        ]
+        (sdir / "turns.json").write_text(json.dumps(turns_data))
+
+        # Create interaction.json
+        interaction_data = {
+            "session_id": session_id,
+            "contents": [
+                {"parts": [{"text": "Objective"}], "role": "user"},
+                {"parts": [{"text": "Thought 1"}], "role": "model"},
+                {"parts": [{"text": "Action 1"}], "role": "model"},
+                {"parts": [{"text": "Result 1"}], "role": "user"},
+                {"parts": [{"text": "Thought 2"}], "role": "model"}
+            ],
+            "file_system": {
+                "files": {
+                    "notes.md": {
+                        "data": "hello world",
+                        "mime_type": "text/plain",
+                        "type": "text"
+                    }
+                },
+                "routes": {},
+                "file_count": 1
+            },
+            "function_call_part": {},
+            "task_tree": {"tree": None},
+            "consents_granted": [],
+            "flags": {},
+            "graph": {},
+            "model": "gemini-2.5-pro",
+            "completed_function_responses": [],
+            "is_precondition_check": False
+        }
+        (sdir / "interaction.json").write_text(json.dumps(interaction_data))
+
+        # Trigger rollback-to-turn mutation to fork at turn 1 (which has context_length 3)
+        _write_mutation(hive, {
+            "type": "rollback-to-turn",
+            "task_id": task_id,
+            "turn_index": 1,
+        })
+        manager = MutationManager(hive)
+        outcome = asyncio.run(manager.process_inline())
+
+        assert outcome.hot_processed == 1
+
+        # Task metadata should be updated
+        updated_task = store.get(task_id)
+        assert updated_task.metadata.status == "available"
+        new_session_id = updated_task.metadata.active_session
+        assert new_session_id != session_id
+        assert updated_task.metadata.turns == 1
+
+        # Lineage should be recorded correctly
+        old_lineage = json.loads((sdir / "lineage.json").read_text())
+        assert old_lineage["forked_to"]["session"] == new_session_id
+        assert old_lineage["forked_to"]["at_turn"] == 1
+
+        new_sdir = hive / "tickets" / task_id / "sessions" / new_session_id
+        new_lineage = json.loads((new_sdir / "lineage.json").read_text())
+        assert new_lineage["forked_from"]["session"] == session_id
+        assert new_lineage["forked_from"]["at_turn"] == 1
+
+        # New interaction state should be seeded and have dummy resume_id
+        new_interaction = json.loads((new_sdir / "interaction.json").read_text())
+        assert len(new_interaction["contents"]) == 3
+        assert (new_sdir / "resume_id").read_text() == "fork-resume-id"
+
+        # File system workspace should be hydrated correctly to the turn 1 snapshot ("hello")
+        assert (new_sdir / "workspace" / "notes.md").read_text() == "hello"
+
+        # Events file should be sliced and copied correctly up to turn 1 (only the first 3 events)
+        new_events_content = (new_sdir / "events.jsonl").read_text(encoding="utf-8")
+        new_events_lines = new_events_content.splitlines()
+        assert len(new_events_lines) == 3
+        assert "Thought 1" in new_events_content
+        assert "Thought 2" not in new_events_content
 
 
 # ---------------------------------------------------------------------------
@@ -390,7 +546,7 @@ class TestUnknown:
     def test_unknown_type(self, hive):
         path = _write_mutation(hive, {"type": "bogus"})
         manager = MutationManager(hive)
-        outcome = manager.process_inline()
+        outcome = asyncio.run(manager.process_inline())
 
         assert outcome.hot_processed == 0
 
@@ -413,7 +569,7 @@ class TestResultWriting:
         _create_task(store, status="available")
         _write_mutation(hive, {"type": "pause-all"})
         manager = MutationManager(hive)
-        manager.process_inline()
+        asyncio.run(manager.process_inline())
 
         results = list((hive / "mutations").glob("*.result.json"))
         assert len(results) == 1
