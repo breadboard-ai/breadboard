@@ -61,11 +61,13 @@ class AudioInput {
   #running = false;
 
   /**
-   * When true (default), PCM chunks from the worklet are discarded.
-   * The mic capture stays running to avoid getUserMedia latency on
-   * each Talk press — we just gate whether chunks flow to the callback.
+   * When true, mic audio is below the threshold and we are not streaming.
+   * When false, speech is detected and chunks are flowing to the callback.
    */
   #gated = true;
+  #threshold = 1500; // Amplitude threshold (0-32767 for Int16)
+  #hangoverMs = 800; // Keep gate open for 800ms of silence to avoid word clipping
+  #hangoverTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(onChunk: OnChunkCallback, onStreamEnd: OnStreamEndCallback) {
     this.#onChunk = onChunk;
@@ -78,22 +80,6 @@ class AudioInput {
 
   get gated(): boolean {
     return this.#gated;
-  }
-
-  /** Open the gate — audio chunks start flowing to the callback. */
-  openGate(): void {
-    this.#gated = false;
-  }
-
-  /**
-   * Close the gate — audio chunks stop flowing.
-   * Fires the onStreamEnd callback so the caller can send audioStreamEnd.
-   */
-  closeGate(): void {
-    if (!this.#gated) {
-      this.#gated = true;
-      this.#onStreamEnd();
-    }
   }
 
   /** Start capturing microphone audio. */
@@ -129,24 +115,50 @@ class AudioInput {
     // Receive PCM chunks from the worklet thread.
     let chunkCount = 0;
     this.#workletNode.port.onmessage = (event: MessageEvent) => {
-      // Gate: discard chunks when the user isn't talking.
-      if (this.#gated) return;
-
       const pcm = event.data.pcm as Int16Array;
       if (pcm && pcm.length > 0) {
         chunkCount++;
-        // Log amplitude every ~1 second (10 chunks × 100ms).
-        if (chunkCount % 10 === 0) {
-          let maxAmp = 0;
-          for (let i = 0; i < pcm.length; i++) {
-            const abs = Math.abs(pcm[i]);
-            if (abs > maxAmp) maxAmp = abs;
+
+        // Measure peak amplitude in this chunk
+        let maxAmp = 0;
+        for (let i = 0; i < pcm.length; i++) {
+          const abs = Math.abs(pcm[i]);
+          if (abs > maxAmp) maxAmp = abs;
+        }
+
+        const hasSpeech = maxAmp >= this.#threshold;
+
+        if (hasSpeech) {
+          if (this.#hangoverTimer) {
+            clearTimeout(this.#hangoverTimer);
+            this.#hangoverTimer = null;
           }
+
+          if (this.#gated) {
+            console.log(`[audio-input] Speech detected (peak=${maxAmp}), opening gate`);
+            this.#gated = false;
+          }
+        } else if (!this.#gated && !this.#hangoverTimer) {
+          // Quiet chunk: schedule hangover timeout to close gate
+          this.#hangoverTimer = setTimeout(() => {
+            console.log(`[audio-input] Silence detected for ${this.#hangoverMs}ms, closing gate`);
+            this.#gated = true;
+            this.#hangoverTimer = null;
+            this.#onStreamEnd();
+          }, this.#hangoverMs);
+        }
+
+        // If the gate is open, stream the chunk
+        if (!this.#gated) {
+          this.#onChunk(int16ToBase64(pcm));
+        }
+
+        // Log peak amplitude periodically
+        if (chunkCount % 10 === 0) {
           console.log(
-            `[audio-input] chunk #${chunkCount}: ${pcm.length} samples, peak=${maxAmp}`,
+            `[audio-input] chunk #${chunkCount}: peak=${maxAmp}, gate=${this.#gated ? "closed" : "open"}`,
           );
         }
-        this.#onChunk(int16ToBase64(pcm));
       }
     };
 
@@ -156,16 +168,22 @@ class AudioInput {
     this.#workletNode.connect(this.#context.destination);
 
     this.#running = true;
-    console.log("[audio-input] Mic capture started");
+    console.log("[audio-input] Mic capture started with auto-gate");
   }
 
   /** Stop capturing and release resources. */
   stop(): void {
     if (!this.#running) return;
 
+    if (this.#hangoverTimer) {
+      clearTimeout(this.#hangoverTimer);
+      this.#hangoverTimer = null;
+    }
+
     // Close the gate if still open.
     if (!this.#gated) {
       this.#gated = true;
+      this.#onStreamEnd();
     }
 
     this.#workletNode?.disconnect();

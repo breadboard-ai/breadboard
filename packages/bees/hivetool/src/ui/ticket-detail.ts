@@ -579,40 +579,30 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
 
     if (!hasActive && status === "idle") return nothing;
 
-    const isConnected =
-      status === "connected" || status === "connecting";
-
-    // Another ticket is currently connected.
-    const otherConnected = client && !isThisTicket;
+    const isConnected = status === "connected";
+    const isConnecting = status === "connecting";
 
     return html`
       <div class="block live-panel">
         <div class="live-panel-header">
           <span class="live-status-dot ${status}"></span>
           <span class="live-status-label">Live Session — ${status}</span>
-          ${isThisTicket && isConnected
-            ? html`<button
-                class="live-btn disconnect"
-                @click=${() => this.handleLiveDisconnect()}
-              >
-                Disconnect
-              </button>`
-            : nothing}
+          <button
+            class="live-btn ${isConnected ? "disconnect" : "connect"}"
+            ?disabled=${isConnecting}
+            @click=${() => this.handleLiveConnectToggle(ticketId)}
+          >
+            ${isConnecting
+              ? "Connecting…"
+              : isConnected
+                ? "Stop Session"
+                : "Start Session"}
+          </button>
         </div>
-        ${hasActive
-          ? html`<div class="live-mic-bar">
-              <button
-                class="live-btn talk ${isTalking ? "active" : ""}"
-                @pointerdown=${() => this.handleTalkStart(ticketId)}
-                @pointerup=${() => this.handleTalkEnd()}
-                @pointerleave=${() => this.handleTalkEnd()}
-              >
-                ${otherConnected
-                  ? "🎤 Talk to switch"
-                  : isTalking
-                    ? "🔊 Talking…"
-                    : "🎤 Talk"}
-              </button>
+        ${isConnected
+          ? html`<div class="live-mic-bar" style="font-size:0.8rem; color:#94a3b8; display:flex; align-items:center; gap:8px;">
+              <span class="live-status-dot ${isTalking ? "connected" : "idle"}" style="animation: none;"></span>
+              <span>${isTalking ? "Streaming audio (Voice active)" : "Microphone active (Quiet)"}</span>
             </div>`
           : nothing}
         ${transcript
@@ -628,43 +618,18 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
     `;
   }
 
-  /**
-   * Handle Talk button press.
-   *
-   * First press connects (if not already connected to this ticket),
-   * then opens the audio gate.
-   */
-  private async handleTalkStart(ticketId: string): Promise<void> {
+  private async handleLiveConnectToggle(ticketId: string): Promise<void> {
     if (!this.ticketStore) return;
 
     const client = this.ticketStore.activeConnection.get();
 
-    // Not connected to this ticket — connect first.
-    if (!client || client.taskId !== ticketId) {
+    if (client && client.taskId === ticketId) {
+      // Already connected to this ticket, stop it
+      this.ticketStore.disconnectLiveSession();
+    } else {
+      // Start connection
       await this.ticketStore.connectLiveSession(ticketId);
     }
-
-    // Now begin talking (opens the audio gate).
-    const activeClient = this.ticketStore.activeConnection.get();
-    if (activeClient?.status.get() === "connected") {
-      try {
-        await activeClient.beginTalking();
-      } catch (e) {
-        console.error("Failed to start talking:", e);
-      }
-    }
-  }
-
-  /** Handle Talk button release — close the audio gate. */
-  private handleTalkEnd(): void {
-    const client = this.ticketStore?.activeConnection.get();
-    if (client?.talking.get()) {
-      client.endTalking();
-    }
-  }
-
-  private handleLiveDisconnect(): void {
-    this.ticketStore?.disconnectLiveSession();
   }
 }
 
