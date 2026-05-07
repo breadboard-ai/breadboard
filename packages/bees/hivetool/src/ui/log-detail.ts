@@ -194,12 +194,12 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
     const s = this.interactionSummary;
     if (!s) return nothing;
     return html`
-      <div class="block" style="margin: 12px 32px; background: #111b2744; border-color: #1e3a8a">
-        <div class="block-header" style="background: #102a45; color: #60a5fa; border-bottom-color: #1e3a8a">Active Interaction Snapshot</div>
-        <div class="block-content" style="display: flex; gap: 24px; padding: 12px 16px; color: #cbd5e1">
-          <div><strong>Conversation Size:</strong> ${s.contextCount} entries</div>
-          <div><strong>Workspace Size:</strong> ${s.fsSize} files</div>
-          ${s.pendingCall ? html`<div><strong>Suspended On:</strong> <code class="mono" style="color:#fbbf24">${s.pendingCall}</code></div>` : nothing}
+      <div class="interaction-block">
+        <div class="interaction-block-header">Active Interaction Snapshot</div>
+        <div class="interaction-block-content">
+          <div><strong>Conversation:</strong> ${s.contextCount} entries</div>
+          <div><strong>Workspace:</strong> ${s.fsSize} files</div>
+          ${s.pendingCall ? html`<div><strong>Suspended On:</strong> <code class="mono">${s.pendingCall}</code></div>` : nothing}
         </div>
       </div>
     `;
@@ -208,6 +208,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
   private renderHeader(d: MergedSessionView) {
     const duration = (d.totalDurationMs / 1000).toFixed(1);
     const started = d.segments[0]?.startedDateTime;
+    const tId = this.ticketId || d.sessionId;
     return html`
       <div class="header">
         <div class="header-top">
@@ -217,10 +218,10 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
           </h2>
           <span
             class="link-chip"
-            @click=${() => this.#dispatchNavigate("ticket", d.sessionId)}
+            @click=${() => this.#dispatchNavigate("ticket", tId)}
           >
             <span class="link-chip-label">task</span>
-            ${d.sessionId.slice(0, 8)}
+            ${tId.slice(0, 8)}
           </span>
           ${d.segments.length > 1
             ? html`<span class="segment-count"
@@ -494,8 +495,8 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
           </button>
         ` : nothing}
         ${fileCount !== null ? html`
-          <span class="turn-header-fs" style="margin-left: 12px; font-size: 11px; color: #38bdf8; background: #0284c733; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #0284c744">
-            📂 ${fileCount} files
+          <span class="turn-header-fs" style="margin-left: 12px; font-size: 11px; color: #475569; display: inline-flex; align-items: center; gap: 4px">
+            📂 ${fileCount} file${fileCount !== 1 ? "s" : ""}
           </span>
         ` : nothing}
         <div class="turn-header-bar" style="margin-left: 12px">

@@ -574,6 +574,44 @@ const logDetailBaseStyles = css`
     font-family: "Google Mono", "Roboto Mono", monospace;
     font-weight: 600;
   }
+
+  /* ── Interaction Snapshot Block ── */
+  .interaction-block {
+    background: #13161c;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 0.8rem;
+    max-width: 960px;
+    margin: 16px auto;
+    width: calc(100% - 64px);
+    flex-shrink: 0;
+  }
+
+  .interaction-block-header {
+    padding: 8px 16px;
+    background: #191d24;
+    border-bottom: 1px solid #1e293b;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #38bdf8;
+  }
+
+  .interaction-block-content {
+    display: flex;
+    gap: 24px;
+    padding: 12px 16px;
+    color: #cbd5e1;
+  }
+
+  .interaction-block-content code {
+    background: #1e293b;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #fbbf24;
+  }
 `;
 
 export const logDetailStyles = [logDetailBaseStyles, jsonTreeStyles];

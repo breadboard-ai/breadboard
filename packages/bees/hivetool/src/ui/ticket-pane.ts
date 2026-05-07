@@ -217,10 +217,11 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
         value: ticket.owning_task_id.slice(0, 8),
         onclick: () => this.navigate("tickets", ticket.owning_task_id!),
       });
+    const sessionVal = ticket.active_session || ticket.id;
     identityChips.push({
       label: "session",
-      value: ticket.id.slice(0, 8),
-      onclick: () => this.navigate("logs", ticket.id),
+      value: sessionVal.slice(0, 8),
+      onclick: () => this.navigate("logs", sessionVal),
     });
     if (ticket.skills && ticket.skills.length > 0) {
       const skillDirs = new Set(

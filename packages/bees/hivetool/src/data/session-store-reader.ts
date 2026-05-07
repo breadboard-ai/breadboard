@@ -37,6 +37,11 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
   let totalFunctionCalls = 0;
   let totalTokens = 0;
   
+  let totalPromptTokens = 0;
+  let totalCandidatesTokens = 0;
+  let totalThoughtsTokens = 0;
+  let totalCachedTokens = 0;
+  
   let systemInstruction: LogConfig["systemInstruction"] = undefined;
   let tools: LogConfig["tools"] = [];
   const turnGroups: TurnGroup[] = [];
@@ -110,7 +115,12 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
         const usageMetadata = event.usageMetadata as Record<string, unknown> || {};
         const metadata = usageMetadata.metadata as Record<string, unknown> || {};
         currentTurnGroup.tokenMetadata = metadata as unknown as LogTurnTokenMetadata;
-        totalTokens += metadata.totalTokenCount as number || 0;
+        
+        totalPromptTokens += (metadata.promptTokenCount as number) || 0;
+        totalCandidatesTokens += (metadata.candidatesTokenCount as number) || 0;
+        totalThoughtsTokens += (metadata.thoughtsTokenCount as number) || 0;
+        totalCachedTokens += (metadata.cachedContentTokenCount as number) || 0;
+        totalTokens += (metadata.totalTokenCount as number) || 0;
       }
     }
   }
@@ -130,10 +140,10 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
       tools
     },
     tokenMetadata: {
-      totalPromptTokens: 0,
-      totalCandidatesTokens: 0,
-      totalThoughtsTokens: 0,
-      totalCachedTokens: 0,
+      totalPromptTokens,
+      totalCandidatesTokens,
+      totalThoughtsTokens,
+      totalCachedTokens,
       totalTokens
     }
   };
