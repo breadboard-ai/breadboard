@@ -319,6 +319,85 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
         font-size: 0.8rem;
         font-style: italic;
       }
+
+      /* ── Live session panel ── */
+      .live-panel {
+        border: 1px solid #1e3a5f;
+        border-radius: 8px;
+        overflow: hidden;
+        margin: 8px 12px;
+        flex-shrink: 0;
+      }
+
+      .live-panel-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: #0c1929;
+        border-bottom: 1px solid #1e3a5f;
+      }
+
+      .live-status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        transition: background 0.3s;
+      }
+
+      .live-status-dot.idle { background: #475569; }
+      .live-status-dot.connecting { background: #f59e0b; animation: pulse 1s infinite; }
+      .live-status-dot.connected { background: #22c55e; animation: pulse 2s infinite; }
+      .live-status-dot.disconnected { background: #64748b; }
+      .live-status-dot.error { background: #ef4444; }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      .live-status-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94a3b8;
+        flex: 1;
+      }
+
+      .live-btn {
+        padding: 4px 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.15s;
+        border: 1px solid;
+      }
+
+      .live-btn.connect {
+        background: #1d4ed8;
+        color: #dbeafe;
+        border-color: #2563eb;
+      }
+      .live-btn.connect:hover { background: #2563eb; }
+
+      .live-btn.disconnect {
+        background: transparent;
+        color: #f87171;
+        border-color: #991b1b;
+      }
+      .live-btn.disconnect:hover { background: #1c1917; }
+
+      .live-mic-bar {
+        padding: 8px 14px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        border-top: 1px solid #1e293b;
+      }
     `,
   ];
 
@@ -395,7 +474,7 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
                 ${displayHistory.map(
                   (m) => html`
                     <div
-                      class="chat-turn ${m.role === "user" ? "user" : "agent"}"
+                       class="chat-turn ${m.role === "user" ? "user" : "agent"}"
                     >
                       <div class="chat-role">${m.role}</div>
                       <div class="chat-text">${markdown(m.text)}</div>
@@ -405,11 +484,66 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
               </div>
             `
           : nothing}
+        ${ticket.runner === "live" ? this.renderLiveSessionPanel(ticket.id) : nothing}
         ${inputUi
           ? html`<div class="response-section">${inputUi}</div>`
           : nothing}
       </div>
     `;
+  }
+
+  private renderLiveSessionPanel(ticketId: string) {
+    const hasActive = this.ticketStore?.activeLiveSessions
+      .get()
+      .has(ticketId);
+
+    const client = this.ticketStore?.activeConnection.get();
+    const isThisTicket = client?.taskId === ticketId;
+    const status = isThisTicket ? (client!.status.get()) : "idle";
+    const isTalking = isThisTicket ? (client!.talking.get()) : false;
+
+    if (!hasActive && status === "idle") return nothing;
+
+    const isConnected = status === "connected";
+    const isConnecting = status === "connecting";
+
+    return html`
+      <div class="block live-panel">
+        <div class="live-panel-header">
+          <span class="live-status-dot ${status}"></span>
+          <span class="live-status-label">Live Session — ${status}</span>
+          <button
+            class="live-btn ${isConnected ? "disconnect" : "connect"}"
+            ?disabled=${isConnecting}
+            @click=${() => this.handleLiveConnectToggle(ticketId)}
+          >
+            ${isConnecting
+              ? "Connecting…"
+              : isConnected
+                ? "Stop Session"
+                : "Start Session"}
+          </button>
+        </div>
+        ${isConnected
+          ? html`<div class="live-mic-bar" style="font-size:0.8rem; color:#94a3b8; display:flex; align-items:center; gap:8px;">
+              <span class="live-status-dot ${isTalking ? "connected" : "idle"}" style="animation: none;"></span>
+              <span>${isTalking ? "Streaming audio (Voice active)" : "Microphone active (Quiet)"}</span>
+            </div>`
+          : nothing}
+      </div>
+    `;
+  }
+
+  private async handleLiveConnectToggle(ticketId: string): Promise<void> {
+    if (!this.ticketStore) return;
+
+    const client = this.ticketStore.activeConnection.get();
+
+    if (client && client.taskId === ticketId) {
+      this.ticketStore.disconnectLiveSession();
+    } else {
+      await this.ticketStore.connectLiveSession(ticketId);
+    }
   }
 
   // ── Input UI ──

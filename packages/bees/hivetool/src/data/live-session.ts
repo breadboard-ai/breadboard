@@ -209,23 +209,19 @@ class LiveSessionClient {
     this.#ws = null;
   }
 
-  // ── Push-to-Talk ──
-
   /**
-   * Begin talking — opens the audio gate so mic chunks flow to the API.
-   *
-   * On first call, starts the mic capture (getUserMedia). The mic stays
-   * running across talk presses to avoid latency. Subsequent calls just
-   * open the gate.
+   * Begin the audio session — starts mic capture with VAD (auto-gating).
+   * The mic will run continuously in the background, auto-streaming
+   * chunks as the user speaks.
    */
-  async beginTalking(): Promise<void> {
+  async startAudio(): Promise<void> {
     if (this.status.get() !== "connected") return;
 
-    // Lazily start the mic on the first Talk press.
     if (!this.#audioInput) {
       this.#audioInput = new AudioInput(
         // onChunk — forward PCM to the WebSocket.
         (base64Pcm: string) => {
+          this.talking.set(true);
           this.send({
             realtimeInput: {
               audio: {
@@ -237,28 +233,12 @@ class LiveSessionClient {
         },
         // onStreamEnd — send audioStreamEnd when the gate closes.
         () => {
+          this.talking.set(false);
           this.send({ realtimeInput: { audioStreamEnd: true } });
         },
       );
       await this.#audioInput.start();
     }
-
-    this.#audioInput.openGate();
-    this.talking.set(true);
-  }
-
-  /**
-   * End talking — closes the audio gate.
-   *
-   * The mic stays running (no getUserMedia teardown). The audio gate
-   * close triggers an `audioStreamEnd` message to the API, flushing
-   * any cached audio in the server's VAD.
-   */
-  endTalking(): void {
-    if (this.#audioInput && !this.#audioInput.gated) {
-      this.#audioInput.closeGate();
-    }
-    this.talking.set(false);
   }
 
   /** Stop mic capture entirely and release the MediaStream. */
@@ -267,7 +247,6 @@ class LiveSessionClient {
       this.#audioInput.stop();
       this.#audioInput = null;
     }
-    this.talking.set(false);
   }
 
   /** Send raw data over the WebSocket (for audio chunks, etc.). */
@@ -302,20 +281,22 @@ class LiveSessionClient {
       return;
     }
 
-    // Setup complete — transition to connected.
-    if (message.setupComplete) {
-      console.log(
-        `[live:${this.taskId.slice(0, 8)}] Setup complete`,
-      );
-      this.status.set("connected");
-      // Write sessionStart event with the config.
-      void this.#writeEvent("sessionStart", {
-        config: this.#bundle.setup,
-      });
-      // Start watching for context updates from the box.
-      void this.#startContextObserver();
-      return;
-    }
+      // Setup complete — transition to connected.
+      if (message.setupComplete) {
+        console.log(
+          `[live:${this.taskId.slice(0, 8)}] Setup complete`,
+        );
+        this.status.set("connected");
+        // Write sessionStart event with the config.
+        void this.#writeEvent("sessionStart", {
+          config: this.#bundle.setup,
+        });
+        // Start watching for context updates from the box.
+        void this.#startContextObserver();
+        // Start the microphone automatically in the background.
+        void this.startAudio();
+        return;
+      }
 
     // Model content — text goes to transcript, audio goes to speakers.
     if (message.serverContent?.modelTurn?.parts) {
