@@ -80,13 +80,14 @@ class FileBasedSessionStore:
             return None
 
     async def set_status(
-        self, session_id: str, status: SessionStatus
+        self, session_id: str, status: SessionStatus | str
     ) -> None:
         """Transition to a new status."""
         sdir = self._session_dir(session_id)
         sdir.mkdir(parents=True, exist_ok=True)
         status_file = sdir / "status"
-        status_file.write_text(status.value, encoding="utf-8")
+        val = status.value if hasattr(status, "value") else status
+        status_file.write_text(val, encoding="utf-8")
 
     # ── SessionStore Event Log ──
 

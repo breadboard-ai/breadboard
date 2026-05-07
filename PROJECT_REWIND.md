@@ -304,7 +304,7 @@ directory with status, events.jsonl, interaction.json (containing a
 
 ---
 
-## Phase 2 — Hivetool Session Inspector
+## Phase 2 — Hivetool Session Inspector ✅
 
 ### 🎯 Objective
 
@@ -326,21 +326,21 @@ the status is live.
 
 #### common
 
-- [ ] `TaskData` — add optional `active_session?: string` field to the shared `TaskData` interface in `common/types.ts` to propagate the active session UUID reactively.
+- [x] `TaskData` — add optional `active_session?: string` field to the shared `TaskData` interface in `common/types.ts` to propagate the active session UUID reactively.
 
 #### hivetool
 
-- [ ] `SessionStoreReader` — new data layer in `hivetool/src/data/` that reads
+- [x] `SessionStoreReader` — new data layer in `hivetool/src/data/` that reads
       the file-backed session store:
   - Scans `tickets/{id}/sessions/` for session directories.
   - Reads each session's `status`, `events.jsonl`, `interaction.json`, and
     `lineage.json`.
   - Provides a signal-backed view of the active session and lineage.
-- [ ] `TicketStore` workspace resolution — rework `readTree()`, `readFileContent()`, and `readSurface()` to dynamically resolve filesystem directory handles from `sessions/{active_session}/workspace/` when `active_session` is present in metadata, with a fallback to the legacy `filesystem/` directory.
-- [ ] `TicketStore` observer path translation — rework `#startObserver()` to parse new session-specific change events with prefix `[ticketId, "sessions", sessionId, "workspace", ...path]` and map them correctly to `filesystemChange` signals.
-- [ ] Session lineage view — show the session list for a task: active session
+- [x] `TicketStore` workspace resolution — rework `readTree()`, `readFileContent()`, and `readSurface()` to dynamically resolve filesystem directory handles from `sessions/{active_session}/workspace/` when `active_session` is present in metadata, with a fallback to the legacy `filesystem/` directory.
+- [x] `TicketStore` observer path translation — rework `#startObserver()` to parse new session-specific change events with prefix `[ticketId, "sessions", sessionId, "workspace", ...path]` and map them correctly to `filesystemChange` signals.
+- [x] Session lineage view — show the session list for a task: active session
       highlighted, superseded sessions listed with fork-point info.
-- [ ] Session detail — render the active session's conversation from
+- [x] Session detail — render the active session's conversation from
       `events.jsonl`. Show `InteractionState` summary: context entries count,
       pending function call (if suspended), file system snapshot size.
 

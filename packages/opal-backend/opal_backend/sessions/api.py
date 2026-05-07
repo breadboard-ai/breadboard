@@ -239,6 +239,7 @@ async def start_session(
             model=ctx.model,
             file_system=ctx.file_system,
             context_queue=ctx.context_queue,
+            session_id=session_id,
         ),
         store=store,
         subscribers=subscribers,
@@ -265,7 +266,14 @@ async def resume_session(
         await store.set_status(session_id, SessionStatus.FAILED)
         return
 
-    interaction_id = await store.get_resume_id(session_id)
+    from .file_store import FileBasedSessionStore
+    if isinstance(store, FileBasedSessionStore):
+        sdir = store._session_dir(session_id)
+        resume_id_file = sdir / "resume_id"
+        interaction_id = resume_id_file.read_text(encoding="utf-8").strip() if resume_id_file.exists() else None
+    else:
+        interaction_id = await store.get_resume_id(session_id)
+
     if not interaction_id:
         logger.error("No resume_id for session %s", session_id)
         await store.set_status(session_id, SessionStatus.FAILED)

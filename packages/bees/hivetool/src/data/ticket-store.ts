@@ -224,7 +224,15 @@ class TicketStore {
     if (!this.#ticketsHandle) return [];
     try {
       const ticketDir = await this.#ticketsHandle.getDirectoryHandle(ticketId);
-      const fsDir = await ticketDir.getDirectoryHandle("filesystem");
+      const ticket = this.tickets.get().find((t) => t.id === ticketId);
+      let fsDir: FileSystemDirectoryHandle;
+      if (ticket && ticket.active_session) {
+        const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+        const sessionDir = await sessionsDir.getDirectoryHandle(ticket.active_session);
+        fsDir = await sessionDir.getDirectoryHandle("workspace");
+      } else {
+        fsDir = await ticketDir.getDirectoryHandle("filesystem");
+      }
       return this.#scanDir(fsDir);
     } catch {
       return [];
@@ -239,7 +247,15 @@ class TicketStore {
     if (!this.#ticketsHandle) return null;
     try {
       const ticketDir = await this.#ticketsHandle.getDirectoryHandle(ticketId);
-      let dir = await ticketDir.getDirectoryHandle("filesystem");
+      const ticket = this.tickets.get().find((t) => t.id === ticketId);
+      let dir: FileSystemDirectoryHandle;
+      if (ticket && ticket.active_session) {
+        const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+        const sessionDir = await sessionsDir.getDirectoryHandle(ticket.active_session);
+        dir = await sessionDir.getDirectoryHandle("workspace");
+      } else {
+        dir = await ticketDir.getDirectoryHandle("filesystem");
+      }
       // Walk to the parent directory.
       for (const segment of path.slice(0, -1)) {
         dir = await dir.getDirectoryHandle(segment);
@@ -263,7 +279,15 @@ class TicketStore {
     if (!this.#ticketsHandle) return null;
     try {
       const ticketDir = await this.#ticketsHandle.getDirectoryHandle(ticketId);
-      const fsDir = await ticketDir.getDirectoryHandle("filesystem");
+      const ticket = this.tickets.get().find((t) => t.id === ticketId);
+      let fsDir: FileSystemDirectoryHandle;
+      if (ticket && ticket.active_session) {
+        const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+        const sessionDir = await sessionsDir.getDirectoryHandle(ticket.active_session);
+        fsDir = await sessionDir.getDirectoryHandle("workspace");
+      } else {
+        fsDir = await ticketDir.getDirectoryHandle("filesystem");
+      }
       const fileHandle = await fsDir.getFileHandle("surface.json");
       const file = await fileHandle.getFile();
       const text = await file.text();
@@ -470,9 +494,15 @@ class TicketStore {
             const ticketId = segments[0];
             if (!updatedTicketId) updatedTicketId = ticketId;
 
-            // Filesystem changes: [ticketId, "filesystem", ...path]
+            // Filesystem changes:
+            // Legacy: [ticketId, "filesystem", ...path]
+            // New: [ticketId, "sessions", sessionId, "workspace", ...path]
             if (segments.length >= 3 && segments[1] === "filesystem") {
               const fsPath = segments.slice(2).join("/");
+              if (!fsChanges.has(ticketId)) fsChanges.set(ticketId, []);
+              fsChanges.get(ticketId)!.push(fsPath);
+            } else if (segments.length >= 5 && segments[1] === "sessions" && segments[3] === "workspace") {
+              const fsPath = segments.slice(4).join("/");
               if (!fsChanges.has(ticketId)) fsChanges.set(ticketId, []);
               fsChanges.get(ticketId)!.push(fsPath);
             }

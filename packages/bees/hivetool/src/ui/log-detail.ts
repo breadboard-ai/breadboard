@@ -5,7 +5,7 @@
  */
 
 import { LitElement, html, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import {
   renderJson,
   renderExpandButton,
@@ -19,9 +19,23 @@ import type {
   TurnGroup,
   LogTurnTokenMetadata,
 } from "../data/types.js";
+import { SessionStoreReader, compileEventsToSegment } from "../data/session-store-reader.js";
+import type { StateAccess } from "../data/state-access.js";
 import { logDetailStyles } from "./log-detail.styles.js";
 
 export { BeesLogDetail };
+
+interface InteractionStateDto {
+  file_system?: {
+    files?: Record<string, unknown>;
+  };
+  function_call_part?: {
+    functionCall?: {
+      name?: string;
+    };
+  };
+  contents?: Array<unknown>;
+}
 
 const TERMINATION_FUNCTIONS = new Set([
   "system_objective_fulfilled",
@@ -48,23 +62,105 @@ class BeesLogDetail extends LitElement {
   @property({ type: Object })
   accessor data: MergedSessionView | null = null;
 
+  @property({ attribute: false })
+  accessor stateAccess: StateAccess | null = null;
+
+  @property({ type: String })
+  accessor sessionId: string | null = null;
+
+  @state() accessor storeData: MergedSessionView | null = null;
+  @state() accessor interactionSummary: { contextCount: number; pendingCall?: string; fsSize: number } | null = null;
+
   static styles = [logDetailStyles];
 
+  #sessionReader: SessionStoreReader | null = null;
+
+  get sessionReader() {
+    if (!this.#sessionReader && this.stateAccess) {
+      this.#sessionReader = new SessionStoreReader(this.stateAccess);
+    }
+    return this.#sessionReader;
+  }
+
+  #loadedSessionId: string | null = null;
+
+  private async loadSessionData(sessionId: string) {
+    if (!this.sessionReader) return;
+    
+    const ticketId = await this.sessionReader.findTicketForSession(sessionId);
+    if (!ticketId) return;
+
+    const events = await this.sessionReader.readEvents(ticketId, sessionId);
+    const interaction = await this.sessionReader.readInteraction(ticketId, sessionId) as InteractionStateDto | null;
+
+    if (events.length > 0) {
+      const segment = compileEventsToSegment(sessionId, events);
+      this.storeData = {
+        sessionId,
+        segments: [segment],
+        totalDurationMs: 0,
+        totalTurns: segment.turnCount,
+        totalThoughts: segment.totalThoughts,
+        totalFunctionCalls: segment.totalFunctionCalls,
+        totalTokens: segment.totalTokens
+      };
+    } else {
+      this.storeData = null;
+    }
+
+    if (interaction) {
+      const files = interaction.file_system?.files || {};
+      const fc = interaction.function_call_part?.functionCall || {};
+      this.interactionSummary = {
+        contextCount: interaction.contents?.length ?? 0,
+        pendingCall: fc.name || undefined,
+        fsSize: Object.keys(files).length
+      };
+    } else {
+      this.interactionSummary = null;
+    }
+  }
+
   render() {
-    if (!this.data) {
+    if (this.sessionId && this.#loadedSessionId !== this.sessionId) {
+      this.storeData = null;
+      this.interactionSummary = null;
+      this.#loadedSessionId = this.sessionId;
+      this.loadSessionData(this.sessionId);
+    }
+
+    const effectiveData = this.storeData || this.data;
+
+    if (!effectiveData) {
       return html`<div class="empty">Select a log entry to inspect.</div>`;
     }
-    const d = this.data;
+    const d = effectiveData;
     const firstSegment = d.segments[0];
 
     return html`
       ${this.renderHeader(d)}
+      ${this.renderInteractionSummary()}
       ${this.renderTokenBar(d)}
       <div class="sections">
         ${this.renderSystemInstruction(firstSegment)}
         ${this.renderTools(firstSegment)}
       </div>
       ${this.renderTimeline(d)}
+    `;
+  }
+
+  private renderInteractionSummary() {
+    const s = this.interactionSummary;
+    if (!s) return nothing;
+    return html`
+      <div class="block" style="margin: 12px 32px; background: #111b2744; border-color: #1e3a8a">
+        <div class="block-header" style="background: #102a45; color: #60a5fa; border-bottom-color: #1e3a8a">Active Interaction Snapshot</div>
+        <div class="block-content" style="display: flex; gap: 24px; padding: 12px 16px; color: #cbd5e1">
+          <div><strong>Conversation Size:</strong> ${s.contextCount} entries</div>
+          <div><strong>Workspace Size:</strong> ${s.fsSize} files</div>
+          ${s.pendingCall ? html`<div><strong>Suspended On:</strong> <code class="mono" style="color:#fbbf24">${s.pendingCall}</code></div>` : nothing}
+        </div>
+      </div>
     `;
   }
 
