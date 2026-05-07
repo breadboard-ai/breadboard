@@ -409,25 +409,25 @@ back for the filesystem if needed, and has everything to create the new session.
 
 ### Changes
 
-- [ ] Extend `SessionStore` protocol with turn-boundary tracking:
+- [x] Extend `SessionStore` protocol with turn-boundary tracking:
   - `record_turn_boundary(session_id, context_length, file_system_snapshot)` —
     captures both the context offset and a `FileSystemSnapshot`.
   - `get_turn_boundaries(session_id) -> list[TurnCheckpoint]` — returns the
     recorded checkpoints.
-- [ ] `FileBasedSessionStore` — persists checkpoints to `turns.json`.
-- [ ] **Turn recording lives in bees**, not in opal-backend's `_tee_events()`.
+- [x] `FileBasedSessionStore` — persists checkpoints to `turns.json`.
+- [x] **Turn recording lives in bees**, not in opal-backend's `_tee_events()`.
       `_tee_events()` is a generic opal-backend function with no knowledge of
       `DiskFileSystem` or bees-specific file-writing detection. Instead,
       `drain_session()` (or a new callback on `EvalCollector`) records turn
       boundaries into the store when it sees `sendRequest` events. This keeps
       bees concerns in bees and avoids coupling opal-backend to filesystem
       snapshotting.
-- [ ] Lazy snapshot detection: the recorder checks whether the preceding turn
+- [x] Lazy snapshot detection: the recorder checks whether the preceding turn
       produced file writes (via `functionResponse` from file-writing tools).
       If no files changed, the checkpoint carries `file_system: null`.
-- [ ] Hivetool — display turn checkpoints in the session inspector. Show context
+- [x] Hivetool — display turn checkpoints in the session inspector. Show context
       offset, filesystem file count, and (if available) token metadata per turn.
-- [ ] `EvalCollector` — delegate turn tracking to the store instead of
+- [x] `EvalCollector` — delegate turn tracking to the store instead of
       maintaining its own `turns` list. The store is authoritative.
 
 ---

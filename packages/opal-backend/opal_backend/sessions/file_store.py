@@ -8,15 +8,15 @@ Conforms strictly to both protocols while offering durable preservation
 for offline debugging and inspection.
 """
 
-from __future__ import annotations
-
+from dataclasses import asdict
 import json
 import logging
 from pathlib import Path
 from typing import Any
 
+from ..agent_file_system import FileDescriptor, FileSystemSnapshot
 from ..interaction_store import InteractionState
-from .store import SessionStatus
+from .store import SessionStatus, TurnCheckpoint
 
 __all__ = ["FileBasedSessionStore"]
 
@@ -223,3 +223,97 @@ class FileBasedSessionStore:
         for sdir in self.base_dir.iterdir():
             if sdir.is_dir():
                 (sdir / "resume_id").unlink(missing_ok=True)
+
+    # ── Turn Checkpoints ──
+
+    async def record_turn_boundary(
+        self,
+        session_id: str,
+        turn_index: int,
+        context_length: int,
+        file_system: FileSystemSnapshot | None,
+        token_metadata: dict[str, Any] | None = None,
+    ) -> None:
+        """Record a turn boundary checkpoint."""
+        sdir = self._session_dir(session_id)
+        sdir.mkdir(parents=True, exist_ok=True)
+        turns_file = sdir / "turns.json"
+
+        turns = []
+        if turns_file.exists():
+            try:
+                turns = json.loads(turns_file.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+
+        # Find if checkpoint already exists for this turn
+        existing_idx = None
+        for idx, cp in enumerate(turns):
+            if cp["turn"] == turn_index:
+                existing_idx = idx
+                break
+
+        fs_dict = None
+        if file_system is not None:
+            fs_dict = {
+                "files": {
+                    path: asdict(fd)
+                    for path, fd in file_system.files.items()
+                },
+                "routes": file_system.routes,
+                "file_count": file_system.file_count,
+            }
+
+        if existing_idx is not None:
+            existing = turns[existing_idx]
+            if context_length > 0:
+                existing["context_length"] = context_length
+            if fs_dict is not None:
+                existing["file_system"] = fs_dict
+            if token_metadata is not None:
+                existing["token_metadata"] = token_metadata
+        else:
+            turns.append({
+                "turn": turn_index,
+                "context_length": context_length,
+                "file_system": fs_dict,
+                "token_metadata": token_metadata,
+            })
+
+        turns_file.write_text(
+            json.dumps(turns, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+
+    async def get_turn_boundaries(self, session_id: str) -> list[TurnCheckpoint]:
+        """Retrieve the recorded checkpoints for a session."""
+        turns_file = self._session_dir(session_id) / "turns.json"
+        if not turns_file.exists():
+            return []
+
+        try:
+            data = json.loads(turns_file.read_text(encoding="utf-8"))
+            result = []
+            for entry in data:
+                fs_data = entry.get("file_system")
+                fs_snapshot = None
+                if fs_data is not None:
+                    fs_snapshot = FileSystemSnapshot(
+                        files={
+                            path: FileDescriptor(**fd)
+                            for path, fd in fs_data["files"].items()
+                        },
+                        routes=fs_data["routes"],
+                        file_count=fs_data["file_count"],
+                    )
+                result.append({
+                    "turn": entry["turn"],
+                    "context_length": entry["context_length"],
+                    "file_system": fs_snapshot,
+                    "token_metadata": entry.get("token_metadata"),
+                })
+            return result
+        except Exception as e:
+            logger.warning("Failed to read turns for %s: %s", session_id, e)
+            return []
+

@@ -9,7 +9,14 @@ import type { StateAccess } from "./state-access.js";
 import type { SessionSegment, TurnGroup, LogTurnTokenMetadata, LogConfig } from "./types.js";
 
 export { SessionStoreReader, compileEventsToSegment };
-export type { SessionLineageInfo };
+export type { SessionLineageInfo, TurnCheckpointInfo };
+
+interface TurnCheckpointInfo {
+  turn: number;
+  context_length: number;
+  file_system: Record<string, unknown> | null;
+  token_metadata: Record<string, unknown> | null;
+}
 
 interface SessionLineageInfo {
   sessionId: string;
@@ -200,6 +207,23 @@ class SessionStoreReader {
       }
 
       return result;
+    } catch {
+      return [];
+    }
+  }
+
+  async readTurns(ticketId: string, sessionId: string): Promise<TurnCheckpointInfo[]> {
+    const ticketsHandle = await this.access.getSubdirectory("tickets");
+    if (!ticketsHandle) return [];
+    try {
+      const ticketDir = await ticketsHandle.getDirectoryHandle(ticketId);
+      const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+      const sessionDir = await sessionsDir.getDirectoryHandle(sessionId);
+      const turns = await this.#readJson(sessionDir, "turns.json");
+      if (Array.isArray(turns)) {
+        return turns as TurnCheckpointInfo[];
+      }
+      return [];
     } catch {
       return [];
     }

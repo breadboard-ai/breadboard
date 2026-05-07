@@ -20,6 +20,7 @@ import type {
   LogTurnTokenMetadata,
 } from "../data/types.js";
 import { SessionStoreReader, compileEventsToSegment } from "../data/session-store-reader.js";
+import type { TurnCheckpointInfo } from "../data/session-store-reader.js";
 import type { StateAccess } from "../data/state-access.js";
 import { logDetailStyles } from "./log-detail.styles.js";
 
@@ -70,6 +71,7 @@ class BeesLogDetail extends LitElement {
 
   @state() accessor storeData: MergedSessionView | null = null;
   @state() accessor interactionSummary: { contextCount: number; pendingCall?: string; fsSize: number } | null = null;
+  @state() accessor turns: TurnCheckpointInfo[] = [];
 
   static styles = [logDetailStyles];
 
@@ -92,9 +94,12 @@ class BeesLogDetail extends LitElement {
 
     const events = await this.sessionReader.readEvents(ticketId, sessionId);
     const interaction = await this.sessionReader.readInteraction(ticketId, sessionId) as InteractionStateDto | null;
+    const turns = await this.sessionReader.readTurns(ticketId, sessionId);
+
+    this.turns = turns;
 
     if (events.length > 0) {
-      const segment = compileEventsToSegment(sessionId, events);
+      const segment = compileEventsToSegment(sessionId, events as Record<string, unknown>[]);
       this.storeData = {
         sessionId,
         segments: [segment],
@@ -125,6 +130,7 @@ class BeesLogDetail extends LitElement {
     if (this.sessionId && this.#loadedSessionId !== this.sessionId) {
       this.storeData = null;
       this.interactionSummary = null;
+      this.turns = [];
       this.#loadedSessionId = this.sessionId;
       this.loadSessionData(this.sessionId);
     }
@@ -407,15 +413,16 @@ class BeesLogDetail extends LitElement {
   }
 
   private renderTurnGroup(tg: TurnGroup, _seg: SessionSegment) {
-    const tokens = this.turnTokens(tg.tokenMetadata);
+    const checkpoint = this.turns.find((cp) => cp.turn === tg.turnIndex);
+    const tokens = this.turnTokens(tg.tokenMetadata || (checkpoint?.token_metadata as unknown as LogTurnTokenMetadata) || null);
 
     return html`
-      ${tokens.total > 0 ? this.renderTurnHeader(tokens) : nothing}
+      ${tokens.total > 0 || checkpoint ? this.renderTurnHeader(tokens, checkpoint) : nothing}
       ${tg.entries.map((turn) => this.renderTurn(turn))}
     `;
   }
 
-  private renderTurnHeader(t: TokenBreakdown) {
+  private renderTurnHeader(t: TokenBreakdown, checkpoint?: TurnCheckpointInfo) {
     const TIERS = [
       { cap: 50_000, label: "50K" },
       { cap: 250_000, label: "250K" },
@@ -435,10 +442,18 @@ class BeesLogDetail extends LitElement {
       { cls: "output", value: t.output, label: "output" },
     ].filter((s) => s.value > 0);
 
+    const fsInfo = checkpoint?.file_system;
+    const fileCount = fsInfo ? (fsInfo as unknown as { file_count?: number }).file_count ?? null : null;
+
     return html`
       <div class="turn-header">
-        <span class="turn-header-label">turn</span>
-        <div class="turn-header-bar">
+        <span class="turn-header-label">turn ${checkpoint ? checkpoint.turn + 1 : ""}</span>
+        ${fileCount !== null ? html`
+          <span class="turn-header-fs" style="margin-left: 12px; font-size: 11px; color: #38bdf8; background: #0284c733; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #0284c744">
+            📂 ${fileCount} files
+          </span>
+        ` : nothing}
+        <div class="turn-header-bar" style="margin-left: 12px">
           <div class="token-segments">
             ${segments.map(
               (s) => html`

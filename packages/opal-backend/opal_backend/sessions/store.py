@@ -17,11 +17,20 @@ Implementations:
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable, TypedDict
 
+from ..agent_file_system import FileSystemSnapshot
 from ..interaction_store import InteractionState
 
-__all__ = ["SessionStatus", "SessionStore"]
+__all__ = ["SessionStatus", "SessionStore", "TurnCheckpoint"]
+
+
+class TurnCheckpoint(TypedDict):
+    turn: int
+    context_length: int
+    file_system: FileSystemSnapshot | None
+    token_metadata: dict[str, Any] | None
+
 
 
 class SessionStatus(StrEnum):
@@ -105,3 +114,21 @@ class SessionStore(Protocol):
     ) -> str | None:
         """Reverse lookup: find the session that owns this interaction_id."""
         ...
+
+    # ── Turn Checkpoints ──
+
+    async def record_turn_boundary(
+        self,
+        session_id: str,
+        turn_index: int,
+        context_length: int,
+        file_system: FileSystemSnapshot | None,
+        token_metadata: dict[str, Any] | None = None,
+    ) -> None:
+        """Record a turn boundary checkpoint."""
+        ...
+
+    async def get_turn_boundaries(self, session_id: str) -> list[TurnCheckpoint]:
+        """Retrieve the recorded checkpoints for a session."""
+        ...
+

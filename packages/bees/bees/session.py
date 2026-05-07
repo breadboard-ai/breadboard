@@ -326,6 +326,25 @@ def extract_files(
     return manifest
 
 
+def _fs_changed(snap1: Any | None, snap2: Any | None) -> bool:
+    """Compare two FileSystemSnapshots and return True if they differ."""
+    if (snap1 is None) != (snap2 is None):
+        return True
+    if snap1 is None or snap2 is None:
+        return False
+    if snap1.file_count != snap2.file_count:
+        return True
+    if snap1.routes != snap2.routes:
+        return True
+    if set(snap1.files.keys()) != set(snap2.files.keys()):
+        return True
+    for path, fd1 in snap1.files.items():
+        fd2 = snap2.files[path]
+        if fd1.data != fd2.data or fd1.mime_type != fd2.mime_type or fd1.type != fd2.type:
+            return True
+    return False
+
+
 # ---------------------------------------------------------------------------
 # Session draining — the composition point
 # ---------------------------------------------------------------------------
@@ -357,6 +376,8 @@ async def drain_session(
         on_event: Optional async callback invoked for each event.
     """
     from bees.protocols.session import SessionConfiguration, SessionStream
+    from opal_backend.sessions.file_store import FileBasedSessionStore
+    from opal_backend.sessions.in_memory_store import InMemorySessionStore
 
     prefix = f"[{config.label}] " if config.label else ""
     log_path = config.log_path
@@ -366,11 +387,68 @@ async def drain_session(
     chat_entry = config.on_chat_entry if config else None
     prev_context_len = 0
 
+    session_id = config.session_id or ticket_id or ""
+    if config.ticket_dir:
+        session_store = FileBasedSessionStore(config.ticket_dir / "sessions")
+    else:
+        session_store = InMemorySessionStore()
+
+    # Ensure session is created in the store (relevant for unit tests / standalone runs)
+    if await session_store.get_status(session_id) is None:
+        await session_store.create(session_id)
+
+    # Retrieve existing checkpoints to know where we are starting from
+    existing_checkpoints = await session_store.get_turn_boundaries(session_id)
+    start_turn_index = len(existing_checkpoints)
+    current_turn_index = start_turn_index - 1
+
+    last_fs_snapshot = None
+    if start_turn_index > 0:
+        for cp in reversed(existing_checkpoints):
+            if cp.get("file_system") is not None:
+                last_fs_snapshot = cp["file_system"]
+                break
+    else:
+        if hasattr(config.file_system, "snapshot"):
+            last_fs_snapshot = config.file_system.snapshot
+
     try:
         async for event in stream:
             collector.collect(event)
             event_count += 1
             _print_event_summary(event, prefix=prefix)
+
+            # Record turn boundary and checkpoint on sendRequest
+            if "sendRequest" in event:
+                contents = event["sendRequest"].get("body", {}).get("contents", [])
+                context_len = len(contents)
+                current_turn_index += 1
+
+                fs_snap = None
+                if hasattr(config.file_system, "snapshot"):
+                    current_snap = config.file_system.snapshot
+                    if current_turn_index == 0 or _fs_changed(current_snap, last_fs_snapshot):
+                        fs_snap = current_snap
+                        last_fs_snapshot = current_snap
+
+                await session_store.record_turn_boundary(
+                    session_id=session_id,
+                    turn_index=current_turn_index,
+                    context_length=context_len,
+                    file_system=fs_snap,
+                )
+
+            # Update token metadata on usageMetadata
+            elif "usageMetadata" in event:
+                metadata = event["usageMetadata"].get("metadata", {})
+                if current_turn_index >= 0:
+                    await session_store.record_turn_boundary(
+                        session_id=session_id,
+                        turn_index=current_turn_index,
+                        context_length=0,
+                        file_system=None,
+                        token_metadata=metadata,
+                    )
 
             # Write log at turn boundaries.
             if log_path and (
