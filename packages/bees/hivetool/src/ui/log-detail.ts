@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
@@ -22,6 +23,8 @@ import type {
 import { SessionStoreReader, compileEventsToSegment } from "../data/session-store-reader.js";
 import type { TurnCheckpointInfo } from "../data/session-store-reader.js";
 import type { StateAccess } from "../data/state-access.js";
+import type { TicketStore } from "../data/ticket-store.js";
+import type { MutationClient } from "../data/mutation-client.js";
 import { logDetailStyles } from "./log-detail.styles.js";
 
 export { BeesLogDetail };
@@ -59,12 +62,18 @@ interface TokenBreakdown {
  * NEW turns that segment contributed.
  */
 @customElement("bees-log-detail")
-class BeesLogDetail extends LitElement {
+class BeesLogDetail extends SignalWatcher(LitElement) {
   @property({ type: Object })
   accessor data: MergedSessionView | null = null;
 
   @property({ attribute: false })
   accessor stateAccess: StateAccess | null = null;
+
+  @property({ attribute: false })
+  accessor ticketStore: TicketStore | null = null;
+
+  @property({ attribute: false })
+  accessor mutationClient: MutationClient | null = null;
 
   @property({ type: String })
   accessor sessionId: string | null = null;
@@ -72,6 +81,8 @@ class BeesLogDetail extends LitElement {
   @state() accessor storeData: MergedSessionView | null = null;
   @state() accessor interactionSummary: { contextCount: number; pendingCall?: string; fsSize: number } | null = null;
   @state() accessor turns: TurnCheckpointInfo[] = [];
+  @state() accessor ticketId: string | null = null;
+  @state() accessor activeSessionId: string | null = null;
 
   static styles = [logDetailStyles];
 
@@ -87,21 +98,44 @@ class BeesLogDetail extends LitElement {
   #loadedSessionId: string | null = null;
 
   private async loadSessionData(sessionId: string) {
-    if (!this.sessionReader) return;
-    
-    const ticketId = await this.sessionReader.findTicketForSession(sessionId);
-    if (!ticketId) return;
+    if (!this.sessionReader || !this.ticketStore) return;
 
-    const events = await this.sessionReader.readEvents(ticketId, sessionId);
-    const interaction = await this.sessionReader.readInteraction(ticketId, sessionId) as InteractionStateDto | null;
-    const turns = await this.sessionReader.readTurns(ticketId, sessionId);
+    let ticketId: string | null = null;
+    let resolvedSessionId: string | null = null;
+
+    // Resolving if sessionId is the ticket ID or active session UUID
+    const tickets = this.ticketStore.tickets.get();
+    const ticketByTaskId = tickets.find((t) => t.id === sessionId);
+    if (ticketByTaskId) {
+      ticketId = sessionId;
+      resolvedSessionId = ticketByTaskId.active_session || null;
+    } else {
+      ticketId = await this.sessionReader.findTicketForSession(sessionId);
+      resolvedSessionId = sessionId;
+    }
+
+    if (!ticketId || !resolvedSessionId) {
+      this.ticketId = null;
+      this.activeSessionId = null;
+      this.storeData = null;
+      this.interactionSummary = null;
+      this.turns = [];
+      return;
+    }
+
+    this.ticketId = ticketId;
+    this.activeSessionId = resolvedSessionId;
+
+    const events = await this.sessionReader.readEvents(ticketId, resolvedSessionId);
+    const interaction = await this.sessionReader.readInteraction(ticketId, resolvedSessionId) as InteractionStateDto | null;
+    const turns = await this.sessionReader.readTurns(ticketId, resolvedSessionId);
 
     this.turns = turns;
 
     if (events.length > 0) {
-      const segment = compileEventsToSegment(sessionId, events as Record<string, unknown>[]);
+      const segment = compileEventsToSegment(resolvedSessionId, events as Record<string, unknown>[]);
       this.storeData = {
-        sessionId,
+        sessionId: resolvedSessionId,
         segments: [segment],
         totalDurationMs: 0,
         totalTurns: segment.turnCount,
@@ -131,6 +165,7 @@ class BeesLogDetail extends LitElement {
       this.storeData = null;
       this.interactionSummary = null;
       this.turns = [];
+      this.activeSessionId = null;
       this.#loadedSessionId = this.sessionId;
       this.loadSessionData(this.sessionId);
     }
@@ -448,6 +483,16 @@ class BeesLogDetail extends LitElement {
     return html`
       <div class="turn-header">
         <span class="turn-header-label">turn ${checkpoint ? checkpoint.turn + 1 : ""}</span>
+        ${this.canRollback() && checkpoint ? html`
+          <button
+            class="rollback-btn"
+            style="margin-left: 8px; padding: 1px 6px; font-size: 0.65rem; font-weight: 600; background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; cursor: pointer; font-family: inherit; transition: all 0.15s"
+            @click=${() => this.handleRollback(checkpoint.turn)}
+            title="Rollback session to the start of this turn"
+          >
+            ⏪ Rewind
+          </button>
+        ` : nothing}
         ${fileCount !== null ? html`
           <span class="turn-header-fs" style="margin-left: 12px; font-size: 11px; color: #38bdf8; background: #0284c733; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #0284c744">
             📂 ${fileCount} files
@@ -715,6 +760,35 @@ class BeesLogDetail extends LitElement {
         composed: true,
       })
     );
+  }
+
+  private get activeTicket() {
+    if (!this.ticketStore || !this.ticketId) return null;
+    return this.ticketStore.tickets.get().find((t) => t.id === this.ticketId) || null;
+  }
+
+  private canRollback() {
+    const boxActive = this.mutationClient?.boxActive.get();
+    const ticket = this.activeTicket;
+    if (!boxActive) return false;
+    if (!ticket) return false;
+    return ticket.status === "suspended" && ticket.active_session === this.activeSessionId;
+  }
+
+  private async handleRollback(turnIndex: number) {
+    if (!this.mutationClient || !this.ticketId) return;
+
+    const confirmed = confirm(
+      `Fork at turn ${turnIndex + 1}? A new session will be created and turns ` +
+      `${turnIndex + 2} onwards will be preserved in the superseded session.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await this.mutationClient.rollbackToTurn(this.ticketId, turnIndex);
+    } catch (e) {
+      console.error("Failed to rollback to turn:", e);
+    }
   }
 }
 

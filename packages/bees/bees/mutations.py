@@ -147,7 +147,7 @@ class MutationManager:
 
     # -- Public API --------------------------------------------------------
 
-    def process_all(self) -> bool:
+    async def process_all(self) -> bool:
         """Process all pending mutations (startup).
 
         Handles both hot and cold mutations.  Used when the box starts
@@ -164,11 +164,11 @@ class MutationManager:
                 "Processing mutation: %s (%s)",
                 mutation.mutation_type, mutation.path.name,
             )
-            self._dispatch(mutation)
+            await self._dispatch(mutation)
 
         return True
 
-    def process_inline(self) -> MutationOutcome:
+    async def process_inline(self) -> MutationOutcome:
         """Process hot mutations inline while the scheduler is running.
 
         Cold mutations are not processed — they're flagged in the outcome
@@ -188,7 +188,7 @@ class MutationManager:
                 "Processing hot mutation: %s (%s)",
                 mutation.mutation_type, mutation.path.name,
             )
-            result = self._dispatch(mutation)
+            result = await self._dispatch(mutation)
             if result:
                 outcome.hot_processed += 1
                 if result.get("created"):
@@ -196,7 +196,7 @@ class MutationManager:
 
         return outcome
 
-    def process_cold(self) -> bool:
+    async def process_cold(self) -> bool:
         """Process cold mutations only (requires quiescent state).
 
         Called in the gap between Bees shutdown and restart.
@@ -213,7 +213,7 @@ class MutationManager:
                 "Processing cold mutation: %s (%s)",
                 mutation.mutation_type, mutation.path.name,
             )
-            self._dispatch(mutation)
+            await self._dispatch(mutation)
             processed = True
 
         return processed
@@ -264,7 +264,7 @@ class MutationManager:
 
     # -- Dispatch ----------------------------------------------------------
 
-    def _dispatch(self, mutation: PendingMutation) -> dict[str, Any] | None:
+    async def _dispatch(self, mutation: PendingMutation) -> dict[str, Any] | None:
         """Dispatch a mutation by type and write the result.
 
         Returns extra result data on success (e.g., created task IDs),
@@ -290,6 +290,8 @@ class MutationManager:
                     extra = self._handle_resume_task(mutation)
                 case "delete-task":
                     extra = self._handle_delete_task(mutation)
+                case "rollback-to-turn":
+                    extra = await self._handle_rollback_to_turn(mutation)
                 case _:
                     self._write_result(
                         mutation.result_path,
@@ -588,6 +590,202 @@ class MutationManager:
 
         deleted.append(task_id)
         logger.info("Deleted task %s", task_id[:8])
+
+    async def _handle_rollback_to_turn(self, mutation: PendingMutation) -> dict[str, Any]:
+        """Fork a session at a prior turn boundary."""
+        from opal_backend.sessions.file_store import FileBasedSessionStore
+        from opal_backend.interaction_store import InteractionState
+        from bees.disk_file_system import DiskFileSystem
+        from opal_backend.chat_log_manager import derive_chat_log
+
+        task_id = mutation.data.get("task_id")
+        turn_index = mutation.data.get("turn_index")
+        if not task_id:
+            raise ValueError("rollback-to-turn mutation missing 'task_id'")
+        if turn_index is None:
+            raise ValueError("rollback-to-turn mutation missing 'turn_index'")
+
+        store = TaskStore(self._hive_dir)
+        task = store.get(task_id)
+        if not task:
+            raise ValueError(f"Task {task_id} not found")
+
+        # 0. Guard: reject if metadata.status != "suspended".
+        if task.metadata.status != "suspended":
+            raise ValueError(
+                f"Cannot rollback task {task_id} because its status is "
+                f"'{task.metadata.status}', not 'suspended'"
+            )
+
+        active_session = task.metadata.active_session
+        if not active_session:
+            raise ValueError(f"Task {task_id} has no active session to rollback")
+
+        session_store = FileBasedSessionStore(task.dir / "sessions")
+
+        # 1. Load the active session's InteractionState from the store.
+        sdir = session_store._session_dir(active_session)
+        int_file = sdir / "interaction.json"
+        if not int_file.exists():
+            raise ValueError(f"Active session interaction file not found: {int_file}")
+        
+        int_data = json.loads(int_file.read_text(encoding="utf-8"))
+        interaction_state = InteractionState.from_dict(int_data)
+
+        # 2. Load turn boundaries and filesystem snapshots from the store.
+        checkpoints = await session_store.get_turn_boundaries(active_session)
+        if not checkpoints:
+            raise ValueError(f"No turn checkpoints found for session {active_session}")
+        
+        if turn_index < 0 or turn_index >= len(checkpoints):
+            raise ValueError(f"Invalid turn_index {turn_index} (total checkpoints: {len(checkpoints)})")
+
+        target_checkpoint = checkpoints[turn_index]
+        context_length = target_checkpoint["context_length"]
+
+        # Find the nearest non-null file system snapshot by walking backward from turn_index
+        fs_snapshot = None
+        for idx in range(turn_index, -1, -1):
+            cp = checkpoints[idx]
+            if cp.get("file_system") is not None:
+                fs_snapshot = cp["file_system"]
+                break
+
+        # 3. Generate a new session UUID. Create its directory under tickets/{id}/sessions/.
+        import uuid as uuid_lib
+        new_session_id = str(uuid_lib.uuid4())
+        new_sdir = task.dir / "sessions" / new_session_id
+        new_sdir.mkdir(parents=True, exist_ok=True)
+
+        # 4. Copy interaction_state.contents[:turn_boundaries[turn_index]] into the new session's InteractionState.
+        new_contents = interaction_state.contents[:context_length]
+
+        # 5. Copy the file_system snapshot from the fork-point turn boundary.
+        # 6. Clear function_call_part in the new session (no pending suspend).
+        new_state = InteractionState(
+            session_id=new_session_id,
+            contents=new_contents,
+            file_system=fs_snapshot,
+            function_call_part={},
+            task_tree=interaction_state.task_tree,
+            consents_granted=interaction_state.consents_granted,
+            flags=interaction_state.flags,
+            graph=interaction_state.graph,
+            model=interaction_state.model,
+            completed_function_responses=[],
+            is_precondition_check=False,
+        )
+
+        # Save the new interaction state and set a dummy resume_id to enable loading
+        await session_store.save_interaction(new_session_id, new_state)
+        await session_store.set_resume_id(new_session_id, "fork-resume-id")
+
+        # Also copy turns.json up to turn_index
+        turns_file = sdir / "turns.json"
+        if turns_file.exists():
+            try:
+                turns_data = json.loads(turns_file.read_text(encoding="utf-8"))
+                new_turns = turns_data[:turn_index]
+                new_turns_file = new_sdir / "turns.json"
+                new_turns_file.write_text(json.dumps(new_turns, ensure_ascii=False, indent=2), encoding="utf-8")
+            except Exception as e:
+                logger.warning("Failed to copy turns.json on fork: %s", e)
+
+        # Also copy and slice events.jsonl up to turn_index
+        events_file = sdir / "events.jsonl"
+        if events_file.exists():
+            try:
+                lines = events_file.read_text(encoding="utf-8").splitlines()
+                keep_lines = []
+                send_request_count = 0
+                for line in lines:
+                    if not line.strip():
+                        continue
+                    event_obj = json.loads(line)
+                    if "sendRequest" in event_obj:
+                        if send_request_count == turn_index:
+                            break
+                        send_request_count += 1
+                    keep_lines.append(line)
+                
+                new_events_file = new_sdir / "events.jsonl"
+                new_events_file.write_text("\n".join(keep_lines) + "\n", encoding="utf-8")
+            except Exception as e:
+                logger.warning("Failed to slice events.jsonl on fork: %s", e)
+
+        # 7. Write lineage.json for both sessions (fork point + parent/child).
+        old_lineage = {}
+        old_lineage_file = sdir / "lineage.json"
+        if old_lineage_file.exists():
+            try:
+                old_lineage = json.loads(old_lineage_file.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+        
+        old_lineage["forked_to"] = {"session": new_session_id, "at_turn": turn_index}
+        old_lineage_file.write_text(json.dumps(old_lineage, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        new_lineage = {"forked_from": {"session": active_session, "at_turn": turn_index}}
+        new_lineage_file = new_sdir / "lineage.json"
+        new_lineage_file.write_text(json.dumps(new_lineage, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        # 8. Mark old session status as SUPERSEDED.
+        await session_store.set_status(active_session, "superseded")
+
+        # 9. Update task metadata: active_session → new session ID.
+        # 10. Reset task metadata: status → available, clear suspend_event, adjust turns count, clear assignee.
+        task.metadata.active_session = new_session_id
+        task.metadata.status = "available"
+        task.metadata.suspend_event = None
+        task.metadata.turns = turn_index
+        task.metadata.assignee = None
+        task.metadata.error = None
+        task.metadata.completed_at = None
+        store.save_metadata(task)
+
+        # 11. Hydrate the runtime DiskFileSystem from the fork-point snapshot.
+        new_ws = task.fs_dir
+        new_ws.mkdir(parents=True, exist_ok=True)
+        if fs_snapshot is not None:
+            dfs = DiskFileSystem(new_ws)
+            dfs.hydrate_from_snapshot(fs_snapshot)
+
+        # 12. Trim chat_log.json to match.
+        chat_log_path = task.dir / "chat_log.json"
+        if chat_log_path.exists():
+            try:
+                derived = derive_chat_log(new_contents)
+                trimmed_entries = []
+                for entry in derived:
+                    role = "agent" if entry["role"] == "model" else "user"
+                    parts = entry.get("parts", [])
+                    text_parts = [p.get("text", "") for p in parts if "text" in p]
+                    trimmed_entries.append({
+                        "role": role,
+                        "text": "".join(text_parts)
+                    })
+                chat_log_path.write_text(
+                    json.dumps(trimmed_entries, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8"
+                )
+            except Exception as e:
+                logger.warning("Failed to trim chat_log.json: %s", e)
+
+        # 13. Optionally clean up child tasks spawned after the rollback point.
+        try:
+            new_contents_str = json.dumps(new_contents)
+            child_tickets = store.get_children(task_id)
+            for child in child_tickets:
+                if child.id not in new_contents_str:
+                    logger.info("Deleting child task %s spawned after rollback point", child.id[:8])
+                    if self._bees:
+                        self._bees.delete_task(child.id)
+                    else:
+                        self._delete_task_filesystem(child.id)
+        except Exception as e:
+            logger.warning("Failed to clean up child tasks during rollback: %s", e)
+
+        return {}
 
     # -- Utilities ---------------------------------------------------------
 

@@ -175,7 +175,7 @@ async def run(
 
     # Process any mutations that arrived while the box was down.
     startup_manager = MutationManager(hive_dir)
-    if startup_manager.process_all():
+    if await startup_manager.process_all():
         logger.info("Processed pending mutations on startup")
 
     # Write sentinel so hivetool knows the box is listening.
@@ -221,7 +221,7 @@ async def run(
                 # cold mutations signal a restart.
                 if needs_mutation:
                     manager = MutationManager(hive_dir, bees=bees)
-                    outcome = manager.process_inline()
+                    outcome = await manager.process_inline()
                     if outcome.hot_processed > 0:
                         needs_trigger = True
                     if outcome.cold_pending:
@@ -250,7 +250,7 @@ async def run(
         # Process cold mutations in the quiescent gap.
         if cold_pending:
             cold_manager = MutationManager(hive_dir)
-            cold_manager.process_cold()
+            await cold_manager.process_cold()
 
         if not restart:
             MutationManager(hive_dir).deactivate()

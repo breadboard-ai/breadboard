@@ -138,6 +138,7 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
    * so we only re-probe on ticket change, not on every render.
    */
   #probedFor: string | null = null;
+  #autoSwitchedFor: string | null = null;
 
   render() {
     if (!this.ticketStore) return nothing;
@@ -150,6 +151,7 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
     // Probe for surface.json on ticket change (async, once per ticket).
     if (this.#probedFor !== ticket.id) {
       this.#probedFor = ticket.id;
+      this.#autoSwitchedFor = null;
       this.hasSurfaceManifest = false;
       this.activePane = "detail";
       this.probeSurface(ticket.id);
@@ -160,7 +162,8 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
     const showSurface = this.hasSurfaceManifest || chatActive;
 
     // Auto-switch to Surface tab when content first appears.
-    if (showSurface && this.activePane === "detail" && !this.hasSurfaceManifest) {
+    if (showSurface && this.#autoSwitchedFor !== ticket.id) {
+      this.#autoSwitchedFor = ticket.id;
       this.activePane = "surface";
     }
 

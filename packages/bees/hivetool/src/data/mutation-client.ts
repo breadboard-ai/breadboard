@@ -186,6 +186,17 @@ class MutationClient {
     return this.#writeMutation({ type: "delete-task", task_id: taskId });
   }
 
+  /**
+   * Rollback a task to a prior turn boundary.
+   */
+  async rollbackToTurn(taskId: string, turnIndex: number): Promise<string> {
+    return this.#writeMutation({
+      type: "rollback-to-turn",
+      task_id: taskId,
+      turn_index: turnIndex,
+    });
+  }
+
   // -- internal -----------------------------------------------------------
 
   async #writeMutation(data: Record<string, unknown>): Promise<string> {

@@ -285,6 +285,25 @@ class GeminiRunner:
 
         session_id = config.session_id or str(uuid.uuid4())
 
+        # Pre-hydrate the disk workspace if this is a pre-seeded fork session
+        if isinstance(interaction_store, FileBasedSessionStore):
+            sdir = interaction_store._session_dir(session_id)
+            int_file = sdir / "interaction.json"
+            if int_file.exists():
+                try:
+                    data = json.loads(int_file.read_text(encoding="utf-8"))
+                    state = InteractionState.from_dict(data)
+                    if (
+                        state.file_system is not None
+                        and hasattr(config.file_system, "hydrate_from_snapshot")
+                    ):
+                        config.file_system.hydrate_from_snapshot(state.file_system)
+                except Exception as e:
+                    import logging
+                    logging.getLogger("bees.runners.gemini").warning(
+                        "Failed to pre-hydrate workspace on fork: %s", e
+                    )
+
         await new_session(
             session_id=session_id,
             segments=config.segments,

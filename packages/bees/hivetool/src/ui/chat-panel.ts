@@ -697,7 +697,12 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
 
     this.responding = true;
     try {
-      await this.mutationClient.respondToTask(ticketId, { text });
+      await this.mutationClient.respondToTask(ticketId, {
+        input: {
+          parts: [{ text }],
+          role: "user",
+        },
+      });
       this.replyText = "";
     } catch (e) {
       console.error("Failed to send reply:", e);
@@ -712,7 +717,9 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
     this.responding = true;
     try {
       await this.mutationClient.respondToTask(ticketId, {
-        selectedIds: [...this.selectedChoiceIds],
+        selected: {
+          ids: [...this.selectedChoiceIds],
+        },
       });
       this.selectedChoiceIds = new Set();
     } catch (e) {
