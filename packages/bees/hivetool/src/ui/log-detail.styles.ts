@@ -253,6 +253,14 @@ const logDetailBaseStyles = css`
     padding: 12px 16px;
     font-size: 0.8rem;
     line-height: 1.5;
+    transition: all 0.15s ease;
+  }
+
+  .turn.inherited {
+    opacity: 0.75;
+    border-style: dashed !important;
+    border-color: #334155 !important;
+    background: #0f1115;
   }
 
   .turn.user {
@@ -409,6 +417,12 @@ const logDetailBaseStyles = css`
     color: #fbbf24;
   }
 
+  .role-chip.inherited {
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+  }
+
   .part-function-response {
     padding: 6px 10px;
     background: #0f1115;
@@ -539,6 +553,34 @@ const logDetailBaseStyles = css`
     gap: 10px;
     margin: 14px 0 6px;
     padding: 0;
+  }
+
+  .rollback-btn {
+    margin-left: 8px;
+    padding: 2px 8px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+  }
+
+  .rollback-btn:hover {
+    background: #24344d;
+    border-color: #3b82f6;
+    color: #3b82f6;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+  }
+
+  .rollback-btn:active {
+    transform: scale(0.96);
   }
 
   .turn-header-label {

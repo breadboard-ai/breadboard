@@ -21,11 +21,12 @@ import type {
   LogTurnTokenMetadata,
 } from "../data/types.js";
 import { SessionStoreReader, compileEventsToSegment } from "../data/session-store-reader.js";
-import type { TurnCheckpointInfo } from "../data/session-store-reader.js";
+import type { TurnCheckpointInfo, SessionLineageInfo } from "../data/session-store-reader.js";
 import type { StateAccess } from "../data/state-access.js";
 import type { TicketStore } from "../data/ticket-store.js";
 import type { MutationClient } from "../data/mutation-client.js";
 import { logDetailStyles } from "./log-detail.styles.js";
+import "./primitives/confirm-dialog.js";
 
 export { BeesLogDetail };
 
@@ -83,8 +84,29 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
   @state() accessor turns: TurnCheckpointInfo[] = [];
   @state() accessor ticketId: string | null = null;
   @state() accessor activeSessionId: string | null = null;
+  @state() accessor showConfirmDialog = false;
+  @state() accessor confirmMessage = "";
+  @state() accessor rollbackTurnIndex = -1;
+  @state() accessor lineage: SessionLineageInfo[] = [];
 
   static styles = [logDetailStyles];
+
+  #rollbackSourceSessionId: string | null = null;
+
+  protected updated(changedProperties: Map<PropertyKey, unknown>) {
+    super.updated(changedProperties);
+
+    if (this.#rollbackSourceSessionId && this.activeTicket) {
+      const currentActive = this.activeTicket.active_session;
+      if (currentActive && currentActive !== this.#rollbackSourceSessionId) {
+        const newActive = currentActive;
+        this.#rollbackSourceSessionId = null;
+        
+        // Auto-navigate Hivetool to the newly forked active session
+        this.#dispatchNavigate("logs", newActive);
+      }
+    }
+  }
 
   #sessionReader: SessionStoreReader | null = null;
 
@@ -125,6 +147,9 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
 
     this.ticketId = ticketId;
     this.activeSessionId = resolvedSessionId;
+
+    const lineage = await this.sessionReader.readLineage(ticketId);
+    this.lineage = lineage;
 
     const events = await this.sessionReader.readEvents(ticketId, resolvedSessionId);
     const interaction = await this.sessionReader.readInteraction(ticketId, resolvedSessionId) as InteractionStateDto | null;
@@ -187,6 +212,15 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
         ${this.renderTools(firstSegment)}
       </div>
       ${this.renderTimeline(d)}
+      <bees-confirm-dialog
+        .open=${this.showConfirmDialog}
+        .title=${"Confirm Session Rewind"}
+        .message=${this.confirmMessage}
+        .confirmLabel=${"Rewind"}
+        .cancelLabel=${"Cancel"}
+        @confirm=${this.executeRollback}
+        @cancel=${this.closeConfirmDialog}
+      ></bees-confirm-dialog>
     `;
   }
 
@@ -452,13 +486,16 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
     const checkpoint = this.turns.find((cp) => cp.turn === tg.turnIndex);
     const tokens = this.turnTokens(tg.tokenMetadata || (checkpoint?.token_metadata as unknown as LogTurnTokenMetadata) || null);
 
+    const currentSession = this.lineage.find((l) => l.sessionId === this.activeSessionId);
+    const isInherited = !!(currentSession?.forkedFrom && tg.turnIndex < currentSession.forkedFrom.at_turn);
+
     return html`
-      ${tokens.total > 0 || checkpoint ? this.renderTurnHeader(tokens, checkpoint) : nothing}
-      ${tg.entries.map((turn) => this.renderTurn(turn))}
+      ${tokens.total > 0 || checkpoint ? this.renderTurnHeader(tokens, checkpoint, isInherited) : nothing}
+      ${tg.entries.map((turn) => this.renderTurn(turn, isInherited))}
     `;
   }
 
-  private renderTurnHeader(t: TokenBreakdown, checkpoint?: TurnCheckpointInfo) {
+  private renderTurnHeader(t: TokenBreakdown, checkpoint?: TurnCheckpointInfo, isInherited = false) {
     const TIERS = [
       { cap: 50_000, label: "50K" },
       { cap: 250_000, label: "250K" },
@@ -484,10 +521,10 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
     return html`
       <div class="turn-header">
         <span class="turn-header-label">turn ${checkpoint ? checkpoint.turn + 1 : ""}</span>
+        ${isInherited ? html`<span class="role-chip inherited" style="margin-left: 8px">🧬 Cloned</span>` : nothing}
         ${this.canRollback() && checkpoint ? html`
           <button
             class="rollback-btn"
-            style="margin-left: 8px; padding: 1px 6px; font-size: 0.65rem; font-weight: 600; background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; cursor: pointer; font-family: inherit; transition: all 0.15s"
             @click=${() => this.handleRollback(checkpoint.turn)}
             title="Rollback session to the start of this turn"
           >
@@ -527,7 +564,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
     `;
   }
 
-  private renderTurn(turn: LogTurn) {
+  private renderTurn(turn: LogTurn, isInherited = false) {
     const role = turn.role || "unknown";
     const parts = (turn.parts || []).filter((p) => !this.isEmptyPart(p));
     if (parts.length === 0) return nothing;
@@ -553,7 +590,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
       const content = match ? match[1].trim() : p.text!;
       const label = html`<span class="role-chip context-update">context update</span>`;
       return html`
-        <div class="turn context-update">
+        <div class="turn context-update ${isInherited ? "inherited" : ""}">
           <div class="turn-role">${label}</div>
           <div class="turn-parts">
             <bees-truncated-text fadeBg="#1c1a11">${content}</bees-truncated-text>
@@ -574,19 +611,19 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
       return html`${contextCards}${otherParts.map((p) => {
         const name = p.functionResponse!.name;
         const label = html`<span class="role-chip response">response</span> ${name}`;
-        return this.#renderCard("system", label, [p]);
+        return this.#renderCard("system", label, [p], isInherited);
       })}`;
     }
 
     // Model turns: split thoughts and function calls into their own cards.
     if (role === "model") {
-      return this.#renderModelTurn(otherParts);
+      return this.#renderModelTurn(otherParts, isInherited);
     }
 
-    return html`${contextCards}${this.#renderCard(role, role, otherParts)}`;
+    return html`${contextCards}${this.#renderCard(role, role, otherParts, isInherited)}`;
   }
 
-  #renderModelTurn(parts: LogPart[]) {
+  #renderModelTurn(parts: LogPart[], isInherited = false) {
     // Classify each part and render as separate cards.
     type PartKind = "thought" | "call" | "other";
     const classify = (p: LogPart): PartKind => {
@@ -616,7 +653,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
             : "thought";
           const isLong = body.length > 300;
           return html`
-            <div class="turn thought">
+            <div class="turn thought ${isInherited ? "inherited" : ""}">
               <div class="turn-role">${label}</div>
               <div class="turn-parts">
                 <div class="part-thought ${isLong ? "long" : ""}">${body}${isLong ? renderExpandButton() : nothing}</div>
@@ -630,7 +667,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
           const fc = p.functionCall!;
           const label = html`<span class="role-chip call">call</span> ${fc.name}`;
           return html`
-            <div class="turn call">
+            <div class="turn call ${isInherited ? "inherited" : ""}">
               <div class="turn-role">${label}</div>
               <div class="turn-parts">
                 <div class="json-tree">${renderJson(fc.args)}</div>
@@ -639,13 +676,13 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
           `;
         })}`;
       }
-      return this.#renderCard("model", "model", g.parts);
+      return this.#renderCard("model", "model", g.parts, isInherited);
     })}`;
   }
 
-  #renderCard(roleClass: string, displayRole: unknown, parts: LogPart[]) {
+  #renderCard(roleClass: string, displayRole: unknown, parts: LogPart[], isInherited = false) {
     return html`
-      <div class="turn ${roleClass}">
+      <div class="turn ${roleClass} ${isInherited ? "inherited" : ""}">
         <div class="turn-role">${displayRole}</div>
         <div class="turn-parts">
           ${parts.map((p) => this.renderPart(p))}
@@ -779,17 +816,32 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
   private async handleRollback(turnIndex: number) {
     if (!this.mutationClient || !this.ticketId) return;
 
-    const confirmed = confirm(
+    this.rollbackTurnIndex = turnIndex;
+    this.confirmMessage =
       `Fork at turn ${turnIndex + 1}? A new session will be created and turns ` +
-      `${turnIndex + 2} onwards will be preserved in the superseded session.`
-    );
-    if (!confirmed) return;
+      `${turnIndex + 2} onwards will be preserved in the superseded session.`;
+    this.showConfirmDialog = true;
+  }
+
+  private async executeRollback() {
+    if (!this.mutationClient || !this.ticketId || this.rollbackTurnIndex === -1) return;
+
+    const turnIndex = this.rollbackTurnIndex;
+    this.showConfirmDialog = false;
+    this.rollbackTurnIndex = -1;
 
     try {
+      this.#rollbackSourceSessionId = this.activeSessionId;
       await this.mutationClient.rollbackToTurn(this.ticketId, turnIndex);
     } catch (e) {
+      this.#rollbackSourceSessionId = null;
       console.error("Failed to rollback to turn:", e);
     }
+  }
+
+  private closeConfirmDialog() {
+    this.showConfirmDialog = false;
+    this.rollbackTurnIndex = -1;
   }
 }
 
