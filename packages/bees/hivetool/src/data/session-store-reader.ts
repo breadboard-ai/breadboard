@@ -6,7 +6,7 @@
 
 import type { StateAccess } from "./state-access.js";
 
-import type { SessionSegment, TurnGroup, LogTurnTokenMetadata, LogConfig } from "./types.js";
+import type { SessionSegment, TurnGroup, LogTurnTokenMetadata, LogConfig, LogPart } from "./types.js";
 
 export { SessionStoreReader, compileEventsToSegment };
 export type { SessionLineageInfo, TurnCheckpointInfo };
@@ -70,6 +70,34 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
       };
       turnGroups.push(currentTurnGroup);
       turnCount++;
+
+      // Parse the incoming user turn / resume turn from sendRequest history
+      const contents = body.contents as Array<Record<string, unknown>> || [];
+      if (contents.length > 0) {
+        const lastTurn = contents[contents.length - 1];
+        if (lastTurn && lastTurn.role === "user") {
+          const rawParts = lastTurn.parts as unknown[] || [];
+          const parts: LogPart[] = rawParts.map((p) => {
+            const rawPart = p as Record<string, unknown>;
+            const part: LogPart = {};
+            if (rawPart.text !== undefined) {
+              part.text = rawPart.text as string;
+            }
+            if (rawPart.functionResponse) {
+              const fr = rawPart.functionResponse as Record<string, unknown>;
+              part.functionResponse = {
+                name: fr.name as string || "",
+                response: fr.response as Record<string, unknown> || {}
+              };
+            }
+            return part;
+          });
+          currentTurnGroup.entries.push({
+            role: "user",
+            parts
+          });
+        }
+      }
     }
     
     if (currentTurnGroup) {
@@ -96,19 +124,6 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
           }]
         });
         totalFunctionCalls++;
-      }
-
-      if ("functionResponse" in event) {
-        const fr = event.functionResponse as Record<string, unknown> || {};
-        currentTurnGroup.entries.push({
-          role: "user",
-          parts: [{
-            functionResponse: {
-              name: fr.name as string || "",
-              response: fr.response as Record<string, unknown> || {}
-            }
-          }]
-        });
       }
       
       if ("usageMetadata" in event) {
