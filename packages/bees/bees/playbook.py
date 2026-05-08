@@ -42,7 +42,7 @@ class PlaybookAborted(Exception):
 
 
 def _load_templates(config_dir: Path) -> list[dict[str, Any]]:
-    """Parse TEMPLATES.yaml and return the list of template dicts."""
+    """Parse TEMPLATES.yaml and return the list of template dicts (legacy)."""
     templates_path = config_dir / "TEMPLATES.yaml"
     if not templates_path.exists():
         return []
@@ -54,17 +54,68 @@ def _load_templates(config_dir: Path) -> list[dict[str, Any]]:
     return data
 
 
-def list_playbooks(config_dir: Path) -> list[str]:
+def load_all_templates(config_dir: Path, workspace_dir: Path | None = None) -> list[dict[str, Any]]:
+    """Load and merge all templates from global and local sources."""
+    templates: dict[str, dict[str, Any]] = {}
+
+    def _load_file(path: Path) -> list[dict[str, Any]]:
+        if not path.exists():
+            return []
+        try:
+            with open(path, encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+            if isinstance(data, dict):
+                if "name" not in data:
+                    data["name"] = path.stem
+                return [data]
+            elif isinstance(data, list):
+                for i, item in enumerate(data):
+                    if isinstance(item, dict) and "name" not in item:
+                        item["name"] = f"{path.stem}_{i}"
+                return [item for item in data if isinstance(item, dict)]
+            else:
+                logger.warning("Template file %s must be a list or dictionary; got %s", path, type(data).__name__)
+        except Exception as e:
+            logger.warning("Failed to load template from %s: %s", path, e)
+        return []
+
+    def _scan_dir(templates_dir: Path) -> list[dict[str, Any]]:
+        items = []
+        if not templates_dir.is_dir():
+            return []
+        for child in sorted(templates_dir.iterdir()):
+            if child.is_file() and child.suffix in (".yaml", ".yml"):
+                items.extend(_load_file(child))
+        return items
+
+    # 1. Global Legacy
+    global_legacy = config_dir / "TEMPLATES.yaml"
+    if global_legacy.exists():
+        for item in _load_file(global_legacy):
+            t_name = item.get("name")
+            if t_name:
+                templates[t_name] = item
+
+    # 2. Local Workspace templates
+    if workspace_dir:
+        local_dir = workspace_dir / "templates"
+        if local_dir.is_dir():
+            for item in _scan_dir(local_dir):
+                t_name = item.get("name")
+                if t_name:
+                    templates[t_name] = item
+
+    return list(templates.values())
+
+
+def list_playbooks(config_dir: Path, workspace_dir: Path | None = None) -> list[str]:
     """Return the names of all available templates."""
-    return [t["name"] for t in _load_templates(config_dir) if "name" in t]
+    return [t["name"] for t in load_all_templates(config_dir, workspace_dir) if "name" in t]
 
 
-def load_playbook(name: str, config_dir: Path) -> dict[str, Any]:
-    """Load a template by name.
-
-    Returns the template dict directly (flat — no ``steps`` wrapper).
-    """
-    for t in _load_templates(config_dir):
+def load_playbook(name: str, config_dir: Path, workspace_dir: Path | None = None) -> dict[str, Any]:
+    """Load a template by name."""
+    for t in load_all_templates(config_dir, workspace_dir):
         if t.get("name") == name:
             return t
     raise FileNotFoundError(f"Template not found: {name}")
@@ -104,6 +155,7 @@ def run_playbook(
     context: str | None = None,
     owning_task_id: str | None = None,
     slug: str | None = None,
+    workspace_dir: Path | None = None,
 ) -> Ticket:
     """Create a task from a template.
 
@@ -121,7 +173,7 @@ def run_playbook(
     config_dir = hive_dir / "config"
     hooks_dir = config_dir / "hooks"
 
-    data = load_playbook(name, config_dir)
+    data = load_playbook(name, config_dir, workspace_dir)
 
     # Run on_run_playbook hook if present.
     hooks = _load_hooks(name, hooks_dir)
@@ -200,6 +252,7 @@ def stamp_child_task(
         context=context,
         owning_task_id=child_scope.workspace_root_id,
         slug=child_scope.slug_path,
+        workspace_dir=parent_task.fs_dir,
     )
 
     if child_scope.slug_path:

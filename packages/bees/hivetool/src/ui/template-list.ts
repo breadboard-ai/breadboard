@@ -63,6 +63,8 @@ class BeesTemplateList extends SignalWatcher(LitElement) {
         color: #c4b5fd;
         font-family: "Google Mono", "Roboto Mono", monospace;
       }
+
+
     `,
   ];
 

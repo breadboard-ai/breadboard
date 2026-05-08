@@ -351,12 +351,15 @@ class DiskFileSystem:
             for item in self._work_dir.rglob("*"):
                 if item.is_file():
                     rel = item.relative_to(self._work_dir)
-                    if not any(part.startswith(".") or part in _SKIP_DIRS for part in rel.parts):
+                    if not any(part.startswith(".") or part in _SKIP_DIRS or part == "templates" for part in rel.parts):
                         item.unlink(missing_ok=True)
 
-            # Clean up empty directories
+            # Clean up empty directories (protect templates directory)
             for item in sorted(self._work_dir.rglob("*"), key=lambda p: len(p.parts), reverse=True):
                 if item.is_dir():
+                    rel = item.relative_to(self._work_dir)
+                    if any(part.startswith(".") or part in _SKIP_DIRS or part == "templates" for part in rel.parts):
+                        continue
                     try:
                         item.rmdir()
                     except OSError:

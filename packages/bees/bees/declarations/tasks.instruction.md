@@ -5,8 +5,12 @@ You can delegate work to subagents using tasks.
 When you create a task, a scheduler will assign a subagent to the task as soon
 as it is able. The availability depends on the current workload and will vary.
 
-There are several pre-defined task types that are accessible via the
-"tasks_list_types" function. Choose the right type for the new task.
+Available task types are resolved dynamically via the "tasks_list_types"
+function. New task templates or overrides can be created or modified inside the
+`templates/` directory of your workspace during execution. You MUST always call
+"tasks_list_types" to discover the current, most up-to-date list of available
+task types before creating a task, especially if you or the system have
+dynamically created or edited templates.
 
 You can create tasks using the "tasks_create_task" function, check the status of
 the task using the "tasks_check_status" function, and request task cancellation
@@ -16,10 +20,8 @@ You can send events to a running subagent using "tasks_send_event". The agent
 receives the event as a context update. Use this to provide additional
 instructions, clarifications, or data while the subagent is working.
 
-When creating a task, you can opt to wait until the task is done by setting the
-"wait_ms_before_async" parameter to a sufficiently large value. Note that in the
-worst case, this will block your ability to do anything else for this amount of
-time. Use it with care.
+Unless the objective explicitly calls for itit, keep the "wait_ms_before_async"
+parameter at 0 and let the tasks run asynchronously.
 
 For tasks that run asynchronously, the scheduler will issue a context update
 when each task completes. The update will contain the outcome of the completed

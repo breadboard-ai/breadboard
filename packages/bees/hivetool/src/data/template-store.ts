@@ -34,6 +34,8 @@ interface TemplateData {
   autostart?: string[];
   runner?: "generate" | "live";
   voice?: string;
+  isWorkspaceScoped?: boolean;
+  ticketId?: string;
 }
 
 class TemplateStore {
@@ -57,11 +59,14 @@ class TemplateStore {
     await this.scan();
   }
 
-  /** Read and parse TEMPLATES.yaml from the hive handle. */
-  async scan(): Promise<void> {
+  /** Read and parse TEMPLATES.yaml from the config folder, AND scan any local templates in the active ticket. */
+  async scan(activeTicketId?: string | null): Promise<void> {
     const handle = this.access.handle;
     if (!handle) return;
 
+    const allTemplates: TemplateData[] = [];
+
+    // 1. Read and parse legacy TEMPLATES.yaml from config/
     try {
       const configDir = await handle.getDirectoryHandle("config");
       const fileHandle = await configDir.getFileHandle("TEMPLATES.yaml");
@@ -69,17 +74,81 @@ class TemplateStore {
       const text = await file.text();
       const data = yaml.load(text);
 
-      if (!Array.isArray(data)) {
-        console.warn("TEMPLATES.yaml must be a list; got", typeof data);
-        this.templates.set([]);
-        return;
+      if (Array.isArray(data)) {
+        allTemplates.push(...(data as TemplateData[]));
       }
-
-      this.templates.set(data as TemplateData[]);
     } catch (e) {
-      console.warn("Could not read TEMPLATES.yaml:", e);
-      this.templates.set([]);
+      console.warn("Could not read config/TEMPLATES.yaml:", e);
     }
+
+    // 2. If an active ticket ID is provided, scan tickets/{id}/filesystem/templates/*.yaml
+    if (activeTicketId) {
+      try {
+        const ticketsDir = await handle.getDirectoryHandle("tickets");
+        const ticketDir = await ticketsDir.getDirectoryHandle(activeTicketId);
+        
+        let fsDir: FileSystemDirectoryHandle;
+        let activeSession: string | null = null;
+        try {
+          const metaFile = await ticketDir.getFileHandle("metadata.json");
+          const metaText = await (await metaFile.getFile()).text();
+          const meta = JSON.parse(metaText);
+          activeSession = meta?.active_session ?? null;
+        } catch {
+          // Meta might not exist yet — ignore
+        }
+
+        if (activeSession) {
+          const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+          const sessionDir = await sessionsDir.getDirectoryHandle(activeSession);
+          fsDir = await sessionDir.getDirectoryHandle("workspace");
+        } else {
+          fsDir = await ticketDir.getDirectoryHandle("filesystem");
+        }
+
+        const templatesDir = await fsDir.getDirectoryHandle("templates");
+        
+        for await (const [name, entry] of (
+          templatesDir as FileSystemDirectoryHandle & {
+            entries(): AsyncIterable<[string, FileSystemHandle]>;
+          }
+        ).entries()) {
+          if (entry.kind !== "file" || (!name.endsWith(".yaml") && !name.endsWith(".yml"))) {
+            continue;
+          }
+          try {
+            const fileHandle = await templatesDir.getFileHandle(name);
+            const file = await fileHandle.getFile();
+            const text = await file.text();
+            const tData = yaml.load(text);
+            if (tData && typeof tData === "object") {
+              const template = tData as TemplateData;
+              if (!template.name) {
+                template.name = name.substring(0, name.lastIndexOf("."));
+              }
+              
+              // Inject metadata for visual badge and route rendering
+              template.isWorkspaceScoped = true;
+              if (activeTicketId) template.ticketId = activeTicketId;
+
+              // Overwrite global templates with workspace definitions if they match names
+              const existingIndex = allTemplates.findIndex((t) => t.name === template.name);
+              if (existingIndex !== -1) {
+                allTemplates[existingIndex] = template;
+              } else {
+                allTemplates.push(template);
+              }
+            }
+          } catch (e) {
+            console.warn(`Could not load local template ${name}:`, e);
+          }
+        }
+      } catch {
+        // Quietly catch when filesystem/templates directory does not exist yet
+      }
+    }
+
+    this.templates.set(allTemplates);
   }
 
   selectTemplate(name: string): void {
@@ -89,37 +158,135 @@ class TemplateStore {
   // ── Write operations ──
 
   /** Save an existing template by replacing its entry and writing to disk. */
-  async saveTemplate(originalName: string, data: TemplateData): Promise<void> {
-    const current = this.templates.get();
-    const index = current.findIndex((t) => t.name === originalName);
-    if (index === -1) throw new Error(`Template "${originalName}" not found`);
+  async saveTemplate(originalName: string, data: TemplateData, activeTicketId?: string | null): Promise<void> {
+    if (data.isWorkspaceScoped && activeTicketId) {
+      await this.#writeLocalTemplate(activeTicketId, data);
+    } else {
+      const current = this.templates.get();
+      const index = current.findIndex((t) => t.name === originalName);
+      if (index === -1) throw new Error(`Template "${originalName}" not found`);
 
-    const updated = [...current];
-    updated[index] = data;
-    await this.#writeTemplates(updated);
+      const updated = [...current];
+      updated[index] = data;
+      const globalsOnly = updated.filter((t) => !t.isWorkspaceScoped);
+      await this.#writeTemplates(globalsOnly);
+    }
+    await this.scan(activeTicketId);
   }
 
   /** Create a new template by appending it and writing to disk. */
-  async createTemplate(data: TemplateData): Promise<void> {
+  async createTemplate(data: TemplateData, activeTicketId?: string | null, saveLocal = false): Promise<void> {
     const current = this.templates.get();
     if (current.some((t) => t.name === data.name))
       throw new Error(`Template "${data.name}" already exists`);
 
-    const updated = [...current, data];
-    await this.#writeTemplates(updated);
+    if (saveLocal && activeTicketId) {
+      data.isWorkspaceScoped = true;
+      data.ticketId = activeTicketId;
+      await this.#writeLocalTemplate(activeTicketId, data);
+    } else {
+      const globalsOnly = current.filter((t) => !t.isWorkspaceScoped);
+      const updated = [...globalsOnly, data];
+      await this.#writeTemplates(updated);
+    }
+    await this.scan(activeTicketId);
     this.selectedTemplateName.set(data.name);
   }
 
   /** Delete a template by name and write to disk. */
-  async deleteTemplate(name: string): Promise<void> {
+  async deleteTemplate(name: string, activeTicketId?: string | null): Promise<void> {
     const current = this.templates.get();
-    const updated = current.filter((t) => t.name !== name);
-    if (updated.length === current.length)
-      throw new Error(`Template "${name}" not found`);
+    const target = current.find((t) => t.name === name);
+    if (!target) throw new Error(`Template "${name}" not found`);
 
-    await this.#writeTemplates(updated);
+    if (target.isWorkspaceScoped && activeTicketId) {
+      await this.#deleteLocalTemplate(activeTicketId, name);
+    } else {
+      const globalsOnly = current.filter((t) => t.name !== name && !t.isWorkspaceScoped);
+      await this.#writeTemplates(globalsOnly);
+    }
+    
+    await this.scan(activeTicketId);
     if (this.selectedTemplateName.get() === name)
       this.selectedTemplateName.set(null);
+  }
+
+  async #writeLocalTemplate(ticketId: string, template: TemplateData): Promise<void> {
+    const handle = this.access.handle;
+    if (!handle) throw new Error("No hive directory handle");
+
+    const ticketsDir = await handle.getDirectoryHandle("tickets");
+    const ticketDir = await ticketsDir.getDirectoryHandle(ticketId);
+    
+    let fsDir: FileSystemDirectoryHandle;
+    let activeSession: string | null = null;
+    try {
+      const metaFile = await ticketDir.getFileHandle("metadata.json");
+      const metaText = await (await metaFile.getFile()).text();
+      const meta = JSON.parse(metaText);
+      activeSession = meta?.active_session ?? null;
+    } catch {
+      // Meta might not exist yet
+    }
+
+    if (activeSession) {
+      const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+      const sessionDir = await sessionsDir.getDirectoryHandle(activeSession);
+      fsDir = await sessionDir.getDirectoryHandle("workspace");
+    } else {
+      fsDir = await ticketDir.getDirectoryHandle("filesystem");
+    }
+
+    const templatesDir = await fsDir.getDirectoryHandle("templates", { create: true });
+    const fileHandle = await templatesDir.getFileHandle(`${template.name}.yaml`, { create: true });
+    const writable = await fileHandle.createWritable();
+
+    const cleaned: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(template)) {
+      if (key === "isWorkspaceScoped" || key === "ticketId") continue;
+      if (value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)) continue;
+      cleaned[key] = value;
+    }
+
+    const content = yaml.dump(cleaned, {
+      lineWidth: 80,
+      noRefs: true,
+      quotingType: '"',
+      forceQuotes: false,
+    });
+
+    await writable.write(content);
+    await writable.close();
+  }
+
+  async #deleteLocalTemplate(ticketId: string, name: string): Promise<void> {
+    const handle = this.access.handle;
+    if (!handle) throw new Error("No hive directory handle");
+
+    const ticketsDir = await handle.getDirectoryHandle("tickets");
+    const ticketDir = await ticketsDir.getDirectoryHandle(ticketId);
+    
+    let fsDir: FileSystemDirectoryHandle;
+    let activeSession: string | null = null;
+    try {
+      const metaFile = await ticketDir.getFileHandle("metadata.json");
+      const metaText = await (await metaFile.getFile()).text();
+      const meta = JSON.parse(metaText);
+      activeSession = meta?.active_session ?? null;
+    } catch {
+      // Meta might not exist yet
+    }
+
+    if (activeSession) {
+      const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+      const sessionDir = await sessionsDir.getDirectoryHandle(activeSession);
+      fsDir = await sessionDir.getDirectoryHandle("workspace");
+    } else {
+      fsDir = await ticketDir.getDirectoryHandle("filesystem");
+    }
+
+    const templatesDir = await fsDir.getDirectoryHandle("templates");
+    await templatesDir.removeEntry(`${name}.yaml`);
   }
 
   /**

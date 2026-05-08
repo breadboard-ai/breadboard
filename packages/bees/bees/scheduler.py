@@ -395,26 +395,27 @@ class Scheduler:
         """Deliver, inject, or buffer a context update for a task.
 
         Three delivery paths, tried in order:
-        1. **Mid-stream** — task is running and has a live context
-           queue.  Push pre-formatted parts for injection at the next
-           turn boundary.
-        2. **Immediate resume** — task is suspended and idle.  Write
-           ``response.json`` and flip assignee to trigger resume.
-        3. **Buffer** — task is busy but has no live queue (e.g.
-           batch mode).  Append to ``pending_context_updates`` in
-           metadata for later drain.
+        1. **Mid-stream injection** (Live sessions only) — task is running
+           and has an active real-time WebSocket stream. Pushes context
+           parts for immediate live injection.
+        2. **Immediate resume** — task is suspended and waiting for user
+           input. Writes ``response.json`` and flips assignee to trigger
+           resumption.
+        3. **Buffer** — task is busy or turn-based (batch mode). Appends
+           to ``pending_context_updates`` in metadata to be drained on settle
+           or next resume.
         """
-        # Path 1: mid-stream injection via live stream.
-        stream = self._active_streams.get(target_id)
-        if stream is not None:
-            parts = updates_to_context_parts([update])
-            asyncio.create_task(stream.send_context(parts))
-            logger.info("Context update injected mid-stream for %s", target_id)
-            return
-
         target = self.store.get(target_id)
         if not target:
             logger.warning("Failed to load task %s for context update", target_id)
+            return
+
+        # Path 1: mid-stream injection via live stream (Live sessions only)
+        stream = self._active_streams.get(target_id)
+        if stream is not None and target.metadata.runner == "live":
+            parts = updates_to_context_parts([update])
+            asyncio.create_task(stream.send_context(parts))
+            logger.info("Context update injected mid-stream for %s", target_id)
             return
 
         # Path 2: immediate resume via response.json.

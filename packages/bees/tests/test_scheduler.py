@@ -165,6 +165,59 @@ async def test_deliver_context_update_immediate(mock_clients):
     assert fresh_creator.metadata.assignee == "agent"
 
 
+@pytest.mark.asyncio
+async def test_deliver_context_update_running_buffers_and_autoresumes_on_suspend(mock_clients):
+    _, backend = mock_clients
+    scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
+    
+    creator = GLOBAL_STORE.create("Parent Objective")
+    creator.metadata.status = "running"
+    creator.metadata.assignee = "agent"
+    creator.metadata.runner = "generate"  # Batch runner
+    GLOBAL_STORE.save_metadata(creator)
+    
+    # Mock active stream to simulate running state
+    mock_stream = AsyncMock()
+    scheduler._active_streams[creator.id] = mock_stream
+    
+    update = {"task_id": "sub-1", "outcome": "done"}
+    scheduler._deliver_context_update(creator.id, update)
+    
+    # Assert that it was NOT injected mid-stream (Path 1 skipped for generate)
+    mock_stream.send_context.assert_not_called()
+    
+    # Assert that it was buffered in pending_context_updates (Path 3)
+    fresh_creator = GLOBAL_STORE.get(creator.id)
+    assert fresh_creator.metadata.pending_context_updates == [update]
+    
+    # Now simulate that the parent turn finishes and it suspends
+    from bees.protocols.session import SessionResult
+    result = SessionResult(
+        session_id="s1",
+        status="suspended",
+        events=1,
+        output="",
+        suspended=True,
+        suspend_event={"waitForInput": {}},
+    )
+    
+    scheduler._task_runner._handle_suspend(creator, result)
+    scheduler.store.save_metadata(creator)
+    
+    # Assert that the pending updates were consumed, response.json written, and assignee flipped to agent (auto-resume!)
+    response_path = creator.dir / "response.json"
+    assert response_path.exists()
+    
+    import json
+    content = json.loads(response_path.read_text())
+    assert content["context_updates"] == [update]
+    
+    fresh_creator2 = GLOBAL_STORE.get(creator.id)
+    assert fresh_creator2.metadata.assignee == "agent"
+    assert fresh_creator2.metadata.status == "suspended"
+    assert fresh_creator2.metadata.pending_context_updates == []
+
+
 # ---------------------------------------------------------------------------
 # Tag enrichment tests
 # ---------------------------------------------------------------------------

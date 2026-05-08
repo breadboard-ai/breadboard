@@ -12,7 +12,7 @@
  */
 
 import { SignalWatcher } from "@lit-labs/signals";
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, state } from "lit/decorators.js";
 
 import { APP_ICON, APP_NAME } from "../constants.js";
@@ -430,6 +430,15 @@ class BeesApp extends SignalWatcher(LitElement) {
     }
   `,
   ];
+
+  willUpdate(changedProperties: PropertyValues) {
+    super.willUpdate(changedProperties);
+    
+    const activeTicketId = this.ticketStore.selectedTicketId.get();
+    if (this.stateAccess.accessState.get() === "ready") {
+      this.templateStore.scan(activeTicketId);
+    }
+  }
 
   connectedCallback() {
     super.connectedCallback();

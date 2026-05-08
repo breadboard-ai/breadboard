@@ -107,10 +107,23 @@ def provision_session(
     )
     disk_fs = DiskFileSystem(work_dir)
 
-    # 4. Seed initial files (skills) directly to disk.
+    # 4. Seed initial files (skills and templates) directly to disk.
     if seed_files:
         for name, content in session_files.items():
             disk_fs.write(name, content)
+
+        try:
+            import yaml
+            from bees.playbook import _load_templates
+            global_templates = _load_templates(hive_dir / "config")
+            for t in global_templates:
+                t_name = t.get("name")
+                if t_name:
+                    t_content = yaml.dump(t, sort_keys=False, allow_unicode=True)
+                    disk_fs.write(f"templates/{t_name}.yaml", t_content)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning("Failed to seed templates into workspace: %s", exc)
 
     # 5. Assemble function group factories.
     workspace_root_id = scope.workspace_root_id if scope else None

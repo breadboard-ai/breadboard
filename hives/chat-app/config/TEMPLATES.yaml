@@ -134,3 +134,10 @@
     - gmail.*
     - calendar.*
     - people.*
+
+- name: delegator
+  title: Delegator
+  description: You chat with the user and delegate work to sub-agents
+  functions:
+    - chat.*
+    - tasks.*

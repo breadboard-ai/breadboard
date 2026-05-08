@@ -165,6 +165,10 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
         color: #e2e8f0;
         font-size: 0.85rem;
         line-height: 1.6;
+        max-height: 300px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #334155 transparent;
       }
 
       .agent-prompt p {
