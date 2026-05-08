@@ -189,11 +189,12 @@ class MutationClient {
   /**
    * Rollback a task to a prior turn boundary.
    */
-  async rollbackToTurn(taskId: string, turnIndex: number): Promise<string> {
+  async rollbackToTurn(taskId: string, turnIndex: number, sessionId?: string): Promise<string> {
     return this.#writeMutation({
       type: "rollback-to-turn",
       task_id: taskId,
       turn_index: turnIndex,
+      session_id: sessionId,
     });
   }
 

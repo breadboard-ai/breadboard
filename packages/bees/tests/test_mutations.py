@@ -534,6 +534,125 @@ class TestRollbackToTurn:
         assert "Thought 1" in new_events_content
         assert "Thought 2" not in new_events_content
 
+    def test_rollback_fork_superseded_session(self, hive, store):
+        # Create a suspended task
+        task_id = _create_task(store, status="suspended")
+        task = store.get(task_id)
+        
+        # Set active session ID to session_2
+        session_1 = "superseded-session-111"
+        session_2 = "active-session-222"
+        task.metadata.active_session = session_2
+        store.save_metadata(task)
+
+        # Setup session_1 directory (superseded)
+        sdir_1 = hive / "tickets" / task_id / "sessions" / session_1
+        sdir_1.mkdir(parents=True, exist_ok=True)
+        (sdir_1 / "status").write_text("superseded", encoding="utf-8")
+        (sdir_1 / "workspace").mkdir(parents=True, exist_ok=True)
+        (sdir_1 / "workspace" / "notes.md").write_text("hello from session 1")
+
+        # Setup turn checkpoints for session_1
+        turns_data = [
+            {
+                "turn": 0,
+                "context_length": 1,
+                "file_system": None,
+                "token_metadata": None
+            },
+            {
+                "turn": 1,
+                "context_length": 3,
+                "file_system": {
+                    "files": {
+                        "notes.md": {
+                            "data": "hello from session 1",
+                            "mime_type": "text/plain",
+                            "type": "text"
+                        }
+                    },
+                    "routes": {},
+                    "file_count": 1
+                },
+                "token_metadata": None
+            }
+        ]
+        (sdir_1 / "turns.json").write_text(json.dumps(turns_data))
+
+        # Create interaction.json for session_1
+        interaction_data = {
+            "session_id": session_1,
+            "contents": [
+                {"parts": [{"text": "Objective"}], "role": "user"},
+                {"parts": [{"text": "Thought 1"}], "role": "model"},
+                {"parts": [{"text": "Action 1"}], "role": "model"}
+            ],
+            "file_system": {
+                "files": {
+                    "notes.md": {
+                        "data": "hello from session 1",
+                        "mime_type": "text/plain",
+                        "type": "text"
+                    }
+                },
+                "routes": {},
+                "file_count": 1
+            },
+            "function_call_part": {},
+            "task_tree": {"tree": None},
+            "consents_granted": [],
+            "flags": {},
+            "graph": {},
+            "model": "gemini-2.5-pro",
+            "completed_function_responses": [],
+            "is_precondition_check": False
+        }
+        (sdir_1 / "interaction.json").write_text(json.dumps(interaction_data))
+
+        # Setup session_2 directory (active)
+        sdir_2 = hive / "tickets" / task_id / "sessions" / session_2
+        sdir_2.mkdir(parents=True, exist_ok=True)
+        (sdir_2 / "status").write_text("suspended", encoding="utf-8")
+
+        # Trigger rollback-to-turn mutation targeting the superseded session_1
+        _write_mutation(hive, {
+            "type": "rollback-to-turn",
+            "task_id": task_id,
+            "turn_index": 1,
+            "session_id": session_1,
+        })
+        manager = MutationManager(hive)
+        outcome = asyncio.run(manager.process_inline())
+
+        assert outcome.hot_processed == 1
+
+        # Task metadata should be updated to the new active session ID
+        updated_task = store.get(task_id)
+        assert updated_task.metadata.status == "available"
+        new_session_id = updated_task.metadata.active_session
+        assert new_session_id != session_1
+        assert new_session_id != session_2
+        assert updated_task.metadata.turns == 1
+
+        # The old active session (session_2) should be marked superseded
+        assert (sdir_2 / "status").read_text(encoding="utf-8") == "superseded"
+
+        # The cloned source session (session_1) should remain superseded
+        assert (sdir_1 / "status").read_text(encoding="utf-8") == "superseded"
+
+        # Lineage for session_1 and new session should link correctly
+        old_lineage = json.loads((sdir_1 / "lineage.json").read_text())
+        assert old_lineage["forked_to"]["session"] == new_session_id
+        assert old_lineage["forked_to"]["at_turn"] == 1
+
+        new_sdir = hive / "tickets" / task_id / "sessions" / new_session_id
+        new_lineage = json.loads((new_sdir / "lineage.json").read_text())
+        assert new_lineage["forked_from"]["session"] == session_1
+        assert new_lineage["forked_from"]["at_turn"] == 1
+
+        # File system workspace should hydrate from session_1's snapshot
+        assert (new_sdir / "workspace" / "notes.md").read_text() == "hello from session 1"
+
 
 # ---------------------------------------------------------------------------
 # Unknown mutations
