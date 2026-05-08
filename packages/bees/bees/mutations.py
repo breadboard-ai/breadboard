@@ -600,6 +600,7 @@ class MutationManager:
 
         task_id = mutation.data.get("task_id")
         turn_index = mutation.data.get("turn_index")
+        session_id = mutation.data.get("session_id")
         if not task_id:
             raise ValueError("rollback-to-turn mutation missing 'task_id'")
         if turn_index is None:
@@ -618,13 +619,14 @@ class MutationManager:
             )
 
         active_session = task.metadata.active_session
-        if not active_session:
-            raise ValueError(f"Task {task_id} has no active session to rollback")
+        fork_source_session = session_id or active_session
+        if not fork_source_session:
+            raise ValueError(f"Task {task_id} has no session to fork from")
 
         session_store = FileBasedSessionStore(task.dir / "sessions")
 
-        # 1. Load the active session's InteractionState from the store.
-        sdir = session_store._session_dir(active_session)
+        # 1. Load the target session's InteractionState from the store.
+        sdir = session_store._session_dir(fork_source_session)
         int_file = sdir / "interaction.json"
         if not int_file.exists():
             raise ValueError(f"Active session interaction file not found: {int_file}")
@@ -633,9 +635,9 @@ class MutationManager:
         interaction_state = InteractionState.from_dict(int_data)
 
         # 2. Load turn boundaries and filesystem snapshots from the store.
-        checkpoints = await session_store.get_turn_boundaries(active_session)
+        checkpoints = await session_store.get_turn_boundaries(fork_source_session)
         if not checkpoints:
-            raise ValueError(f"No turn checkpoints found for session {active_session}")
+            raise ValueError(f"No turn checkpoints found for session {fork_source_session}")
         
         if turn_index < 0 or turn_index >= len(checkpoints):
             raise ValueError(f"Invalid turn_index {turn_index} (total checkpoints: {len(checkpoints)})")
@@ -725,12 +727,13 @@ class MutationManager:
         old_lineage["forked_to"] = {"session": new_session_id, "at_turn": turn_index}
         old_lineage_file.write_text(json.dumps(old_lineage, ensure_ascii=False, indent=2), encoding="utf-8")
 
-        new_lineage = {"forked_from": {"session": active_session, "at_turn": turn_index}}
+        new_lineage = {"forked_from": {"session": fork_source_session, "at_turn": turn_index}}
         new_lineage_file = new_sdir / "lineage.json"
         new_lineage_file.write_text(json.dumps(new_lineage, ensure_ascii=False, indent=2), encoding="utf-8")
 
-        # 8. Mark old session status as SUPERSEDED.
-        await session_store.set_status(active_session, "superseded")
+        # 8. Mark currently active session status as SUPERSEDED.
+        if active_session:
+            await session_store.set_status(active_session, "superseded")
 
         # 9. Update task metadata: active_session → new session ID.
         # 10. Reset task metadata: status → available, clear suspend_event, adjust turns count, clear assignee.

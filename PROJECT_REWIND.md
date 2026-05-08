@@ -536,11 +536,11 @@ Smooth out and polish all user interactions and visual components of the session
 
 ### Changes
 
-- [ ] **Rewind Button Presentation & Positioning**: Styling of the `⏪` button next to turn labels to look premium, aligning with Hivetool's dark-mode styling.
-- [ ] **Session Lineage Tree Visuals**: Enhance the lineage component to render clear icons and visual badges for different session states (e.g., `"active"`, `"superseded"`).
-- [ ] **Inherited Turns Visual Cue**: Render a subtle visual indicator or badge next to turns that were cloned from an ancestor session, making the origin of the history clear.
-- [ ] **Premium Dialog Confirmation**: Replace the default browser `confirm()` prompt with a custom, elegant Lit modal confirmation dialog to prevent freezing the main UI thread.
-- [ ] **Timeline Navigation Focus**: Auto-navigate the timeline and select the newly forked active session after the rollback completes.
+- [x] **Rewind Button Presentation & Positioning**: Styling of the `⏪` button next to turn labels to look premium, aligning with Hivetool's dark-mode styling.
+- [x] **Session Lineage Tree Visuals**: Enhance the lineage component to render clear icons and visual badges for different session states (e.g., `"active"`, `"superseded"`).
+- [x] **Inherited Turns Visual Cue**: Render a subtle visual indicator or badge next to turns that were cloned from an ancestor session, making the origin of the history clear.
+- [x] **Premium Dialog Confirmation**: Replace the default browser `confirm()` prompt with a custom, elegant Lit modal confirmation dialog to prevent freezing the main UI thread.
+- [x] **Timeline Navigation Focus**: Auto-navigate the timeline and select the newly forked active session after the rollback completes.
 
 ---
 

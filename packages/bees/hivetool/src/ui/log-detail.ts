@@ -810,7 +810,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
     const ticket = this.activeTicket;
     if (!boxActive) return false;
     if (!ticket) return false;
-    return ticket.status === "suspended" && ticket.active_session === this.activeSessionId;
+    return ticket.status === "suspended";
   }
 
   private async handleRollback(turnIndex: number) {
@@ -832,7 +832,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
 
     try {
       this.#rollbackSourceSessionId = this.activeSessionId;
-      await this.mutationClient.rollbackToTurn(this.ticketId, turnIndex);
+      await this.mutationClient.rollbackToTurn(this.ticketId, turnIndex, this.activeSessionId ?? undefined);
     } catch (e) {
       this.#rollbackSourceSessionId = null;
       console.error("Failed to rollback to turn:", e);
