@@ -447,6 +447,8 @@ class TaskRunner:
             if fresh:
                 if fresh.metadata.queued_updates:
                     task.metadata.queued_updates = fresh.metadata.queued_updates
+                if fresh.metadata.pending_context_updates:
+                    task.metadata.pending_context_updates = fresh.metadata.pending_context_updates
                 if fresh.metadata.title != task.metadata.title:
                     task.metadata.title = fresh.metadata.title
 
@@ -454,7 +456,18 @@ class TaskRunner:
             # the runner before yielding.
             suspend_event = dict(result.suspend_event) if result.suspend_event else {}
 
-            if getattr(task.metadata, "queued_updates", None):
+            if getattr(task.metadata, "pending_context_updates", None):
+                updates = list(task.metadata.pending_context_updates)
+                task.metadata.pending_context_updates = []
+                response_path = task.dir / "response.json"
+                response_path.write_text(
+                    json.dumps({"context_updates": updates}, indent=2, ensure_ascii=False) + "\n"
+                )
+                task.metadata.status = "suspended"
+                task.metadata.assignee = "agent"
+                task.metadata.suspend_event = suspend_event
+                print(f"  [{task.id[:8]}] 📩 auto-resume with buffered context updates", file=sys.stderr)
+            elif getattr(task.metadata, "queued_updates", None):
                 update = task.metadata.queued_updates.pop(0)
                 response_path = task.dir / "response.json"
                 response_path.write_text(

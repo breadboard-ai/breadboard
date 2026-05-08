@@ -40,21 +40,29 @@ def _make_handlers(
             status_cb("Listing available task types")
             
         allowed_tasks = []
+        workspace_dir = None
         if caller_ticket_id:
             task = scheduler.store.get(caller_ticket_id) if scheduler else None
-            if task and task.metadata.tasks:
-                allowed_tasks = task.metadata.tasks
+            if task:
+                workspace_dir = task.fs_dir
+                if task.metadata.tasks:
+                    allowed_tasks = task.metadata.tasks
                 
         task_types = []
         from bees.playbook import list_playbooks, load_playbook
         
         config_dir = scheduler.store.hive_dir / "config"
         
-        for name in list_playbooks(config_dir):
+        global_names = set(list_playbooks(config_dir))
+        all_names = list_playbooks(config_dir, workspace_dir)
+        
+        for name in all_names:
             try:
-                data = load_playbook(name, config_dir)
+                data = load_playbook(name, config_dir, workspace_dir)
                 task_name = data.get("name", name)
-                if task_name in allowed_tasks:
+                is_local = task_name not in global_names
+                
+                if is_local or task_name in allowed_tasks:
                     task_types.append({
                         "name": task_name,
                         "title": data.get("title", name),
@@ -84,8 +92,12 @@ def _make_handlers(
             
         from bees.playbook import load_playbook, stamp_child_task
         config_dir = scheduler.store.hive_dir / "config"
+        
+        parent = scheduler.store.get(caller_ticket_id) if scheduler and caller_ticket_id else None
+        workspace_dir = parent.fs_dir if parent else None
+        
         try:
-            load_playbook(task_type, config_dir)
+            load_playbook(task_type, config_dir, workspace_dir)
         except FileNotFoundError:
             return {"error": f"Task type not found: {task_type}"}
 

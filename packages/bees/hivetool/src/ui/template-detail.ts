@@ -299,6 +299,7 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
   @state() accessor saving = false;
   @state() accessor error: string | null = null;
   @state() accessor draft: TemplateData | null = null;
+  @state() accessor saveLocal = false;
 
   // ── Run state ──
   @state() accessor showRunDialog = false;
@@ -574,6 +575,23 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
             : nothing}
 
           <div class="edit-form">
+            ${isNew && this.ticketStore?.selectedTicketId.get()
+              ? html`
+                  <div class="edit-row" style="align-items:center;margin-bottom:8px">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:#cbd5e1;cursor:pointer">
+                      <input
+                        type="checkbox"
+                        ?checked=${this.saveLocal}
+                        @change=${(e: Event) => {
+                          this.saveLocal = (e.target as HTMLInputElement).checked;
+                        }}
+                        style="cursor:pointer"
+                      />
+                      Save as Local Template in Active Task Workspace
+                    </label>
+                  </div>
+                `
+              : nothing}
             <!-- Identity fields -->
             <div class="edit-row">
               <bees-editable-field
@@ -744,6 +762,7 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
   private startEditing(template: TemplateData) {
     this.#originalName = template.name;
     this.draft = { ...template };
+    this.saveLocal = !!template.isWorkspaceScoped;
     this.editing = true;
     this.error = null;
   }
@@ -751,6 +770,7 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
   startCreating() {
     this.#originalName = null;
     this.draft = { name: "" };
+    this.saveLocal = false;
     this.creating = true;
     this.editing = false;
     this.error = null;
@@ -808,11 +828,13 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
     this.saving = true;
     this.error = null;
 
+    const activeTicketId = this.ticketStore?.selectedTicketId.get();
+
     try {
       if (this.creating) {
-        await this.templateStore.createTemplate(this.draft);
+        await this.templateStore.createTemplate(this.draft, activeTicketId, this.saveLocal);
       } else if (this.#originalName) {
-        await this.templateStore.saveTemplate(this.#originalName, this.draft);
+        await this.templateStore.saveTemplate(this.#originalName, this.draft, activeTicketId);
         // If name changed, update selection.
         if (this.draft.name !== this.#originalName) {
           this.templateStore.selectTemplate(this.draft.name);
@@ -842,8 +864,10 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
     this.saving = true;
     this.error = null;
 
+    const activeTicketId = this.ticketStore?.selectedTicketId.get();
+
     try {
-      await this.templateStore.deleteTemplate(this.#originalName);
+      await this.templateStore.deleteTemplate(this.#originalName, activeTicketId);
       this.cancelEditing();
     } catch (e) {
       this.error =
