@@ -341,13 +341,13 @@ class DiskFileSystem:
             file_count=len(files),
         )
 
-    def hydrate_from_snapshot(self, snapshot: FileSystemSnapshot) -> None:
+    def hydrate_from_snapshot(self, snapshot: FileSystemSnapshot, clear_untracked: bool = True) -> None:
         """Hydrate the disk workspace from a snapshot.
 
         Clears any existing files on disk before writing snapshot files.
         """
         # Clear existing files on disk (excluding hidden files or skipped directories)
-        if self._work_dir.exists():
+        if clear_untracked and self._work_dir.exists():
             for item in self._work_dir.rglob("*"):
                 if item.is_file():
                     rel = item.relative_to(self._work_dir)

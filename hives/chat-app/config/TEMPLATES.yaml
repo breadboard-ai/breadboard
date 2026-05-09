@@ -27,41 +27,41 @@
     - system.*
 
 - name: chat-chat
-  title: Chat Chat
+  title: Opie w/o Workspace
   description: A chat app that builds apps
   objective: >-
-    Build high-quality React apps in response to user requests. If the requests
-    are simple, just respond. If the user asks for a "widget", build a React
-    app. When the user asks to update the widget, update the JSON file that
-    supplies widget's data.
+    Converse with the user as Opie, a friendly assistant. 
 
 
-    Use generate_text to research the data and ensure that the JSON file
-    information contains accurate data.
+    In the conversation, strive to be helpful: concise but not terse, effective
+    but not brash. Ok to stop and ask questions if request is not clear.
 
 
-    Here's how you build a widget:
+    In the first message, briefly introduce yourself and tell the user what you
+    can do.
 
 
-    1) Create a new subdirectory where the app will go. Check to see that this
-    is a new directory.
+    If the requests don't require a UI, reply in chat. If the user asks for a
+    "widget", build a widget. When the user asks to update the widget, update
+    the JSON file that supplies widget's data.
 
 
-    2) Write the React app using Opal SDK in that subdirectory. Rules for app
-    crafting
-
-    - craft the app in a way that any non-constant data is represented as a JSON
-    file that's loaded and watched for changes. 
-
-    - do not create additional bezels or borders for the widget: they will
-    conflict with the surface borders. Just 10px padding.
+    Use a child task of type `generate_text` (using standard tasks tool with
+    `slug` set to a research folder name like `research`) to research the data
+    and ensure that the JSON file information contains accurate data.
 
 
-    3) Create or update the surface to include the widget.
+    Anticipate that user is not very technical, so instead of using technical
+    jargon or terms (like React or generate_text), apply more friendly terms.
 
 
-    4) Get back to the user with a friendly message notifying them that the
-    widget was added.
+    React app bundle = widget
+
+    surface = dashboard
+
+    section = tab in the dashboard
+
+    etc.
   model: gemini-3.1-pro-preview
   skills:
     - build-react-apps
@@ -70,7 +70,9 @@
     - use-opal-sdk
   functions:
     - chat.*
-    - generate.text
+    - tasks.*
+  tasks:
+    - generate_text
 
 - name: workspace-test
   title: Test Workspace MCP 2
@@ -104,8 +106,9 @@
     the JSON file that supplies widget's data.
 
 
-    Use generate_text to research the data and ensure that the JSON file
-    information contains accurate data.
+    Use a child task of type `generate_text` (using standard tasks tool with
+    `slug` set to a research folder name like `research`) to research the data
+    and ensure that the JSON file information contains accurate data.
 
 
     Anticipate that user is not very technical, so instead of using technical
@@ -128,12 +131,14 @@
     - build-widgets
   functions:
     - chat.*
-    - generate.text
+    - tasks.*
     - drive.*
     - gchat.*
     - gmail.*
     - calendar.*
     - people.*
+  tasks:
+    - generate_text
 
 - name: delegator
   title: Delegator
@@ -143,17 +148,13 @@
     - tasks.*
 
 - name: generate_text
-  title: AI Text Generator
+  title: Text Generator
   runner: direct_model
   model: gemini-3-flash-preview
   objective: "{{system.context}}"
   functions:
     - builtin.search_grounding
-
-- name: search
-  title: Grounded Search
-  description: Uses Google Search based on the provided context
-  runner: direct_model
-  objective: "{{system.context}}"
-  functions:
-    - builtin.search_grounding
+  description: >-
+    An extremely versatile text generator, powered by Gemini. Use it for any
+    tasks that involve generation of text. Supports multimodal content input.
+    Always writes its output to {slug}/text.md.
