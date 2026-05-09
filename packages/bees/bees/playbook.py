@@ -105,6 +105,8 @@ def load_all_templates(config_dir: Path, workspace_dir: Path | None = None) -> l
                 if t_name:
                     templates[t_name] = item
 
+
+
     return list(templates.values())
 
 

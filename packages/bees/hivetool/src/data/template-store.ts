@@ -32,7 +32,7 @@ interface TemplateData {
   watch_events?: Array<{ type: string }>;
   tasks?: string[];
   autostart?: string[];
-  runner?: "generate" | "live";
+  runner?: "generate" | "live" | "direct_model";
   voice?: string;
   isWorkspaceScoped?: boolean;
   ticketId?: string;

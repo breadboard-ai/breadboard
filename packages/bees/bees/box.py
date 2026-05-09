@@ -52,6 +52,7 @@ from bees.protocols.events import (
 )
 from bees.runners.gemini import GeminiRunner
 from bees.runners.live import LiveRunner
+from bees.runners.direct_model import DirectModelRunner
 from bees.ticket import Ticket
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
@@ -185,6 +186,7 @@ async def run(
     runners = {
         "generate": runner,
         "live": LiveRunner(api_key=gemini_key),
+        "direct_model": DirectModelRunner(backend),
     }
 
     while True:

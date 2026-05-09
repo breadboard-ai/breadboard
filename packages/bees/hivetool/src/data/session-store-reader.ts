@@ -137,6 +137,34 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
         totalCachedTokens += (metadata.cachedContentTokenCount as number) || 0;
         totalTokens += (metadata.totalTokenCount as number) || 0;
       }
+
+      if ("complete" in event) {
+        const complete = event.complete as Record<string, unknown> || {};
+        const result = complete.result as Record<string, unknown> || {};
+        const outcomes = result.outcomes as Record<string, unknown> || {};
+        const parts = outcomes.parts as Array<Record<string, unknown>> || [];
+
+        const intermediate = result.intermediate as Array<Record<string, unknown>> || [];
+        const textParts = [];
+
+        for (const item of intermediate) {
+          const content = item.content as Record<string, unknown> || {};
+          if ("text" in content) {
+            textParts.push({
+              text: content.text as string
+            });
+          }
+        }
+
+        const finalParts = textParts.length > 0 ? textParts : parts;
+
+        if (currentTurnGroup && finalParts.length > 0) {
+          currentTurnGroup.entries.push({
+            role: "model",
+            parts: finalParts.map((p) => ({ text: p.text as string }))
+          });
+        }
+      }
     }
   }
 

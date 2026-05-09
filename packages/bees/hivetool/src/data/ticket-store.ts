@@ -167,7 +167,7 @@ class TicketStore {
     tags?: string[];
     tasks?: string[];
     model?: string;
-    runner?: "generate" | "live";
+    runner?: "generate" | "live" | "direct_model";
     context?: string;
     watch_events?: Array<{ type: string }>;
   }): Promise<string> {
