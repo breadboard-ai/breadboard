@@ -636,10 +636,12 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
                 .value=${draft.runner ?? "generate"}
                 editing
                 placeholder="generate"
-                @change=${(e: CustomEvent) =>
+                @change=${(e: CustomEvent) => {
+                  const val = e.detail.value;
                   this.updateDraft({
-                    runner: e.detail.value === "live" ? "live" : "generate",
-                  })}
+                    runner: (val === "live" || val === "direct_model") ? val : "generate",
+                  });
+                }}
               ></bees-editable-field>
             </div>
 

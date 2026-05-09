@@ -43,7 +43,7 @@ export interface TaskData {
   watch_events?: Array<{ type: string }>;
   outcome_content?: Record<string, unknown>;
   files?: Array<{ path: string; mimeType: string; localPath: string }>;
-  runner?: "generate" | "live";
+  runner?: "generate" | "live" | "direct_model";
   voice?: string;
   active_session?: string;
 }

@@ -225,10 +225,10 @@ and resolves task status to completed.
 
 ### Changes
 
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
       [ticket.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/ticket.py)**
   - Update `RunnerType` literal definition to support `"direct_model"`.
-- [ ] **[NEW]
+- [x] **[NEW]
       [direct_model.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/runners/direct_model.py)**
   - Implement `DirectModelRunner` and `DirectModelStream` implementing
     `SessionRunner` and `SessionStream` protocols.
@@ -238,17 +238,16 @@ and resolves task status to completed.
     - Calls `stream_generate_content` via `gemini_client`.
     - Yields live thought chunks to driving SSE.
     - Writes final generated text to `slug/text.md` on completion.
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
       [box.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/box.py)**
   - Register `"direct_model"` runner in the starting dictionary.
-- [ ] **[NEW]
-      [generate_text.yaml](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/declarations/tasks/generate_text.yaml)**
-  - Register built-in template for `generate_text` specifying
-    `runner: direct_model`, `tags: ["text"]`, and model defaults.
+- [x] **[MODIFY]
+      [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
+  - Define the `generate_text` task template specifying `runner: direct_model`, `model: gemini-3-flash-preview`, `objective: "{{system.context}}"`, and support for `builtin.search_grounding` in functions.
 
 #### Verification
 
-- [ ] Add automated test `test_direct_model_text.py` to verify
+- [x] Add automated test `test_direct_model_text.py` to verify
       `DirectModelRunner` core execution, text generation, thought streaming,
       and sandboxed file generation in isolation.
 
@@ -417,13 +416,7 @@ packages/bees/
       direct_model.py            ← [NEW] DirectModelRunner and DirectModelStream (SessionRunner protocols)
     functions/
       tasks.py                   ← ensure child slug parameters are wired
-    declarations/
-      tasks/
-        generate_text.yaml       ← [NEW] template defining generate_text built-in runner
-        generate_images.yaml     ← [NEW] template defining generate_images built-in runner
-        generate_video.yaml      ← [NEW] template defining generate_video built-in runner
-        generate_speech.yaml     ← [NEW] template defining generate_speech built-in runner
-        generate_music.yaml      ← [NEW] template defining generate_music built-in runner
+
   tests/
     test_direct_model_text.py    ← [NEW] verify text adapter execution and thoughts
     test_direct_model_image.py   ← [NEW] verify image adapter execution and PNG outputs

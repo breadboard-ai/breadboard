@@ -28,7 +28,7 @@ TicketStatus = Literal[
 
 TicketKind = Literal["work", "coordination"]
 
-RunnerType = Literal["generate", "live"]
+RunnerType = Literal["generate", "live", "direct_model"]
 
 
 

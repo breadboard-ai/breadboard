@@ -141,3 +141,19 @@
   functions:
     - chat.*
     - tasks.*
+
+- name: generate_text
+  title: AI Text Generator
+  runner: direct_model
+  model: gemini-3-flash-preview
+  objective: "{{system.context}}"
+  functions:
+    - builtin.search_grounding
+
+- name: search
+  title: Grounded Search
+  description: Uses Google Search based on the provided context
+  runner: direct_model
+  objective: "{{system.context}}"
+  functions:
+    - builtin.search_grounding
