@@ -89,12 +89,12 @@ class SubagentScope:
 
     # -- Instruction generation --------------------------------------------
 
-    def sandbox_instructions(self) -> str:
+    def sandbox_instructions(self, runner: str = "generate") -> str:
         """Generate the ``<sandbox_environment>`` block for the objective.
 
         Returns an empty string for root agents (no restriction).
         """
-        if self.slug_path is None:
+        if self.slug_path is None or runner == "direct_model":
             return ""
         return (
             "<sandbox_environment>\n"

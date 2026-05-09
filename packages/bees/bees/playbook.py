@@ -258,14 +258,17 @@ def stamp_child_task(
     )
 
     if child_scope.slug_path:
-        sandbox_block = child_scope.sandbox_instructions()
-        child.objective = (
-            f"{child.objective}\n\n"
+        sandbox_block = child_scope.sandbox_instructions(child.metadata.runner)
+        
+        blocks = [
             f"<subagent_context>\n"
             f"Your parent id is: {parent_task.id}\n"
-            f"</subagent_context>\n"
-            f"{sandbox_block}"
-        )
+            f"</subagent_context>"
+        ]
+        if sandbox_block:
+            blocks.append(sandbox_block)
+
+        child.objective = f"{child.objective}\n\n" + "\n\n".join(blocks)
         store.save(child)
         child_scope.writable_dir(child.fs_dir).mkdir(
             parents=True, exist_ok=True,

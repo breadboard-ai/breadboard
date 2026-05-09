@@ -376,3 +376,50 @@ class TestProtocolCompliance:
 
         fs = AgentFileSystem()
         assert isinstance(fs, FileSystem)
+
+
+# ---------------------------------------------------------------------------
+# hydrate_from_snapshot
+# ---------------------------------------------------------------------------
+
+
+class TestHydrateFromSnapshot:
+
+    def test_hydrate_recreates_tracked_files(self, tmp_path):
+        fs = DiskFileSystem(tmp_path)
+        fs.write("a.txt", "original-a")
+        snap = fs.snapshot
+
+        # Modify original file on disk
+        (tmp_path / "a.txt").write_text("modified-a")
+
+        # Hydrate should restore original content
+        fs.hydrate_from_snapshot(snap)
+        assert (tmp_path / "a.txt").read_text() == "original-a"
+
+    def test_hydrate_deletes_untracked_files_when_clear_untracked_is_true(self, tmp_path):
+        fs = DiskFileSystem(tmp_path)
+        fs.write("a.txt", "original-a")
+        snap = fs.snapshot
+
+        # Create an untracked file on disk
+        (tmp_path / "untracked.txt").write_text("new-file")
+
+        # Hydrating with default (clear_untracked=True) should delete untracked.txt
+        fs.hydrate_from_snapshot(snap, clear_untracked=True)
+        assert not (tmp_path / "untracked.txt").exists()
+
+    def test_hydrate_preserves_untracked_files_when_clear_untracked_is_false(self, tmp_path):
+        fs = DiskFileSystem(tmp_path)
+        fs.write("a.txt", "original-a")
+        snap = fs.snapshot
+
+        # Create an untracked file on disk
+        (tmp_path / "untracked.txt").write_text("new-file")
+
+        # Hydrating with clear_untracked=False should NOT delete untracked.txt
+        fs.hydrate_from_snapshot(snap, clear_untracked=False)
+        assert (tmp_path / "untracked.txt").exists()
+        assert (tmp_path / "untracked.txt").read_text() == "new-file"
+        assert (tmp_path / "a.txt").read_text() == "original-a"
+

@@ -366,7 +366,7 @@ class TestStampChildTask:
     def test_sandbox_instructions_appended(self, write_template):
         write_template(
             {"name": "parent", "objective": "Manage."},
-            {"name": "worker", "objective": "Do work."},
+            {"name": "worker", "objective": "Do work.", "runner": "generate"},
         )
 
         parent = run_playbook("parent")
@@ -376,6 +376,20 @@ class TestStampChildTask:
 
         assert "<sandbox_environment>" in child.objective
         assert "my-worker" in child.objective
+        assert "<subagent_context>" in child.objective
+
+    def test_sandbox_instructions_skipped_for_direct_model(self, write_template):
+        write_template(
+            {"name": "parent", "objective": "Manage."},
+            {"name": "worker", "objective": "Do work.", "runner": "direct_model"},
+        )
+
+        parent = run_playbook("parent")
+        child = stamp_child_task(
+            "worker", parent_task=parent, slug="my-worker",
+        )
+
+        assert "<sandbox_environment>" not in child.objective
         assert "<subagent_context>" in child.objective
 
     def test_writable_dir_created(self, write_template):

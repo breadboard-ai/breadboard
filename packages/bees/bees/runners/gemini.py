@@ -368,7 +368,10 @@ class GeminiRunner:
             interaction_state.file_system is not None
             and hasattr(config.file_system, "hydrate_from_snapshot")
         ):
-            config.file_system.hydrate_from_snapshot(interaction_state.file_system)
+            config.file_system.hydrate_from_snapshot(
+                interaction_state.file_system,
+                clear_untracked=False,
+            )
 
         if self._session_store_factory:
             session_store = self._session_store_factory(config)

@@ -268,7 +268,7 @@ after receiving deliverables inside `memo/text.md`.
 
 ### Changes
 
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
       [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
   - Under templates `chat-chat` and `chat-3`:
     - Remove `generate.text` from the allowed `functions:` allowlist.
@@ -277,7 +277,7 @@ after receiving deliverables inside `memo/text.md`.
       references of calling the `generate_text` function with instructions to
       spawn a `generate_text` sub-task with `slug` set to the desired folder
       name.
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
       [SKILL.md](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/hive/skills/research/SKILL.md)**
   - Remove `generate.text` from the allowed-tools header list.
   - Add `tasks.*` to the allowed-tools list.
@@ -289,7 +289,7 @@ after receiving deliverables inside `memo/text.md`.
 
 #### Verification
 
-- [ ] Run the updated `chat-chat` or `chat-3` agent sessions end-to-end and
+- [x] Run the updated `chat-chat` or `chat-3` agent sessions end-to-end and
       verify they execute concurrent tasks for generation seamlessly.
 
 ---
