@@ -48,7 +48,7 @@ const RESEARCH_TOOLS: DefaultToolDescriptor[] = [
   },
 ];
 
-const RESEARCH_MODEL = "gemini-2.5-flash";
+const RESEARCH_MODEL = "gemini-3.1-flash-lite";
 
 const MAX_ITERATIONS = 7;
 
