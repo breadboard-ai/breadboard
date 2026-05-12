@@ -31,7 +31,7 @@ interface LineageJson {
   forked_to?: { session: string; at_turn: number };
 }
 
-function compileEventsToSegment(sessionId: string, events: Record<string, unknown>[]): SessionSegment {
+function compileEventsToSegment(sessionId: string, events: Record<string, unknown>[], runnerType?: string): SessionSegment {
   let turnCount = 0;
   let totalThoughts = 0;
   let totalFunctionCalls = 0;
@@ -138,7 +138,7 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
         totalTokens += (metadata.totalTokenCount as number) || 0;
       }
 
-      if ("complete" in event) {
+      if ("complete" in event && runnerType !== "generate") {
         const complete = event.complete as Record<string, unknown> || {};
         const result = complete.result as Record<string, unknown> || {};
         const outcomes = result.outcomes as Record<string, unknown> || {};

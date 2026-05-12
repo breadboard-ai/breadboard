@@ -158,7 +158,8 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
     this.turns = turns;
 
     if (events.length > 0) {
-      const segment = compileEventsToSegment(resolvedSessionId, events as Record<string, unknown>[]);
+      const ticket = tickets.find((t) => t.id === ticketId);
+      const segment = compileEventsToSegment(resolvedSessionId, events as Record<string, unknown>[], ticket?.runner);
       this.storeData = {
         sessionId: resolvedSessionId,
         segments: [segment],
