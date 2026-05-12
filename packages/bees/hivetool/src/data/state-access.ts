@@ -49,6 +49,7 @@ class StateAccess {
   readonly isMultiHive = new Signal.State<boolean>(false);
   readonly cases = new Signal.State<Array<{ id: string; name: string }>>([]);
   readonly activeCaseId = new Signal.State<string | null>(null);
+  readonly isReadonly = new Signal.State<boolean>(false);
 
   #handle: FileSystemDirectoryHandle | null = null;
   #resultsRootHandle: FileSystemDirectoryHandle | null = null;
@@ -207,6 +208,7 @@ class StateAccess {
       this.activeCaseId.set(null);
       this.#resultsRootHandle = null;
       this.#handle = handle;
+      await this.#checkReadonly(handle);
     } else {
       this.isMultiHive.set(true);
       this.#resultsRootHandle = handle;
@@ -219,6 +221,7 @@ class StateAccess {
       } else {
         this.#handle = null;
         this.activeCaseId.set(null);
+        this.isReadonly.set(false);
       }
     }
   }
@@ -277,8 +280,18 @@ class StateAccess {
       }
       this.#handle = current;
       this.activeCaseId.set(caseId);
+      await this.#checkReadonly(current);
     } catch (e) {
       console.error(`Failed to switch to case ${caseId}:`, e);
+    }
+  }
+
+  async #checkReadonly(handle: FileSystemDirectoryHandle): Promise<void> {
+    try {
+      await handle.getFileHandle(".readonly");
+      this.isReadonly.set(true);
+    } catch {
+      this.isReadonly.set(false);
     }
   }
 

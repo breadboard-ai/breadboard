@@ -78,6 +78,7 @@ class BeesTemplateList extends SignalWatcher(LitElement) {
 
     return html`
       <div class="sidebar-toolbar">
+        ${this.store.access.isReadonly.get() ? nothing : html`
         <button
           class="add-btn"
           @click=${() => this.handleCreate()}
@@ -85,6 +86,7 @@ class BeesTemplateList extends SignalWatcher(LitElement) {
         >
           +
         </button>
+        `}
       </div>
       ${templates.length === 0
         ? html`<div class="empty-state">No templates found.</div>`

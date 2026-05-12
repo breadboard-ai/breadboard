@@ -1,0 +1,27 @@
+# Ticket templates — see docs/patterns.md for the field reference.
+
+- name: ui-builder
+  title: React App Builder
+  description: Builds a high-quality React App
+  objective: >-
+    Create a weather data file named weather_data.json, showing weather for a
+    location. Simulate the weather data for Los Altos, CA.
+
+
+    Then, build a high-quality React app according to this specification:
+
+
+    - A weather widget that loads from weather_data.json and displays it
+
+    - Anytime the file changes, use the opal SDK to read and update the display.
+
+
+    Finally, add a surface to display this app as a single primary item.
+  model: gemini-3.1-pro-preview
+  skills:
+    - build-react-apps
+    - run-in-sandbox
+    - surface
+    - use-opal-sdk
+  functions:
+    - system.*

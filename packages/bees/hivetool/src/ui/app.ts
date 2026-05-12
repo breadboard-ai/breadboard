@@ -935,6 +935,7 @@ class BeesApp extends SignalWatcher(LitElement) {
             this.syncHash();
           }}
           @create=${() => {
+            if (this.stateAccess.isReadonly.get()) return;
             // Tell the detail panel to enter create mode.
             const detail = this.renderRoot.querySelector(
               "bees-template-detail"
@@ -951,6 +952,7 @@ class BeesApp extends SignalWatcher(LitElement) {
             this.syncHash();
           }}
           @create=${() => {
+            if (this.stateAccess.isReadonly.get()) return;
             const detail = this.renderRoot.querySelector(
               "bees-skill-detail"
             );

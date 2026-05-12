@@ -57,7 +57,7 @@ function parseFrontmatter(text: string): {
 }
 
 class SkillStore {
-  constructor(private access: StateAccess) {}
+  constructor(readonly access: StateAccess) {}
 
   readonly skills = new Signal.State<SkillData[]>([]);
   readonly selectedSkillDir = new Signal.State<string | null>(null);

@@ -56,7 +56,7 @@ interface SystemData {
 const EMPTY: SystemData = { title: "", description: "", root: "", mcp: [] };
 
 class SystemStore {
-  constructor(private access: StateAccess) {}
+  constructor(readonly access: StateAccess) {}
 
   readonly config = new Signal.State<SystemData>(EMPTY);
 

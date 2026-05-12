@@ -26,7 +26,8 @@
     "prepare": "husky",
     "setup:python": "wireit",
     "test:python": "wireit",
-    "show:archived-projects": "git log --diff-filter=D --name-only --pretty=format:'%h %s' -- 'PROJECT_*.md'"
+    "show:archived-projects": "git log --diff-filter=D --name-only --pretty=format:'%h %s' -- 'PROJECT_*.md'",
+    "eval:ui-builder": "npm run eval -w bees -- run ../../hives/ui-builder --root ui-builder"
   },
   "wireit": {
     "build": {

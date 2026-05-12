@@ -154,9 +154,11 @@ class BeesSkillDetail extends SignalWatcher(LitElement) {
           <div class="job-detail-header-top">
             <h2 class="job-detail-title">${skill.title || skill.name}</h2>
             <div style="display:flex;align-items:center;gap:8px">
+              ${this.skillStore!.access.isReadonly.get() ? nothing : html`
               <button class="edit-btn" @click=${() => this.startEditing(skill)}>
                 ✏️ Edit
               </button>
+              `}
               <div class="skill-badge">SKILL</div>
             </div>
           </div>
