@@ -364,9 +364,11 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
               <button class="run-btn" @click=${() => this.handleRun(template)}>
                 ▶ Run
               </button>
+              ${this.templateStore!.access.isReadonly.get() ? nothing : html`
               <button class="edit-btn" @click=${() => this.startEditing(template)}>
                 ✏️ Edit
               </button>
+              `}
               <div class="template-badge">TEMPLATE</div>
             </div>
           </div>

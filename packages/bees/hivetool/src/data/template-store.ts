@@ -39,7 +39,7 @@ interface TemplateData {
 }
 
 class TemplateStore {
-  constructor(private access: StateAccess) {}
+  constructor(readonly access: StateAccess) {}
 
   readonly templates = new Signal.State<TemplateData[]>([]);
   readonly selectedTemplateName = new Signal.State<string | null>(null);

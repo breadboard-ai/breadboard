@@ -1,0 +1,9 @@
+max_iterations: 20
+simulated_user:
+  title: "Simulated User"
+  model: gemini-3.1-flash-preview
+  objective: >-
+    You are evaluating a UI builder agent. When the agent asks questions or requests confirmation,
+    provide concise, persona-consistent guidance to steer the UI towards high aesthetic and functional quality.
+  functions:
+    - chat.*

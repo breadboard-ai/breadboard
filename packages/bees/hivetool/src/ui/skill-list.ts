@@ -70,6 +70,7 @@ class BeesSkillList extends SignalWatcher(LitElement) {
 
     return html`
       <div class="sidebar-toolbar">
+        ${this.store.access.isReadonly.get() ? nothing : html`
         <button
           class="add-btn"
           @click=${() => this.handleCreate()}
@@ -77,6 +78,7 @@ class BeesSkillList extends SignalWatcher(LitElement) {
         >
           +
         </button>
+        `}
       </div>
       ${skills.length === 0
         ? html`<div class="empty-state">No skills found.</div>`

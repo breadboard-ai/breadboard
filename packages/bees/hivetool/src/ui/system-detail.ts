@@ -579,12 +579,14 @@ class BeesSystemDetail extends SignalWatcher(LitElement) {
           <div class="job-detail-header-top">
             <h2 class="job-detail-title">${config.title || "Untitled Hive"}</h2>
             <div style="display:flex;align-items:center;gap:8px">
+              ${this.systemStore!.access.isReadonly.get() ? nothing : html`
               <button
                 class="edit-btn"
                 @click=${() => this.startEditing(config)}
               >
                 ✏️ Edit
               </button>
+              `}
               <div class="system-badge">SYSTEM</div>
             </div>
           </div>

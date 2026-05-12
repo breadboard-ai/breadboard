@@ -182,6 +182,7 @@ async def run_case(
     if work_dir.exists():
         shutil.rmtree(work_dir)
     shutil.copytree(hive_dir, work_dir)
+    (work_dir / ".readonly").touch()
 
     logger.info("Running case '%s': %s → %s", name, hive_dir, work_dir)
 
