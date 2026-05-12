@@ -17,7 +17,7 @@ Start the evaluation session using the top-level npm script. This executes a
 batch eval against the `ui-builder` template:
 
 ```bash
-npm run eval:ui-builder
+npm run hiveval -- ui-builder
 ```
 
 This command copies this hive to a pristine working directory under
