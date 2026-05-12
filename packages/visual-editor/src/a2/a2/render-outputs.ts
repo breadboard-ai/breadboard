@@ -64,21 +64,21 @@ type Model = {
 const MODELS: Model[] = [
   {
     id: "gemini-flash",
-    title: "Gemini 2.5 Flash",
+    title: "Gemini 3.0 Flash",
     description: "Best for coding simple, static displays",
-    modelName: "gemini-2.5-flash",
+    modelName: "gemini-3-flash-preview",
   },
   {
     id: "gemini-flash-lite",
-    title: "Gemini 2.5 Flash Lite",
+    title: "Gemini 3.1 Flash Lite",
     description: "Best for simple speedy displays",
-    modelName: "gemini-2.5-flash-lite",
+    modelName: "gemini-3.1-flash-lite",
   },
   {
     id: "gemini-pro",
-    title: "Gemini 2.5 Pro",
+    title: "Gemini 3.1 Pro",
     description: "Best for coding complex or interactive displays",
-    modelName: "gemini-2.5-pro",
+    modelName: "gemini-3.1-pro-preview",
   },
 ];
 
@@ -352,7 +352,7 @@ async function invoke(
   const context = mergeContent([substituting], "user");
   // If the step uses one of the deprecated modes that encodes model, trust this.
   if (renderMode == FLASH_MODE) {
-    modelName = "gemini-2.5-flash";
+    modelName = "gemini-3.1-flash-lite";
   } else if (renderMode == PRO_MODE) {
     modelName = "gemini-2.5-pro";
   }

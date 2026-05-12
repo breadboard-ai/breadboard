@@ -303,7 +303,12 @@ export type GeminiOutputs =
       context: LLMContent[];
     };
 
+const MODEL_ALIASES: Record<string, string> = {
+  "gemini-2.5-flash": "gemini-3.1-flash-lite",
+};
+
 const MODELS: readonly string[] = [
+  "gemini-3.1-flash-lite",
   "gemini-3-flash-preview",
   "gemini-2.5-flash",
   "gemini-2.5-flash-lite",
@@ -338,7 +343,7 @@ const MODELS: readonly string[] = [
 const MODEL_FALLBACKS: Record<string, readonly string[]> = {
   "gemini-3-pro": ["gemini-3-flash-preview", "gemini-2.5-pro"],
   "gemini-2.5-pro": ["gemini-3-flash-preview"],
-  "gemini-3-flash-preview": ["gemini-2.5-flash"],
+  "gemini-3-flash-preview": ["gemini-3.1-flash-lite"],
 };
 
 const NO_RETRY_CODES: readonly number[] = [400, 429, 404, 403];
@@ -490,6 +495,7 @@ async function conformBody(
 
 function calculateDuration(model: string) {
   switch (model) {
+    case "gemini-3.1-flash-lite":
     case "gemini-2.5-flash":
       return 20;
     case "gemini-2.5-pro":
@@ -758,6 +764,9 @@ async function generateContent(
   body: GeminiBody,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<GeminiAPIOutputs>> {
+  if (MODEL_ALIASES[model]) {
+    model = MODEL_ALIASES[model];
+  }
   const { fetchWithCreds, context } = moduleArgs;
   try {
     const prefix = await resolvePrefix();
@@ -812,6 +821,9 @@ async function streamGenerateContent(
   body: GeminiBody,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AsyncIterable<GeminiAPIOutputs>>> {
+  if (MODEL_ALIASES[model]) {
+    model = MODEL_ALIASES[model];
+  }
   const { fetchWithCreds, context } = moduleArgs;
   const prefix = await resolvePrefix();
   for (let attempt = 0; attempt < STREAM_MAX_RETRIES; attempt++) {
@@ -929,6 +941,9 @@ async function invoke(
     return validatingInputs;
   }
   let { model } = inputs;
+  if (model && MODEL_ALIASES[model]) {
+    model = MODEL_ALIASES[model];
+  }
   if (!model) {
     model = MODELS[0];
   }
