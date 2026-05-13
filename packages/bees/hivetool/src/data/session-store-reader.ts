@@ -145,23 +145,27 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
         const parts = outcomes.parts as Array<Record<string, unknown>> || [];
 
         const intermediate = result.intermediate as Array<Record<string, unknown>> || [];
-        const textParts = [];
+        const intermediateParts: LogPart[] = [];
 
         for (const item of intermediate) {
           const content = item.content as Record<string, unknown> || {};
           if ("text" in content) {
-            textParts.push({
+            intermediateParts.push({
               text: content.text as string
+            });
+          } else if ("inlineData" in content) {
+            intermediateParts.push({
+              inlineData: content.inlineData as { mimeType: string; data: string }
             });
           }
         }
 
-        const finalParts = textParts.length > 0 ? textParts : parts;
+        const finalParts = intermediateParts.length > 0 ? intermediateParts : (parts as LogPart[]);
 
         if (currentTurnGroup && finalParts.length > 0) {
           currentTurnGroup.entries.push({
             role: "model",
-            parts: finalParts.map((p) => ({ text: p.text as string }))
+            parts: finalParts
           });
         }
       }

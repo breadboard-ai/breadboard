@@ -495,6 +495,9 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
   }
 
   private renderFileContent(filename: string, content: string): unknown {
+    if (content.startsWith("data:image/")) {
+      return html`<img src="${content}" alt="${filename}" style="max-width: 100%; border-radius: 6px; display: block;" />`;
+    }
     if (filename.endsWith(".json")) {
       try {
         const parsed = JSON.parse(content);
@@ -507,6 +510,8 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
   }
 
   private fileIcon(name: string): string {
+    const lower = name.toLowerCase();
+    if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".gif") || lower.endsWith(".webp") || lower.endsWith(".svg")) return "🖼️";
     if (name.endsWith(".json")) return "📊";
     if (name.endsWith(".md")) return "📝";
     if (name.endsWith(".py")) return "🐍";

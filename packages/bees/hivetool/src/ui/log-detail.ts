@@ -693,6 +693,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
   }
 
   private isEmptyPart(p: LogPart): boolean {
+    if (p.inlineData) return false;
     if (
       p.thoughtSignature &&
       !p.text &&
@@ -722,6 +723,12 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
       return html`<div class="part-function-response">
         <div class="json-tree">${renderJson(fr.response)}</div>
       </div>`;
+    }
+
+    if (p.inlineData) {
+      if (p.inlineData.mimeType.startsWith("image/")) {
+        return html`<div class="part-image"><img src="data:${p.inlineData.mimeType};base64,${p.inlineData.data}" alt="Generated Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;" /></div>`;
+      }
     }
 
     if (p.text) {

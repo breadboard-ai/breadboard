@@ -158,3 +158,15 @@
     An extremely versatile text generator, powered by Gemini. Use it for any
     tasks that involve generation of text. Supports multimodal content input.
     Always writes its output to {slug}/text.md.
+
+- name: generate_images
+  title: Image Generator
+  runner: direct_model
+  model: gemini-3.1-flash-image-preview
+  tags:
+    - image
+  objective: "{{system.context}}"
+  description: >-
+    An extremely versatile image generator, powered by Gemini. Use it for any
+    tasks that involve generation of images based on a prompt.
+    Always writes its output to {slug}/image_0.png.
