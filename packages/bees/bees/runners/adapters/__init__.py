@@ -6,5 +6,6 @@ from .text import TextAdapter
 from .image import ImageAdapter
 from .video import VideoAdapter
 from .speech import SpeechAdapter
+from .music import MusicAdapter
 
-__all__ = ["GenAdapter", "TextAdapter", "ImageAdapter", "VideoAdapter", "SpeechAdapter"]
+__all__ = ["GenAdapter", "TextAdapter", "ImageAdapter", "VideoAdapter", "SpeechAdapter", "MusicAdapter"]
