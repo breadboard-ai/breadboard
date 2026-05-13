@@ -182,3 +182,15 @@
     An extremely versatile video generator, powered by Veo. Use it for any
     tasks that involve generation of videos based on a prompt.
     Always writes its output to {slug}/video_0.mp4.
+
+- name: generate_speech
+  title: Speech Generator
+  runner: direct_model
+  model: gemini-3.1-flash-tts-preview
+  tags:
+    - speech
+  objective: "{{system.context}}"
+  description: >-
+    An extremely versatile speech generator, powered by Gemini. Use it for any
+    tasks that involve generation of speech/audio from text.
+    Always writes its output to {slug}/audio_0.wav.

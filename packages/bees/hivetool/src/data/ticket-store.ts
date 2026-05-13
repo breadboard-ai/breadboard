@@ -285,11 +285,11 @@ class TicketStore {
         }
         const base64 = globalThis.btoa(binary);
         let mime = file.type;
-        if (!mime) {
+        if (!mime || mime === "audio/mp3") {
           if (lower.endsWith(".mp4")) mime = "video/mp4";
           else if (lower.endsWith(".webm")) mime = "video/webm";
           else if (lower.endsWith(".mov")) mime = "video/quicktime";
-          else if (lower.endsWith(".mp3")) mime = "audio/mp3";
+          else if (lower.endsWith(".mp3")) mime = "audio/mpeg";
           else if (lower.endsWith(".wav")) mime = "audio/wav";
           else mime = "application/octet-stream";
         }

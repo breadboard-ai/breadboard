@@ -37,13 +37,16 @@ class TaskStore:
         metadata_path = ticket_dir / "metadata.json"
         if not objective_path.exists() or not metadata_path.exists():
             return None
+        try:
+            mdata = json.loads(metadata_path.read_text())
+        except Exception:
+            return None
+
         return Ticket(
             id=ticket_id,
             objective=objective_path.read_text(),
             dir=ticket_dir,
-            metadata=TicketMetadata.from_dict(
-                json.loads(metadata_path.read_text())
-            ),
+            metadata=TicketMetadata.from_dict(mdata),
         )
 
     def query_all(self, status: TicketStatus | None = None) -> list[Ticket]:
