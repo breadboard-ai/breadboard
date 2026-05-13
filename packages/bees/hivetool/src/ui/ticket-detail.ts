@@ -498,6 +498,12 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
     if (content.startsWith("data:image/")) {
       return html`<img src="${content}" alt="${filename}" style="max-width: 100%; border-radius: 6px; display: block;" />`;
     }
+    if (content.startsWith("data:video/")) {
+      return html`<video src="${content}" controls style="max-width: 100%; border-radius: 6px; display: block;"></video>`;
+    }
+    if (content.startsWith("data:audio/")) {
+      return html`<audio src="${content}" controls style="max-width: 100%; display: block;"></audio>`;
+    }
     if (filename.endsWith(".json")) {
       try {
         const parsed = JSON.parse(content);
@@ -512,6 +518,8 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
   private fileIcon(name: string): string {
     const lower = name.toLowerCase();
     if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".gif") || lower.endsWith(".webp") || lower.endsWith(".svg")) return "🖼️";
+    if (lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mov")) return "🎥";
+    if (lower.endsWith(".mp3") || lower.endsWith(".wav")) return "🎵";
     if (name.endsWith(".json")) return "📊";
     if (name.endsWith(".md")) return "📝";
     if (name.endsWith(".py")) return "🐍";

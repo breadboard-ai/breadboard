@@ -4,5 +4,6 @@
 from .protocol import GenAdapter
 from .text import TextAdapter
 from .image import ImageAdapter
+from .video import VideoAdapter
 
-__all__ = ["GenAdapter", "TextAdapter", "ImageAdapter"]
+__all__ = ["GenAdapter", "TextAdapter", "ImageAdapter", "VideoAdapter"]

@@ -307,6 +307,15 @@ const logDetailBaseStyles = css`
     color: #f59e0b;
   }
 
+  .turn.system-message {
+    background: #162016;
+    border: 1px solid #233d23;
+  }
+
+  .turn.system-message .turn-role {
+    color: #4ade80;
+  }
+
   .turn-parts {
     display: flex;
     flex-direction: column;
@@ -350,6 +359,14 @@ const logDetailBaseStyles = css`
   .part-thought {
     color: #94a3b8;
     font-style: italic;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .part-system-message {
+    color: #a3e635;
+    font-weight: 500;
     line-height: 1.5;
     white-space: pre-wrap;
     word-break: break-word;
@@ -415,6 +432,11 @@ const logDetailBaseStyles = css`
   .role-chip.context-update {
     background: #3d3520;
     color: #fbbf24;
+  }
+
+  .role-chip.system-message {
+    background: #143314;
+    color: #86efac;
   }
 
   .role-chip.inherited {

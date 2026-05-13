@@ -276,6 +276,25 @@ class TicketStore {
         const mime = lower.endsWith(".svg") ? "image/svg+xml" : (file.type || "image/png");
         return `data:${mime};base64,${base64}`;
       }
+      if (lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mov") || lower.endsWith(".mp3") || lower.endsWith(".wav")) {
+        const buffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        let binary = "";
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        const base64 = globalThis.btoa(binary);
+        let mime = file.type;
+        if (!mime) {
+          if (lower.endsWith(".mp4")) mime = "video/mp4";
+          else if (lower.endsWith(".webm")) mime = "video/webm";
+          else if (lower.endsWith(".mov")) mime = "video/quicktime";
+          else if (lower.endsWith(".mp3")) mime = "audio/mp3";
+          else if (lower.endsWith(".wav")) mime = "audio/wav";
+          else mime = "application/octet-stream";
+        }
+        return `data:${mime};base64,${base64}`;
+      }
       return await file.text();
     } catch {
       return null;

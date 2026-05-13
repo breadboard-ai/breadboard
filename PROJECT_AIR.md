@@ -336,19 +336,19 @@ Implement specialized `VideoAdapter` to support concurrent video generation task
 
 ### Changes
 
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
       [direct_model.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/runners/direct_model.py)**
   - Implement and register the **`VideoAdapter`**:
     - Uses `httpx` to call Veo video generation REST API directly.
     - Integrates Veo safety diagnostics (`expand_veo_error`).
     - Writes binary output to `slug/video_0.mp4`.
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
       [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
   - Register built-in template for `generate_video` specifying `runner: direct_model` and `tags: ["video"]`.
 
 #### Verification
 
-- [ ] Add automated test `test_direct_model_video.py` verifying `VideoAdapter` execution and mp4 file generation in isolation.
+- [x] Add automated test `test_direct_model_video.py` verifying `VideoAdapter` execution and mp4 file generation in isolation.
 
 ---
 
@@ -449,6 +449,11 @@ packages/bees/
     scheduler.py                 ← remains clean (termination only)
     runners/
       direct_model.py            ← [NEW] DirectModelRunner and DirectModelStream (SessionRunner protocols)
+      adapters/
+        protocol.py              ← [NEW] GenAdapter protocol interface
+        text.py                  ← [NEW] Text generation adapter via Gemini Stream
+        image.py                 ← [NEW] Image generation adapter via Gemini REST
+        video.py                 ← [NEW] Video generation adapter via Veo REST
     functions/
       tasks.py                   ← ensure child slug parameters are wired
 
@@ -456,7 +461,7 @@ packages/bees/
     test_runners/
       test_direct_model_text.py    ← [NEW] verify text adapter execution and thoughts
       test_direct_model_image.py   ← [NEW] verify image adapter execution and PNG outputs
-      test_direct_model_media.py   ← [NEW] verify video, audio, speech adapter executions
+      test_direct_model_video.py   ← [NEW] verify video adapter execution and MP4 outputs
 ```
 
 ## Context for New Sessions

@@ -111,6 +111,15 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
         totalThoughts++;
       }
       
+      if ("systemMessage" in event) {
+        const sm = event.systemMessage as Record<string, unknown> || {};
+        const text = sm.text as string || "";
+        currentTurnGroup.entries.push({
+          role: "model",
+          parts: [{ text, systemMessage: true }]
+        });
+      }
+      
       if ("functionCall" in event) {
         const fc = event.functionCall as Record<string, unknown> || {};
         currentTurnGroup.entries.push({

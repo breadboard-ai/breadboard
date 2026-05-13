@@ -22,7 +22,7 @@ from opal_backend.local.backend_client_impl import HttpBackendClient
 from opal_backend.sessions.file_store import FileBasedSessionStore
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
 from opal_backend.sessions.store import SessionStore
-from bees.runners.adapters import GenAdapter, ImageAdapter, TextAdapter
+from bees.runners.adapters import GenAdapter, ImageAdapter, TextAdapter, VideoAdapter
 
 logger = logging.getLogger("bees.runners.direct_model")
 
@@ -120,6 +120,8 @@ class DirectModelStream:
             adapter: GenAdapter = TextAdapter()
             if "image" in tags:
                 adapter = ImageAdapter()
+            elif "video" in tags:
+                adapter = VideoAdapter()
 
             await adapter.generate(
                 self._config,
@@ -135,7 +137,15 @@ class DirectModelStream:
 
         except Exception as e:
             logger.exception("DirectModel runner failed")
-            err_event = {"error": {"message": str(e)}}
+            if hasattr(e, "error_dict"):
+                err_event = {
+                    "error": {
+                        "message": getattr(e, "error_dict").get("error", str(e)),
+                        "metadata": getattr(e, "error_dict").get("metadata"),
+                    }
+                }
+            else:
+                err_event = {"error": {"message": str(e)}}
             await self._log_event(err_event)
             if self._config.session_id:
                 await self._session_store.set_status(self._config.session_id, "failed")
