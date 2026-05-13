@@ -298,3 +298,22 @@ async def test_tasks_create_task_nested_slug(write_template):
     assert ticket.metadata.parent_task_id == caller.id
     assert "./research/deep-dive" in ticket.objective
     assert (ticket.fs_dir / "research" / "deep-dive").exists()
+
+
+def test_task_store_get_malformed_metadata():
+    """Verify TaskStore.get() gracefully returns None if metadata.json is empty or malformed during live scanning."""
+    store = GLOBAL_STORE
+    assert store is not None
+    
+    ticket_id = "malformed-ticket"
+    ticket_dir = store.tickets_dir / ticket_id
+    ticket_dir.mkdir()
+    
+    (ticket_dir / "objective.md").write_text("Some objective")
+    (ticket_dir / "metadata.json").write_text("")  # Empty file causing standard JSONDecodeError
+    
+    assert store.get(ticket_id) is None
+    
+    # Partially written JSON
+    (ticket_dir / "metadata.json").write_text('{"status": "avail')
+    assert store.get(ticket_id) is None

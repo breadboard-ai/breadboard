@@ -358,23 +358,23 @@ Implement specialized `VideoAdapter` to support concurrent video generation task
 
 Implement specialized `SpeechAdapter` to support concurrent speech generation (TTS) tasks directly via REST API.
 
-**Observable proof:** Trigger a `generate_speech` sub-task. Verify that it executes under `SpeechAdapter` via direct REST API calls (bypassing `opal-backend`) and produces `slug/audio_0.mp3` correctly.
+**Observable proof:** Trigger a `generate_speech` sub-task. Verify that it executes under `SpeechAdapter` via direct REST API calls (bypassing `opal-backend`) and produces `slug/audio_0.wav` correctly.
 
 ### Changes
 
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
       [direct_model.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/runners/direct_model.py)**
   - Implement and register the **`SpeechAdapter`**:
     - Uses `httpx` to call TTS REST API directly.
     - Translates voice presets and parameters.
-    - Writes binary output to `slug/audio_0.mp3`.
-- [ ] **[MODIFY]
+    - Writes binary output to `slug/audio_0.wav`.
+- [x] **[MODIFY]
       [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
   - Register built-in template for `generate_speech` specifying `runner: direct_model` and `tags: ["speech"]`.
 
 #### Verification
 
-- [ ] Add automated test `test_direct_model_speech.py` verifying `SpeechAdapter` execution and mp3 file generation in isolation.
+- [x] Add automated test `test_direct_model_speech.py` verifying `SpeechAdapter` execution and wav file generation in isolation.
 
 ---
 
