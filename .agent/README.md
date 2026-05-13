@@ -7,9 +7,10 @@ humans and agents work together in this codebase.
 
 | Practice             | What it does                                                                                                               | Skill               |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| **Backend Calls**    | How authenticated HTTP calls to the Opal backend work — host/guest, fetchWithCreds, allowlist, OpalBackendClient.          | `opal-backend-api/` |
+| **Codemods**         | Mechanical, multi-file, type-aware refactors via `ts-morph`. See `codemods/README.md`.                                     | `codemod/`          |
 | **Daily Dig**        | Proactive bug hunt — scout, catch, tag, log.                                                                               | `daily-dig/`        |
 | **Déjà Code**        | Detect and pave desire paths — find repeated multi-statement patterns and extract shared utilities backed by ESLint rules. | `deja-code/`        |
-| **Codemods**         | Mechanical, multi-file, type-aware refactors via `ts-morph`. See `codemods/README.md`.                                     | `codemod/`          |
 | **Idiomatic TS+Lit** | Living reference for idiomatic TypeScript and Lit — type safety, import hygiene, component design, signal patterns.        | `idiomatic-ts-lit/` |
 | **Port Fidelity**    | Audit, diff, and port changes between TypeScript and Python codebases to keep them in sync during the migration.           | `port-fidelity/`    |
 | **Spec-Driven**      | Write protocols and conformance tests first, then migrate code to satisfy them. For any Python boundary extraction.        | `spec-driven/`      |
