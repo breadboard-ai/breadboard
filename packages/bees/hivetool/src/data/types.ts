@@ -88,6 +88,10 @@ export interface LogPart {
     response: Record<string, unknown>;
   };
   thoughtSignature?: string;
+  inlineData?: {
+    mimeType: string;
+    data: string;
+  };
 }
 
 export interface SidebarSessionInfo {

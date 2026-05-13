@@ -186,7 +186,7 @@ async def run(
     runners = {
         "generate": runner,
         "live": LiveRunner(api_key=gemini_key),
-        "direct_model": DirectModelRunner(backend),
+        "direct_model": DirectModelRunner(backend, api_key=gemini_key),
     }
 
     while True:

@@ -239,7 +239,7 @@ class TicketStore {
     }
   }
 
-  /** Read the text content of a file within a ticket's filesystem. */
+  /** Read the text content (or base64 data URL for images) of a file within a ticket's filesystem. */
   async readFileContent(
     ticketId: string,
     path: string[]
@@ -264,6 +264,18 @@ class TicketStore {
       if (!filename) return null;
       const fileHandle = await dir.getFileHandle(filename);
       const file = await fileHandle.getFile();
+      const lower = filename.toLowerCase();
+      if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".gif") || lower.endsWith(".webp") || lower.endsWith(".svg")) {
+        const buffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        let binary = "";
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        const base64 = globalThis.btoa(binary);
+        const mime = lower.endsWith(".svg") ? "image/svg+xml" : (file.type || "image/png");
+        return `data:${mime};base64,${base64}`;
+      }
       return await file.text();
     } catch {
       return null;

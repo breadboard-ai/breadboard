@@ -98,7 +98,7 @@ class TestDirectModelTextAdapter(unittest.TestCase):
             for chunk in mock_chunks:
                 yield chunk
 
-        with patch("bees.runners.direct_model.stream_generate_content", side_effect=mock_generator) as mock_stream:
+        with patch("bees.runners.adapters.text.stream_generate_content", side_effect=mock_generator) as mock_stream:
             runner = DirectModelRunner(mock_backend)
 
             async def run_stream():

@@ -109,7 +109,7 @@ resolved dynamically by the task's **`tags`** metadata:
          ▼                       ▼                       ▼
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │   TextAdapter   │     │  ImageAdapter   │     │  VideoAdapter   │
-│ (Gemini Stream) │     │ (ai_image_tool) │     │ (Veo Generator) │
+│ (Gemini Stream) │     │  (Gemini REST)  │     │ (Veo Generator) │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
 
@@ -126,11 +126,9 @@ Each Gen-Adapter implements the execution and handles type-specific quirks:
 
 #### B. Image Generation (`type: "generate_images"`)
 
-- **API Call**: AI Image Tool `execute_step` with `ai_image_tool` model API.
+- **API Call**: Gemini REST API (`gemini-3.1-flash-image-preview` `generateContent`).
 - **Quirks**:
-  - Translates and base64 encodes any input images.
-  - Resolves `aspect_ratio` from task metadata or parses it from instructions
-    (defaults to 16:9).
+  - Extracts prompt string from `objective.md` or input segments.
   - Writes consecutive binary PNG deliverables: `slug/image_0.png`,
     `slug/image_1.png`, etc.
 
@@ -185,7 +183,7 @@ and execution entirely automatically:
   title: AI Image Generator
   description: Natively generates high-fidelity images based on a prompt.
   runner: direct_model
-  model: gemini-3-pro-image-preview
+  model: gemini-3.1-flash-image-preview
   tags:
     - image # ◄── Tells DirectModelRunner to use ImageAdapter
   objective: >-
@@ -308,63 +306,100 @@ containing the generated image.
 
 ### Changes
 
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
       [direct_model.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/runners/direct_model.py)**
   - Implement and register the **`ImageAdapter`**:
-    - Resolves input reference images from the objective.
-    - Runs the `ai_image_tool` plan step execution via `execute_step`.
-    - Decodes output chunks and writes consecutive binary PNGs to
-      `slug/image_N.png`.
-- [ ] **[NEW]
-      [generate_images.yaml](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/declarations/tasks/generate_images.yaml)**
-  - Register built-in template for `generate_images` specifying
-    `runner: direct_model`, `tags: ["image"]`, and model defaults.
-- [ ] **[MODIFY]
+    - Uses `httpx` to call `gemini-3.1-flash-image-preview` directly via Gemini REST API.
+    - Decodes `inlineData` and writes consecutive binary PNGs to `slug/image_N.png`.
+- [x] **[MODIFY]
+      [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
+  - Register built-in template for `generate_images` specifying `runner: direct_model`, `tags: ["image"]`, and model defaults.
+- [x] **[MODIFY]
       [log-detail.ts](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/hivetool/src/ui/log-detail.ts)**
   - Enhance Hivetool to recognize completed `generate_images` child tasks and
     render the `.png` deliverables directly in the logs pane as an inline image.
 
 #### Verification
 
-- [ ] Add automated test `test_direct_model_image.py` to verify `ImageAdapter`
-      execution, input image marshalling, and PNG file outputs.
+- [x] Add automated test `test_direct_model_image.py` to verify `ImageAdapter`
+      execution, REST API payload structure, and PNG file outputs.
 
 ---
 
-## Phase 4 — Advanced Media Gen-Adapters (Video, Speech, Music)
+## Phase 4.1 — Video Generation Adapter (`generate_video`)
 
 ### 🎯 Objective
 
-Implement specialized plan-step Gen-Adapters to support video, speech, and music
-generation tasks.
+Implement specialized `VideoAdapter` to support concurrent video generation tasks directly via REST API.
 
-**Observable proof:** Trigger a `generate_video` sub-task. Verify that it
-executes under the specialized `VideoAdapter` and produces `slug/video_0.mp4`
-correctly. Trigger speech or music tasks and verify they produce audio
-`.mp3`/`.wav` deliverables.
+**Observable proof:** Trigger a `generate_video` sub-task. Verify that it executes under `VideoAdapter` via direct REST API calls (bypassing `opal-backend`) and produces `slug/video_0.mp4` correctly.
 
 ### Changes
 
 - [ ] **[MODIFY]
       [direct_model.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/runners/direct_model.py)**
   - Implement and register the **`VideoAdapter`**:
-    - Runs `generate_video` step execution.
+    - Uses `httpx` to call Veo video generation REST API directly.
     - Integrates Veo safety diagnostics (`expand_veo_error`).
     - Writes binary output to `slug/video_0.mp4`.
-  - Implement and register **`SpeechAdapter`** and **`MusicAdapter`**:
-    - Runs TTS and music plan steps.
-    - Translates voices and presets.
-    - Writes audio outputs `slug/audio_0.mp3` or `slug/audio_0.wav`.
-- [ ] **[NEW] Task templates**:
-  - Create `generate_video.yaml`, `generate_speech.yaml`, and
-    `generate_music.yaml` specifying `runner: direct_model` and their respective
-    `tags`.
+- [ ] **[MODIFY]
+      [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
+  - Register built-in template for `generate_video` specifying `runner: direct_model` and `tags: ["video"]`.
 
 #### Verification
 
-- [ ] Add automated tests `test_direct_model_media.py` verifying
-      video/speech/music adapters execution and binary file generations in
-      isolation.
+- [ ] Add automated test `test_direct_model_video.py` verifying `VideoAdapter` execution and mp4 file generation in isolation.
+
+---
+
+## Phase 4.2 — Speech Generation Adapter (`generate_speech`)
+
+### 🎯 Objective
+
+Implement specialized `SpeechAdapter` to support concurrent speech generation (TTS) tasks directly via REST API.
+
+**Observable proof:** Trigger a `generate_speech` sub-task. Verify that it executes under `SpeechAdapter` via direct REST API calls (bypassing `opal-backend`) and produces `slug/audio_0.mp3` correctly.
+
+### Changes
+
+- [ ] **[MODIFY]
+      [direct_model.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/runners/direct_model.py)**
+  - Implement and register the **`SpeechAdapter`**:
+    - Uses `httpx` to call TTS REST API directly.
+    - Translates voice presets and parameters.
+    - Writes binary output to `slug/audio_0.mp3`.
+- [ ] **[MODIFY]
+      [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
+  - Register built-in template for `generate_speech` specifying `runner: direct_model` and `tags: ["speech"]`.
+
+#### Verification
+
+- [ ] Add automated test `test_direct_model_speech.py` verifying `SpeechAdapter` execution and mp3 file generation in isolation.
+
+---
+
+## Phase 4.3 — Music Generation Adapter (`generate_music`)
+
+### 🎯 Objective
+
+Implement specialized `MusicAdapter` to support concurrent music generation tasks directly via REST API.
+
+**Observable proof:** Trigger a `generate_music` sub-task. Verify that it executes under `MusicAdapter` via direct REST API calls (bypassing `opal-backend`) and produces `slug/audio_0.wav` correctly.
+
+### Changes
+
+- [ ] **[MODIFY]
+      [direct_model.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/runners/direct_model.py)**
+  - Implement and register the **`MusicAdapter`**:
+    - Uses `httpx` to call MusicFX REST API directly.
+    - Writes binary output to `slug/audio_0.wav`.
+- [ ] **[MODIFY]
+      [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
+  - Register built-in template for `generate_music` specifying `runner: direct_model` and `tags: ["music"]`.
+
+#### Verification
+
+- [ ] Add automated test `test_direct_model_music.py` verifying `MusicAdapter` execution and wav file generation in isolation.
 
 ---
 
@@ -418,9 +453,10 @@ packages/bees/
       tasks.py                   ← ensure child slug parameters are wired
 
   tests/
-    test_direct_model_text.py    ← [NEW] verify text adapter execution and thoughts
-    test_direct_model_image.py   ← [NEW] verify image adapter execution and PNG outputs
-    test_direct_model_media.py   ← [NEW] verify video, audio, speech adapter executions
+    test_runners/
+      test_direct_model_text.py    ← [NEW] verify text adapter execution and thoughts
+      test_direct_model_image.py   ← [NEW] verify image adapter execution and PNG outputs
+      test_direct_model_media.py   ← [NEW] verify video, audio, speech adapter executions
 ```
 
 ## Context for New Sessions
