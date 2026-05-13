@@ -194,3 +194,15 @@
     An extremely versatile speech generator, powered by Gemini. Use it for any
     tasks that involve generation of speech/audio from text.
     Always writes its output to {slug}/audio_0.wav.
+
+- name: generate_music
+  title: Music Generator
+  runner: direct_model
+  model: lyria-3-pro-preview
+  tags:
+    - music
+  objective: "{{system.context}}"
+  description: >-
+    An extremely versatile music generator, powered by Lyria. Use it for any
+    tasks that involve generation of music or songs based on a prompt.
+    Always writes its output to {slug}/audio_0.wav.

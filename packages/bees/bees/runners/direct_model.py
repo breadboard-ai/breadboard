@@ -22,7 +22,7 @@ from opal_backend.local.backend_client_impl import HttpBackendClient
 from opal_backend.sessions.file_store import FileBasedSessionStore
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
 from opal_backend.sessions.store import SessionStore
-from bees.runners.adapters import GenAdapter, ImageAdapter, SpeechAdapter, TextAdapter, VideoAdapter
+from bees.runners.adapters import GenAdapter, ImageAdapter, MusicAdapter, SpeechAdapter, TextAdapter, VideoAdapter
 
 logger = logging.getLogger("bees.runners.direct_model")
 
@@ -124,6 +124,8 @@ class DirectModelStream:
                 adapter = VideoAdapter()
             elif "speech" in tags:
                 adapter = SpeechAdapter()
+            elif "music" in tags:
+                adapter = MusicAdapter()
 
             await adapter.generate(
                 self._config,

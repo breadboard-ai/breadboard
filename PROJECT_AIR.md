@@ -388,18 +388,18 @@ Implement specialized `MusicAdapter` to support concurrent music generation task
 
 ### Changes
 
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
       [direct_model.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/runners/direct_model.py)**
   - Implement and register the **`MusicAdapter`**:
     - Uses `httpx` to call MusicFX REST API directly.
     - Writes binary output to `slug/audio_0.wav`.
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
       [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
   - Register built-in template for `generate_music` specifying `runner: direct_model` and `tags: ["music"]`.
 
 #### Verification
 
-- [ ] Add automated test `test_direct_model_music.py` verifying `MusicAdapter` execution and wav file generation in isolation.
+- [x] Add automated test `test_direct_model_music.py` verifying `MusicAdapter` execution and wav file generation in isolation.
 
 ---
 
