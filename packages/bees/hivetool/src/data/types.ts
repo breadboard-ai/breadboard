@@ -78,6 +78,7 @@ export interface LogTurn {
 export interface LogPart {
   text?: string;
   thought?: boolean;
+  systemMessage?: boolean;
   functionCall?: {
     name: string;
     args: Record<string, unknown>;

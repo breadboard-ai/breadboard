@@ -170,3 +170,15 @@
     An extremely versatile image generator, powered by Gemini. Use it for any
     tasks that involve generation of images based on a prompt.
     Always writes its output to {slug}/image_0.png.
+
+- name: generate_video
+  title: Video Generator
+  runner: direct_model
+  model: veo-3.1-generate-preview
+  tags:
+    - video
+  objective: "{{system.context}}"
+  description: >-
+    An extremely versatile video generator, powered by Veo. Use it for any
+    tasks that involve generation of videos based on a prompt.
+    Always writes its output to {slug}/video_0.mp4.

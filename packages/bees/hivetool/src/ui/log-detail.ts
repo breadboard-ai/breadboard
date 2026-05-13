@@ -118,6 +118,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
   }
 
   #loadedSessionId: string | null = null;
+  #lastReloadedTimestamp = 0;
 
   private async loadSessionData(sessionId: string) {
     if (!this.sessionReader || !this.ticketStore) return;
@@ -187,6 +188,15 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
   }
 
   render() {
+    // Access recentlyUpdatedTicket signal to establish a reactive subscription
+    const updated = this.ticketStore?.recentlyUpdatedTicket.get();
+    if (updated && this.ticketId && updated.id === this.ticketId && this.sessionId) {
+      if (this.#lastReloadedTimestamp !== updated.at) {
+        this.#lastReloadedTimestamp = updated.at;
+        this.loadSessionData(this.sessionId);
+      }
+    }
+
     if (this.sessionId && this.#loadedSessionId !== this.sessionId) {
       this.storeData = null;
       this.interactionSummary = null;
@@ -626,8 +636,9 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
 
   #renderModelTurn(parts: LogPart[], isInherited = false) {
     // Classify each part and render as separate cards.
-    type PartKind = "thought" | "call" | "other";
+    type PartKind = "thought" | "call" | "systemMessage" | "other";
     const classify = (p: LogPart): PartKind => {
+      if (p.systemMessage && p.text) return "systemMessage";
       if (p.thought && p.text) return "thought";
       if (p.functionCall) return "call";
       return "other";
@@ -646,6 +657,19 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
     }
 
     return html`${groups.map((g) => {
+      if (g.kind === "systemMessage") {
+        return html`${g.parts.map((p) => {
+          const label = html`<span class="role-chip system-message">system</span>`;
+          return html`
+            <div class="turn system-message ${isInherited ? "inherited" : ""}">
+              <div class="turn-role">${label}</div>
+              <div class="turn-parts">
+                <div class="part-system-message">${p.text}</div>
+              </div>
+            </div>
+          `;
+        })}`;
+      }
       if (g.kind === "thought") {
         return html`${g.parts.map((p) => {
           const { title, body } = this.#parseThought(p.text!);
@@ -716,6 +740,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
   private renderPart(p: LogPart) {
     // Thoughts and function calls are handled at the card level.
     if (p.thought && p.text) return nothing;
+    if (p.systemMessage && p.text) return nothing;
     if (p.functionCall) return nothing;
 
     if (p.functionResponse) {
@@ -728,6 +753,12 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
     if (p.inlineData) {
       if (p.inlineData.mimeType.startsWith("image/")) {
         return html`<div class="part-image"><img src="data:${p.inlineData.mimeType};base64,${p.inlineData.data}" alt="Generated Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;" /></div>`;
+      }
+      if (p.inlineData.mimeType.startsWith("video/")) {
+        return html`<div class="part-video"><video src="data:${p.inlineData.mimeType};base64,${p.inlineData.data}" controls style="max-width: 100%; border-radius: 8px; margin-top: 8px; display: block;"></video></div>`;
+      }
+      if (p.inlineData.mimeType.startsWith("audio/")) {
+        return html`<div class="part-audio"><audio src="data:${p.inlineData.mimeType};base64,${p.inlineData.data}" controls style="max-width: 100%; margin-top: 8px; display: block;"></audio></div>`;
       }
     }
 

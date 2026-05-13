@@ -158,6 +158,10 @@ class EvalCollector:
             self.model_parts.append({"text": text, "thought": True})
             self.total_thoughts += 1
 
+        elif "systemMessage" in event:
+            text = event["systemMessage"].get("text", "")
+            self.model_parts.append({"text": text, "systemMessage": True})
+
         elif "functionCall" in event:
             fc = event["functionCall"]
             self.model_parts.append({
@@ -555,6 +559,10 @@ def _print_event_summary(
         text = event["thought"].get("text", "")
         preview = text[:80].replace("\n", " ")
         print(f"  {prefix}💭 {preview}", file=sys.stderr)
+    elif "systemMessage" in event:
+        text = event["systemMessage"].get("text", "")
+        preview = text[:80].replace("\n", " ")
+        print(f"  {prefix}⚡ {preview}", file=sys.stderr)
     elif "functionCall" in event:
         call = event["functionCall"]
         name = call.get("name", "?")
