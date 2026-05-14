@@ -63,11 +63,14 @@ def _make_handlers(
                 is_local = task_name not in global_names
                 
                 if is_local or task_name in allowed_tasks:
-                    task_types.append({
+                    item = {
                         "name": task_name,
                         "title": data.get("title", name),
                         "description": data.get("description", ""),
-                    })
+                    }
+                    if "options_schema" in data:
+                        item["options_schema"] = data["options_schema"]
+                    task_types.append(item)
             except Exception as e:
                 logger.warning("tasks_list_types: skipping invalid %s: %s", name, e)
                 
@@ -83,6 +86,7 @@ def _make_handlers(
         objective = args.get("objective")
         slug = args.get("slug")
         wait_ms = args.get("wait_ms_before_async")
+        options = args.get("options")
         
         if not all([task_type, summary, objective, slug]):
             return {"error": "type, summary, objective, and slug are required"}
@@ -97,10 +101,30 @@ def _make_handlers(
         workspace_dir = parent.fs_dir if parent else None
         
         try:
-            load_playbook(task_type, config_dir, workspace_dir)
+            playbook_data = load_playbook(task_type, config_dir, workspace_dir)
         except FileNotFoundError:
             return {"error": f"Task type not found: {task_type}"}
 
+        if options:
+            options_schema = playbook_data.get("options_schema")
+            if not options_schema:
+                return {"error": f"Task type '{task_type}' does not support configuration options."}
+            
+            supported_keys = set(options_schema.keys())
+            provided_keys = set(options.keys())
+            unknown_keys = provided_keys - supported_keys
+            if unknown_keys:
+                unknown_str = ", ".join(sorted(unknown_keys))
+                supported_str = ", ".join(sorted(supported_keys))
+                return {"error": f"Invalid option(s): {unknown_str}. Supported options for '{task_type}' are: {supported_str}."}
+
+            for key, value in options.items():
+                prop_schema = options_schema.get(key)
+                if prop_schema and "enum" in prop_schema:
+                    valid_values = prop_schema["enum"]
+                    if value not in valid_values:
+                        valid_str = ", ".join(str(v) for v in valid_values)
+                        return {"error": f"Invalid value '{value}' for option '{key}'. Valid values for '{key}' in '{task_type}' are: {valid_str}."}
 
         try:
             parent = scheduler.store.get(caller_ticket_id) if scheduler and caller_ticket_id else None
@@ -115,6 +139,7 @@ def _make_handlers(
                 context=objective,
                 title=title or summary,
                 scope=scope,
+                options=options,
             )
             
         except Exception as e:
