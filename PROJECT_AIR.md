@@ -224,10 +224,10 @@ and resolves task status to completed.
 ### Changes
 
 - [x] **[MODIFY]
-      [ticket.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/ticket.py)**
+      [ticket.py](packages/bees/bees/ticket.py)**
   - Update `RunnerType` literal definition to support `"direct_model"`.
 - [x] **[NEW]
-      [direct_model.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/runners/direct_model.py)**
+      [direct_model.py](packages/bees/bees/runners/direct_model.py)**
   - Implement `DirectModelRunner` and `DirectModelStream` implementing
     `SessionRunner` and `SessionStream` protocols.
   - Implement base Gen-Adapter dispatch routing using task `tags`.
@@ -237,10 +237,10 @@ and resolves task status to completed.
     - Yields live thought chunks to driving SSE.
     - Writes final generated text to `slug/text.md` on completion.
 - [x] **[MODIFY]
-      [box.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/box.py)**
+      [box.py](packages/bees/bees/box.py)**
   - Register `"direct_model"` runner in the starting dictionary.
 - [x] **[MODIFY]
-      [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
+      [TEMPLATES.yaml](hives/chat-app/config/TEMPLATES.yaml)**
   - Define the `generate_text` task template specifying `runner: direct_model`, `model: gemini-3-flash-preview`, `objective: "{{system.context}}"`, and support for `builtin.search_grounding` in functions.
 
 #### Verification
@@ -267,7 +267,7 @@ after receiving deliverables inside `memo/text.md`.
 ### Changes
 
 - [x] **[MODIFY]
-      [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
+      [TEMPLATES.yaml](hives/chat-app/config/TEMPLATES.yaml)**
   - Under templates `chat-chat` and `chat-3`:
     - Remove `generate.text` from the allowed `functions:` allowlist.
     - Add `tasks.*` to the allowed functions list if not already present.
@@ -276,7 +276,7 @@ after receiving deliverables inside `memo/text.md`.
       spawn a `generate_text` sub-task with `slug` set to the desired folder
       name.
 - [x] **[MODIFY]
-      [SKILL.md](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/hive/skills/research/SKILL.md)**
+      [SKILL.md](packages/bees/hive/skills/research/SKILL.md)**
   - Remove `generate.text` from the allowed-tools header list.
   - Add `tasks.*` to the allowed-tools list.
   - Update Step 3: "Create a child task of type `generate_text` with `slug` set
@@ -307,15 +307,15 @@ containing the generated image.
 ### Changes
 
 - [x] **[MODIFY]
-      [direct_model.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/runners/direct_model.py)**
+      [direct_model.py](packages/bees/bees/runners/direct_model.py)**
   - Implement and register the **`ImageAdapter`**:
     - Uses `httpx` to call `gemini-3.1-flash-image-preview` directly via Gemini REST API.
     - Decodes `inlineData` and writes consecutive binary PNGs to `slug/image_N.png`.
 - [x] **[MODIFY]
-      [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
+      [TEMPLATES.yaml](hives/chat-app/config/TEMPLATES.yaml)**
   - Register built-in template for `generate_images` specifying `runner: direct_model`, `tags: ["image"]`, and model defaults.
 - [x] **[MODIFY]
-      [log-detail.ts](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/hivetool/src/ui/log-detail.ts)**
+      [log-detail.ts](packages/bees/hivetool/src/ui/log-detail.ts)**
   - Enhance Hivetool to recognize completed `generate_images` child tasks and
     render the `.png` deliverables directly in the logs pane as an inline image.
 
@@ -337,13 +337,13 @@ Implement specialized `VideoAdapter` to support concurrent video generation task
 ### Changes
 
 - [x] **[MODIFY]
-      [direct_model.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/runners/direct_model.py)**
+      [direct_model.py](packages/bees/bees/runners/direct_model.py)**
   - Implement and register the **`VideoAdapter`**:
     - Uses `httpx` to call Veo video generation REST API directly.
     - Integrates Veo safety diagnostics (`expand_veo_error`).
     - Writes binary output to `slug/video_0.mp4`.
 - [x] **[MODIFY]
-      [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
+      [TEMPLATES.yaml](hives/chat-app/config/TEMPLATES.yaml)**
   - Register built-in template for `generate_video` specifying `runner: direct_model` and `tags: ["video"]`.
 
 #### Verification
@@ -363,13 +363,13 @@ Implement specialized `SpeechAdapter` to support concurrent speech generation (T
 ### Changes
 
 - [x] **[MODIFY]
-      [direct_model.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/runners/direct_model.py)**
+      [direct_model.py](packages/bees/bees/runners/direct_model.py)**
   - Implement and register the **`SpeechAdapter`**:
     - Uses `httpx` to call TTS REST API directly.
     - Translates voice presets and parameters.
     - Writes binary output to `slug/audio_0.wav`.
 - [x] **[MODIFY]
-      [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
+      [TEMPLATES.yaml](hives/chat-app/config/TEMPLATES.yaml)**
   - Register built-in template for `generate_speech` specifying `runner: direct_model` and `tags: ["speech"]`.
 
 #### Verification
@@ -389,12 +389,12 @@ Implement specialized `MusicAdapter` to support concurrent music generation task
 ### Changes
 
 - [x] **[MODIFY]
-      [direct_model.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/runners/direct_model.py)**
+      [direct_model.py](packages/bees/bees/runners/direct_model.py)**
   - Implement and register the **`MusicAdapter`**:
     - Uses `httpx` to call MusicFX REST API directly.
     - Writes binary output to `slug/audio_0.wav`.
 - [x] **[MODIFY]
-      [TEMPLATES.yaml](file:///Users/dglazkov/Documents/code/breadboard/hives/chat-app/config/TEMPLATES.yaml)**
+      [TEMPLATES.yaml](hives/chat-app/config/TEMPLATES.yaml)**
   - Register built-in template for `generate_music` specifying `runner: direct_model` and `tags: ["music"]`.
 
 #### Verification
@@ -403,31 +403,144 @@ Implement specialized `MusicAdapter` to support concurrent music generation task
 
 ---
 
-## Phase 5 — Rollback Integration & Telemetry Polish
+## Phase 5 — Core Plumbing: Dynamic Task Configuration Overrides
 
 ### 🎯 Objective
 
-Ensure absolute session rollback safety for background calls and child tasks,
-and add premium log details rendering in Hivetool.
+Establish a robust architectural pattern to allow agents to supply runtime configuration overrides (e.g., aspect ratio, resolution, voice presets) when spawning tasks, solving the combinatorial template explosion without confusing the LLM or violating abstraction boundaries.
 
-**Observable proof:** Run a multi-turn session, trigger a rollback in Hivetool,
-and verify that any active child generation tasks spawned in rolled-back turns
-are cleanly deleted/cancelled from the `TaskStore` and `Scheduler`. completed
-deliverables (.md, .png, .mp4, .mp3) are cleanly rendered in the logs panel with
-inline preview widgets.
+**Observable proof:** An architectural decision is finalized and implemented across the task creation plumbing and `TicketMetadata`, enabling downstream Gen-Adapters to receive structured options without requiring a combinatorial matrix of templates in `TEMPLATES.yaml`.
+
+### The Architectural Tension
+
+To supply a different set of options to a model (e.g., "create a 16:9 ratio picture of a rose in 4K"), forcing the user to create a distinct task template (e.g., `generate_images_16_9_4k`) expands combinatorially into an unmaintainable template matrix. However, allowing dynamic overrides introduces structural trade-offs between LLM prompting accuracy, interface cleanliness, and framework uniformity.
+
+#### Alternatives Considered
+
+##### 1. Opaque `options: object` Bag in `tasks_create_task`
+- **Concept**: Add an optional `options: object` parameter to the `tasks_create_task` tool declaration, allowing the agent to supply arbitrary JSON key-value overrides at runtime.
+- **Pros**: Maintains a single, universal `tasks_create_task` tool; zero template matrix.
+- **Cons**: Open-ended `object` bags with "put json here" instructions confuse LLMs, leading to hallucinated keys, incorrect nesting, or malformed values.
+
+##### 2. Dynamic Task-Scoped Spawning Tools
+- **Concept**: Instead of a single `tasks_create_task` tool, the `tasks` group dynamically exposes scoped, strongly-typed spawning tools for built-in templates (e.g., `tasks_create_image_task(..., aspect_ratio, image_size)`).
+- **Pros**: Absolute strictness and autocomplete for the LLM; pristine separation of concerns for the orchestration engine.
+- **Cons**: Tool catalog bloat (consuming context window tokens); introduces a "privileged template" dichotomy where built-in templates get custom tools while user playbooks do not; dynamic tool generation complexity.
 
 ### Changes
 
 - [ ] **[MODIFY]
-      [mutations.py](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/bees/mutations.py)**
-  - Enhance the `rollback-to-turn` handler to search the active task tree for
-    any child tasks spawned after the rollback point's turn boundaries and
-    recursively delete/cancel them.
+      [ticket.py](packages/bees/bees/ticket.py)**
+  - Implement the finalized configuration override container in `TicketMetadata` (e.g. `options: dict[str, Any] | None = None`).
 - [ ] **[MODIFY]
-      [log-detail.ts](file:///Users/dglazkov/Documents/code/breadboard/packages/bees/hivetool/src/ui/log-detail.ts)**
-  - Style child task cards premium-ly. Add rich inline widgets to preview
-    markdown, image, video, and audio deliverables directly in the timeline
-    under their spawning turn.
+      [playbook.py](packages/bees/bees/playbook.py)**
+  - Update `run_playbook` and `stamp_child_task` to process and serialize runtime overrides.
+- [ ] **[MODIFY]
+      [tasks.py](packages/bees/bees/functions/tasks.py)**
+  - Update task creation tool definitions and handlers to support the chosen override mechanism.
+
+---
+
+## Phase 6 — Advanced Image Generation & Subject Grounding (`generate_images`)
+
+### 🎯 Objective
+
+Unlock high-resolution generation, precise dimensional framing, and multi-image
+subject/style grounding (image-to-image editing).
+
+**Observable proof:** Trigger a `generate_images` task specifying `model: gemini-3-pro-image-preview`,
+`aspect_ratio: "21:9"`, and `image_size: "4K"`. Verify the output image matches the
+precise aspect ratio and resolution. Pass 3 reference images of character faces with the
+objective `"An office group photo of these people making funny faces"`. Verify the adapter
+structures a multi-part context payload and delivers a single composite image preserving
+subject identity.
+
+### Changes
+
+- [ ] **[MODIFY]
+      [image.py](packages/bees/bees/runners/adapters/image.py)**
+  - Parse `aspect_ratio` (supporting 14 ratios from `"1:1"` to `"21:9"`) and `image_size`
+    (`"512"`, `"1K"`, `"2K"`, `"4K"`) from `SessionConfiguration` metadata, mapping them
+    into `generationConfig.responseFormat.image`.
+  - Support `gemini-3-pro-image-preview` for complex instructions, enabling its default
+    "Thinking" process and Google Search grounding.
+  - When `config.segments` contains reference images (or `role: "model"` history from
+    prior turns), structure the REST `contents` array to interleave text prompts and base64
+    `inlineData` for multi-turn image editing and subject grounding.
+- [ ] **[MODIFY]
+      [TEMPLATES.yaml](hives/chat-app/config/TEMPLATES.yaml)**
+  - Update `generate_images` template options to expose `aspect_ratio` and `image_size`
+    declaratively.
+
+---
+
+## Phase 7 — Cinematic Video Direction, Interpolation & Continuation (`generate_video`)
+
+### 🎯 Objective
+
+Expose Veo 3.1's advanced control plane, enabling video continuation (extending existing
+clips), keyframe interpolation (animating between two states), and precise cinematic styling.
+
+**Observable proof:**
+1. **Continuation:** Pass an active video deliverable (`video_0.mp4` from turn 1) to a new
+   video task with prompt `"Track the butterfly into the garden"`. Verify Veo extends the
+   existing video by 7 seconds cleanly.
+2. **Interpolation:** Provide a starting frame image and an ending frame image (`lastFrame`).
+   Verify Veo interpolates a seamless 720p transition between the two images.
+3. **Cinematic Direction:** Request a 4K, 8-second video using 3 reference asset images.
+   Verify the adapter successfully drives the long-running polling loop to produce an
+   8-second 4K mp4.
+
+### Changes
+
+- [ ] **[MODIFY]
+      [video.py](packages/bees/bees/runners/adapters/video.py)**
+  - Populate `aspectRatio` (`"16:9"`, `"9:16"`), `resolution` (`"720p"`, `"1080p"`, `"4k"`),
+    `durationSeconds` (`"4"`, `"6"`, `"8"`), and `personGeneration` (`"allow_all"`, `"allow_adult"`)
+    in the Veo REST `parameters` block. (Enforce `durationSeconds: "8"` for 1080p/4K/extensions).
+  - Establish video continuation: when an agent references a previously generated video, attach
+    it under the `video` key in the Veo request instance, setting `numberOfVideos: 1` and
+    `resolution: "720p"`.
+  - Support keyframe interpolation & style references: map secondary target images tagged as
+    `lastFrame` into the instance payload to trigger Veo interpolation, and map images with
+    `referenceType: "asset"` into `referenceImages`.
+- [ ] **[MODIFY]
+      [TEMPLATES.yaml](hives/chat-app/config/TEMPLATES.yaml)**
+  - Update `generate_video` template options to support `aspect_ratio`, `resolution`,
+    `duration_seconds`, and reference images.
+
+---
+
+## Phase 8 — Expressive Multi-Speaker TTS & Podcast Orchestration (`generate_speech`)
+
+### 🎯 Objective
+
+Elevate speech generation from monotone single-voice readouts to dynamic, multi-speaker
+voice acting directed by structural personas and audio tags.
+
+**Observable proof:** Execute a `generate_speech` task with a podcast transcript between
+two hosts ("Dr. Anya" and "Liam"). Verify the adapter dispatches a `multiSpeakerVoiceConfig`
+mapping Anya to the *Kore* voice and Liam to the *Puck* voice, and that the resulting audio
+accurately reflects emotional shifts directed by inline tags like `[excitedly]`, `[laughs]`,
+and `[whispers]`.
+
+### Changes
+
+- [ ] **[MODIFY]
+      [speech.py](packages/bees/bees/runners/adapters/speech.py)**
+  - Detect speaker declarations in `SessionConfiguration`. If multiple speakers are defined,
+    switch the REST payload from `voiceConfig` to `multiSpeakerVoiceConfig`, populating
+    `speakerVoiceConfigs` with up to 2 distinct speakers.
+  - Expose Gemini's 30 prebuilt voices (e.g., *Zephyr* - Bright, *Fenrir* - Excitable,
+    *Enceladus* - Breathy, *Charon* - Informative) via template configuration or dynamic
+    persona-to-voice matching.
+- [ ] **[MODIFY]
+      [TEMPLATES.yaml](hives/chat-app/config/TEMPLATES.yaml)**
+  - Formalize declarative prompt structures in task templates with sections `# AUDIO PROFILE`,
+    `### DIRECTOR'S NOTES`, and `#### TRANSCRIPT` with audio tags (`[whispers]`, `[laughs]`).
+  - Establish a composite task pattern where an initial LLM task (`generate_text`) outputs
+    a structured transcript conforming exactly to this schema, which is then piped into
+    `SpeechAdapter`.
 
 ---
 
@@ -448,20 +561,24 @@ packages/bees/
   bees/
     scheduler.py                 ← remains clean (termination only)
     runners/
-      direct_model.py            ← [NEW] DirectModelRunner and DirectModelStream (SessionRunner protocols)
+      direct_model.py            ← DirectModelRunner and DirectModelStream (SessionRunner protocols)
       adapters/
-        protocol.py              ← [NEW] GenAdapter protocol interface
-        text.py                  ← [NEW] Text generation adapter via Gemini Stream
-        image.py                 ← [NEW] Image generation adapter via Gemini REST
-        video.py                 ← [NEW] Video generation adapter via Veo REST
+        protocol.py              ← GenAdapter protocol interface
+        text.py                  ← Text generation adapter via Gemini Stream
+        image.py                 ← Image generation adapter via Gemini REST
+        video.py                 ← Video generation adapter via Veo REST
+        speech.py                ← Speech generation adapter via Gemini REST
+        music.py                 ← Music generation adapter via Gemini REST
     functions/
       tasks.py                   ← ensure child slug parameters are wired
 
   tests/
     test_runners/
-      test_direct_model_text.py    ← [NEW] verify text adapter execution and thoughts
-      test_direct_model_image.py   ← [NEW] verify image adapter execution and PNG outputs
-      test_direct_model_video.py   ← [NEW] verify video adapter execution and MP4 outputs
+      test_direct_model_text.py    ← verify text adapter execution and thoughts
+      test_direct_model_image.py   ← verify image adapter execution and PNG outputs
+      test_direct_model_music.py   ← verify music adapter execution and WAV outputs
+      test_direct_model_speech.py  ← verify speech adapter execution and WAV outputs
+      test_direct_model_video.py   ← verify video adapter execution and MP4 outputs
 ```
 
 ## Context for New Sessions
