@@ -409,35 +409,84 @@ Implement specialized `MusicAdapter` to support concurrent music generation task
 
 Establish a robust architectural pattern to allow agents to supply runtime configuration overrides (e.g., aspect ratio, resolution, voice presets) when spawning tasks, solving the combinatorial template explosion without confusing the LLM or violating abstraction boundaries.
 
-**Observable proof:** An architectural decision is finalized and implemented across the task creation plumbing and `TicketMetadata`, enabling downstream Gen-Adapters to receive structured options without requiring a combinatorial matrix of templates in `TEMPLATES.yaml`.
+**Observable proof:** Trigger a child task of `type: "generate_images"` passing `options: {"aspect_ratio": "16:9", "image_size": "4K"}`. Verify that the options are validated against the template's `options_schema`, successfully persisted into `TicketMetadata`, and made available to downstream Gen-Adapters. Pass an invalid option key `{"ratio": "16:9"}` and verify that `tasks_create_task` rejects it with a descriptive tool validation error string.
 
-### The Architectural Tension
+### Finalized Architectural Decision: Dynamic Template Schemas + Engine Validation
 
-To supply a different set of options to a model (e.g., "create a 16:9 ratio picture of a rose in 4K"), forcing the user to create a distinct task template (e.g., `generate_images_16_9_4k`) expands combinatorially into an unmaintainable template matrix. However, allowing dynamic overrides introduces structural trade-offs between LLM prompting accuracy, interface cleanliness, and framework uniformity.
+To maintain a pristine tool catalog without sacrificing schema validation or LLM prompting accuracy, we adopt a declarative, template-driven approach:
+1. **Agnostic Spawning Tool:** `tasks_create_task` exposes a generic, open `options: object` parameter, keeping the core tool registry static and decoupled from multimedia domain concepts.
+2. **Declarative Template Schemas:** Each task template in `TEMPLATES.yaml` defines its own `options_schema` block (e.g., `generate_images` declares `aspect_ratio` and `image_size`).
+3. **Dynamic Discovery:** `tasks_list_types` returns available tasks enriched with their specific `options_schema`, instructing the LLM exactly what keys/values matter for that task type.
+4. **Active Runtime Validation:** `tasks_create_task` actively validates incoming `options` against the template's `options_schema`. If the LLM hallucinates a key or provides an invalid enum, the engine rejects the tool call with an explicit, guiding error message (e.g., `"Invalid option 'ratio'. Supported options: aspect_ratio, image_size"`), forcing immediate self-correction.
 
-#### Alternatives Considered
+### Compiled Reference: Generator Options Matrix
 
-##### 1. Opaque `options: object` Bag in `tasks_create_task`
-- **Concept**: Add an optional `options: object` parameter to the `tasks_create_task` tool declaration, allowing the agent to supply arbitrary JSON key-value overrides at runtime.
-- **Pros**: Maintains a single, universal `tasks_create_task` tool; zero template matrix.
-- **Cons**: Open-ended `object` bags with "put json here" instructions confuse LLMs, leading to hallucinated keys, incorrect nesting, or malformed values.
+This matrix compiles the available runtime configuration options across the downstream Gemini and Veo generation engines. These schemas are declared directly in `TEMPLATES.yaml` and made discoverable via `tasks_list_types`.
 
-##### 2. Dynamic Task-Scoped Spawning Tools
-- **Concept**: Instead of a single `tasks_create_task` tool, the `tasks` group dynamically exposes scoped, strongly-typed spawning tools for built-in templates (e.g., `tasks_create_image_task(..., aspect_ratio, image_size)`).
-- **Pros**: Absolute strictness and autocomplete for the LLM; pristine separation of concerns for the orchestration engine.
-- **Cons**: Tool catalog bloat (consuming context window tokens); introduces a "privileged template" dichotomy where built-in templates get custom tools while user playbooks do not; dynamic tool generation complexity.
+| Task Type | Option Key | Type | Supported Values / Descriptions | API Mapping Reference |
+| :--- | :--- | :--- | :--- | :--- |
+| **`generate_images`** | `aspect_ratio` | `string` | `"1:1"`, `"3:4"`, `"4:3"`, `"9:16"`, `"16:9"`, `"1:2"`, `"2:1"`, `"3:2"`, `"2:3"`, `"5:4"`, `"4:5"`, `"7:5"`, `"5:7"`, `"21:9"`, `"9:21"` | `generationConfig.responseFormat.image.aspectRatio` |
+| | `image_size` | `string` | `"512"`, `"1K"`, `"2K"`, `"4K"` | `generationConfig.responseFormat.image.imageSize` |
+| | `person_generation` | `string` | `"allow_all"`, `"dont_allow"`, `"allow_adult"` | `generationConfig.responseFormat.image.personGeneration` |
+| **`generate_video`** | `aspect_ratio` | `string` | `"16:9"`, `"9:16"`, `"1:1"` | Veo REST `parameters.aspectRatio` |
+| | `resolution` | `string` | `"720p"`, `"1080p"`, `"4k"` | Veo REST `parameters.resolution` |
+| | `duration_seconds` | `number` | `4`, `6`, `8` | Veo REST `parameters.durationSeconds` |
+| | `person_generation` | `string` | `"allow_all"`, `"dont_allow"`, `"allow_adult"` | Veo REST `parameters.personGeneration` |
+| **`generate_speech`** | `voice` | `string` | `"Puck"`, `"Charon"`, `"Kore"`, `"Fenrir"`, `"Aoede"`, `"Zephyr"`, `"Enceladus"` (Gemini Prebuilt Voices) | REST `voiceConfig.prebuiltVoiceConfig.voiceName` |
+| | `speech_speed` | `number` | `0.5` to `2.0` (Default: `1.0`) | REST `voiceConfig.speechSpeed` |
+
+### Changes
+
+- [x] **[MODIFY]
+      [tasks.functions.json](packages/bees/bees/declarations/tasks.functions.json)**
+  - Add optional `options` parameter (type `object`, `additionalProperties: true`) to `tasks_create_task` with a rich description directing the agent to check `tasks_list_types`.
+- [x] **[MODIFY]
+      [tasks.instruction.md](packages/bees/bees/declarations/tasks.instruction.md)**
+  - Add guidance instructing the agent to inspect `options_schema` in task listings and supply valid configuration overrides via `options`.
+- [x] **[MODIFY]
+      [TEMPLATES.yaml](hives/chat-app/config/TEMPLATES.yaml)**
+  - Attach declarative `options_schema` blocks to `generate_images`, `generate_video`, `generate_speech`, and `generate_music` templates.
+- [x] **[MODIFY]
+      [ticket.py](packages/bees/bees/ticket.py)**
+  - Add `options: dict[str, Any] | None = None` to `TicketMetadata`.
+- [x] **[MODIFY]
+      [playbook.py](packages/bees/bees/playbook.py)**
+  - Update `run_playbook` and `stamp_child_task` to accept and serialize `options`.
+- [x] **[MODIFY]
+      [tasks.py](packages/bees/bees/functions/tasks.py)**
+  - Update `_tasks_list_types` to pass through `options_schema` from loaded templates.
+  - Update `_tasks_create_task` to validate incoming `options` against the loaded template's `options_schema`, returning a clear error dict on failure.
+
+#### Verification
+
+- [x] Add automated test `test_tasks_options_validation.py` verifying successful options pass-through, dynamic schema listing, and explicit validation errors on malformed keys/values.
+
+---
+
+## Phase 5.1 — Hivetool Options Schema & Overrides UI
+
+### 🎯 Objective
+
+Bring first-class frontend UI support to Hivetool for viewing, running, and editing template configuration options, bridging the gap between declarative schemas and parameterized task execution.
+
+**Observable proof:** 
+1. **View Mode:** Select the `generate_images` template in Hivetool and verify that its `options_schema` is rendered as a clean visual specification block.
+2. **Run Dialog:** Click "▶ Run" on `generate_images`. Verify that the run dialog dynamically generates form controls (`<select>` dropdowns for enums) matching the template's `options_schema`. Select custom values, click "Create Task", and verify that the spawned task correctly stores the selected `options` in `metadata.json`.
+3. **Edit Mode (Polish):** Implement a dedicated, user-friendly options editor in `<bees-template-detail>` to allow developers to easily configure custom `options_schema` properties without wrestling with raw YAML strings.
 
 ### Changes
 
 - [ ] **[MODIFY]
-      [ticket.py](packages/bees/bees/ticket.py)**
-  - Implement the finalized configuration override container in `TicketMetadata` (e.g. `options: dict[str, Any] | None = None`).
+      [template-store.ts](packages/bees/hivetool/src/data/template-store.ts)**
+  - Update `TemplateData` interface to include `options_schema?: Record<string, any>`.
 - [ ] **[MODIFY]
-      [playbook.py](packages/bees/bees/playbook.py)**
-  - Update `run_playbook` and `stamp_child_task` to process and serialize runtime overrides.
+      [ticket-store.ts](packages/bees/hivetool/src/data/ticket-store.ts)**
+  - Update `createTask` to accept `options?: Record<string, unknown>` and persist it to `metadata.json`.
 - [ ] **[MODIFY]
-      [tasks.py](packages/bees/bees/functions/tasks.py)**
-  - Update task creation tool definitions and handlers to support the chosen override mechanism.
+      [template-detail.ts](packages/bees/hivetool/src/ui/template-detail.ts)**
+  - Implement view mode rendering for `options_schema`.
+  - Update `handleRun` and `renderRunDialog` to dynamically render form inputs (`<select>` dropdowns for enum values, `<input>` for primitives) based on `options_schema`, binding selections to a local `runOptions` state, and passing them to `createTask`.
+  - Implement the dedicated options schema builder UI in edit mode.
 
 ---
 

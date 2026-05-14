@@ -79,6 +79,9 @@ class TicketMetadata:
     voice: str | None = None
     """Prebuilt voice name for Live API audio output (e.g. ``'Kore'``)."""
 
+    options: dict[str, Any] | None = None
+    """Optional runtime configuration overrides for the task."""
+
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
         # Omit None fields for cleaner JSON.
@@ -123,6 +126,7 @@ class TicketMetadata:
             active_session=data.get("active_session"),
             runner=data.get("runner", "generate"),
             voice=data.get("voice"),
+            options=data.get("options"),
         )
 
 

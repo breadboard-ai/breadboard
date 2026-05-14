@@ -36,6 +36,11 @@
         "wait_ms_before_async": {
           "type": "number",
           "description": "Specifies the number of milliseconds to wait for task completion instead of returning immediately. If the task is completed in that period of time, the outcome of the task will be returned. Otherwise, the task status will be returned. Use only when explicitly requested to wait to return."
+        },
+        "options": {
+          "type": "object",
+          "description": "Optional runtime configuration overrides for the task as key-value pairs. Supported keys and values depend entirely on the task type being created. Discover available options for each task type by calling 'tasks_list_types'.",
+          "additionalProperties": true
         }
       },
       "required": ["type", "summary", "objective", "slug"]

@@ -10,7 +10,9 @@ function. New task templates or overrides can be created or modified inside the
 `templates/` directory of your workspace during execution. You MUST always call
 "tasks_list_types" to discover the current, most up-to-date list of available
 task types before creating a task, especially if you or the system have
-dynamically created or edited templates.
+dynamically created or edited templates. When listing task types, check their
+"options_schema" to see what configuration overrides (if any) can be supplied
+via the "options" parameter of "tasks_create_task".
 
 You can create tasks using the "tasks_create_task" function, check the status of
 the task using the "tasks_check_status" function, and request task cancellation

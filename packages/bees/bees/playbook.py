@@ -158,6 +158,7 @@ def run_playbook(
     owning_task_id: str | None = None,
     slug: str | None = None,
     workspace_dir: Path | None = None,
+    options: dict[str, Any] | None = None,
 ) -> Ticket:
     """Create a task from a template.
 
@@ -206,6 +207,7 @@ def run_playbook(
         slug=slug,
         runner=data.get("runner", "generate"),
         voice=data.get("voice"),
+        options=options,
     )
 
     # Autostart: stamp child tasks declared in the template.
@@ -235,6 +237,7 @@ def stamp_child_task(
     context: str | None = None,
     title: str | None = None,
     scope: SubagentScope | None = None,
+    options: dict[str, Any] | None = None,
 ) -> Ticket:
     """Create a child task from a template under a parent.
 
@@ -255,6 +258,7 @@ def stamp_child_task(
         owning_task_id=child_scope.workspace_root_id,
         slug=child_scope.slug_path,
         workspace_dir=parent_task.fs_dir,
+        options=options,
     )
 
     if child_scope.slug_path:

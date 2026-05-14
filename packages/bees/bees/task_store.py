@@ -130,6 +130,7 @@ class TaskStore:
         slug: str | None = None,
         runner: RunnerType = "generate",
         voice: str | None = None,
+        options: dict[str, Any] | None = None,
     ) -> Ticket:
         """Create a new task.
 
@@ -182,6 +183,7 @@ class TaskStore:
                 slug=slug,
                 runner=runner,
                 voice=voice,
+                options=options,
             ),
         )
         self.save(ticket)
