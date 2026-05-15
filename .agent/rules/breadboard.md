@@ -207,8 +207,8 @@ the mirror.
 ## Project Documents
 
 `projects/[name]/PROJECT.md` files are living project plans. Each project lives
-in its own directory under `projects/` at the repo root. Each phase
-has a 🎯 objective — a concrete, observable test that proves the system works.
+in its own directory under `projects/` at the repo root. Each phase has a 🎯
+objective — a concrete, observable test that proves the system works.
 
 **Plan backward from the objective.** The objective is the real milestone, not
 the checkbox items below it. Before coding, trace the full path from the user's
