@@ -12,14 +12,16 @@
   subscription membership.
 - **Call Location:**
   [app-catalyst.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/ui/flow-gen/app-catalyst.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 #### `POST /v1beta1/getG1Credits`
 
 - **Description:** Fetches the user's available Google One credits balance.
 - **Call Location:**
   [app-catalyst.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/ui/flow-gen/app-catalyst.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 #### `POST /v1beta1/chatGenerateApp`
 
@@ -27,7 +29,8 @@
   using flow generation models.
 - **Call Location:**
   [app-catalyst.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/ui/flow-gen/app-catalyst.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 #### `POST /v1beta1/generateOpalStream?alt=sse`
 
@@ -73,7 +76,8 @@
   of Service.
 - **Call Location:**
   [app-catalyst.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/ui/flow-gen/app-catalyst.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 #### `POST /v1beta1/getEmailPreferences`
 
@@ -81,14 +85,16 @@
   events.
 - **Call Location:**
   [app-catalyst.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/ui/flow-gen/app-catalyst.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 #### `POST /v1beta1/setEmailPreferences`
 
 - **Description:** Updates standard email notification preferences.
 - **Call Location:**
   [app-catalyst.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/ui/flow-gen/app-catalyst.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 ---
 
