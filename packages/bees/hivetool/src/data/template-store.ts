@@ -17,7 +17,14 @@ import yaml from "js-yaml";
 import type { StateAccess } from "./state-access.js";
 
 export { TemplateStore };
-export type { TemplateData };
+export type { TemplateData, OptionPropertySchema };
+
+/** Schema for a single option property within a template's options_schema. */
+interface OptionPropertySchema {
+  type: string;
+  description?: string;
+  enum?: Array<string | number>;
+}
 
 /** A single template entry from TEMPLATES.yaml. */
 interface TemplateData {
@@ -34,6 +41,7 @@ interface TemplateData {
   autostart?: string[];
   runner?: "generate" | "live" | "direct_model";
   voice?: string;
+  options_schema?: Record<string, OptionPropertySchema>;
   isWorkspaceScoped?: boolean;
   ticketId?: string;
 }

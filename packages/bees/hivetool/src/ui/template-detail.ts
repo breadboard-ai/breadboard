@@ -17,7 +17,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 
-import type { TemplateStore, TemplateData } from "../data/template-store.js";
+import type { TemplateStore, TemplateData, OptionPropertySchema } from "../data/template-store.js";
 import type { SkillStore } from "../data/skill-store.js";
 import type { TicketStore } from "../data/ticket-store.js";
 import { sharedStyles } from "./shared-styles.js";
@@ -281,6 +281,195 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
         opacity: 0.4;
         cursor: not-allowed;
       }
+
+      /* ── Options schema view block ── */
+
+      .option-row {
+        padding: 8px 0;
+        border-bottom: 1px solid #1e293b;
+      }
+
+      .option-row:last-child {
+        border-bottom: none;
+      }
+
+      .option-name-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .option-name {
+        font-family: "Google Mono", "Roboto Mono", monospace;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #e2e8f0;
+      }
+
+      .option-type-badge {
+        font-size: 0.65rem;
+        padding: 1px 6px;
+        border-radius: 3px;
+        background: #1a1526;
+        color: #c4b5fd;
+        border: 1px solid #2d2540;
+      }
+
+      .option-enum-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-left: auto;
+      }
+
+      .option-enum-pill {
+        font-size: 0.65rem;
+        padding: 1px 6px;
+        border-radius: 3px;
+        background: #111d1f;
+        color: #5eead4;
+        border: 1px solid #1a3338;
+        font-family: "Google Mono", "Roboto Mono", monospace;
+      }
+
+      .option-desc {
+        font-size: 0.72rem;
+        color: #64748b;
+        margin-top: 3px;
+        line-height: 1.4;
+      }
+
+      /* ── Run dialog options section ── */
+
+      .run-options-section {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #1e293b;
+      }
+
+      .run-options-title {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94a3b8;
+        margin-bottom: 10px;
+      }
+
+      .run-option-field {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .run-option-label {
+        font-size: 0.8rem;
+        color: #cbd5e1;
+        min-width: 120px;
+        font-family: "Google Mono", "Roboto Mono", monospace;
+      }
+
+      .run-option-field select,
+      .run-option-field input {
+        flex: 1;
+        padding: 6px 10px;
+        background: #0b0c0f;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        color: #e2e8f0;
+        font-family: inherit;
+        font-size: 0.85rem;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+
+      .run-option-field select:focus,
+      .run-option-field input:focus {
+        border-color: #10b981;
+      }
+
+      /* ── Edit mode options schema editor ── */
+
+      .schema-editor-row {
+        display: grid;
+        grid-template-columns: 1fr 80px 1fr 1fr 32px;
+        gap: 8px;
+        align-items: start;
+        margin-bottom: 8px;
+      }
+
+      .schema-editor-row input {
+        width: 100%;
+        padding: 6px 8px;
+        background: #0b0c0f;
+        border: 1px solid #334155;
+        border-radius: 4px;
+        color: #e2e8f0;
+        font-family: inherit;
+        font-size: 0.8rem;
+        outline: none;
+      }
+
+      .schema-editor-row select {
+        width: 100%;
+        padding: 6px 8px;
+        background: #0b0c0f;
+        border: 1px solid #334155;
+        border-radius: 4px;
+        color: #e2e8f0;
+        font-family: inherit;
+        font-size: 0.8rem;
+        outline: none;
+      }
+
+      .schema-delete-btn {
+        padding: 4px;
+        background: transparent;
+        color: #64748b;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        line-height: 1;
+        transition: all 0.15s;
+      }
+
+      .schema-delete-btn:hover {
+        color: #f87171;
+        border-color: #991b1b;
+        background: #450a0a;
+      }
+
+      .schema-add-btn {
+        padding: 4px 12px;
+        font-size: 0.75rem;
+        background: transparent;
+        color: #94a3b8;
+        border: 1px dashed #334155;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: inherit;
+      }
+
+      .schema-add-btn:hover {
+        color: #e2e8f0;
+        border-color: #3b82f6;
+        background: #1e293b;
+      }
+
+      .schema-header-row {
+        display: grid;
+        grid-template-columns: 1fr 80px 1fr 1fr 32px;
+        gap: 8px;
+        margin-bottom: 4px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+      }
     `,
   ];
 
@@ -304,6 +493,7 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
   // ── Run state ──
   @state() accessor showRunDialog = false;
   @state() accessor runContext = "";
+  @state() accessor runOptions: Record<string, unknown> = {};
   @state() accessor runningTemplate: TemplateData | null = null;
 
   /** The name of the template when editing started (for rename detection). */
@@ -471,6 +661,7 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
                 </div>
               `
             : nothing}
+          ${this.renderOptionsSchemaView(template)}
           ${template.skills && template.skills.length > 0
             ? (() => {
                 const skillDirs = new Set(
@@ -755,6 +946,8 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
                   ),
                 })}
             ></bees-chip-input>
+
+            ${this.renderOptionsSchemaEditor(draft)}
           </div>
         </div>
       </div>
@@ -948,14 +1141,20 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
     return (template.objective ?? "").includes("{{system.context}}");
   }
 
+  /** Whether the template declares options_schema. */
+  private hasOptions(template: TemplateData): boolean {
+    return Object.keys(template.options_schema ?? {}).length > 0;
+  }
+
   /**
    * Initiate a run from a template. If the template needs context,
    * show the dialog; otherwise create the task immediately.
    */
   private handleRun(template: TemplateData) {
-    if (this.needsContext(template)) {
+    if (this.needsContext(template) || this.hasOptions(template)) {
       this.runningTemplate = template;
       this.runContext = "";
+      this.runOptions = {};
       this.showRunDialog = true;
     } else {
       this.executeRun(template, undefined);
@@ -966,25 +1165,49 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
     this.showRunDialog = false;
     this.runningTemplate = null;
     this.runContext = "";
+    this.runOptions = {};
   }
 
   private renderRunDialog(template: TemplateData) {
+    const wantsContext = this.needsContext(template);
+    const schema = template.options_schema ?? {};
+    const schemaEntries = Object.entries(schema);
+    const canCreate = !wantsContext || this.runContext.trim();
+
     return html`
       <div class="run-overlay" @click=${(e: Event) => {
         if (e.target === e.currentTarget) this.closeRunDialog();
       }}>
         <div class="run-dialog">
           <h3>▶ Run: ${template.title || template.name}</h3>
-          <div class="run-subtitle">
-            This template requires context to run.
-          </div>
-          <textarea
-            placeholder="Provide context for {{system.context}}…"
-            .value=${this.runContext}
-            @input=${(e: Event) => {
-              this.runContext = (e.target as HTMLTextAreaElement).value;
-            }}
-          ></textarea>
+          ${wantsContext
+            ? html`
+              <div class="run-subtitle">
+                This template requires context to run.
+              </div>
+              <textarea
+                placeholder="Provide context for {{system.context}}…"
+                .value=${this.runContext}
+                @input=${(e: Event) => {
+                  this.runContext = (e.target as HTMLTextAreaElement).value;
+                }}
+              ></textarea>
+            `
+            : html`
+              <div class="run-subtitle">
+                Configure options and create the task.
+              </div>
+            `}
+          ${schemaEntries.length > 0
+            ? html`
+              <div class="run-options-section">
+                <div class="run-options-title">Options</div>
+                ${schemaEntries.map(([key, prop]) =>
+                  this.renderRunOptionField(key, prop)
+                )}
+              </div>
+            `
+            : nothing}
           <div class="run-dialog-actions">
             <button
               class="run-cancel-btn"
@@ -992,9 +1215,14 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
             >Cancel</button>
             <button
               class="run-create-btn"
-              ?disabled=${!this.runContext.trim()}
+              ?disabled=${!canCreate}
               @click=${() => {
-                this.executeRun(template, this.runContext.trim());
+                const options = this.collectRunOptions();
+                this.executeRun(
+                  template,
+                  wantsContext ? this.runContext.trim() : undefined,
+                  options,
+                );
                 this.closeRunDialog();
               }}
             >Create Task</button>
@@ -1008,7 +1236,80 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
    * Create a task on disk from a template.
    * Writes objective.md + metadata.json so the box picks it up.
    */
-  private async executeRun(template: TemplateData, context: string | undefined) {
+  /**
+   * Render a single form control for an option in the run dialog.
+   */
+  private renderRunOptionField(key: string, prop: OptionPropertySchema) {
+    const label = key.replace(/_/g, " ");
+
+    if (prop.enum && prop.enum.length > 0) {
+      return html`
+        <div class="run-option-field">
+          <span class="run-option-label">${label}</span>
+          <select
+            @change=${(e: Event) => {
+              const val = (e.target as HTMLSelectElement).value;
+              this.runOptions = { ...this.runOptions, [key]: val || undefined };
+            }}
+          >
+            <option value="" selected>Default</option>
+            ${prop.enum.map((v) => html`<option value=${v}>${v}</option>`)}
+          </select>
+        </div>
+      `;
+    }
+
+    if (prop.type === "number") {
+      return html`
+        <div class="run-option-field">
+          <span class="run-option-label">${label}</span>
+          <input
+            type="number"
+            placeholder=${prop.description ?? ""}
+            @input=${(e: Event) => {
+              const raw = (e.target as HTMLInputElement).value;
+              this.runOptions = {
+                ...this.runOptions,
+                [key]: raw ? Number(raw) : undefined,
+              };
+            }}
+          />
+        </div>
+      `;
+    }
+
+    return html`
+      <div class="run-option-field">
+        <span class="run-option-label">${label}</span>
+        <input
+          type="text"
+          placeholder=${prop.description ?? ""}
+          @input=${(e: Event) => {
+            const val = (e.target as HTMLInputElement).value;
+            this.runOptions = {
+              ...this.runOptions,
+              [key]: val || undefined,
+            };
+          }}
+        />
+      </div>
+    `;
+  }
+
+  /** Collect non-empty run options into a clean dict. */
+  private collectRunOptions(): Record<string, unknown> | undefined {
+    const clean: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(this.runOptions)) {
+      if (v !== undefined && v !== "") clean[k] = v;
+    }
+    return Object.keys(clean).length > 0 ? clean : undefined;
+  }
+
+  private async executeRun(
+    template: TemplateData,
+    context: string | undefined,
+    options?: Record<string, unknown>,
+  ) {
     if (!this.ticketStore) return;
 
     try {
@@ -1024,6 +1325,7 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
         runner: template.runner,
         context,
         watch_events: template.watch_events,
+        options,
       });
 
       // Navigate to the new task.
@@ -1038,6 +1340,182 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
       this.error =
         e instanceof Error ? e.message : "Failed to create task.";
     }
+  }
+
+  // ── View mode: options schema rendering ──
+
+  private renderOptionsSchemaView(template: TemplateData) {
+    const schema = template.options_schema;
+    if (!schema || Object.keys(schema).length === 0) return nothing;
+
+    return html`
+      <div class="block">
+        <div class="block-header">Configuration Options</div>
+        <div class="block-content">
+          ${Object.entries(schema).map(
+            ([key, prop]) => html`
+              <div class="option-row">
+                <div class="option-name-line">
+                  <span class="option-name">${key}</span>
+                  <span class="option-type-badge">${prop.type}</span>
+                  ${prop.enum && prop.enum.length > 0
+                    ? html`
+                        <div class="option-enum-pills">
+                          ${prop.enum.map(
+                            (v) =>
+                              html`<span class="option-enum-pill"
+                                >${v}</span
+                              >`
+                          )}
+                        </div>
+                      `
+                    : nothing}
+                </div>
+                ${prop.description
+                  ? html`<div class="option-desc">${prop.description}</div>`
+                  : nothing}
+              </div>
+            `
+          )}
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Edit mode: options schema editor ──
+
+  private renderOptionsSchemaEditor(draft: TemplateData) {
+    const schema = draft.options_schema ?? {};
+    const entries = Object.entries(schema);
+
+    return html`
+      <div class="block" style="border:none;background:transparent">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label style="font-size:0.7rem;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em"
+            >Options Schema</label
+          >
+          <button
+            class="schema-add-btn"
+            @click=${() => this.addSchemaOption()}
+          >+ Add Option</button>
+        </div>
+        ${entries.length > 0
+          ? html`
+            <div class="schema-header-row">
+              <span>Name</span>
+              <span>Type</span>
+              <span>Description</span>
+              <span>Enum Values</span>
+              <span></span>
+            </div>
+            ${entries.map(([key, prop], i) =>
+              this.renderSchemaEditorRow(key, prop, i)
+            )}
+          `
+          : html`<div style="font-size:0.75rem;color:#475569;padding:8px 0">No options defined. Click "+ Add Option" to start.</div>`}
+      </div>
+    `;
+  }
+
+  private renderSchemaEditorRow(
+    key: string,
+    prop: OptionPropertySchema,
+    _index: number,
+  ) {
+    return html`
+      <div class="schema-editor-row">
+        <input
+          type="text"
+          .value=${key}
+          placeholder="option_name"
+          @change=${(e: Event) => {
+            const newKey = (e.target as HTMLInputElement).value.trim();
+            if (newKey && newKey !== key) {
+              this.renameSchemaOption(key, newKey);
+            }
+          }}
+        />
+        <select
+          @change=${(e: Event) => {
+            const val = (e.target as HTMLSelectElement).value;
+            this.updateSchemaOption(key, { ...prop, type: val });
+          }}
+        >
+          <option value="string" ?selected=${prop.type === "string"}>string</option>
+          <option value="number" ?selected=${prop.type === "number"}>number</option>
+        </select>
+        <input
+          type="text"
+          .value=${prop.description ?? ""}
+          placeholder="Description…"
+          @change=${(e: Event) => {
+            const val = (e.target as HTMLInputElement).value;
+            this.updateSchemaOption(key, {
+              ...prop,
+              description: val || undefined,
+            });
+          }}
+        />
+        <input
+          type="text"
+          .value=${(prop.enum ?? []).join(", ")}
+          placeholder="value1, value2, …"
+          @change=${(e: Event) => {
+            const raw = (e.target as HTMLInputElement).value;
+            const values = raw
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+              .map((s) => (prop.type === "number" ? Number(s) : s));
+            this.updateSchemaOption(key, {
+              ...prop,
+              enum: values.length > 0 ? values : undefined,
+            });
+          }}
+        />
+        <button
+          class="schema-delete-btn"
+          title="Remove option"
+          @click=${() => this.deleteSchemaOption(key)}
+        >✕</button>
+      </div>
+    `;
+  }
+
+  private addSchemaOption() {
+    if (!this.draft) return;
+    const schema = { ...(this.draft.options_schema ?? {}) };
+    // Generate a unique placeholder key.
+    let n = 1;
+    while (schema[`option_${n}`]) n++;
+    schema[`option_${n}`] = { type: "string" };
+    this.updateDraft({ options_schema: schema });
+  }
+
+  private deleteSchemaOption(key: string) {
+    if (!this.draft) return;
+    const schema = { ...(this.draft.options_schema ?? {}) };
+    delete schema[key];
+    this.updateDraft({
+      options_schema: Object.keys(schema).length > 0 ? schema : undefined,
+    });
+  }
+
+  private updateSchemaOption(key: string, prop: OptionPropertySchema) {
+    if (!this.draft) return;
+    const schema = { ...(this.draft.options_schema ?? {}) };
+    schema[key] = prop;
+    this.updateDraft({ options_schema: schema });
+  }
+
+  private renameSchemaOption(oldKey: string, newKey: string) {
+    if (!this.draft) return;
+    const oldSchema = this.draft.options_schema ?? {};
+    const schema: Record<string, OptionPropertySchema> = {};
+    for (const [k, v] of Object.entries(oldSchema)) {
+      schema[k === oldKey ? newKey : k] = v;
+    }
+    this.updateDraft({ options_schema: schema });
   }
 }
 

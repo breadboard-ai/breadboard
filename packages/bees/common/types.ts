@@ -46,4 +46,5 @@ export interface TaskData {
   runner?: "generate" | "live" | "direct_model";
   voice?: string;
   active_session?: string;
+  options?: Record<string, unknown>;
 }

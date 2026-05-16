@@ -476,17 +476,23 @@ Bring first-class frontend UI support to Hivetool for viewing, running, and edit
 
 ### Changes
 
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
+      [types.ts](packages/bees/common/types.ts)**
+  - Add `options` field to `TaskData` shared contract.
+- [x] **[MODIFY]
       [template-store.ts](packages/bees/hivetool/src/data/template-store.ts)**
-  - Update `TemplateData` interface to include `options_schema?: Record<string, any>`.
-- [ ] **[MODIFY]
+  - Add `OptionPropertySchema` interface and `options_schema` field to `TemplateData`.
+- [x] **[MODIFY]
       [ticket-store.ts](packages/bees/hivetool/src/data/ticket-store.ts)**
   - Update `createTask` to accept `options?: Record<string, unknown>` and persist it to `metadata.json`.
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
       [template-detail.ts](packages/bees/hivetool/src/ui/template-detail.ts)**
-  - Implement view mode rendering for `options_schema`.
+  - Implement view mode rendering for `options_schema` as a "Configuration Options" block with name, type badge, enum pills, and description.
   - Update `handleRun` and `renderRunDialog` to dynamically render form inputs (`<select>` dropdowns for enum values, `<input>` for primitives) based on `options_schema`, binding selections to a local `runOptions` state, and passing them to `createTask`.
-  - Implement the dedicated options schema builder UI in edit mode.
+  - Implement the dedicated options schema editor in edit mode with structured key/value rows (name, type, description, enum list, delete).
+- [x] **[MODIFY]
+      [ticket-detail.ts](packages/bees/hivetool/src/ui/ticket-detail.ts)**
+  - Display task creation options as identity-chip key-value pairs in the ticket detail view.
 
 ---
 
