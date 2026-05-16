@@ -371,6 +371,25 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
               </div>
             `
           : nothing}
+        ${ticket.options && Object.keys(ticket.options).length > 0
+          ? html`
+              <div class="block">
+                <div class="block-header">Options</div>
+                <div class="block-content">
+                  <div class="identity-row">
+                    ${Object.entries(ticket.options).map(
+                      ([key, val]) => html`
+                        <span class="identity-chip">
+                          <span class="identity-label">${key}</span>
+                          ${String(val)}
+                        </span>
+                      `
+                    )}
+                  </div>
+                </div>
+              </div>
+            `
+          : nothing}
         ${ticket.functions && ticket.functions.length > 0
           ? html`
               <div class="block">

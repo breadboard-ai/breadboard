@@ -170,6 +170,7 @@ class TicketStore {
     runner?: "generate" | "live" | "direct_model";
     context?: string;
     watch_events?: Array<{ type: string }>;
+    options?: Record<string, unknown>;
   }): Promise<string> {
     if (!this.#ticketsHandle) throw new Error("Ticket store not activated");
 
@@ -203,6 +204,7 @@ class TicketStore {
     if (opts.runner) metadata.runner = opts.runner;
     if (opts.context) metadata.context = opts.context;
     if (opts.watch_events?.length) metadata.watch_events = opts.watch_events;
+    if (opts.options && Object.keys(opts.options).length) metadata.options = opts.options;
 
     // Write metadata.json
     const metadataHandle = await taskDir.getFileHandle("metadata.json", {
