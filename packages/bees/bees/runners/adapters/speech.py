@@ -45,8 +45,101 @@ def _pcm_to_wav(pcm_bytes: bytes, sample_rate: int = 24000) -> bytes:
     return header + pcm_bytes
 
 
+# ---------------------------------------------------------------------------
+# Voice preset mapping & speech config builder
+# ---------------------------------------------------------------------------
+
+# Maps legacy/generic voice aliases to Gemini prebuilt voice names.
+_VOICE_PRESET_MAP: dict[str, str] = {
+    "female": "Kore",
+    "male": "Puck",
+    "female (english)": "Kore",
+    "male (english)": "Puck",
+    "en-us-female": "Kore",
+    "en-us-male": "Puck",
+}
+
+
+def _resolve_voice(name: str) -> str:
+    """Resolve a voice name through the legacy preset map."""
+    return _VOICE_PRESET_MAP.get(name.lower(), name)
+
+
+def _parse_speaker(value: str) -> tuple[str, str] | None:
+    """Parse a flat ``"Alias:VoiceName"`` string into (alias, voice).
+
+    Returns ``None`` if the format is invalid.
+    """
+    if ":" not in value:
+        return None
+    alias, _, voice = value.partition(":")
+    alias = alias.strip()
+    voice = voice.strip()
+    if not alias or not voice:
+        return None
+    return (alias, _resolve_voice(voice))
+
+
+def _build_speech_config(
+    voice_preset: str,
+    options: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Build the ``speechConfig`` block for the Gemini TTS REST payload.
+
+    When ``speaker_1`` and ``speaker_2`` options are present (flat strings in
+    ``"Alias:VoiceName"`` format), produces a ``multiSpeakerVoiceConfig``
+    payload for multi-speaker dialogue. Otherwise, produces a single-speaker
+    ``voiceConfig`` payload.
+    """
+    opts = options or {}
+    speaker_1 = opts.get("speaker_1")
+    speaker_2 = opts.get("speaker_2")
+
+    if speaker_1 and speaker_2:
+        parsed = [
+            _parse_speaker(str(speaker_1)),
+            _parse_speaker(str(speaker_2)),
+        ]
+        # Only switch to multi-speaker if both parse successfully.
+        valid = [p for p in parsed if p is not None]
+        if len(valid) == 2:
+            speaker_configs = [
+                {
+                    "speaker": alias,
+                    "voiceConfig": {
+                        "prebuiltVoiceConfig": {
+                            "voiceName": voice,
+                        }
+                    },
+                }
+                for alias, voice in valid
+            ]
+            return {
+                "multiSpeakerVoiceConfig": {
+                    "speakerVoiceConfigs": speaker_configs,
+                }
+            }
+
+    # Single-speaker mode.
+    resolved = _resolve_voice(voice_preset)
+    return {
+        "voiceConfig": {
+            "prebuiltVoiceConfig": {
+                "voiceName": resolved,
+            }
+        },
+    }
+
 class SpeechAdapter:
-    """Adapter for direct speech generation (TTS) via Gemini REST API."""
+    """Adapter for direct speech generation (TTS) via Gemini REST API.
+
+    Supports:
+    - Single-speaker voice selection via ``options.voice`` or segment config.
+    - Multi-speaker dialogue via ``speaker_1``/``speaker_2`` options
+      which switches the payload to ``multiSpeakerVoiceConfig``.
+    - Audio tags in the transcript for expressive control (``[whispers]``,
+      ``[laughs]``, ``[excitedly]``).
+    """
 
     async def generate(
         self,
@@ -59,7 +152,7 @@ class SpeechAdapter:
     ) -> None:
         # Combine text segments to form prompt
         prompt_parts = []
-        voice_preset = "Kore"  # Default voice (firm female)
+        voice_preset = "Kore"  # Default voice (firm, clear)
 
         for segment in config.segments:
             seg_type = segment.get("type")
@@ -74,6 +167,10 @@ class SpeechAdapter:
                         prompt_parts.append(part["text"])
             elif seg_type == "voice":
                 voice_preset = segment.get("voice_name", segment.get("voice", voice_preset))
+
+        # Options-based voice override takes precedence over segment config.
+        if options and "voice" in options:
+            voice_preset = options["voice"]
 
         prompt = "\n".join(prompt_parts).strip()
 
@@ -91,30 +188,16 @@ class SpeechAdapter:
         if isinstance(translated, dict) and "$error" in translated:
             raise ValueError(translated["$error"])
 
-        # Translate voice presets (mapping standard male/female presets to Gemini prebuilt voices)
-        preset_map = {
-            "female": "Kore",
-            "male": "Puck",
-            "female (english)": "Kore",
-            "male (english)": "Puck",
-            "en-us-female": "Kore",
-            "en-us-male": "Puck",
-        }
-        resolved_voice = preset_map.get(voice_preset.lower(), voice_preset)
-
         resolved_model = config.model or "gemini-3.1-flash-tts-preview"
+
+        # Build speech config: multi-speaker or single-speaker.
+        speech_config = _build_speech_config(voice_preset, options)
 
         body: dict[str, Any] = {
             "contents": [translated],
             "generationConfig": {
                 "responseModalities": ["AUDIO"],
-                "speechConfig": {
-                    "voiceConfig": {
-                        "prebuiltVoiceConfig": {
-                            "voiceName": resolved_voice
-                        }
-                    }
-                }
+                "speechConfig": speech_config,
             }
         }
 

@@ -599,36 +599,57 @@ clips), keyframe interpolation (animating between two states), and precise cinem
 
 ---
 
-## Phase 7 — Expressive Multi-Speaker TTS & Podcast Orchestration (`generate_speech`)
+## Phase 7 — Expressive Multi-Speaker TTS & Voice Catalog (`generate_speech`)
 
 ### 🎯 Objective
 
-Elevate speech generation from monotone single-voice readouts to dynamic, multi-speaker
-voice acting directed by structural personas and audio tags.
+Elevate the `SpeechAdapter` to full fidelity, matching the pattern established
+by Phase 5.2 (image grounding + options) and Phase 6 (video
+continuation/interpolation). Wire options that were accepted but ignored, add
+multi-speaker dialogue support, and expose the complete Gemini voice catalog.
 
-**Observable proof:** Execute a `generate_speech` task with a podcast transcript between
-two hosts ("Dr. Anya" and "Liam"). Verify the adapter dispatches a `multiSpeakerVoiceConfig`
-mapping Anya to the *Kore* voice and Liam to the *Puck* voice, and that the resulting audio
-accurately reflects emotional shifts directed by inline tags like `[excitedly]`, `[laughs]`,
-and `[whispers]`.
+**Observable proof:**
+1. **Options plumbing:** Trigger a `generate_speech` task with
+   `options: { "voice": "Charon" }`. Verify the REST payload uses `voiceConfig`
+   with `voiceName: "Charon"` instead of the default `"Kore"`.
+2. **Multi-speaker:** Trigger a `generate_speech` task with
+   `options: { "speaker_1": "Host:Aoede", "speaker_2": "Guest:Puck" }` and a
+   transcript using `"Alias: text"` format. Verify the REST payload uses
+   `multiSpeakerVoiceConfig` with correct alias/voice mappings.
+3. **Voice catalog:** Verify `tasks_list_types` returns all 30 Gemini prebuilt
+   voices with personality annotations in the `voice` enum.
 
 ### Changes
 
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
       [speech.py](packages/bees/bees/runners/adapters/speech.py)**
-  - Detect speaker declarations in `SessionConfiguration`. If multiple speakers are defined,
-    switch the REST payload from `voiceConfig` to `multiSpeakerVoiceConfig`, populating
-    `speakerVoiceConfigs` with up to 2 distinct speakers.
-  - Expose Gemini's 30 prebuilt voices (e.g., *Zephyr* - Bright, *Fenrir* - Excitable,
-    *Enceladus* - Breathy, *Charon* - Informative) via template configuration or dynamic
-    persona-to-voice matching.
-- [ ] **[MODIFY]
+  - Wire `options.voice` to override the segment-derived voice preset.
+  - Add multi-speaker support: when `speaker_1` and `speaker_2` options are
+    present (flat `"Alias:VoiceName"` strings), switch the REST payload from
+    `voiceConfig` to `multiSpeakerVoiceConfig`. Flat strings avoid LLM
+    serialization failures with nested objects.
+  - Extract voice resolution and speech config building into `_resolve_voice`
+    and `_build_speech_config` helpers for testability.
+- [x] **[MODIFY]
       [TEMPLATES.yaml](hives/chat-app/config/TEMPLATES.yaml)**
-  - Formalize declarative prompt structures in task templates with sections `# AUDIO PROFILE`,
-    `### DIRECTOR'S NOTES`, and `#### TRANSCRIPT` with audio tags (`[whispers]`, `[laughs]`).
-  - Establish a composite task pattern where an initial LLM task (`generate_text`) outputs
-    a structured transcript conforming exactly to this schema, which is then piped into
-    `SpeechAdapter`.
+  - Expand `voice` enum to all 30 Gemini prebuilt voices with personality
+    annotations in the description.
+  - Remove phantom `speech_speed` option (not a real API parameter — pacing
+    is controlled via natural language audio tags).
+  - Add `speaker_1` and `speaker_2` options (string type, `"Alias:VoiceName"`
+    format) for multi-speaker dialogue. Flat strings prevent LLM tool-calling
+    serialization failures with nested objects.
+  - Enrich template description with audio tag guidance and multi-speaker
+    usage patterns.
+  - Add `test_multi_speaker_speech` test harness template.
+
+#### Verification
+
+- [x] Add automated tests verifying options.voice override, options.voice
+      precedence over segment voice, and multi-speaker `multiSpeakerVoiceConfig`
+      payload shape in `test_direct_model_speech.py`.
+- [x] Run `test_multi_speaker_speech` template end-to-end and verify the
+      generated audio contains two distinct voices.
 
 ---
 
