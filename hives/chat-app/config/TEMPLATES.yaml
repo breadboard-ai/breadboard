@@ -206,6 +206,37 @@
     tasks that involve generation of images based on a prompt.
     Always writes its output to {slug}/image_0.png.
 
+- name: test_image_grounding
+  title: Image Grounding Test
+  description: >-
+    Test harness for image grounding and options plumbing. Spawns two
+    generate_images tasks in sequence — the second references the first
+    via pidgin to verify subject grounding end-to-end.
+  model: gemini-3-flash-preview
+  objective: >-
+    You are a test harness for the image generation pipeline. Run these
+    two steps in order:
+
+
+    Step 1: Create a `generate_images` task with slug "reference" and
+    objective "A simple cartoon cat sitting on a red cushion". Wait for
+    it to complete (use wait_ms_before_async: 60000).
+
+
+    Step 2: Once Step 1 completes, create a second `generate_images` task
+    with slug "grounded" and this objective (including the pidgin file
+    tag exactly): "A pencil sketch version of this image
+    <file src=\"reference/image_0.png\" />. Draw it in a notebook style."
+    Set options: { "aspect_ratio": "16:9" }. Wait for it to complete.
+
+
+    Report whether both tasks succeeded and describe what was generated.
+  functions:
+    - system.*
+    - tasks.*
+  tasks:
+    - generate_images
+
 - name: generate_video
   title: Video Generator
   runner: direct_model

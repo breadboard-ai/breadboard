@@ -19,5 +19,6 @@ class GenAdapter(Protocol):
         log_event: Callable[[dict[str, Any]], Any],
         backend: HttpBackendClient,
         api_key: str,
+        options: dict[str, Any] | None = None,
     ) -> None:
         ...

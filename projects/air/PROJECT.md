@@ -496,40 +496,66 @@ Bring first-class frontend UI support to Hivetool for viewing, running, and edit
 
 ---
 
-## Phase 6 — Advanced Image Generation & Subject Grounding (`generate_images`)
+## Phase 5.2 — Image Grounding & Options Plumbing (`generate_images`)
 
 ### 🎯 Objective
 
-Unlock high-resolution generation, precise dimensional framing, and multi-image
-subject/style grounding (image-to-image editing).
+Enable the `ImageAdapter` to receive reference images via pidgin file tags in
+the objective and to apply runtime configuration options (aspect ratio, image
+size, person generation) to the Gemini REST call.
 
-**Observable proof:** Trigger a `generate_images` task specifying `model: gemini-3-pro-image-preview`,
-`aspect_ratio: "21:9"`, and `image_size: "4K"`. Verify the output image matches the
-precise aspect ratio and resolution. Pass 3 reference images of character faces with the
-objective `"An office group photo of these people making funny faces"`. Verify the adapter
-structures a multi-part context payload and delivers a single composite image preserving
-subject identity.
+**Observable proof:**
+1. **Options plumbing:** Trigger a `generate_images` task with
+   `options: { "aspect_ratio": "16:9", "image_size": "4K" }`. Verify the REST
+   request includes `generationConfig.responseFormat.image` with matching
+   values, and the output image reflects the requested dimensions.
+2. **Image grounding:** The parent agent writes an objective containing pidgin
+   file references:
+   `"A group photo of these people <file src=\"face1.png\" /> <file src=\"face2.png\" /> making funny faces"`.
+   Verify that `from_pidgin_string` resolves the tags into `inlineData` parts,
+   that `ImageAdapter` includes them alongside text in the REST `contents`
+   array, and that the generated image reflects the referenced subjects.
+
+### Why this is a small phase
+
+Pidgin already resolves `<file src="..." />` into `inlineData` parts via
+`from_pidgin_string`. The `ImageAdapter` already calls `from_pidgin_string` on
+the prompt. The only gap: **it extracts only text parts and discards everything
+else** (lines 27-38). Fixing this is a targeted adapter change, not a new
+architecture.
+
+Options plumbing is similarly narrow: the `options` dict is already persisted in
+`metadata.json` (Phase 5) — the adapter just needs to read and map them.
 
 ### Changes
 
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
+      [protocol.py](packages/bees/bees/runners/adapters/protocol.py)**
+  - Add `options: dict[str, Any] | None = None` parameter to `GenAdapter.generate`.
+- [x] **[MODIFY]
+      [direct_model.py](packages/bees/bees/runners/direct_model.py)**
+  - Read `options` from task `metadata.json` and pass through to `adapter.generate`.
+- [x] **[MODIFY]
       [image.py](packages/bees/bees/runners/adapters/image.py)**
-  - Parse `aspect_ratio` (supporting 14 ratios from `"1:1"` to `"21:9"`) and `image_size`
-    (`"512"`, `"1K"`, `"2K"`, `"4K"`) from `SessionConfiguration` metadata, mapping them
-    into `generationConfig.responseFormat.image`.
-  - Support `gemini-3-pro-image-preview` for complex instructions, enabling its default
-    "Thinking" process and Google Search grounding.
-  - When `config.segments` contains reference images (or `role: "model"` history from
-    prior turns), structure the REST `contents` array to interleave text prompts and base64
-    `inlineData` for multi-turn image editing and subject grounding.
-- [ ] **[MODIFY]
+  - **Image grounding:** Use the full resolved `contents` from `from_pidgin_string`
+    (text + `inlineData` parts) in the REST `contents` array, enabling subject
+    grounding via pidgin file references.
+  - **Options plumbing:** Map `aspect_ratio`, `image_size`, `person_generation`
+    from `options` into `generationConfig.imageConfig`.
+- [x] **[MODIFY]
       [TEMPLATES.yaml](hives/chat-app/config/TEMPLATES.yaml)**
-  - Update `generate_images` template options to expose `aspect_ratio` and `image_size`
-    declaratively.
+  - Add `test_image_grounding` template: a parent agent that writes a reference
+    image, spawns `generate_images` with pidgin file refs and options, and
+    reports the result.
+
+#### Verification
+
+- [ ] Run `test_image_grounding` template end-to-end and verify the generated
+      image reflects the reference subject and requested aspect ratio.
 
 ---
 
-## Phase 7 — Cinematic Video Direction, Interpolation & Continuation (`generate_video`)
+## Phase 6 — Cinematic Video Direction, Interpolation & Continuation (`generate_video`)
 
 ### 🎯 Objective
 
@@ -566,7 +592,7 @@ clips), keyframe interpolation (animating between two states), and precise cinem
 
 ---
 
-## Phase 8 — Expressive Multi-Speaker TTS & Podcast Orchestration (`generate_speech`)
+## Phase 7 — Expressive Multi-Speaker TTS & Podcast Orchestration (`generate_speech`)
 
 ### 🎯 Objective
 
