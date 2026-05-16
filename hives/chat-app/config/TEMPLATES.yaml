@@ -415,21 +415,83 @@
   options_schema:
     voice:
       type: string
-      description: "Voice preset name. Valid values: 'Puck', 'Charon', 'Kore', 'Fenrir', 'Aoede', 'Zephyr', 'Enceladus'."
+      description: >-
+        Voice preset name. Each voice has a distinct personality:
+        Achernar (clear, friendly), Achird (warm, conversational),
+        Algenib (deep, authoritative), Algieba (rich, dramatic),
+        Alnilam (smooth, neutral), Aoede (breezy, intelligent),
+        Autonoe (mature, wise), Callirrhoe (bright, animated),
+        Charon (informative, calm), Despina (gentle, soothing),
+        Enceladus (breathy, intimate), Erinome (crisp, precise),
+        Fenrir (excitable, energetic), Gacrux (steady, grounded),
+        Iapetus (resonant, measured), Kore (firm, clear),
+        Laomedeia (melodic, expressive), Leda (professional, composed),
+        Orus (bold, commanding), Puck (upbeat, youthful),
+        Pulcherrima (elegant, polished), Rasalgethi (gravelly, textured),
+        Sadachbia (soft, contemplative), Sadaltager (neutral, versatile),
+        Schedar (warm, reassuring), Sulafat (lively, playful),
+        Umbriel (mysterious, atmospheric), Vindemiatrix (articulate, refined),
+        Zephyr (bright, perky), Zubenelgenubi (deep, resonant).
       enum:
-        - "Puck"
-        - "Charon"
-        - "Kore"
-        - "Fenrir"
+        - "Achernar"
+        - "Achird"
+        - "Algenib"
+        - "Algieba"
+        - "Alnilam"
         - "Aoede"
-        - "Zephyr"
+        - "Autonoe"
+        - "Callirrhoe"
+        - "Charon"
+        - "Despina"
         - "Enceladus"
-    speech_speed:
-      type: number
-      description: "Speech speed multiplier, 0.5 to 2.0."
+        - "Erinome"
+        - "Fenrir"
+        - "Gacrux"
+        - "Iapetus"
+        - "Kore"
+        - "Laomedeia"
+        - "Leda"
+        - "Orus"
+        - "Puck"
+        - "Pulcherrima"
+        - "Rasalgethi"
+        - "Sadachbia"
+        - "Sadaltager"
+        - "Schedar"
+        - "Sulafat"
+        - "Umbriel"
+        - "Vindemiatrix"
+        - "Zephyr"
+        - "Zubenelgenubi"
+    speaker_1:
+      type: string
+      description: >-
+        First speaker for multi-speaker dialogue, in "Alias:VoiceName" format
+        (e.g. "Host:Aoede"). The alias must match what appears in the transcript.
+        Both speaker_1 and speaker_2 must be set for multi-speaker mode.
+    speaker_2:
+      type: string
+      description: >-
+        Second speaker for multi-speaker dialogue, in "Alias:VoiceName" format
+        (e.g. "Guest:Puck"). The alias must match what appears in the transcript.
+        Both speaker_1 and speaker_2 must be set for multi-speaker mode.
   description: >-
-    An extremely versatile speech generator, powered by Gemini. Use it for any
-    tasks that involve generation of speech/audio from text.
+    An expressive speech generator powered by Gemini TTS. Use it for
+    narration, voiceover, dialogue, and podcast-style multi-speaker audio.
+
+    **Single speaker**: Set the `voice` option to choose a voice preset.
+    Defaults to Kore if unspecified.
+
+    **Multi-speaker dialogue**: Set `speaker_1` and `speaker_2` options
+    using "Alias:VoiceName" format (e.g. speaker_1: "Host:Aoede",
+    speaker_2: "Guest:Puck"). Write the transcript using "Alias: text"
+    format on each line. The API currently supports exactly 2 speakers.
+
+    **Expressive control**: Embed audio tags directly in the transcript
+    to direct performance: [whispers], [laughs], [excitedly],
+    [slowly, with gravity], [sighs], [pauses]. The model interprets
+    these as stage directions for natural delivery.
+
     Always writes its output to {slug}/audio_0.wav.
 
 - name: generate_music
@@ -443,3 +505,42 @@
     An extremely versatile music generator, powered by Lyria. Use it for any
     tasks that involve generation of music or songs based on a prompt.
     Always writes its output to {slug}/audio_0.wav.
+
+- name: test_multi_speaker_speech
+  title: Multi-Speaker Speech Test
+  description: >-
+    Test harness for multi-speaker TTS. Spawns a generate_speech task
+    with two-speaker dialogue using the speakers option to verify the
+    multiSpeakerVoiceConfig pipeline end-to-end.
+  model: gemini-3-flash-preview
+  objective: >-
+    You are a test harness for the multi-speaker speech pipeline. Run these
+    steps in order:
+
+
+    Step 1: Create a `generate_speech` task with slug "dialogue" and this
+    objective (include it exactly as the transcript):
+
+    "Host: Welcome to the AI podcast! Today we're exploring how autonomous
+    agents collaborate on creative tasks. [excitedly] It's going to be a
+    great episode!
+    Guest: Thanks for having me! [laughs] I've been looking forward to
+    this conversation. Let me tell you about something fascinating."
+
+    Set options: { "speaker_1": "Host:Aoede", "speaker_2": "Guest:Puck" }.
+    Wait for it to complete (use wait_ms_before_async: 120000).
+
+
+    Step 2: Create a second `generate_speech` task with slug "narration"
+    and objective "The morning sun cast long shadows across the ancient
+    library. [slowly, with gravity] Within its walls, secrets waited to
+    be discovered." Set options: { "voice": "Charon" }.
+    Wait for it to complete (use wait_ms_before_async: 120000).
+
+
+    Report whether both tasks succeeded and describe the results.
+  functions:
+    - system.*
+    - tasks.*
+  tasks:
+    - generate_speech
