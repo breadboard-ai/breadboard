@@ -21,6 +21,7 @@ class TextAdapter:
         log_event: Callable[[dict[str, Any]], Any],
         backend: HttpBackendClient,
         api_key: str,
+        options: dict[str, Any] | None = None,
     ) -> None:
         # Combine text segments to form prompt
         prompt_parts = []

@@ -574,21 +574,28 @@ clips), keyframe interpolation (animating between two states), and precise cinem
 
 ### Changes
 
-- [ ] **[MODIFY]
+- [x] **[MODIFY]
       [video.py](packages/bees/bees/runners/adapters/video.py)**
-  - Populate `aspectRatio` (`"16:9"`, `"9:16"`), `resolution` (`"720p"`, `"1080p"`, `"4k"`),
-    `durationSeconds` (`"4"`, `"6"`, `"8"`), and `personGeneration` (`"allow_all"`, `"allow_adult"`)
-    in the Veo REST `parameters` block. (Enforce `durationSeconds: "8"` for 1080p/4K/extensions).
-  - Establish video continuation: when an agent references a previously generated video, attach
-    it under the `video` key in the Veo request instance, setting `numberOfVideos: 1` and
-    `resolution: "720p"`.
-  - Support keyframe interpolation & style references: map secondary target images tagged as
-    `lastFrame` into the instance payload to trigger Veo interpolation, and map images with
-    `referenceType: "asset"` into `referenceImages`.
-- [ ] **[MODIFY]
+  - Populate `aspectRatio`, `resolution`, `durationSeconds`, and `personGeneration`
+    in the Veo REST `parameters` block via `_build_parameters(options)`.
+  - Video continuation via `extend_video` option: reads the server-side URI from a
+    sidecar file (`video_0.uri.json`) persisted after each generation. The Veo API
+    requires a server-side URI reference for extension — inline bytes are rejected.
+  - Keyframe interpolation via `first_frame` / `last_frame` options: resolves images
+    through `FileSystem.get()` and maps to `bytesBase64Encoded` format.
+  - Reference image direction via `reference_images` option: up to 3 images mapped
+    to `referenceImages[]` with `referenceType: "asset"`.
+  - URI sidecar persistence: after every successful generation, the `video.uri` from
+    the Veo response is saved as `video_0.uri.json` for future extension.
+- [x] **[MODIFY]
       [TEMPLATES.yaml](hives/chat-app/config/TEMPLATES.yaml)**
-  - Update `generate_video` template options to support `aspect_ratio`, `resolution`,
-    `duration_seconds`, and reference images.
+  - Expanded `generate_video` template with `first_frame`, `last_frame`,
+    `extend_video`, and `reference_images` options plus enriched description.
+  - Added `test_video_extension` and `test_video_interpolation` parent agent
+    templates for end-to-end validation.
+- [x] **Protocol conformance fix:** Added `options` parameter to `TextAdapter`,
+  `SpeechAdapter`, and `MusicAdapter` to match the `GenAdapter` protocol (latent
+  bug — the runner was already passing `options=options` to all adapters).
 
 ---
 
