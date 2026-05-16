@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Callable
 
 import httpx
@@ -11,9 +12,18 @@ from bees.pidgin import from_pidgin_string
 from bees.protocols.session import SessionConfiguration
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
+logger = logging.getLogger("bees.runners.adapters.image")
+
 
 class ImageAdapter:
-    """Adapter for direct image generation via Gemini REST API."""
+    """Adapter for direct image generation via Gemini REST API.
+
+    Supports:
+    - Multimodal prompts via pidgin file references (``<file src="..." />``)
+      resolved into ``inlineData`` parts for subject grounding.
+    - Runtime configuration via ``options`` (aspect_ratio, image_size,
+      person_generation) mapped into ``generationConfig``.
+    """
 
     async def generate(
         self,
@@ -22,8 +32,9 @@ class ImageAdapter:
         log_event: Callable[[dict[str, Any]], Any],
         backend: HttpBackendClient,
         api_key: str,
+        options: dict[str, Any] | None = None,
     ) -> None:
-        # Combine text segments to form prompt
+        # 1. Combine text segments to form prompt string.
         prompt_parts = []
         for segment in config.segments:
             seg_type = segment.get("type")
@@ -39,7 +50,7 @@ class ImageAdapter:
 
         prompt = "\n".join(prompt_parts).strip()
 
-        # Fallback to objective.md if prompt is empty
+        # Fallback to objective.md if prompt is empty.
         if not prompt and config.ticket_dir:
             objective_path = config.ticket_dir / "objective.md"
             if objective_path.is_file():
@@ -48,22 +59,30 @@ class ImageAdapter:
         if not prompt:
             raise ValueError("Direct image generation failed: Empty prompt / objective")
 
-        # Translate pidgin references (resolving files)
+        # 2. Resolve pidgin file references → multimodal content.
+        #    from_pidgin_string returns {"parts": [...], "role": "user"} where
+        #    parts can include text AND inlineData (for <file src="..." /> tags).
         translated = await from_pidgin_string(prompt, config.file_system)
         if isinstance(translated, dict) and "$error" in translated:
             raise ValueError(translated["$error"])
 
         resolved_model = config.model or "gemini-3.1-flash-image-preview"
 
+        # 3. Build generationConfig from options.
+        generation_config = _build_generation_config(options)
+
         body: dict[str, Any] = {
-            "contents": [translated]
+            "contents": [translated],
         }
+        if generation_config:
+            body["generationConfig"] = generation_config
 
         send_request_event = {
             "sendRequest": {
                 "body": {
                     "model": resolved_model,
                     "contents": body["contents"],
+                    **({"generationConfig": generation_config} if generation_config else {}),
                 }
             }
         }
@@ -111,3 +130,56 @@ class ImageAdapter:
             }
         }
         await log_event(complete_event)
+
+
+# ---------------------------------------------------------------------------
+# Options → generationConfig mapping
+# ---------------------------------------------------------------------------
+
+# Gemini image generation supports responseModalities and image config
+# within generationConfig.  See:
+# https://ai.google.dev/gemini-api/docs/image-generation
+
+_IMAGE_SIZE_MAP: dict[str, str] = {
+    "512": "512",
+    "1K": "1024",
+    "1k": "1024",
+    "2K": "2048",
+    "2k": "2048",
+    "4K": "4096",
+    "4k": "4096",
+}
+
+
+def _build_generation_config(
+    options: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Map user-facing options into Gemini generationConfig.
+
+    Returns None if no options require config overrides.
+    """
+    if not options:
+        return None
+
+    image_config: dict[str, Any] = {}
+
+    aspect_ratio = options.get("aspect_ratio")
+    if aspect_ratio:
+        image_config["aspectRatio"] = aspect_ratio
+
+    image_size = options.get("image_size")
+    if image_size:
+        mapped = _IMAGE_SIZE_MAP.get(str(image_size), str(image_size))
+        image_config["imageSize"] = mapped
+
+    person_generation = options.get("person_generation")
+    if person_generation:
+        image_config["personGeneration"] = person_generation
+
+    if not image_config:
+        return None
+
+    return {
+        "responseModalities": ["TEXT", "IMAGE"],
+        "imageConfig": image_config,
+    }

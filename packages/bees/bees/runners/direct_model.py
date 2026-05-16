@@ -106,6 +106,7 @@ class DirectModelStream:
             # 1. Read metadata.json to get slug and other config
             slug = None
             tags = []
+            options: dict[str, Any] | None = None
             if self._config.ticket_dir:
                 metadata_path = self._config.ticket_dir / "metadata.json"
                 if metadata_path.is_file():
@@ -113,6 +114,7 @@ class DirectModelStream:
                         mdata = json.loads(metadata_path.read_text(encoding="utf-8"))
                         slug = mdata.get("slug")
                         tags = mdata.get("tags") or []
+                        options = mdata.get("options")
                     except Exception as e:
                         logger.warning("Failed to load task metadata: %s", e)
 
@@ -133,6 +135,7 @@ class DirectModelStream:
                 self._log_event,
                 self._backend,
                 self._api_key,
+                options=options,
             )
 
             # 3. Update session status to completed
