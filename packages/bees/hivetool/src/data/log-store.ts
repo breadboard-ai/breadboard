@@ -5,10 +5,11 @@
  */
 
 /**
- * Signal-backed reactive store for session files grouped by parent tasks.
+ * Signal-backed reactive store for session files grouped by parent entities.
  *
- * Resolves the `hive/tickets/` subdirectory via a shared StateAccess,
- * uses FileSystemObserver for live updates, and manages session grouping.
+ * Resolves the entity directory (`agents/` or `tickets/`) via a shared
+ * StateAccess, uses FileSystemObserver for live updates, and manages
+ * session grouping.
  */
 
 import { Signal } from "signal-polyfill";
@@ -49,45 +50,58 @@ class LogStore {
 
   // ── Private ──
 
-  #ticketsHandle: FileSystemDirectoryHandle | null = null;
+  /** Handle for the primary entity directory (agents/ or tickets/). */
+  #entityHandle: FileSystemDirectoryHandle | null = null;
   #observer: { disconnect(): void } | null = null;
   #activated = false;
 
   // ── Lifecycle ──
 
-  /** Activate the store — resolves tickets/ subdir, scans, observes. */
+  /**
+   * Activate the store — resolves the entity directory, scans, observes.
+   *
+   * Tries `agents/` first (Project Swarm layout), then falls back
+   * to `tickets/` (legacy layout).
+   */
   async activate(): Promise<void> {
     if (this.#activated) return;
     if (this.access.accessState.get() !== "ready") return;
 
-    const ticketsHandle = await this.access.getSubdirectory("tickets");
-    if (!ticketsHandle) {
-      console.warn("Could not find tickets/ subdirectory in hive/");
-      return;
+    // Try agents/ first (Project Swarm layout).
+    const agentsHandle = await this.access.getSubdirectory("agents");
+    if (agentsHandle) {
+      this.#entityHandle = agentsHandle;
+    } else {
+      // Fall back to tickets/ (legacy layout).
+      const ticketsHandle = await this.access.getSubdirectory("tickets");
+      if (!ticketsHandle) {
+        console.warn("Could not find agents/ or tickets/ subdirectory in hive/");
+        return;
+      }
+      this.#entityHandle = ticketsHandle;
     }
 
-    this.#ticketsHandle = ticketsHandle;
     this.#activated = true;
     await this.scan();
     this.#startObserver();
   }
 
-  /** Scan the tickets subdirectory, load tasks metadata and their sessions. */
+  /** Scan the entity directory, load entity metadata and their sessions. */
   async scan(): Promise<void> {
-    if (!this.#ticketsHandle) return;
+    if (!this.#entityHandle) return;
 
     const groups: TaskGroupedSessions[] = [];
 
     try {
       for await (const [name, entry] of (
-        this.#ticketsHandle as FileSystemDirectoryHandle & {
+        this.#entityHandle as FileSystemDirectoryHandle & {
           entries(): AsyncIterable<[string, FileSystemHandle]>;
         }
       ).entries()) {
         if (entry.kind !== "directory") continue;
 
-        const ticketDir = await this.#ticketsHandle.getDirectoryHandle(name);
-        const metadata = await this.#readJson(ticketDir, "metadata.json") as Record<string, unknown> | null;
+        const entityDir = await this.#entityHandle.getDirectoryHandle(name);
+        const metadata = await this.#readJson(entityDir, "metadata.json") as Record<string, unknown> | null;
         if (!metadata) continue;
         if (metadata.kind === "coordination") continue;
 
@@ -97,7 +111,7 @@ class LogStore {
 
         const sessions: SidebarSessionInfo[] = [];
         try {
-          const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+          const sessionsDir = await entityDir.getDirectoryHandle("sessions");
           for await (const [sName, sEntry] of (
             sessionsDir as FileSystemDirectoryHandle & {
               entries(): AsyncIterable<[string, FileSystemHandle]>;
@@ -156,7 +170,7 @@ class LogStore {
         });
       }
     } catch (e) {
-      console.error("Failed to scan tickets/ sessions:", e);
+      console.error("Failed to scan entity sessions:", e);
     }
 
     // Sort taskGroups by their most recently updated session's lastModified, descending
@@ -178,7 +192,7 @@ class LogStore {
   reset(): void {
     this.#observer?.disconnect();
     this.#observer = null;
-    this.#ticketsHandle = null;
+    this.#entityHandle = null;
     this.#activated = false;
     this.taskGroups.set([]);
     this.selectedSessionId.set(null);
@@ -221,7 +235,7 @@ class LogStore {
   }
 
   #startObserver(): void {
-    if (!this.#ticketsHandle) return;
+    if (!this.#entityHandle) return;
     if (!("FileSystemObserver" in globalThis)) return;
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -243,7 +257,7 @@ class LogStore {
             } else if (typeof r.relativePath === "string") {
               segments = r.relativePath.split("/").filter(Boolean);
             }
-            // [ticketId, "sessions", sessionId, ...]
+            // [entityId, "sessions", sessionId, ...]
             if (segments.length >= 3 && segments[1] === "sessions") {
               this.recentlyUpdatedSession.set({ id: segments[2], at: Date.now() });
               break;
@@ -251,7 +265,7 @@ class LogStore {
           }
         }
       });
-      observer.observe(this.#ticketsHandle, { recursive: true });
+      observer.observe(this.#entityHandle, { recursive: true });
       this.#observer = observer;
     } catch (e) {
       console.warn("FileSystemObserver not available:", e);

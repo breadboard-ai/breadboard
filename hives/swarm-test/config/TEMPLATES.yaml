@@ -7,7 +7,7 @@
   functions:
     - tasks.*
     - system.*
-  autostart:
+  tasks:
     - writer
 
 - name: writer

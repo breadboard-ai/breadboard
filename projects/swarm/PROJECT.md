@@ -677,7 +677,7 @@ idle and waits for Hivetool to create tasks. Since Hivetool isn't updated until
 Phase 2c, `swarm-test` is the only hive that exercises the full boot → run →
 complete lifecycle in swarm mode.
 
-### Phase 2c — Hivetool Reads From New Layout
+### Phase 2c — Hivetool Reads From New Layout ✅
 
 Hivetool's `TicketStore` reads from both `agents/` + `tasks/` and `tickets/`
 directories. This is the dual-directory scanning mode that enables the lockstep
@@ -689,20 +689,75 @@ agent lifecycle, workspace, and surface correctly from `agents/` paths.
 
 #### Hivetool Changes
 
-- [ ] **[MODIFY] `ticket-store.ts`** — Accept both `agents/` and `tickets/` as
-      root. Scan `tasks/` for task data alongside agent metadata. Update
-      `readTree()`, `readSurface()`, `readFileContent()` for agent paths
-      (`agents/{uuid}/sessions/{sid}/workspace`). Update `createTask()` to
-      create agents + tasks in new layout when operating against new hives.
-- [ ] **[MODIFY] `mutation-client.ts`** — Update internal mutation vocabulary.
-      Rollback targets agent, not task.
-- [ ] **[MODIFY] `ticket-pane.ts`** — Wire agent-based workspace paths.
+- [x] **[MODIFY] `ticket-store.ts`** — Accept both `agents/` and `tickets/` as
+      root. Scan `tasks/` for task data alongside agent metadata. Complete
+      metadata shim (all TicketData fields mapped from AgentMetadata). Read
+      `objective.md` from agent directories. Dual-mode `createTask()` creates
+      agents + tasks in swarm layout. Observer watches `agents/` when available.
+      Live session detection checks `agents/` too.
+- [x] **[MODIFY] `session-store-reader.ts`** — Entity-aware path resolution:
+      all five methods (`findTicketForSession`, `readLineage`, `readTurns`,
+      `readEvents`, `readInteraction`) now try `agents/` first, falling back
+      to `tickets/`.
+- [x] **[MODIFY] `log-store.ts`** — Dual-directory activation: `activate()`
+      tries `agents/` first, falls back to `tickets/`. Observer watches
+      whichever directory is active.
+- [ ] ~~**[MODIFY] `mutation-client.ts`**~~ — Deferred. The mutation protocol
+      vocabulary (`task_id` in payloads) continues to work because the Python
+      handler treats it as an entity ID. Renaming to `agent_id` is Phase 6.
+- [ ] ~~**[MODIFY] `ticket-pane.ts`**~~ — Not needed. Workspace paths already
+      resolve through `#getEntityDirHandle()` and `readTree()`/`readSurface()`/
+      `readFileContent()` use `active_session`-aware path resolution that works
+      for both `agents/{uuid}/sessions/{sid}/workspace` and legacy
+      `tickets/{uuid}/filesystem`.
+
+#### Adjustments Made
+
+1. **Scope was broader than blueprint planned** — The blueprint listed only
+   `ticket-store.ts`, `mutation-client.ts`, and `ticket-pane.ts`. In practice,
+   making session lineage, log detail, and rollback work required updating
+   `session-store-reader.ts` (all five methods hardcoded to `tickets/`) and
+   `log-store.ts` (activation and scanning only saw `tickets/`).
+
+2. **Metadata shim was incomplete** — The original `#scanAgentsDir()` only
+   mapped identity/config fields. The ticket-detail and ticket-pane components
+   read execution-state fields (`error`, `suspend_event`, `context`, `turns`,
+   `thoughts`, `assignee`, `depends_on`, `options`, `files`,
+   `playbook_run_id`, `watch_events`, `outcome_content`). All are now mapped.
+
+3. **`objective.md` was not read** — Agents store their objective in a
+   separate `objective.md` file (same as `AgentStore.get()` on the Python
+   side), but `#scanAgentsDir()` never read it. Added `#readText()` call
+   with fallback chain: task objective → `objective.md` → type label.
+
+4. **`mutation-client.ts` changes deferred** — The mutation payload uses
+   `task_id` as the entity identifier. The Python `MutationManager` already
+   routes this through `UnifiedAgentStore.get()`, which resolves both agent
+   and ticket IDs. No functional change needed until Phase 6 cleanup.
+
+5. **Task record status never synced** — `UnifiedAgentStore.save_metadata()`
+   wrote to `agents/{id}/metadata.json` but never updated the corresponding
+   `tasks/{id}.json` record. All task files remained at `status: "available"`
+   forever. Fixed by adding `_sync_task_record()` which maps agent status to
+   task status (`running/suspended` → `in_progress`, terminal states 1:1)
+   and updates outcome/completed_at. Gated by `_SYNC_WORTHY_STATUSES` so
+   incremental bookkeeping saves don't pay the scan cost.
+
+6. **Duplicate agents from `autostart` + LLM creation** — The `swarm-test`
+   orchestrator template had `autostart: [writer]` which stamped a writer
+   child at creation time. But the orchestrator's objective also instructed
+   the LLM to create a writer child via `tasks_create_task`, producing a
+   duplicate. Fixed by replacing `autostart` with `tasks` (the allowlist
+   field) so the LLM drives the creation, exercising the full lifecycle.
 
 #### Verification
 
-- [ ] Hivetool shows agents from `agents/` layout in real time.
-- [ ] Hivetool shows agents from legacy `tickets/` layout (backward compat).
-- [ ] File tree, surface, and session lineage work with agent paths.
+- [x] TypeScript build passes (`tsc --noEmit` clean).
+- [x] Python tests pass (418 passed, 1 pre-existing failure unrelated).
+- [x] Manual: hivetool shows agents from `agents/` layout in real time.
+- [x] Manual: single orchestrator → single writer child, no duplicates.
+- [x] Manual: task record status synced (verified `tasks/*.json` after run).
+- [x] Manual: full lifecycle: boot → create child → await → resume → complete.
 
 ---
 
