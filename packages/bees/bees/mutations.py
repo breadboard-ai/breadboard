@@ -48,7 +48,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from bees.task_store import TaskStore
+from bees.unified_agent_store import UnifiedAgentStore
 
 if TYPE_CHECKING:
     from bees.bees import Bees
@@ -320,11 +320,13 @@ class MutationManager:
     def _handle_reset(self) -> None:
         """Delete all tasks and session logs.
 
-        Removes the contents of ``tickets/``, ``logs/``, and
-        ``mutations/`` while preserving the directories themselves
-        (so watchers don't lose their handles).
+        Removes the contents of entity directories (``agents/``,
+        ``tasks/``, ``tickets/``), ``logs/``, and ``mutations/``
+        while preserving the directories themselves (so watchers
+        don't lose their handles).
         """
-        for subdir_name in ("tickets", "logs", "mutations"):
+        # Phase 6: remove "tickets" from this list
+        for subdir_name in ("tickets", "agents", "tasks", "logs", "mutations"):
             subdir = self._hive_dir / subdir_name
             if not subdir.exists():
                 continue
@@ -362,7 +364,7 @@ class MutationManager:
                 raise ValueError(f"Task {task_id[:8]} not found")
             node.respond(response)
         else:
-            store = TaskStore(self._hive_dir)
+            store = UnifiedAgentStore(self._hive_dir)
             store.respond(task_id, response)
 
         logger.info("Response written for task %s", task_id[:8])
@@ -382,7 +384,7 @@ class MutationManager:
         if not tasks or not isinstance(tasks, list):
             raise ValueError("create-task-group mutation missing 'tasks' array")
 
-        store = TaskStore(self._hive_dir)
+        store = UnifiedAgentStore(self._hive_dir)
         ref_to_id: dict[str, str] = {}
 
         for task_spec in tasks:
@@ -403,8 +405,8 @@ class MutationManager:
                         )
                     resolved_deps.append(dep_id)
 
-            # Create the task — if it has resolved deps, it starts blocked.
-            task = store.create(
+            # Create the agent — if it has resolved deps, it starts blocked.
+            agent = store.create(
                 objective=task_spec.get("objective", ""),
                 title=task_spec.get("title"),
                 playbook_id=task_spec.get("playbook_id"),
@@ -420,16 +422,16 @@ class MutationManager:
 
             # Override dependency state if ref-based deps were specified.
             if resolved_deps:
-                task.metadata.depends_on = resolved_deps
-                task.metadata.status = "blocked"
-                store.save_metadata(task)
+                agent.metadata.depends_on = resolved_deps
+                agent.metadata.status = "blocked"
+                store.save_metadata(agent)
 
             if ref:
-                ref_to_id[ref] = task.id
+                ref_to_id[ref] = agent.id
 
             logger.info(
-                "Created task %s%s",
-                task.id[:8],
+                "Created agent %s%s",
+                agent.id[:8],
                 f" (ref={ref})" if ref else "",
             )
 
@@ -444,13 +446,13 @@ class MutationManager:
         if self._bees:
             count = self._bees.pause_all()
         else:
-            store = TaskStore(self._hive_dir)
+            store = UnifiedAgentStore(self._hive_dir)
             count = 0
             for status in ("available", "blocked", "running", "suspended"):
-                for task in store.query_all(status=status):
-                    task.metadata.paused_from = task.metadata.status
-                    task.metadata.status = "paused"
-                    store.save_metadata(task)
+                for agent in store.query_all(status=status):
+                    agent.metadata.paused_from = agent.metadata.status
+                    agent.metadata.status = "paused"
+                    store.save_metadata(agent)
                     count += 1
 
         logger.info("Paused %d task(s)", count)
@@ -461,12 +463,12 @@ class MutationManager:
         if self._bees:
             count = self._bees.resume_all()
         else:
-            store = TaskStore(self._hive_dir)
+            store = UnifiedAgentStore(self._hive_dir)
             paused = store.query_all(status="paused")
-            for task in paused:
-                task.metadata.status = task.metadata.paused_from or "available"
-                task.metadata.paused_from = None
-                store.save_metadata(task)
+            for agent in paused:
+                agent.metadata.status = agent.metadata.paused_from or "available"
+                agent.metadata.paused_from = None
+                store.save_metadata(agent)
             count = len(paused)
 
         logger.info("Resumed %d paused task(s)", count)
@@ -482,16 +484,16 @@ class MutationManager:
             node = self._bees.get_by_id(task_id)
             paused = node.pause() if node else False
         else:
-            store = TaskStore(self._hive_dir)
-            task = store.get(task_id)
-            if not task or task.metadata.status in (
+            store = UnifiedAgentStore(self._hive_dir)
+            agent = store.get(task_id)
+            if not agent or agent.metadata.status in (
                 "completed", "failed", "cancelled", "paused",
             ):
                 paused = False
             else:
-                task.metadata.paused_from = task.metadata.status
-                task.metadata.status = "paused"
-                store.save_metadata(task)
+                agent.metadata.paused_from = agent.metadata.status
+                agent.metadata.status = "paused"
+                store.save_metadata(agent)
                 paused = True
 
         if paused:
@@ -511,16 +513,16 @@ class MutationManager:
             node = self._bees.get_by_id(task_id)
             resumed = node.resume() if node else False
         else:
-            store = TaskStore(self._hive_dir)
-            task = store.get(task_id)
-            if not task or task.metadata.status != "paused":
+            store = UnifiedAgentStore(self._hive_dir)
+            agent = store.get(task_id)
+            if not agent or agent.metadata.status != "paused":
                 logger.warning(
                     "Could not resume task %s (not paused)", task_id[:8],
                 )
                 return {"resumed": False}
-            task.metadata.status = task.metadata.paused_from or "available"
-            task.metadata.paused_from = None
-            store.save_metadata(task)
+            agent.metadata.status = agent.metadata.paused_from or "available"
+            agent.metadata.paused_from = None
+            store.save_metadata(agent)
             resumed = True
 
         if resumed:
@@ -561,13 +563,13 @@ class MutationManager:
 
         Used at startup when no Bees instance is running.
         """
-        store = TaskStore(self._hive_dir)
+        store = UnifiedAgentStore(self._hive_dir)
         deleted: list[str] = []
         self._delete_fs_recursive(task_id, store, deleted)
         return deleted
 
     def _delete_fs_recursive(
-        self, task_id: str, store: TaskStore, deleted: list[str],
+        self, task_id: str, store: UnifiedAgentStore, deleted: list[str],
     ) -> None:
         """Recursively delete a task and its children from disk."""
         # Recurse into children first.
@@ -575,10 +577,10 @@ class MutationManager:
         for child in children:
             self._delete_fs_recursive(child.id, store, deleted)
 
-        # Remove ticket directory.
-        ticket_dir = store.tickets_dir / task_id
-        if ticket_dir.exists():
-            shutil.rmtree(ticket_dir)
+        # Remove entity directory.
+        entity_dir = store.entity_dir(task_id)
+        if entity_dir.exists():
+            shutil.rmtree(entity_dir)
 
         # Remove matching session logs.
         logs_dir = self._hive_dir / "logs"
@@ -606,24 +608,24 @@ class MutationManager:
         if turn_index is None:
             raise ValueError("rollback-to-turn mutation missing 'turn_index'")
 
-        store = TaskStore(self._hive_dir)
-        task = store.get(task_id)
-        if not task:
+        store = UnifiedAgentStore(self._hive_dir)
+        agent = store.get(task_id)
+        if not agent:
             raise ValueError(f"Task {task_id} not found")
 
         # 0. Guard: reject if metadata.status != "suspended".
-        if task.metadata.status != "suspended":
+        if agent.metadata.status != "suspended":
             raise ValueError(
                 f"Cannot rollback task {task_id} because its status is "
-                f"'{task.metadata.status}', not 'suspended'"
+                f"'{agent.metadata.status}', not 'suspended'"
             )
 
-        active_session = task.metadata.active_session
+        active_session = agent.metadata.active_session
         fork_source_session = session_id or active_session
         if not fork_source_session:
             raise ValueError(f"Task {task_id} has no session to fork from")
 
-        session_store = FileBasedSessionStore(task.dir / "sessions")
+        session_store = FileBasedSessionStore(agent.dir / "sessions")
 
         # 1. Load the target session's InteractionState from the store.
         sdir = session_store._session_dir(fork_source_session)
@@ -656,7 +658,7 @@ class MutationManager:
         # 3. Generate a new session UUID. Create its directory under tickets/{id}/sessions/.
         import uuid as uuid_lib
         new_session_id = str(uuid_lib.uuid4())
-        new_sdir = task.dir / "sessions" / new_session_id
+        new_sdir = agent.dir / "sessions" / new_session_id
         new_sdir.mkdir(parents=True, exist_ok=True)
 
         # 4. Copy interaction_state.contents[:turn_boundaries[turn_index]] into the new session's InteractionState.
@@ -737,24 +739,24 @@ class MutationManager:
 
         # 9. Update task metadata: active_session → new session ID.
         # 10. Reset task metadata: status → available, clear suspend_event, adjust turns count, clear assignee.
-        task.metadata.active_session = new_session_id
-        task.metadata.status = "available"
-        task.metadata.suspend_event = None
-        task.metadata.turns = turn_index
-        task.metadata.assignee = None
-        task.metadata.error = None
-        task.metadata.completed_at = None
-        store.save_metadata(task)
+        agent.metadata.active_session = new_session_id
+        agent.metadata.status = "available"
+        agent.metadata.suspend_event = None
+        agent.metadata.turns = turn_index
+        agent.metadata.assignee = None
+        agent.metadata.error = None
+        agent.metadata.completed_at = None
+        store.save_metadata(agent)
 
         # 11. Hydrate the runtime DiskFileSystem from the fork-point snapshot.
-        new_ws = task.fs_dir
+        new_ws = agent.fs_dir
         new_ws.mkdir(parents=True, exist_ok=True)
         if fs_snapshot is not None:
             dfs = DiskFileSystem(new_ws)
             dfs.hydrate_from_snapshot(fs_snapshot)
 
         # 12. Trim chat_log.json to match.
-        chat_log_path = task.dir / "chat_log.json"
+        chat_log_path = agent.dir / "chat_log.json"
         if chat_log_path.exists():
             try:
                 derived = derive_chat_log(new_contents)

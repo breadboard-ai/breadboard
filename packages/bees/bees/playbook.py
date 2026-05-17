@@ -22,10 +22,9 @@ from typing import Any
 
 import yaml
 
+from bees.agent import Agent
 from bees.config import HIVE_DIR
 from bees.subagent_scope import SubagentScope
-from bees.task_store import TaskStore
-from bees.ticket import Ticket
 
 logger = logging.getLogger(__name__)
 
@@ -153,13 +152,13 @@ def _load_hooks(name: str, hooks_dir: Path) -> ModuleType | None:
 def run_playbook(
     name: str,
     *,
-    store: TaskStore,
+    store: Any,
     context: str | None = None,
     owning_task_id: str | None = None,
     slug: str | None = None,
     workspace_dir: Path | None = None,
     options: dict[str, Any] | None = None,
-) -> Ticket:
+) -> Agent:
     """Create a task from a template.
 
     If ``owning_task_id`` is provided, the created task shares the
@@ -190,7 +189,7 @@ def run_playbook(
     playbook_id = data.get("name", name)
     playbook_run_id = str(uuid.uuid4())
 
-    task = store.create(
+    agent = store.create(
         data.get("objective", ""),
         title=data.get("title"),
         functions=data.get("functions"),
@@ -215,7 +214,7 @@ def run_playbook(
         try:
             stamp_child_task(
                 child_name,
-                parent_task=task,
+                parent=agent,
                 slug=child_name,
                 store=store,
             )
@@ -225,30 +224,30 @@ def run_playbook(
                 child_name, name, exc,
             )
 
-    return task
+    return agent
 
 
 def stamp_child_task(
     template_name: str,
     *,
-    parent_task: Ticket,
+    parent: Agent,
     slug: str,
-    store: TaskStore,
+    store: Any,
     context: str | None = None,
     title: str | None = None,
     scope: SubagentScope | None = None,
     options: dict[str, Any] | None = None,
-) -> Ticket:
-    """Create a child task from a template under a parent.
+) -> Agent:
+    """Create a child agent from a template under a parent.
 
     Handles SubagentScope composition, sandbox instructions, writable
-    directory creation, and ``parent_task_id`` assignment — the
-    shared logic for both ``autostart`` and ``tasks_create_task``.
+    directory creation, and ``parent_id`` assignment — the shared
+    logic for both ``autostart`` and ``tasks_create_task``.
 
-    If *scope* is not provided, one is derived from the parent task.
+    If *scope* is not provided, one is derived from the parent agent.
     """
     if scope is None:
-        scope = SubagentScope.for_ticket(parent_task)
+        scope = SubagentScope.for_agent(parent)
     child_scope = scope.child(slug)
 
     child = run_playbook(
@@ -257,16 +256,16 @@ def stamp_child_task(
         context=context,
         owning_task_id=child_scope.workspace_root_id,
         slug=child_scope.slug_path,
-        workspace_dir=parent_task.fs_dir,
+        workspace_dir=parent.fs_dir,
         options=options,
     )
 
     if child_scope.slug_path:
         sandbox_block = child_scope.sandbox_instructions(child.metadata.runner)
-        
+
         blocks = [
             f"<subagent_context>\n"
-            f"Your parent id is: {parent_task.id}\n"
+            f"Your parent id is: {parent.id}\n"
             f"</subagent_context>"
         ]
         if sandbox_block:
@@ -281,7 +280,7 @@ def stamp_child_task(
     if title:
         child.metadata.title = title
 
-    child.metadata.parent_task_id = parent_task.id
+    child.metadata.parent_id = parent.id
     store.save_metadata(child)
 
     return child
@@ -306,24 +305,24 @@ def load_system_config(config_dir: Path) -> dict[str, Any]:
 
 
 
-def run_task_done_hooks(ticket: Ticket) -> None:
-    """Run ``on_task_done`` for the template that owns this task.
+def run_task_done_hooks(agent: Agent) -> None:
+    """Run ``on_task_done`` for the template that owns this agent.
 
-    Looks up the task's ``playbook_id`` and, if the corresponding
-    template defines an ``on_task_done(ticket)`` hook, calls it.
-    Tasks not created by a template are silently skipped.
+    Looks up the agent's ``playbook_id`` and, if the corresponding
+    template defines an ``on_task_done(agent)`` hook, calls it.
+    Agents not created by a template are silently skipped.
     """
-    playbook_id = ticket.metadata.playbook_id
+    playbook_id = agent.metadata.playbook_id
     if not playbook_id:
         return
 
-    hive_dir = ticket.dir.parent.parent
+    hive_dir = agent.dir.parent.parent
     hooks_dir = hive_dir / "config" / "hooks"
 
     hooks = _load_hooks(playbook_id, hooks_dir)
     if hooks and hasattr(hooks, "on_task_done"):
         try:
-            hooks.on_task_done(ticket)
+            hooks.on_task_done(agent)
         except Exception as exc:
             logger.warning(
                 "on_task_done hook for '%s' failed: %s", playbook_id, exc,
@@ -331,24 +330,24 @@ def run_task_done_hooks(ticket: Ticket) -> None:
 
 
 def run_event_hooks(
-    signal_type: str, payload: str, ticket: Ticket, store: TaskStore,
+    signal_type: str, payload: str, agent: Agent, store: Any,
 ) -> str | None:
-    """Run ``on_event`` for the template that owns this ticket.
+    """Run ``on_event`` for the template that owns this agent.
 
     Called by the scheduler before delivering a coordination signal.
     The hook can inspect the signal, apply side effects (e.g., rename
-    the ticket), and decide whether to pass the signal through or eat it.
+    the agent), and decide whether to pass the signal through or eat it.
 
     Returns the (possibly transformed) payload to deliver, or ``None``
     to suppress delivery (eat the signal).
 
     Fail-open: if the hook raises, the signal is delivered as-is.
     """
-    playbook_id = ticket.metadata.playbook_id
+    playbook_id = agent.metadata.playbook_id
     if not playbook_id:
         return payload
 
-    hive_dir = ticket.dir.parent.parent
+    hive_dir = agent.dir.parent.parent
     hooks_dir = hive_dir / "config" / "hooks"
 
     hooks = _load_hooks(playbook_id, hooks_dir)
@@ -356,7 +355,7 @@ def run_event_hooks(
         return payload
 
     try:
-        return hooks.on_event(signal_type, payload, ticket, store)
+        return hooks.on_event(signal_type, payload, agent, store)
     except Exception as exc:
         logger.warning(
             "on_event hook for '%s' failed: %s", playbook_id, exc,

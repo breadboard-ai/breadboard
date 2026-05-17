@@ -157,7 +157,7 @@ async def test_run_all_waves_emits_task_done(store):
     from bees.agent_adapter import agent_to_ticket
     from bees.playbook import run_task_done_hooks
 
-    run_task_done_hooks(agent_to_ticket(task))
+    run_task_done_hooks(task)
 
     enriched = scheduler._enrich_parent_tags(task)
     await capture_emit(TaskDone(task=agent_to_ticket(task)))
@@ -206,13 +206,12 @@ async def test_bees_run_boots_root_template(hive):
     # The root template should have booted and been processed.
     assert isinstance(summaries, list)
 
-    # Verify the root ticket was created.
-    from bees.task_store import TaskStore
-    store = TaskStore(hive)
-    all_tasks = store.query_all()
-    assert len(all_tasks) >= 1
+    # Verify the root agent was created.
+    store = UnifiedAgentStore(hive)
+    all_agents = store.query_all()
+    assert len(all_agents) >= 1
 
-    root = [t for t in all_tasks if t.metadata.playbook_id == "simple"]
+    root = [a for a in all_agents if a.metadata.playbook_id == "simple"]
     assert len(root) == 1
 
 

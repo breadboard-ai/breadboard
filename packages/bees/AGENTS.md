@@ -26,6 +26,8 @@ packages/bees/
     scheduler.py         # Scheduler layer: task lifecycle, coordination
     playbook.py          # Template loading, task creation from templates
     ticket.py            # Task data model (on-disk "ticket" format)
+    agent.py             # Agent entity model (Swarm layout)
+    unified_agent_store.py  # Layout-aware store (routes to agents/ or tickets/)
     functions/           # Function group implementations
     declarations/        # Function declarations (JSON schemas)
   app/                   # Reference application and CLI tools
@@ -38,7 +40,9 @@ packages/bees/
       hooks/             # Python lifecycle hooks per template
     skills/              # Agent skill documents (SKILL.md + assets)
     eval/                # Eval-specific config (persona.md for simulated user)
-    tickets/             # Runtime task state (on-disk)
+    agents/              # Runtime agent state (Swarm layout)
+    tasks/               # Runtime task files (Swarm layout)
+    tickets/             # Runtime task state (legacy layout)
     logs/                # Session logs
   web/                   # Reference web shell (React, will be extracted)
   hivetool/              # Built-in dev workbench (Lit, Vite)
@@ -83,6 +87,21 @@ whatever the surrounding file uses until the codemod lands.
 - Tests use `pytest` in `tests/`.
 - The developer environment uses a corporate mirror for package repositories. If
   package installation fails, remind the user to run `gcert`.
+
+## Running a Hive
+
+The primary way to run a Bees hive during development is `dev:box`, which starts
+the filesystem-watching scheduler loop (`bees.box`):
+
+```bash
+BEES_HIVE_DIR=../../hives/chat-app  npm run dev:box -w bees
+```
+
+`BEES_HIVE_DIR` points to the hive directory containing `config/SYSTEM.yaml`.
+The box watches the hive for filesystem changes and drives the scheduler.
+
+To reset a hive, use Hivetool's reset control — it handles cleanup of all
+runtime directories (`agents/`, `tasks/`, `tickets/`, `logs/`, `mutations/`).
 
 ## Deeper References
 

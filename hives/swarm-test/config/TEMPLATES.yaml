@@ -1,0 +1,20 @@
+- name: orchestrator
+  title: Orchestrator
+  objective: >-
+    You are a simple orchestrator. Your writer child task will produce a short
+    poem. Once it reports back as completed, mark your own objective as
+    fulfilled.
+  functions:
+    - tasks.*
+    - system.*
+  autostart:
+    - writer
+
+- name: writer
+  title: Writer
+  objective: >-
+    Write a haiku about bees working together. Save it to a file called
+    haiku.txt, then mark your objective as fulfilled.
+  functions:
+    - files.*
+    - system.*

@@ -1,15 +1,15 @@
 # Project Swarm — Agents and Tasks
 
-Bees currently fuses three concepts into one identity — the **Ticket**: what
-to do (task), who does it (agent), and how it runs (session). Creating a task
+Bees currently fuses three concepts into one identity — the **Ticket**: what to
+do (task), who does it (agent), and how it runs (session). Creating a task
 creates an agent. An agent works on exactly one task. When the task completes,
 the agent dies.
 
 This model breaks down when agents need to work on multiple tasks sequentially.
 A parent agent that needs ten images generated must spawn ten sub-agents, each
 with its own session, its own context window warm-up, and its own model
-initialization. There is no way to say "here's a researcher — give it work as
-it comes in."
+initialization. There is no way to say "here's a researcher — give it work as it
+comes in."
 
 **Project Swarm decouples agents from tasks.** An agent is a persistent identity
 with a session, a workspace, and a set of tools. Tasks are lightweight work
@@ -61,9 +61,9 @@ declares `system.*` functions continues to work as-is.
 
 ### Infinite Agents (Scheduler's View)
 
-No `system.*` functions — the agent cannot declare itself done. Receives
-tasks as context updates within a single long-running session. Tasks queue up
-and are delivered sequentially. Context and workspace accumulate across tasks.
+No `system.*` functions — the agent cannot declare itself done. Receives tasks
+as context updates within a single long-running session. Tasks queue up and are
+delivered sequentially. Context and workspace accumulate across tasks.
 
 The infinite agent's value: **session continuity**. A researcher that found
 pricing for product X retains that knowledge when asked to compare X vs Y.
@@ -101,16 +101,16 @@ CREATE TABLE agents (
 );
 ```
 
-An agent owns its session, workspace, tools, and model configuration. These
-come from the agent type definition (TEMPLATES.yaml) and don't change between
-tasks. **The agent owns its workspace** — `fs_dir` resolves through the agent's
-session directory, not through tasks. `SubagentScope` derives workspace paths
-from the agent hierarchy (parent slug path + child slug).
+An agent owns its session, workspace, tools, and model configuration. These come
+from the agent type definition (TEMPLATES.yaml) and don't change between tasks.
+**The agent owns its workspace** — `fs_dir` resolves through the agent's session
+directory, not through tasks. `SubagentScope` derives workspace paths from the
+agent hierarchy (parent slug path + child slug).
 
 `workspace_root_id` replaces today's `owning_task_id` — it points to the root
 agent whose workspace is shared. Set once at creation: inherited from the
-parent's `workspace_root_id`, or self for root agents. This avoids O(depth)
-tree walks on every `SubagentScope` construction.
+parent's `workspace_root_id`, or self for root agents. This avoids O(depth) tree
+walks on every `SubagentScope` construction.
 
 **Invariant:** `agent.active_session` must always equal the `id` of the sole
 session with `status = 'active'` for that agent.
@@ -146,9 +146,9 @@ CREATE TABLE tasks (
 ```
 
 Tasks are lightweight. No session, no workspace, no function groups. Just an
-objective, a status, and an outcome. A row in a table. Coordination signals
-are tasks with `kind = 'coordination'` — they carry a `signal_type` and
-`context` payload but have no assignee or objective.
+objective, a status, and an outcome. A row in a table. Coordination signals are
+tasks with `kind = 'coordination'` — they carry a `signal_type` and `context`
+payload but have no assignee or objective.
 
 ### Sessions Table
 
@@ -201,22 +201,22 @@ addressing without filesystem collision.
 
 ## The LLM-Facing API
 
-| Function | Description |
-|----------|-------------|
-| `agents_list_types()` | Available agent types (same filtering as `tasks_list_types`: local templates + parent's `tasks` allowlist) |
-| `agents_assign_task(type, slug, objective, opts?)` | Assign task, agent materialized on demand |
-| `agents_check_status()` | Tree of agents (by slug) with task queues |
-| `agents_send_event(slug, type, message)` | Context injection by agent name |
-| `agents_cancel(slug)` | Cancel agent and pending tasks |
-| `agents_await()` | Suspend until task result arrives |
+| Function                                           | Description                                                                                                |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `agents_list_types()`                              | Available agent types (same filtering as `tasks_list_types`: local templates + parent's `tasks` allowlist) |
+| `agents_assign_task(type, slug, objective, opts?)` | Assign task, agent materialized on demand                                                                  |
+| `agents_check_status()`                            | Tree of agents (by slug) with task queues                                                                  |
+| `agents_send_event(slug, type, message)`           | Context injection by agent name                                                                            |
+| `agents_cancel(slug)`                              | Cancel agent and pending tasks                                                                             |
+| `agents_await()`                                   | Suspend until task result arrives                                                                          |
 
 The subagent uses `events.*` to communicate upward:
 
-| Function | Description |
-|----------|-------------|
-| `events_send_to_parent(type, message)` | Send a typed event to the parent agent |
+| Function                                    | Description                                               |
+| ------------------------------------------- | --------------------------------------------------------- |
+| `events_send_to_parent(type, message)`      | Send a typed event to the parent agent                    |
 | `events_report_task_done(task_id, outcome)` | Mark assigned task as completed, deliver result to parent |
-| `events_broadcast(type, message)` | Pub/sub broadcast to subscribers |
+| `events_broadcast(type, message)`           | Pub/sub broadcast to subscribers                          |
 
 Agent creation is **implicit**. The parent never calls "create" — it assigns
 tasks and the scheduler materializes agents on demand. The parent perceives
@@ -225,10 +225,11 @@ continuity: agents just exist, ready to receive work.
 **How assignment works:**
 
 1. Parent calls `agents_assign_task(type="researcher", slug="deep-dive", ...)`.
-2. Handler resolves slug under this parent (serialized via a per-`(parent_id,
-   slug)` asyncio lock to prevent races when two tasks target the same
-   terminal-state slug simultaneously):
-   - **No agent with this slug** → create from agent type definition, assign task.
+2. Handler resolves slug under this parent (serialized via a
+   per-`(parent_id, slug)` asyncio lock to prevent races when two tasks target
+   the same terminal-state slug simultaneously):
+   - **No agent with this slug** → create from agent type definition, assign
+     task.
    - **Existing agent, terminal** → fresh instance: reuse the same Agent row
      (reset status to `available`, create a new session, keep the same UUID;
      workspace persists). Assign task.
@@ -243,8 +244,8 @@ scheduler does when a task completes:
   tasks remain, scheduler creates a fresh instance (same slug, workspace
   persists) and assigns the next task. Serial execution, clean context per task.
 - **Infinite**: agent calls `events_report_task_done(task_id, outcome)` to
-  report task completion → stays alive → scheduler delivers the next queued
-  task as a context update. Same session, cumulative context.
+  report task completion → stays alive → scheduler delivers the next queued task
+  as a context update. Same session, cumulative context.
 
 ### What the infinite agent sees
 
@@ -259,9 +260,8 @@ updates:
 > updates. For each task, investigate the topic, write your findings to a
 > markdown file in your workspace, and report the task as done.
 >
-> \<sandbox_environment\>
-> Your current working directory is the root of the workspace.
-> You are assigned to work in the subdirectory: ./deep-dive
+> \<sandbox_environment\> Your current working directory is the root of the
+> workspace. You are assigned to work in the subdirectory: ./deep-dive
 > ...\</sandbox_environment\>
 
 When a task is assigned, the agent receives a context update:
@@ -274,12 +274,12 @@ When a task is assigned, the agent receives a context update:
 }
 ```
 
-When the agent finishes, it calls `events_report_task_done(task_id="abc-123",
-outcome="Found pricing: $99/month for basic, $299/month for enterprise.
-Details in report.md")`. The scheduler marks the task as `completed`, delivers
-the completion update to the parent (same mechanism as finite agents —
-`scheduler.py`'s `_wrap_execution` and post-cycle hooks), and the agent calls
-`agents_await` to suspend until the next task arrives.
+When the agent finishes, it calls
+`events_report_task_done(task_id="abc-123", outcome="Found pricing: $99/month for basic, $299/month for enterprise. Details in report.md")`.
+The scheduler marks the task as `completed`, delivers the completion update to
+the parent (same mechanism as finite agents — `scheduler.py`'s `_wrap_execution`
+and post-cycle hooks), and the agent calls `agents_await` to suspend until the
+next task arrives.
 
 ---
 
@@ -306,13 +306,12 @@ When a parent assigns a task to an infinite agent, delivery follows the existing
 three-path model (all paths work for both `generate` and `live` agents unless
 noted):
 
-1. **Mid-stream injection** (`live` sessions only) — push context parts into
-   the WebSocket stream for immediate real-time delivery.
+1. **Mid-stream injection** (`live` sessions only) — push context parts into the
+   WebSocket stream for immediate real-time delivery.
 2. **Immediate resume** — agent is suspended (e.g., called `agents_await`),
    write `response.json` and flip assignee to trigger resumption.
-3. **Buffer + auto-drain** — agent is busy, append to
-   `pending_context_updates`. Drained automatically when the agent next
-   suspends or resumes.
+3. **Buffer + auto-drain** — agent is busy, append to `pending_context_updates`.
+   Drained automatically when the agent next suspends or resumes.
 
 No new delivery machinery needed. Task assignment is just a context update with
 `type: "task_assigned"`.
@@ -321,22 +320,22 @@ No new delivery machinery needed. Task assignment is just a context update with
 
 ## Rollback
 
-Rollback is a **system-level** operation. The agent being rolled back is
-unaware — its session simply forks at the specified turn.
+Rollback is a **system-level** operation. The agent being rolled back is unaware
+— its session simply forks at the specified turn.
 
 When an agent is rolled back to turn N:
 
 1. **Session fork** — same mechanism as Project Rewind. Context truncated,
    filesystem restored from snapshot.
 2. **Task re-queuing** — tasks completed after turn N revert to `available`,
-   outcome cleared. They go back into the agent's queue and will be delivered
-   as new context updates when the agent resumes.
+   outcome cleared. They go back into the agent's queue and will be delivered as
+   new context updates when the agent resumes.
 3. **No parent notification** — the parent's context may reference stale task
    outcomes, but this is no different from any other stale data. The parent
    discovers the changed state on its next `agents_check_status` call.
 
-The key insight: **rollback is localized to one agent's session. The rest of
-the system discovers the consequences organically.**
+The key insight: **rollback is localized to one agent's session. The rest of the
+system discovers the consequences organically.**
 
 Edge case: if the parent already completed based on the rolled-back agent's
 outcomes, nobody will re-check. Hivetool could warn about this before allowing
@@ -381,21 +380,21 @@ No HTTP, no WebSocket — three channels:
 
 The box classifies every filesystem change via `classify_change()` in `box.py`:
 
-| ChangeKind | Trigger paths | Behavior |
-|------------|--------------|----------|
-| `config` | `config/`, `skills/` | Cold restart (shutdown → restart) |
-| `task` | `tickets/` | Hot trigger (`bees.trigger()`) |
-| `mutation` | `mutations/` (not result files) | Process inline or flag cold |
-| `ignore` | everything else | Skip |
+| ChangeKind | Trigger paths                   | Behavior                          |
+| ---------- | ------------------------------- | --------------------------------- |
+| `config`   | `config/`, `skills/`            | Cold restart (shutdown → restart) |
+| `task`     | `tickets/`                      | Hot trigger (`bees.trigger()`)    |
+| `mutation` | `mutations/` (not result files) | Process inline or flag cold       |
+| `ignore`   | everything else                 | Skip                              |
 
 Hot mutations run inline while the scheduler is active: `respond-to-task`,
 `create-task-group`, `pause-all`, `resume-paused`, `delete-task`,
 `rollback-to-turn`. Cold mutations (`reset`) require quiescence.
 
 **Post-pivot, `TicketStore`'s `FileSystemObserver` watches the hive root** (not
-`tickets/`). The path classifier recognizes `agents/`, `tasks/`, and
-`tickets/` prefixes, routing each to the appropriate scan or trigger. A single
-observer avoids the complexity of multiple watchers during dual-directory mode.
+`tickets/`). The path classifier recognizes `agents/`, `tasks/`, and `tickets/`
+prefixes, routing each to the appropriate scan or trigger. A single observer
+avoids the complexity of multiple watchers during dual-directory mode.
 
 ### Post-Pivot Evolution
 
@@ -412,13 +411,13 @@ Today's `tickets/{id}/` directory is already the agent — it owns metadata,
 sessions, workspace, and configuration. The only task-specific content is
 `objective.md`. The migration exploits this:
 
-| Today (Ticket = Agent + Task) | Tomorrow (Separated) |
-|-------------------------------|---------------------|
-| `tickets/{id}/` | `agents/{uuid}/` (same internal structure) |
-| `tickets/{id}/objective.md` | Removed (objective moves to task JSON) |
-| `tickets/{id}/metadata.json` | `agents/{uuid}/metadata.json` (agent config + status + slug) |
-| `tickets/{id}/sessions/` | `agents/{id}/sessions/` (unchanged) |
-| (objective embedded in dir) | `tasks/{uuid}.json` (new: lightweight work items) |
+| Today (Ticket = Agent + Task) | Tomorrow (Separated)                                         |
+| ----------------------------- | ------------------------------------------------------------ |
+| `tickets/{id}/`               | `agents/{uuid}/` (same internal structure)                   |
+| `tickets/{id}/objective.md`   | Removed (objective moves to task JSON)                       |
+| `tickets/{id}/metadata.json`  | `agents/{uuid}/metadata.json` (agent config + status + slug) |
+| `tickets/{id}/sessions/`      | `agents/{id}/sessions/` (unchanged)                          |
+| (objective embedded in dir)   | `tasks/{uuid}.json` (new: lightweight work items)            |
 
 The finite agent path preserves backward compatibility: a finite agent with one
 task looks identical to today's ticket from the scheduler's perspective.
@@ -435,19 +434,19 @@ losing observability.
 
 Introduce the `Agent` and `Task` as first-class data models, separate from the
 existing `Ticket`. The `AgentStore` manages agent directories under `agents/`.
-The `TaskStore` manages lightweight task files under `tasks/`. Hivetool can
-read from both `agents/` and `tickets/` directory layouts.
+The `TaskStore` manages lightweight task files under `tasks/`. Hivetool can read
+from both `agents/` and `tickets/` directory layouts.
 
 **Observable proof:**
 
-1. Manually create `agents/{uuid}/metadata.json` with type, slug="my-researcher",
-   status, and config fields. Create `tasks/{task-uuid}.json` with an objective
-   and assignee pointing to the agent UUID.
+1. Manually create `agents/{uuid}/metadata.json` with type,
+   slug="my-researcher", status, and config fields. Create
+   `tasks/{task-uuid}.json` with an objective and assignee pointing to the agent
+   UUID.
 2. Open hivetool — the agent `my-researcher` appears in the sidebar with its
    assigned task.
-3. Inspect the filesystem — `agents/{uuid}/` contains `metadata.json`
-   with agent config and slug, `tasks/` contains the task JSON with objective
-   and status.
+3. Inspect the filesystem — `agents/{uuid}/` contains `metadata.json` with agent
+   config and slug, `tasks/` contains the task JSON with objective and status.
 
 ### Python Changes
 
@@ -461,21 +460,21 @@ read from both `agents/` and `tickets/` directory layouts.
 - [x] **[NEW] `agent_adapter.py`** — `TicketToAgentAdapter` bridges reads from
       existing `tickets/` directory layout to `Agent` objects. Derives `finite`
       from `system.*` presence in functions list.
-- [ ] ~~**[MODIFY] `ticket.py`**~~ — Deferred to Phase 2a. `TicketMetadata`
-      left untouched; `AgentMetadata` is a standalone dataclass. The adapter
-      bridges the gap without touching existing code.
-- [ ] ~~**[RENAME] `task_store.py` → `ticket_store.py`**~~ — Deferred. The
-      new lightweight task store lives in `task_file_store.py` instead,
-      avoiding a 15-file import rename. `TaskRecord` + `TaskFileStore` manage
-      flat `tasks/{uuid}.json` files with `assignee` and `kind` fields.
+- [ ] ~~**[MODIFY] `ticket.py`**~~ — Deferred to Phase 2a. `TicketMetadata` left
+      untouched; `AgentMetadata` is a standalone dataclass. The adapter bridges
+      the gap without touching existing code.
+- [ ] ~~**[RENAME] `task_store.py` → `ticket_store.py`**~~ — Deferred. The new
+      lightweight task store lives in `task_file_store.py` instead, avoiding a
+      15-file import rename. `TaskRecord` + `TaskFileStore` manage flat
+      `tasks/{uuid}.json` files with `assignee` and `kind` fields.
 
 ### Hivetool Changes
 
 - [x] **[MODIFY] `common/types.ts`** — Added `AgentData` and `TaskItemData`
       interfaces alongside existing `TaskData`.
-- [x] **[MODIFY] `ticket-store.ts`** — Dual-directory scanning: tries
-      `agents/` first, falls back to `tickets/`. Reads `tasks/` for task data
-      alongside agent metadata. Shims agent+task into `TicketData` shape.
+- [x] **[MODIFY] `ticket-store.ts`** — Dual-directory scanning: tries `agents/`
+      first, falls back to `tickets/`. Reads `tasks/` for task data alongside
+      agent metadata. Shims agent+task into `TicketData` shape.
       `#getEntityDirHandle()` resolves entity dirs across both layouts.
 - [x] **[MODIFY] `data/types.ts`** — Re-exports `AgentData` and `TaskItemData`.
 
@@ -483,8 +482,8 @@ read from both `agents/` and `tickets/` directory layouts.
 
 - [x] Unit tests for `AgentStore` CRUD operations (16 tests).
 - [x] Unit tests for `TaskFileStore` with assignee and kind fields (14 tests).
-- [x] Round-trip: create agent → create task → assign → query tasks for
-      agent → see in hivetool. Verified with seed script + manual hivetool check.
+- [x] Round-trip: create agent → create task → assign → query tasks for agent →
+      see in hivetool. Verified with seed script + manual hivetool check.
 - [x] Adapter: verify `TicketToAgentAdapter` reads from `tickets/` (15 tests).
 
 ---
@@ -497,12 +496,12 @@ sub-phase delivers working, hivetool-observable state.
 ### Phase 2a — Scheduler Accepts Agent Objects ✅
 
 Internal refactor: the scheduler, task runner, and provisioner accept `Agent`
-objects instead of `Ticket` objects. The on-disk layout is still `tickets/` —
-an adapter layer bridges the new internal API to the old filesystem.
+objects instead of `Ticket` objects. The on-disk layout is still `tickets/` — an
+adapter layer bridges the new internal API to the old filesystem.
 
-**Observable proof:** Start an existing hive. The scheduler uses `Agent`
-objects internally, but hivetool still reads from `tickets/` and shows
-everything working as before. Existing batch-mode tests pass.
+**Observable proof:** Start an existing hive. The scheduler uses `Agent` objects
+internally, but hivetool still reads from `tickets/` and shows everything
+working as before. Existing batch-mode tests pass.
 
 #### Python Changes
 
@@ -516,9 +515,10 @@ everything working as before. Existing batch-mode tests pass.
 - [x] **[MODIFY] `segments.py`** — Accept `Agent` and `UnifiedAgentStore`.
 - [x] **[MODIFY] `bees.py`** — `Bees.__init__` creates `UnifiedAgentStore`.
       Public methods reconstruct `Ticket` via `agent_to_ticket()` at boundary.
-- [x] **[MODIFY] `task_node.py`** — Uses inner `_ticket_store` for
-      `Ticket`-typed queries. Public API unchanged.
-- [x] **[NEW] `unified_agent_store.py`** — Bidirectional adapter wrapping
+- [x] **[MODIFY] `task_node.py`** — Reads through `UnifiedAgentStore` and
+      converts Agent→Ticket at the boundary. `children`, `parent`, `query`,
+      `respond`, `save`, and `pause` all route through the unified store.
+- [x] **[NEW] `unified_agent_store.py`** — Layout-aware store with automatic
       `TaskStore`, exposing `Agent`-typed CRUD.
 - [x] **[MODIFY] `agent_adapter.py`** — Added `agent_to_ticket()` reverse
       mapping and execution-state bridge fields.
@@ -528,36 +528,36 @@ everything working as before. Existing batch-mode tests pass.
 
 ##### Deferred
 
-- `provisioner.py` — Not modified. It accepts unpacked parameters, not a
-  typed entity, so the refactor is a no-op. Revisit in Phase 2b.
+- `provisioner.py` — Not modified. It accepts unpacked parameters, not a typed
+  entity, so the refactor is a no-op. Revisit in Phase 2b.
 - `task_node.py` → `agent_node.py` rename — Deferred. The public API still
   returns `Ticket` objects; renaming before the full entity migration would
   create a misleading name.
-- `protocols/events.py` — Event types still carry `Ticket`. Changing them
-  would cascade into the SSE/Hivetool stack. Deferred to Phase 4.
+- `protocols/events.py` — Event types still carry `Ticket`. Changing them would
+  cascade into the SSE/Hivetool stack. Deferred to Phase 4.
 
 #### Adjustments Made
 
-1. **Execution-state bridge fields on `AgentMetadata`** — The original
-   blueprint assumed the scheduler would only read identity/config fields
-   from `AgentMetadata`. In practice, the scheduler and task runner write
-   execution state (`error`, `outcome`, `turns`, `assignee`, `suspend_event`,
-   etc.) during every session. These fields must live on `AgentMetadata`
-   during the adapter era to survive the `Agent` → `Ticket` → disk →
-   `Ticket` → `Agent` round-trip. In Phase 3+, some move to `TaskRecord`,
-   others stay.
+1. **Execution-state bridge fields on `AgentMetadata`** — The original blueprint
+   assumed the scheduler would only read identity/config fields from
+   `AgentMetadata`. In practice, the scheduler and task runner write execution
+   state (`error`, `outcome`, `turns`, `assignee`, `suspend_event`, etc.) during
+   every session. These fields must live on `AgentMetadata` during the adapter
+   era to survive the `Agent` → `Ticket` → disk → `Ticket` → `Agent` round-trip.
+   In Phase 3+, some move to `TaskRecord`, others stay.
 
-2. **`TaskNode` uses inner `_ticket_store` directly** — Rather than
-   converting between `Agent` and `Ticket` in the tree API, `TaskNode`
-   accesses the inner `TaskStore` for all read operations. This keeps the
-   public API stable and avoids a double-conversion penalty.
+2. **`TaskNode` routes through `UnifiedAgentStore`** — Originally, `TaskNode`
+   accessed the inner `_ticket_store` directly. This worked in legacy mode but
+   silently returned empty data in swarm mode (where agents live in `agents/`,
+   not `tickets/`). Updated in Phase 2b to read through `UnifiedAgentStore` with
+   Agent→Ticket conversion at the boundary.
 
-3. **`UnifiedAgentStore` instead of separate `AgentStore` + `TaskStore`** —
-   The blueprint proposed the scheduler use `AgentStore` with `TaskStore`
-   alongside. Since the on-disk layout is still `tickets/` (fused), a
-   single bidirectional adapter (`UnifiedAgentStore`) is cleaner than
-   two stores pointing at the same directory. The split into separate stores
-   happens in Phase 2b when the layout actually diverges.
+3. **`UnifiedAgentStore` instead of separate `AgentStore` + `TaskStore`** — The
+   blueprint proposed the scheduler use `AgentStore` with `TaskStore` alongside.
+   Since the on-disk layout is still `tickets/` (fused), a single bidirectional
+   adapter (`UnifiedAgentStore`) is cleaner than two stores pointing at the same
+   directory. The split into separate stores happens in Phase 2b when the layout
+   actually diverges.
 
 #### Verification
 
@@ -566,15 +566,16 @@ everything working as before. Existing batch-mode tests pass.
 - [x] Coordination smoke test: two agents with `watch_events`, broadcast a
       signal, verify delivery via `route_coordination_task` using Agent objects.
 
-### Phase 2b — Box and Mutations Route Through New Stores
+### Phase 2b — Box and Mutations Route Through New Stores ✅
 
 The box's `classify_change()` recognizes `agents/` and `tasks/` directories.
-Mutation handlers use `AgentStore` and `TaskStore`. On disk, the system now
-writes to `agents/` + `tasks/` (with `tickets/` fallback for existing hives).
+Mutation handlers use `UnifiedAgentStore`. On disk, the system now writes to
+`agents/` + `tasks/` (with `tickets/` fallback for existing hives).
 
-**Observable proof:** Start a hive. Verify `agents/` directory created on
-disk with expected structure. Verify task file in `tasks/` shows `completed`
-status. Hivetool still works (still reading from `tickets/` via adapter).
+**Observable proof:** Start a hive with `root:` configured. Verify `agents/`
+directory created on disk with expected structure. Verify task files in
+`tasks/`. Both agents complete end-to-end. Verified with `hives/swarm-test/`
+smoke-test hive (orchestrator → writer lifecycle).
 
 **Layout detection:** A hive's layout is detected by checking whether `agents/`
 exists at startup. New hives created after this phase write to `agents/` +
@@ -583,25 +584,104 @@ exists at startup. New hives created after this phase write to `agents/` +
 
 #### Python Changes
 
-- [ ] **[MODIFY] `box.py`** — Update `classify_change()`:
-      - `agents/` → hot trigger (same role as `tickets/` today).
-      - `tasks/` → hot trigger.
-      - `tickets/` → hot trigger (backward compat, removed in Phase 6).
-- [ ] **[MODIFY] `mutations.py`** — Update handlers to use `AgentStore`
-      alongside `TaskStore`. `_handle_reset` clears `agents/`, `tasks/`,
-      `logs/`, `mutations/`. Rollback routes through agent session.
+- [x] **[MODIFY] `box.py`** — Update `classify_change()`: - `agents/` → hot
+      trigger (same role as `tickets/` today). - `tasks/` → hot trigger. -
+      `tickets/` → hot trigger (backward compat, removed in Phase 6).
+- [x] **[MODIFY] `mutations.py`** — All handlers route through
+      `UnifiedAgentStore`. `_handle_reset` clears `agents/`, `tasks/`,
+      `tickets/`, `logs/`, `mutations/`.
+- [x] **[MODIFY] `playbook.py`** — `run_playbook` and `stamp_child_task` accept
+      `UnifiedAgentStore`, return `Agent`. `stamp_child_task` takes
+      `parent: Agent` instead of `parent_task: Ticket`. Event hooks receive
+      `Agent` directly.
+- [x] **[MODIFY] `scheduler.py`** — `_boot_root_template` returns `Agent`
+      directly. `delete_task` uses `entity_dir()`. `run_task_done_hooks`
+      receives `Agent` (no more `agent_to_ticket` conversion).
+- [x] **[MODIFY] `coordination.py`** — Passes `Agent` directly to
+      `run_event_hooks`.
+- [x] **[MODIFY] `functions/tasks.py`** — `_tasks_check_status` and
+      `_tasks_create_task` use `scheduler.store` (UnifiedAgentStore) directly.
+- [x] **[MODIFY] `task_node.py`** — Reads through `UnifiedAgentStore` instead of
+      raw `TaskStore`. Agent→Ticket conversion at the boundary.
+- [x] **[MODIFY] `agent_store.py`** — `get()` reads `objective.md` from disk.
+- [x] **[MODIFY] `unified_agent_store.py`** — Full CRUD with layout detection,
+      `entity_dir()`, and backward-compat `tickets_dir` property.
+- [x] **[MODIFY] `eval/runner.py`** — Uses `UnifiedAgentStore`.
+
+#### Adjustments Made
+
+1. **`AgentStore.get()` must read `objective.md`** — The original `AgentStore`
+   created agents with `objective.md` on disk but never read it back. Every
+   agent loaded from disk had `objective=""`, causing the LLM to receive empty
+   instructions. Caught by the smoke test — agents reported "objective is empty"
+   and called `system_failed_to_fulfill_objective`.
+
+2. **Scope was broader than blueprint planned** — The blueprint listed only
+   `box.py` and `mutations.py`. In practice, making the box work end-to-end
+   required updating every file that interacts with the store: `playbook.py`,
+   `scheduler.py`, `coordination.py`, `functions/tasks.py`, `task_node.py`, and
+   `eval/runner.py`. The boundary between "scheduler accepts Agent" (2a) and
+   "box routes through new stores" (2b) was artificial — the playbook and
+   function handlers were the real remaining Ticket-typed code.
+
+3. **`TaskNode` moved from `_ticket_store` to `UnifiedAgentStore`** — Phase 2a
+   had `TaskNode` reading from the inner `_ticket_store` directly. This broke in
+   swarm mode where agents live in `agents/`, not `tickets/`. `TaskNode` now
+   reads through `UnifiedAgentStore` with Agent→Ticket conversion at the
+   boundary.
+
+4. **Smoke-test hive (`hives/swarm-test/`)** — Created a minimal hive with an
+   orchestrator that auto-starts a writer child. Both use `system.*` functions
+   to self-terminate. Essential for verifying the full lifecycle without
+   Hivetool (which isn't updated until Phase 2c). The `chat-app` hive has no
+   `root:` template, so it starts idle and can't exercise the boot path.
+
+5. **`dev:clean` and `dev:box:clean` removed** — Blunt instruments that only
+   cleared `tickets/` and `logs/`. Hivetool's reset mutation handles cleanup
+   correctly for all directories.
 
 #### Verification
 
-- [ ] Agents written to `agents/` on disk.
-- [ ] Tasks written to `tasks/` on disk.
-- [ ] Existing hives with `tickets/` still load and run.
+- [x] Agents written to `agents/` on disk.
+- [x] Tasks written to `tasks/` on disk.
+- [x] Existing hives with `tickets/` still load and run.
+- [x] 75 targeted tests pass. 497/519 full suite pass (22 pre-existing).
+- [x] End-to-end smoke test: orchestrator→writer lifecycle completes with haiku
+      output. Verified parent→child hierarchy, objective delivery, and file
+      creation.
+
+### Smoke-Test Hive: `hives/swarm-test/`
+
+A minimal hive for verifying the swarm layout end-to-end. Contains two
+templates: an **orchestrator** (root, auto-starts a writer) and a **writer**
+(writes a haiku, then calls `system_objective_fulfilled`).
+
+```bash
+# Run the smoke test (from repo root):
+BEES_HIVE_DIR=../../hives/swarm-test  npm run dev:box -w bees
+
+# Clean up runtime state before re-running:
+rm -rf hives/swarm-test/agents hives/swarm-test/tasks hives/swarm-test/logs hives/swarm-test/mutations
+```
+
+**What to verify after a run:**
+
+- `agents/` contains two agent directories (orchestrator + writer), each with
+  `metadata.json` showing `status: completed`.
+- `tasks/` contains two task records.
+- Writer's `metadata.json` has `parent_id` pointing to orchestrator's UUID.
+- A `haiku.txt` file exists under the orchestrator's `filesystem/writer/`.
+
+**Why not `chat-app`?** The `chat-app` hive has no `root:` template — it starts
+idle and waits for Hivetool to create tasks. Since Hivetool isn't updated until
+Phase 2c, `swarm-test` is the only hive that exercises the full boot → run →
+complete lifecycle in swarm mode.
 
 ### Phase 2c — Hivetool Reads From New Layout
 
 Hivetool's `TicketStore` reads from both `agents/` + `tasks/` and `tickets/`
-directories. This is the dual-directory scanning mode that enables the
-lockstep transition.
+directories. This is the dual-directory scanning mode that enables the lockstep
+transition.
 
 **Observable proof:** Start a hive using the new layout. Open hivetool — the
 agent appears, transitions to `running`, and completes. Verify hivetool shows
@@ -609,8 +689,8 @@ agent lifecycle, workspace, and surface correctly from `agents/` paths.
 
 #### Hivetool Changes
 
-- [ ] **[MODIFY] `ticket-store.ts`** — Accept both `agents/` and `tickets/`
-      as root. Scan `tasks/` for task data alongside agent metadata. Update
+- [ ] **[MODIFY] `ticket-store.ts`** — Accept both `agents/` and `tickets/` as
+      root. Scan `tasks/` for task data alongside agent metadata. Update
       `readTree()`, `readSurface()`, `readFileContent()` for agent paths
       (`agents/{uuid}/sessions/{sid}/workspace`). Update `createTask()` to
       create agents + tasks in new layout when operating against new hives.
@@ -630,22 +710,22 @@ agent lifecycle, workspace, and surface correctly from `agents/` paths.
 
 ### 🎯 Objective
 
-Replace the `tasks_*` LLM-facing API with `agents_*`. Agent creation is
-implicit — the parent assigns tasks by `(type, slug)` and the handler
-materializes agents on demand. Hivetool displays the agent→task hierarchy.
+Replace the `tasks_*` LLM-facing API with `agents_*`. Agent creation is implicit
+— the parent assigns tasks by `(type, slug)` and the handler materializes agents
+on demand. Hivetool displays the agent→task hierarchy.
 
 **Observable proof:**
 
-1. Write a TEMPLATES.yaml entry that uses `agents_*` functions. The root
-   agent's objective instructs it to assign a task to a `"researcher"` agent.
-2. Start the hive. Watch hivetool — the root agent runs, a `researcher`
-   agent named by its slug appears in the sidebar with a task.
-3. The researcher agent completes (finite — calls
-   `system_objective_fulfilled`). The root agent receives the result and
-   calls `agents_check_status()` — it sees the slug with `completed` status.
+1. Write a TEMPLATES.yaml entry that uses `agents_*` functions. The root agent's
+   objective instructs it to assign a task to a `"researcher"` agent.
+2. Start the hive. Watch hivetool — the root agent runs, a `researcher` agent
+   named by its slug appears in the sidebar with a task.
+3. The researcher agent completes (finite — calls `system_objective_fulfilled`).
+   The root agent receives the result and calls `agents_check_status()` — it
+   sees the slug with `completed` status.
 4. Assign a second task to the same slug. The scheduler creates a **fresh
-   instance** (same slug, new session). This verifies the finite agent path
-   only — infinite agent behavior is Phase 4.
+   instance** (same slug, new session). This verifies the finite agent path only
+   — infinite agent behavior is Phase 4.
 
 ### Python Changes
 
@@ -659,8 +739,8 @@ materializes agents on demand. Hivetool displays the agent→task hierarchy.
 - [ ] **[NEW] `declarations/agents.instruction.md`** — LLM instructions
       explaining the implicit creation model: "assign tasks, agents appear."
 - [ ] **[MODIFY] `provisioner.py`** — Wire `agents_*` function group.
-- [ ] **[DEPRECATE] `functions/tasks.py`** — Keep for backward compat but
-      route through agents internally.
+- [ ] **[DEPRECATE] `functions/tasks.py`** — Keep for backward compat but route
+      through agents internally.
 
 **Function group coexistence rule:** The template's `functions` list in
 TEMPLATES.yaml controls which function set is active for each agent type.
@@ -672,16 +752,16 @@ the agent uses `tasks.*` or `agents.*`.
 
 ### Hivetool Changes
 
-- [ ] **[MODIFY] `ticket-list.ts`** — Show agents by slug in sidebar.
-      Agents as primary items, tasks nested or shown as status indicators.
-- [ ] **[MODIFY] `ticket-detail.ts`** — Agent detail view: show the agent's
-      task queue alongside session, workspace, and surface.
+- [ ] **[MODIFY] `ticket-list.ts`** — Show agents by slug in sidebar. Agents as
+      primary items, tasks nested or shown as status indicators.
+- [ ] **[MODIFY] `ticket-detail.ts`** — Agent detail view: show the agent's task
+      queue alongside session, workspace, and surface.
 
 ### Verification
 
-- [ ] Unit tests for each `agents_*` handler, including implicit creation
-      (new slug), reuse (existing slug, non-terminal), and fresh instance
-      (existing slug, terminal).
+- [ ] Unit tests for each `agents_*` handler, including implicit creation (new
+      slug), reuse (existing slug, non-terminal), and fresh instance (existing
+      slug, terminal).
 - [ ] Integration test: parent assigns task → agent appears → check status.
 - [ ] Integration test: parent assigns two tasks to same slug → both complete.
 - [ ] Hivetool: agent visible by slug with task in sidebar.
@@ -702,29 +782,29 @@ shows the task queue draining in real time.
 1. Define an infinite agent type in TEMPLATES.yaml (no `system.*` functions).
    Write a root agent objective that assigns task A, waits, then assigns task B
    to the same slug.
-2. Start the hive. Watch hivetool — the infinite agent appears, receives
-   task A, completes it.
+2. Start the hive. Watch hivetool — the infinite agent appears, receives task A,
+   completes it.
 3. Task B is assigned to the same slug. In hivetool, the agent's session view
    shows continuous context — task A's context is still present when task B
    arrives.
-4. Both tasks show `completed` in hivetool. The agent remains `suspended`
-   (not terminated), waiting for more work.
+4. Both tasks show `completed` in hivetool. The agent remains `suspended` (not
+   terminated), waiting for more work.
 
 ### Python Changes
 
 - [ ] **[MODIFY] `scheduler.py`** — When an infinite agent calls
       `events_report_task_done`, the scheduler updates the task status to
-      `completed` and auto-delivers the completion update to the parent.
-      The infinite agent then calls `agents_await` to suspend and wait for
-      more work. The scheduler delivers new task assignments as context
-      updates when the agent resumes.
+      `completed` and auto-delivers the completion update to the parent. The
+      infinite agent then calls `agents_await` to suspend and wait for more
+      work. The scheduler delivers new task assignments as context updates when
+      the agent resumes.
 - [ ] **[MODIFY] `functions/events.py`** — Add `events_report_task_done`
-      handler. Validates `task_id` against the agent's assigned tasks.
-      Sets `task.status = completed`, `task.outcome = outcome`. Returns
-      success confirmation to the agent.
+      handler. Validates `task_id` against the agent's assigned tasks. Sets
+      `task.status = completed`, `task.outcome = outcome`. Returns success
+      confirmation to the agent.
 - [ ] **[NEW] `declarations/events.functions.json` update** — Add
-      `events_report_task_done` declaration with required `task_id` (string)
-      and `outcome` (string) parameters.
+      `events_report_task_done` declaration with required `task_id` (string) and
+      `outcome` (string) parameters.
 - [ ] **[MODIFY] `task_runner.py`** — For infinite agents, don't call
       `system_objective_fulfilled` / `system_failed_to_fulfill_objective`
       handling. The agent stays alive across tasks.
@@ -734,8 +814,8 @@ shows the task queue draining in real time.
 
 ### Hivetool Changes
 
-- [ ] **[MODIFY] `ticket-detail.ts`** — Task queue within agent detail:
-      show completed tasks, current task, and pending tasks.
+- [ ] **[MODIFY] `ticket-detail.ts`** — Task queue within agent detail: show
+      completed tasks, current task, and pending tasks.
 - [ ] **[MODIFY] `ticket-list.ts`** — Distinguish infinite agents (persistent
       status badge) from finite agents (appear and disappear).
 
@@ -759,8 +839,8 @@ rollback confirmation dialog.
 **Observable proof:**
 
 1. Run an infinite agent through tasks A, B, and C (all complete).
-2. In hivetool's session view, click rollback to the turn where task A was
-   just completed.
+2. In hivetool's session view, click rollback to the turn where task A was just
+   completed.
 3. The rollback dialog shows: "Tasks B and C will be re-queued."
 4. Confirm. Observe in hivetool: tasks B and C revert to `available` status.
 5. The agent resumes from the fork point. Task B is delivered as a new context
@@ -769,18 +849,18 @@ rollback confirmation dialog.
 ### Python Changes
 
 - [ ] **[MODIFY] `session.py`** — Add `task_completions` field to turn
-      checkpoints in `turns.json`. Each checkpoint records which task IDs
-      were completed at that turn boundary, enabling rollback to correlate
-      turns with task completion events.
+      checkpoints in `turns.json`. Each checkpoint records which task IDs were
+      completed at that turn boundary, enabling rollback to correlate turns with
+      task completion events.
 - [ ] **[MODIFY] `mutations.py`** — Update `rollback-to-turn` handler. After
-      forking the session, use the turn checkpoint's `task_completions` field
-      to identify tasks completed after the fork point. Clear their outcome,
-      revert status to `available`.
+      forking the session, use the turn checkpoint's `task_completions` field to
+      identify tasks completed after the fork point. Clear their outcome, revert
+      status to `available`.
 
 ### Hivetool Changes
 
-- [ ] **[MODIFY] `log-detail.ts`** — Rollback confirmation dialog shows
-      which tasks will be re-queued: "Tasks B and C will be re-queued."
+- [ ] **[MODIFY] `log-detail.ts`** — Rollback confirmation dialog shows which
+      tasks will be re-queued: "Tasks B and C will be re-queued."
 - [ ] **[MODIFY] `mutation-client.ts`** — Rollback mutation targets agent ID
       (not task ID). The handler navigates from agent → session.
 
@@ -789,8 +869,8 @@ rollback confirmation dialog.
 - [ ] Unit test: rollback on agent with 3 completed tasks at mid-point.
 - [ ] Unit test: rollback on a finite agent with one completed task.
 - [ ] Verify re-queued tasks are delivered to the agent on resume.
-- [ ] Hivetool: rollback dialog shows correct task list, post-rollback
-      task queue reflects re-queued items.
+- [ ] Hivetool: rollback dialog shows correct task list, post-rollback task
+      queue reflects re-queued items.
 
 ---
 
@@ -804,10 +884,9 @@ Remove backward-compat shims. Deprecate `tasks_*` function group.
 ### Python Changes
 
 - [ ] **[NEW] Migration script** — Reads `tickets/`, creates `agents/`
-      directories with same internal structure, extracts task data into
-      `tasks/` JSON files. Preserves session data. **Pre-flight guard:**
-      aborts if any agent is `running` or `suspended` — migration requires
-      quiescence.
+      directories with same internal structure, extracts task data into `tasks/`
+      JSON files. Preserves session data. **Pre-flight guard:** aborts if any
+      agent is `running` or `suspended` — migration requires quiescence.
 - [ ] **[DELETE] Backward compat paths** — Remove `tickets/` fallback from
       stores, `classify_change()`, and hivetool.
 - [ ] **[DELETE] `functions/tasks.py`** — Remove deprecated function group.
@@ -816,31 +895,31 @@ Remove backward-compat shims. Deprecate `tasks_*` function group.
 
 - [ ] **[MODIFY] `ticket-store.ts`** — Remove `tickets/` fallback. Read
       exclusively from `agents/` + `tasks/`.
-- [ ] **[RENAME]** UI components: `ticket-*` → `agent-*` where appropriate.
-      Tab label: "Tasks" → "Agents".
+- [ ] **[RENAME]** UI components: `ticket-*` → `agent-*` where appropriate. Tab
+      label: "Tasks" → "Agents".
 
 ---
 
 ## Non-Goals
 
-- **Task reassignment between agents**: A task's assignee is set at creation
-  and doesn't change. Reassignment adds complexity with minimal initial value.
+- **Task reassignment between agents**: A task's assignee is set at creation and
+  doesn't change. Reassignment adds complexity with minimal initial value.
 - **Task priorities / ordering**: Tasks are delivered in creation order.
   Priority-based scheduling is a future optimization.
 - **Context summarization**: Session-layer context management (summarization,
   pruning) is a separate concern from the agent/task split. It benefits all
   sessions regardless of this project.
-- **Agent-to-agent communication**: Agents communicate through their parent
-  (via context updates). Direct agent-to-agent messaging is out of scope.
+- **Agent-to-agent communication**: Agents communicate through their parent (via
+  context updates). Direct agent-to-agent messaging is out of scope.
 - **Dynamic agent type creation**: Agents creating new agent type configurations
   at runtime. The infrastructure supports it (workspace `templates/` directory),
   but the explicit API is deferred.
 - **Coordination system redesign**: The current coordination mechanism
   (`kind="coordination"`, `signal_type`, `watch_events`, `delivered_to`,
-  `events_broadcast`) predates the agent-tree model. These fields remain on
-  the ticket/agent metadata during the migration but are candidates for
-  deprecation once agent-tree-scoped routing replaces broadcast-based
-  coordination. Redesigning coordination is out of scope.
+  `events_broadcast`) predates the agent-tree model. These fields remain on the
+  ticket/agent metadata during the migration but are candidates for deprecation
+  once agent-tree-scoped routing replaces broadcast-based coordination.
+  Redesigning coordination is out of scope.
 - **`playbook_run_id` removal**: Currently used in `coordination.py` to scope
   broadcast signals to a single playbook run. In the agent-tree model, this
   scoping is replaced by root-ancestor matching: a coordination signal is only
@@ -857,50 +936,50 @@ Files that need changes, ordered by coupling density:
 
 ### Python (box + backend)
 
-| File | Current Coupling | Required Change |
-|------|-----------------|-----------------|
-| `bees.py` | Public API returns `TaskNode`/`Ticket` | Returns `AgentNode`/`Agent` |
-| `task_node.py` | Wraps `Ticket`, tree via `parent_task_id` | → `agent_node.py`, wraps `Agent` |
-| `protocols/events.py` | Events carry `Ticket` payloads | Events carry `Agent` payloads |
-| `scheduler.py` | Scheduling unit = ticket | Schedule agents, not tickets |
-| `task_runner.py` | Session wiring = per-ticket | Wire sessions for agents |
-| `ticket.py` | Identity = task + agent + session | Split into agent + task |
-| `task_store.py` | CRUD = tickets only | Manage tasks (lightweight) |
-| `playbook.py` | Template = task + agent type config | Template = agent type config |
-| `functions/tasks.py` | Create task = create agent | Deprecate → agents_* |
-| `functions/events.py` | `events_broadcast` uses ticket ID | Use agent ID |
-| `functions/chat.py` | Chat logging uses `workspace_root_id` | Derive from agent |
-| `functions/files.py` | File ops scoped to ticket workspace | Scope to agent workspace |
-| `functions/sandbox.py` | Sandbox scoped to ticket work dir | Scope to agent work dir |
-| `subagent_scope.py` | Scope = ticket-derived | Scope = agent-derived |
-| `mutations.py` | Rollback = ticket-scoped | Rollback = agent-scoped |
-| `session.py` | Drain + observe = per-ticket, log prefix | Per-agent, add task_completions |
-| `provisioner.py` | Provision = ticket params | Provision = agent params |
-| `coordination.py` | Event routing = ticket-to-ticket | Agent-to-agent, root-ancestor scoping |
-| `box.py` | Watches `tickets/` | Watch `agents/` + `tasks/` |
-| `disk_file_system.py` | Workspace path resolves via ticket | Resolve via agent |
-| `context_updates.py` | Converts updates to context parts | May need agent awareness |
-| `skill_filter.py` | Merges function filters from ticket | Source from agent config |
-| `segments.py` | `resolve_segments(task: Ticket, ...)` | Accept `Agent` |
-| `config.py` | `HIVE_DIR` constant | No change (layout depth same) |
+| File                   | Current Coupling                          | Required Change                       |
+| ---------------------- | ----------------------------------------- | ------------------------------------- |
+| `bees.py`              | Public API returns `TaskNode`/`Ticket`    | Returns `AgentNode`/`Agent`           |
+| `task_node.py`         | Wraps `Ticket`, tree via `parent_task_id` | → `agent_node.py`, wraps `Agent`      |
+| `protocols/events.py`  | Events carry `Ticket` payloads            | Events carry `Agent` payloads         |
+| `scheduler.py`         | Scheduling unit = ticket                  | Schedule agents, not tickets          |
+| `task_runner.py`       | Session wiring = per-ticket               | Wire sessions for agents              |
+| `ticket.py`            | Identity = task + agent + session         | Split into agent + task               |
+| `task_store.py`        | CRUD = tickets only                       | Manage tasks (lightweight)            |
+| `playbook.py`          | Template = task + agent type config       | Template = agent type config          |
+| `functions/tasks.py`   | Create task = create agent                | Deprecate → agents\_\*                |
+| `functions/events.py`  | `events_broadcast` uses ticket ID         | Use agent ID                          |
+| `functions/chat.py`    | Chat logging uses `workspace_root_id`     | Derive from agent                     |
+| `functions/files.py`   | File ops scoped to ticket workspace       | Scope to agent workspace              |
+| `functions/sandbox.py` | Sandbox scoped to ticket work dir         | Scope to agent work dir               |
+| `subagent_scope.py`    | Scope = ticket-derived                    | Scope = agent-derived                 |
+| `mutations.py`         | Rollback = ticket-scoped                  | Rollback = agent-scoped               |
+| `session.py`           | Drain + observe = per-ticket, log prefix  | Per-agent, add task_completions       |
+| `provisioner.py`       | Provision = ticket params                 | Provision = agent params              |
+| `coordination.py`      | Event routing = ticket-to-ticket          | Agent-to-agent, root-ancestor scoping |
+| `box.py`               | Watches `tickets/`                        | Watch `agents/` + `tasks/`            |
+| `disk_file_system.py`  | Workspace path resolves via ticket        | Resolve via agent                     |
+| `context_updates.py`   | Converts updates to context parts         | May need agent awareness              |
+| `skill_filter.py`      | Merges function filters from ticket       | Source from agent config              |
+| `segments.py`          | `resolve_segments(task: Ticket, ...)`     | Accept `Agent`                        |
+| `config.py`            | `HIVE_DIR` constant                       | No change (layout depth same)         |
 
 ### Hivetool (TypeScript)
 
-| File | Current Coupling | Required Change |
-|------|-----------------|-----------------|
-| `ticket-store.ts` | Reads `tickets/` directory | Read `agents/` + `tasks/` |
-| `ticket-store.ts` (`createTask`) | Creates tasks in `tickets/` | Create agents + tasks in new layout |
-| `mutation-client.ts` | All mutations target `task_id` | Some become agent-scoped |
-| `common/types.ts` | `TaskData` = agent + task fused | Split `AgentData` + `TaskData` |
-| `ticket-list.ts` | Flat ticket list | Agent→task hierarchy |
-| `ticket-detail.ts` | Ticket = everything | Agent detail + task queue |
-| `ticket-pane.ts` | Tabbed container per ticket | Per agent |
-| `session-lineage.ts` | Session tree via ticket dirs | Via agent dirs |
-| `log-store.ts` | Log files named with ticket ID | Use agent ID |
-| `session-store-reader.ts` | Reads sessions from ticket subdirs | From agent subdirs |
-| `log-detail.ts` | Rollback targets task | Rollback targets agent |
-| `app.ts` | "Tasks" tab, `TicketStore` | "Agents" tab, `AgentStore` |
-| `opal_backend/sessions/file_store.py` | Session paths from ticket dir | Paths from agent dir |
+| File                                  | Current Coupling                   | Required Change                     |
+| ------------------------------------- | ---------------------------------- | ----------------------------------- |
+| `ticket-store.ts`                     | Reads `tickets/` directory         | Read `agents/` + `tasks/`           |
+| `ticket-store.ts` (`createTask`)      | Creates tasks in `tickets/`        | Create agents + tasks in new layout |
+| `mutation-client.ts`                  | All mutations target `task_id`     | Some become agent-scoped            |
+| `common/types.ts`                     | `TaskData` = agent + task fused    | Split `AgentData` + `TaskData`      |
+| `ticket-list.ts`                      | Flat ticket list                   | Agent→task hierarchy                |
+| `ticket-detail.ts`                    | Ticket = everything                | Agent detail + task queue           |
+| `ticket-pane.ts`                      | Tabbed container per ticket        | Per agent                           |
+| `session-lineage.ts`                  | Session tree via ticket dirs       | Via agent dirs                      |
+| `log-store.ts`                        | Log files named with ticket ID     | Use agent ID                        |
+| `session-store-reader.ts`             | Reads sessions from ticket subdirs | From agent subdirs                  |
+| `log-detail.ts`                       | Rollback targets task              | Rollback targets agent              |
+| `app.ts`                              | "Tasks" tab, `TicketStore`         | "Agents" tab, `AgentStore`          |
+| `opal_backend/sessions/file_store.py` | Session paths from ticket dir      | Paths from agent dir                |
 
 ---
 
@@ -908,33 +987,33 @@ Files that need changes, ordered by coupling density:
 
 ### Core architecture (read first)
 
-| File | What to learn |
-|------|---------------|
-| `packages/bees/bees/bees.py` | Public consumer API: Bees class, event dispatch |
-| `packages/bees/bees/task_node.py` | DOM-like tree traversal wrapper over Ticket |
+| File                                     | What to learn                                      |
+| ---------------------------------------- | -------------------------------------------------- |
+| `packages/bees/bees/bees.py`             | Public consumer API: Bees class, event dispatch    |
+| `packages/bees/bees/task_node.py`        | DOM-like tree traversal wrapper over Ticket        |
 | `packages/bees/bees/protocols/events.py` | Typed scheduler events (TaskAdded, TaskDone, etc.) |
-| `packages/bees/bees/ticket.py` | Current fused identity: Ticket = agent + task |
-| `packages/bees/bees/scheduler.py` | Cycle orchestration, context delivery |
-| `packages/bees/bees/task_runner.py` | Session wiring, run/resume paths |
-| `packages/bees/bees/playbook.py` | Agent type loading, child task stamping |
-| `packages/bees/bees/functions/tasks.py` | LLM-facing task API |
-| `packages/bees/bees/subagent_scope.py` | Workspace scoping |
+| `packages/bees/bees/ticket.py`           | Current fused identity: Ticket = agent + task      |
+| `packages/bees/bees/scheduler.py`        | Cycle orchestration, context delivery              |
+| `packages/bees/bees/task_runner.py`      | Session wiring, run/resume paths                   |
+| `packages/bees/bees/playbook.py`         | Agent type loading, child task stamping            |
+| `packages/bees/bees/functions/tasks.py`  | LLM-facing task API                                |
+| `packages/bees/bees/subagent_scope.py`   | Workspace scoping                                  |
 
 ### Hivetool architecture (read for any hivetool phase)
 
-| File | What to learn |
-|------|---------------|
-| `packages/bees/hivetool/src/ui/app.ts` | Root orchestrator, tab routing, store lifecycle |
-| `packages/bees/hivetool/src/data/ticket-store.ts` | Ticket scanning, FileSystemObserver, workspace paths |
-| `packages/bees/hivetool/src/data/mutation-client.ts` | Mutation protocol client, fire-and-forget writes |
-| `packages/bees/hivetool/src/data/types.ts` | Data types, surface schema |
-| `packages/bees/common/types.ts` | Shared backend API contract |
-| `packages/bees/bees/box.py` | classify_change, hot/cold processing loop |
-| `packages/bees/bees/mutations.py` | Mutation dispatch table, handler implementations |
+| File                                                 | What to learn                                        |
+| ---------------------------------------------------- | ---------------------------------------------------- |
+| `packages/bees/hivetool/src/ui/app.ts`               | Root orchestrator, tab routing, store lifecycle      |
+| `packages/bees/hivetool/src/data/ticket-store.ts`    | Ticket scanning, FileSystemObserver, workspace paths |
+| `packages/bees/hivetool/src/data/mutation-client.ts` | Mutation protocol client, fire-and-forget writes     |
+| `packages/bees/hivetool/src/data/types.ts`           | Data types, surface schema                           |
+| `packages/bees/common/types.ts`                      | Shared backend API contract                          |
+| `packages/bees/bees/box.py`                          | classify_change, hot/cold processing loop            |
+| `packages/bees/bees/mutations.py`                    | Mutation dispatch table, handler implementations     |
 
 ### Related projects
 
-| Project | Relevance |
-|---------|-----------|
+| Project                      | Relevance                                                  |
+| ---------------------------- | ---------------------------------------------------------- |
 | `projects/rewind/PROJECT.md` | Session rollback — the fork mechanism this project extends |
-| `projects/air/PROJECT.md` | Unified task model — finite agents (direct_model) |
+| `projects/air/PROJECT.md`    | Unified task model — finite agents (direct_model)          |

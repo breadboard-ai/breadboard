@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, AsyncMock
 
 from bees.functions.tasks import _make_handlers
 from bees.subagent_scope import SubagentScope
-from bees.task_store import TaskStore
+from bees.unified_agent_store import UnifiedAgentStore
 
 
 GLOBAL_STORE = None
@@ -24,7 +24,7 @@ def _temp_dirs(tmp_path):
     global GLOBAL_STORE
     tickets_dir = tmp_path / "tickets"
     tickets_dir.mkdir()
-    GLOBAL_STORE = TaskStore(tmp_path)
+    GLOBAL_STORE = UnifiedAgentStore(tmp_path)
 
     config_dir = tmp_path / "config"
     config_dir.mkdir()
@@ -124,13 +124,13 @@ async def test_tasks_list_types_filters_by_allowlist(write_template):
 @pytest.mark.asyncio
 async def test_tasks_check_status(write_template):
     task_ticket = GLOBAL_STORE.create("Do something")
-    task_ticket.metadata.parent_task_id = "caller-id"
+    task_ticket.metadata.parent_id = "caller-id"
     task_ticket.metadata.title = "My Task"
     task_ticket.metadata.status = "running"
     GLOBAL_STORE.save_metadata(task_ticket)
 
     other_ticket = GLOBAL_STORE.create("Do something else")
-    other_ticket.metadata.parent_task_id = "other-id"
+    other_ticket.metadata.parent_id = "other-id"
     GLOBAL_STORE.save_metadata(other_ticket)
 
     scope = SubagentScope(workspace_root_id="caller-id")
@@ -188,7 +188,7 @@ async def test_tasks_create_task_async(write_template):
     ticket = GLOBAL_STORE.get(result["task_id"])
     assert ticket is not None
 
-    assert ticket.metadata.parent_task_id == caller.id
+    assert ticket.metadata.parent_id == caller.id
     assert ticket.metadata.slug == "my-slug"
     assert ticket.metadata.title == "Testing create"
     assert "You are assigned to work in the subdirectory: ./my-slug" in ticket.objective
@@ -313,7 +313,7 @@ async def test_tasks_create_task_nested_slug(write_template):
     assert ticket is not None
 
     assert ticket.metadata.slug == "research/deep-dive"
-    assert ticket.metadata.parent_task_id == caller.id
+    assert ticket.metadata.parent_id == caller.id
     assert "./research/deep-dive" in ticket.objective
     assert (ticket.fs_dir / "research" / "deep-dive").exists()
 
@@ -392,11 +392,10 @@ async def test_create_task_sets_parent_id_via_unified_store(
 
     assert "task_id" in result, f"Expected task_id, got: {result}"
 
-    # Read the child back via the inner TaskStore to verify the on-disk
-    # Ticket has parent_task_id set correctly.
-    child_ticket = unified_store._ticket_store.get(result["task_id"])
-    assert child_ticket is not None
-    assert child_ticket.metadata.parent_task_id == parent.id
+    # Read the child back and verify parent_id is set.
+    child = unified_store.get(result["task_id"])
+    assert child is not None
+    assert child.metadata.parent_id == parent.id
 
 
 @pytest.mark.asyncio
@@ -404,13 +403,12 @@ async def test_check_status_builds_tree_via_unified_store(unified_store):
     """tasks_check_status must find children when store is UnifiedAgentStore."""
     parent = unified_store.create("Parent objective")
 
-    # Create a child with parent_task_id set on the inner TaskStore
-    # (simulating what stamp_child_task does after the fix).
-    child_ticket = unified_store._ticket_store.create("Child objective")
-    child_ticket.metadata.parent_task_id = parent.id
-    child_ticket.metadata.title = "Child Title"
-    child_ticket.metadata.status = "running"
-    unified_store._ticket_store.save_metadata(child_ticket)
+    # Create a child with parent_id set.
+    child = unified_store.create("Child objective")
+    child.metadata.parent_id = parent.id
+    child.metadata.title = "Child Title"
+    child.metadata.status = "running"
+    unified_store.save_metadata(child)
 
     mock_scheduler = MagicMock()
     mock_scheduler.store = unified_store
@@ -423,6 +421,6 @@ async def test_check_status_builds_tree_via_unified_store(unified_store):
 
     assert "tasks" in result, f"Expected tree, got: {result}"
     assert len(result["tasks"]) == 1
-    assert result["tasks"][0]["task_id"] == child_ticket.id
+    assert result["tasks"][0]["task_id"] == child.id
     assert result["tasks"][0]["summary"] == "Child Title"
     assert result["tasks"][0]["status"] == "running"

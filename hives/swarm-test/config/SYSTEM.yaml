@@ -1,0 +1,7 @@
+# Swarm smoke-test hive.
+#
+# Minimal hive for verifying the agents/ + tasks/ layout.
+# Root auto-boots an orchestrator that autostarts a writer.
+title: swarm-test
+description: "Smoke test for Swarm layout"
+root: orchestrator

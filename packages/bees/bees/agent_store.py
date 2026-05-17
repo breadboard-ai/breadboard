@@ -101,10 +101,19 @@ class AgentStore:
         except Exception:
             return None
 
+        metadata = AgentMetadata.from_dict(mdata)
+
+        # Load objective from disk — stored separately from metadata.
+        objective = ""
+        objective_path = agent_dir / "objective.md"
+        if objective_path.exists():
+            objective = objective_path.read_text(encoding="utf-8")
+
         return Agent(
             id=agent_id,
             dir=agent_dir,
-            metadata=AgentMetadata.from_dict(mdata),
+            metadata=metadata,
+            objective=objective,
         )
 
     def query_all(self, status: AgentStatus | None = None) -> list[Agent]:

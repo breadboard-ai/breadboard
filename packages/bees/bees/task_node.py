@@ -20,15 +20,14 @@ class TaskNode:
 
     TaskNode is a public-facing API consumed by the server, eval, and
     hivetool. It continues to expose ``Ticket`` objects. Internally it
-    accesses the ``TaskStore`` (tickets/) directly for queries and
-    mutations, bypassing the Agent-typed ``UnifiedAgentStore``.
+    uses the ``UnifiedAgentStore`` for queries and converts Agent
+    objects to Tickets at the boundary.
     """
 
     def __init__(self, task: Ticket, bees: Bees):
         self._task = task
         self._bees = bees
-        # Use the inner TaskStore for Ticket-typed queries/mutations.
-        self._ticket_store = bees._store._ticket_store
+        self._store = bees._store
 
     @property
     def task(self) -> Ticket:
@@ -43,16 +42,21 @@ class TaskNode:
     @property
     def children(self) -> list[TaskNode]:
         """Returns children of this task."""
-        tasks = self._ticket_store.get_children(self._task.id)
-        return [TaskNode(t, self._bees) for t in tasks]
+        from bees.agent_adapter import agent_to_ticket
+        agents = self._store.get_children(self._task.id)
+        return [TaskNode(agent_to_ticket(a), self._bees) for a in agents]
 
     @property
     def parent(self) -> TaskNode | None:
         """Returns the parent of this task."""
-        if not self._task.metadata.parent_task_id:
+        from bees.agent_adapter import agent_to_ticket
+        parent_id = self._task.metadata.parent_task_id
+        if not parent_id:
             return None
-        parent_task = self._ticket_store.get(self._task.metadata.parent_task_id)
-        return TaskNode(parent_task, self._bees) if parent_task else None
+        parent_agent = self._store.get(parent_id)
+        if not parent_agent:
+            return None
+        return TaskNode(agent_to_ticket(parent_agent), self._bees)
 
     @property
     def awaiting_response(self) -> bool:
@@ -61,16 +65,17 @@ class TaskNode:
 
     def query(self, tags: list[str]) -> list[TaskNode]:
         """Searches for tasks in the subtree that contain all of the specified tags."""
-        all_tickets = self._ticket_store.query_all()
+        from bees.agent_adapter import agent_to_ticket
+        all_agents = self._store.query_all()
         
         # Build child map
         from collections import defaultdict
         child_map = defaultdict(list)
-        ticket_map = {}
-        for t in all_tickets:
-            ticket_map[t.id] = t
-            if t.metadata.parent_task_id:
-                child_map[t.metadata.parent_task_id].append(t.id)
+        agent_map = {}
+        for a in all_agents:
+            agent_map[a.id] = a
+            if a.metadata.parent_id:
+                child_map[a.metadata.parent_id].append(a.id)
                 
         # Find all descendants of current node
         descendants = []
@@ -91,10 +96,10 @@ class TaskNode:
             
         # Check descendants
         for d_id in descendants:
-            t = ticket_map[d_id]
-            t_tags = t.metadata.tags or []
-            if all(tag in t_tags for tag in tags):
-                matching_nodes.append(TaskNode(t, self._bees))
+            a = agent_map[d_id]
+            a_tags = a.metadata.tags or []
+            if all(tag in a_tags for tag in tags):
+                matching_nodes.append(TaskNode(agent_to_ticket(a), self._bees))
                 
         return matching_nodes
 
@@ -143,13 +148,19 @@ class TaskNode:
             else:
                 payload["selectedIds"] = selectedIds
 
-        self._task = self._ticket_store.respond(self.id, payload)
+        self._store.respond(self.id, payload)
+        refreshed = self._store.get(self.id)
+        if refreshed:
+            from bees.agent_adapter import agent_to_ticket
+            self._task = agent_to_ticket(refreshed)
         self._bees.trigger()
         return self._task
 
     def save(self):
         """Saves the task metadata."""
-        self._ticket_store.save_metadata(self._task)
+        from bees.agent_adapter import agent_to_ticket, ticket_to_agent
+        agent = ticket_to_agent(self._task)
+        self._store.save_metadata(agent)
 
     def retry(self):
         """Retries a paused task."""
@@ -169,9 +180,10 @@ class TaskNode:
         paused = self._bees._scheduler.pause_task(self.id)
         if paused:
             # Refresh our snapshot.
-            refreshed = self._ticket_store.get(self.id)
+            refreshed = self._store.get(self.id)
             if refreshed:
-                self._task = refreshed
+                from bees.agent_adapter import agent_to_ticket
+                self._task = agent_to_ticket(refreshed)
         return paused
 
     def resume(self) -> bool:
