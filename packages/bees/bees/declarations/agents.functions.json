@@ -1,0 +1,103 @@
+[
+  {
+    "name": "agents_list_types",
+    "description": "List available agent types that can be assigned tasks.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "agents_assign_task",
+    "description": "Assign a task to a named agent. If the agent doesn't exist yet, it is created automatically from the specified type. If it previously completed a task, a fresh instance is created (same name, new session, workspace persists).",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The agent type — one of the types returned by agents_list_types."
+        },
+        "slug": {
+          "type": "string",
+          "description": "The agent's name. Use a short, descriptive, lowercase identifier (e.g., 'researcher', 'deep-dive'). The same slug always refers to the same agent."
+        },
+        "objective": {
+          "type": "string",
+          "description": "The task objective. Must include all information necessary for the agent to complete the task."
+        },
+        "summary": {
+          "type": "string",
+          "description": "A short summary for the task in the [Subject] [Action-er] format, under four words, e.g., \"Laptop Finder\", \"Meal Planner\""
+        },
+        "title": {
+          "type": "string",
+          "description": "Optional friendly title for the task."
+        },
+        "options": {
+          "type": "object",
+          "description": "Optional runtime configuration overrides. Supported keys depend on the agent type. Discover available options via agents_list_types.",
+          "additionalProperties": true
+        }
+      },
+      "required": ["type", "slug", "objective", "summary"]
+    }
+  },
+  {
+    "name": "agents_check_status",
+    "description": "Check the status of all agents you have assigned tasks to. Returns agents by name (slug) with their current status and task outcomes.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "agents_cancel",
+    "description": "Cancel a named agent and any pending tasks.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "The name of the agent to cancel."
+        }
+      },
+      "required": ["slug"]
+    }
+  },
+  {
+    "name": "agents_send_event",
+    "description": "Send a typed event to a named agent. The agent receives the event as a context update. Use this to provide additional instructions, clarifications, or data to a running agent.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "The name of the agent to send the event to."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of event (e.g., 'clarification', 'additional_context'). Choose descriptive, stable names."
+        },
+        "message": {
+          "type": "string",
+          "description": "Text payload delivered to the agent. Include all relevant details the agent needs to act on."
+        }
+      },
+      "required": ["slug", "type", "message"]
+    }
+  },
+  {
+    "name": "agents_await",
+    "description": "Suspend execution until a context update arrives (e.g. an agent completes a task or a parent sends an event). Returns immediately if updates are already pending. Call this after assigning tasks to wait for their results.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {
+        "slugs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional. Agent names to wait for. Currently informational — the function resumes on any context update."
+        }
+      }
+    }
+  }
+]

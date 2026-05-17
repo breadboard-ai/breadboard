@@ -143,7 +143,7 @@ class BeesTicketList extends SignalWatcher(LitElement) {
         @click=${() => this.handleSelect(t.id)}
       >
         <div class="job-header">
-          <div class="job-title">${t.title || t.id.slice(0, 8)}</div>
+          <div class="job-title">${this.displayName(t)}</div>
           <div class="job-status ${t.status}"></div>
         </div>
         <div class="job-meta">
@@ -204,6 +204,24 @@ class BeesTicketList extends SignalWatcher(LitElement) {
     this.dispatchEvent(
       new CustomEvent("select", { detail: { id }, bubbles: true })
     );
+  }
+
+  /**
+   * Pick the best display name for an entity.
+   *
+   * Priority: slug tail → title → truncated UUID.
+   * The slug is what the parent uses via `agents_*` — making it
+   * visible confirms the named-agent model works.
+   */
+  private displayName(t: TicketData): string {
+    if (t.slug) {
+      // Show just the tail segment for nested slugs.
+      const tail = t.slug.includes("/")
+        ? t.slug.split("/").pop()!
+        : t.slug;
+      return tail;
+    }
+    return t.title || t.id.slice(0, 8);
   }
 }
 

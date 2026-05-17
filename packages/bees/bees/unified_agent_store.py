@@ -328,4 +328,93 @@ class UnifiedAgentStore:
             if changed:
                 self._task_file_store.save(task)
 
+    # -- Slug resolution ---------------------------------------------------
+
+    def find_child_by_slug(self, parent_id: str, slug: str) -> Agent | None:
+        """Find a child agent by slug under a given parent.
+
+        Scans the parent's children for a matching ``metadata.slug``.
+        Returns the first match, or ``None`` if not found.
+
+        The slug stored in metadata is the full slug path (e.g.,
+        ``"poet"`` for a direct child, ``"app/tests"`` for a nested
+        child). The caller provides just the child's own slug segment —
+        we match against the tail of the stored slug path.
+        """
+        children = self.get_children(parent_id)
+        for child in children:
+            stored = child.metadata.slug or ""
+            # Match the tail segment of the slug path.
+            tail = stored.rsplit("/", 1)[-1] if "/" in stored else stored
+            if tail == slug:
+                return child
+        return None
+
+    # -- Fresh-instance reuse ----------------------------------------------
+
+    _TERMINAL_STATUSES = frozenset({"completed", "failed", "cancelled"})
+
+    def reset_for_reuse(
+        self,
+        agent: Agent,
+        objective: str,
+        *,
+        title: str | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> None:
+        """Reset a terminal agent for a new task assignment.
+
+        Used by ``agents_assign_task`` when a finite agent that has
+        already completed receives a new task for the same slug.
+
+        Resets status, creates a new session ID, clears outcome and
+        error fields, writes the new objective, and creates a new task
+        record. The UUID and workspace persist — the slug→UUID mapping
+        is stable.
+
+        Raises ``ValueError`` if the agent is not in a terminal state.
+        """
+        if agent.metadata.status not in self._TERMINAL_STATUSES:
+            raise ValueError(
+                f"Cannot reset agent {agent.id[:8]} — "
+                f"status is '{agent.metadata.status}', not terminal"
+            )
+
+        # Reset metadata for a fresh run.
+        agent.metadata.status = "available"
+        agent.metadata.active_session = str(uuid.uuid4())
+        agent.metadata.outcome = None
+        agent.metadata.outcome_content = None
+        agent.metadata.error = None
+        agent.metadata.completed_at = None
+        agent.metadata.assignee = None
+        agent.metadata.suspend_event = None
+        agent.metadata.turns = 0
+        agent.metadata.thoughts = 0
+        agent.metadata.files = None
+        agent.metadata.pending_context_updates = None
+        agent.metadata.queued_updates = None
+
+        if title:
+            agent.metadata.title = title
+        if options:
+            agent.metadata.options = options
+
+        # Write new objective.
+        agent.objective = objective
+        objective_path = agent.dir / "objective.md"
+        objective_path.write_text(objective)
+
+        # Save updated metadata.
+        self.save_metadata(agent)
+
+        # Create new task record for the new assignment.
+        if self._layout == "swarm":
+            self._task_file_store.create(
+                objective=objective,
+                assignee=agent.id,
+                created_by=agent.metadata.parent_id,
+                kind="work",
+                title=title,
+            )
 

@@ -1,11 +1,12 @@
 - name: orchestrator
   title: Orchestrator
   objective: >-
-    You are a simple orchestrator. Your writer child task will produce a short
-    poem. Once it reports back as completed, mark your own objective as
-    fulfilled.
+    You are a simple orchestrator. Use agents_list_types to discover available
+    agent types, then use agents_assign_task to assign a task to a "writer"
+    agent with slug "poet". Wait for the writer to complete using agents_await,
+    then mark your own objective as fulfilled.
   functions:
-    - tasks.*
+    - agents.*
     - system.*
   tasks:
     - writer

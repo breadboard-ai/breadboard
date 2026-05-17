@@ -72,6 +72,11 @@ class TicketStore {
   #observer: { disconnect(): void } | null = null;
   #activated = false;
 
+  /** Cached tasks indexed by assignee agent ID. */
+  readonly #tasksByAssignee = new Signal.State<Map<string, TaskItemData[]>>(
+    new Map(),
+  );
+
   /** Activate the store — resolves entity directories, scans, observes.
    *
    * Tries `agents/` first (Project Swarm layout). Falls back to
@@ -210,6 +215,9 @@ class TicketStore {
       }
     }
 
+    // Cache task data for getTasksForAgent().
+    this.#tasksByAssignee.set(tasksByAssignee);
+
     const entries: TicketData[] = [];
 
     for await (const [name, entry] of (
@@ -276,6 +284,16 @@ class TicketStore {
     }
 
     return entries;
+  }
+
+  /**
+   * Get task records assigned to a given agent.
+   *
+   * Returns tasks from the cached `tasks/` scan. The data refreshes
+   * on every `scan()` cycle, so it stays current with disk changes.
+   */
+  getTasksForAgent(agentId: string): TaskItemData[] {
+    return this.#tasksByAssignee.get().get(agentId) ?? [];
   }
 
   selectTicket(id: string | null): void {
