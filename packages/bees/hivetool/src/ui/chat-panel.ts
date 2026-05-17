@@ -561,7 +561,8 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
       | undefined;
     const isUserFacing =
       ticket.assignee === "user" &&
-      functionName !== "chat_await_context_update";
+      functionName !== "chat_await_context_update" &&
+      functionName !== "tasks_await";
 
     if (!isUserFacing || !this.mutationClient?.boxActive.get()) return null;
 
@@ -770,7 +771,9 @@ export function hasChatContent(ticket: TaskData): boolean {
   if (ticket.status === "suspended" && ticket.suspend_event) {
     const fn = ticket.suspend_event.function_name as string | undefined;
     const isUserFacing =
-      ticket.assignee === "user" && fn !== "chat_await_context_update";
+      ticket.assignee === "user" &&
+      fn !== "chat_await_context_update" &&
+      fn !== "tasks_await";
     if (isUserFacing) {
       const hasInput = !!ticket.suspend_event.waitForInput;
       const hasChoice = !!ticket.suspend_event.waitForChoice;

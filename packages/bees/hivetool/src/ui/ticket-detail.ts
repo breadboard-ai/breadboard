@@ -581,7 +581,8 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
   ) {
     const functionName = suspendEvent.function_name as string | undefined;
     const label =
-      functionName === "chat_await_context_update"
+      functionName === "chat_await_context_update" ||
+      functionName === "tasks_await"
         ? "Waiting for Event"
         : "Suspended";
     return html`

@@ -219,15 +219,16 @@
 
 
     Step 1: Create a `generate_images` task with slug "reference" and
-    objective "A simple cartoon cat sitting on a red cushion". Wait for
-    it to complete (use wait_ms_before_async: 60000).
+    objective "A simple cartoon cat sitting on a red cushion". Then call
+    tasks_await to wait for it to complete.
 
 
     Step 2: Once Step 1 completes, create a second `generate_images` task
     with slug "grounded" and this objective (including the pidgin file
     tag exactly): "A pencil sketch version of this image
     <file src=\"reference/image_0.png\" />. Draw it in a notebook style."
-    Set options: { "aspect_ratio": "16:9" }. Wait for it to complete.
+    Set options: { "aspect_ratio": "16:9" }. Then call tasks_await to
+    wait for it to complete.
 
 
     Report whether both tasks succeeded and describe what was generated.
@@ -329,23 +330,23 @@
     Step 1: Create a `generate_images` task with slug "frame" and
     objective "A wide shot of a single origami butterfly resting on a
     mossy rock in a sunlit forest clearing, photorealistic". Set options:
-    { "aspect_ratio": "16:9" }. Wait for it to complete
-    (use wait_ms_before_async: 120000).
+    { "aspect_ratio": "16:9" }. Then call tasks_await to wait for it
+    to complete.
 
 
     Step 2: Once Step 1 completes, create a `generate_video` task with
     slug "clip" and objective "The origami butterfly slowly lifts off the
     rock and flutters upward into dappled sunlight, gentle rustling
     sounds". Set options: { "first_frame": "frame/image_0.png",
-    "resolution": "720p" }. Wait for it to complete
-    (use wait_ms_before_async: 180000).
+    "resolution": "720p" }. Then call tasks_await to wait for it
+    to complete.
 
 
     Step 3: Once Step 2 completes, create another `generate_video` task
     with slug "clip" and objective "The butterfly soars higher through
     the canopy, light rays streaming through leaves, birdsong". Set
-    options: { "extend_video": "clip/video_0.mp4" }. Wait for it to
-    complete (use wait_ms_before_async: 180000).
+    options: { "extend_video": "clip/video_0.mp4" }. Then call
+    tasks_await to wait for it to complete.
 
 
     Report whether all three tasks succeeded and describe the result.
@@ -369,21 +370,20 @@
 
     Step 1: Create a `generate_images` task with slug "keyframes" and
     objective "A woman in a red dress standing at the edge of a calm lake
-    at sunrise, wide shot, photorealistic". Wait for it to complete
-    (use wait_ms_before_async: 120000).
+    at sunrise, wide shot, photorealistic". Then call tasks_await to wait
+    for it to complete.
 
 
     Step 2: Create a second `generate_images` task with slug "keyframes_end"
     and objective "The same woman now sitting in a small wooden rowboat
     in the middle of the lake, golden hour light, wide shot,
-    photorealistic". Wait for it to complete
-    (use wait_ms_before_async: 120000).
+    photorealistic". Then call tasks_await to wait for it to complete.
 
 
     Step 3: Create a `generate_images` task with slug "ref" and objective
     "Close-up portrait of a woman with dark hair wearing a flowing red
-    silk dress, soft lighting". Wait for it to complete
-    (use wait_ms_before_async: 120000).
+    silk dress, soft lighting". Then call tasks_await to wait for it
+    to complete.
 
 
     Step 4: Once all images are ready, create a `generate_video` task with
@@ -393,8 +393,8 @@
     to reveal the golden sunrise reflecting on the water". Set options:
     { "first_frame": "keyframes/image_0.png",
     "last_frame": "keyframes_end/image_0.png",
-    "reference_images": ["ref/image_0.png"] }. Wait for it to complete
-    (use wait_ms_before_async: 180000).
+    "reference_images": ["ref/image_0.png"] }. Then call tasks_await
+    to wait for it to complete.
 
 
     Report whether all tasks succeeded and describe the generated video.
@@ -528,14 +528,14 @@
     this conversation. Let me tell you about something fascinating."
 
     Set options: { "speaker_1": "Host:Aoede", "speaker_2": "Guest:Puck" }.
-    Wait for it to complete (use wait_ms_before_async: 120000).
+    Then call tasks_await to wait for it to complete.
 
 
     Step 2: Create a second `generate_speech` task with slug "narration"
     and objective "The morning sun cast long shadows across the ancient
     library. [slowly, with gravity] Within its walls, secrets waited to
     be discovered." Set options: { "voice": "Charon" }.
-    Wait for it to complete (use wait_ms_before_async: 120000).
+    Then call tasks_await to wait for it to complete.
 
 
     Report whether both tasks succeeded and describe the results.

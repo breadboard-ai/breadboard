@@ -22,12 +22,19 @@ You can send events to a running subagent using "tasks_send_event". The agent
 receives the event as a context update. Use this to provide additional
 instructions, clarifications, or data while the subagent is working.
 
-Unless the objective explicitly calls for itit, keep the "wait_ms_before_async"
-parameter at 0 and let the tasks run asynchronously.
+Tasks run asynchronously — "tasks_create_task" returns immediately with a
+task ID and status. The scheduler issues a context update when each task
+completes, containing the outcome or an error message.
 
-For tasks that run asynchronously, the scheduler will issue a context update
-when each task completes. The update will contain the outcome of the completed
-task or an error message if the task failed.
+To wait for task results, call "tasks_await". This suspends your execution
+until a context update arrives (e.g. a child task completes or a parent sends
+you an event). If updates are already pending, it returns immediately.
+
+Typical workflow:
+1. Create one or more tasks with "tasks_create_task".
+2. Call "tasks_await" to suspend until a task completes.
+3. Check results with "tasks_check_status".
+4. Repeat or proceed based on results.
 
 The subagents working on tasks have access to a sub-directory of your
 filesystem, specified by the "slug" parameter when creating a task. You provide

@@ -6,9 +6,16 @@
 from __future__ import annotations
 
 import logging
+import uuid
 from pathlib import Path
 from typing import Any
 
+from bees.context_updates import updates_to_context_parts
+from bees.protocols.handler_types import (
+    CONTEXT_PARTS_KEY,
+    SuspendError,
+    WaitForInputEvent,
+)
 from bees.subagent_scope import SubagentScope
 
 from bees.protocols.functions import (
@@ -85,7 +92,6 @@ def _make_handlers(
         summary = args.get("summary")
         objective = args.get("objective")
         slug = args.get("slug")
-        wait_ms = args.get("wait_ms_before_async")
         options = args.get("options")
         
         if not all([task_type, summary, objective, slug]):
@@ -148,20 +154,7 @@ def _make_handlers(
             
         if status_cb:
             status_cb(None, None)
-            
-        if wait_ms and scheduler:
-            if status_cb:
-                status_cb(f"Waiting for task {task.id}...")
-            status = await scheduler.wait_for_task(task.id, wait_ms)
-            if status_cb:
-                status_cb(None, None)
-                
-            if status == "completed":
-                fresh = scheduler.store.get(task.id) if scheduler else None
-                return {"outcome": fresh.metadata.outcome if fresh else "completed"}
-            else:
-                return {"task_id": task.id, "status": status}
-        
+
         return {"task_id": task.id, "status": task.metadata.status}
 
     async def _tasks_check_status(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
@@ -266,12 +259,48 @@ def _make_handlers(
             "delivered": True,
         }
 
+    async def _tasks_await(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
+        """Suspend until a context update arrives (e.g. child task completes).
+
+        If updates are already buffered in the task's metadata, returns
+        them immediately without suspending.  Otherwise raises
+        ``SuspendError`` and the scheduler resumes the agent when an
+        update is delivered.
+        """
+        # Check for already-buffered context updates.
+        if caller_ticket_id and scheduler:
+            task = scheduler.store.get(caller_ticket_id)
+            if task and task.metadata.pending_context_updates:
+                updates = task.metadata.pending_context_updates
+                task.metadata.pending_context_updates = []
+                scheduler.store.save_metadata(task)
+                return {
+                    "resumed": True,
+                    CONTEXT_PARTS_KEY: updates_to_context_parts(updates),
+                }
+
+        # No updates pending — suspend.
+        request_id = str(uuid.uuid4())
+        event = WaitForInputEvent(
+            request_id=request_id,
+            prompt={},
+            input_type="any",
+        )
+        function_call_part = {
+            "functionCall": {
+                "name": "tasks_await",
+                "args": args,
+            }
+        }
+        raise SuspendError(event, function_call_part)
+
     return {
         "tasks_list_types": _tasks_list_types,
         "tasks_create_task": _tasks_create_task,
         "tasks_check_status": _tasks_check_status,
         "tasks_cancel_task": _tasks_cancel_task,
         "tasks_send_event": _tasks_send_event,
+        "tasks_await": _tasks_await,
     }
 
 

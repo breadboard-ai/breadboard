@@ -33,10 +33,6 @@
           "type": "string",
           "description": "A single directory name for the task's working area (e.g., 'research'). The system automatically nests this under your own working directory if you are a subagent."
         },
-        "wait_ms_before_async": {
-          "type": "number",
-          "description": "Specifies the number of milliseconds to wait for task completion instead of returning immediately. If the task is completed in that period of time, the outcome of the task will be returned. Otherwise, the task status will be returned. Use only when explicitly requested to wait to return."
-        },
         "options": {
           "type": "object",
           "description": "Optional runtime configuration overrides for the task as key-value pairs. Supported keys and values depend entirely on the task type being created. Discover available options for each task type by calling 'tasks_list_types'.",
@@ -88,6 +84,20 @@
         }
       },
       "required": ["task_id", "type", "message"]
+    }
+  },
+  {
+    "name": "tasks_await",
+    "description": "Suspend execution until a context update arrives (e.g. a child task completes or a parent sends an event). Returns immediately if updates are already pending. Call this after creating tasks to wait for their results.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {
+        "task_ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional. Task IDs to wait for. Currently informational — the function resumes on any context update."
+        }
+      }
     }
   }
 ]
