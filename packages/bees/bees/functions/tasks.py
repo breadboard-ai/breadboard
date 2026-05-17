@@ -133,7 +133,8 @@ def _make_handlers(
                         return {"error": f"Invalid value '{value}' for option '{key}'. Valid values for '{key}' in '{task_type}' are: {valid_str}."}
 
         try:
-            parent = scheduler.store.get(caller_ticket_id) if scheduler and caller_ticket_id else None
+            ticket_store = getattr(scheduler.store, '_ticket_store', scheduler.store) if scheduler else None
+            parent = ticket_store.get(caller_ticket_id) if ticket_store and caller_ticket_id else None
             if not parent:
                 return {"error": "Parent ticket not found"}
 
@@ -141,7 +142,7 @@ def _make_handlers(
                 task_type,
                 parent_task=parent,
                 slug=slug,
-                store=scheduler.store,
+                store=ticket_store,
                 context=objective,
                 title=title or summary,
                 scope=scope,
@@ -166,8 +167,11 @@ def _make_handlers(
             from collections import defaultdict
 
             # Build an index: parent_task_id -> list of child tickets.
+            # Use the inner TaskStore to get Ticket objects (which have
+            # parent_task_id), not Agent objects (which use parent_id).
+            ticket_store = getattr(scheduler.store, '_ticket_store', scheduler.store) if scheduler else None
             children_of: dict[str, list[Any]] = defaultdict(list)
-            for t in (scheduler.store.query_all() if scheduler else []):
+            for t in (ticket_store.query_all() if ticket_store else []):
                 if t.metadata.parent_task_id:
                     children_of[t.metadata.parent_task_id].append(t)
 

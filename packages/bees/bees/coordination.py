@@ -18,10 +18,11 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
 
+from bees.agent import Agent
+from bees.agent_adapter import agent_to_ticket
 from bees.playbook import run_event_hooks
 from bees.protocols.events import BroadcastReceived, EventEmitter, TaskDone
-from bees.task_store import TaskStore
-from bees.ticket import Ticket
+from bees.unified_agent_store import UnifiedAgentStore
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +30,8 @@ __all__ = ["route_coordination_task"]
 
 
 async def route_coordination_task(
-    task: Ticket,
-    store: TaskStore,
+    agent: Agent,
+    store: UnifiedAgentStore,
     running_tasks: set[str],
     emit: EventEmitter,
 ) -> None:
@@ -44,16 +45,16 @@ async def route_coordination_task(
     This design survives server restarts — undelivered coordination
     tasks remain ``available`` on disk and are re-routed on startup.
     """
-    signal_type = task.metadata.signal_type or ""
-    payload = task.metadata.context or ""
-    source_tags = set(task.metadata.tags or [])
-    delivered = set(task.metadata.delivered_to or [])
+    signal_type = agent.metadata.signal_type or ""
+    payload = agent.metadata.context or ""
+    source_tags = set(agent.metadata.tags or [])
+    delivered = set(agent.metadata.delivered_to or [])
 
     # Find all matching subscribers.
-    source_run_id = task.metadata.playbook_run_id
-    subscribers: list[Ticket] = []
+    source_run_id = agent.metadata.playbook_run_id
+    subscribers: list[Agent] = []
     for candidate in store.query_all():
-        if candidate.id == task.id:
+        if candidate.id == agent.id:
             continue
         if not candidate.metadata.watch_events:
             continue
@@ -82,14 +83,20 @@ async def route_coordination_task(
             continue
 
         # Let the playbook hook intercept before delivery.
-        result = run_event_hooks(signal_type, payload, sub, store)
+        sub_ticket = agent_to_ticket(sub)
+        result = run_event_hooks(
+            signal_type, payload, sub_ticket, store._ticket_store,
+        )
         if result is None:
             # Hook ate the event — mark delivered, skip agent.
             delivered.add(sub.id)
-            store.save_metadata(sub)
+            # Refresh sub from store in case the hook mutated it.
+            refreshed = store.get(sub.id)
+            if refreshed:
+                store.save_metadata(refreshed)
             logger.info(
                 "Coordination %s eaten by hook for %s",
-                task.id[:8],
+                agent.id[:8],
                 sub.id[:8],
             )
             continue
@@ -114,7 +121,7 @@ async def route_coordination_task(
             delivered.add(sub.id)
             logger.info(
                 "Coordination %s delivered to %s",
-                task.id[:8],
+                agent.id[:8],
                 sub.id[:8],
             )
         else:
@@ -122,25 +129,25 @@ async def route_coordination_task(
             all_delivered = False
 
     # Update delivery tracking.
-    task.metadata.delivered_to = list(delivered)
+    agent.metadata.delivered_to = list(delivered)
 
     if all_delivered:
-        task.metadata.status = "completed"
-        task.metadata.completed_at = datetime.now(timezone.utc).isoformat()
+        agent.metadata.status = "completed"
+        agent.metadata.completed_at = datetime.now(timezone.utc).isoformat()
         logger.info(
             "Coordination task %s fully delivered (signal_type=%s)",
-            task.id[:8],
+            agent.id[:8],
             signal_type,
         )
 
-    store.save_metadata(task)
+    store.save_metadata(agent)
 
     # Notify application consumers about the broadcast.
     await emit(BroadcastReceived(
         signal_type=signal_type,
         message=payload,
-        source_task_id=task.id,
+        source_task_id=agent.id,
     ))
 
     # Broadcast the updated coordination task to the UI.
-    await emit(TaskDone(task=task))
+    await emit(TaskDone(task=agent_to_ticket(agent)))

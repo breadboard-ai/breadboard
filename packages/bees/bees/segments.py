@@ -12,27 +12,28 @@ from __future__ import annotations
 
 from typing import Any
 
-from bees.task_store import TaskStore, _DEP_PATTERN
-from bees.ticket import Ticket
+from bees.agent import Agent
+from bees.task_store import _DEP_PATTERN
+from bees.unified_agent_store import UnifiedAgentStore
 
 __all__ = ["resolve_segments"]
 
 
-def resolve_segments(task: Ticket, store: TaskStore) -> list[dict[str, Any]]:
-    """Build segments from a task's objective, resolving ``{{…}}`` references.
+def resolve_segments(agent: Agent, store: UnifiedAgentStore) -> list[dict[str, Any]]:
+    """Build segments from an agent's objective, resolving ``{{…}}`` references.
 
     References are resolved by namespace:
 
-    - ``{{system.context}}`` — replaced with the task's context string.
-    - ``{{system.ticket_id}}`` — replaced with the task's own ID.
+    - ``{{system.context}}`` — replaced with the agent's context string.
+    - ``{{system.ticket_id}}`` — replaced with the agent's own ID.
     - ``{{ticket-id}}`` — replaced with the dependency's outcome as an
       ``input`` segment carrying LLMContent.
 
     Plain text around references becomes text segments.
     """
-    objective = task.objective
-    deps = task.metadata.depends_on or []
-    context = task.metadata.context or ""
+    objective = agent.objective
+    deps = agent.metadata.depends_on or []
+    context = agent.metadata.context or ""
 
     # Build a lookup from dep ID to resolved outcome.
     dep_outcomes: dict[str, dict[str, Any]] = {}
@@ -56,7 +57,7 @@ def resolve_segments(task: Ticket, store: TaskStore) -> list[dict[str, Any]]:
                 if context:
                     segments.append({"type": "text", "text": context})
             elif part == "system.ticket_id":
-                segments.append({"type": "text", "text": task.id})
+                segments.append({"type": "text", "text": agent.id})
             else:
                 # Dependency ref — resolve to input segment.
                 resolved_id = _find_dep_id(part, deps)

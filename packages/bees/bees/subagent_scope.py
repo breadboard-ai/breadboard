@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from bees.agent import Agent
     from bees.ticket import Ticket
 
 __all__ = ["SubagentScope"]
@@ -50,6 +51,14 @@ class SubagentScope:
         return SubagentScope(
             workspace_root_id=ticket.metadata.owning_task_id or ticket.id,
             slug_path=ticket.metadata.slug,
+        )
+
+    @staticmethod
+    def for_agent(agent: Agent) -> SubagentScope:
+        """Reconstruct a scope from agent metadata."""
+        return SubagentScope(
+            workspace_root_id=agent.metadata.workspace_root_id or agent.id,
+            slug_path=agent.metadata.slug or None,
         )
 
     def child(self, slug: str) -> SubagentScope:

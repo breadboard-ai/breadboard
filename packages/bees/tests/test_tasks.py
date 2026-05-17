@@ -335,3 +335,94 @@ def test_task_store_get_malformed_metadata():
     # Partially written JSON
     (ticket_dir / "metadata.json").write_text('{"status": "avail')
     assert store.get(ticket_id) is None
+
+
+# ---------------------------------------------------------------------------
+# UnifiedAgentStore integration — regression tests
+#
+# These tests exercise the production code path where scheduler.store is a
+# UnifiedAgentStore (returns Agent objects). The bug: function handlers
+# received Agent objects but passed them to Ticket-typed APIs, silently
+# dropping parent_task_id and producing empty trees.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def unified_store(tmp_path):
+    """Create a UnifiedAgentStore backed by a temp directory."""
+    from bees.unified_agent_store import UnifiedAgentStore
+    (tmp_path / "tickets").mkdir(exist_ok=True)
+    config_dir = tmp_path / "config"
+    config_dir.mkdir(exist_ok=True)
+    config_dir.joinpath("hooks").mkdir(exist_ok=True)
+    return UnifiedAgentStore(tmp_path)
+
+
+@pytest.mark.asyncio
+async def test_create_task_sets_parent_id_via_unified_store(
+    unified_store, write_template,
+):
+    """parent_task_id must survive the Agent→Ticket round-trip in stamp_child_task."""
+    write_template({
+        "name": "child-type",
+        "title": "Child",
+        "objective": "Do child work.",
+    })
+
+    # Create a parent via the unified store (returns Agent).
+    parent = unified_store.create("I'm the parent")
+    parent.metadata.tasks = ["child-type"]
+    unified_store.save_metadata(parent)
+
+    scope = SubagentScope(workspace_root_id=parent.id)
+    mock_scheduler = MagicMock()
+    mock_scheduler.store = unified_store
+    handlers = _make_handlers(
+        scope=scope,
+        caller_ticket_id=parent.id,
+        scheduler=mock_scheduler,
+    )
+
+    result = await handlers["tasks_create_task"]({
+        "type": "child-type",
+        "summary": "Child task",
+        "objective": "Full child objective",
+        "slug": "child-slug",
+    }, None)
+
+    assert "task_id" in result, f"Expected task_id, got: {result}"
+
+    # Read the child back via the inner TaskStore to verify the on-disk
+    # Ticket has parent_task_id set correctly.
+    child_ticket = unified_store._ticket_store.get(result["task_id"])
+    assert child_ticket is not None
+    assert child_ticket.metadata.parent_task_id == parent.id
+
+
+@pytest.mark.asyncio
+async def test_check_status_builds_tree_via_unified_store(unified_store):
+    """tasks_check_status must find children when store is UnifiedAgentStore."""
+    parent = unified_store.create("Parent objective")
+
+    # Create a child with parent_task_id set on the inner TaskStore
+    # (simulating what stamp_child_task does after the fix).
+    child_ticket = unified_store._ticket_store.create("Child objective")
+    child_ticket.metadata.parent_task_id = parent.id
+    child_ticket.metadata.title = "Child Title"
+    child_ticket.metadata.status = "running"
+    unified_store._ticket_store.save_metadata(child_ticket)
+
+    mock_scheduler = MagicMock()
+    mock_scheduler.store = unified_store
+    handlers = _make_handlers(
+        caller_ticket_id=parent.id,
+        scheduler=mock_scheduler,
+    )
+
+    result = await handlers["tasks_check_status"]({}, None)
+
+    assert "tasks" in result, f"Expected tree, got: {result}"
+    assert len(result["tasks"]) == 1
+    assert result["tasks"][0]["task_id"] == child_ticket.id
+    assert result["tasks"][0]["summary"] == "Child Title"
+    assert result["tasks"][0]["status"] == "running"

@@ -96,10 +96,43 @@ class AgentMetadata:
     playbook_id: str | None = None
     """Template name that created this agent."""
 
+    playbook_run_id: str | None = None
+    """Run-scoped ID for coordination signal routing.
+
+    Temporary bridge from ``TicketMetadata`` — coordination uses this
+    to scope broadcasts to a single playbook run. Will be replaced by
+    root-ancestor matching in Phase 6.
+    """
+
     tasks: list[str] | None = None
     """Allowlist for child agent types (template names)."""
 
     tags: list[str] | None = None
+
+    # -- Execution state (bridge fields from TicketMetadata) ---------------
+    # These are written by the scheduler and task runner during execution.
+    # In the future, some move to TaskRecord (outcome, title, context)
+    # and others stay on the agent (error, suspend_event, assignee).
+
+    depends_on: list[str] | None = None
+    error: str | None = None
+    outcome: str | None = None
+    outcome_content: dict[str, Any] | None = None
+    assignee: str | None = None
+    """``'user'`` or ``'agent'`` — who owns the next move."""
+
+    suspend_event: dict[str, Any] | None = None
+    kind: str = "work"
+    """``'work'`` or ``'coordination'``."""
+
+    delivered_to: list[str] | None = None
+    """Coordination delivery tracking."""
+
+    context: str | None = None
+    title: str | None = None
+    turns: int = 0
+    thoughts: int = 0
+    files: list[dict[str, str]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -112,6 +145,7 @@ class AgentMetadata:
             type=data.get("type", ""),
             slug=data.get("slug", ""),
             status=data.get("status", "available"),
+            # playbook_run_id populated below
             finite=data.get("finite", True),
             runner=data.get("runner", "generate"),
             parent_id=data.get("parent_id"),
@@ -130,8 +164,22 @@ class AgentMetadata:
             completed_at=data.get("completed_at"),
             paused_from=data.get("paused_from"),
             playbook_id=data.get("playbook_id"),
+            playbook_run_id=data.get("playbook_run_id"),
             tasks=data.get("tasks"),
             tags=data.get("tags"),
+            depends_on=data.get("depends_on"),
+            error=data.get("error"),
+            outcome=data.get("outcome"),
+            outcome_content=data.get("outcome_content"),
+            assignee=data.get("assignee"),
+            suspend_event=data.get("suspend_event"),
+            kind=data.get("kind", "work"),
+            delivered_to=data.get("delivered_to"),
+            context=data.get("context"),
+            title=data.get("title"),
+            turns=data.get("turns", 0),
+            thoughts=data.get("thoughts", 0),
+            files=data.get("files"),
         )
 
 
@@ -142,6 +190,13 @@ class Agent:
     id: str
     dir: Path
     metadata: AgentMetadata = field(default_factory=AgentMetadata)
+    objective: str = ""
+    """Transient objective text.
+
+    During the ``tickets/`` era the objective lives in ``objective.md``
+    and is populated by the adapter. Once ``TaskRecord`` takes over
+    (Phase 3+) this field is removed — objectives belong on tasks.
+    """
 
     @property
     def fs_dir(self) -> Path:

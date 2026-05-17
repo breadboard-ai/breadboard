@@ -44,6 +44,8 @@ import logging
 import sys
 from typing import Any, Awaitable, Callable
 
+from bees.agent import Agent
+from bees.agent_adapter import agent_to_ticket
 from bees.coordination import route_coordination_task
 from bees.playbook import run_task_done_hooks, load_system_config, run_playbook
 from bees.protocols.events import (
@@ -58,7 +60,7 @@ from bees.protocols.events import (
 from bees.protocols.session import SessionResult, SessionRunner, SessionStream
 from bees.task_runner import TaskRunner
 from bees.ticket import Ticket
-from bees.task_store import TaskStore
+from bees.unified_agent_store import UnifiedAgentStore
 from bees.functions.mcp_bridge import MCPRegistry
 from bees.context_updates import updates_to_context_parts
 
@@ -79,7 +81,7 @@ async def _noop_emit(event: Any) -> None:
 # ---------------------------------------------------------------------------
 
 
-def promote_blocked_tasks(store: TaskStore) -> int:
+def promote_blocked_tasks(store: UnifiedAgentStore) -> int:
     """Check blocked tasks and promote those whose deps are met.
 
     Returns the number of tasks promoted.
@@ -87,8 +89,8 @@ def promote_blocked_tasks(store: TaskStore) -> int:
     blocked = store.query_all(status="blocked")
     promoted = 0
 
-    for task in blocked:
-        deps = task.metadata.depends_on or []
+    for agent in blocked:
+        deps = agent.metadata.depends_on or []
         all_met = True
         any_failed = False
 
@@ -105,14 +107,14 @@ def promote_blocked_tasks(store: TaskStore) -> int:
             all_met = False
 
         if any_failed:
-            task.metadata.status = "failed"
-            task.metadata.error = "Dependency failed"
-            store.save_metadata(task)
+            agent.metadata.status = "failed"
+            agent.metadata.error = "Dependency failed"
+            store.save_metadata(agent)
             continue
 
         if all_met:
-            task.metadata.status = "available"
-            store.save_metadata(task)
+            agent.metadata.status = "available"
+            store.save_metadata(agent)
             promoted += 1
 
     return promoted
@@ -139,7 +141,7 @@ class Scheduler:
         self,
         *,
         runners: dict[str, SessionRunner],
-        store: TaskStore,
+        store: UnifiedAgentStore,
         emit: EventEmitter | None = None,
         root_override: str | None = None,
     ) -> None:
@@ -175,9 +177,9 @@ class Scheduler:
         """Wake the scheduler loop."""
         self._trigger.set()
 
-    async def startup(self) -> Ticket | None:
+    async def startup(self) -> Agent | None:
         """Recover stuck tasks, boot root template if needed."""
-        tasks = await self.recover_stuck_tasks()
+        agents = await self.recover_stuck_tasks()
 
         # Connect to MCP servers declared in SYSTEM.yaml.
         config = load_system_config(self.store.hive_dir / "config")
@@ -188,11 +190,11 @@ class Scheduler:
                 mcp_configs, hive_dir=self.store.hive_dir,
             )
 
-        root_task = await self._boot_root_template(tasks)
-        if root_task:
-            tasks.append(root_task)
+        root_agent = await self._boot_root_template(agents)
+        if root_agent:
+            agents.append(root_agent)
 
-        return root_task
+        return root_agent
 
     async def shutdown(self) -> None:
         """Clean up MCP connections and other resources."""
@@ -200,14 +202,14 @@ class Scheduler:
             await self._mcp_registry.disconnect_all()
             self._mcp_registry = None
 
-    async def create_task(self, objective: str, **kwargs) -> Ticket:
+    async def create_task(self, objective: str, **kwargs) -> Agent:
         """Create a new task and emit TaskAdded."""
-        task = self.store.create(objective, **kwargs)
-        await self._emit(TaskAdded(task=task))
+        agent = self.store.create(objective, **kwargs)
+        await self._emit(TaskAdded(task=agent_to_ticket(agent)))
         self.trigger()
-        return task
+        return agent
 
-    async def _boot_root_template(self, tickets: list[Ticket]) -> Ticket | None:
+    async def _boot_root_template(self, agents: list[Agent]) -> Agent | None:
         """Boot the root template if it isn't already running."""
         config = load_system_config(self.store.hive_dir / "config")
         root = self._root_override or config.get("root")
@@ -216,17 +218,18 @@ class Scheduler:
 
         _TERMINAL = {"completed", "failed", "cancelled"}
         already_booted = any(
-            t.metadata.playbook_id == root
-            and t.metadata.status not in _TERMINAL
-            for t in tickets
+            a.metadata.playbook_id == root
+            and a.metadata.status not in _TERMINAL
+            for a in agents
         )
         if already_booted:
             return None
 
         logger.info("Booting root template '%s'", root)
-        task = run_playbook(root, store=self.store)
-        await self._emit(TaskAdded(task=task))
-        return task
+        ticket = run_playbook(root, store=self.store._ticket_store)
+        agent = self.store.get(ticket.id)
+        await self._emit(TaskAdded(task=ticket))
+        return agent
 
     async def wait_for_task(self, task_id: str, timeout_ms: float) -> str:
         """Wait for a task to complete, fail, or suspend.
@@ -261,10 +264,10 @@ class Scheduler:
             self._active_tasks[task_id].cancel()
             cancelled = True
             
-        task = self.store.get(task_id)
-        if task:
-            task.metadata.status = "cancelled"
-            self.store.save_metadata(task)
+        agent = self.store.get(task_id)
+        if agent:
+            agent.metadata.status = "cancelled"
+            self.store.save_metadata(agent)
             cancelled = True
             
         return cancelled
@@ -274,7 +277,7 @@ class Scheduler:
 
         Cancels the asyncio task if running, removes the ticket
         directory and all matching session logs.  Recurses into child
-        tasks (any task whose ``parent_task_id`` matches).
+        tasks (any task whose ``parent_id`` matches).
 
         Marks the task ID in ``_deleted_tasks`` so that
         ``_wrap_execution``'s finally block skips post-completion
@@ -332,10 +335,10 @@ class Scheduler:
         NON_TERMINAL = ("available", "blocked", "running", "suspended")
         count = 0
         for status in NON_TERMINAL:
-            for task in self.store.query_all(status=status):
-                task.metadata.paused_from = task.metadata.status
-                task.metadata.status = "paused"
-                self.store.save_metadata(task)
+            for agent in self.store.query_all(status=status):
+                agent.metadata.paused_from = agent.metadata.status
+                agent.metadata.status = "paused"
+                self.store.save_metadata(agent)
                 count += 1
 
         return count
@@ -347,21 +350,21 @@ class Scheduler:
         ``paused`` with ``paused_from`` set for later resume.
         Returns True if the task was found and paused.
         """
-        task = self.store.get(task_id)
-        if not task:
+        agent = self.store.get(task_id)
+        if not agent:
             return False
 
         # Already in a terminal or paused state — nothing to do.
-        if task.metadata.status in ("completed", "failed", "cancelled", "paused"):
+        if agent.metadata.status in ("completed", "failed", "cancelled", "paused"):
             return False
 
         # Cancel the asyncio task if it's actively running.
         if task_id in self._active_tasks:
             self._active_tasks[task_id].cancel()
 
-        task.metadata.paused_from = task.metadata.status
-        task.metadata.status = "paused"
-        self.store.save_metadata(task)
+        agent.metadata.paused_from = agent.metadata.status
+        agent.metadata.status = "paused"
+        self.store.save_metadata(agent)
         return True
 
     def deliver_to_task(
@@ -376,14 +379,14 @@ class Scheduler:
         Returns ``None`` on success, or an error string on failure.
 
         When ``expected_creator`` is provided the target task's
-        ``parent_task_id`` must match — this prevents one agent from
+        ``parent_id`` must match — this prevents one agent from
         injecting updates into another agent's tasks.
         """
-        task = self.store.get(task_id)
-        if not task:
+        agent = self.store.get(task_id)
+        if not agent:
             return f"Task {task_id} not found"
 
-        if expected_creator and task.metadata.parent_task_id != expected_creator:
+        if expected_creator and agent.metadata.parent_id != expected_creator:
             return f"Task {task_id} is not owned by this agent"
 
         self._deliver_context_update(task_id, update)
@@ -436,17 +439,17 @@ class Scheduler:
 
     # -- tag enrichment ----------------------------------------------------
 
-    def _enrich_parent_tags(self, task: Ticket) -> Ticket | None:
-        """Merge a completed task's tags into its parent's tags.
+    def _enrich_parent_tags(self, agent: Agent) -> Agent | None:
+        """Merge a completed agent's tags into its parent's tags.
 
         Called when a subagent finishes (any terminal status).  Performs
         a deduplicated union — one level up only.
 
-        Returns the enriched parent task so the caller can broadcast
+        Returns the enriched parent agent so the caller can broadcast
         a ``task_update`` via SSE, or ``None`` if nothing changed.
         """
-        parent_id = task.metadata.parent_task_id
-        child_tags = task.metadata.tags
+        parent_id = agent.metadata.parent_id
+        child_tags = agent.metadata.tags
         if not parent_id or not child_tags:
             return None
 
@@ -454,7 +457,7 @@ class Scheduler:
         if not parent:
             logger.warning(
                 "Tag enrichment: parent %s not found for %s",
-                parent_id, task.id[:8],
+                parent_id, agent.id[:8],
             )
             return None
 
@@ -467,7 +470,7 @@ class Scheduler:
         self.store.save_metadata(parent)
         logger.info(
             "Tag enrichment: %s -> %s (added %s)",
-            task.id[:8],
+            agent.id[:8],
             parent_id[:8],
             sorted(merged - existing),
         )
@@ -492,30 +495,30 @@ class Scheduler:
             finally:
                 self._running = False
 
-    async def recover_stuck_tasks(self) -> list[Ticket]:
+    async def recover_stuck_tasks(self) -> list[Agent]:
         """Flip any ``running`` or ``paused`` tasks back to a runnable state.
 
         For ``paused`` tasks with ``paused_from`` set, the original status
         is restored.  Otherwise they become ``available``.
 
-        Returns the full task list (for ``on_startup``).
+        Returns the full agent list (for ``on_startup``).
         """
-        tickets = self.store.query_all()
-        for t in tickets:
-            if t.metadata.status == "running":
-                logger.info("Recovered stuck running task: %s", t.id)
-                t.metadata.status = "available"
-                self.store.save_metadata(t)
-            elif t.metadata.status == "paused":
-                restored = t.metadata.paused_from or "available"
+        agents = self.store.query_all()
+        for a in agents:
+            if a.metadata.status == "running":
+                logger.info("Recovered stuck running task: %s", a.id)
+                a.metadata.status = "available"
+                self.store.save_metadata(a)
+            elif a.metadata.status == "paused":
+                restored = a.metadata.paused_from or "available"
                 logger.info(
                     "Recovered paused task: %s (restoring to %s)",
-                    t.id, restored,
+                    a.id, restored,
                 )
-                t.metadata.status = restored
-                t.metadata.paused_from = None
-                self.store.save_metadata(t)
-        return tickets
+                a.metadata.status = restored
+                a.metadata.paused_from = None
+                self.store.save_metadata(a)
+        return agents
 
     async def run_all_waves(self) -> list[dict]:
         """Batch mode: run cycles until no work remains.
@@ -533,22 +536,22 @@ class Scheduler:
 
             # Route coordination tasks before processing work tasks.
             coordination = [
-                t for t in all_available
-                if t.metadata.kind == "coordination"
+                a for a in all_available
+                if a.metadata.kind == "coordination"
             ]
-            for t in coordination:
+            for a in coordination:
                 await route_coordination_task(
-                    t, self.store, self._running_tasks,
+                    a, self.store, self._running_tasks,
                     self._emit,
                 )
 
             items = [
-                t for t in all_available
-                if t.metadata.kind != "coordination"
+                a for a in all_available
+                if a.metadata.kind != "coordination"
             ]
             resumable = [
-                t for t in self.store.query_all(status="suspended")
-                if t.metadata.assignee == "agent"
+                a for a in self.store.query_all(status="suspended")
+                if a.metadata.assignee == "agent"
             ]
 
             if not items and not resumable:
@@ -609,9 +612,9 @@ class Scheduler:
             # so that parent tasks waiting for children get woken up.
             for item in all_items_in_cycle:
                 updated = self.store.get(item.id) or item
-                run_task_done_hooks(updated)
+                run_task_done_hooks(agent_to_ticket(updated))
 
-                parent_id = updated.metadata.parent_task_id
+                parent_id = updated.metadata.parent_id
                 if parent_id and updated.metadata.status in (
                     "completed", "failed",
                 ):
@@ -628,8 +631,8 @@ class Scheduler:
 
                 enriched = self._enrich_parent_tags(updated)
                 if enriched:
-                    await self._emit(TaskDone(task=enriched))
-                await self._emit(TaskDone(task=updated))
+                    await self._emit(TaskDone(task=agent_to_ticket(enriched)))
+                await self._emit(TaskDone(task=agent_to_ticket(updated)))
 
         await self._emit(CycleComplete(total_cycles=cycle))
 
@@ -642,27 +645,27 @@ class Scheduler:
         self.trigger()
 
     async def _wrap_execution(
-        self, task: Ticket, coro: Awaitable[SessionResult],
+        self, agent: Agent, coro: Awaitable[SessionResult],
     ) -> None:
         """Run a task coroutine and handle post-completion cleanup."""
         try:
             await coro
         finally:
-            self._running_tasks.discard(task.id)
-            self._active_tasks.pop(task.id, None)
+            self._running_tasks.discard(agent.id)
+            self._active_tasks.pop(agent.id, None)
 
             # If the task was deleted while in-flight, skip all
             # post-completion work — the ticket directory is gone,
             # and we must not deliver ghost events or context updates.
-            if task.id in self._deleted_tasks:
-                self._deleted_tasks.discard(task.id)
+            if agent.id in self._deleted_tasks:
+                self._deleted_tasks.discard(agent.id)
                 return
 
-            updated = self.store.get(task.id) or task
-            run_task_done_hooks(updated)
-            self._notify_task_done(task.id)
+            updated = self.store.get(agent.id) or agent
+            run_task_done_hooks(agent_to_ticket(updated))
+            self._notify_task_done(agent.id)
 
-            parent_id = updated.metadata.parent_task_id
+            parent_id = updated.metadata.parent_id
             if parent_id and updated.metadata.status in ("completed", "failed"):
                 update = {
                     "task_id": updated.id,
@@ -677,8 +680,8 @@ class Scheduler:
 
             enriched = self._enrich_parent_tags(updated)
             if enriched:
-                await self._emit(TaskDone(task=enriched))
-            await self._emit(TaskDone(task=updated))
+                await self._emit(TaskDone(task=agent_to_ticket(enriched)))
+            await self._emit(TaskDone(task=agent_to_ticket(updated)))
 
             self.trigger()
 
@@ -697,22 +700,22 @@ class Scheduler:
 
             # Route coordination tasks before processing work tasks.
             coordination = [
-                t for t in all_available
-                if t.metadata.kind == "coordination"
+                a for a in all_available
+                if a.metadata.kind == "coordination"
             ]
-            for t in coordination:
+            for a in coordination:
                 await route_coordination_task(
-                    t, self.store, self._running_tasks,
+                    a, self.store, self._running_tasks,
                     self._emit,
                 )
 
             items = [
-                t for t in all_available
-                if t.metadata.kind != "coordination"
+                a for a in all_available
+                if a.metadata.kind != "coordination"
             ]
             resumable = [
-                t for t in self.store.query_all(status="suspended")
-                if t.metadata.assignee == "agent"
+                a for a in self.store.query_all(status="suspended")
+                if a.metadata.assignee == "agent"
             ]
 
             if not items and not resumable:

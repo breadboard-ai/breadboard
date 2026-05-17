@@ -494,7 +494,7 @@ read from both `agents/` and `tickets/` directory layouts.
 This phase is split into three independently-verifiable sub-phases. Each
 sub-phase delivers working, hivetool-observable state.
 
-### Phase 2a — Scheduler Accepts Agent Objects
+### Phase 2a — Scheduler Accepts Agent Objects ✅
 
 Internal refactor: the scheduler, task runner, and provisioner accept `Agent`
 objects instead of `Ticket` objects. The on-disk layout is still `tickets/` —
@@ -506,28 +506,64 @@ everything working as before. Existing batch-mode tests pass.
 
 #### Python Changes
 
-- [ ] **[MODIFY] `scheduler.py`** — Replace ticket-driven cycle loop with
-      agent-driven loop. Query `AgentStore` for available/suspended agents.
-      Fire `TaskRunner` per agent, not per ticket.
-- [ ] **[MODIFY] `task_runner.py`** — Accept an `Agent` instead of a `Ticket`.
+- [x] **[MODIFY] `scheduler.py`** — Replace ticket-driven cycle loop with
+      agent-driven loop. Query `UnifiedAgentStore` for available/suspended
+      agents. Fire `TaskRunner` per agent, not per ticket.
+- [x] **[MODIFY] `task_runner.py`** — Accept an `Agent` instead of a `Ticket`.
       Wire session using agent's config (model, tools, session, workspace).
-      For finite agents, derive objective from the assigned task.
-- [ ] **[MODIFY] `provisioner.py`** — Accept agent config instead of ticket
-      metadata. No functional change — just the parameter source shifts.
-- [ ] **[MODIFY] `bees.py`** — `Bees.__init__` creates `AgentStore` +
-      `TaskStore`. Public methods operate on agents, not tickets.
-- [ ] **[MODIFY] `task_node.py`** → **`agent_node.py`** — Rename and refactor.
-      `AgentNode` wraps `Agent`. Tree traversal uses `parent_id`.
-- [ ] **[MODIFY] `protocols/events.py`** — Event types carry `Agent` instead
-      of `Ticket`. Keep type aliases for backward compat.
-- [ ] **[NEW] Adapter layer** — Bridges `AgentStore`/`TaskStore` reads to
-      existing `tickets/` directory layout during transition.
+- [x] **[MODIFY] `coordination.py`** — Accept `Agent` and `UnifiedAgentStore`.
+      Playbook hooks still receive `Ticket` via `agent_to_ticket()`.
+- [x] **[MODIFY] `segments.py`** — Accept `Agent` and `UnifiedAgentStore`.
+- [x] **[MODIFY] `bees.py`** — `Bees.__init__` creates `UnifiedAgentStore`.
+      Public methods reconstruct `Ticket` via `agent_to_ticket()` at boundary.
+- [x] **[MODIFY] `task_node.py`** — Uses inner `_ticket_store` for
+      `Ticket`-typed queries. Public API unchanged.
+- [x] **[NEW] `unified_agent_store.py`** — Bidirectional adapter wrapping
+      `TaskStore`, exposing `Agent`-typed CRUD.
+- [x] **[MODIFY] `agent_adapter.py`** — Added `agent_to_ticket()` reverse
+      mapping and execution-state bridge fields.
+- [x] **[MODIFY] `agent.py`** — Added execution-state bridge fields to
+      `AgentMetadata`, `playbook_run_id`, and transient `objective` on `Agent`.
+- [x] **[MODIFY] `subagent_scope.py`** — Added `for_agent()` factory method.
+
+##### Deferred
+
+- `provisioner.py` — Not modified. It accepts unpacked parameters, not a
+  typed entity, so the refactor is a no-op. Revisit in Phase 2b.
+- `task_node.py` → `agent_node.py` rename — Deferred. The public API still
+  returns `Ticket` objects; renaming before the full entity migration would
+  create a misleading name.
+- `protocols/events.py` — Event types still carry `Ticket`. Changing them
+  would cascade into the SSE/Hivetool stack. Deferred to Phase 4.
+
+#### Adjustments Made
+
+1. **Execution-state bridge fields on `AgentMetadata`** — The original
+   blueprint assumed the scheduler would only read identity/config fields
+   from `AgentMetadata`. In practice, the scheduler and task runner write
+   execution state (`error`, `outcome`, `turns`, `assignee`, `suspend_event`,
+   etc.) during every session. These fields must live on `AgentMetadata`
+   during the adapter era to survive the `Agent` → `Ticket` → disk →
+   `Ticket` → `Agent` round-trip. In Phase 3+, some move to `TaskRecord`,
+   others stay.
+
+2. **`TaskNode` uses inner `_ticket_store` directly** — Rather than
+   converting between `Agent` and `Ticket` in the tree API, `TaskNode`
+   accesses the inner `TaskStore` for all read operations. This keeps the
+   public API stable and avoids a double-conversion penalty.
+
+3. **`UnifiedAgentStore` instead of separate `AgentStore` + `TaskStore`** —
+   The blueprint proposed the scheduler use `AgentStore` with `TaskStore`
+   alongside. Since the on-disk layout is still `tickets/` (fused), a
+   single bidirectional adapter (`UnifiedAgentStore`) is cleaner than
+   two stores pointing at the same directory. The split into separate stores
+   happens in Phase 2b when the layout actually diverges.
 
 #### Verification
 
-- [ ] All existing batch-mode tests pass (adapter layer transparent).
-- [ ] Hivetool unchanged — still reads from `tickets/`.
-- [ ] Coordination smoke test: two agents with `watch_events`, broadcast a
+- [x] All existing batch-mode tests pass (339 passed, adapter transparent).
+- [x] Hivetool unchanged — still reads from `tickets/`.
+- [x] Coordination smoke test: two agents with `watch_events`, broadcast a
       signal, verify delivery via `route_coordination_task` using Agent objects.
 
 ### Phase 2b — Box and Mutations Route Through New Stores

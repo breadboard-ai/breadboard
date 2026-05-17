@@ -98,7 +98,10 @@ def _make_handlers(
         try:
             if not scheduler:
                 return {"error": "Scheduler not available"}
-            task = scheduler.store.create(
+            # Use the inner TaskStore to create a Ticket (not an Agent)
+            # because on_events_broadcast expects Ticket-typed objects.
+            ticket_store = getattr(scheduler.store, '_ticket_store', scheduler.store)
+            task = ticket_store.create(
                 "",  # No objective — event tickets carry context, not work.
                 kind="coordination",
                 signal_type=event_type,

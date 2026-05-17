@@ -109,14 +109,16 @@ def test_query_by_tags(temp_hive):
 
 @pytest.mark.asyncio
 async def test_bees_create_child(temp_hive):
+    from bees.agent import Agent, AgentMetadata
     bees = Bees(temp_hive, runners={"generate": Mock()})
     bees._scheduler = Mock()
     
-    mock_ticket = Mock()
-    mock_ticket.id = "task1"
-    mock_ticket.metadata = Mock()
-    mock_ticket.metadata.tags = []
-    bees._scheduler.create_task = AsyncMock(return_value=mock_ticket)
+    mock_agent = Agent(
+        id="task1",
+        dir=temp_hive / "tickets" / "task1",
+        metadata=AgentMetadata(tags=[]),
+    )
+    bees._scheduler.create_task = AsyncMock(return_value=mock_agent)
     
     node = await bees.create_child("New Task", tags=["test"])
     
@@ -126,14 +128,16 @@ async def test_bees_create_child(temp_hive):
 
 @pytest.mark.asyncio
 async def test_task_node_create_child(temp_hive):
+    from bees.agent import Agent, AgentMetadata
     bees = Bees(temp_hive, runners={"generate": Mock()})
     bees._scheduler = Mock()
     
-    mock_ticket = Mock()
-    mock_ticket.id = "child1"
-    mock_ticket.metadata = Mock()
-    mock_ticket.metadata.tags = []
-    bees._scheduler.create_task = AsyncMock(return_value=mock_ticket)
+    mock_agent = Agent(
+        id="child1",
+        dir=temp_hive / "tickets" / "child1",
+        metadata=AgentMetadata(tags=[]),
+    )
+    bees._scheduler.create_task = AsyncMock(return_value=mock_agent)
     
     parent_ticket = Mock()
     parent_ticket.id = "parent1"
@@ -150,8 +154,8 @@ async def test_task_node_create_child(temp_hive):
 
 def test_task_node_respond(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
-    store_mock = Mock()
-    bees._store = store_mock
+    ticket_store_mock = Mock()
+    bees._store._ticket_store = ticket_store_mock
     
     ticket = Mock()
     ticket.id = "task1"
@@ -159,13 +163,13 @@ def test_task_node_respond(temp_hive):
     
     node.respond({"text": "reply"})
     
-    store_mock.respond.assert_called_once_with("task1", {"text": "reply"})
+    ticket_store_mock.respond.assert_called_once_with("task1", {"text": "reply"})
 
 
 def test_task_node_respond_with_text_kwarg(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
-    store_mock = Mock()
-    bees._store = store_mock
+    ticket_store_mock = Mock()
+    bees._store._ticket_store = ticket_store_mock
     
     ticket = Mock()
     ticket.id = "task1"
@@ -173,13 +177,13 @@ def test_task_node_respond_with_text_kwarg(temp_hive):
     
     node.respond(text="reply")
     
-    store_mock.respond.assert_called_once_with("task1", {"text": "reply"})
+    ticket_store_mock.respond.assert_called_once_with("task1", {"text": "reply"})
 
 
 def test_task_node_respond_with_selected_ids_kwarg(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
-    store_mock = Mock()
-    bees._store = store_mock
+    ticket_store_mock = Mock()
+    bees._store._ticket_store = ticket_store_mock
     
     ticket = Mock()
     ticket.id = "task1"
@@ -187,7 +191,7 @@ def test_task_node_respond_with_selected_ids_kwarg(temp_hive):
     
     node.respond(selectedIds=["choice1"])
     
-    store_mock.respond.assert_called_once_with("task1", {"selectedIds": ["choice1"]})
+    ticket_store_mock.respond.assert_called_once_with("task1", {"selectedIds": ["choice1"]})
 
 
 def test_task_node_respond_mutually_exclusive_kwargs(temp_hive):
@@ -251,22 +255,12 @@ def test_task_node_awaiting_response(temp_hive):
 
 def test_bees_all(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
-    store_mock = Mock()
-    bees._store = store_mock
+    store = bees._store
     
-    t1 = Mock()
-    t1.id = "t1"
-    t1.metadata = Mock()
-    t1.metadata.tags = []
-    
-    t2 = Mock()
-    t2.id = "t2"
-    t2.metadata = Mock()
-    t2.metadata.tags = []
-    
-    store_mock.query_all.return_value = [t1, t2]
+    t1 = store.create("Task 1")
+    t2 = store.create("Task 2")
     
     all_nodes = bees.all
     assert len(all_nodes) == 2
-    assert all_nodes[0].id == "t1"
-    assert all_nodes[1].id == "t2"
+    all_ids = {n.id for n in all_nodes}
+    assert all_ids == {t1.id, t2.id}

@@ -19,6 +19,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
 
+from bees.agent import Agent
+from bees.agent_adapter import agent_to_ticket
 from bees.context_updates import updates_to_context_parts
 from bees.protocols.events import (
     EventEmitter,
@@ -35,8 +37,8 @@ from bees.session import (
 )
 from opal_backend.sessions.file_store import FileBasedSessionStore
 from bees.subagent_scope import SubagentScope
-from bees.task_store import TaskStore
 from bees.ticket import Ticket
+from bees.unified_agent_store import UnifiedAgentStore
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +57,7 @@ class TaskRunner:
         self,
         *,
         runners: dict[str, SessionRunner],
-        store: TaskStore,
+        store: UnifiedAgentStore,
         scheduler_ref: Any,
         active_streams: dict[str, SessionStream],
         get_mcp_factories: Callable[[], list | None],
@@ -76,72 +78,72 @@ class TaskRunner:
 
     async def run_task(
         self,
-        task: Ticket,
+        agent: Agent,
     ) -> SessionResult:
         """Run a single task's session and update its metadata."""
         # Reload title from disk — it may have been renamed by an on_event
         # hook during coordination routing earlier in this cycle, while the
-        # in-memory task object (from list_tickets) still has the old value.
-        fresh = self._store.get(task.id)
-        if fresh and fresh.metadata.title != task.metadata.title:
-            task.metadata.title = fresh.metadata.title
+        # in-memory agent object (from list_tickets) still has the old value.
+        fresh = self._store.get(agent.id)
+        if fresh and fresh.metadata.title != agent.metadata.title:
+            agent.metadata.title = fresh.metadata.title
 
         # Set active_session on first run
-        if task.metadata.active_session is None:
-            task.metadata.active_session = str(uuid.uuid4())
+        if agent.metadata.active_session is None:
+            agent.metadata.active_session = str(uuid.uuid4())
 
-        task.metadata.status = "running"
-        self._store.save_metadata(task)
-        await self._emit(TaskStarted(task=task))
+        agent.metadata.status = "running"
+        self._store.save_metadata(agent)
+        await self._emit(TaskStarted(task=agent_to_ticket(agent)))
 
-        label = task.id[:8]
-        print(f"▶ [{label}] {task.objective!r}", file=sys.stderr)
+        label = agent.id[:8]
+        print(f"▶ [{label}] {agent.objective!r}", file=sys.stderr)
 
         try:
-            segments = resolve_segments(task, self._store)
-            scope = SubagentScope.for_ticket(task)
+            segments = resolve_segments(agent, self._store)
+            scope = SubagentScope.for_agent(agent)
             config = provision_session(
                 segments=segments,
-                ticket_id=task.id,
-                ticket_dir=task.dir,
-                fs_dir=task.fs_dir,
-                session_id=task.metadata.active_session,
-                function_filter=task.metadata.functions,
-                allowed_skills=task.metadata.skills,
-                model=task.metadata.model,
+                ticket_id=agent.id,
+                ticket_dir=agent.dir,
+                fs_dir=agent.fs_dir,
+                session_id=agent.metadata.active_session,
+                function_filter=agent.metadata.functions,
+                allowed_skills=agent.metadata.skills,
+                model=agent.metadata.model,
                 on_events_broadcast=self._on_events_broadcast,
-                deliver_to_parent=self._make_deliver_to_parent(task),
+                deliver_to_parent=self._make_deliver_to_parent(agent),
                 scope=scope,
                 scheduler=self._scheduler_ref,
                 mcp_factories=self._get_mcp_factories(),
                 on_chat_entry=lambda role, text: append_chat_log(
-                    task.dir, role, text,
+                    agent.dir, role, text,
                 ),
-                voice=task.metadata.voice,
+                voice=agent.metadata.voice,
             )
 
             # Live sessions need context-level chat extraction because
             # they lack function-level chat handlers.
-            if task.metadata.runner == "live":
+            if agent.metadata.runner == "live":
                 config.extract_chat_from_context = True
 
-            stream = await self._runner_for(task).run(config)
-            self._active_streams[task.id] = stream
+            stream = await self._runner_for(agent).run(config)
+            self._active_streams[agent.id] = stream
             try:
                 result = await drain_session(
                     stream,
                     config=config,
-                    ticket_id=task.id,
-                    on_event=self._make_on_event(task.id),
+                    ticket_id=agent.id,
+                    on_event=self._make_on_event(agent.id),
                 )
             finally:
-                self._active_streams.pop(task.id, None)
+                self._active_streams.pop(agent.id, None)
 
         except Exception as exc:
-            task.metadata.status = "failed"
-            task.metadata.completed_at = datetime.now(timezone.utc).isoformat()
-            task.metadata.error = str(exc)
-            self._store.save_metadata(task)
+            agent.metadata.status = "failed"
+            agent.metadata.completed_at = datetime.now(timezone.utc).isoformat()
+            agent.metadata.error = str(exc)
+            self._store.save_metadata(agent)
             print(f"  [{label}] ❌ {exc}", file=sys.stderr)
             return SessionResult(
                 session_id="",
@@ -151,26 +153,26 @@ class TaskRunner:
                 error=str(exc),
             )
 
-        self._update_metadata(task, result)
-        self._handle_suspend(task, result)
-        self._handle_pause(task, result)
-        self._store.save_metadata(task)
+        self._update_metadata(agent, result)
+        self._handle_suspend(agent, result)
+        self._handle_pause(agent, result)
+        self._store.save_metadata(agent)
         return result
 
     async def resume_task(
         self,
-        task: Ticket,
+        agent: Agent,
     ) -> SessionResult:
         """Resume a suspended task with the user's response."""
-        label = task.id[:8]
-        print(f"▶ [{label}] resuming {task.objective!r}", file=sys.stderr)
+        label = agent.id[:8]
+        print(f"▶ [{label}] resuming {agent.objective!r}", file=sys.stderr)
 
         # Load the user's response.
-        response_path = task.dir / "response.json"
+        response_path = agent.dir / "response.json"
         if not response_path.exists():
-            task.metadata.status = "failed"
-            task.metadata.error = "No response.json found for resume"
-            self._store.save_metadata(task)
+            agent.metadata.status = "failed"
+            agent.metadata.error = "No response.json found for resume"
+            self._store.save_metadata(agent)
             return SessionResult(
                 session_id="",
                 status="failed",
@@ -195,17 +197,17 @@ class TaskRunner:
             selected_ids = selected_obj["ids"]
 
         if user_text:
-            append_chat_log(task.dir, "user", user_text)
+            append_chat_log(agent.dir, "user", user_text)
         elif selected_ids:
-            append_chat_log(task.dir, "user", ", ".join(selected_ids))
+            append_chat_log(agent.dir, "user", ", ".join(selected_ids))
 
         # Dynamic inline migration for legacy tasks
-        if task.metadata.active_session is None:
-            state_path = task.dir / "session_state.json"
+        if agent.metadata.active_session is None:
+            state_path = agent.dir / "session_state.json"
             if not state_path.exists():
-                task.metadata.status = "failed"
-                task.metadata.error = "No saved session state or active session found"
-                self._store.save_metadata(task)
+                agent.metadata.status = "failed"
+                agent.metadata.error = "No saved session state or active session found"
+                self._store.save_metadata(agent)
                 return SessionResult(
                     session_id="",
                     status="failed",
@@ -220,10 +222,10 @@ class TaskRunner:
                 interaction_id = state_data["interaction_id"]
                 interaction_state = state_data["interaction_state"]
 
-                logger.info("Migrating legacy task %s to session-specific path...", task.id[:8])
+                logger.info("Migrating legacy task %s to session-specific path...", agent.id[:8])
 
                 # Initialize session directory
-                sdir = task.dir / "sessions" / session_id
+                sdir = agent.dir / "sessions" / session_id
                 sdir.mkdir(parents=True, exist_ok=True)
 
                 # Write status, resume_id, interaction.json
@@ -235,23 +237,23 @@ class TaskRunner:
                 )
 
                 # Migrate filesystem workspace
-                legacy_fs = task.dir / "filesystem"
+                legacy_fs = agent.dir / "filesystem"
                 if legacy_fs.exists():
                     new_ws = sdir / "workspace"
                     new_ws.parent.mkdir(parents=True, exist_ok=True)
                     legacy_fs.rename(new_ws)
 
-                # Update task metadata
-                task.metadata.active_session = session_id
-                self._store.save_metadata(task)
+                # Update agent metadata
+                agent.metadata.active_session = session_id
+                self._store.save_metadata(agent)
 
                 # Clean up legacy file
                 state_path.unlink(missing_ok=True)
                 state = state_bytes
             except Exception as e:
-                task.metadata.status = "failed"
-                task.metadata.error = f"Migration failed: {e}"
-                self._store.save_metadata(task)
+                agent.metadata.status = "failed"
+                agent.metadata.error = f"Migration failed: {e}"
+                self._store.save_metadata(agent)
                 return SessionResult(
                     session_id="",
                     status="failed",
@@ -261,15 +263,15 @@ class TaskRunner:
                 )
         else:
             # Load and construct state bytes dynamically from the persistent session store
-            session_id = task.metadata.active_session
-            sdir = task.dir / "sessions" / session_id
+            session_id = agent.metadata.active_session
+            sdir = agent.dir / "sessions" / session_id
             resume_id_file = sdir / "resume_id"
             int_file = sdir / "interaction.json"
 
             if not resume_id_file.exists() or not int_file.exists():
-                task.metadata.status = "failed"
-                task.metadata.error = "No active resume session files found"
-                self._store.save_metadata(task)
+                agent.metadata.status = "failed"
+                agent.metadata.error = "No active resume session files found"
+                self._store.save_metadata(agent)
                 return SessionResult(
                     session_id="",
                     status="failed",
@@ -288,9 +290,9 @@ class TaskRunner:
                 }
                 state = json.dumps(state_dict, ensure_ascii=False).encode("utf-8")
             except Exception as e:
-                task.metadata.status = "failed"
-                task.metadata.error = f"Failed to load session files: {e}"
-                self._store.save_metadata(task)
+                agent.metadata.status = "failed"
+                agent.metadata.error = f"Failed to load session files: {e}"
+                self._store.save_metadata(agent)
                 return SessionResult(
                     session_id="",
                     status="failed",
@@ -299,24 +301,24 @@ class TaskRunner:
                     error=f"Failed to load session files: {e}",
                 )
 
-        task.metadata.status = "running"
-        task.metadata.assignee = "agent"
-        self._store.save_metadata(task)
-        await self._emit(TaskStarted(task=task))
+        agent.metadata.status = "running"
+        agent.metadata.assignee = "agent"
+        self._store.save_metadata(agent)
+        await self._emit(TaskStarted(task=agent_to_ticket(agent)))
 
         try:
             # Assemble context updates from both sources:
             #   1. response.json may contain context_updates (from delivery)
-            #   2. ticket metadata may have pending_context_updates (buffered)
+            #   2. agent metadata may have pending_context_updates (buffered)
             all_updates: list = []
             response_updates = response.pop("context_updates", None)
             if response_updates:
                 all_updates.extend(response_updates)
 
-            if task.metadata.pending_context_updates:
-                all_updates.extend(task.metadata.pending_context_updates)
-                task.metadata.pending_context_updates = []
-                self._store.save_metadata(task)
+            if agent.metadata.pending_context_updates:
+                all_updates.extend(agent.metadata.pending_context_updates)
+                agent.metadata.pending_context_updates = []
+                self._store.save_metadata(agent)
 
             context_parts = (
                 updates_to_context_parts(all_updates)
@@ -324,56 +326,56 @@ class TaskRunner:
                 else None
             )
 
-            scope = SubagentScope.for_ticket(task)
+            scope = SubagentScope.for_agent(agent)
             config = provision_session(
                 segments=[],  # Not used for resume.
-                ticket_id=task.id,
-                ticket_dir=task.dir,
-                fs_dir=task.fs_dir,
-                session_id=task.metadata.active_session,
-                function_filter=task.metadata.functions,
-                allowed_skills=task.metadata.skills,
+                ticket_id=agent.id,
+                ticket_dir=agent.dir,
+                fs_dir=agent.fs_dir,
+                session_id=agent.metadata.active_session,
+                function_filter=agent.metadata.functions,
+                allowed_skills=agent.metadata.skills,
                 on_events_broadcast=self._on_events_broadcast,
-                deliver_to_parent=self._make_deliver_to_parent(task),
+                deliver_to_parent=self._make_deliver_to_parent(agent),
                 scope=scope,
                 scheduler=self._scheduler_ref,
                 mcp_factories=self._get_mcp_factories(),
                 on_chat_entry=lambda role, text: append_chat_log(
-                    task.dir, role, text,
+                    agent.dir, role, text,
                 ),
                 seed_files=False,  # Files already on disk from previous run.
-                voice=task.metadata.voice,
+                voice=agent.metadata.voice,
             )
 
             # Live sessions need context-level chat extraction because
             # they lack function-level chat handlers.
-            if task.metadata.runner == "live":
+            if agent.metadata.runner == "live":
                 config.extract_chat_from_context = True
 
-            stream = await self._runner_for(task).resume(
+            stream = await self._runner_for(agent).resume(
                 config,
                 state=state,
                 response=response,
                 context_parts=context_parts,
             )
-            self._active_streams[task.id] = stream
+            self._active_streams[agent.id] = stream
             try:
                 result = await drain_session(
                     stream,
                     config=config,
-                    ticket_id=task.id,
-                    on_event=self._make_on_event(task.id),
+                    ticket_id=agent.id,
+                    on_event=self._make_on_event(agent.id),
                 )
             finally:
-                self._active_streams.pop(task.id, None)
+                self._active_streams.pop(agent.id, None)
 
             # Clean up response file.
             response_path.unlink(missing_ok=True)
         except Exception as exc:
-            task.metadata.status = "failed"
-            task.metadata.completed_at = datetime.now(timezone.utc).isoformat()
-            task.metadata.error = str(exc)
-            self._store.save_metadata(task)
+            agent.metadata.status = "failed"
+            agent.metadata.completed_at = datetime.now(timezone.utc).isoformat()
+            agent.metadata.error = str(exc)
+            self._store.save_metadata(agent)
             print(f"  [{label}] ❌ {exc}", file=sys.stderr)
             return SessionResult(
                 session_id="",
@@ -383,121 +385,121 @@ class TaskRunner:
                 error=str(exc),
             )
 
-        self._update_metadata(task, result, accumulate=True)
-        self._handle_suspend(task, result)
-        self._handle_pause(task, result)
+        self._update_metadata(agent, result, accumulate=True)
+        self._handle_suspend(agent, result)
+        self._handle_pause(agent, result)
 
-        self._store.save_metadata(task)
+        self._store.save_metadata(agent)
         return result
 
     # -- internal ----------------------------------------------------------
 
     def _update_metadata(
         self,
-        task: Ticket,
+        agent: Agent,
         result: SessionResult,
         *,
         accumulate: bool = False,
     ) -> None:
-        """Update task metadata from a session result.
+        """Update agent metadata from a session result.
 
         When ``accumulate`` is True (used on resume), turns and thoughts
         are added to the existing values rather than replaced.
         """
-        task.metadata.completed_at = datetime.now(timezone.utc).isoformat()
+        agent.metadata.completed_at = datetime.now(timezone.utc).isoformat()
 
         if result.status == "completed":
-            task.metadata.status = "completed"
+            agent.metadata.status = "completed"
         elif result.paused:
             # Transient Gemini error — don't set completed_at, the task
             # is not done.  Status is set by _handle_pause below.
-            task.metadata.completed_at = None
+            agent.metadata.completed_at = None
         else:
-            task.metadata.status = "failed"
+            agent.metadata.status = "failed"
 
         if accumulate:
-            task.metadata.turns += result.turns
-            task.metadata.thoughts += result.thoughts
+            agent.metadata.turns += result.turns
+            agent.metadata.thoughts += result.thoughts
         else:
-            task.metadata.turns = result.turns
-            task.metadata.thoughts = result.thoughts
+            agent.metadata.turns = result.turns
+            agent.metadata.thoughts = result.thoughts
 
         if result.error:
-            task.metadata.error = result.error
+            agent.metadata.error = result.error
         if result.outcome:
-            task.metadata.outcome = result.outcome
+            agent.metadata.outcome = result.outcome
         if result.outcome_content:
-            task.metadata.outcome_content = result.outcome_content
+            agent.metadata.outcome_content = result.outcome_content
 
         # Extract agent file system to task directory.
         file_manifest = extract_files(
-            result.intermediate, task.fs_dir,
+            result.intermediate, agent.fs_dir,
         )
         if file_manifest:
-            task.metadata.files = file_manifest
+            agent.metadata.files = file_manifest
 
-    def _handle_suspend(self, task: Ticket, result: SessionResult) -> None:
+    def _handle_suspend(self, agent: Agent, result: SessionResult) -> None:
         """Handle suspend state, including queued-update auto-resume."""
         if result.suspended:
             # Reload fields that may have been modified externally while
             # the session was running (e.g., by on_event hooks or
-            # coordination delivery).  The in-memory task object is
+            # coordination delivery).  The in-memory agent object is
             # stale for these fields.
-            fresh = self._store.get(task.id)
+            fresh = self._store.get(agent.id)
             if fresh:
                 if fresh.metadata.queued_updates:
-                    task.metadata.queued_updates = fresh.metadata.queued_updates
+                    agent.metadata.queued_updates = fresh.metadata.queued_updates
                 if fresh.metadata.pending_context_updates:
-                    task.metadata.pending_context_updates = fresh.metadata.pending_context_updates
-                if fresh.metadata.title != task.metadata.title:
-                    task.metadata.title = fresh.metadata.title
+                    agent.metadata.pending_context_updates = fresh.metadata.pending_context_updates
+                if fresh.metadata.title != agent.metadata.title:
+                    agent.metadata.title = fresh.metadata.title
 
             # function_name is already in suspend_event — enriched by
             # the runner before yielding.
             suspend_event = dict(result.suspend_event) if result.suspend_event else {}
 
-            if getattr(task.metadata, "pending_context_updates", None):
-                updates = list(task.metadata.pending_context_updates)
-                task.metadata.pending_context_updates = []
-                response_path = task.dir / "response.json"
+            if getattr(agent.metadata, "pending_context_updates", None):
+                updates = list(agent.metadata.pending_context_updates)
+                agent.metadata.pending_context_updates = []
+                response_path = agent.dir / "response.json"
                 response_path.write_text(
                     json.dumps({"context_updates": updates}, indent=2, ensure_ascii=False) + "\n"
                 )
-                task.metadata.status = "suspended"
-                task.metadata.assignee = "agent"
-                task.metadata.suspend_event = suspend_event
-                print(f"  [{task.id[:8]}] 📩 auto-resume with buffered context updates", file=sys.stderr)
-            elif getattr(task.metadata, "queued_updates", None):
-                update = task.metadata.queued_updates.pop(0)
-                response_path = task.dir / "response.json"
+                agent.metadata.status = "suspended"
+                agent.metadata.assignee = "agent"
+                agent.metadata.suspend_event = suspend_event
+                print(f"  [{agent.id[:8]}] 📩 auto-resume with buffered context updates", file=sys.stderr)
+            elif getattr(agent.metadata, "queued_updates", None):
+                update = agent.metadata.queued_updates.pop(0)
+                response_path = agent.dir / "response.json"
                 response_path.write_text(
                     json.dumps({"context_updates": [update]}, indent=2, ensure_ascii=False) + "\n"
                 )
-                task.metadata.status = "suspended"
-                task.metadata.assignee = "agent"
-                task.metadata.suspend_event = suspend_event
-                print(f"  [{task.id[:8]}] 📩 auto-resume with queued update", file=sys.stderr)
+                agent.metadata.status = "suspended"
+                agent.metadata.assignee = "agent"
+                agent.metadata.suspend_event = suspend_event
+                print(f"  [{agent.id[:8]}] 📩 auto-resume with queued update", file=sys.stderr)
             else:
-                task.metadata.status = "suspended"
-                task.metadata.assignee = "user"
-                task.metadata.suspend_event = suspend_event
+                agent.metadata.status = "suspended"
+                agent.metadata.assignee = "user"
+                agent.metadata.suspend_event = suspend_event
         else:
-            task.metadata.assignee = None
-            task.metadata.suspend_event = None
+            agent.metadata.assignee = None
+            agent.metadata.suspend_event = None
 
-    def _handle_pause(self, task: Ticket, result: SessionResult) -> None:
+    def _handle_pause(self, agent: Agent, result: SessionResult) -> None:
         """Handle pause state from transient Gemini API errors."""
         if result.paused:
-            task.metadata.status = "paused"
-            task.metadata.assignee = None
+            agent.metadata.status = "paused"
+            agent.metadata.assignee = None
             print(
-                f"  [{task.id[:8]}] ⏸ paused: {result.error}",
+                f"  [{agent.id[:8]}] ⏸ paused: {result.error}",
                 file=sys.stderr,
             )
 
-    def _make_deliver_to_parent(self, task: Ticket) -> Callable[[dict[str, Any]], None] | None:
-        """Create a callback that delivers an update to this task's parent."""
-        parent_id = task.metadata.parent_task_id
+    def _make_deliver_to_parent(self, agent: Agent) -> Callable[[dict[str, Any]], None] | None:
+        """Create a callback that delivers an update to this agent's parent."""
+        parent_id = agent.metadata.parent_id
         if not parent_id:
             return None
 
@@ -515,9 +517,9 @@ class TaskRunner:
 
         return on_event
 
-    def _runner_for(self, task: Ticket) -> SessionRunner:
-        """Select the session runner for a task based on its metadata."""
-        runner_type = task.metadata.runner
+    def _runner_for(self, agent: Agent) -> SessionRunner:
+        """Select the session runner for an agent based on its metadata."""
+        runner_type = agent.metadata.runner
         runner = self._runners.get(runner_type)
         if runner is None:
             available = ", ".join(sorted(self._runners.keys()))

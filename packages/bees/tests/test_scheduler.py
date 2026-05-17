@@ -12,7 +12,7 @@ from pathlib import Path
 import yaml
 
 from bees.scheduler import Scheduler
-from bees.task_store import TaskStore
+from bees.unified_agent_store import UnifiedAgentStore
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def tickets_dir(tmp_path, monkeypatch):
     global GLOBAL_STORE
     tickets_dir = tmp_path / "tickets"
     tickets_dir.mkdir()
-    GLOBAL_STORE = TaskStore(tmp_path)
+    GLOBAL_STORE = UnifiedAgentStore(tmp_path)
     return tickets_dir
 
 @pytest.fixture
@@ -231,7 +231,7 @@ async def test_enrich_parent_tags_merges(mock_clients):
 
     parent = GLOBAL_STORE.create("Parent", tags=["b", "c"])
     child = GLOBAL_STORE.create("Child", tags=["a", "b"])
-    child.metadata.parent_task_id = parent.id
+    child.metadata.parent_id = parent.id
     GLOBAL_STORE.save_metadata(child)
 
     result = scheduler._enrich_parent_tags(child)
@@ -249,7 +249,7 @@ async def test_enrich_parent_tags_no_parent(mock_clients):
     scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
 
     child = GLOBAL_STORE.create("Child", tags=["a"])
-    child.metadata.parent_task_id = "nonexistent-id"
+    child.metadata.parent_id = "nonexistent-id"
     GLOBAL_STORE.save_metadata(child)
 
     # Should not raise, returns None.
@@ -264,7 +264,7 @@ async def test_enrich_parent_tags_no_tags(mock_clients):
 
     parent = GLOBAL_STORE.create("Parent", tags=["x"])
     child = GLOBAL_STORE.create("Child")  # No tags.
-    child.metadata.parent_task_id = parent.id
+    child.metadata.parent_id = parent.id
     GLOBAL_STORE.save_metadata(child)
 
     assert scheduler._enrich_parent_tags(child) is None
@@ -281,7 +281,7 @@ async def test_enrich_parent_tags_parent_has_no_tags(mock_clients):
 
     parent = GLOBAL_STORE.create("Parent")  # tags=None
     child = GLOBAL_STORE.create("Child", tags=["a"])
-    child.metadata.parent_task_id = parent.id
+    child.metadata.parent_id = parent.id
     GLOBAL_STORE.save_metadata(child)
 
     result = scheduler._enrich_parent_tags(child)
@@ -408,14 +408,15 @@ async def test_skips_when_root_already_booted(mock_clients, write_template, tmp_
     system_path.write_text(yaml.dump({"root": "opie"}))
     
     from bees.playbook import run_playbook
-    existing = run_playbook("opie", store=GLOBAL_STORE)
+    ticket = run_playbook("opie", store=GLOBAL_STORE._ticket_store)
+    existing = GLOBAL_STORE.get(ticket.id)
     
     _, backend = mock_clients
     scheduler = Scheduler(store=GLOBAL_STORE, runners={"generate": backend})
 
-    ticket = await scheduler._boot_root_template([existing])
+    result = await scheduler._boot_root_template([existing])
 
-    assert ticket is None
+    assert result is None
 
 
 @pytest.mark.asyncio

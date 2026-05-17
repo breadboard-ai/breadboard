@@ -112,5 +112,38 @@ async def test_events_send_to_parent_no_parent():
     assert "error" in result
 
 
+# ---------------------------------------------------------------------------
+# UnifiedAgentStore regression
+# ---------------------------------------------------------------------------
 
+
+@pytest.mark.asyncio
+async def test_events_broadcast_returns_ticket_via_unified_store(tmp_path):
+    """Callback must receive a Ticket (not an Agent) when store is UnifiedAgentStore."""
+    from bees.functions.events import _make_handlers
+    from bees.unified_agent_store import UnifiedAgentStore
+    from bees.ticket import Ticket
+
+    (tmp_path / "tickets").mkdir()
+    store = UnifiedAgentStore(tmp_path)
+
+    callback = MagicMock()
+    mock_scheduler = MagicMock()
+    mock_scheduler.store = store
+    handlers = _make_handlers(on_events_broadcast=callback, scheduler=mock_scheduler)
+
+    result = await handlers["events_broadcast"](
+        {"type": "app_update", "message": "New app"}, None,
+    )
+
+    assert result["broadcast"] is True
+    callback.assert_called_once()
+
+    # The callback must receive a Ticket, not an Agent.
+    task = callback.call_args[0][0]
+    assert isinstance(task, Ticket), (
+        f"Expected Ticket, got {type(task).__name__}"
+    )
+    assert task.metadata.kind == "coordination"
+    assert task.metadata.signal_type == "app_update"
 
