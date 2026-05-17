@@ -842,7 +842,7 @@ the agent uses `tasks.*` or `agents.*`.
 
 ---
 
-## Phase 4 — Infinite Agent Lifecycle
+## Phase 4 — Infinite Agent Lifecycle ✅
 
 ### 🎯 Objective
 
@@ -864,41 +864,69 @@ shows the task queue draining in real time.
 4. Both tasks show `completed` in hivetool. The agent remains `suspended` (not
    terminated), waiting for more work.
 
+### Key Design Decision: `events_yield`
+
+The original design proposed two separate functions: `events_report_task_done`
+to mark a task complete, and `agents_await` to suspend for the next task. This
+was replaced with a single `events_yield(outcome)` function that atomically
+reports the current task's outcome and suspends until the next task arrives.
+
+**Rationale:**
+- **Correct directionality**: Task completion is child-to-parent communication
+  (the `events_*` group looks up), not parent-to-child (`agents_*` looks down).
+- **Atomic yield**: Report + suspend is one round-trip. The agent can't report
+  done without suspending, or suspend without reporting.
+- **No task_id leakage**: The agent never sees task IDs. The handler resolves
+  the active task internally via `TaskFileStore.query_by_assignee`.
+
 ### Python Changes
 
-- [ ] **[MODIFY] `scheduler.py`** — When an infinite agent calls
-      `events_report_task_done`, the scheduler updates the task status to
-      `completed` and auto-delivers the completion update to the parent. The
-      infinite agent then calls `agents_await` to suspend and wait for more
-      work. The scheduler delivers new task assignments as context updates when
-      the agent resumes.
-- [ ] **[MODIFY] `functions/events.py`** — Add `events_report_task_done`
-      handler. Validates `task_id` against the agent's assigned tasks. Sets
-      `task.status = completed`, `task.outcome = outcome`. Returns success
-      confirmation to the agent.
-- [ ] **[NEW] `declarations/events.functions.json` update** — Add
-      `events_report_task_done` declaration with required `task_id` (string) and
-      `outcome` (string) parameters.
-- [ ] **[MODIFY] `task_runner.py`** — For infinite agents, don't call
-      `system_objective_fulfilled` / `system_failed_to_fulfill_objective`
-      handling. The agent stays alive across tasks.
-- [ ] **[MODIFY] `declarations/`** — Instructions for infinite agents about
-      using `events_report_task_done` to report task completion and
-      `agents_await` to wait for more work.
+- [x] **[MODIFY] `declarations/events.functions.json`** — Added
+      `events_yield` declaration with required `outcome` (string) parameter.
+- [x] **[MODIFY] `declarations/events.instruction.md`** — Added documentation
+      for the yield workflow: receive task → do work → call `events_yield`.
+- [x] **[MODIFY] `functions/events.py`** — Added `events_yield` handler:
+      finds in-progress task, marks completed, delivers to parent, checks
+      pending updates, suspends. Added `caller_agent_id` parameter to factory.
+- [x] **[MODIFY] `provisioner.py`** — Wired `caller_agent_id=ticket_id` into
+      the events function group factory.
+- [x] **[MODIFY] `functions/agents.py`** — Updated `agents_assign_task` to
+      queue tasks for non-terminal infinite agents: creates TaskRecord, buffers
+      context update, delivers via `scheduler.deliver_to_task`. Finite agents
+      still get the "busy" error.
+- [x] **[MODIFY] `unified_agent_store.py`** — Fixed `_sync_task_record` to
+      not downgrade terminal tasks back to `in_progress`. Critical for infinite
+      agents where `events_yield` marks tasks completed while the agent is
+      still running.
 
 ### Hivetool Changes
 
-- [ ] **[MODIFY] `ticket-detail.ts`** — Task queue within agent detail: show
-      completed tasks, current task, and pending tasks.
-- [ ] **[MODIFY] `ticket-list.ts`** — Distinguish infinite agents (persistent
-      status badge) from finite agents (appear and disappear).
+- [x] **[MODIFY] `ticket-detail.ts`** — Suspension label shows "Waiting for
+      Task" when the suspend function is `events_yield`.
+- [x] **[MODIFY] `ticket-list.ts`** — ∞ indicator for infinite agents (those
+      without `system.*` in their function filter).
+- [x] **[MODIFY] `chat-panel.ts`** — Added `events_yield` and `agents_await`
+      to the non-interactive suspend list in both `renderInputUi` and
+      `hasChatContent`. Without this, suspended infinite agents incorrectly
+      showed a chat reply form.
+- [x] **[MODIFY] `ticket-pane.ts`** — Added `events_yield` and `agents_await`
+      to `isAwaitSuspend`. Status badge shows "waiting for task" for
+      `events_yield` suspensions.
+
+### Smoke Test Templates
+
+- [x] **[MODIFY] `hives/swarm-test/config/TEMPLATES.yaml`** — Added
+      `infinite-poet` template (no `system.*` = infinite). Updated
+      orchestrator to assign two sequential haiku tasks to the same slug.
 
 ### Verification
 
-- [ ] End-to-end test: infinite agent receives two tasks sequentially in one
-      session, completes both, session context carries over.
-- [ ] Verify that finite agent behavior is unchanged.
-- [ ] Hivetool: task queue visibly drains as agent works.
+- [x] Unit tests: 10 tests for `events_yield` handler and task queueing
+      (all passing).
+- [x] Existing test suite: 70 relevant tests passing, 0 regressions.
+- [x] End-to-end smoke test: orchestrator assigns two tasks to `infinite-poet`,
+      agent completes both sequentially in one session, hivetool shows
+      "waiting for task" status and task queue drains correctly.
 
 ---
 

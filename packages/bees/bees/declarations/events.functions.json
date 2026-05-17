@@ -34,5 +34,19 @@
       },
       "required": ["type", "message"]
     }
+  },
+  {
+    "name": "events_yield",
+    "description": "Report the outcome of your current task and wait for the next one. Call this when you have completed the work assigned to you. Your result will be delivered to the parent agent, and you will suspend until more work arrives. If another task is already queued, you will receive it immediately.",
+    "parametersJsonSchema": {
+      "type": "object",
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "description": "A summary of what you accomplished. Include key results, file paths created, or findings. This is delivered to the parent agent."
+        }
+      },
+      "required": ["outcome"]
+    }
   }
 ]

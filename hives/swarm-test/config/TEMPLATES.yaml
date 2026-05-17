@@ -1,15 +1,36 @@
 - name: orchestrator
   title: Orchestrator
   objective: >-
-    You are a simple orchestrator. Use agents_list_types to discover available
-    agent types, then use agents_assign_task to assign a task to a "writer"
-    agent with slug "poet". Wait for the writer to complete using agents_await,
-    then mark your own objective as fulfilled.
+    You are an orchestrator. Use agents_list_types to discover available
+    agent types, then assign two sequential tasks to an "infinite-poet"
+    agent with slug "poet".
+
+    Task 1: Write a haiku about bees. Save it to haiku.txt.
+    Task 2: Write a haiku about ants. Save it to ants.txt.
+
+    After assigning task 1, wait for it to complete using agents_await.
+    Then assign task 2 to the same slug and wait again.
+    When both tasks are complete, mark your objective as fulfilled with
+    a summary of the results.
   functions:
     - agents.*
     - system.*
   tasks:
-    - writer
+    - infinite-poet
+
+- name: infinite-poet
+  title: Infinite Poet
+  objective: >-
+    You are a poet. You will receive tasks describing what to write.
+    For each task, write the requested content to a file in your
+    workspace, then call events_yield with a summary of what you
+    produced.
+
+    Your first task:
+    {{system.context}}
+  functions:
+    - files.*
+    - events.*
 
 - name: writer
   title: Writer

@@ -195,14 +195,43 @@ def _make_handlers(
                     status_cb(None, None)
                 return {"agent_slug": slug, "status": "reused"}
 
-            # Non-terminal: agent is busy — can't queue yet (Phase 4).
+            # Non-terminal: agent is busy or suspended.
+            if existing.metadata.finite:
+                # Finite agents process one task at a time via fresh instances.
+                if status_cb:
+                    status_cb(None, None)
+                return {
+                    "error": f"Agent '{slug}' is currently busy "
+                    f"(status: {existing.metadata.status}). "
+                    f"Wait for it to complete before assigning a new task."
+                }
+
+            # Infinite agent: queue the task for delivery.
+            task_file_store = getattr(scheduler.store, '_task_file_store', None)
+            if task_file_store:
+                task_file_store.create(
+                    objective=objective,
+                    assignee=existing.id,
+                    created_by=caller_agent_id,
+                    kind="work",
+                    title=title or summary,
+                )
+
+            # Deliver task assignment as a context update.
+            task_update = {
+                "type": "task_assigned",
+                "objective": objective,
+                "from_slug": scope.slug_path if scope else None,
+            }
+            scheduler.deliver_to_task(
+                existing.id,
+                task_update,
+                expected_creator=None,  # Allow self-delivery.
+            )
+
             if status_cb:
                 status_cb(None, None)
-            return {
-                "error": f"Agent '{slug}' is currently busy "
-                f"(status: {existing.metadata.status}). "
-                f"Wait for it to complete before assigning a new task."
-            }
+            return {"agent_slug": slug, "status": "queued"}
 
         except Exception as e:
             logger.exception("agents_assign_task failed")

@@ -142,6 +142,7 @@ def provision_session(
             on_events_broadcast=on_events_broadcast,
             deliver_to_parent=deliver_to_parent,
             ticket_id=ticket_id,
+            caller_agent_id=ticket_id,
             scope=scope,
             scheduler=scheduler,
         ),
