@@ -13,12 +13,13 @@ import pytest
 
 from bees.coordination import route_coordination_task
 from bees.protocols.events import BroadcastReceived, TaskDone
-from bees.task_store import TaskStore
+from bees.unified_agent_store import UnifiedAgentStore
 
 
 @pytest.fixture
 def store(tmp_path):
-    return TaskStore(tmp_path)
+    (tmp_path / "tickets").mkdir()
+    return UnifiedAgentStore(tmp_path)
 
 
 # ---------------------------------------------------------------------------

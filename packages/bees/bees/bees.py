@@ -7,9 +7,11 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Awaitable, Callable, TypeVar
 
+from bees.agent import Agent
+from bees.agent_adapter import agent_to_ticket
 from bees.protocols.events import SchedulerEvent
 from bees.protocols.session import SessionRunner
-from bees.task_store import TaskStore
+from bees.unified_agent_store import UnifiedAgentStore
 from bees.task_node import TaskNode
 from bees.scheduler import Scheduler
 
@@ -32,7 +34,7 @@ class Bees:
         *,
         root_override: str | None = None,
     ):
-        self._store = TaskStore(hive_dir)
+        self._store = UnifiedAgentStore(hive_dir)
         self._observers: dict[type[SchedulerEvent], list[EventCallback]] = defaultdict(list)
         self._loop_task = None
 
@@ -73,10 +75,10 @@ class Bees:
         Returns the number of tasks resumed.
         """
         count = 0
-        for task in self._store.query_all(status="paused"):
-            task.metadata.status = task.metadata.paused_from or "available"
-            task.metadata.paused_from = None
-            self._store.save_metadata(task)
+        for agent in self._store.query_all(status="paused"):
+            agent.metadata.status = agent.metadata.paused_from or "available"
+            agent.metadata.paused_from = None
+            self._store.save_metadata(agent)
             count += 1
         return count
 
@@ -129,29 +131,31 @@ class Bees:
     @property
     def children(self) -> list[TaskNode]:
         """Returns all tasks that have no parents, as TaskNodes."""
-        return [TaskNode(task, self) for task in self._store.get_children(None)]
+        agents = self._store.get_children(None)
+        return [TaskNode(agent_to_ticket(a), self) for a in agents]
 
     @property
     def all(self) -> list[TaskNode]:
         """Returns all tasks in the hive."""
-        return [TaskNode(task, self) for task in self._store.query_all()]
+        agents = self._store.query_all()
+        return [TaskNode(agent_to_ticket(a), self) for a in agents]
 
     def get_by_id(self, task_id: str) -> TaskNode | None:
         """Looks up a task by ID and returns it as a TaskNode."""
-        task = self._store.get(task_id)
-        return TaskNode(task, self) if task else None
+        agent = self._store.get(task_id)
+        return TaskNode(agent_to_ticket(agent), self) if agent else None
 
     def query(self, tags: list[str]) -> list[TaskNode]:
         """Searches for tasks that contain all of the specified tags."""
-        all_tasks = self._store.query_all()
+        all_agents = self._store.query_all()
         matching_nodes: list[TaskNode] = []
-        for task in all_tasks:
-            task_tags = task.metadata.tags or []
-            if all(tag in task_tags for tag in tags):
-                matching_nodes.append(TaskNode(task, self))
+        for agent in all_agents:
+            agent_tags = agent.metadata.tags or []
+            if all(tag in agent_tags for tag in tags):
+                matching_nodes.append(TaskNode(agent_to_ticket(agent), self))
         return matching_nodes
 
     async def create_child(self, objective: str, **kwargs) -> TaskNode:
         """Creates a root task."""
-        task = await self._scheduler.create_task(objective, **kwargs)
-        return TaskNode(task, self)
+        agent = await self._scheduler.create_task(objective, **kwargs)
+        return TaskNode(agent_to_ticket(agent), self)

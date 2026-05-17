@@ -16,12 +16,19 @@ class ChooseResponse(TypedDict):
 
 
 class TaskNode:
-    """Wraps a Ticket and provides a tree traversal and manipulation API."""
+    """Wraps a Ticket and provides a tree traversal and manipulation API.
+
+    TaskNode is a public-facing API consumed by the server, eval, and
+    hivetool. It continues to expose ``Ticket`` objects. Internally it
+    accesses the ``TaskStore`` (tickets/) directly for queries and
+    mutations, bypassing the Agent-typed ``UnifiedAgentStore``.
+    """
 
     def __init__(self, task: Ticket, bees: Bees):
         self._task = task
         self._bees = bees
-        self._store = bees._store
+        # Use the inner TaskStore for Ticket-typed queries/mutations.
+        self._ticket_store = bees._store._ticket_store
 
     @property
     def task(self) -> Ticket:
@@ -36,7 +43,7 @@ class TaskNode:
     @property
     def children(self) -> list[TaskNode]:
         """Returns children of this task."""
-        tasks = self._store.get_children(self._task.id)
+        tasks = self._ticket_store.get_children(self._task.id)
         return [TaskNode(t, self._bees) for t in tasks]
 
     @property
@@ -44,7 +51,7 @@ class TaskNode:
         """Returns the parent of this task."""
         if not self._task.metadata.parent_task_id:
             return None
-        parent_task = self._store.get(self._task.metadata.parent_task_id)
+        parent_task = self._ticket_store.get(self._task.metadata.parent_task_id)
         return TaskNode(parent_task, self._bees) if parent_task else None
 
     @property
@@ -54,7 +61,7 @@ class TaskNode:
 
     def query(self, tags: list[str]) -> list[TaskNode]:
         """Searches for tasks in the subtree that contain all of the specified tags."""
-        all_tickets = self._store.query_all()
+        all_tickets = self._ticket_store.query_all()
         
         # Build child map
         from collections import defaultdict
@@ -93,10 +100,11 @@ class TaskNode:
 
     async def create_child(self, objective: str, **kwargs) -> TaskNode:
         """Creates a child task under this task."""
+        from bees.agent_adapter import agent_to_ticket
         kwargs['owning_task_id'] = self.id
         kwargs['parent_task_id'] = self.id
-        ticket = await self._bees._scheduler.create_task(objective, **kwargs)
-        return TaskNode(ticket, self._bees)
+        agent = await self._bees._scheduler.create_task(objective, **kwargs)
+        return TaskNode(agent_to_ticket(agent), self._bees)
 
     @overload
     def respond(self, response: ReplyResponse) -> Ticket: ...
@@ -135,13 +143,13 @@ class TaskNode:
             else:
                 payload["selectedIds"] = selectedIds
 
-        self._task = self._store.respond(self.id, payload)
+        self._task = self._ticket_store.respond(self.id, payload)
         self._bees.trigger()
         return self._task
 
     def save(self):
         """Saves the task metadata."""
-        self._store.save_metadata(self._task)
+        self._ticket_store.save_metadata(self._task)
 
     def retry(self):
         """Retries a paused task."""
@@ -161,7 +169,7 @@ class TaskNode:
         paused = self._bees._scheduler.pause_task(self.id)
         if paused:
             # Refresh our snapshot.
-            refreshed = self._store.get(self.id)
+            refreshed = self._ticket_store.get(self.id)
             if refreshed:
                 self._task = refreshed
         return paused
