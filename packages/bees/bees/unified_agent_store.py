@@ -153,9 +153,15 @@ class UnifiedAgentStore:
         self._ticket_store.save(agent_to_ticket(agent))
 
     def save_metadata(self, agent: Agent) -> None:
-        """Persist only the metadata."""
+        """Persist only the metadata.
+
+        In swarm layout, also syncs the corresponding task record's status
+        and outcome so that ``tasks/{uuid}.json`` stays consistent with
+        the agent's lifecycle transitions.
+        """
         if self._layout == "swarm":
             self._agent_store.save_metadata(agent)
+            self._sync_task_record(agent)
             return
 
         # Phase 6: remove legacy path
@@ -253,3 +259,73 @@ class UnifiedAgentStore:
         )
 
         return agent
+
+    # -- Task record sync --------------------------------------------------
+
+    # Agent statuses that warrant syncing to the task record.
+    # Not every save_metadata call changes the agent's externally-visible
+    # status — most are incremental bookkeeping (turns++, file list, etc.).
+    # We only pay the cost of scanning tasks/ when the agent enters a
+    # status that a task consumer would care about.
+    _SYNC_WORTHY_STATUSES = frozenset({
+        "running", "suspended", "completed", "failed", "cancelled",
+    })
+
+    # Agent status → task status mapping.
+    _AGENT_TO_TASK_STATUS: dict[str, str] = {
+        "available": "available",
+        "blocked": "available",
+        "running": "in_progress",
+        "suspended": "in_progress",
+        "paused": "in_progress",
+        "completed": "completed",
+        "failed": "failed",
+        "cancelled": "cancelled",
+    }
+
+    def _sync_task_record(self, agent: Agent) -> None:
+        """Sync the task record assigned to this agent.
+
+        Only runs when the agent's status is significant (running,
+        terminal). Finds the task whose ``assignee`` matches the agent
+        ID, then updates its ``status``, ``outcome``, ``outcome_content``,
+        and ``completed_at``.
+
+        Best-effort — missing or malformed task files are silently skipped.
+        The agent metadata is the source of truth; the task file is a
+        read model.
+        """
+        if agent.metadata.status not in self._SYNC_WORTHY_STATUSES:
+            return
+
+        tasks = self._task_file_store.query_by_assignee(agent.id)
+        if not tasks:
+            return
+
+        task_status = self._AGENT_TO_TASK_STATUS.get(
+            agent.metadata.status, "available"
+        )
+
+        for task in tasks:
+            changed = False
+
+            if task.status != task_status:
+                task.status = task_status
+                changed = True
+
+            if agent.metadata.outcome and task.outcome != agent.metadata.outcome:
+                task.outcome = agent.metadata.outcome
+                changed = True
+
+            if agent.metadata.outcome_content and task.outcome_content != agent.metadata.outcome_content:
+                task.outcome_content = agent.metadata.outcome_content
+                changed = True
+
+            if agent.metadata.completed_at and task.completed_at != agent.metadata.completed_at:
+                task.completed_at = agent.metadata.completed_at
+                changed = True
+
+            if changed:
+                self._task_file_store.save(task)
+
+

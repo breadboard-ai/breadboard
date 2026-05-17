@@ -5,16 +5,17 @@
  */
 
 /**
- * Signal-backed reactive store for ticket directories.
+ * Signal-backed reactive store for entity directories.
  *
- * Reads ticket data from `hive/tickets/{uuid}/` directories,
- * combining `metadata.json` and `objective.md` into TicketData objects.
+ * Reads entity data from `hive/agents/{uuid}/` (Project Swarm layout)
+ * or `hive/tickets/{uuid}/` (legacy layout), combining `metadata.json`
+ * and `objective.md` into TicketData objects for the UI.
  * Uses FileSystemObserver for live updates.
  */
 
 import { Signal } from "signal-polyfill";
 import type { StateAccess } from "./state-access.js";
-import type { TicketData, AgentData, TaskItemData, SurfaceManifest } from "./types.js";
+import type { TicketData, TaskItemData, SurfaceManifest } from "./types.js";
 import { LiveSessionClient } from "./live-session.js";
 
 export { TicketStore };
@@ -222,36 +223,54 @@ class TicketStore {
       const metadata = await this.#readJson(agentDir, "metadata.json");
       if (!metadata) continue;
 
-      const agentData = metadata as AgentData;
+      // The full agent metadata — includes execution-state bridge fields.
+      const md = metadata as Record<string, unknown>;
       const agentTasks = tasksByAssignee.get(name) ?? [];
       const chatLog = await this.#readJson(agentDir, "chat_log.json");
 
-      // Pick the first task's objective as the agent's objective,
-      // or fall back to the agent's type as a label.
-      const primaryTask = agentTasks[0];
-      const objective = primaryTask?.objective ?? `Agent: ${agentData.type}`;
+      // Read objective.md from the agent directory.
+      const objectiveMd = await this.#readText(agentDir, "objective.md");
 
-      // Shim agent data into TicketData shape.
+      // Pick the first task's objective, then objective.md, then type label.
+      const primaryTask = agentTasks[0];
+      const objective =
+        primaryTask?.objective ?? objectiveMd ?? `Agent: ${md.type}`;
+
+      // Shim agent data into TicketData shape — map every field the
+      // detail/pane components read.
       entries.push({
         id: name,
         objective,
-        status: agentData.status,
-        created_at: agentData.created_at,
-        completed_at: agentData.completed_at,
-        slug: agentData.slug,
-        model: agentData.model,
-        runner: agentData.runner,
-        voice: agentData.voice,
-        functions: agentData.functions,
-        skills: agentData.skills,
-        tags: agentData.tags,
-        playbook_id: agentData.playbook_id,
-        parent_task_id: agentData.parent_id,
-        owning_task_id: agentData.workspace_root_id,
-        active_session: agentData.active_session,
-        title: primaryTask?.title,
-        outcome: primaryTask?.outcome,
-        kind: primaryTask?.kind,
+        status: md.status as string,
+        created_at: md.created_at as string | undefined,
+        completed_at: md.completed_at as string | undefined,
+        slug: md.slug as string | undefined,
+        model: md.model as string | undefined,
+        runner: md.runner as TicketData["runner"],
+        voice: md.voice as string | undefined,
+        functions: md.functions as string[] | undefined,
+        skills: md.skills as string[] | undefined,
+        tags: md.tags as string[] | undefined,
+        playbook_id: md.playbook_id as string | undefined,
+        playbook_run_id: md.playbook_run_id as string | undefined,
+        parent_task_id: md.parent_id as string | undefined,
+        owning_task_id: md.workspace_root_id as string | undefined,
+        active_session: md.active_session as string | undefined,
+        title: (md.title as string | undefined) ?? primaryTask?.title,
+        outcome: (md.outcome as string | undefined) ?? primaryTask?.outcome,
+        kind: (md.kind as string | undefined) ?? primaryTask?.kind,
+        // Execution-state bridge fields.
+        error: md.error as string | undefined,
+        suspend_event: md.suspend_event as Record<string, unknown> | undefined,
+        context: md.context as string | undefined,
+        turns: md.turns as number | undefined,
+        thoughts: md.thoughts as number | undefined,
+        assignee: md.assignee as string | undefined,
+        depends_on: md.depends_on as string[] | undefined,
+        options: md.options as Record<string, unknown> | undefined,
+        files: md.files as TicketData["files"],
+        watch_events: md.watch_events as TicketData["watch_events"],
+        outcome_content: md.outcome_content as Record<string, unknown> | undefined,
         ...(chatLog ? { chat_history: chatLog as TicketData["chat_history"] } : {}),
       } as TicketData);
     }
@@ -286,15 +305,135 @@ class TicketStore {
   }
 
   /**
-   * Create a new task by writing files to `tickets/{uuid}/`.
+   * Create a new task.
    *
-   * Writes `objective.md` and `metadata.json` — the minimal structure
-   * the scheduler expects. The box's file watcher will detect the new
-   * directory and trigger the scheduler automatically.
+   * In swarm layout (agents/ exists), creates:
+   *   - `agents/{uuid}/metadata.json` and `agents/{uuid}/objective.md`
+   *   - `tasks/{uuid}.json`
+   * In legacy layout, creates `tickets/{uuid}/` with `objective.md`
+   * and `metadata.json`.
    *
-   * Returns the generated task ID (UUID).
+   * The box's file watcher detects the new directory and triggers the
+   * scheduler automatically.
+   *
+   * Returns the generated entity ID (UUID).
    */
   async createTask(opts: {
+    objective: string;
+    playbook_id?: string;
+    title?: string;
+    functions?: string[];
+    skills?: string[];
+    tags?: string[];
+    tasks?: string[];
+    model?: string;
+    runner?: "generate" | "live" | "direct_model";
+    context?: string;
+    watch_events?: Array<{ type: string }>;
+    options?: Record<string, unknown>;
+  }): Promise<string> {
+    if (this.#agentsHandle) {
+      return this.#createTaskSwarm(opts);
+    }
+    return this.#createTaskLegacy(opts);
+  }
+
+  /** Create agent + task in the Project Swarm layout. */
+  async #createTaskSwarm(opts: {
+    objective: string;
+    playbook_id?: string;
+    title?: string;
+    functions?: string[];
+    skills?: string[];
+    tags?: string[];
+    tasks?: string[];
+    model?: string;
+    runner?: "generate" | "live" | "direct_model";
+    context?: string;
+    watch_events?: Array<{ type: string }>;
+    options?: Record<string, unknown>;
+  }): Promise<string> {
+    if (!this.#agentsHandle) throw new Error("Agents handle not available");
+
+    const agentId = crypto.randomUUID();
+    const agentDir = await this.#agentsHandle.getDirectoryHandle(agentId, {
+      create: true,
+    });
+
+    // Determine if system.* functions are present.
+    const hasSystem = opts.functions?.some((f) => f.startsWith("system.")) ?? false;
+
+    // Write objective.md
+    const objectiveHandle = await agentDir.getFileHandle("objective.md", {
+      create: true,
+    });
+    const objectiveWritable = await objectiveHandle.createWritable();
+    await objectiveWritable.write(opts.objective);
+    await objectiveWritable.close();
+
+    // Build agent metadata — mirrors UnifiedAgentStore._create_swarm().
+    const metadata: Record<string, unknown> = {
+      type: opts.playbook_id ?? "",
+      slug: "",
+      status: "available",
+      finite: hasSystem,
+      runner: opts.runner ?? "generate",
+      created_at: new Date().toISOString(),
+      kind: "work",
+    };
+    if (opts.playbook_id) metadata.playbook_id = opts.playbook_id;
+    if (opts.playbook_id) metadata.playbook_run_id = crypto.randomUUID();
+    if (opts.title) metadata.title = opts.title;
+    if (opts.functions?.length) metadata.functions = opts.functions;
+    if (opts.skills?.length) metadata.skills = opts.skills;
+    if (opts.tags?.length) metadata.tags = opts.tags;
+    if (opts.tasks?.length) metadata.tasks = opts.tasks;
+    if (opts.model) metadata.model = opts.model;
+    if (opts.context) metadata.context = opts.context;
+    if (opts.watch_events?.length) metadata.watch_events = opts.watch_events;
+    if (opts.options && Object.keys(opts.options).length) metadata.options = opts.options;
+
+    // Write agent metadata.json
+    const metadataHandle = await agentDir.getFileHandle("metadata.json", {
+      create: true,
+    });
+    const metadataWritable = await metadataHandle.createWritable();
+    await metadataWritable.write(
+      JSON.stringify(metadata, null, 2) + "\n"
+    );
+    await metadataWritable.close();
+
+    // Write lightweight task record to tasks/.
+    if (this.#tasksHandle) {
+      const taskId = crypto.randomUUID();
+      const taskRecord: Record<string, unknown> = {
+        id: taskId,
+        objective: opts.objective,
+        status: "available",
+        assignee: agentId,
+        kind: "work",
+        created_at: new Date().toISOString(),
+      };
+      if (opts.title) taskRecord.title = opts.title;
+      if (opts.context) taskRecord.context = opts.context;
+      if (opts.tags?.length) taskRecord.tags = opts.tags;
+
+      const taskFileHandle = await this.#tasksHandle.getFileHandle(
+        `${taskId}.json`,
+        { create: true },
+      );
+      const taskWritable = await taskFileHandle.createWritable();
+      await taskWritable.write(
+        JSON.stringify(taskRecord, null, 2) + "\n"
+      );
+      await taskWritable.close();
+    }
+
+    return agentId;
+  }
+
+  /** Create task in the legacy tickets/ layout. */
+  async #createTaskLegacy(opts: {
     objective: string;
     playbook_id?: string;
     title?: string;
@@ -618,7 +757,7 @@ class TicketStore {
   // ── Live session detection ──
 
   async #detectLiveSessions(tickets: TicketData[]): Promise<void> {
-    if (!this.#ticketsHandle) return;
+    if (!this.#ticketsHandle && !this.#agentsHandle) return;
 
     const liveTickets = tickets.filter((t) => t.runner === "live");
     if (liveTickets.length === 0) {
@@ -631,10 +770,8 @@ class TicketStore {
     const activeIds = new Set<string>();
     for (const ticket of liveTickets) {
       try {
-        const ticketDir = await this.#ticketsHandle.getDirectoryHandle(
-          ticket.id,
-        );
-        if (await LiveSessionClient.hasActiveSession(ticketDir)) {
+        const entityDir = await this.#getEntityDirHandle(ticket.id);
+        if (entityDir && await LiveSessionClient.hasActiveSession(entityDir)) {
           activeIds.add(ticket.id);
         }
       } catch {
@@ -653,7 +790,11 @@ class TicketStore {
   }
 
   #startObserver(): void {
-    if (!this.#ticketsHandle) return;
+    // Observe the primary entity directory: agents/ in swarm layout,
+    // tickets/ in legacy layout. One recursive observer covers both
+    // metadata changes and workspace file writes.
+    const handle = this.#agentsHandle ?? this.#ticketsHandle;
+    if (!handle) return;
     if (!("FileSystemObserver" in globalThis)) return;
     try {
       // FileSystemObserver is experimental — access via dynamic typing.
@@ -711,8 +852,8 @@ class TicketStore {
           }
         }
       });
-      // Recursive — ticket subdirectories may be added/modified.
-      observer.observe(this.#ticketsHandle, { recursive: true });
+      // Recursive — entity subdirectories may be added/modified.
+      observer.observe(handle, { recursive: true });
       this.#observer = observer;
     } catch (e) {
       console.warn("FileSystemObserver not available:", e);

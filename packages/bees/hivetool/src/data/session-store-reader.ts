@@ -208,38 +208,68 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
 class SessionStoreReader {
   constructor(private access: StateAccess) {}
 
-  async findTicketForSession(sessionId: string): Promise<string | null> {
-    const ticketsHandle = await this.access.getSubdirectory("tickets");
-    if (!ticketsHandle) return null;
-    try {
-      for await (const [name, entry] of (
-        ticketsHandle as FileSystemDirectoryHandle & {
-          entries(): AsyncIterable<[string, FileSystemHandle]>;
-        }
-      ).entries()) {
-        if (entry.kind !== "directory") continue;
-        const ticketDir = await ticketsHandle.getDirectoryHandle(name);
-        try {
-          const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
-          await sessionsDir.getDirectoryHandle(sessionId);
-          return name;
-        } catch {
-          // Not in this ticket
-        }
+  /**
+   * Resolve the directory handle for an entity by ID.
+   *
+   * Tries `agents/{id}` first (Project Swarm layout), then falls back
+   * to `tickets/{id}` (legacy layout).
+   */
+  async #getEntityDir(entityId: string): Promise<FileSystemDirectoryHandle | null> {
+    // Try agents/ first.
+    const agentsHandle = await this.access.getSubdirectory("agents");
+    if (agentsHandle) {
+      try {
+        return await agentsHandle.getDirectoryHandle(entityId);
+      } catch {
+        // Not in agents/, try tickets/.
       }
-    } catch {
-      // Ignore scanning errors
+    }
+    // Fall back to tickets/.
+    const ticketsHandle = await this.access.getSubdirectory("tickets");
+    if (ticketsHandle) {
+      try {
+        return await ticketsHandle.getDirectoryHandle(entityId);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  async findTicketForSession(sessionId: string): Promise<string | null> {
+    // Search agents/ first, then tickets/.
+    for (const dirName of ["agents", "tickets"]) {
+      const dirHandle = await this.access.getSubdirectory(dirName);
+      if (!dirHandle) continue;
+      try {
+        for await (const [name, entry] of (
+          dirHandle as FileSystemDirectoryHandle & {
+            entries(): AsyncIterable<[string, FileSystemHandle]>;
+          }
+        ).entries()) {
+          if (entry.kind !== "directory") continue;
+          const entityDir = await dirHandle.getDirectoryHandle(name);
+          try {
+            const sessionsDir = await entityDir.getDirectoryHandle("sessions");
+            await sessionsDir.getDirectoryHandle(sessionId);
+            return name;
+          } catch {
+            // Not in this entity
+          }
+        }
+      } catch {
+        // Ignore scanning errors
+      }
     }
     return null;
   }
 
   async readLineage(ticketId: string): Promise<SessionLineageInfo[]> {
-    const ticketsHandle = await this.access.getSubdirectory("tickets");
-    if (!ticketsHandle) return [];
+    const entityDir = await this.#getEntityDir(ticketId);
+    if (!entityDir) return [];
 
     try {
-      const ticketDir = await ticketsHandle.getDirectoryHandle(ticketId);
-      const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+      const sessionsDir = await entityDir.getDirectoryHandle("sessions");
       const result: SessionLineageInfo[] = [];
 
       for await (const [name, entry] of (
@@ -279,11 +309,10 @@ class SessionStoreReader {
   }
 
   async readTurns(ticketId: string, sessionId: string): Promise<TurnCheckpointInfo[]> {
-    const ticketsHandle = await this.access.getSubdirectory("tickets");
-    if (!ticketsHandle) return [];
+    const entityDir = await this.#getEntityDir(ticketId);
+    if (!entityDir) return [];
     try {
-      const ticketDir = await ticketsHandle.getDirectoryHandle(ticketId);
-      const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+      const sessionsDir = await entityDir.getDirectoryHandle("sessions");
       const sessionDir = await sessionsDir.getDirectoryHandle(sessionId);
       const turns = await this.#readJson(sessionDir, "turns.json");
       if (Array.isArray(turns)) {
@@ -296,11 +325,10 @@ class SessionStoreReader {
   }
 
   async readEvents(ticketId: string, sessionId: string): Promise<unknown[]> {
-    const ticketsHandle = await this.access.getSubdirectory("tickets");
-    if (!ticketsHandle) return [];
+    const entityDir = await this.#getEntityDir(ticketId);
+    if (!entityDir) return [];
     try {
-      const ticketDir = await ticketsHandle.getDirectoryHandle(ticketId);
-      const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+      const sessionsDir = await entityDir.getDirectoryHandle("sessions");
       const sessionDir = await sessionsDir.getDirectoryHandle(sessionId);
       const text = await this.#readText(sessionDir, "events.jsonl");
       if (!text) return [];
@@ -311,11 +339,10 @@ class SessionStoreReader {
   }
 
   async readInteraction(ticketId: string, sessionId: string): Promise<unknown | null> {
-    const ticketsHandle = await this.access.getSubdirectory("tickets");
-    if (!ticketsHandle) return null;
+    const entityDir = await this.#getEntityDir(ticketId);
+    if (!entityDir) return null;
     try {
-      const ticketDir = await ticketsHandle.getDirectoryHandle(ticketId);
-      const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+      const sessionsDir = await entityDir.getDirectoryHandle("sessions");
       const sessionDir = await sessionsDir.getDirectoryHandle(sessionId);
       return await this.#readJson(sessionDir, "interaction.json");
     } catch {
