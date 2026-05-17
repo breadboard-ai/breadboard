@@ -310,6 +310,13 @@ class UnifiedAgentStore:
             changed = False
 
             if task.status != task_status:
+                # Don't downgrade a task that's already terminal.
+                # For infinite agents, events_yield marks individual tasks
+                # as completed while the agent is still running. The
+                # agent-level sync must not revert those to in_progress.
+                _TERMINAL_TASK = {"completed", "failed", "cancelled"}
+                if task.status in _TERMINAL_TASK and task_status not in _TERMINAL_TASK:
+                    continue
                 task.status = task_status
                 changed = True
 

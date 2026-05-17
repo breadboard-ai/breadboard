@@ -134,6 +134,9 @@ class BeesTicketList extends SignalWatcher(LitElement) {
   }
 
   private renderItem(t: TicketData, selectedId: string | null) {
+    const isInfinite = t.functions?.length &&
+      !t.functions.some((f) => f.startsWith("system."));
+
     return html`
       <div
         class="job-item ${selectedId === t.id ? "selected" : ""} ${this
@@ -144,6 +147,9 @@ class BeesTicketList extends SignalWatcher(LitElement) {
       >
         <div class="job-header">
           <div class="job-title">${this.displayName(t)}</div>
+          ${isInfinite
+            ? html`<span style="font-size:0.7rem;color:#94a3b8;margin-right:4px" title="Persistent agent">∞</span>`
+            : nothing}
           <div class="job-status ${t.status}"></div>
         </div>
         <div class="job-meta">

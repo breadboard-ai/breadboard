@@ -171,15 +171,19 @@ class BeesTicketPane extends SignalWatcher(LitElement) {
       ticket.suspend_event?.function_name as string | undefined;
     const isAwaitSuspend =
       suspendFn === "chat_await_context_update" ||
-      suspendFn === "tasks_await";
+      suspendFn === "tasks_await" ||
+      suspendFn === "agents_await" ||
+      suspendFn === "events_yield";
     const statusLabel =
       ticket.status === "suspended" &&
       ticket.assignee === "user" &&
       !isAwaitSuspend
         ? "waiting for user"
-        : ticket.status === "suspended"
-          ? "waiting for event"
-          : ticket.status;
+        : ticket.status === "suspended" && suspendFn === "events_yield"
+          ? "waiting for task"
+          : ticket.status === "suspended"
+            ? "waiting for event"
+            : ticket.status;
 
     // Collect identity chips.
     const identityChips: Array<{
