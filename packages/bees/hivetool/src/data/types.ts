@@ -7,6 +7,9 @@
 // Re-export the shared backend API contract.
 export type { TaskData as TicketData } from "../../../common/types.js";
 
+// Project Swarm — decoupled entity types.
+export type { AgentData, TaskItemData } from "../../../common/types.js";
+
 // ---------------------------------------------------------------------------
 // Log file types (from EvalCollector output in packages/bees/hive/logs)
 // ---------------------------------------------------------------------------
