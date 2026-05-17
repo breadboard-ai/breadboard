@@ -133,16 +133,14 @@ def _make_handlers(
                         return {"error": f"Invalid value '{value}' for option '{key}'. Valid values for '{key}' in '{task_type}' are: {valid_str}."}
 
         try:
-            ticket_store = getattr(scheduler.store, '_ticket_store', scheduler.store) if scheduler else None
-            parent = ticket_store.get(caller_ticket_id) if ticket_store and caller_ticket_id else None
             if not parent:
-                return {"error": "Parent ticket not found"}
+                return {"error": "Parent agent not found"}
 
-            task = stamp_child_task(
+            child = stamp_child_task(
                 task_type,
-                parent_task=parent,
+                parent=parent,
                 slug=slug,
-                store=ticket_store,
+                store=scheduler.store,
                 context=objective,
                 title=title or summary,
                 scope=scope,
@@ -156,7 +154,7 @@ def _make_handlers(
         if status_cb:
             status_cb(None, None)
 
-        return {"task_id": task.id, "status": task.metadata.status}
+        return {"task_id": child.id, "status": child.metadata.status}
 
     async def _tasks_check_status(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
         if status_cb:
@@ -166,24 +164,21 @@ def _make_handlers(
         if caller_ticket_id:
             from collections import defaultdict
 
-            # Build an index: parent_task_id -> list of child tickets.
-            # Use the inner TaskStore to get Ticket objects (which have
-            # parent_task_id), not Agent objects (which use parent_id).
-            ticket_store = getattr(scheduler.store, '_ticket_store', scheduler.store) if scheduler else None
+            # Build an index: parent_id -> list of child agents.
             children_of: dict[str, list[Any]] = defaultdict(list)
-            for t in (ticket_store.query_all() if ticket_store else []):
-                if t.metadata.parent_task_id:
-                    children_of[t.metadata.parent_task_id].append(t)
+            for a in (scheduler.store.query_all() if scheduler else []):
+                if a.metadata.parent_id:
+                    children_of[a.metadata.parent_id].append(a)
 
             def _build_tree(parent_id: str) -> list[dict[str, Any]]:
                 result: list[dict[str, Any]] = []
-                for t in children_of.get(parent_id, []):
+                for a in children_of.get(parent_id, []):
                     node: dict[str, Any] = {
-                        "task_id": t.id,
-                        "summary": t.metadata.title or "(no title)",
-                        "status": t.metadata.status,
+                        "task_id": a.id,
+                        "summary": a.metadata.title or "(no title)",
+                        "status": a.metadata.status,
                     }
-                    subtasks = _build_tree(t.id)
+                    subtasks = _build_tree(a.id)
                     if subtasks:
                         node["subtasks"] = subtasks
                     result.append(node)

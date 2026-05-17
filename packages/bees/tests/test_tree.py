@@ -154,8 +154,10 @@ async def test_task_node_create_child(temp_hive):
 
 def test_task_node_respond(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
-    ticket_store_mock = Mock()
-    bees._store._ticket_store = ticket_store_mock
+    store_mock = Mock()
+    store_mock.respond = Mock()
+    store_mock.get = Mock(return_value=None)
+    bees._store = store_mock
     
     ticket = Mock()
     ticket.id = "task1"
@@ -163,13 +165,15 @@ def test_task_node_respond(temp_hive):
     
     node.respond({"text": "reply"})
     
-    ticket_store_mock.respond.assert_called_once_with("task1", {"text": "reply"})
+    store_mock.respond.assert_called_once_with("task1", {"text": "reply"})
 
 
 def test_task_node_respond_with_text_kwarg(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
-    ticket_store_mock = Mock()
-    bees._store._ticket_store = ticket_store_mock
+    store_mock = Mock()
+    store_mock.respond = Mock()
+    store_mock.get = Mock(return_value=None)
+    bees._store = store_mock
     
     ticket = Mock()
     ticket.id = "task1"
@@ -177,13 +181,15 @@ def test_task_node_respond_with_text_kwarg(temp_hive):
     
     node.respond(text="reply")
     
-    ticket_store_mock.respond.assert_called_once_with("task1", {"text": "reply"})
+    store_mock.respond.assert_called_once_with("task1", {"text": "reply"})
 
 
 def test_task_node_respond_with_selected_ids_kwarg(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
-    ticket_store_mock = Mock()
-    bees._store._ticket_store = ticket_store_mock
+    store_mock = Mock()
+    store_mock.respond = Mock()
+    store_mock.get = Mock(return_value=None)
+    bees._store = store_mock
     
     ticket = Mock()
     ticket.id = "task1"
@@ -191,7 +197,7 @@ def test_task_node_respond_with_selected_ids_kwarg(temp_hive):
     
     node.respond(selectedIds=["choice1"])
     
-    ticket_store_mock.respond.assert_called_once_with("task1", {"selectedIds": ["choice1"]})
+    store_mock.respond.assert_called_once_with("task1", {"selectedIds": ["choice1"]})
 
 
 def test_task_node_respond_mutually_exclusive_kwargs(temp_hive):

@@ -212,8 +212,8 @@ async def run_case(
             except Exception as e:
                 logger.warning("Failed to parse eval/config.yaml: %s", e)
 
-        from bees.task_store import TaskStore
-        store = TaskStore(work_dir)
+        from bees.unified_agent_store import UnifiedAgentStore
+        store = UnifiedAgentStore(work_dir)
 
         iteration = 0
         all_summaries = []
@@ -349,9 +349,9 @@ async def run_case(
     duration = time.monotonic() - start
 
     # Query final task states from the store.
-    from bees.task_store import TaskStore
+    from bees.unified_agent_store import UnifiedAgentStore
 
-    store = TaskStore(work_dir)
+    store = UnifiedAgentStore(work_dir)
     all_tasks = store.query_all()
 
     task_summaries = [

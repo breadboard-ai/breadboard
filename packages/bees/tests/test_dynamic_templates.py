@@ -19,6 +19,7 @@ from bees.playbook import (
     stamp_child_task,
 )
 from bees.task_store import TaskStore
+from bees.unified_agent_store import UnifiedAgentStore
 from bees.provisioner import provision_session
 from bees.ticket import Ticket
 from bees.subagent_scope import SubagentScope
@@ -206,8 +207,8 @@ async def test_tasks_create_task_dynamic(temp_hive):
     """Verify tasks_create_task successfully creates task from dynamically authored templates."""
     from bees.functions.tasks import get_tasks_function_group_factory
     
-    store = TaskStore(temp_hive)
-    parent_task = store.create(
+    store = UnifiedAgentStore(temp_hive)
+    parent = store.create(
         "Test objective",
         title="Test Task",
         playbook_id="opie",
@@ -215,7 +216,7 @@ async def test_tasks_create_task_dynamic(temp_hive):
     )
     
     # Add dynamic template
-    workspace_dir = parent_task.fs_dir
+    workspace_dir = parent.fs_dir
     local_templates_dir = workspace_dir / "templates"
     local_templates_dir.mkdir(parents=True, exist_ok=True)
     
@@ -236,10 +237,10 @@ async def test_tasks_create_task_dynamic(temp_hive):
     scheduler = MockScheduler(store)
     
     factory = get_tasks_function_group_factory(
-        scope=SubagentScope.for_ticket(parent_task),
-        caller_ticket_id=parent_task.id,
+        scope=SubagentScope.for_agent(parent),
+        caller_ticket_id=parent.id,
         scheduler=scheduler,
-        ticket_id=parent_task.id,
+        ticket_id=parent.id,
     )
     
     class MockHooks:
@@ -268,11 +269,11 @@ async def test_tasks_create_task_dynamic(temp_hive):
     assert "error" not in result
     
     # Verify child was written to store successfully
-    all_tickets = store.query_all()
-    child_tickets = [t for t in all_tickets if t.metadata.parent_task_id == parent_task.id]
-    assert len(child_tickets) == 1
+    all_agents = store.query_all()
+    child_agents = [a for a in all_agents if a.metadata.parent_id == parent.id]
+    assert len(child_agents) == 1
     
-    child = child_tickets[0]
+    child = child_agents[0]
     assert child.metadata.playbook_id == "custom-worker"
     assert child.metadata.slug == "custom-run"
     assert child.metadata.context == "some custom parameters"

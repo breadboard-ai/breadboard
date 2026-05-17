@@ -83,9 +83,8 @@ async def route_coordination_task(
             continue
 
         # Let the playbook hook intercept before delivery.
-        sub_ticket = agent_to_ticket(sub)
         result = run_event_hooks(
-            signal_type, payload, sub_ticket, store._ticket_store,
+            signal_type, payload, sub, store,
         )
         if result is None:
             # Hook ate the event — mark delivered, skip agent.

@@ -226,9 +226,8 @@ class Scheduler:
             return None
 
         logger.info("Booting root template '%s'", root)
-        ticket = run_playbook(root, store=self.store._ticket_store)
-        agent = self.store.get(ticket.id)
-        await self._emit(TaskAdded(task=ticket))
+        agent = run_playbook(root, store=self.store)
+        await self._emit(TaskAdded(task=agent_to_ticket(agent)))
         return agent
 
     async def wait_for_task(self, task_id: str, timeout_ms: float) -> str:
@@ -304,10 +303,10 @@ class Scheduler:
         self._deleted_tasks.add(task_id)
         self._running_tasks.discard(task_id)
 
-        # Remove ticket directory.
-        ticket_dir = self.store.tickets_dir / task_id
-        if ticket_dir.exists():
-            shutil.rmtree(ticket_dir)
+        # Remove entity directory.
+        entity_dir = self.store.entity_dir(task_id)
+        if entity_dir.exists():
+            shutil.rmtree(entity_dir)
 
         # Remove matching session logs.
         logs_dir = self.store.hive_dir / "logs"
@@ -612,7 +611,7 @@ class Scheduler:
             # so that parent tasks waiting for children get woken up.
             for item in all_items_in_cycle:
                 updated = self.store.get(item.id) or item
-                run_task_done_hooks(agent_to_ticket(updated))
+                run_task_done_hooks(updated)
 
                 parent_id = updated.metadata.parent_id
                 if parent_id and updated.metadata.status in (
@@ -662,7 +661,7 @@ class Scheduler:
                 return
 
             updated = self.store.get(agent.id) or agent
-            run_task_done_hooks(agent_to_ticket(updated))
+            run_task_done_hooks(updated)
             self._notify_task_done(agent.id)
 
             parent_id = updated.metadata.parent_id

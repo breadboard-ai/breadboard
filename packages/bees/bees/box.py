@@ -101,8 +101,8 @@ def classify_change(path: Path, hive_dir: Path) -> ChangeKind:
             return "ignore"
         return "mutation"
 
-    # Task paths → hot trigger.
-    if top == "tickets":
+    # Entity paths → hot trigger.
+    if top in ("tickets", "agents", "tasks"):  # Phase 6: remove "tickets"
         return "task"
 
     return "ignore"
