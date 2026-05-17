@@ -262,7 +262,6 @@ async def test_tasks_create_task_dynamic(temp_hive):
         "summary": "My Custom Run",
         "objective": "some custom parameters",
         "slug": "custom-run",
-        "wait_ms_before_async": 10,
     }
     
     result = await create_task(args, None)

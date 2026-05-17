@@ -105,7 +105,7 @@ using bees-native protocols from `bees/protocols/`:
 | `sandbox`      | `sandbox.*`      | Sandboxed bash execution in the task's working directory.                                                                |
 | `chat`         | `chat.*`         | User interaction: `chat_request_user_input`, `chat_present_choices`, `chat_await_context_update`.                        |
 | `events`       | `events.*`       | Cross-agent communication: `events_broadcast`, `events_send_to_parent`.                                                  |
-| `tasks`        | `tasks.*`        | Task management: `tasks_list_types`, `tasks_create_task`, `tasks_check_status`, `tasks_cancel_task`, `tasks_send_event`. |
+| `tasks`        | `tasks.*`        | Task management: `tasks_list_types`, `tasks_create_task`, `tasks_check_status`, `tasks_cancel_task`, `tasks_send_event`, `tasks_await`. |
 | `skills`       | `skills.*`       | Instruction-only: injects a system instruction listing available skills. No callable functions.                          |
 | `live`         | `live.*`         | Instruction-only: voice-native system instruction for `runner: live` sessions. No callable functions.                    |
 
@@ -169,7 +169,8 @@ includes:
 ### Suspend
 
 When the model calls a suspend function (`chat.request_user_input`,
-`chat.present_choices`, or `chat.await_context_update`), the agent loop raises a
+`chat.present_choices`, `chat.await_context_update`, or `tasks.await`), the
+agent loop raises a
 `SuspendError`. The session state is persisted to `session_state.json` in the
 task directory:
 

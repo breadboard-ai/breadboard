@@ -289,7 +289,7 @@ The built-in function groups are:
 
 | Group    | Filter prefix | Purpose                                                                                                                 |
 | -------- | ------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `tasks`  | `tasks.*`     | Task management: `tasks_list_types`, `tasks_create_task`, `tasks_check_status`, `tasks_cancel_task`, `tasks_send_event` |
+| `tasks`  | `tasks.*`     | Task management: `tasks_list_types`, `tasks_create_task`, `tasks_check_status`, `tasks_cancel_task`, `tasks_send_event`, `tasks_await` |
 | `events` | `events.*`    | Cross-agent communication: `events_broadcast`, `events_send_to_parent`                                                  |
 
 #### Task trees

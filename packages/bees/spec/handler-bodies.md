@@ -182,7 +182,8 @@ For each file, the migration is:
 - The `SessionHooks` protocol
 - The `assemble_function_group` call
 - The loaded declarations
-- The bees-local wrappers in `chat.py` (`chat_await_context_update`)
+- The bees-local wrappers in `chat.py` (`chat_await_context_update` — now a
+  thin alias for the shared `tasks_await` suspend logic)
 
 ### After this spec
 

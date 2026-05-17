@@ -196,35 +196,53 @@ async def test_tasks_create_task_async(write_template):
 
 
 @pytest.mark.asyncio
-async def test_tasks_create_task_sync_wait_timeout(write_template, monkeypatch):
-    write_template({
-        "name": "my-task",
-        "title": "My Task Template",
+async def test_tasks_await_with_pending_updates():
+    """tasks_await returns immediately when context updates are buffered."""
+    from bees.protocols.handler_types import CONTEXT_PARTS_KEY
 
-        "objective": "Do it.",
-    })
+    caller = GLOBAL_STORE.create("I'm the caller")
+    caller.metadata.pending_context_updates = [
+        {"type": "task_completed", "message": "Task abc done"},
+    ]
+    GLOBAL_STORE.save_metadata(caller)
 
     mock_scheduler = MagicMock()
     mock_scheduler.store = GLOBAL_STORE
-    mock_scheduler.wait_for_task = AsyncMock(return_value="running")
 
-    caller = GLOBAL_STORE.create("I'm the caller")
     scope = SubagentScope(workspace_root_id=caller.id)
     handlers = _make_handlers(scope=scope, caller_ticket_id=caller.id, scheduler=mock_scheduler)
 
-    args = {
-        "type": "my-task",
-        "summary": "Testing create sync",
-        "objective": "Full objective",
-        "slug": "my-slug",
-        "wait_ms_before_async": 1000
-    }
+    result = await handlers["tasks_await"]({}, None)
 
-    result = await handlers["tasks_create_task"](args, None)
+    assert result["resumed"] is True
+    assert CONTEXT_PARTS_KEY in result
 
-    assert "task_id" in result
-    assert result["status"] == "running"
-    mock_scheduler.wait_for_task.assert_called_once()
+    # Pending updates should be drained.
+    fresh = GLOBAL_STORE.get(caller.id)
+    assert fresh.metadata.pending_context_updates == []
+
+
+@pytest.mark.asyncio
+async def test_tasks_await_suspends_when_no_updates():
+    """tasks_await raises SuspendError when no updates are pending."""
+    from bees.protocols.handler_types import SuspendError
+
+    caller = GLOBAL_STORE.create("I'm the caller")
+    caller.metadata.pending_context_updates = []
+    GLOBAL_STORE.save_metadata(caller)
+
+    mock_scheduler = MagicMock()
+    mock_scheduler.store = GLOBAL_STORE
+
+    scope = SubagentScope(workspace_root_id=caller.id)
+    handlers = _make_handlers(scope=scope, caller_ticket_id=caller.id, scheduler=mock_scheduler)
+
+    with pytest.raises(SuspendError) as exc_info:
+        await handlers["tasks_await"]({}, None)
+
+    # The function call part should identify as tasks_await.
+    fc = exc_info.value.function_call_part
+    assert fc["functionCall"]["name"] == "tasks_await"
 
 
 @pytest.mark.asyncio
