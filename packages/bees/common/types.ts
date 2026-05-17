@@ -48,3 +48,57 @@ export interface TaskData {
   active_session?: string;
   options?: Record<string, unknown>;
 }
+
+// ---------------------------------------------------------------------------
+// Project Swarm — decoupled entity types
+// ---------------------------------------------------------------------------
+
+/**
+ * Agent data — a persistent identity with session, workspace, and tools.
+ *
+ * Mirrors the ``agents`` SQL table from Project Swarm. Agents own
+ * configuration and lifecycle; work items are separate TaskItemData.
+ */
+export interface AgentData {
+  id: string;
+  type: string;
+  slug: string;
+  status: string;
+  finite: boolean;
+  parent_id?: string;
+  workspace_root_id?: string;
+  active_session?: string;
+  model?: string;
+  runner?: "generate" | "live" | "direct_model";
+  voice?: string;
+  functions?: string[];
+  skills?: string[];
+  tags?: string[];
+  playbook_id?: string;
+  tasks?: string[];
+  created_at?: string;
+  completed_at?: string;
+}
+
+/**
+ * Lightweight task data — a work item assigned to an agent.
+ *
+ * Mirrors the ``tasks`` SQL table from Project Swarm. Tasks carry an
+ * objective and outcome, but no session or workspace.
+ */
+export interface TaskItemData {
+  id: string;
+  objective: string;
+  status: string;
+  assignee?: string;
+  created_by?: string;
+  kind?: string;
+  title?: string;
+  outcome?: string;
+  outcome_content?: Record<string, unknown>;
+  context?: string;
+  tags?: string[];
+  depends_on?: string[];
+  created_at?: string;
+  completed_at?: string;
+}

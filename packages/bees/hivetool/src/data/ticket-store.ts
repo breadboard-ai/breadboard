@@ -14,7 +14,7 @@
 
 import { Signal } from "signal-polyfill";
 import type { StateAccess } from "./state-access.js";
-import type { TicketData, SurfaceManifest } from "./types.js";
+import type { TicketData, AgentData, TaskItemData, SurfaceManifest } from "./types.js";
 import { LiveSessionClient } from "./live-session.js";
 
 export { TicketStore };
@@ -64,17 +64,34 @@ class TicketStore {
   readonly activeConnection = new Signal.State<LiveSessionClient | null>(null);
 
   #ticketsHandle: FileSystemDirectoryHandle | null = null;
+  /** Handle for agents/ directory (Project Swarm layout). */
+  #agentsHandle: FileSystemDirectoryHandle | null = null;
+  /** Handle for tasks/ directory (Project Swarm layout). */
+  #tasksHandle: FileSystemDirectoryHandle | null = null;
   #observer: { disconnect(): void } | null = null;
   #activated = false;
 
-  /** Activate the store — resolves tickets/ subdir, scans, observes. */
+  /** Activate the store — resolves entity directories, scans, observes.
+   *
+   * Tries `agents/` first (Project Swarm layout). Falls back to
+   * `tickets/` (legacy layout). When `agents/` exists, also resolves
+   * `tasks/` for lightweight task data.
+   */
   async activate(): Promise<void> {
     if (this.#activated) return;
     if (this.access.accessState.get() !== "ready") return;
 
+    // Try agents/ first (Project Swarm layout).
+    const agentsHandle = await this.access.getSubdirectory("agents");
+    if (agentsHandle) {
+      this.#agentsHandle = agentsHandle;
+      this.#tasksHandle = await this.access.getSubdirectory("tasks");
+    }
+
+    // Always resolve tickets/ (legacy layout or create for backward compat).
     const ticketsHandle = await this.access.getSubdirectory("tickets", { create: true });
-    if (!ticketsHandle) {
-      console.warn("Could not find tickets/ subdirectory in hive/");
+    if (!ticketsHandle && !agentsHandle) {
+      console.warn("Could not find tickets/ or agents/ subdirectory in hive/");
       return;
     }
 
@@ -84,10 +101,53 @@ class TicketStore {
     this.#startObserver();
   }
 
-  /** Scan the tickets subdirectory and rebuild the ticket list. */
+  /** Scan entity directories and rebuild the ticket list.
+   *
+   * Reads from `agents/` + `tasks/` (Project Swarm layout) and/or
+   * `tickets/` (legacy layout), merging results into a single list.
+   * Agent data is shimmed into the `TicketData` shape so downstream
+   * UI components work without changes.
+   */
   async scan(): Promise<void> {
-    if (!this.#ticketsHandle) return;
+    const entries: TicketData[] = [];
 
+    // Scan agents/ (Project Swarm layout).
+    if (this.#agentsHandle) {
+      const agentTasks = await this.#scanAgentsDir();
+      entries.push(...agentTasks);
+    }
+
+    // Scan tickets/ (legacy layout).
+    if (this.#ticketsHandle) {
+      const ticketEntries = await this.#scanTicketsDir();
+      // Deduplicate: if an agent with the same ID was already loaded
+      // from agents/, skip the ticket.
+      const agentIds = new Set(entries.map((e) => e.id));
+      for (const t of ticketEntries) {
+        if (!agentIds.has(t.id)) entries.push(t);
+      }
+    }
+
+    if (entries.length === 0 && !this.#ticketsHandle && !this.#agentsHandle) {
+      return;
+    }
+
+    // Sort newest first.
+    entries.sort((a, b) => {
+      const aDate = a.created_at ?? "";
+      const bDate = b.created_at ?? "";
+      return bDate.localeCompare(aDate);
+    });
+
+    this.tickets.set(entries);
+
+    // Detect active live sessions.
+    await this.#detectLiveSessions(entries);
+  }
+
+  /** Scan `tickets/` — the legacy fused layout. */
+  async #scanTicketsDir(): Promise<TicketData[]> {
+    if (!this.#ticketsHandle) return [];
     const entries: TicketData[] = [];
 
     for await (const [name, entry] of (
@@ -112,17 +172,91 @@ class TicketStore {
       } as TicketData);
     }
 
-    // Sort newest first.
-    entries.sort((a, b) => {
-      const aDate = a.created_at ?? "";
-      const bDate = b.created_at ?? "";
-      return bDate.localeCompare(aDate);
-    });
+    return entries;
+  }
 
-    this.tickets.set(entries);
+  /** Scan `agents/` + `tasks/` — the Project Swarm layout.
+   *
+   * Reads agent metadata from `agents/{uuid}/metadata.json` and task
+   * records from `tasks/{uuid}.json`. Adapts agent+task data into the
+   * existing `TicketData` shape for backward compatibility with the UI.
+   */
+  async #scanAgentsDir(): Promise<TicketData[]> {
+    if (!this.#agentsHandle) return [];
 
-    // Detect active live sessions.
-    await this.#detectLiveSessions(entries);
+    // Load all tasks into a lookup by assignee.
+    const tasksByAssignee = new Map<string, TaskItemData[]>();
+    if (this.#tasksHandle) {
+      for await (const [name, entry] of (
+        this.#tasksHandle as FileSystemDirectoryHandle & {
+          entries(): AsyncIterable<[string, FileSystemHandle]>;
+        }
+      ).entries()) {
+        if (entry.kind !== "file" || !name.endsWith(".json")) continue;
+        try {
+          const fileHandle = await this.#tasksHandle!.getFileHandle(name);
+          const file = await fileHandle.getFile();
+          const text = await file.text();
+          const taskData = JSON.parse(text) as TaskItemData;
+          if (taskData.assignee) {
+            const list = tasksByAssignee.get(taskData.assignee) ?? [];
+            list.push(taskData);
+            tasksByAssignee.set(taskData.assignee, list);
+          }
+        } catch {
+          // Skip malformed task files.
+        }
+      }
+    }
+
+    const entries: TicketData[] = [];
+
+    for await (const [name, entry] of (
+      this.#agentsHandle as FileSystemDirectoryHandle & {
+        entries(): AsyncIterable<[string, FileSystemHandle]>;
+      }
+    ).entries()) {
+      if (entry.kind !== "directory") continue;
+
+      const agentDir = await this.#agentsHandle!.getDirectoryHandle(name);
+      const metadata = await this.#readJson(agentDir, "metadata.json");
+      if (!metadata) continue;
+
+      const agentData = metadata as AgentData;
+      const agentTasks = tasksByAssignee.get(name) ?? [];
+      const chatLog = await this.#readJson(agentDir, "chat_log.json");
+
+      // Pick the first task's objective as the agent's objective,
+      // or fall back to the agent's type as a label.
+      const primaryTask = agentTasks[0];
+      const objective = primaryTask?.objective ?? `Agent: ${agentData.type}`;
+
+      // Shim agent data into TicketData shape.
+      entries.push({
+        id: name,
+        objective,
+        status: agentData.status,
+        created_at: agentData.created_at,
+        completed_at: agentData.completed_at,
+        slug: agentData.slug,
+        model: agentData.model,
+        runner: agentData.runner,
+        voice: agentData.voice,
+        functions: agentData.functions,
+        skills: agentData.skills,
+        tags: agentData.tags,
+        playbook_id: agentData.playbook_id,
+        parent_task_id: agentData.parent_id,
+        owning_task_id: agentData.workspace_root_id,
+        active_session: agentData.active_session,
+        title: primaryTask?.title,
+        outcome: primaryTask?.outcome,
+        kind: primaryTask?.kind,
+        ...(chatLog ? { chat_history: chatLog as TicketData["chat_history"] } : {}),
+      } as TicketData);
+    }
+
+    return entries;
   }
 
   selectTicket(id: string | null): void {
@@ -134,6 +268,8 @@ class TicketStore {
     this.#observer?.disconnect();
     this.#observer = null;
     this.#ticketsHandle = null;
+    this.#agentsHandle = null;
+    this.#tasksHandle = null;
     this.#activated = false;
     this.tickets.set([]);
     this.selectedTicketId.set(null);
@@ -223,17 +359,17 @@ class TicketStore {
 
   /** Read the directory tree for a ticket's filesystem. */
   async readTree(ticketId: string): Promise<FileTreeNode[]> {
-    if (!this.#ticketsHandle) return [];
     try {
-      const ticketDir = await this.#ticketsHandle.getDirectoryHandle(ticketId);
+      const entityDir = await this.#getEntityDirHandle(ticketId);
+      if (!entityDir) return [];
       const ticket = this.tickets.get().find((t) => t.id === ticketId);
       let fsDir: FileSystemDirectoryHandle;
       if (ticket && ticket.active_session) {
-        const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+        const sessionsDir = await entityDir.getDirectoryHandle("sessions");
         const sessionDir = await sessionsDir.getDirectoryHandle(ticket.active_session);
         fsDir = await sessionDir.getDirectoryHandle("workspace");
       } else {
-        fsDir = await ticketDir.getDirectoryHandle("filesystem");
+        fsDir = await entityDir.getDirectoryHandle("filesystem");
       }
       return this.#scanDir(fsDir);
     } catch {
@@ -246,17 +382,17 @@ class TicketStore {
     ticketId: string,
     path: string[]
   ): Promise<string | null> {
-    if (!this.#ticketsHandle) return null;
     try {
-      const ticketDir = await this.#ticketsHandle.getDirectoryHandle(ticketId);
+      const entityDir = await this.#getEntityDirHandle(ticketId);
+      if (!entityDir) return null;
       const ticket = this.tickets.get().find((t) => t.id === ticketId);
       let dir: FileSystemDirectoryHandle;
       if (ticket && ticket.active_session) {
-        const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+        const sessionsDir = await entityDir.getDirectoryHandle("sessions");
         const sessionDir = await sessionsDir.getDirectoryHandle(ticket.active_session);
         dir = await sessionDir.getDirectoryHandle("workspace");
       } else {
-        dir = await ticketDir.getDirectoryHandle("filesystem");
+        dir = await entityDir.getDirectoryHandle("filesystem");
       }
       // Walk to the parent directory.
       for (const segment of path.slice(0, -1)) {
@@ -309,17 +445,17 @@ class TicketStore {
    * Returns the parsed manifest, or `null` if no surface exists.
    */
   async readSurface(ticketId: string): Promise<SurfaceManifest | null> {
-    if (!this.#ticketsHandle) return null;
     try {
-      const ticketDir = await this.#ticketsHandle.getDirectoryHandle(ticketId);
+      const entityDir = await this.#getEntityDirHandle(ticketId);
+      if (!entityDir) return null;
       const ticket = this.tickets.get().find((t) => t.id === ticketId);
       let fsDir: FileSystemDirectoryHandle;
       if (ticket && ticket.active_session) {
-        const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+        const sessionsDir = await entityDir.getDirectoryHandle("sessions");
         const sessionDir = await sessionsDir.getDirectoryHandle(ticket.active_session);
         fsDir = await sessionDir.getDirectoryHandle("workspace");
       } else {
-        fsDir = await ticketDir.getDirectoryHandle("filesystem");
+        fsDir = await entityDir.getDirectoryHandle("filesystem");
       }
       const fileHandle = await fsDir.getFileHandle("surface.json");
       const file = await fileHandle.getFile();
@@ -386,19 +522,43 @@ class TicketStore {
   }
 
   /**
-   * Get the `FileSystemDirectoryHandle` for a ticket.
+   * Get the `FileSystemDirectoryHandle` for a ticket or agent.
    *
    * Used by `LiveSessionClient.fromTicketDir()` to read the session bundle.
+   * Tries `agents/` first, falls back to `tickets/`.
    */
   async getTicketDirHandle(
     ticketId: string,
   ): Promise<FileSystemDirectoryHandle | null> {
-    if (!this.#ticketsHandle) return null;
-    try {
-      return await this.#ticketsHandle.getDirectoryHandle(ticketId);
-    } catch {
-      return null;
+    return this.#getEntityDirHandle(ticketId);
+  }
+
+  /**
+   * Resolve the directory handle for an entity ID.
+   *
+   * Tries `agents/{id}` first (Project Swarm layout), then falls back
+   * to `tickets/{id}` (legacy layout).
+   */
+  async #getEntityDirHandle(
+    entityId: string,
+  ): Promise<FileSystemDirectoryHandle | null> {
+    // Try agents/ first.
+    if (this.#agentsHandle) {
+      try {
+        return await this.#agentsHandle.getDirectoryHandle(entityId);
+      } catch {
+        // Not in agents/, try tickets/.
+      }
     }
+    // Fall back to tickets/.
+    if (this.#ticketsHandle) {
+      try {
+        return await this.#ticketsHandle.getDirectoryHandle(entityId);
+      } catch {
+        return null;
+      }
+    }
+    return null;
   }
 
   // ── Live session connection management ──
