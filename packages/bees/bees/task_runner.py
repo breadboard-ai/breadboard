@@ -389,6 +389,17 @@ class TaskRunner:
         self._handle_suspend(agent, result)
         self._handle_pause(agent, result)
 
+        # Clean up stale suspend artifacts after a successful resume.
+        # When a session suspends, the runner writes interaction.json and
+        # resume_id to the session directory. If the resumed session
+        # completes normally (not re-suspended), these files are stale —
+        # but they were never cleaned up, causing hivetool to show a
+        # phantom "Suspended On" indicator.
+        if not result.suspended and agent.metadata.active_session:
+            sdir = agent.dir / "sessions" / agent.metadata.active_session
+            for stale_file in ("interaction.json", "resume_id"):
+                (sdir / stale_file).unlink(missing_ok=True)
+
         self._store.save_metadata(agent)
         return result
 

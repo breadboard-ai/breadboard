@@ -18,6 +18,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 
 import type { TicketStore, FileTreeNode } from "../data/ticket-store.js";
+import type { TaskItemData } from "../data/types.js";
 import type { MutationClient } from "../data/mutation-client.js";
 import { SessionStoreReader, type SessionLineageInfo } from "../data/session-store-reader.js";
 import type { StateAccess } from "../data/state-access.js";
@@ -35,6 +36,53 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
     sharedStyles,
     jsonTreeStyles,
     css`
+      /* ── Task queue ── */
+      .task-queue-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border: 1px solid #1e293b;
+        border-radius: 6px;
+        margin-bottom: 6px;
+        background: #0a0f1a;
+      }
+
+      .task-queue-status {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .task-queue-status.available { background: #475569; }
+      .task-queue-status.in_progress { background: #3b82f6; }
+      .task-queue-status.completed { background: #22c55e; }
+      .task-queue-status.failed { background: #ef4444; }
+      .task-queue-status.cancelled { background: #64748b; }
+
+      .task-queue-body {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .task-queue-title {
+        font-size: 0.8rem;
+        color: #e2e8f0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .task-queue-outcome {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 2px;
+      }
+
       /* ── File tree ── */
       .file-tree {
         font-family: "Google Mono", "Roboto Mono", monospace;
@@ -342,6 +390,7 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
               </div>
             `
           : nothing}
+        ${this.renderTaskQueue(ticket.id)}
         ${ticket.error
           ? html`
               <div class="block error">
@@ -442,6 +491,44 @@ class BeesTicketDetail extends SignalWatcher(LitElement) {
             `
           : nothing}
         ${this.renderFileTree(ticket.id)}
+      </div>
+    `;
+  }
+
+  // --- Task Queue ---
+
+  /**
+   * Render the task queue for an agent — the work items from `tasks/`
+   * assigned to this entity. For Phase 3 (finite agents), this is
+   * typically one task; the structure supports multiple for Phase 4.
+   */
+  private renderTaskQueue(ticketId: string) {
+    if (!this.ticketStore) return nothing;
+    const tasks = this.ticketStore.getTasksForAgent(ticketId);
+    if (tasks.length === 0) return nothing;
+
+    return html`
+      <div class="block">
+        <div class="block-header">Tasks (${tasks.length})</div>
+        <div class="block-content">
+          ${tasks.map((task) => this.renderTaskQueueItem(task))}
+        </div>
+      </div>
+    `;
+  }
+
+  private renderTaskQueueItem(task: TaskItemData) {
+    return html`
+      <div class="task-queue-item">
+        <span class="task-queue-status ${task.status ?? "available"}"></span>
+        <div class="task-queue-body">
+          <div class="task-queue-title">
+            ${task.title ?? task.objective?.slice(0, 80) ?? task.id.slice(0, 8)}
+          </div>
+          ${task.outcome
+            ? html`<div class="task-queue-outcome">${task.outcome}</div>`
+            : nothing}
+        </div>
       </div>
     `;
   }

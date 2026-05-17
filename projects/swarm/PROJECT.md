@@ -784,18 +784,20 @@ on demand. Hivetool displays the agent→task hierarchy.
 
 ### Python Changes
 
-- [ ] **[NEW] `functions/agents.py`** — New function group implementing:
+- [x] **[NEW] `functions/agents.py`** — New function group implementing:
       `agents_list_types`, `agents_assign_task` (with implicit creation),
       `agents_check_status`, `agents_send_event`, `agents_cancel`,
       `agents_await`.
-- [ ] **[NEW] `declarations/agents.functions.json`** — Function declarations.
+- [x] **[NEW] `declarations/agents.functions.json`** — Function declarations.
       `agents_assign_task` takes `type`, `slug`, `objective`, and optional
       `options`. Slug is required.
-- [ ] **[NEW] `declarations/agents.instruction.md`** — LLM instructions
+- [x] **[NEW] `declarations/agents.instruction.md`** — LLM instructions
       explaining the implicit creation model: "assign tasks, agents appear."
-- [ ] **[MODIFY] `provisioner.py`** — Wire `agents_*` function group.
+- [x] **[MODIFY] `provisioner.py`** — Wire `agents_*` function group.
+- [x] **[MODIFY] `unified_agent_store.py`** — Added `find_child_by_slug()`
+      and `reset_for_reuse()` for slug resolution and fresh-instance reuse.
 - [ ] **[DEPRECATE] `functions/tasks.py`** — Keep for backward compat but route
-      through agents internally.
+      through agents internally. (Deferred to Phase 6 — both groups coexist.)
 
 **Function group coexistence rule:** The template's `functions` list in
 TEMPLATES.yaml controls which function set is active for each agent type.
@@ -807,19 +809,36 @@ the agent uses `tasks.*` or `agents.*`.
 
 ### Hivetool Changes
 
-- [ ] **[MODIFY] `ticket-list.ts`** — Show agents by slug in sidebar. Agents as
+- [x] **[MODIFY] `ticket-list.ts`** — Show agents by slug in sidebar. Agents as
       primary items, tasks nested or shown as status indicators.
-- [ ] **[MODIFY] `ticket-detail.ts`** — Agent detail view: show the agent's task
+- [x] **[MODIFY] `ticket-detail.ts`** — Agent detail view: show the agent's task
       queue alongside session, workspace, and surface.
+- [x] **[MODIFY] `ticket-store.ts`** — Cached `tasksByAssignee` signal and
+      `getTasksForAgent()` method for task queue display.
 
 ### Verification
 
-- [ ] Unit tests for each `agents_*` handler, including implicit creation (new
+- [x] Unit tests for each `agents_*` handler, including implicit creation (new
       slug), reuse (existing slug, non-terminal), and fresh instance (existing
-      slug, terminal).
-- [ ] Integration test: parent assigns task → agent appears → check status.
+      slug, terminal). (20 tests in `tests/test_agents.py`)
+- [x] Integration test: parent assigns task → agent appears → check status.
+      (Verified via `swarm-test` hive with `agents.*` functions.)
 - [ ] Integration test: parent assigns two tasks to same slug → both complete.
-- [ ] Hivetool: agent visible by slug with task in sidebar.
+      (Deferred — requires agent with multi-task objective.)
+- [x] Hivetool: agent visible by slug with task in sidebar.
+
+### Adjustments Made
+
+- **`summary` field retained**: LLM testing showed the model prefers `summary`
+  over `title` for the human-readable task label. Kept as a required field in
+  `agents_assign_task`.
+- **Stale suspend artifact cleanup**: Found and fixed a pre-existing bug where
+  `interaction.json` and `resume_id` files persisted in the session directory
+  after a successful resume, causing hivetool to show phantom "Suspended On"
+  indicators. Fix applied in `task_runner.py` `resume_task()`.
+- **Task queuing for busy agents**: Deferred to Phase 4. In Phase 3,
+  `agents_assign_task` returns an error if the target agent is non-terminal
+  (busy). Phase 4 adds infinite agent support with proper queueing.
 
 ---
 
