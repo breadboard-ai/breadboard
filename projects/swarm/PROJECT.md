@@ -994,33 +994,7 @@ in the session directory (alongside `turns.json` and `events.jsonl`). Format:
 
 ---
 
-## Phase 6 — Migration and Cleanup
-
-### 🎯 Objective
-
-Migrate existing hives from the `tickets/` layout to `agents/` + `tasks/`.
-Remove backward-compat shims. Deprecate `tasks_*` function group.
-
-### Python Changes
-
-- [ ] **[NEW] Migration script** — Reads `tickets/`, creates `agents/`
-      directories with same internal structure, extracts task data into `tasks/`
-      JSON files. Preserves session data. **Pre-flight guard:** aborts if any
-      agent is `running` or `suspended` — migration requires quiescence.
-- [ ] **[DELETE] Backward compat paths** — Remove `tickets/` fallback from
-      stores, `classify_change()`, and hivetool.
-- [ ] **[DELETE] `functions/tasks.py`** — Remove deprecated function group.
-
-### Hivetool Changes
-
-- [ ] **[MODIFY] `ticket-store.ts`** — Remove `tickets/` fallback. Read
-      exclusively from `agents/` + `tasks/`.
-- [ ] **[RENAME]** UI components: `ticket-*` → `agent-*` where appropriate. Tab
-      label: "Tasks" → "Agents".
-
----
-
-## Phase 7 — Context Update Deduplication
+## Phase 6 — Context Update Deduplication ✅
 
 ### 🎯 Objective
 
@@ -1058,26 +1032,32 @@ with outcome "I have written **another** haiku about ants."
 **The result**: the poet gets the ants task as both an inline `events_yield`
 return and a `response.json` auto-resume, executing it twice.
 
-### Proposed Fix
+### Fix: Option C — Single Delivery Path
 
-Deduplicate at the consumption site. Options:
+Removed the inline `pending_context_updates` check from `events_yield` entirely.
+All context update delivery now flows through the single `_handle_suspend`
+auto-resume path in `task_runner.py`. One code path, no race.
 
-- [ ] **Option A: Clear on consumption.** When `events_yield` returns inline
-      updates, immediately clear `pending_context_updates` and persist. The
-      auto-resume path in `_handle_suspend` then finds nothing.
-      — Simplest, but fragile if new updates arrive between clear and persist.
+The extra suspend/resume round-trip is negligible — it's a metadata write and
+scheduler trigger, not a model call. The structural simplicity (one path to
+reason about, one path to debug) outweighs the marginal latency.
 
-- [ ] **Option B: Stamp-and-skip.** Each context update gets a unique ID
-      (assigned by `deliver_to_task`). `events_yield` and `_handle_suspend`
-      track consumed IDs. Duplicates are skipped.
-      — More robust, slightly more complex.
+### Python Changes
 
-- [ ] **Option C: Single delivery path.** Remove the inline check from
-      `events_yield` entirely. All deliveries go through the suspend →
-      auto-resume path in `_handle_suspend`. One code path, no race.
-      — Cleanest, but adds a suspend/resume round-trip to every delivery.
+- [x] **[MODIFY] `functions/events.py`** — Removed the inline
+      `pending_context_updates` check from `events_yield` (lines 267–275).
+      The function now always suspends via `SuspendError`. Cleaned up dead
+      imports (`CONTEXT_PARTS_KEY`, `updates_to_context_parts`).
 
-### Reproduction
+### Verification
+
+- [x] Code review: `_handle_suspend` in `task_runner.py` (lines 472–482)
+      correctly handles the buffered updates via auto-resume — no changes
+      needed there.
+- [ ] End-to-end: run `swarm-test` hive, verify infinite-poet receives each
+      task exactly once with no spurious third yield.
+
+### Reproduction (pre-fix)
 
 ```bash
 BEES_HIVE_DIR=../../hives/swarm-test npm run dev:box -w bees
@@ -1085,6 +1065,32 @@ BEES_HIVE_DIR=../../hives/swarm-test npm run dev:box -w bees
 # - Orchestrator's pending_context_updates (3 entries, expected 2)
 # - Poet's events.jsonl (duplicate task_assigned context_update)
 ```
+
+---
+
+## Phase 7 — Migration and Cleanup
+
+### 🎯 Objective
+
+Migrate existing hives from the `tickets/` layout to `agents/` + `tasks/`.
+Remove backward-compat shims. Deprecate `tasks_*` function group.
+
+### Python Changes
+
+- [ ] **[NEW] Migration script** — Reads `tickets/`, creates `agents/`
+      directories with same internal structure, extracts task data into `tasks/`
+      JSON files. Preserves session data. **Pre-flight guard:** aborts if any
+      agent is `running` or `suspended` — migration requires quiescence.
+- [ ] **[DELETE] Backward compat paths** — Remove `tickets/` fallback from
+      stores, `classify_change()`, and hivetool.
+- [ ] **[DELETE] `functions/tasks.py`** — Remove deprecated function group.
+
+### Hivetool Changes
+
+- [ ] **[MODIFY] `ticket-store.ts`** — Remove `tickets/` fallback. Read
+      exclusively from `agents/` + `tasks/`.
+- [ ] **[RENAME]** UI components: `ticket-*` → `agent-*` where appropriate. Tab
+      label: "Tasks" → "Agents".
 
 ---
 
