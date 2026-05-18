@@ -86,14 +86,18 @@ class AgentStore {
     if (this.#activated) return;
     if (this.access.accessState.get() !== "ready") return;
 
-    const agentsHandle = await this.access.getSubdirectory("agents");
+    const agentsHandle = await this.access.getSubdirectory("agents", {
+      create: true,
+    });
     if (!agentsHandle) {
-      console.warn("Could not find agents/ subdirectory in hive/");
+      console.warn("Could not resolve agents/ subdirectory in hive/");
       return;
     }
 
     this.#agentsHandle = agentsHandle;
-    this.#tasksHandle = await this.access.getSubdirectory("tasks");
+    this.#tasksHandle = await this.access.getSubdirectory("tasks", {
+      create: true,
+    });
     this.#activated = true;
     await this.scan();
     this.#startObserver();

@@ -19,6 +19,8 @@ import type { AgentStore } from "../data/agent-store.js";
 import type { TaskItemData } from "../data/types.js";
 import { getRelativeTime } from "../utils.js";
 import { sharedStyles } from "./shared-styles.js";
+import { renderJson } from "./json-tree.js";
+import { jsonTreeStyles } from "./json-tree.styles.js";
 import "./truncated-text.js";
 
 export { BeesTaskDetail };
@@ -27,6 +29,7 @@ export { BeesTaskDetail };
 class BeesTaskDetail extends SignalWatcher(LitElement) {
   static styles = [
     sharedStyles,
+    jsonTreeStyles,
     css`
       .status-timeline {
         display: flex;
@@ -89,6 +92,27 @@ class BeesTaskDetail extends SignalWatcher(LitElement) {
         border: 1px solid #1e293b;
         max-height: 300px;
         overflow-y: auto;
+      }
+
+      .outcome-parts {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .outcome-parts img {
+        max-width: 100%;
+        border-radius: 6px;
+        border: 1px solid #1e293b;
+        display: block;
+      }
+
+      .outcome-parts .part-text {
+        font-size: 0.8rem;
+        color: #e2e8f0;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
       }
     `,
   ];
@@ -280,7 +304,7 @@ class BeesTaskDetail extends SignalWatcher(LitElement) {
                 <div class="block outcome">
                   <div class="block-header">Outcome Content</div>
                   <div class="block-content">
-                    <div class="outcome-json">${JSON.stringify(task.outcome_content, null, 2)}</div>
+                    ${this.renderOutcomeContent(task.outcome_content)}
                   </div>
                 </div>
               `
@@ -337,6 +361,49 @@ class BeesTaskDetail extends SignalWatcher(LitElement) {
         bubbles: true,
       })
     );
+  }
+
+  /**
+   * Render outcome_content with Gemini content-parts awareness.
+   *
+   * If the value has a `parts` array (Gemini Content shape), renders
+   * text parts as paragraphs and inlineData parts as inline images.
+   * Falls back to JSON for anything else.
+   */
+  private renderOutcomeContent(content: Record<string, unknown>) {
+    const parts = content.parts as Array<Record<string, unknown>> | undefined;
+    if (!Array.isArray(parts) || parts.length === 0) {
+      return html`<div class="json-tree">${renderJson(content)}</div>`;
+    }
+
+    return html`
+      <div class="outcome-parts">
+        ${parts.map((part) => {
+          // Text part.
+          if (typeof part.text === "string") {
+            return html`<div class="part-text">${part.text}</div>`;
+          }
+          // Inline data (image, audio, video).
+          const inlineData = part.inlineData as
+            | { mimeType: string; data: string }
+            | undefined;
+          if (inlineData?.data && inlineData?.mimeType) {
+            const dataUrl = `data:${inlineData.mimeType};base64,${inlineData.data}`;
+            if (inlineData.mimeType.startsWith("image/")) {
+              return html`<img src="${dataUrl}" alt="outcome image" />`;
+            }
+            if (inlineData.mimeType.startsWith("video/")) {
+              return html`<video src="${dataUrl}" controls style="max-width:100%;border-radius:6px"></video>`;
+            }
+            if (inlineData.mimeType.startsWith("audio/")) {
+              return html`<audio src="${dataUrl}" controls style="max-width:100%"></audio>`;
+            }
+          }
+          // Unknown part shape — show as JSON tree.
+          return html`<div class="json-tree">${renderJson(part)}</div>`;
+        })}
+      </div>
+    `;
   }
 }
 
