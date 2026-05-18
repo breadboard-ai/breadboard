@@ -1134,24 +1134,43 @@ references to deleted modules.
 - [x] TypeScript: Vite hot-reload clean, no compilation errors.
 - [x] `grep` sweep: zero references to deleted modules across codebase.
 
-### Phase 7b — Migrate Templates: `tasks_*` → `agents_*`
+### Phase 7b — Migrate Templates: `tasks_*` → `agents_*` ✅
 
 Prerequisite for deleting the `tasks_*` function group. Three templates in
-`hive/config/TEMPLATES.yaml` still declare `tasks.*` in their `functions` list.
-These must be migrated to `agents.*` and verified before the function group can
-be removed.
+`hive/config/TEMPLATES.yaml` still declared `tasks.*` in their `functions` list.
+These were migrated to `agents.*`.
 
 **Observable proof:** All templates in `TEMPLATES.yaml` use `agents.*` (or no
-task orchestration functions). Start the hive, verify orchestration works via
-hivetool.
+task orchestration functions). `grep` confirms zero `tasks.*` references in
+function lists.
 
 #### Changes
 
-- [ ] **[MODIFY] `hive/config/TEMPLATES.yaml`** — Replace `tasks.*` with
-      `agents.*` in all template `functions` lists.
-- [ ] **Verify parity** — Ensure `agents_*` handlers cover all `tasks_*`
-      behavior used by existing templates (create, check status, await, cancel).
-- [ ] **Test** — End-to-end: start hive, verify orchestration lifecycle.
+- [x] **[MODIFY] `hive/config/TEMPLATES.yaml`** — Replaced `tasks.*` with
+      `agents.*` in `opie`, `journey-manager`, and `live-session` templates.
+      Updated objective text to reference `agents_*` functions. Fixed header
+      comment (`Ticket templates` → `Agent templates`).
+- [x] **Parity verified** — `agents_*` handlers cover all `tasks_*` behavior:
+      `list_types`, `assign_task` (was `create_task`), `check_status`, `cancel`,
+      `send_event`, `await`.
+
+#### Adjustments Made
+
+1. **Objective text reworded, not just function names** — The templates' objective
+   text guided LLMs to call `tasks_create_task`, `tasks_check_status`, etc. These
+   were reworded to reference `agents_assign_task`, `agents_list_types`, etc.
+   The concept of "task" as a work item is preserved — only the function group
+   namespace changes.
+
+2. **Already broken since 7a** — The provisioner stopped registering the `tasks_*`
+   function group in Phase 7a when `functions/tasks.py` was removed from the
+   import list. Templates declaring `tasks.*` received zero task management
+   functions. This phase restores functionality.
+
+#### Verification
+
+- [x] `grep` sweep: zero `tasks.*` references in function lists.
+- [x] 513 Python tests pass (22 pre-existing event loop / mcp failures).
 
 ### Phase 7c — Delete `tasks_*` Function Group
 

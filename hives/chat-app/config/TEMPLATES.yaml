@@ -1,4 +1,4 @@
-# Ticket templates — see docs/patterns.md for the field reference.
+# Agent templates — see docs/patterns.md for the field reference.
 
 - name: chat-app-builder
   title: React App Builder
@@ -46,7 +46,7 @@
     the JSON file that supplies widget's data.
 
 
-    Use a child task of type `generate_text` (using standard tasks tool with
+    Assign a task to a `generate_text` agent (using agents_assign_task with
     `slug` set to a research folder name like `research`) to research the data
     and ensure that the JSON file information contains accurate data.
 
@@ -70,7 +70,7 @@
     - use-opal-sdk
   functions:
     - chat.*
-    - tasks.*
+    - agents.*
   tasks:
     - generate_text
 
@@ -106,7 +106,7 @@
     the JSON file that supplies widget's data.
 
 
-    Use a child task of type `generate_text` (using standard tasks tool with
+    Assign a task to a `generate_text` agent (using agents_assign_task with
     `slug` set to a research folder name like `research`) to research the data
     and ensure that the JSON file information contains accurate data.
 
@@ -131,7 +131,7 @@
     - build-widgets
   functions:
     - chat.*
-    - tasks.*
+    - agents.*
     - drive.*
     - gchat.*
     - gmail.*
@@ -145,7 +145,7 @@
   description: You chat with the user and delegate work to sub-agents
   functions:
     - chat.*
-    - tasks.*
+    - agents.*
 
 - name: generate_text
   title: Text Generator
@@ -218,23 +218,23 @@
     two steps in order:
 
 
-    Step 1: Create a `generate_images` task with slug "reference" and
+    Step 1: Assign a `generate_images` task with slug "reference" and
     objective "A simple cartoon cat sitting on a red cushion". Then call
-    tasks_await to wait for it to complete.
+    agents_await to wait for it to complete.
 
 
-    Step 2: Once Step 1 completes, create a second `generate_images` task
+    Step 2: Once Step 1 completes, assign a second `generate_images` task
     with slug "grounded" and this objective (including the pidgin file
     tag exactly): "A pencil sketch version of this image
     <file src=\"reference/image_0.png\" />. Draw it in a notebook style."
-    Set options: { "aspect_ratio": "16:9" }. Then call tasks_await to
+    Set options: { "aspect_ratio": "16:9" }. Then call agents_await to
     wait for it to complete.
 
 
     Report whether both tasks succeeded and describe what was generated.
   functions:
     - system.*
-    - tasks.*
+    - agents.*
   tasks:
     - generate_images
 
@@ -327,32 +327,32 @@
     three steps in order:
 
 
-    Step 1: Create a `generate_images` task with slug "frame" and
+    Step 1: Assign a `generate_images` task with slug "frame" and
     objective "A wide shot of a single origami butterfly resting on a
     mossy rock in a sunlit forest clearing, photorealistic". Set options:
-    { "aspect_ratio": "16:9" }. Then call tasks_await to wait for it
+    { "aspect_ratio": "16:9" }. Then call agents_await to wait for it
     to complete.
 
 
-    Step 2: Once Step 1 completes, create a `generate_video` task with
+    Step 2: Once Step 1 completes, assign a `generate_video` task with
     slug "clip" and objective "The origami butterfly slowly lifts off the
     rock and flutters upward into dappled sunlight, gentle rustling
     sounds". Set options: { "first_frame": "frame/image_0.png",
-    "resolution": "720p" }. Then call tasks_await to wait for it
+    "resolution": "720p" }. Then call agents_await to wait for it
     to complete.
 
 
-    Step 3: Once Step 2 completes, create another `generate_video` task
+    Step 3: Once Step 2 completes, assign another `generate_video` task
     with slug "clip" and objective "The butterfly soars higher through
     the canopy, light rays streaming through leaves, birdsong". Set
     options: { "extend_video": "clip/video_0.mp4" }. Then call
-    tasks_await to wait for it to complete.
+    agents_await to wait for it to complete.
 
 
     Report whether all three tasks succeeded and describe the result.
   functions:
     - system.*
-    - tasks.*
+    - agents.*
   tasks:
     - generate_images
     - generate_video
@@ -368,39 +368,39 @@
     You are a test harness for video interpolation. Run these steps in order:
 
 
-    Step 1: Create a `generate_images` task with slug "keyframes" and
+    Step 1: Assign a `generate_images` task with slug "keyframes" and
     objective "A woman in a red dress standing at the edge of a calm lake
-    at sunrise, wide shot, photorealistic". Then call tasks_await to wait
+    at sunrise, wide shot, photorealistic". Then call agents_await to wait
     for it to complete.
 
 
-    Step 2: Create a second `generate_images` task with slug "keyframes_end"
+    Step 2: Assign a second `generate_images` task with slug "keyframes_end"
     and objective "The same woman now sitting in a small wooden rowboat
     in the middle of the lake, golden hour light, wide shot,
-    photorealistic". Then call tasks_await to wait for it to complete.
+    photorealistic". Then call agents_await to wait for it to complete.
 
 
-    Step 3: Create a `generate_images` task with slug "ref" and objective
+    Step 3: Assign a `generate_images` task with slug "ref" and objective
     "Close-up portrait of a woman with dark hair wearing a flowing red
-    silk dress, soft lighting". Then call tasks_await to wait for it
+    silk dress, soft lighting". Then call agents_await to wait for it
     to complete.
 
 
-    Step 4: Once all images are ready, create a `generate_video` task with
+    Step 4: Once all images are ready, assign a `generate_video` task with
     slug "transition" and objective "A cinematic, dreamlike video. A woman
     in a red dress walks from the shore of a calm lake and gracefully
     steps into a small wooden rowboat, the camera slowly pulling back
     to reveal the golden sunrise reflecting on the water". Set options:
     { "first_frame": "keyframes/image_0.png",
     "last_frame": "keyframes_end/image_0.png",
-    "reference_images": ["ref/image_0.png"] }. Then call tasks_await
+    "reference_images": ["ref/image_0.png"] }. Then call agents_await
     to wait for it to complete.
 
 
     Report whether all tasks succeeded and describe the generated video.
   functions:
     - system.*
-    - tasks.*
+    - agents.*
   tasks:
     - generate_images
     - generate_video
@@ -518,7 +518,7 @@
     steps in order:
 
 
-    Step 1: Create a `generate_speech` task with slug "dialogue" and this
+    Step 1: Assign a `generate_speech` task with slug "dialogue" and this
     objective (include it exactly as the transcript):
 
     "Host: Welcome to the AI podcast! Today we're exploring how autonomous
@@ -528,19 +528,19 @@
     this conversation. Let me tell you about something fascinating."
 
     Set options: { "speaker_1": "Host:Aoede", "speaker_2": "Guest:Puck" }.
-    Then call tasks_await to wait for it to complete.
+    Then call agents_await to wait for it to complete.
 
 
-    Step 2: Create a second `generate_speech` task with slug "narration"
+    Step 2: Assign a second `generate_speech` task with slug "narration"
     and objective "The morning sun cast long shadows across the ancient
     library. [slowly, with gravity] Within its walls, secrets waited to
     be discovered." Set options: { "voice": "Charon" }.
-    Then call tasks_await to wait for it to complete.
+    Then call agents_await to wait for it to complete.
 
 
     Report whether both tasks succeeded and describe the results.
   functions:
     - system.*
-    - tasks.*
+    - agents.*
   tasks:
     - generate_speech
