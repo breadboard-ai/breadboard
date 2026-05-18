@@ -17,6 +17,7 @@ type ConsentRequestOfType<T extends ConsentType> = Extract<
 interface ConsentRenderInfo<T extends ConsentType> {
   name: string;
   description: (request: ConsentRequestOfType<T>) => HTMLTemplateResult;
+  saveButtonLabel?: string;
 }
 
 // The type for the main CONSENT_RENDER_INFO object
@@ -44,6 +45,16 @@ export const CONSENT_RENDER_INFO: ConsentRenderInfoMap = {
       <p>This Opal would like to open a webpage on the following site:</p>
       <p class="center" style="word-break: break-all;">${request.scope}</p>
       <p>Only click allow if you recognize this site and trust the Opal.</p>
+    `,
+  },
+  // Drive file consent is handled by the batch consent modal
+  // (bb-batch-consent-modal). This minimal entry exists only for
+  // ConsentRenderInfoMap type completeness.
+  [ConsentType.ACCESS_DRIVE_FILE_CONTENT]: {
+    name: "Opal App - Drive Assets Used",
+    saveButtonLabel: "Allow & Continue",
+    description: () => html`
+      <p>This Opal app uses Google Drive files. Allow access to continue.</p>
     `,
   },
 };

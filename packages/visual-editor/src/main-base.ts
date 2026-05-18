@@ -803,6 +803,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   protected renderConsentRequests() {
+    // Batch consent modal takes priority over individual modals.
+    if (this.sca.controller.global.consent.pendingBatchConsent) {
+      return html`<bb-batch-consent-modal></bb-batch-consent-modal>`;
+    }
+
     if (this.sca.controller.global.consent.pendingModal.length === 0)
       return nothing;
 

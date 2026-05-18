@@ -12,6 +12,7 @@ export { PublishButton } from "./shell/publish-button.js";
 export { VEModal } from "./shell/modal.js";
 export { VEMCPServersSettings } from "./shell/mcp-server-settings.js";
 export { VEConsentRequestModal } from "./shell/consent-request.js";
+export { VEBatchConsentModal } from "./shell/batch-consent-modal.js";
 export { VERuntimeFlags } from "./shell/runtime-flags.js";
 export { VEGlobalSettingsModal } from "./shell/global-settings.js";
 export { VEWarmWelcomeModal } from "./shell/warm-welcome.js";
