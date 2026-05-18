@@ -8,7 +8,7 @@ from __future__ import annotations
 import pytest
 from unittest.mock import MagicMock
 from bees.functions.chat import get_chat_function_group_factory
-from bees.task_store import TaskStore
+from bees.unified_agent_store import UnifiedAgentStore
 from bees.context_updates import CONTEXT_UPDATE_TAG
 from bees.protocols.handler_types import CONTEXT_PARTS_KEY
 
@@ -16,7 +16,7 @@ from bees.protocols.handler_types import CONTEXT_PARTS_KEY
 @pytest.fixture
 def task_store(tmp_path):
     """Create a TaskStore in a temp directory."""
-    return TaskStore(tmp_path)
+    return UnifiedAgentStore(tmp_path)
 
 
 @pytest.mark.asyncio

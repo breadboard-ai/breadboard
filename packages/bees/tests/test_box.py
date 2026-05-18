@@ -43,26 +43,31 @@ class TestClassifyChange:
 
     # -- Task paths (hot trigger) --
 
-    def test_ticket_metadata(self):
+    def test_agent_metadata(self):
+        assert classify_change(
+            HIVE / "agents" / "abc-123" / "metadata.json", HIVE
+        ) == "task"
+
+    def test_agent_objective(self):
+        assert classify_change(
+            HIVE / "agents" / "abc-123" / "objective.md", HIVE
+        ) == "task"
+
+    def test_agent_response(self):
+        assert classify_change(
+            HIVE / "agents" / "abc-123" / "response.json", HIVE
+        ) == "task"
+
+    def test_agent_dir_created(self):
+        assert classify_change(HIVE / "agents" / "abc-123", HIVE) == "task"
+
+    def test_agents_dir_itself(self):
+        assert classify_change(HIVE / "agents", HIVE) == "task"
+
+    def test_legacy_tickets_ignored(self):
         assert classify_change(
             HIVE / "tickets" / "abc-123" / "metadata.json", HIVE
-        ) == "task"
-
-    def test_ticket_objective(self):
-        assert classify_change(
-            HIVE / "tickets" / "abc-123" / "objective.md", HIVE
-        ) == "task"
-
-    def test_ticket_response(self):
-        assert classify_change(
-            HIVE / "tickets" / "abc-123" / "response.json", HIVE
-        ) == "task"
-
-    def test_ticket_dir_created(self):
-        assert classify_change(HIVE / "tickets" / "abc-123", HIVE) == "task"
-
-    def test_tickets_dir_itself(self):
-        assert classify_change(HIVE / "tickets", HIVE) == "task"
+        ) == "ignore"
 
     # -- Ignored paths --
 

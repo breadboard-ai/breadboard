@@ -8,11 +8,9 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, TypeVar
 
 from bees.agent import Agent
-from bees.agent_adapter import agent_to_ticket
 from bees.protocols.events import SchedulerEvent
-from bees.protocols.session import SessionRunner
 from bees.unified_agent_store import UnifiedAgentStore
-from bees.task_node import TaskNode
+from bees.agent_node import AgentNode
 from bees.scheduler import Scheduler
 
 T = TypeVar("T", bound=SchedulerEvent)
@@ -30,7 +28,7 @@ class Bees:
     def __init__(
         self,
         hive_dir: Path,
-        runners: dict[str, SessionRunner],
+        runners: dict[str, "SessionRunner"],
         *,
         root_override: str | None = None,
     ):
@@ -61,18 +59,18 @@ class Bees:
         self._observers[event_type].append(callback)
 
     def pause_all(self) -> int:
-        """Pause all non-terminal tasks.
+        """Pause all non-terminal agents.
 
         Cancels in-flight asyncio tasks and flips statuses to ``paused``,
         preserving the original status in ``paused_from`` for later resume.
-        Returns the number of tasks paused.
+        Returns the number of agents paused.
         """
         return self._scheduler.pause_all_tasks()
 
     def resume_all(self) -> int:
-        """Resume all paused tasks, restoring their pre-pause status.
+        """Resume all paused agents, restoring their pre-pause status.
 
-        Returns the number of tasks resumed.
+        Returns the number of agents resumed.
         """
         count = 0
         for agent in self._store.query_all(status="paused"):
@@ -83,22 +81,22 @@ class Bees:
         return count
 
     def delete_task(self, task_id: str) -> list[str]:
-        """Delete a task and all its descendants.
+        """Delete an agent and all its descendants.
 
-        Cancels in-flight work, removes ticket directories and session
-        logs, and marks the task so that post-completion cleanup is
+        Cancels in-flight work, removes agent directories and session
+        logs, and marks the agent so that post-completion cleanup is
         skipped for any LLM calls or tool invocations that complete
         after deletion.
 
-        Returns a list of all deleted task IDs.
+        Returns a list of all deleted agent IDs.
         """
         return self._scheduler.delete_task(task_id)
 
     async def run(self) -> list[dict]:
         """Run the hive to completion (batch mode).
 
-        Boots the root template, recovers stuck tasks, then runs
-        cycles until no work remains.  Returns per-task summaries.
+        Boots the root template, recovers stuck agents, then runs
+        cycles until no work remains.  Returns per-agent summaries.
 
         Counterpart to :meth:`listen` — one-shot vs. reactive.
         """
@@ -129,33 +127,34 @@ class Bees:
                 pass
 
     @property
-    def children(self) -> list[TaskNode]:
-        """Returns all tasks that have no parents, as TaskNodes."""
+    def children(self) -> list[AgentNode]:
+        """Returns all agents that have no parents, as AgentNodes."""
         agents = self._store.get_children(None)
-        return [TaskNode(agent_to_ticket(a), self) for a in agents]
+        return [AgentNode(a, self) for a in agents]
 
     @property
-    def all(self) -> list[TaskNode]:
-        """Returns all tasks in the hive."""
+    def all(self) -> list[AgentNode]:
+        """Returns all agents in the hive."""
         agents = self._store.query_all()
-        return [TaskNode(agent_to_ticket(a), self) for a in agents]
+        return [AgentNode(a, self) for a in agents]
 
-    def get_by_id(self, task_id: str) -> TaskNode | None:
-        """Looks up a task by ID and returns it as a TaskNode."""
+    def get_by_id(self, task_id: str) -> AgentNode | None:
+        """Looks up an agent by ID and returns it as an AgentNode."""
         agent = self._store.get(task_id)
-        return TaskNode(agent_to_ticket(agent), self) if agent else None
+        return AgentNode(agent, self) if agent else None
 
-    def query(self, tags: list[str]) -> list[TaskNode]:
-        """Searches for tasks that contain all of the specified tags."""
+    def query(self, tags: list[str]) -> list[AgentNode]:
+        """Searches for agents that contain all of the specified tags."""
         all_agents = self._store.query_all()
-        matching_nodes: list[TaskNode] = []
+        matching_nodes: list[AgentNode] = []
         for agent in all_agents:
             agent_tags = agent.metadata.tags or []
             if all(tag in agent_tags for tag in tags):
-                matching_nodes.append(TaskNode(agent_to_ticket(agent), self))
+                matching_nodes.append(AgentNode(agent, self))
         return matching_nodes
 
-    async def create_child(self, objective: str, **kwargs) -> TaskNode:
-        """Creates a root task."""
+    async def create_child(self, objective: str, **kwargs) -> AgentNode:
+        """Creates a root agent."""
         agent = await self._scheduler.create_task(objective, **kwargs)
-        return TaskNode(agent_to_ticket(agent), self)
+        return AgentNode(agent, self)
+

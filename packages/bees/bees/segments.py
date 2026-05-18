@@ -10,13 +10,16 @@ to build the structured input for a session.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from bees.agent import Agent
-from bees.task_store import _DEP_PATTERN
 from bees.unified_agent_store import UnifiedAgentStore
 
 __all__ = ["resolve_segments"]
+
+# Matches {{ticket-id-prefix}} references in objectives.
+_DEP_PATTERN = re.compile(r"\{\{([^}]+)\}\}")
 
 
 def resolve_segments(agent: Agent, store: UnifiedAgentStore) -> list[dict[str, Any]]:

@@ -23,13 +23,11 @@ def mock_clients():
 GLOBAL_STORE = None
 
 @pytest.fixture(autouse=True)
-def tickets_dir(tmp_path, monkeypatch):
-    """Point TICKETS_DIR to a temp directory."""
+def agents_dir(tmp_path, monkeypatch):
+    """Point the store to a temp directory."""
     global GLOBAL_STORE
-    tickets_dir = tmp_path / "tickets"
-    tickets_dir.mkdir()
     GLOBAL_STORE = UnifiedAgentStore(tmp_path)
-    return tickets_dir
+    return tmp_path
 
 @pytest.fixture
 def write_template(tmp_path):
@@ -408,7 +406,7 @@ async def test_skips_when_root_already_booted(mock_clients, write_template, tmp_
     system_path.write_text(yaml.dump({"root": "opie"}))
     
     from bees.playbook import run_playbook
-    ticket = run_playbook("opie", store=GLOBAL_STORE._ticket_store)
+    ticket = run_playbook("opie", store=GLOBAL_STORE)
     existing = GLOBAL_STORE.get(ticket.id)
     
     _, backend = mock_clients

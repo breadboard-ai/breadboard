@@ -45,7 +45,7 @@ import sys
 from typing import Any, Awaitable, Callable
 
 from bees.agent import Agent
-from bees.agent_adapter import agent_to_ticket
+
 from bees.coordination import route_coordination_task
 from bees.playbook import run_task_done_hooks, load_system_config, run_playbook
 from bees.protocols.events import (
@@ -59,7 +59,7 @@ from bees.protocols.events import (
 )
 from bees.protocols.session import SessionResult, SessionRunner, SessionStream
 from bees.task_runner import TaskRunner
-from bees.ticket import Ticket
+
 from bees.unified_agent_store import UnifiedAgentStore
 from bees.functions.mcp_bridge import MCPRegistry
 from bees.context_updates import updates_to_context_parts
@@ -205,7 +205,7 @@ class Scheduler:
     async def create_task(self, objective: str, **kwargs) -> Agent:
         """Create a new task and emit TaskAdded."""
         agent = self.store.create(objective, **kwargs)
-        await self._emit(TaskAdded(task=agent_to_ticket(agent)))
+        await self._emit(TaskAdded(task=agent))
         self.trigger()
         return agent
 
@@ -227,7 +227,7 @@ class Scheduler:
 
         logger.info("Booting root template '%s'", root)
         agent = run_playbook(root, store=self.store)
-        await self._emit(TaskAdded(task=agent_to_ticket(agent)))
+        await self._emit(TaskAdded(task=agent))
         return agent
 
     async def wait_for_task(self, task_id: str, timeout_ms: float) -> str:
@@ -595,13 +595,13 @@ class Scheduler:
             for item, result in zip(all_items_in_cycle, results):
                 if isinstance(result, Exception):
                     all_summaries.append({
-                        "ticket": item.id,
+                        "agent": item.id,
                         "status": "failed",
                         "error": str(result),
                     })
                 else:
                     all_summaries.append({
-                        "ticket": item.id,
+                        "agent": item.id,
                         "status": result.status,
                         "events": result.events,
                         "output": result.output,
@@ -630,8 +630,8 @@ class Scheduler:
 
                 enriched = self._enrich_parent_tags(updated)
                 if enriched:
-                    await self._emit(TaskDone(task=agent_to_ticket(enriched)))
-                await self._emit(TaskDone(task=agent_to_ticket(updated)))
+                    await self._emit(TaskDone(task=enriched))
+                await self._emit(TaskDone(task=updated))
 
         await self._emit(CycleComplete(total_cycles=cycle))
 
@@ -639,8 +639,8 @@ class Scheduler:
 
     # -- internal ----------------------------------------------------------
 
-    def _on_events_broadcast_internal(self, task: Ticket) -> None:
-        asyncio.create_task(self._emit(TaskAdded(task=task)))
+    def _on_events_broadcast_internal(self, agent: Agent) -> None:
+        asyncio.create_task(self._emit(TaskAdded(task=agent)))
         self.trigger()
 
     async def _wrap_execution(
@@ -679,8 +679,8 @@ class Scheduler:
 
             enriched = self._enrich_parent_tags(updated)
             if enriched:
-                await self._emit(TaskDone(task=agent_to_ticket(enriched)))
-            await self._emit(TaskDone(task=agent_to_ticket(updated)))
+                await self._emit(TaskDone(task=enriched))
+            await self._emit(TaskDone(task=updated))
 
             self.trigger()
 

@@ -12,17 +12,17 @@ from __future__ import annotations
 import logging
 import subprocess
 
-from bees.ticket import Ticket
+from bees.agent import Agent
 
 logger = logging.getLogger(__name__)
 
 
-def on_ticket_done(ticket: Ticket) -> None:
+def on_ticket_done(agent: Agent) -> None:
     """Auto-build the UI bundle if the agent skipped the bundler step."""
-    if ticket.metadata.status != "completed":
+    if agent.metadata.status != "completed":
         return
 
-    fs_dir = ticket.fs_dir
+    fs_dir = agent.fs_dir
     app_path = fs_dir / "App.jsx"
     app_lower = fs_dir / "app.jsx"
     if not (app_path.exists() or app_lower.exists()):
@@ -32,7 +32,7 @@ def on_ticket_done(ticket: Ticket) -> None:
     if not bundler_path.exists():
         return
 
-    logger.info("Auto-building UI bundle for ticket %s...", ticket.id)
+    logger.info("Auto-building UI bundle for agent %s...", agent.id)
     try:
         subprocess.run(
             ["node", str(bundler_path)],
@@ -41,6 +41,6 @@ def on_ticket_done(ticket: Ticket) -> None:
             capture_output=True,
             text=True,
         )
-        logger.info("Successfully auto-built bundle for %s", ticket.id)
+        logger.info("Successfully auto-built bundle for %s", agent.id)
     except subprocess.CalledProcessError as e:
-        logger.error("Auto-bundle failed for %s:\n%s", ticket.id, e.stderr)
+        logger.error("Auto-bundle failed for %s:\n%s", agent.id, e.stderr)

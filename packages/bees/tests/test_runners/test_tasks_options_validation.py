@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-from bees.task_store import TaskStore
+from bees.unified_agent_store import UnifiedAgentStore
 from bees.functions.tasks import get_tasks_function_group_factory
 from bees.subagent_scope import SubagentScope
 
@@ -24,7 +24,7 @@ class TestTasksOptionsValidation(unittest.TestCase):
         self.config_dir = self.hive_dir / "config"
         self.config_dir.mkdir(parents=True, exist_ok=True)
         
-        self.store = TaskStore(self.hive_dir)
+        self.store = UnifiedAgentStore(self.hive_dir)
 
         # Write a TEMPLATES.yaml with options_schema and enum
         templates = [
@@ -47,7 +47,7 @@ class TestTasksOptionsValidation(unittest.TestCase):
             yaml.dump(templates, f)
 
         self.parent_task = self.store.create("Parent objective", title="Parent Task", tasks=["generate_images"])
-        self.scope = SubagentScope.for_ticket(self.parent_task)
+        self.scope = SubagentScope.for_agent(self.parent_task)
 
     def tearDown(self) -> None:
         shutil.rmtree(self.tmp_dir)

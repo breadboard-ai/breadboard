@@ -18,7 +18,7 @@ from bees.playbook import (
     run_event_hooks,
     stamp_child_task as _real_stamp_child_task,
 )
-from bees.task_store import _DEP_PATTERN
+from bees.segments import _DEP_PATTERN
 from bees.unified_agent_store import UnifiedAgentStore
 
 GLOBAL_STORE = None
@@ -251,74 +251,6 @@ class TestRunEventHooks:
         result = run_event_hooks("update_title", "New Title", ticket, GLOBAL_STORE)
         assert result is None
         assert ticket.metadata.title == "New Title"
-
-
-# --- Ticket path resolution ---
-
-
-class TestTicketPaths:
-    """Tests for Ticket.dir and Ticket.fs_dir path resolution."""
-
-    def test_dir_always_top_level(self, _temp_dirs):
-        from bees.ticket import Ticket, TicketMetadata
-
-        t = Ticket(
-            id="abc-123",
-            objective="test",
-            dir=GLOBAL_STORE.tickets_dir / "abc-123",
-            metadata=TicketMetadata(
-                playbook_run_id="run-456",
-                owning_task_id="run-789",
-            ),
-        )
-        assert t.dir == GLOBAL_STORE.tickets_dir / "abc-123"
-
-    def test_fs_dir_with_owning_task_id(self, _temp_dirs):
-        from bees.ticket import Ticket, TicketMetadata
-
-        t = Ticket(
-            id="abc-123",
-            objective="test",
-            dir=GLOBAL_STORE.tickets_dir / "abc-123",
-            metadata=TicketMetadata(owning_task_id="parent-ticket"),
-        )
-        assert t.fs_dir == GLOBAL_STORE.tickets_dir / "parent-ticket" / "filesystem"
-
-    def test_fs_dir_plain_ticket(self, _temp_dirs):
-        from bees.ticket import Ticket, TicketMetadata
-
-        t = Ticket(
-            id="abc-123",
-            objective="test",
-            dir=GLOBAL_STORE.tickets_dir / "abc-123",
-            metadata=TicketMetadata(),
-        )
-        assert t.fs_dir == GLOBAL_STORE.tickets_dir / "abc-123" / "filesystem"
-
-    def test_fs_dir_playbook_run_id_alone_uses_own_dir(self, _temp_dirs):
-        from bees.ticket import Ticket, TicketMetadata
-
-        t = Ticket(
-            id="abc-123",
-            objective="test",
-            dir=GLOBAL_STORE.tickets_dir / "abc-123",
-            metadata=TicketMetadata(playbook_run_id="pb-run"),
-        )
-        assert t.fs_dir == GLOBAL_STORE.tickets_dir / "abc-123" / "filesystem"
-
-    def test_fs_dir_parent_takes_precedence(self, _temp_dirs):
-        from bees.ticket import Ticket, TicketMetadata
-
-        t = Ticket(
-            id="abc-123",
-            objective="test",
-            dir=GLOBAL_STORE.tickets_dir / "abc-123",
-            metadata=TicketMetadata(
-                playbook_run_id="pb-run",
-                owning_task_id="parent-ticket",
-            ),
-        )
-        assert t.fs_dir == GLOBAL_STORE.tickets_dir / "parent-ticket" / "filesystem"
 
 
 

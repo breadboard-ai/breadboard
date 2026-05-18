@@ -19,7 +19,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, fields
 from typing import Any, Awaitable, Callable, TypeVar
 
-from bees.ticket import Ticket
+from bees.agent import Agent
 
 __all__ = [
     "BroadcastReceived",
@@ -65,10 +65,10 @@ class SchedulerEvent:
 
 @dataclass
 class TaskAdded(SchedulerEvent):
-    """A new task was created or discovered."""
+    """A new agent was created or discovered."""
 
     type: str = field(init=False, default="task_added")
-    task: Ticket = field(default=None)  # type: ignore[assignment]
+    task: Agent = field(default=None)  # type: ignore[assignment]
 
 
 @dataclass
@@ -92,18 +92,18 @@ class TaskEvent(SchedulerEvent):
 
 @dataclass
 class TaskStarted(SchedulerEvent):
-    """A task transitioned to running."""
+    """An agent transitioned to running."""
 
     type: str = field(init=False, default="task_started")
-    task: Ticket = field(default=None)  # type: ignore[assignment]
+    task: Agent = field(default=None)  # type: ignore[assignment]
 
 
 @dataclass
 class TaskDone(SchedulerEvent):
-    """A task reached a resting state (completed/failed/suspended/paused)."""
+    """An agent reached a resting state (completed/failed/suspended/paused)."""
 
     type: str = field(init=False, default="task_done")
-    task: Ticket = field(default=None)  # type: ignore[assignment]
+    task: Agent = field(default=None)  # type: ignore[assignment]
 
 
 @dataclass
@@ -135,3 +135,4 @@ class BroadcastReceived(SchedulerEvent):
 
 # The single callback signature used by Scheduler and TaskRunner.
 EventEmitter = Callable[[SchedulerEvent], Awaitable[None]]
+

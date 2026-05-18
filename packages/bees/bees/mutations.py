@@ -318,15 +318,14 @@ class MutationManager:
     # -- Handlers ----------------------------------------------------------
 
     def _handle_reset(self) -> None:
-        """Delete all tasks and session logs.
+        """Delete all agents, tasks, and session logs.
 
         Removes the contents of entity directories (``agents/``,
-        ``tasks/``, ``tickets/``), ``logs/``, and ``mutations/``
+        ``tasks/``), ``logs/``, and ``mutations/``
         while preserving the directories themselves (so watchers
         don't lose their handles).
         """
-        # Phase 6: remove "tickets" from this list
-        for subdir_name in ("tickets", "agents", "tasks", "logs", "mutations"):
+        for subdir_name in ("agents", "tasks", "logs", "mutations"):
             subdir = self._hive_dir / subdir_name
             if not subdir.exists():
                 continue

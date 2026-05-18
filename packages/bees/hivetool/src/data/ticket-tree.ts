@@ -25,7 +25,7 @@ interface TicketTreeNode {
 /**
  * Build a forest of ticket trees from a flat list.
  *
- * Root nodes are tickets with no `parent_task_id` (or legacy `creator_ticket_id`).
+ * Root nodes are agents with no `parent_task_id`.
  * Children are sorted by `created_at` ascending (oldest first) so the
  * tree reads in chronological order.
  */

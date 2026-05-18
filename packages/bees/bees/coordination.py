@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
 
 from bees.agent import Agent
-from bees.agent_adapter import agent_to_ticket
+
 from bees.playbook import run_event_hooks
 from bees.protocols.events import BroadcastReceived, EventEmitter, TaskDone
 from bees.unified_agent_store import UnifiedAgentStore
@@ -149,4 +149,4 @@ async def route_coordination_task(
     ))
 
     # Broadcast the updated coordination task to the UI.
-    await emit(TaskDone(task=agent_to_ticket(agent)))
+    await emit(TaskDone(task=agent))

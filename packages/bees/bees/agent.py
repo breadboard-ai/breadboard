@@ -31,6 +31,17 @@ AgentStatus = Literal[
 RunnerType = Literal["generate", "live", "direct_model"]
 
 
+def has_system_functions(functions: list[str] | None) -> bool:
+    """Determine if a functions list includes system.* functions.
+
+    An agent is finite if its template's ``functions`` list includes
+    ``system.*``. This matches any entry that starts with ``system``.
+    """
+    if not functions:
+        return True  # Default: finite (backward compat with old templates)
+    return any(f.startswith("system") for f in functions)
+
+
 @dataclass
 class AgentMetadata:
     """Metadata for an agent stored as metadata.json.

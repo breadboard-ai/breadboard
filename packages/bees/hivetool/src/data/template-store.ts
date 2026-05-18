@@ -89,16 +89,16 @@ class TemplateStore {
       console.warn("Could not read config/TEMPLATES.yaml:", e);
     }
 
-    // 2. If an active ticket ID is provided, scan tickets/{id}/filesystem/templates/*.yaml
+    // 2. If an active agent ID is provided, scan agents/{id}/sessions/{session}/workspace/templates/*.yaml
     if (activeTicketId) {
       try {
-        const ticketsDir = await handle.getDirectoryHandle("tickets");
-        const ticketDir = await ticketsDir.getDirectoryHandle(activeTicketId);
+        const agentsDir = await handle.getDirectoryHandle("agents");
+        const agentDir = await agentsDir.getDirectoryHandle(activeTicketId);
         
         let fsDir: FileSystemDirectoryHandle;
         let activeSession: string | null = null;
         try {
-          const metaFile = await ticketDir.getFileHandle("metadata.json");
+          const metaFile = await agentDir.getFileHandle("metadata.json");
           const metaText = await (await metaFile.getFile()).text();
           const meta = JSON.parse(metaText);
           activeSession = meta?.active_session ?? null;
@@ -107,11 +107,11 @@ class TemplateStore {
         }
 
         if (activeSession) {
-          const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+          const sessionsDir = await agentDir.getDirectoryHandle("sessions");
           const sessionDir = await sessionsDir.getDirectoryHandle(activeSession);
           fsDir = await sessionDir.getDirectoryHandle("workspace");
         } else {
-          fsDir = await ticketDir.getDirectoryHandle("filesystem");
+          fsDir = await agentDir.getDirectoryHandle("filesystem");
         }
 
         const templatesDir = await fsDir.getDirectoryHandle("templates");
@@ -223,13 +223,13 @@ class TemplateStore {
     const handle = this.access.handle;
     if (!handle) throw new Error("No hive directory handle");
 
-    const ticketsDir = await handle.getDirectoryHandle("tickets");
-    const ticketDir = await ticketsDir.getDirectoryHandle(ticketId);
+    const agentsDir = await handle.getDirectoryHandle("agents");
+    const agentDir = await agentsDir.getDirectoryHandle(ticketId);
     
     let fsDir: FileSystemDirectoryHandle;
     let activeSession: string | null = null;
     try {
-      const metaFile = await ticketDir.getFileHandle("metadata.json");
+      const metaFile = await agentDir.getFileHandle("metadata.json");
       const metaText = await (await metaFile.getFile()).text();
       const meta = JSON.parse(metaText);
       activeSession = meta?.active_session ?? null;
@@ -238,11 +238,11 @@ class TemplateStore {
     }
 
     if (activeSession) {
-      const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+      const sessionsDir = await agentDir.getDirectoryHandle("sessions");
       const sessionDir = await sessionsDir.getDirectoryHandle(activeSession);
       fsDir = await sessionDir.getDirectoryHandle("workspace");
     } else {
-      fsDir = await ticketDir.getDirectoryHandle("filesystem");
+      fsDir = await agentDir.getDirectoryHandle("filesystem");
     }
 
     const templatesDir = await fsDir.getDirectoryHandle("templates", { create: true });
@@ -271,13 +271,13 @@ class TemplateStore {
     const handle = this.access.handle;
     if (!handle) throw new Error("No hive directory handle");
 
-    const ticketsDir = await handle.getDirectoryHandle("tickets");
-    const ticketDir = await ticketsDir.getDirectoryHandle(ticketId);
+    const agentsDir = await handle.getDirectoryHandle("agents");
+    const agentDir = await agentsDir.getDirectoryHandle(ticketId);
     
     let fsDir: FileSystemDirectoryHandle;
     let activeSession: string | null = null;
     try {
-      const metaFile = await ticketDir.getFileHandle("metadata.json");
+      const metaFile = await agentDir.getFileHandle("metadata.json");
       const metaText = await (await metaFile.getFile()).text();
       const meta = JSON.parse(metaText);
       activeSession = meta?.active_session ?? null;
@@ -286,11 +286,11 @@ class TemplateStore {
     }
 
     if (activeSession) {
-      const sessionsDir = await ticketDir.getDirectoryHandle("sessions");
+      const sessionsDir = await agentDir.getDirectoryHandle("sessions");
       const sessionDir = await sessionsDir.getDirectoryHandle(activeSession);
       fsDir = await sessionDir.getDirectoryHandle("workspace");
     } else {
-      fsDir = await ticketDir.getDirectoryHandle("filesystem");
+      fsDir = await agentDir.getDirectoryHandle("filesystem");
     }
 
     const templatesDir = await fsDir.getDirectoryHandle("templates");

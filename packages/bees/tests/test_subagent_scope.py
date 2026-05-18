@@ -15,33 +15,33 @@ from bees.subagent_scope import SubagentScope
 # ---- Construction ----
 
 
-class TestForTicket:
-    """SubagentScope.for_ticket reconstructs from ticket metadata."""
+class TestForAgent:
+    """SubagentScope.for_agent reconstructs from agent metadata."""
 
-    def test_root_ticket(self):
-        """Root ticket (no parent) gets scope with own ID as workspace root."""
-        ticket = _fake_ticket("root-id", owning_task_id=None, slug=None)
-        scope = SubagentScope.for_ticket(ticket)
+    def test_root_agent(self):
+        """Root agent (no parent) gets scope with own ID as workspace root."""
+        agent = _fake_agent("root-id", workspace_root_id=None, slug=None)
+        scope = SubagentScope.for_agent(agent)
         assert scope.workspace_root_id == "root-id"
         assert scope.slug_path is None
 
-    def test_child_ticket(self):
-        """Child ticket gets parent as workspace root and slug from metadata."""
-        ticket = _fake_ticket(
-            "child-id", owning_task_id="root-id", slug="research",
+    def test_child_agent(self):
+        """Child agent gets parent as workspace root and slug from metadata."""
+        agent = _fake_agent(
+            "child-id", workspace_root_id="root-id", slug="research",
         )
-        scope = SubagentScope.for_ticket(ticket)
+        scope = SubagentScope.for_agent(agent)
         assert scope.workspace_root_id == "root-id"
         assert scope.slug_path == "research"
 
-    def test_grandchild_ticket(self):
-        """Grandchild ticket preserves full slug path from metadata."""
-        ticket = _fake_ticket(
+    def test_grandchild_agent(self):
+        """Grandchild agent preserves full slug path from metadata."""
+        agent = _fake_agent(
             "grandchild-id",
-            owning_task_id="root-id",
+            workspace_root_id="root-id",
             slug="research/deep-dive",
         )
-        scope = SubagentScope.for_ticket(ticket)
+        scope = SubagentScope.for_agent(agent)
         assert scope.workspace_root_id == "root-id"
         assert scope.slug_path == "research/deep-dive"
 
@@ -212,30 +212,30 @@ class TestFrozen:
 class _FakeMetadata:
     def __init__(
         self,
-        owning_task_id: str | None = None,
+        workspace_root_id: str | None = None,
         slug: str | None = None,
     ) -> None:
-        self.owning_task_id = owning_task_id
+        self.workspace_root_id = workspace_root_id
         self.slug = slug
 
 
-class _FakeTicket:
+class _FakeAgent:
     def __init__(
         self,
-        ticket_id: str,
-        owning_task_id: str | None = None,
+        agent_id: str,
+        workspace_root_id: str | None = None,
         slug: str | None = None,
     ) -> None:
-        self.id = ticket_id
+        self.id = agent_id
         self.metadata = _FakeMetadata(
-            owning_task_id=owning_task_id,
+            workspace_root_id=workspace_root_id,
             slug=slug,
         )
 
 
-def _fake_ticket(
-    ticket_id: str,
-    owning_task_id: str | None = None,
+def _fake_agent(
+    agent_id: str,
+    workspace_root_id: str | None = None,
     slug: str | None = None,
-) -> _FakeTicket:
-    return _FakeTicket(ticket_id, owning_task_id, slug)
+) -> _FakeAgent:
+    return _FakeAgent(agent_id, workspace_root_id, slug)
