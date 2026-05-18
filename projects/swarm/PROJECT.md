@@ -948,31 +948,49 @@ rollback confirmation dialog.
 5. The agent resumes from the fork point. Task B is delivered as a new context
    update. The agent works on it again.
 
+### Design Decision
+
+The blueprint proposed extending `TurnCheckpoint` in
+`opal-backend/sessions/store.py` with a `task_completions` field. This was
+rejected because `TurnCheckpoint` is a cross-package protocol shared with the
+unified server — task completion tracking is a bees-specific concern.
+
+Instead, `events_yield` writes to a dedicated **`task_completions.json`** file
+in the session directory (alongside `turns.json` and `events.jsonl`). Format:
+
+```json
+[
+  {"task_id": "uuid", "turn": 2, "completed_at": "2026-05-17T..."},
+  {"task_id": "uuid", "turn": 4, "completed_at": "2026-05-17T..."}
+]
+```
+
 ### Python Changes
 
-- [ ] **[MODIFY] `session.py`** — Add `task_completions` field to turn
-      checkpoints in `turns.json`. Each checkpoint records which task IDs were
-      completed at that turn boundary, enabling rollback to correlate turns with
-      task completion events.
-- [ ] **[MODIFY] `mutations.py`** — Update `rollback-to-turn` handler. After
-      forking the session, use the turn checkpoint's `task_completions` field to
-      identify tasks completed after the fork point. Clear their outcome, revert
-      status to `available`.
+- [x] **[MODIFY] `functions/events.py`** — `events_yield` records task
+      completions via `_record_task_completion()`. After marking a task as
+      completed, appends `{task_id, turn, completed_at}` to
+      `task_completions.json` in the agent's active session directory.
+- [x] **[MODIFY] `mutations.py`** — `_handle_rollback_to_turn` step 14: reads
+      `task_completions.json` from the source session, reverts tasks completed
+      after the fork point to `available`, copies pre-fork completions to the
+      new session.
 
 ### Hivetool Changes
 
-- [ ] **[MODIFY] `log-detail.ts`** — Rollback confirmation dialog shows which
-      tasks will be re-queued: "Tasks B and C will be re-queued."
-- [ ] **[MODIFY] `mutation-client.ts`** — Rollback mutation targets agent ID
-      (not task ID). The handler navigates from agent → session.
+- [x] **[MODIFY] `session-store-reader.ts`** — Added `readTaskCompletions()`
+      method and `TaskCompletionInfo` type.
+- [x] **[MODIFY] `log-detail.ts`** — Rollback confirmation dialog reads task
+      completions and shows which tasks will be re-queued.
 
 ### Verification
 
-- [ ] Unit test: rollback on agent with 3 completed tasks at mid-point.
-- [ ] Unit test: rollback on a finite agent with one completed task.
-- [ ] Verify re-queued tasks are delivered to the agent on resume.
-- [ ] Hivetool: rollback dialog shows correct task list, post-rollback task
-      queue reflects re-queued items.
+- [x] Unit test: `events_yield` records completion in `task_completions.json`.
+- [x] Unit test: rollback re-queues tasks completed after the fork point.
+- [x] Unit test: rollback with no `task_completions.json` (backward compat).
+- [x] Unit test: all completions before fork point — nothing re-queued.
+- [ ] End-to-end: run `swarm-test` hive, rollback infinite-poet, verify
+      re-queued task is re-delivered.
 
 ---
 
@@ -999,6 +1017,74 @@ Remove backward-compat shims. Deprecate `tasks_*` function group.
       exclusively from `agents/` + `tasks/`.
 - [ ] **[RENAME]** UI components: `ticket-*` → `agent-*` where appropriate. Tab
       label: "Tasks" → "Agents".
+
+---
+
+## Phase 7 — Context Update Deduplication
+
+### 🎯 Objective
+
+Context updates delivered to infinite agents are received exactly once. No
+duplicate task assignments, no phantom re-execution of already-completed work.
+
+**Observable proof:**
+
+1. Run orchestrator → infinite-poet with 2 sequential tasks.
+2. Each task is received and executed exactly once.
+3. The poet suspends cleanly after the second task with no spurious third yield.
+
+### Bug: Duplicate `task_assigned` Delivery
+
+**Found during Phase 5 verification.** The `swarm-test` smoke test shows the
+infinite-poet receiving the ants task twice, producing a third spurious yield
+with outcome "I have written **another** haiku about ants."
+
+**Root cause — two delivery paths collide:**
+
+1. **Inline path**: `agents_assign_task` calls `scheduler.deliver_to_task()`,
+   which appends the update to `agent.metadata.pending_context_updates` and
+   saves. When the poet's `events_yield` fires, it checks
+   `pending_context_updates`, finds the buffered update, and returns
+   `{"resumed": true}` — the poet processes the task in the same session run.
+
+2. **Auto-resume path**: After the poet calls `events_yield` a second time
+   (completing the ants task), `drain_session` returns with
+   `result.suspended = True`. `_handle_suspend` in `task_runner.py` then
+   **reloads** the agent from disk (line 459) and checks
+   `pending_context_updates` again. If the orchestrator delivered the update
+   between the inline check and the suspend reload, the same update appears
+   twice — once consumed inline, once triggering auto-resume.
+
+**The result**: the poet gets the ants task as both an inline `events_yield`
+return and a `response.json` auto-resume, executing it twice.
+
+### Proposed Fix
+
+Deduplicate at the consumption site. Options:
+
+- [ ] **Option A: Clear on consumption.** When `events_yield` returns inline
+      updates, immediately clear `pending_context_updates` and persist. The
+      auto-resume path in `_handle_suspend` then finds nothing.
+      — Simplest, but fragile if new updates arrive between clear and persist.
+
+- [ ] **Option B: Stamp-and-skip.** Each context update gets a unique ID
+      (assigned by `deliver_to_task`). `events_yield` and `_handle_suspend`
+      track consumed IDs. Duplicates are skipped.
+      — More robust, slightly more complex.
+
+- [ ] **Option C: Single delivery path.** Remove the inline check from
+      `events_yield` entirely. All deliveries go through the suspend →
+      auto-resume path in `_handle_suspend`. One code path, no race.
+      — Cleanest, but adds a suspend/resume round-trip to every delivery.
+
+### Reproduction
+
+```bash
+BEES_HIVE_DIR=../../hives/swarm-test npm run dev:box -w bees
+# After completion, inspect:
+# - Orchestrator's pending_context_updates (3 entries, expected 2)
+# - Poet's events.jsonl (duplicate task_assigned context_update)
+```
 
 ---
 

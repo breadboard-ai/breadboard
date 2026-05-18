@@ -21,7 +21,7 @@ import type {
   LogTurnTokenMetadata,
 } from "../data/types.js";
 import { SessionStoreReader, compileEventsToSegment } from "../data/session-store-reader.js";
-import type { TurnCheckpointInfo, SessionLineageInfo } from "../data/session-store-reader.js";
+import type { TurnCheckpointInfo, SessionLineageInfo, TaskCompletionInfo } from "../data/session-store-reader.js";
 import type { StateAccess } from "../data/state-access.js";
 import type { TicketStore } from "../data/ticket-store.js";
 import type { MutationClient } from "../data/mutation-client.js";
@@ -856,9 +856,26 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
     if (!this.mutationClient || !this.ticketId) return;
 
     this.rollbackTurnIndex = turnIndex;
+
+    // Check for tasks that would be re-queued (infinite agents).
+    let requeueMessage = "";
+    if (this.sessionReader && this.activeSessionId) {
+      const completions = await this.sessionReader.readTaskCompletions(
+        this.ticketId, this.activeSessionId
+      );
+      const requeued = completions.filter((c) => c.turn > turnIndex);
+      if (requeued.length > 0) {
+        const taskIds = requeued.map((c) => c.task_id.slice(0, 8));
+        requeueMessage =
+          ` ${requeued.length} completed task${requeued.length > 1 ? "s" : ""}` +
+          ` will be re-queued: ${taskIds.join(", ")}.`;
+      }
+    }
+
     this.confirmMessage =
       `Fork at turn ${turnIndex + 1}? A new session will be created and turns ` +
-      `${turnIndex + 2} onwards will be preserved in the superseded session.`;
+      `${turnIndex + 2} onwards will be preserved in the superseded session.` +
+      requeueMessage;
     this.showConfirmDialog = true;
   }
 

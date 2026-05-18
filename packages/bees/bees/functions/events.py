@@ -11,6 +11,7 @@ so agents can communicate mid-session.
 
 from __future__ import annotations
 
+import json
 import logging
 import uuid
 from pathlib import Path
@@ -44,6 +45,53 @@ _DECLARATIONS_DIR = Path(__file__).resolve().parent.parent / "declarations"
 # Load declarations once at module level.
 _LOADED = load_declarations("events", declarations_dir=_DECLARATIONS_DIR)
 
+
+def _record_task_completion(
+    agent_id: str,
+    scheduler: Any,
+    task: Any,
+) -> None:
+    """Append a task completion record to the session's tracking file.
+
+    Records ``{task_id, turn, completed_at}`` in
+    ``task_completions.json`` inside the session directory.  This is
+    read by the rollback handler to identify tasks completed after a
+    fork point so they can be re-queued.
+
+    Best-effort — failures are logged but don't block the yield.
+    """
+    try:
+        agent = scheduler.store.get(agent_id)
+        if not agent or not agent.metadata.active_session:
+            return
+
+        session_dir = (
+            agent.dir / "sessions" / agent.metadata.active_session
+        )
+        if not session_dir.exists():
+            return
+
+        completions_file = session_dir / "task_completions.json"
+        completions: list[dict[str, Any]] = []
+        if completions_file.exists():
+            completions = json.loads(
+                completions_file.read_text(encoding="utf-8")
+            )
+
+        completions.append({
+            "task_id": task.id,
+            "turn": agent.metadata.turns or 0,
+            "completed_at": task.completed_at,
+        })
+
+        completions_file.write_text(
+            json.dumps(completions, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+    except Exception as exc:
+        logger.warning(
+            "Failed to record task completion for rollback: %s", exc,
+        )
 
 def _make_handlers(
     *,
@@ -181,6 +229,14 @@ def _make_handlers(
                 logger.info(
                     "events_yield: task %s completed for agent %s",
                     active_task.id[:8], agent_id[:8],
+                )
+
+                # 2b. Record completion for rollback correlation.
+                # Written to task_completions.json in the session dir
+                # so rollback can identify tasks completed after the
+                # fork point and re-queue them.
+                _record_task_completion(
+                    agent_id, scheduler, active_task,
                 )
 
         # 3. Deliver completion update to parent.

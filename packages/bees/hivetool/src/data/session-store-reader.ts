@@ -9,13 +9,19 @@ import type { StateAccess } from "./state-access.js";
 import type { SessionSegment, TurnGroup, LogTurnTokenMetadata, LogConfig, LogPart } from "./types.js";
 
 export { SessionStoreReader, compileEventsToSegment };
-export type { SessionLineageInfo, TurnCheckpointInfo };
+export type { SessionLineageInfo, TurnCheckpointInfo, TaskCompletionInfo };
 
 interface TurnCheckpointInfo {
   turn: number;
   context_length: number;
   file_system: Record<string, unknown> | null;
   token_metadata: Record<string, unknown> | null;
+}
+
+interface TaskCompletionInfo {
+  task_id: string;
+  turn: number;
+  completed_at: string;
 }
 
 interface SessionLineageInfo {
@@ -347,6 +353,22 @@ class SessionStoreReader {
       return await this.#readJson(sessionDir, "interaction.json");
     } catch {
       return null;
+    }
+  }
+
+  async readTaskCompletions(ticketId: string, sessionId: string): Promise<TaskCompletionInfo[]> {
+    const entityDir = await this.#getEntityDir(ticketId);
+    if (!entityDir) return [];
+    try {
+      const sessionsDir = await entityDir.getDirectoryHandle("sessions");
+      const sessionDir = await sessionsDir.getDirectoryHandle(sessionId);
+      const data = await this.#readJson(sessionDir, "task_completions.json");
+      if (Array.isArray(data)) {
+        return data as TaskCompletionInfo[];
+      }
+      return [];
+    } catch {
+      return [];
     }
   }
 

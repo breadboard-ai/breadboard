@@ -214,6 +214,49 @@ async def test_events_yield_sets_agent_outcome(tmp_path):
     assert refreshed.metadata.outcome == "Analysis complete"
 
 
+@pytest.mark.asyncio
+async def test_events_yield_records_task_completion(tmp_path):
+    """events_yield writes a task_completions.json entry for rollback."""
+    agent = _make_agent(tmp_path)
+    # Create a session directory so the recording has somewhere to write.
+    session_id = "test-session-111"
+    agent_dir = tmp_path / "agents" / "agent-111"
+    session_dir = agent_dir / "sessions" / session_id
+    session_dir.mkdir(parents=True, exist_ok=True)
+    # Set the agent's active_session and turns metadata.
+    meta = agent.metadata
+    meta.active_session = session_id
+    meta.turns = 3
+    (agent_dir / "metadata.json").write_text(
+        json.dumps(meta.to_dict(), indent=2)
+    )
+
+    store = UnifiedAgentStore(tmp_path)
+    task_file_store, task = _make_in_progress_task(store)
+    scheduler = _mock_scheduler(store)
+
+    handlers = _make_handlers(
+        caller_agent_id="agent-111",
+        scheduler=scheduler,
+        deliver_to_parent=MagicMock(),
+    )
+
+    with pytest.raises(SuspendError):
+        await handlers["events_yield"](
+            {"outcome": "Done"}, None,
+        )
+
+    # Verify task_completions.json was created in the session directory.
+    completions_file = session_dir / "task_completions.json"
+    assert completions_file.exists()
+
+    completions = json.loads(completions_file.read_text())
+    assert len(completions) == 1
+    assert completions[0]["task_id"] == task.id
+    assert completions[0]["turn"] == 3
+    assert completions[0]["completed_at"] is not None
+
+
 # ---------------------------------------------------------------------------
 # events_yield — error cases
 # ---------------------------------------------------------------------------
