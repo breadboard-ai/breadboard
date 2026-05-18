@@ -28,12 +28,11 @@ from bees.protocols.functions import (
 )
 
 from bees.protocols.handler_types import (
-    CONTEXT_PARTS_KEY,
     SuspendError,
     WaitForInputEvent,
 )
 
-from bees.context_updates import updates_to_context_parts
+
 from bees.ticket import Ticket
 
 __all__ = ["get_events_function_group_factory"]
@@ -264,17 +263,14 @@ def _make_handlers(
         if status_cb:
             status_cb(None, None)
 
-        # 4. Check for already-buffered context updates.
-        if agent and agent.metadata.pending_context_updates:
-            updates = agent.metadata.pending_context_updates
-            agent.metadata.pending_context_updates = []
-            scheduler.store.save_metadata(agent)
-            return {
-                "resumed": True,
-                CONTEXT_PARTS_KEY: updates_to_context_parts(updates),
-            }
-
-        # 5. No updates pending — suspend.
+        # Suspend unconditionally. If context updates are already
+        # buffered, _handle_suspend in task_runner.py will pick them
+        # up and auto-resume — one delivery path, no race.
+        #
+        # The original inline check here consumed buffered updates
+        # and returned {resumed: true}, but _handle_suspend would
+        # then reload the agent and find the same updates again if
+        # delivery happened between the two checks (Phase 7 bug).
         request_id = str(uuid.uuid4())
         event = WaitForInputEvent(
             request_id=request_id,

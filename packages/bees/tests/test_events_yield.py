@@ -13,7 +13,7 @@ import pytest
 
 from bees.agent import Agent, AgentMetadata
 from bees.functions.events import _make_handlers
-from bees.protocols.handler_types import CONTEXT_PARTS_KEY, SuspendError
+from bees.protocols.handler_types import SuspendError
 from bees.subagent_scope import SubagentScope
 from bees.task_file_store import TaskFileStore
 from bees.unified_agent_store import UnifiedAgentStore
@@ -162,8 +162,13 @@ async def test_events_yield_suspends_when_no_pending(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_events_yield_returns_immediately_with_pending_updates(tmp_path):
-    """events_yield returns buffered updates without suspending."""
+async def test_events_yield_suspends_even_with_pending_updates(tmp_path):
+    """events_yield always suspends — pending updates are drained by _handle_suspend.
+
+    Option C fix: the inline consumption path was removed to eliminate
+    the duplicate delivery race. Pending context updates are now handled
+    exclusively by the auto-resume path in task_runner._handle_suspend.
+    """
     pending = [{"type": "task_assigned", "objective": "Next task"}]
     agent = _make_agent(
         tmp_path, pending_context_updates=pending,
@@ -178,17 +183,14 @@ async def test_events_yield_returns_immediately_with_pending_updates(tmp_path):
         deliver_to_parent=MagicMock(),
     )
 
-    # Should NOT raise SuspendError — updates are pending.
-    result = await handlers["events_yield"](
-        {"outcome": "Done"}, None,
-    )
+    # Must raise SuspendError even though updates are pending.
+    with pytest.raises(SuspendError) as exc_info:
+        await handlers["events_yield"](
+            {"outcome": "Done"}, None,
+        )
 
-    assert result["resumed"] is True
-    assert CONTEXT_PARTS_KEY in result
-
-    # Verify pending_context_updates are cleared.
-    refreshed = store.get("agent-111")
-    assert not refreshed.metadata.pending_context_updates
+    suspend = exc_info.value
+    assert suspend.function_call_part["functionCall"]["name"] == "events_yield"
 
 
 @pytest.mark.asyncio
