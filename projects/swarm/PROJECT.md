@@ -1073,24 +1073,116 @@ BEES_HIVE_DIR=../../hives/swarm-test npm run dev:box -w bees
 ### 🎯 Objective
 
 Migrate existing hives from the `tickets/` layout to `agents/` + `tasks/`.
-Remove backward-compat shims. Deprecate `tasks_*` function group.
+Remove backward-compat shims. Replace `tasks_*` function group with `agents_*`.
 
-### Python Changes
+### Phase 7a — Strip Legacy Identity Modules ✅
+
+Remove dead modules (`ticket.py`, `task_store.py`, `agent_adapter.py`,
+`task_node.py`) and all code that references them. Strip `tickets/` fallback
+paths from hivetool stores. This sub-phase touches only code that was already
+fully superseded — no behavioral change for any existing template.
+
+**Observable proof:** Full test suite passes. Zero imports of deleted modules.
+Hivetool hot-reloads without errors. `grep` across the codebase finds no
+references to deleted modules.
+
+#### Python Changes
+
+- [x] **[DELETE] `ticket.py`** — Fused identity type, fully replaced by `Agent`.
+- [x] **[DELETE] `task_store.py`** — Legacy CRUD, replaced by
+      `UnifiedAgentStore`.
+- [x] **[DELETE] `agent_adapter.py`** — Bridge layer, no longer needed.
+- [x] **[DELETE] `task_node.py`** — Replaced by `agent_node.py`.
+- [x] **[NEW] `agent_node.py`** — Tree traversal using `Agent` directly.
+- [x] **[MODIFY] `__init__.py`** — Re-export `Agent as Task` instead of
+      `Ticket as Task`.
+- [x] **[MODIFY] `bees.py`** — `AgentNode` replaces `TaskNode`.
+- [x] **[MODIFY] `protocols/events.py`** — Event payloads typed as `Agent`.
+- [x] **[MODIFY] `scheduler.py`** — Remove `agent_to_ticket()` wrapping.
+- [x] **[MODIFY] `task_runner.py`** — Remove `agent_to_ticket()` wrapping.
+- [x] **[MODIFY] `coordination.py`** — Remove `agent_to_ticket()` wrapping.
+- [x] **[MODIFY] `subagent_scope.py`** — Delete `for_ticket()`, keep
+      `for_agent()`.
+- [x] **[MODIFY] `eval/runner.py`** — Remove unused `Ticket` import.
+- [x] **[MODIFY] `box.py`** — Remove `"tickets"` from `classify_change()`.
+- [x] **[MODIFY] `mutations.py`** — Remove `"tickets"` from reset cleanup.
+- [x] **[MODIFY] `agent.py`** — Absorb `has_system_functions` from adapter.
+- [x] **[MODIFY] `segments.py`** — Absorb `_DEP_PATTERN` from `task_store.py`.
+
+#### Hivetool Changes
+
+- [x] **[MODIFY] `ticket-store.ts`** — Remove `#ticketsHandle`,
+      `#scanTicketsDir`, `#createTaskLegacy`, `#getEntityDirHandle` fallback.
+- [x] **[MODIFY] `session-store-reader.ts`** — Remove `tickets/` fallback in
+      entity resolution and session scanning.
+- [x] **[MODIFY] `log-store.ts`** — Remove `tickets/` fallback in activation.
+- [x] **[MODIFY] `template-store.ts`** — Replace `tickets/` with `agents/` for
+      workspace-scoped template storage.
+- [x] **[MODIFY] `mutation-client.ts`** — Fix docstring reference.
+
+#### Test Changes
+
+- [x] Delete `test_agent_adapter.py`.
+- [x] Rewrite `test_tree.py` — `TaskNode` → `AgentNode`.
+- [x] Update 10 test files: remove all `Ticket`/`TaskStore`/adapter imports,
+      `for_ticket` → `for_agent`, `tickets/` paths → `agents/`.
+
+#### Verification
+
+- [x] 521 Python tests pass (10 pre-existing event loop failures, identical on
+      base branch).
+- [x] TypeScript: Vite hot-reload clean, no compilation errors.
+- [x] `grep` sweep: zero references to deleted modules across codebase.
+
+### Phase 7b — Migrate Templates: `tasks_*` → `agents_*`
+
+Prerequisite for deleting the `tasks_*` function group. Three templates in
+`hive/config/TEMPLATES.yaml` still declare `tasks.*` in their `functions` list.
+These must be migrated to `agents.*` and verified before the function group can
+be removed.
+
+**Observable proof:** All templates in `TEMPLATES.yaml` use `agents.*` (or no
+task orchestration functions). Start the hive, verify orchestration works via
+hivetool.
+
+#### Changes
+
+- [ ] **[MODIFY] `hive/config/TEMPLATES.yaml`** — Replace `tasks.*` with
+      `agents.*` in all template `functions` lists.
+- [ ] **Verify parity** — Ensure `agents_*` handlers cover all `tasks_*`
+      behavior used by existing templates (create, check status, await, cancel).
+- [ ] **Test** — End-to-end: start hive, verify orchestration lifecycle.
+
+### Phase 7c — Delete `tasks_*` Function Group
+
+Once no templates reference `tasks.*`, delete the function group.
+
+- [ ] **[DELETE] `functions/tasks.py`** — Remove deprecated function group.
+- [ ] **[DELETE] `declarations/tasks.functions.json`**
+- [ ] **[DELETE] `declarations/tasks.instruction.md`**
+- [ ] **[DELETE] `declarations/tasks.metadata.json`**
+- [ ] **[MODIFY] `provisioner.py`** — Remove `tasks_*` wiring.
+- [ ] **[DELETE] test files** — Remove `test_tasks.py`,
+      `test_tasks_options_validation.py`.
+
+### Phase 7d — Hive Migration Script
 
 - [ ] **[NEW] Migration script** — Reads `tickets/`, creates `agents/`
       directories with same internal structure, extracts task data into `tasks/`
       JSON files. Preserves session data. **Pre-flight guard:** aborts if any
       agent is `running` or `suspended` — migration requires quiescence.
-- [ ] **[DELETE] Backward compat paths** — Remove `tickets/` fallback from
-      stores, `classify_change()`, and hivetool.
-- [ ] **[DELETE] `functions/tasks.py`** — Remove deprecated function group.
 
-### Hivetool Changes
+### Phase 7e — UI Rename + Task Display
 
-- [ ] **[MODIFY] `ticket-store.ts`** — Remove `tickets/` fallback. Read
-      exclusively from `agents/` + `tasks/`.
+Rename hivetool UI components from ticket-centric to agent-centric. Design how
+the new lightweight `tasks/` records are displayed alongside agents.
+
 - [ ] **[RENAME]** UI components: `ticket-*` → `agent-*` where appropriate. Tab
       label: "Tasks" → "Agents".
+- [ ] **[MODIFY] `ticket-store.ts`** — Remove `tickets/` fallback. Read
+      exclusively from `agents/` + `tasks/`.
+- [ ] **Design** — How tasks (the new lightweight work items) are surfaced in
+      the UI: inline in agent detail, separate tab, or status indicators.
 
 ---
 

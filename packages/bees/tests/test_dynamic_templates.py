@@ -18,10 +18,8 @@ from bees.playbook import (
     run_playbook,
     stamp_child_task,
 )
-from bees.task_store import TaskStore
 from bees.unified_agent_store import UnifiedAgentStore
 from bees.provisioner import provision_session
-from bees.ticket import Ticket
 from bees.subagent_scope import SubagentScope
 
 @pytest.fixture
@@ -54,7 +52,7 @@ def temp_hive(tmp_path):
 
 def test_seeding_global_templates(temp_hive):
     """Verify that provision_session seeds global templates into templates/*.yaml."""
-    store = TaskStore(temp_hive)
+    store = UnifiedAgentStore(temp_hive)
     parent_task = store.create(
         "Test objective",
         title="Test Task",
@@ -68,7 +66,7 @@ def test_seeding_global_templates(temp_hive):
         ticket_id=parent_task.id,
         ticket_dir=parent_task.dir,
         hive_dir=temp_hive,
-        scope=SubagentScope.for_ticket(parent_task),
+        scope=SubagentScope.for_agent(parent_task),
     )
     
     # Verify that templates are seeded in workspace/templates/
@@ -85,7 +83,7 @@ def test_seeding_global_templates(temp_hive):
 
 def test_dynamic_template_loading(temp_hive):
     """Verify that load_all_templates loads both global and local workspace templates."""
-    store = TaskStore(temp_hive)
+    store = UnifiedAgentStore(temp_hive)
     parent_task = store.create(
         "Test objective",
         title="Test Task",
@@ -137,7 +135,7 @@ async def test_tasks_list_types_dynamic_allowed(temp_hive):
     """Verify tasks_list_types handles dynamic allowed and local workspace templates."""
     from bees.functions.tasks import get_tasks_function_group_factory
     
-    store = TaskStore(temp_hive)
+    store = UnifiedAgentStore(temp_hive)
     parent_task = store.create(
         "Test objective",
         title="Test Task",
@@ -165,7 +163,7 @@ async def test_tasks_list_types_dynamic_allowed(temp_hive):
     scheduler = MockScheduler(store)
     
     factory = get_tasks_function_group_factory(
-        scope=SubagentScope.for_ticket(parent_task),
+        scope=SubagentScope.for_agent(parent_task),
         caller_ticket_id=parent_task.id,
         scheduler=scheduler,
         ticket_id=parent_task.id,

@@ -11,7 +11,7 @@ import pytest
 from pathlib import Path
 
 from bees.mutations import MutationManager, PendingMutation
-from bees.task_store import TaskStore
+from bees.unified_agent_store import UnifiedAgentStore
 
 
 # ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ def _write_mutation(hive_dir: Path, data: dict) -> Path:
     return path
 
 
-def _create_task(store: TaskStore, status: str = "available", **kwargs) -> str:
+def _create_task(store: UnifiedAgentStore, status: str = "available", **kwargs) -> str:
     """Create a task and return its ID."""
     task = store.create(objective="Test task", **kwargs)
     task.metadata.status = status
@@ -41,7 +41,6 @@ def _create_task(store: TaskStore, status: str = "available", **kwargs) -> str:
 @pytest.fixture
 def hive(tmp_path):
     """Create a minimal hive directory."""
-    (tmp_path / "tickets").mkdir()
     (tmp_path / "mutations").mkdir()
     return tmp_path
 
@@ -49,7 +48,7 @@ def hive(tmp_path):
 @pytest.fixture
 def store(hive):
     """A TaskStore rooted at the hive."""
-    return TaskStore(hive)
+    return UnifiedAgentStore(hive)
 
 
 # ---------------------------------------------------------------------------
@@ -111,7 +110,7 @@ class TestReset:
         manager = MutationManager(hive)
         asyncio.run(manager.process_all())
 
-        assert list((hive / "tickets").iterdir()) == []
+        assert list((hive / "agents").iterdir()) == []
         assert list((hive / "logs").iterdir()) == []
 
     def test_reset_is_cold(self, hive):
@@ -149,7 +148,7 @@ class TestRespond:
         updated = store.get(task_id)
         assert updated.metadata.assignee == "agent"
 
-        response_path = hive / "tickets" / task_id / "response.json"
+        response_path = hive / "agents" / task_id / "response.json"
         assert response_path.exists()
         assert json.loads(response_path.read_text())["text"] == "hello"
 
@@ -199,7 +198,7 @@ class TestCreateGroup:
         assert "a" in outcome.created_tasks
         assert "b" in outcome.created_tasks
 
-        store = TaskStore(hive)
+        store = UnifiedAgentStore(hive)
         task_a = store.get(outcome.created_tasks["a"])
         assert task_a is not None
         assert "First task" in task_a.objective
@@ -220,7 +219,7 @@ class TestCreateGroup:
         outcome = asyncio.run(manager.process_inline())
 
         assert outcome.hot_processed == 1
-        store = TaskStore(hive)
+        store = UnifiedAgentStore(hive)
         task_b = store.get(outcome.created_tasks["b"])
         assert task_b.metadata.status == "blocked"
         assert outcome.created_tasks["a"] in task_b.metadata.depends_on
@@ -415,7 +414,7 @@ class TestRollbackToTurn:
         store.save_metadata(task)
 
         # Setup the active session directory
-        sdir = hive / "tickets" / task_id / "sessions" / session_id
+        sdir = hive / "agents" / task_id / "sessions" / session_id
         sdir.mkdir(parents=True, exist_ok=True)
 
         # Create workspace directory
@@ -514,7 +513,7 @@ class TestRollbackToTurn:
         assert old_lineage["forked_to"]["session"] == new_session_id
         assert old_lineage["forked_to"]["at_turn"] == 1
 
-        new_sdir = hive / "tickets" / task_id / "sessions" / new_session_id
+        new_sdir = hive / "agents" / task_id / "sessions" / new_session_id
         new_lineage = json.loads((new_sdir / "lineage.json").read_text())
         assert new_lineage["forked_from"]["session"] == session_id
         assert new_lineage["forked_from"]["at_turn"] == 1
@@ -546,7 +545,7 @@ class TestRollbackToTurn:
         store.save_metadata(task)
 
         # Setup session_1 directory (superseded)
-        sdir_1 = hive / "tickets" / task_id / "sessions" / session_1
+        sdir_1 = hive / "agents" / task_id / "sessions" / session_1
         sdir_1.mkdir(parents=True, exist_ok=True)
         (sdir_1 / "status").write_text("superseded", encoding="utf-8")
         (sdir_1 / "workspace").mkdir(parents=True, exist_ok=True)
@@ -610,7 +609,7 @@ class TestRollbackToTurn:
         (sdir_1 / "interaction.json").write_text(json.dumps(interaction_data))
 
         # Setup session_2 directory (active)
-        sdir_2 = hive / "tickets" / task_id / "sessions" / session_2
+        sdir_2 = hive / "agents" / task_id / "sessions" / session_2
         sdir_2.mkdir(parents=True, exist_ok=True)
         (sdir_2 / "status").write_text("suspended", encoding="utf-8")
 
@@ -645,7 +644,7 @@ class TestRollbackToTurn:
         assert old_lineage["forked_to"]["session"] == new_session_id
         assert old_lineage["forked_to"]["at_turn"] == 1
 
-        new_sdir = hive / "tickets" / task_id / "sessions" / new_session_id
+        new_sdir = hive / "agents" / task_id / "sessions" / new_session_id
         new_lineage = json.loads((new_sdir / "lineage.json").read_text())
         assert new_lineage["forked_from"]["session"] == session_1
         assert new_lineage["forked_from"]["at_turn"] == 1

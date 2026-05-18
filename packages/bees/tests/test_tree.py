@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import Mock, AsyncMock
 import pytest
 from bees import Bees
-from bees.task_node import TaskNode
+from bees.agent_node import AgentNode
 
 
 @pytest.fixture
@@ -79,32 +79,32 @@ def test_query_by_tags(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
     store = bees._store
 
-    # Create tasks with tags
-    t1 = store.create("Task 1", tags=["bug", "ui"])
-    t2 = store.create("Task 2", tags=["ui"])
-    t3 = store.create("Task 3", tags=["bug"])
+    # Create agents with tags
+    t1 = store.create("Agent 1", tags=["bug", "ui"])
+    t2 = store.create("Agent 2", tags=["ui"])
+    t3 = store.create("Agent 3", tags=["bug"])
     
-    # Create a child task with tags
-    t4 = store.create("Task 4", tags=["bug", "ui"], parent_task_id=t2.id)
+    # Create a child agent with tags
+    t4 = store.create("Agent 4", tags=["bug", "ui"], parent_task_id=t2.id)
 
     # Test global query
-    ui_tasks = bees.query(["ui"])
-    assert len(ui_tasks) == 3  # t1, t2, t4
-    ui_ids = {t.id for t in ui_tasks}
+    ui_agents = bees.query(["ui"])
+    assert len(ui_agents) == 3  # t1, t2, t4
+    ui_ids = {t.id for t in ui_agents}
     assert ui_ids == {t1.id, t2.id, t4.id}
 
-    bug_ui_tasks = bees.query(["bug", "ui"])
-    assert len(bug_ui_tasks) == 2  # t1, t4
-    bug_ui_ids = {t.id for t in bug_ui_tasks}
+    bug_ui_agents = bees.query(["bug", "ui"])
+    assert len(bug_ui_agents) == 2  # t1, t4
+    bug_ui_ids = {t.id for t in bug_ui_agents}
     assert bug_ui_ids == {t1.id, t4.id}
 
     # Test subtree query
     t2_node = bees.get_by_id(t2.id)
     assert t2_node is not None
     
-    subtree_bug_tasks = t2_node.query(["bug"])
-    assert len(subtree_bug_tasks) == 1  # t4
-    assert subtree_bug_tasks[0].id == t4.id
+    subtree_bug_agents = t2_node.query(["bug"])
+    assert len(subtree_bug_agents) == 1  # t4
+    assert subtree_bug_agents[0].id == t4.id
 
 
 @pytest.mark.asyncio
@@ -114,148 +114,148 @@ async def test_bees_create_child(temp_hive):
     bees._scheduler = Mock()
     
     mock_agent = Agent(
-        id="task1",
-        dir=temp_hive / "tickets" / "task1",
+        id="agent1",
+        dir=temp_hive / "agents" / "agent1",
         metadata=AgentMetadata(tags=[]),
     )
     bees._scheduler.create_task = AsyncMock(return_value=mock_agent)
     
-    node = await bees.create_child("New Task", tags=["test"])
+    node = await bees.create_child("New Agent", tags=["test"])
     
-    bees._scheduler.create_task.assert_called_once_with("New Task", tags=["test"])
-    assert node.id == "task1"
+    bees._scheduler.create_task.assert_called_once_with("New Agent", tags=["test"])
+    assert node.id == "agent1"
 
 
 @pytest.mark.asyncio
-async def test_task_node_create_child(temp_hive):
+async def test_agent_node_create_child(temp_hive):
     from bees.agent import Agent, AgentMetadata
     bees = Bees(temp_hive, runners={"generate": Mock()})
     bees._scheduler = Mock()
     
     mock_agent = Agent(
         id="child1",
-        dir=temp_hive / "tickets" / "child1",
+        dir=temp_hive / "agents" / "child1",
         metadata=AgentMetadata(tags=[]),
     )
     bees._scheduler.create_task = AsyncMock(return_value=mock_agent)
     
-    parent_ticket = Mock()
-    parent_ticket.id = "parent1"
-    parent_ticket.metadata = Mock()
-    parent_ticket.metadata.tags = []
+    parent_agent = Mock()
+    parent_agent.id = "parent1"
+    parent_agent.metadata = Mock()
+    parent_agent.metadata.tags = []
     
-    parent_node = TaskNode(parent_ticket, bees)
+    parent_node = AgentNode(parent_agent, bees)
     
-    child_node = await parent_node.create_child("Child Task")
+    child_node = await parent_node.create_child("Child Agent")
     
-    bees._scheduler.create_task.assert_called_once_with("Child Task", owning_task_id="parent1", parent_task_id="parent1")
+    bees._scheduler.create_task.assert_called_once_with("Child Agent", owning_task_id="parent1", parent_task_id="parent1")
     assert child_node.id == "child1"
 
 
-def test_task_node_respond(temp_hive):
+def test_agent_node_respond(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
     store_mock = Mock()
     store_mock.respond = Mock()
     store_mock.get = Mock(return_value=None)
     bees._store = store_mock
     
-    ticket = Mock()
-    ticket.id = "task1"
-    node = TaskNode(ticket, bees)
+    agent = Mock()
+    agent.id = "agent1"
+    node = AgentNode(agent, bees)
     
     node.respond({"text": "reply"})
     
-    store_mock.respond.assert_called_once_with("task1", {"text": "reply"})
+    store_mock.respond.assert_called_once_with("agent1", {"text": "reply"})
 
 
-def test_task_node_respond_with_text_kwarg(temp_hive):
+def test_agent_node_respond_with_text_kwarg(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
     store_mock = Mock()
     store_mock.respond = Mock()
     store_mock.get = Mock(return_value=None)
     bees._store = store_mock
     
-    ticket = Mock()
-    ticket.id = "task1"
-    node = TaskNode(ticket, bees)
+    agent = Mock()
+    agent.id = "agent1"
+    node = AgentNode(agent, bees)
     
     node.respond(text="reply")
     
-    store_mock.respond.assert_called_once_with("task1", {"text": "reply"})
+    store_mock.respond.assert_called_once_with("agent1", {"text": "reply"})
 
 
-def test_task_node_respond_with_selected_ids_kwarg(temp_hive):
+def test_agent_node_respond_with_selected_ids_kwarg(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
     store_mock = Mock()
     store_mock.respond = Mock()
     store_mock.get = Mock(return_value=None)
     bees._store = store_mock
     
-    ticket = Mock()
-    ticket.id = "task1"
-    node = TaskNode(ticket, bees)
+    agent = Mock()
+    agent.id = "agent1"
+    node = AgentNode(agent, bees)
     
     node.respond(selectedIds=["choice1"])
     
-    store_mock.respond.assert_called_once_with("task1", {"selectedIds": ["choice1"]})
+    store_mock.respond.assert_called_once_with("agent1", {"selectedIds": ["choice1"]})
 
 
-def test_task_node_respond_mutually_exclusive_kwargs(temp_hive):
+def test_agent_node_respond_mutually_exclusive_kwargs(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
-    ticket = Mock()
-    ticket.id = "task1"
-    node = TaskNode(ticket, bees)
+    agent = Mock()
+    agent.id = "agent1"
+    node = AgentNode(agent, bees)
     
     with pytest.raises(ValueError, match="Cannot provide both 'text' and 'selectedIds'"):
         node.respond(text="reply", selectedIds=["choice1"])
 
 
-def test_task_node_respond_missing_kwargs(temp_hive):
+def test_agent_node_respond_missing_kwargs(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
-    ticket = Mock()
-    ticket.id = "task1"
-    node = TaskNode(ticket, bees)
+    agent = Mock()
+    agent.id = "agent1"
+    node = AgentNode(agent, bees)
     
     with pytest.raises(ValueError, match="Must provide either 'text' or 'selectedIds'"):
         node.respond()
 
 
-def test_task_node_respond_dict_and_kwargs_conflict(temp_hive):
+def test_agent_node_respond_dict_and_kwargs_conflict(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
-    ticket = Mock()
-    ticket.id = "task1"
-    node = TaskNode(ticket, bees)
+    agent = Mock()
+    agent.id = "agent1"
+    node = AgentNode(agent, bees)
     
     with pytest.raises(ValueError, match="Cannot provide both a dictionary response and keyword arguments"):
         node.respond({"text": "reply"}, text="another reply")
 
 
-def test_task_node_awaiting_response(temp_hive):
+def test_agent_node_awaiting_response(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
     
-    ticket = Mock()
-    ticket.metadata = Mock()
+    agent = Mock()
+    agent.metadata = Mock()
     
-    node = TaskNode(ticket, bees)
+    node = AgentNode(agent, bees)
     
     # Case 1: Not suspended, not user
-    ticket.metadata.status = "running"
-    ticket.metadata.assignee = "agent"
+    agent.metadata.status = "running"
+    agent.metadata.assignee = "agent"
     assert not node.awaiting_response
     
     # Case 2: Suspended, but not user
-    ticket.metadata.status = "suspended"
-    ticket.metadata.assignee = "agent"
+    agent.metadata.status = "suspended"
+    agent.metadata.assignee = "agent"
     assert not node.awaiting_response
     
     # Case 3: Not suspended, but user
-    ticket.metadata.status = "running"
-    ticket.metadata.assignee = "user"
+    agent.metadata.status = "running"
+    agent.metadata.assignee = "user"
     assert not node.awaiting_response
     
     # Case 4: Suspended and user
-    ticket.metadata.status = "suspended"
-    ticket.metadata.assignee = "user"
+    agent.metadata.status = "suspended"
+    agent.metadata.assignee = "user"
     assert node.awaiting_response
 
 
@@ -263,8 +263,8 @@ def test_bees_all(temp_hive):
     bees = Bees(temp_hive, runners={"generate": Mock()})
     store = bees._store
     
-    t1 = store.create("Task 1")
-    t2 = store.create("Task 2")
+    t1 = store.create("Agent 1")
+    t2 = store.create("Agent 2")
     
     all_nodes = bees.all
     assert len(all_nodes) == 2

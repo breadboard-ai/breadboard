@@ -217,55 +217,39 @@ class SessionStoreReader {
   /**
    * Resolve the directory handle for an entity by ID.
    *
-   * Tries `agents/{id}` first (Project Swarm layout), then falls back
-   * to `tickets/{id}` (legacy layout).
+   * Looks up `agents/{id}`.
    */
   async #getEntityDir(entityId: string): Promise<FileSystemDirectoryHandle | null> {
-    // Try agents/ first.
     const agentsHandle = await this.access.getSubdirectory("agents");
-    if (agentsHandle) {
-      try {
-        return await agentsHandle.getDirectoryHandle(entityId);
-      } catch {
-        // Not in agents/, try tickets/.
-      }
+    if (!agentsHandle) return null;
+    try {
+      return await agentsHandle.getDirectoryHandle(entityId);
+    } catch {
+      return null;
     }
-    // Fall back to tickets/.
-    const ticketsHandle = await this.access.getSubdirectory("tickets");
-    if (ticketsHandle) {
-      try {
-        return await ticketsHandle.getDirectoryHandle(entityId);
-      } catch {
-        return null;
-      }
-    }
-    return null;
   }
 
   async findTicketForSession(sessionId: string): Promise<string | null> {
-    // Search agents/ first, then tickets/.
-    for (const dirName of ["agents", "tickets"]) {
-      const dirHandle = await this.access.getSubdirectory(dirName);
-      if (!dirHandle) continue;
-      try {
-        for await (const [name, entry] of (
-          dirHandle as FileSystemDirectoryHandle & {
-            entries(): AsyncIterable<[string, FileSystemHandle]>;
-          }
-        ).entries()) {
-          if (entry.kind !== "directory") continue;
-          const entityDir = await dirHandle.getDirectoryHandle(name);
-          try {
-            const sessionsDir = await entityDir.getDirectoryHandle("sessions");
-            await sessionsDir.getDirectoryHandle(sessionId);
-            return name;
-          } catch {
-            // Not in this entity
-          }
+    const dirHandle = await this.access.getSubdirectory("agents");
+    if (!dirHandle) return null;
+    try {
+      for await (const [name, entry] of (
+        dirHandle as FileSystemDirectoryHandle & {
+          entries(): AsyncIterable<[string, FileSystemHandle]>;
         }
-      } catch {
-        // Ignore scanning errors
+      ).entries()) {
+        if (entry.kind !== "directory") continue;
+        const entityDir = await dirHandle.getDirectoryHandle(name);
+        try {
+          const sessionsDir = await entityDir.getDirectoryHandle("sessions");
+          await sessionsDir.getDirectoryHandle(sessionId);
+          return name;
+        } catch {
+          // Not in this entity
+        }
       }
+    } catch {
+      // Ignore scanning errors
     }
     return null;
   }

@@ -7,9 +7,8 @@
 /**
  * Signal-backed reactive store for session files grouped by parent entities.
  *
- * Resolves the entity directory (`agents/` or `tickets/`) via a shared
- * StateAccess, uses FileSystemObserver for live updates, and manages
- * session grouping.
+ * Resolves the entity directory (`agents/`) via a shared StateAccess,
+ * uses FileSystemObserver for live updates, and manages session grouping.
  */
 
 import { Signal } from "signal-polyfill";
@@ -50,7 +49,7 @@ class LogStore {
 
   // ── Private ──
 
-  /** Handle for the primary entity directory (agents/ or tickets/). */
+  /** Handle for the primary entity directory (agents/). */
   #entityHandle: FileSystemDirectoryHandle | null = null;
   #observer: { disconnect(): void } | null = null;
   #activated = false;
@@ -59,27 +58,17 @@ class LogStore {
 
   /**
    * Activate the store — resolves the entity directory, scans, observes.
-   *
-   * Tries `agents/` first (Project Swarm layout), then falls back
-   * to `tickets/` (legacy layout).
    */
   async activate(): Promise<void> {
     if (this.#activated) return;
     if (this.access.accessState.get() !== "ready") return;
 
-    // Try agents/ first (Project Swarm layout).
     const agentsHandle = await this.access.getSubdirectory("agents");
-    if (agentsHandle) {
-      this.#entityHandle = agentsHandle;
-    } else {
-      // Fall back to tickets/ (legacy layout).
-      const ticketsHandle = await this.access.getSubdirectory("tickets");
-      if (!ticketsHandle) {
-        console.warn("Could not find agents/ or tickets/ subdirectory in hive/");
-        return;
-      }
-      this.#entityHandle = ticketsHandle;
+    if (!agentsHandle) {
+      console.warn("Could not find agents/ subdirectory in hive/");
+      return;
     }
+    this.#entityHandle = agentsHandle;
 
     this.#activated = true;
     await this.scan();

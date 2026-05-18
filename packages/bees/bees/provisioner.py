@@ -31,7 +31,7 @@ from bees.functions.files import get_files_function_group_factory
 from bees.functions.skills import get_skills_function_group
 from bees.functions.system import get_system_function_group_factory
 from bees.functions.agents import get_agents_function_group_factory
-from bees.functions.tasks import get_tasks_function_group_factory
+
 from bees.protocols.session import SessionConfiguration
 from bees.skill_filter import filter_skills, merge_function_filter
 from bees.subagent_scope import SubagentScope
@@ -146,12 +146,7 @@ def provision_session(
             scope=scope,
             scheduler=scheduler,
         ),
-        get_tasks_function_group_factory(
-            scope=scope,
-            caller_ticket_id=ticket_id,
-            scheduler=scheduler,
-            ticket_id=ticket_id,
-        ),
+
         get_agents_function_group_factory(
             scope=scope,
             caller_agent_id=ticket_id,

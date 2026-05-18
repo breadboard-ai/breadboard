@@ -3,7 +3,7 @@
 
 """Bees — agent swarm orchestration framework."""
 
-from .ticket import Ticket as Task
+from .agent import Agent as Task
 from .bees import Bees
 
 __all__ = ["Task", "Bees"]

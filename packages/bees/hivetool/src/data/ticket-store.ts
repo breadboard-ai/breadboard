@@ -7,10 +7,9 @@
 /**
  * Signal-backed reactive store for entity directories.
  *
- * Reads entity data from `hive/agents/{uuid}/` (Project Swarm layout)
- * or `hive/tickets/{uuid}/` (legacy layout), combining `metadata.json`
- * and `objective.md` into TicketData objects for the UI.
- * Uses FileSystemObserver for live updates.
+ * Reads entity data from `hive/agents/{uuid}/` (Project Swarm layout),
+ * combining `metadata.json` and `objective.md` into TicketData objects
+ * for the UI. Uses FileSystemObserver for live updates.
  */
 
 import { Signal } from "signal-polyfill";
@@ -64,10 +63,9 @@ class TicketStore {
    */
   readonly activeConnection = new Signal.State<LiveSessionClient | null>(null);
 
-  #ticketsHandle: FileSystemDirectoryHandle | null = null;
-  /** Handle for agents/ directory (Project Swarm layout). */
+  /** Handle for agents/ directory. */
   #agentsHandle: FileSystemDirectoryHandle | null = null;
-  /** Handle for tasks/ directory (Project Swarm layout). */
+  /** Handle for tasks/ directory. */
   #tasksHandle: FileSystemDirectoryHandle | null = null;
   #observer: { disconnect(): void } | null = null;
   #activated = false;
@@ -77,66 +75,29 @@ class TicketStore {
     new Map(),
   );
 
-  /** Activate the store — resolves entity directories, scans, observes.
-   *
-   * Tries `agents/` first (Project Swarm layout). Falls back to
-   * `tickets/` (legacy layout). When `agents/` exists, also resolves
-   * `tasks/` for lightweight task data.
-   */
+  /** Activate the store — resolves entity directories, scans, observes. */
   async activate(): Promise<void> {
     if (this.#activated) return;
     if (this.access.accessState.get() !== "ready") return;
 
-    // Try agents/ first (Project Swarm layout).
     const agentsHandle = await this.access.getSubdirectory("agents");
-    if (agentsHandle) {
-      this.#agentsHandle = agentsHandle;
-      this.#tasksHandle = await this.access.getSubdirectory("tasks");
-    }
-
-    // Always resolve tickets/ (legacy layout or create for backward compat).
-    const ticketsHandle = await this.access.getSubdirectory("tickets", { create: true });
-    if (!ticketsHandle && !agentsHandle) {
-      console.warn("Could not find tickets/ or agents/ subdirectory in hive/");
+    if (!agentsHandle) {
+      console.warn("Could not find agents/ subdirectory in hive/");
       return;
     }
 
-    this.#ticketsHandle = ticketsHandle;
+    this.#agentsHandle = agentsHandle;
+    this.#tasksHandle = await this.access.getSubdirectory("tasks");
     this.#activated = true;
     await this.scan();
     this.#startObserver();
   }
 
-  /** Scan entity directories and rebuild the ticket list.
-   *
-   * Reads from `agents/` + `tasks/` (Project Swarm layout) and/or
-   * `tickets/` (legacy layout), merging results into a single list.
-   * Agent data is shimmed into the `TicketData` shape so downstream
-   * UI components work without changes.
-   */
+  /** Scan entity directories and rebuild the ticket list. */
   async scan(): Promise<void> {
-    const entries: TicketData[] = [];
+    if (!this.#agentsHandle) return;
 
-    // Scan agents/ (Project Swarm layout).
-    if (this.#agentsHandle) {
-      const agentTasks = await this.#scanAgentsDir();
-      entries.push(...agentTasks);
-    }
-
-    // Scan tickets/ (legacy layout).
-    if (this.#ticketsHandle) {
-      const ticketEntries = await this.#scanTicketsDir();
-      // Deduplicate: if an agent with the same ID was already loaded
-      // from agents/, skip the ticket.
-      const agentIds = new Set(entries.map((e) => e.id));
-      for (const t of ticketEntries) {
-        if (!agentIds.has(t.id)) entries.push(t);
-      }
-    }
-
-    if (entries.length === 0 && !this.#ticketsHandle && !this.#agentsHandle) {
-      return;
-    }
+    const entries = await this.#scanAgentsDir();
 
     // Sort newest first.
     entries.sort((a, b) => {
@@ -151,35 +112,7 @@ class TicketStore {
     await this.#detectLiveSessions(entries);
   }
 
-  /** Scan `tickets/` — the legacy fused layout. */
-  async #scanTicketsDir(): Promise<TicketData[]> {
-    if (!this.#ticketsHandle) return [];
-    const entries: TicketData[] = [];
 
-    for await (const [name, entry] of (
-      this.#ticketsHandle as FileSystemDirectoryHandle & {
-        entries(): AsyncIterable<[string, FileSystemHandle]>;
-      }
-    ).entries()) {
-      if (entry.kind !== "directory") continue;
-
-      const ticketDir = await this.#ticketsHandle!.getDirectoryHandle(name);
-      const metadata = await this.#readJson(ticketDir, "metadata.json");
-      if (!metadata) continue;
-
-      const objective = await this.#readText(ticketDir, "objective.md");
-      const chatLog = await this.#readJson(ticketDir, "chat_log.json");
-
-      entries.push({
-        id: name,
-        objective: objective ?? "",
-        ...(metadata as Omit<TicketData, "id" | "objective">),
-        ...(chatLog ? { chat_history: chatLog as TicketData["chat_history"] } : {}),
-      } as TicketData);
-    }
-
-    return entries;
-  }
 
   /** Scan `agents/` + `tasks/` — the Project Swarm layout.
    *
@@ -304,7 +237,6 @@ class TicketStore {
   reset(): void {
     this.#observer?.disconnect();
     this.#observer = null;
-    this.#ticketsHandle = null;
     this.#agentsHandle = null;
     this.#tasksHandle = null;
     this.#activated = false;
@@ -323,13 +255,11 @@ class TicketStore {
   }
 
   /**
-   * Create a new task.
+   * Create a new agent.
    *
-   * In swarm layout (agents/ exists), creates:
+   * Creates:
    *   - `agents/{uuid}/metadata.json` and `agents/{uuid}/objective.md`
    *   - `tasks/{uuid}.json`
-   * In legacy layout, creates `tickets/{uuid}/` with `objective.md`
-   * and `metadata.json`.
    *
    * The box's file watcher detects the new directory and triggers the
    * scheduler automatically.
@@ -350,10 +280,7 @@ class TicketStore {
     watch_events?: Array<{ type: string }>;
     options?: Record<string, unknown>;
   }): Promise<string> {
-    if (this.#agentsHandle) {
-      return this.#createTaskSwarm(opts);
-    }
-    return this.#createTaskLegacy(opts);
+    return this.#createTaskSwarm(opts);
   }
 
   /** Create agent + task in the Project Swarm layout. */
@@ -450,67 +377,7 @@ class TicketStore {
     return agentId;
   }
 
-  /** Create task in the legacy tickets/ layout. */
-  async #createTaskLegacy(opts: {
-    objective: string;
-    playbook_id?: string;
-    title?: string;
-    functions?: string[];
-    skills?: string[];
-    tags?: string[];
-    tasks?: string[];
-    model?: string;
-    runner?: "generate" | "live" | "direct_model";
-    context?: string;
-    watch_events?: Array<{ type: string }>;
-    options?: Record<string, unknown>;
-  }): Promise<string> {
-    if (!this.#ticketsHandle) throw new Error("Ticket store not activated");
 
-    const taskId = crypto.randomUUID();
-    const taskDir = await this.#ticketsHandle.getDirectoryHandle(taskId, {
-      create: true,
-    });
-
-    // Write objective.md
-    const objectiveHandle = await taskDir.getFileHandle("objective.md", {
-      create: true,
-    });
-    const objectiveWritable = await objectiveHandle.createWritable();
-    await objectiveWritable.write(opts.objective);
-    await objectiveWritable.close();
-
-    // Build metadata — mirror Python's TaskStore.create() shape.
-    const metadata: Record<string, unknown> = {
-      status: "available",
-      created_at: new Date().toISOString(),
-      kind: "work",
-    };
-    if (opts.playbook_id) metadata.playbook_id = opts.playbook_id;
-    if (opts.playbook_id) metadata.playbook_run_id = crypto.randomUUID();
-    if (opts.title) metadata.title = opts.title;
-    if (opts.functions?.length) metadata.functions = opts.functions;
-    if (opts.skills?.length) metadata.skills = opts.skills;
-    if (opts.tags?.length) metadata.tags = opts.tags;
-    if (opts.tasks?.length) metadata.tasks = opts.tasks;
-    if (opts.model) metadata.model = opts.model;
-    if (opts.runner) metadata.runner = opts.runner;
-    if (opts.context) metadata.context = opts.context;
-    if (opts.watch_events?.length) metadata.watch_events = opts.watch_events;
-    if (opts.options && Object.keys(opts.options).length) metadata.options = opts.options;
-
-    // Write metadata.json
-    const metadataHandle = await taskDir.getFileHandle("metadata.json", {
-      create: true,
-    });
-    const metadataWritable = await metadataHandle.createWritable();
-    await metadataWritable.write(
-      JSON.stringify(metadata, null, 2) + "\n"
-    );
-    await metadataWritable.close();
-
-    return taskId;
-  }
 
   // ── File tree ──
 
@@ -682,7 +549,6 @@ class TicketStore {
    * Get the `FileSystemDirectoryHandle` for a ticket or agent.
    *
    * Used by `LiveSessionClient.fromTicketDir()` to read the session bundle.
-   * Tries `agents/` first, falls back to `tickets/`.
    */
   async getTicketDirHandle(
     ticketId: string,
@@ -693,29 +559,17 @@ class TicketStore {
   /**
    * Resolve the directory handle for an entity ID.
    *
-   * Tries `agents/{id}` first (Project Swarm layout), then falls back
-   * to `tickets/{id}` (legacy layout).
+   * Looks up `agents/{id}`.
    */
   async #getEntityDirHandle(
     entityId: string,
   ): Promise<FileSystemDirectoryHandle | null> {
-    // Try agents/ first.
-    if (this.#agentsHandle) {
-      try {
-        return await this.#agentsHandle.getDirectoryHandle(entityId);
-      } catch {
-        // Not in agents/, try tickets/.
-      }
+    if (!this.#agentsHandle) return null;
+    try {
+      return await this.#agentsHandle.getDirectoryHandle(entityId);
+    } catch {
+      return null;
     }
-    // Fall back to tickets/.
-    if (this.#ticketsHandle) {
-      try {
-        return await this.#ticketsHandle.getDirectoryHandle(entityId);
-      } catch {
-        return null;
-      }
-    }
-    return null;
   }
 
   // ── Live session connection management ──
@@ -775,7 +629,7 @@ class TicketStore {
   // ── Live session detection ──
 
   async #detectLiveSessions(tickets: TicketData[]): Promise<void> {
-    if (!this.#ticketsHandle && !this.#agentsHandle) return;
+    if (!this.#agentsHandle) return;
 
     const liveTickets = tickets.filter((t) => t.runner === "live");
     if (liveTickets.length === 0) {
@@ -808,10 +662,8 @@ class TicketStore {
   }
 
   #startObserver(): void {
-    // Observe the primary entity directory: agents/ in swarm layout,
-    // tickets/ in legacy layout. One recursive observer covers both
-    // metadata changes and workspace file writes.
-    const handle = this.#agentsHandle ?? this.#ticketsHandle;
+    // Observe the primary entity directory.
+    const handle = this.#agentsHandle;
     if (!handle) return;
     if (!("FileSystemObserver" in globalThis)) return;
     try {

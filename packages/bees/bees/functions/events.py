@@ -32,8 +32,7 @@ from bees.protocols.handler_types import (
     WaitForInputEvent,
 )
 
-
-from bees.ticket import Ticket
+from bees.agent import Agent
 
 __all__ = ["get_events_function_group_factory"]
 
@@ -94,7 +93,7 @@ def _record_task_completion(
 
 def _make_handlers(
     *,
-    on_events_broadcast: Callable[[Ticket], None] | None = None,
+    on_events_broadcast: Callable[[Agent], None] | None = None,
     deliver_to_parent: Callable[[dict[str, Any]], None] | None = None,
     ticket_id: str | None = None,
     caller_agent_id: str | None = None,
@@ -155,11 +154,9 @@ def _make_handlers(
         try:
             if not scheduler:
                 return {"error": "Scheduler not available"}
-            # Use the inner TaskStore to create a Ticket (not an Agent)
-            # because on_events_broadcast expects Ticket-typed objects.
-            ticket_store = getattr(scheduler.store, '_ticket_store', scheduler.store)
-            task = ticket_store.create(
-                "",  # No objective — event tickets carry context, not work.
+            # Create a coordination agent via the store.
+            agent = scheduler.store.create(
+                "",  # No objective — coordination agents carry context, not work.
                 kind="coordination",
                 signal_type=event_type,
                 context=message,
@@ -172,10 +169,10 @@ def _make_handlers(
             status_cb(None, None)
 
         if on_events_broadcast:
-            on_events_broadcast(task)
+            on_events_broadcast(agent)
 
         return {
-            "ticket_id": task.id,
+            "agent_id": agent.id,
             "type": event_type,
             "broadcast": True,
         }
@@ -294,7 +291,7 @@ def _make_handlers(
 
 def get_events_function_group_factory(
     *,
-    on_events_broadcast: Callable[[Ticket], None] | None = None,
+    on_events_broadcast: Callable[[Agent], None] | None = None,
     deliver_to_parent: Callable[[dict[str, Any]], None] | None = None,
     ticket_id: str | None = None,
     caller_agent_id: str | None = None,

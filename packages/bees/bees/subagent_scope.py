@@ -9,7 +9,7 @@ sits in the subagent tree.  It handles slug composition, file-path
 validation, directory resolution, and sandbox-instruction generation —
 all as pure data transforms with no side effects.
 
-Every ticket in the system gets a scope (constructed via ``for_ticket``).
+Every agent in the system gets a scope (constructed via ``for_agent``).
 Root agents have ``slug_path=None`` (unrestricted).  Subagents carry a
 slash-delimited path like ``"research/deep-dive"`` that scopes their
 writable area within the shared workspace.
@@ -23,7 +23,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from bees.agent import Agent
-    from bees.ticket import Ticket
 
 __all__ = ["SubagentScope"]
 
@@ -44,14 +43,6 @@ class SubagentScope:
     slug_path: str | None = None
 
     # -- Construction ------------------------------------------------------
-
-    @staticmethod
-    def for_ticket(ticket: Ticket) -> SubagentScope:
-        """Reconstruct a scope from persisted ticket metadata."""
-        return SubagentScope(
-            workspace_root_id=ticket.metadata.owning_task_id or ticket.id,
-            slug_path=ticket.metadata.slug,
-        )
 
     @staticmethod
     def for_agent(agent: Agent) -> SubagentScope:

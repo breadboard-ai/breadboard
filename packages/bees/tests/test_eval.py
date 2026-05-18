@@ -48,7 +48,6 @@ def hive(tmp_path):
 @pytest.fixture
 def store(tmp_path):
     """Create a UnifiedAgentStore backed by tmp_path."""
-    (tmp_path / "tickets").mkdir(exist_ok=True)
     return UnifiedAgentStore(tmp_path)
 
 
@@ -154,13 +153,12 @@ async def test_run_all_waves_emits_task_done(store):
     # The post-completion loop iterates items after gather.
     # Since run_all_waves needs actual run_task calls, test the hook
     # path by calling the inner logic directly.
-    from bees.agent_adapter import agent_to_ticket
     from bees.playbook import run_task_done_hooks
 
     run_task_done_hooks(task)
 
     enriched = scheduler._enrich_parent_tags(task)
-    await capture_emit(TaskDone(task=agent_to_ticket(task)))
+    await capture_emit(TaskDone(task=task))
 
     assert len(done_events) == 1
     assert done_events[0].task.id == task.id
@@ -310,7 +308,7 @@ def test_derive_status_empty():
 async def test_run_case_stateful_simulated_user_loop(tmp_path):
     """run_case orchestrates the stateful simulated user loop on task suspension."""
     from bees.eval.runner import run_case
-    from bees.task_store import TaskStore
+    from bees.unified_agent_store import UnifiedAgentStore
     from unittest.mock import patch
 
     # Create a minimal hive directory.

@@ -9,14 +9,14 @@ from __future__ import annotations
 import pytest
 from unittest.mock import MagicMock
 
-from bees.task_store import TaskStore
+from bees.unified_agent_store import UnifiedAgentStore
 from bees.subagent_scope import SubagentScope
 
 
 @pytest.fixture
 def task_store(tmp_path):
     """Create a TaskStore in a temp directory."""
-    return TaskStore(tmp_path)
+    return UnifiedAgentStore(tmp_path)
 
 
 # ---- events_broadcast ----
@@ -38,7 +38,7 @@ async def test_events_broadcast_creates_ticket(task_store):
 
     assert result["broadcast"] is True
     assert result["type"] == "app_update"
-    assert "ticket_id" in result
+    assert "agent_id" in result
     callback.assert_called_once()
 
     # The callback receives a Ticket object.
@@ -118,13 +118,12 @@ async def test_events_send_to_parent_no_parent():
 
 
 @pytest.mark.asyncio
-async def test_events_broadcast_returns_ticket_via_unified_store(tmp_path):
-    """Callback must receive a Ticket (not an Agent) when store is UnifiedAgentStore."""
+async def test_events_broadcast_returns_agent_via_unified_store(tmp_path):
+    """Callback must receive an Agent when store is UnifiedAgentStore."""
     from bees.functions.events import _make_handlers
     from bees.unified_agent_store import UnifiedAgentStore
-    from bees.ticket import Ticket
+    from bees.agent import Agent
 
-    (tmp_path / "tickets").mkdir()
     store = UnifiedAgentStore(tmp_path)
 
     callback = MagicMock()
@@ -139,11 +138,12 @@ async def test_events_broadcast_returns_ticket_via_unified_store(tmp_path):
     assert result["broadcast"] is True
     callback.assert_called_once()
 
-    # The callback must receive a Ticket, not an Agent.
+    # The callback must receive an Agent.
     task = callback.call_args[0][0]
-    assert isinstance(task, Ticket), (
-        f"Expected Ticket, got {type(task).__name__}"
+    assert isinstance(task, Agent), (
+        f"Expected Agent, got {type(task).__name__}"
     )
     assert task.metadata.kind == "coordination"
     assert task.metadata.signal_type == "app_update"
+
 

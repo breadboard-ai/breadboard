@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
 
 from bees.agent import Agent
-from bees.agent_adapter import agent_to_ticket
+
 from bees.context_updates import updates_to_context_parts
 from bees.protocols.events import (
     EventEmitter,
@@ -37,7 +37,7 @@ from bees.session import (
 )
 from opal_backend.sessions.file_store import FileBasedSessionStore
 from bees.subagent_scope import SubagentScope
-from bees.ticket import Ticket
+
 from bees.unified_agent_store import UnifiedAgentStore
 
 logger = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ class TaskRunner:
         active_streams: dict[str, SessionStream],
         get_mcp_factories: Callable[[], list | None],
         deliver_context_update: Callable[[str, dict[str, Any]], None],
-        on_events_broadcast: Callable[[Ticket], None],
+        on_events_broadcast: Callable[[Agent], None],
         emit: EventEmitter,
     ) -> None:
         self._runners = runners
@@ -94,7 +94,7 @@ class TaskRunner:
 
         agent.metadata.status = "running"
         self._store.save_metadata(agent)
-        await self._emit(TaskStarted(task=agent_to_ticket(agent)))
+        await self._emit(TaskStarted(task=agent))
 
         label = agent.id[:8]
         print(f"▶ [{label}] {agent.objective!r}", file=sys.stderr)
@@ -304,7 +304,7 @@ class TaskRunner:
         agent.metadata.status = "running"
         agent.metadata.assignee = "agent"
         self._store.save_metadata(agent)
-        await self._emit(TaskStarted(task=agent_to_ticket(agent)))
+        await self._emit(TaskStarted(task=agent))
 
         try:
             # Assemble context updates from both sources:

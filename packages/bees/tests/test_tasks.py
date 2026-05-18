@@ -20,10 +20,8 @@ GLOBAL_STORE = None
 
 @pytest.fixture(autouse=True)
 def _temp_dirs(tmp_path):
-    """Redirect ticket and template storage to temp directories."""
+    """Redirect agent and template storage to temp directories."""
     global GLOBAL_STORE
-    tickets_dir = tmp_path / "tickets"
-    tickets_dir.mkdir()
     GLOBAL_STORE = UnifiedAgentStore(tmp_path)
 
     config_dir = tmp_path / "config"
@@ -32,7 +30,7 @@ def _temp_dirs(tmp_path):
     hooks_dir = config_dir / "hooks"
     hooks_dir.mkdir()
 
-    yield tickets_dir
+    yield tmp_path
 
 
 @pytest.fixture
@@ -319,22 +317,22 @@ async def test_tasks_create_task_nested_slug(write_template):
 
 
 def test_task_store_get_malformed_metadata():
-    """Verify TaskStore.get() gracefully returns None if metadata.json is empty or malformed during live scanning."""
+    """Verify store.get() gracefully returns None if metadata.json is empty or malformed during live scanning."""
     store = GLOBAL_STORE
     assert store is not None
     
-    ticket_id = "malformed-ticket"
-    ticket_dir = store.tickets_dir / ticket_id
-    ticket_dir.mkdir()
+    agent_id = "malformed-agent"
+    agent_dir = store.entity_dir(agent_id)
+    agent_dir.mkdir(parents=True)
     
-    (ticket_dir / "objective.md").write_text("Some objective")
-    (ticket_dir / "metadata.json").write_text("")  # Empty file causing standard JSONDecodeError
+    (agent_dir / "objective.md").write_text("Some objective")
+    (agent_dir / "metadata.json").write_text("")  # Empty file causing standard JSONDecodeError
     
-    assert store.get(ticket_id) is None
+    assert store.get(agent_id) is None
     
     # Partially written JSON
-    (ticket_dir / "metadata.json").write_text('{"status": "avail')
-    assert store.get(ticket_id) is None
+    (agent_dir / "metadata.json").write_text('{"status": "avail')
+    assert store.get(agent_id) is None
 
 
 # ---------------------------------------------------------------------------
@@ -351,7 +349,6 @@ def test_task_store_get_malformed_metadata():
 def unified_store(tmp_path):
     """Create a UnifiedAgentStore backed by a temp directory."""
     from bees.unified_agent_store import UnifiedAgentStore
-    (tmp_path / "tickets").mkdir(exist_ok=True)
     config_dir = tmp_path / "config"
     config_dir.mkdir(exist_ok=True)
     config_dir.joinpath("hooks").mkdir(exist_ok=True)

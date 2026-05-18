@@ -30,7 +30,6 @@ from bees.protocols.events import (
 )
 from bees.runners.gemini import GeminiRunner
 from bees.runners.live import LiveRunner
-from bees.ticket import Ticket
 
 from opal_backend.local.backend_client_impl import HttpBackendClient
 

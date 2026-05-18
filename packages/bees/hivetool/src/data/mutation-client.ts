@@ -98,7 +98,7 @@ class MutationClient {
   /**
    * Request a hive reset — deletes all tasks and session logs.
    *
-   * Cold mutation: the box shuts down, clears `tickets/` and `logs/`,
+   * Cold mutation: the box shuts down, clears `agents/` and `logs/`,
    * then restarts to re-boot the root template.
    */
   async requestReset(): Promise<string> {

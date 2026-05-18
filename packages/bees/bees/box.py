@@ -53,7 +53,7 @@ from bees.protocols.events import (
 from bees.runners.gemini import GeminiRunner
 from bees.runners.live import LiveRunner
 from bees.runners.direct_model import DirectModelRunner
-from bees.ticket import Ticket
+from bees.agent import Agent
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
 logger = logging.getLogger("bees.box")
@@ -102,7 +102,7 @@ def classify_change(path: Path, hive_dir: Path) -> ChangeKind:
         return "mutation"
 
     # Entity paths → hot trigger.
-    if top in ("tickets", "agents", "tasks"):  # Phase 6: remove "tickets"
+    if top in ("agents", "tasks"):
         return "task"
 
     return "ignore"
