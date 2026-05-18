@@ -4,7 +4,7 @@ title: How to Do Great Research
 description:
   Uplevel your researching abilities and learn how to research properly.
 allowed-tools:
-  - tasks.*
+  - agents.*
   - files.*
 ---
 

@@ -131,9 +131,9 @@ def test_dynamic_template_loading(temp_hive):
 
 
 @pytest.mark.asyncio
-async def test_tasks_list_types_dynamic_allowed(temp_hive):
-    """Verify tasks_list_types handles dynamic allowed and local workspace templates."""
-    from bees.functions.tasks import get_tasks_function_group_factory
+async def test_agents_list_types_dynamic_allowed(temp_hive):
+    """Verify agents_list_types handles dynamic allowed and local workspace templates."""
+    from bees.functions.agents import get_agents_function_group_factory
     
     store = UnifiedAgentStore(temp_hive)
     parent_task = store.create(
@@ -162,11 +162,10 @@ async def test_tasks_list_types_dynamic_allowed(temp_hive):
     
     scheduler = MockScheduler(store)
     
-    factory = get_tasks_function_group_factory(
+    factory = get_agents_function_group_factory(
         scope=SubagentScope.for_agent(parent_task),
-        caller_ticket_id=parent_task.id,
+        caller_agent_id=parent_task.id,
         scheduler=scheduler,
-        ticket_id=parent_task.id,
     )
     
     # Duck-typed class satisfying SessionHooks
@@ -184,26 +183,26 @@ async def test_tasks_list_types_dynamic_allowed(temp_hive):
     group = factory(MockHooks())
     
     # Retrieve function handlers from definitions
-    list_types = next(d.handler for name, d in group.definitions if name == "tasks_list_types")
+    list_types = next(d.handler for name, d in group.definitions if name == "agents_list_types")
     
-    # Call tasks_list_types
+    # Call agents_list_types
     result = await list_types({}, None)
-    task_types = result.get("task_types", [])
+    agent_types = result.get("agent_types", [])
     
     # Verify that:
     # - 'researcher' is included (statically allowed global)
     # - 'custom-worker' is included (dynamically allowed workspace template)
     # - 'opie' is filtered out (global but not in tasks allowlist)
-    names = {t["name"] for t in task_types}
+    names = {t["name"] for t in agent_types}
     assert "researcher" in names
     assert "custom-worker" in names
     assert "opie" not in names
 
 
 @pytest.mark.asyncio
-async def test_tasks_create_task_dynamic(temp_hive):
-    """Verify tasks_create_task successfully creates task from dynamically authored templates."""
-    from bees.functions.tasks import get_tasks_function_group_factory
+async def test_agents_assign_task_dynamic(temp_hive):
+    """Verify agents_assign_task successfully creates agent from dynamically authored templates."""
+    from bees.functions.agents import get_agents_function_group_factory
     
     store = UnifiedAgentStore(temp_hive)
     parent = store.create(
@@ -234,11 +233,10 @@ async def test_tasks_create_task_dynamic(temp_hive):
             
     scheduler = MockScheduler(store)
     
-    factory = get_tasks_function_group_factory(
+    factory = get_agents_function_group_factory(
         scope=SubagentScope.for_agent(parent),
-        caller_ticket_id=parent.id,
+        caller_agent_id=parent.id,
         scheduler=scheduler,
-        ticket_id=parent.id,
     )
     
     class MockHooks:
@@ -253,9 +251,9 @@ async def test_tasks_create_task_dynamic(temp_hive):
             return None
 
     group = factory(MockHooks())
-    create_task = next(d.handler for name, d in group.definitions if name == "tasks_create_task")
+    assign_task = next(d.handler for name, d in group.definitions if name == "agents_assign_task")
     
-    # Spawn child task using custom template
+    # Spawn child agent using custom template
     args = {
         "type": "custom-worker",
         "summary": "My Custom Run",
@@ -263,8 +261,10 @@ async def test_tasks_create_task_dynamic(temp_hive):
         "slug": "custom-run",
     }
     
-    result = await create_task(args, None)
+    result = await assign_task(args, None)
     assert "error" not in result
+    assert result.get("agent_slug") == "custom-run"
+    assert result.get("status") == "created"
     
     # Verify child was written to store successfully
     all_agents = store.query_all()

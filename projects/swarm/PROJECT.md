@@ -1172,17 +1172,62 @@ function lists.
 - [x] `grep` sweep: zero `tasks.*` references in function lists.
 - [x] 513 Python tests pass (22 pre-existing event loop / mcp failures).
 
-### Phase 7c — Delete `tasks_*` Function Group
+### Phase 7c — Delete `tasks_*` Function Group ✅
 
-Once no templates reference `tasks.*`, delete the function group.
+No templates reference `tasks.*`. The function group is fully removed.
 
-- [ ] **[DELETE] `functions/tasks.py`** — Remove deprecated function group.
-- [ ] **[DELETE] `declarations/tasks.functions.json`**
-- [ ] **[DELETE] `declarations/tasks.instruction.md`**
-- [ ] **[DELETE] `declarations/tasks.metadata.json`**
-- [ ] **[MODIFY] `provisioner.py`** — Remove `tasks_*` wiring.
-- [ ] **[DELETE] test files** — Remove `test_tasks.py`,
-      `test_tasks_options_validation.py`.
+**Observable proof:** Zero imports of `bees.functions.tasks` across the codebase.
+`grep` confirms no references. 528 Python tests pass (31 pre-existing failures
+identical on base branch).
+
+#### Deleted
+
+- [x] **[DELETE] `functions/tasks.py`** — Deprecated function group.
+- [x] **[DELETE] `declarations/tasks.functions.json`**
+- [x] **[DELETE] `declarations/tasks.instruction.md`**
+- [x] **[DELETE] `declarations/tasks.metadata.json`**
+- [x] **[DELETE] `tests/test_tasks.py`** — 424-line test suite for tasks handlers.
+- [x] **[DELETE] `tests/test_runners/test_tasks_options_validation.py`** —
+      186-line options validation test.
+
+#### Modified
+
+- [x] **[MODIFY] `tests/test_dynamic_templates.py`** — Rewrote
+      `test_tasks_list_types_dynamic_allowed` → `test_agents_list_types_dynamic_allowed`
+      and `test_tasks_create_task_dynamic` → `test_agents_assign_task_dynamic`.
+      Both now use `get_agents_function_group_factory` with `caller_agent_id`.
+- [x] **[MODIFY] `declarations/chat.instruction.md`** — `tasks_await` reference
+      → `agents_await`.
+- [x] **[MODIFY] `hive/skills/create-task-type/SKILL.md`** — All `tasks.*`
+      and `tasks_*` references → `agents.*` / `agents_*`. Title and description
+      updated.
+- [x] **[MODIFY] `hive/skills/research/SKILL.md`** — `tasks.*` → `agents.*`
+      in `allowed-tools`.
+
+#### Hivetool: No Changes Needed
+
+The four Hivetool files (`chat-panel.ts`, `ticket-detail.ts`, `ticket-pane.ts`)
+already check for both `tasks_await` and `agents_await` in their suspend
+detection. The `tasks_await` string literals are retained for backward
+compatibility — existing sessions may have `tasks_await` serialized in their
+`interaction.json`.
+
+#### Adjustments Made
+
+1. **`provisioner.py` not modified** — Already didn't wire the `tasks_*` group.
+   The function group was orphaned from the provisioner in Phase 7a when the
+   `functions/tasks.py` import was removed.
+
+2. **Skill files required updates** — Not listed in the original Phase 7c plan,
+   but `create-task-type/SKILL.md` and `research/SKILL.md` both referenced
+   `tasks.*` in their `allowed-tools` metadata and instructional text. Updated
+   to `agents.*`.
+
+#### Verification
+
+- [x] 528 Python tests pass (31 pre-existing event loop / MCP failures).
+- [x] `grep` sweep: zero imports of deleted modules across codebase.
+- [x] Dynamic template tests pass via agents API (5/5 in test file).
 
 ### Phase 7d — Hive Migration Script
 
