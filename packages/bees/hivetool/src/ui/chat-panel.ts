@@ -7,8 +7,8 @@
 /**
  * Unified chat panel — chat log + interactive input UI.
  *
- * Renders the conversation history from `ticket.chat_history` and,
- * when the task is suspended waiting for user input, shows a text
+ * Renders the conversation history from `agent.chat_history` and,
+ * when the agent is suspended waiting for user input, shows a text
  * reply form or choice selection cards.
  *
  * This component is a built-in surface item composed by
@@ -19,9 +19,9 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 
-import type { TicketStore } from "../data/ticket-store.js";
+import type { AgentStore } from "../data/agent-store.js";
 import type { MutationClient } from "../data/mutation-client.js";
-import type { TaskData } from "../../../common/types.js";
+import type { AgentData } from "../../../common/types.js";
 import { markdown } from "../../../common/markdown.js";
 import { sharedStyles } from "./shared-styles.js";
 
@@ -406,7 +406,7 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
   ];
 
   @property({ attribute: false })
-  accessor ticketStore: TicketStore | null = null;
+  accessor agentStore: AgentStore | null = null;
 
   @property({ attribute: false })
   accessor mutationClient: MutationClient | null = null;
@@ -429,17 +429,17 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
    * user input. Used by the parent to decide grid layout.
    */
   get hasContent(): boolean {
-    const ticket = this.ticketStore?.selectedTicket.get();
-    if (!ticket) return false;
-    return hasChatContent(ticket);
+    const agent = this.agentStore?.selectedAgent.get();
+    if (!agent) return false;
+    return hasChatContent(agent);
   }
 
   render() {
-    if (!this.ticketStore) return nothing;
-    const ticket = this.ticketStore.selectedTicket.get();
-    if (!ticket) return nothing;
+    if (!this.agentStore) return nothing;
+    const agent = this.agentStore.selectedAgent.get();
+    if (!agent) return nothing;
 
-    const chatHistory = (ticket.chat_history ?? []).filter(
+    const chatHistory = (agent.chat_history ?? []).filter(
       (m) => m.text.trim() !== ""
     );
 
@@ -455,7 +455,7 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
     const hasNewMessages = messageCount > this.#lastMessageCount;
     this.#lastMessageCount = messageCount;
 
-    const inputUi = this.renderInputUi(ticket);
+    const inputUi = this.renderInputUi(agent);
     if (chatHistory.length === 0 && !inputUi) return nothing;
 
     // Schedule auto-scroll after render if there are new messages
@@ -488,7 +488,7 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
               </div>
             `
           : nothing}
-        ${ticket.runner === "live" ? this.renderLiveSessionPanel(ticket.id) : nothing}
+        ${agent.runner === "live" ? this.renderLiveSessionPanel(agent.id) : nothing}
         ${inputUi
           ? html`<div class="response-section">${inputUi}</div>`
           : nothing}
@@ -496,15 +496,15 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
     `;
   }
 
-  private renderLiveSessionPanel(ticketId: string) {
-    const hasActive = this.ticketStore?.activeLiveSessions
+  private renderLiveSessionPanel(agentId: string) {
+    const hasActive = this.agentStore?.activeLiveSessions
       .get()
-      .has(ticketId);
+      .has(agentId);
 
-    const client = this.ticketStore?.activeConnection.get();
-    const isThisTicket = client?.taskId === ticketId;
-    const status = isThisTicket ? (client!.status.get()) : "idle";
-    const isTalking = isThisTicket ? (client!.talking.get()) : false;
+    const client = this.agentStore?.activeConnection.get();
+    const isThisAgent = client?.taskId === agentId;
+    const status = isThisAgent ? (client!.status.get()) : "idle";
+    const isTalking = isThisAgent ? (client!.talking.get()) : false;
 
     if (!hasActive && status === "idle") return nothing;
 
@@ -519,7 +519,7 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
           <button
             class="live-btn ${isConnected ? "disconnect" : "connect"}"
             ?disabled=${isConnecting}
-            @click=${() => this.handleLiveConnectToggle(ticketId)}
+            @click=${() => this.handleLiveConnectToggle(agentId)}
           >
             ${isConnecting
               ? "Connecting…"
@@ -538,29 +538,29 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
     `;
   }
 
-  private async handleLiveConnectToggle(ticketId: string): Promise<void> {
-    if (!this.ticketStore) return;
+  private async handleLiveConnectToggle(agentId: string): Promise<void> {
+    if (!this.agentStore) return;
 
-    const client = this.ticketStore.activeConnection.get();
+    const client = this.agentStore.activeConnection.get();
 
-    if (client && client.taskId === ticketId) {
-      this.ticketStore.disconnectLiveSession();
+    if (client && client.taskId === agentId) {
+      this.agentStore.disconnectLiveSession();
     } else {
-      await this.ticketStore.connectLiveSession(ticketId);
+      await this.agentStore.connectLiveSession(agentId);
     }
   }
 
   // ── Input UI ──
 
   /** Render the interactive input area, or null if not applicable. */
-  private renderInputUi(ticket: TaskData): unknown {
-    if (ticket.status !== "suspended" || !ticket.suspend_event) return null;
+  private renderInputUi(agent: AgentData): unknown {
+    if (agent.status !== "suspended" || !agent.suspend_event) return null;
 
-    const functionName = ticket.suspend_event.function_name as
+    const functionName = agent.suspend_event.function_name as
       | string
       | undefined;
     const isUserFacing =
-      ticket.assignee === "user" &&
+      agent.assignee === "user" &&
       functionName !== "chat_await_context_update" &&
       functionName !== "tasks_await" &&
       functionName !== "agents_await" &&
@@ -568,15 +568,15 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
 
     if (!isUserFacing || !this.mutationClient?.boxActive.get()) return null;
 
-    const waitForInput = ticket.suspend_event.waitForInput as
+    const waitForInput = agent.suspend_event.waitForInput as
       | Record<string, unknown>
       | undefined;
-    const waitForChoice = ticket.suspend_event.waitForChoice as
+    const waitForChoice = agent.suspend_event.waitForChoice as
       | Record<string, unknown>
       | undefined;
 
-    if (waitForInput) return this.renderReplyForm(ticket.id, waitForInput);
-    if (waitForChoice) return this.renderChoiceForm(ticket.id, waitForChoice);
+    if (waitForInput) return this.renderReplyForm(agent.id, waitForInput);
+    if (waitForChoice) return this.renderChoiceForm(agent.id, waitForChoice);
     return null;
   }
 
@@ -761,26 +761,26 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
 }
 
 /**
- * Whether a ticket has chat content — messages or pending user input.
+ * Whether an agent has chat content — messages or pending user input.
  * Exported for use by parent components (tab visibility probing).
  */
-export function hasChatContent(ticket: TaskData): boolean {
-  const hasMessages = (ticket.chat_history ?? []).some(
+export function hasChatContent(agent: AgentData): boolean {
+  const hasMessages = (agent.chat_history ?? []).some(
     (m) => m.text.trim() !== ""
   );
   if (hasMessages) return true;
 
-  if (ticket.status === "suspended" && ticket.suspend_event) {
-    const fn = ticket.suspend_event.function_name as string | undefined;
+  if (agent.status === "suspended" && agent.suspend_event) {
+    const fn = agent.suspend_event.function_name as string | undefined;
     const isUserFacing =
-      ticket.assignee === "user" &&
+      agent.assignee === "user" &&
       fn !== "chat_await_context_update" &&
       fn !== "tasks_await" &&
       fn !== "agents_await" &&
       fn !== "events_yield";
     if (isUserFacing) {
-      const hasInput = !!ticket.suspend_event.waitForInput;
-      const hasChoice = !!ticket.suspend_event.waitForChoice;
+      const hasInput = !!agent.suspend_event.waitForInput;
+      const hasChoice = !!agent.suspend_event.waitForChoice;
       if (hasInput || hasChoice) return true;
     }
   }

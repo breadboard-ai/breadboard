@@ -5,14 +5,16 @@
  */
 
 /**
- * Backend API contract for ticket data. Shared between Opal shell and
- * HiveTool devtools — any additions here must be reflected in the Python
- * server's serialisation logic.
+ * Agent data — a persistent identity with session, workspace, and tools.
+ *
+ * Shared between Opal shell and HiveTool devtools — any additions here
+ * must be reflected in the Python server's serialisation logic.
  */
-export interface TaskData {
+export interface AgentData {
   id: string;
   objective: string;
   status: string;
+  finite?: boolean;
   created_at?: string;
   completed_at?: string;
   turns?: number;
@@ -50,35 +52,8 @@ export interface TaskData {
 }
 
 // ---------------------------------------------------------------------------
-// Project Swarm — decoupled entity types
+// Project Swarm — lightweight task work items
 // ---------------------------------------------------------------------------
-
-/**
- * Agent data — a persistent identity with session, workspace, and tools.
- *
- * Mirrors the ``agents`` SQL table from Project Swarm. Agents own
- * configuration and lifecycle; work items are separate TaskItemData.
- */
-export interface AgentData {
-  id: string;
-  type: string;
-  slug: string;
-  status: string;
-  finite: boolean;
-  parent_id?: string;
-  workspace_root_id?: string;
-  active_session?: string;
-  model?: string;
-  runner?: "generate" | "live" | "direct_model";
-  voice?: string;
-  functions?: string[];
-  skills?: string[];
-  tags?: string[];
-  playbook_id?: string;
-  tasks?: string[];
-  created_at?: string;
-  completed_at?: string;
-}
 
 /**
  * Lightweight task data — a work item assigned to an agent.

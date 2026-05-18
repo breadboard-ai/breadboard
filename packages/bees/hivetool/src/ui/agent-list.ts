@@ -1,0 +1,238 @@
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
+ * Sidebar list of agents with flat/tree toggle.
+ */
+
+import { SignalWatcher } from "@lit-labs/signals";
+import { LitElement, html, css, nothing } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+
+import type { AgentData } from "../data/types.js";
+import type { AgentStore } from "../data/agent-store.js";
+import { deriveAgentTree, type AgentTreeNode } from "../data/agent-tree.js";
+import { getRelativeTime } from "../utils.js";
+import { sharedStyles } from "./shared-styles.js";
+
+export { BeesAgentList };
+
+type AgentViewMode = "flat" | "tree";
+const VIEW_MODE_KEY = "bees-hivetool-agent-view-mode";
+
+@customElement("bees-agent-list")
+class BeesAgentList extends SignalWatcher(LitElement) {
+  static styles = [
+    sharedStyles,
+    css`
+      :host {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      /* Sidebar toolbar */
+      .sidebar-toolbar {
+        display: flex;
+        justify-content: flex-end;
+        padding: 8px 12px 0;
+        flex-shrink: 0;
+      }
+
+      .view-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        font-size: 0.8rem;
+        background: transparent;
+        color: #64748b;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+
+      .view-toggle:hover {
+        color: #e2e8f0;
+        border-color: #3b82f6;
+        background: #1e293b;
+      }
+
+      .view-toggle.active {
+        color: #60a5fa;
+        border-color: #3b82f6;
+        background: #1e293b33;
+      }
+
+      /* Agent tree */
+      .agent-tree-branch {
+        border: none;
+        margin: 0;
+      }
+
+      .agent-tree-branch > summary {
+        list-style: none;
+        cursor: default;
+      }
+
+      .agent-tree-branch > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .agent-tree-children {
+        margin-left: 16px;
+        border-left: 1px solid #1e293b;
+        padding-left: 4px;
+      }
+    `,
+  ];
+
+  @property({ attribute: false })
+  accessor store: AgentStore | null = null;
+
+  /** ID of a recently updated agent (for flash animation). */
+  @property({ attribute: false })
+  accessor flashAgentId: string | null = null;
+
+  @state() accessor viewMode: AgentViewMode =
+    (localStorage.getItem(VIEW_MODE_KEY) as AgentViewMode) || "flat";
+
+  render() {
+    if (!this.store) return nothing;
+    const allAgents = this.store.agents.get();
+    const agents = allAgents.filter((t) => t.kind !== "coordination");
+    const selectedId = this.store.selectedAgentId.get();
+
+    if (agents.length === 0) {
+      return html`<div class="empty-state">No agents found.</div>`;
+    }
+
+    const isTree = this.viewMode === "tree";
+
+    return html`
+      <div class="sidebar-toolbar">
+        <button
+          class="view-toggle ${isTree ? "active" : ""}"
+          @click=${() => this.toggleViewMode()}
+          title="${isTree ? "Switch to flat list" : "Switch to tree view"}"
+        >
+          ${isTree ? "🌳" : "☰"}
+        </button>
+      </div>
+      <div class="jobs-list">
+        ${isTree
+          ? this.renderTree(agents, selectedId)
+          : agents.map((t) => this.renderItem(t, selectedId))}
+      </div>
+    `;
+  }
+
+  private renderItem(t: AgentData, selectedId: string | null) {
+    const isInfinite = t.functions?.length &&
+      !t.functions.some((f) => f.startsWith("system."));
+
+    return html`
+      <div
+        class="job-item ${selectedId === t.id ? "selected" : ""} ${this
+          .flashAgentId === t.id
+          ? "lightning-flash"
+          : ""}"
+        @click=${() => this.handleSelect(t.id)}
+      >
+        <div class="job-header">
+          <div class="job-title">${this.displayName(t)}</div>
+          ${isInfinite
+            ? html`<span style="font-size:0.7rem;color:#94a3b8;margin-right:4px" title="Persistent agent">∞</span>`
+            : nothing}
+          <div class="job-status ${t.status}"></div>
+        </div>
+        <div class="job-meta">
+          <span>${t.playbook_id ?? "ad-hoc"}</span>
+          <span>${getRelativeTime(t.created_at)}</span>
+        </div>
+        ${t.tags && t.tags.length > 0
+          ? html`
+              <div class="job-meta">
+                ${t.tags.map(
+                  (tag) =>
+                    html`<span
+                      class="tool-badge"
+                      style="font-size:0.65rem;padding:1px 5px"
+                      >${tag}</span
+                    >`
+                )}
+              </div>
+            `
+          : nothing}
+      </div>
+    `;
+  }
+
+  private renderTree(agents: AgentData[], selectedId: string | null) {
+    const tree = deriveAgentTree(agents);
+    return tree.map((node) => this.renderTreeNode(node, selectedId));
+  }
+
+  private renderTreeNode(
+    node: AgentTreeNode,
+    selectedId: string | null
+  ): unknown {
+    const t = node.agent;
+    const hasChildren = node.children.length > 0;
+    const item = this.renderItem(t, selectedId);
+
+    if (!hasChildren) return item;
+
+    return html`
+      <details class="agent-tree-branch" open>
+        <summary>${item}</summary>
+        <div class="agent-tree-children">
+          ${node.children.map((child) =>
+            this.renderTreeNode(child, selectedId)
+          )}
+        </div>
+      </details>
+    `;
+  }
+
+  private toggleViewMode() {
+    this.viewMode = this.viewMode === "flat" ? "tree" : "flat";
+    localStorage.setItem(VIEW_MODE_KEY, this.viewMode);
+  }
+
+  private handleSelect(id: string) {
+    this.dispatchEvent(
+      new CustomEvent("select", { detail: { id }, bubbles: true })
+    );
+  }
+
+  /**
+   * Pick the best display name for an entity.
+   *
+   * Priority: slug tail → title → truncated UUID.
+   * The slug is what the parent uses via `agents_*` — making it
+   * visible confirms the named-agent model works.
+   */
+  private displayName(t: AgentData): string {
+    if (t.slug) {
+      // Show just the tail segment for nested slugs.
+      const tail = t.slug.includes("/")
+        ? t.slug.split("/").pop()!
+        : t.slug;
+      return tail;
+    }
+    return t.title || t.id.slice(0, 8);
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "bees-agent-list": BeesAgentList;
+  }
+}

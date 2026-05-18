@@ -1229,24 +1229,96 @@ compatibility — existing sessions may have `tasks_await` serialized in their
 - [x] `grep` sweep: zero imports of deleted modules across codebase.
 - [x] Dynamic template tests pass via agents API (5/5 in test file).
 
-### Phase 7d — Hive Migration Script
+### Phase 7d — Agent-Centric UI + Tasks Tab ✅
 
-- [ ] **[NEW] Migration script** — Reads `tickets/`, creates `agents/`
-      directories with same internal structure, extracts task data into `tasks/`
-      JSON files. Preserves session data. **Pre-flight guard:** aborts if any
-      agent is `running` or `suspended` — migration requires quiescence.
+Rename hivetool UI components from ticket-centric to agent-centric. Replace the
+"Events" tab with a "Tasks" tab that surfaces the lightweight `tasks/` records
+as a first-class view of the hive's work graph.
 
-### Phase 7e — UI Rename + Task Display
+**Observable proof:**
 
-Rename hivetool UI components from ticket-centric to agent-centric. Design how
-the new lightweight `tasks/` records are displayed alongside agents.
+1. Open hivetool. The sidebar shows **Agents · Sessions · Tasks · Templates ·
+   Skills · System** tabs.
+2. Click Tasks — all task records from `tasks/` appear grouped by status
+   (In Progress, Available, Completed, Failed, Cancelled).
+3. Click a task — the detail panel shows objective, context, outcome, lifecycle
+   timeline, and navigable assignee/creator chips (with partial UUIDs).
+4. Click the assignee chip — navigates to the Agents tab with that agent
+   selected.
+5. In agent detail, click a task queue item — navigates to the Tasks tab with
+   that task selected.
 
-- [ ] **[RENAME]** UI components: `ticket-*` → `agent-*` where appropriate. Tab
-      label: "Tasks" → "Agents".
-- [ ] **[MODIFY] `ticket-store.ts`** — Remove `tickets/` fallback. Read
-      exclusively from `agents/` + `tasks/`.
-- [ ] **Design** — How tasks (the new lightweight work items) are surfaced in
-      the UI: inline in agent detail, separate tab, or status indicators.
+#### Consumer Component Migration
+
+All remaining consumer components updated from `TicketStore` to `AgentStore`:
+
+- [x] **[MODIFY] `app.ts`** — `TicketStore` → `AgentStore`. TabId `events` →
+      `tasks`. Tab order: Agents, Sessions, Tasks, Templates, Skills, System.
+      Removed `selectedEventId` state (selection now in `AgentStore`).
+- [x] **[MODIFY] `chat-panel.ts`** — `TicketStore` → `AgentStore`.
+- [x] **[MODIFY] `surface-pane.ts`** — `ticketId` property → `agentId`.
+- [x] **[MODIFY] `event-list.ts`** — `TicketStore` → `AgentStore`.
+- [x] **[MODIFY] `event-detail.ts`** — `TicketStore` → `AgentStore`.
+- [x] **[MODIFY] `log-detail.ts`** — Navigation targets `agents` tab.
+- [x] **[MODIFY] `template-detail.ts`** — Navigation targets `agents` tab.
+- [x] **[MODIFY] `skill-detail.ts`** — Navigation targets `agents` tab.
+- [x] **[MODIFY] `agent-pane.ts`** — Fixed `.ticketId` → `.agentId` binding.
+      Removed non-actionable `playbook_run_id` identity chip.
+- [x] **[MODIFY] `log-list.ts`** — Fixed runtime crash from stale signal
+      references (`taskGroups` → `agentGroups`).
+- [x] **[MODIFY] `state-access.ts`** — Updated documentation references.
+
+#### Data Layer: Tasks Signal
+
+- [x] **[MODIFY] `agent-store.ts`** — Added `tasks` signal (flat
+      `TaskItemData[]` populated during existing `scan()` cycle — zero extra
+      filesystem reads). Added `selectedTaskId` signal. Both cleared on
+      `reset()`.
+- [x] **[MODIFY] `router.ts`** — `events` → `tasks` in `RoutableTab` and
+      `VALID_TABS`.
+
+#### New Components: Tasks Tab
+
+- [x] **[NEW] `task-list.ts`** — Sidebar list grouped by status (In Progress →
+      Available → Completed → Failed → Cancelled). Each card shows
+      title/objective, status dot, kind badge (work/coordination), assignee
+      code, and relative age.
+- [x] **[NEW] `task-detail.ts`** — Detail panel with: status badge header,
+      lifecycle timeline (created → assigned → completed), navigable identity
+      chips (assignee + creator with partial UUIDs), objective, context, outcome
+      blocks with truncation, structured outcome content as JSON, tags, and
+      clickable dependency links.
+
+#### Agent Detail → Task Navigation
+
+- [x] **[MODIFY] `agent-detail.ts`** — Task queue items are clickable: added
+      cursor, hover effect, and click handler that navigates to the Tasks tab
+      with the selected task.
+
+#### Shared Styles
+
+- [x] **[MODIFY] `shared-styles.ts`** — Added status dot and badge CSS for
+      task-specific statuses: `available`, `in_progress`, `cancelled`.
+
+#### Legacy Cleanup
+
+The following files are now obsolete and ready for deletion:
+
+- `src/data/ticket-store.ts`, `src/data/ticket-tree.ts`
+- `src/ui/ticket-list.ts`, `src/ui/ticket-detail.ts`, `src/ui/ticket-pane.ts`
+- `src/ui/event-list.ts`, `src/ui/event-detail.ts`
+
+#### Verification
+
+- [x] TypeScript build clean (no compilation errors).
+- [x] All navigation flows verified: task→agent, agent→task, dependency→task.
+- [x] Tab ordering matches spec: Agents · Sessions · Tasks · ...
+
+> [!NOTE]
+> **Phase 7d (Migration Script) was dropped.** The old `tickets/` directory is
+> completely invisible to the current codebase: `AgentStore` reads only from
+> `agents/`, `box.py`'s `classify_change` ignores `tickets/`, and the Hivetool
+> opens only `agents/`. An old hive starts clean with no weird artifacts.
 
 ---
 
@@ -1315,20 +1387,22 @@ Files that need changes, ordered by coupling density:
 
 ### Hivetool (TypeScript)
 
-| File                                  | Current Coupling                   | Required Change                     |
+| File                                  | Pre-Migration                      | Post-Migration                      |
 | ------------------------------------- | ---------------------------------- | ----------------------------------- |
-| `ticket-store.ts`                     | Reads `tickets/` directory         | Read `agents/` + `tasks/`           |
-| `ticket-store.ts` (`createTask`)      | Creates tasks in `tickets/`        | Create agents + tasks in new layout |
-| `mutation-client.ts`                  | All mutations target `task_id`     | Some become agent-scoped            |
-| `common/types.ts`                     | `TaskData` = agent + task fused    | Split `AgentData` + `TaskData`      |
-| `ticket-list.ts`                      | Flat ticket list                   | Agent→task hierarchy                |
-| `ticket-detail.ts`                    | Ticket = everything                | Agent detail + task queue           |
-| `ticket-pane.ts`                      | Tabbed container per ticket        | Per agent                           |
+| ~~`ticket-store.ts`~~                 | Reads `tickets/` directory         | **Replaced** by `agent-store.ts`    |
+| `agent-store.ts`                      | —                                  | Reads `agents/` + `tasks/`          |
+| `mutation-client.ts`                  | All mutations target `task_id`     | Some became agent-scoped            |
+| `common/types.ts`                     | `TaskData` = agent + task fused    | Split `AgentData` + `TaskItemData`  |
+| ~~`ticket-list.ts`~~                  | Flat ticket list                   | **Replaced** by `agent-list.ts`     |
+| ~~`ticket-detail.ts`~~               | Ticket = everything                | **Replaced** by `agent-detail.ts`   |
+| ~~`ticket-pane.ts`~~                  | Tabbed container per ticket        | **Replaced** by `agent-pane.ts`     |
+| `task-list.ts`                        | —                                  | **New** Tasks tab sidebar           |
+| `task-detail.ts`                      | —                                  | **New** Tasks tab detail panel      |
 | `session-lineage.ts`                  | Session tree via ticket dirs       | Via agent dirs                      |
-| `log-store.ts`                        | Log files named with ticket ID     | Use agent ID                        |
+| `log-store.ts`                        | Log files named with ticket ID     | Uses agent ID                       |
 | `session-store-reader.ts`             | Reads sessions from ticket subdirs | From agent subdirs                  |
 | `log-detail.ts`                       | Rollback targets task              | Rollback targets agent              |
-| `app.ts`                              | "Tasks" tab, `TicketStore`         | "Agents" tab, `AgentStore`          |
+| `app.ts`                              | "Tasks" tab, `TicketStore`         | Agents/Sessions/Tasks tabs          |
 | `opal_backend/sessions/file_store.py` | Session paths from ticket dir      | Paths from agent dir                |
 
 ---
@@ -1340,22 +1414,22 @@ Files that need changes, ordered by coupling density:
 | File                                     | What to learn                                      |
 | ---------------------------------------- | -------------------------------------------------- |
 | `packages/bees/bees/bees.py`             | Public consumer API: Bees class, event dispatch    |
-| `packages/bees/bees/task_node.py`        | DOM-like tree traversal wrapper over Ticket        |
+| `packages/bees/bees/agent_node.py`       | DOM-like tree traversal wrapper over Agent          |
 | `packages/bees/bees/protocols/events.py` | Typed scheduler events (TaskAdded, TaskDone, etc.) |
-| `packages/bees/bees/ticket.py`           | Current fused identity: Ticket = agent + task      |
+| `packages/bees/bees/agent.py`            | Agent + AgentMetadata entities                     |
 | `packages/bees/bees/scheduler.py`        | Cycle orchestration, context delivery              |
 | `packages/bees/bees/task_runner.py`      | Session wiring, run/resume paths                   |
-| `packages/bees/bees/playbook.py`         | Agent type loading, child task stamping            |
-| `packages/bees/bees/functions/tasks.py`  | LLM-facing task API                                |
+| `packages/bees/bees/playbook.py`         | Agent type loading, child task stamping             |
+| `packages/bees/bees/functions/agents.py` | LLM-facing agent orchestration API                 |
 | `packages/bees/bees/subagent_scope.py`   | Workspace scoping                                  |
 
 ### Hivetool architecture (read for any hivetool phase)
 
-| File                                                 | What to learn                                        |
-| ---------------------------------------------------- | ---------------------------------------------------- |
+| File                                                 | What to learn                                       |
+| ---------------------------------------------------- | --------------------------------------------------- |
 | `packages/bees/hivetool/src/ui/app.ts`               | Root orchestrator, tab routing, store lifecycle      |
-| `packages/bees/hivetool/src/data/ticket-store.ts`    | Ticket scanning, FileSystemObserver, workspace paths |
-| `packages/bees/hivetool/src/data/mutation-client.ts` | Mutation protocol client, fire-and-forget writes     |
+| `packages/bees/hivetool/src/data/agent-store.ts`     | Agent + task scanning, FileSystemObserver, workspace |
+| `packages/bees/hivetool/src/data/mutation-client.ts`  | Mutation protocol client, fire-and-forget writes     |
 | `packages/bees/hivetool/src/data/types.ts`           | Data types, surface schema                           |
 | `packages/bees/common/types.ts`                      | Shared backend API contract                          |
 | `packages/bees/bees/box.py`                          | classify_change, hot/cold processing loop            |
@@ -1367,3 +1441,4 @@ Files that need changes, ordered by coupling density:
 | ---------------------------- | ---------------------------------------------------------- |
 | `projects/rewind/PROJECT.md` | Session rollback — the fork mechanism this project extends |
 | `projects/air/PROJECT.md`    | Unified task model — finite agents (direct_model)          |
+

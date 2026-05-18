@@ -23,7 +23,7 @@ import type {
 import { SessionStoreReader, compileEventsToSegment } from "../data/session-store-reader.js";
 import type { TurnCheckpointInfo, SessionLineageInfo, TaskCompletionInfo } from "../data/session-store-reader.js";
 import type { StateAccess } from "../data/state-access.js";
-import type { TicketStore } from "../data/ticket-store.js";
+import type { AgentStore } from "../data/agent-store.js";
 import type { MutationClient } from "../data/mutation-client.js";
 import { logDetailStyles } from "./log-detail.styles.js";
 import "./primitives/confirm-dialog.js";
@@ -71,7 +71,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
   accessor stateAccess: StateAccess | null = null;
 
   @property({ attribute: false })
-  accessor ticketStore: TicketStore | null = null;
+  accessor agentStore: AgentStore | null = null;
 
   @property({ attribute: false })
   accessor mutationClient: MutationClient | null = null;
@@ -82,7 +82,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
   @state() accessor storeData: MergedSessionView | null = null;
   @state() accessor interactionSummary: { contextCount: number; pendingCall?: string; fsSize: number } | null = null;
   @state() accessor turns: TurnCheckpointInfo[] = [];
-  @state() accessor ticketId: string | null = null;
+  @state() accessor agentId: string | null = null;
   @state() accessor activeSessionId: string | null = null;
   @state() accessor showConfirmDialog = false;
   @state() accessor confirmMessage = "";
@@ -96,8 +96,8 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
   protected updated(changedProperties: Map<PropertyKey, unknown>) {
     super.updated(changedProperties);
 
-    if (this.#rollbackSourceSessionId && this.activeTicket) {
-      const currentActive = this.activeTicket.active_session;
+    if (this.#rollbackSourceSessionId && this.activeAgent) {
+      const currentActive = this.activeAgent.active_session;
       if (currentActive && currentActive !== this.#rollbackSourceSessionId) {
         const newActive = currentActive;
         this.#rollbackSourceSessionId = null;
@@ -121,24 +121,24 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
   #lastReloadedTimestamp = 0;
 
   private async loadSessionData(sessionId: string) {
-    if (!this.sessionReader || !this.ticketStore) return;
+    if (!this.sessionReader || !this.agentStore) return;
 
-    let ticketId: string | null = null;
+    let agentId: string | null = null;
     let resolvedSessionId: string | null = null;
 
-    // Resolving if sessionId is the ticket ID or active session UUID
-    const tickets = this.ticketStore.tickets.get();
-    const ticketByTaskId = tickets.find((t) => t.id === sessionId);
-    if (ticketByTaskId) {
-      ticketId = sessionId;
-      resolvedSessionId = ticketByTaskId.active_session || null;
+    // Resolving if sessionId is the agent ID or active session UUID
+    const agents = this.agentStore.agents.get();
+    const agentById = agents.find((t) => t.id === sessionId);
+    if (agentById) {
+      agentId = sessionId;
+      resolvedSessionId = agentById.active_session || null;
     } else {
-      ticketId = await this.sessionReader.findTicketForSession(sessionId);
+      agentId = await this.sessionReader.findTicketForSession(sessionId);
       resolvedSessionId = sessionId;
     }
 
-    if (!ticketId || !resolvedSessionId) {
-      this.ticketId = null;
+    if (!agentId || !resolvedSessionId) {
+      this.agentId = null;
       this.activeSessionId = null;
       this.storeData = null;
       this.interactionSummary = null;
@@ -146,21 +146,21 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
       return;
     }
 
-    this.ticketId = ticketId;
+    this.agentId = agentId;
     this.activeSessionId = resolvedSessionId;
 
-    const lineage = await this.sessionReader.readLineage(ticketId);
+    const lineage = await this.sessionReader.readLineage(agentId);
     this.lineage = lineage;
 
-    const events = await this.sessionReader.readEvents(ticketId, resolvedSessionId);
-    const interaction = await this.sessionReader.readInteraction(ticketId, resolvedSessionId) as InteractionStateDto | null;
-    const turns = await this.sessionReader.readTurns(ticketId, resolvedSessionId);
+    const events = await this.sessionReader.readEvents(agentId, resolvedSessionId);
+    const interaction = await this.sessionReader.readInteraction(agentId, resolvedSessionId) as InteractionStateDto | null;
+    const turns = await this.sessionReader.readTurns(agentId, resolvedSessionId);
 
     this.turns = turns;
 
     if (events.length > 0) {
-      const ticket = tickets.find((t) => t.id === ticketId);
-      const segment = compileEventsToSegment(resolvedSessionId, events as Record<string, unknown>[], ticket?.runner);
+      const agent = agents.find((t) => t.id === agentId);
+      const segment = compileEventsToSegment(resolvedSessionId, events as Record<string, unknown>[], agent?.runner);
       this.storeData = {
         sessionId: resolvedSessionId,
         segments: [segment],
@@ -188,9 +188,9 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
   }
 
   render() {
-    // Access recentlyUpdatedTicket signal to establish a reactive subscription
-    const updated = this.ticketStore?.recentlyUpdatedTicket.get();
-    if (updated && this.ticketId && updated.id === this.ticketId && this.sessionId) {
+    // Access recentlyUpdatedAgent signal to establish a reactive subscription
+    const updated = this.agentStore?.recentlyUpdatedAgent.get();
+    if (updated && this.agentId && updated.id === this.agentId && this.sessionId) {
       if (this.#lastReloadedTimestamp !== updated.at) {
         this.#lastReloadedTimestamp = updated.at;
         this.loadSessionData(this.sessionId);
@@ -253,7 +253,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
   private renderHeader(d: MergedSessionView) {
     const duration = (d.totalDurationMs / 1000).toFixed(1);
     const started = d.segments[0]?.startedDateTime;
-    const tId = this.ticketId || d.sessionId;
+    const tId = this.agentId || d.sessionId;
     return html`
       <div class="header">
         <div class="header-top">
@@ -263,9 +263,9 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
           </h2>
           <span
             class="link-chip"
-            @click=${() => this.#dispatchNavigate("ticket", tId)}
+            @click=${() => this.#dispatchNavigate("agent", tId)}
           >
-            <span class="link-chip-label">task</span>
+            <span class="link-chip-label">agent</span>
             ${tId.slice(0, 8)}
           </span>
           ${d.segments.length > 1
@@ -839,21 +839,21 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
     );
   }
 
-  private get activeTicket() {
-    if (!this.ticketStore || !this.ticketId) return null;
-    return this.ticketStore.tickets.get().find((t) => t.id === this.ticketId) || null;
+  private get activeAgent() {
+    if (!this.agentStore || !this.agentId) return null;
+    return this.agentStore.agents.get().find((t) => t.id === this.agentId) || null;
   }
 
   private canRollback() {
     const boxActive = this.mutationClient?.boxActive.get();
-    const ticket = this.activeTicket;
+    const agent = this.activeAgent;
     if (!boxActive) return false;
-    if (!ticket) return false;
-    return ticket.status === "suspended";
+    if (!agent) return false;
+    return agent.status === "suspended";
   }
 
   private async handleRollback(turnIndex: number) {
-    if (!this.mutationClient || !this.ticketId) return;
+    if (!this.mutationClient || !this.agentId) return;
 
     this.rollbackTurnIndex = turnIndex;
 
@@ -861,7 +861,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
     let requeueMessage = "";
     if (this.sessionReader && this.activeSessionId) {
       const completions = await this.sessionReader.readTaskCompletions(
-        this.ticketId, this.activeSessionId
+        this.agentId, this.activeSessionId
       );
       const requeued = completions.filter((c) => c.turn > turnIndex);
       if (requeued.length > 0) {
@@ -880,7 +880,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
   }
 
   private async executeRollback() {
-    if (!this.mutationClient || !this.ticketId || this.rollbackTurnIndex === -1) return;
+    if (!this.mutationClient || !this.agentId || this.rollbackTurnIndex === -1) return;
 
     const turnIndex = this.rollbackTurnIndex;
     this.showConfirmDialog = false;
@@ -888,7 +888,7 @@ class BeesLogDetail extends SignalWatcher(LitElement) {
 
     try {
       this.#rollbackSourceSessionId = this.activeSessionId;
-      await this.mutationClient.rollbackToTurn(this.ticketId, turnIndex, this.activeSessionId ?? undefined);
+      await this.mutationClient.rollbackToTurn(this.agentId, turnIndex, this.activeSessionId ?? undefined);
     } catch (e) {
       this.#rollbackSourceSessionId = null;
       console.error("Failed to rollback to turn:", e);

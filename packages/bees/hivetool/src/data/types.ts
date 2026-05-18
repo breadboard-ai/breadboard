@@ -5,10 +5,11 @@
  */
 
 // Re-export the shared backend API contract.
-export type { TaskData as TicketData } from "../../../common/types.js";
+export type { AgentData } from "../../../common/types.js";
 
-// Project Swarm — decoupled entity types.
-export type { AgentData, TaskItemData } from "../../../common/types.js";
+// Project Swarm — lightweight task work items.
+export type { TaskItemData } from "../../../common/types.js";
+
 
 // ---------------------------------------------------------------------------
 // Log file types (from EvalCollector output in packages/bees/hive/logs)
@@ -108,8 +109,8 @@ export interface SidebarSessionInfo {
   forkedTo?: { session: string; at_turn: number };
 }
 
-export interface TaskGroupedSessions {
-  taskId: string;
+export interface AgentGroupedSessions {
+  agentId: string;
   title: string;
   status: string;
   activeSessionId: string | null;

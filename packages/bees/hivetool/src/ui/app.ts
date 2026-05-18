@@ -22,7 +22,7 @@ import { parseRoute, writeRoute } from "../data/router.js";
 import { StateAccess } from "../data/state-access.js";
 import { SkillStore } from "../data/skill-store.js";
 import { SystemStore } from "../data/system-store.js";
-import { TicketStore } from "../data/ticket-store.js";
+import { AgentStore } from "../data/agent-store.js";
 import { TemplateStore } from "../data/template-store.js";
 
 // Import composed components (side-effect: registers custom elements).
@@ -30,10 +30,10 @@ import "./template-list.js";
 import "./template-detail.js";
 import "./skill-list.js";
 import "./skill-detail.js";
-import "./ticket-list.js";
-import "./ticket-pane.js";
-import "./event-list.js";
-import "./event-detail.js";
+import "./agent-list.js";
+import "./agent-pane.js";
+import "./task-list.js";
+import "./task-detail.js";
 import "./log-list.js";
 import "./log-detail.js";
 import "./system-detail.js";
@@ -41,7 +41,7 @@ import { scrollbarStyles } from "./shared-styles.js";
 
 export { BeesApp };
 
-type TabId = "logs" | "tickets" | "events" | "templates" | "skills" | "system";
+type TabId = "logs" | "agents" | "tasks" | "templates" | "skills" | "system";
 
 /** Shared interface for editable detail panels. */
 interface EditablePanel {
@@ -53,14 +53,14 @@ interface EditablePanel {
 
 @customElement("bees-app")
 class BeesApp extends SignalWatcher(LitElement) {
-  @state() accessor activeTab: TabId = "tickets";
-  @state() accessor selectedEventId: string | null = null;
+  @state() accessor activeTab: TabId = "agents";
+
   @state() accessor hivePickerOpen = false;
   @state() accessor maximized = false;
 
   private stateAccess = new StateAccess();
   private logStore = new LogStore(this.stateAccess);
-  private ticketStore = new TicketStore(this.stateAccess);
+  private agentStore = new AgentStore(this.stateAccess);
   private templateStore = new TemplateStore(this.stateAccess);
   private skillStore = new SkillStore(this.stateAccess);
   private systemStore = new SystemStore(this.stateAccess);
@@ -434,9 +434,9 @@ class BeesApp extends SignalWatcher(LitElement) {
   willUpdate(changedProperties: PropertyValues) {
     super.willUpdate(changedProperties);
     
-    const activeTicketId = this.ticketStore.selectedTicketId.get();
+    const activeAgentId = this.agentStore.selectedAgentId.get();
     if (this.stateAccess.accessState.get() === "ready") {
-      this.templateStore.scan(activeTicketId);
+      this.templateStore.scan(activeAgentId);
     }
   }
 
@@ -452,7 +452,7 @@ class BeesApp extends SignalWatcher(LitElement) {
   disconnectedCallback() {
     super.disconnectedCallback();
     this.logStore.destroy();
-    this.ticketStore.destroy();
+    this.agentStore.destroy();
     window.removeEventListener("popstate", this.onHashChange);
     window.removeEventListener("keydown", this.#onKeyDown);
     window.removeEventListener("beforeunload", this.#onBeforeUnload);
@@ -470,7 +470,7 @@ class BeesApp extends SignalWatcher(LitElement) {
   private async activateStores(): Promise<void> {
     await Promise.all([
       this.logStore.activate(),
-      this.ticketStore.activate(),
+      this.agentStore.activate(),
       this.templateStore.activate(),
       this.skillStore.activate(),
       this.systemStore.activate(),
@@ -480,11 +480,11 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   private resetStores(): void {
     this.logStore.reset();
-    this.ticketStore.reset();
+    this.agentStore.reset();
     this.templateStore.reset();
     this.skillStore.reset();
     this.systemStore.reset();
-    this.selectedEventId = null;
+
   }
 
   private async handleAddHive(): Promise<void> {
@@ -561,11 +561,11 @@ class BeesApp extends SignalWatcher(LitElement) {
       case "logs":
         id = this.logStore.selectedSessionId.get();
         break;
-      case "tickets":
-        id = this.ticketStore.selectedTicketId.get();
+      case "agents":
+        id = this.agentStore.selectedAgentId.get();
         break;
-      case "events":
-        id = this.selectedEventId;
+      case "tasks":
+        id = this.agentStore.selectedTaskId.get();
         break;
       case "templates":
         id = this.templateStore.selectedTemplateName.get();
@@ -581,15 +581,15 @@ class BeesApp extends SignalWatcher(LitElement) {
     const route = parseRoute();
     const validTabs: TabId[] = [
       "logs",
-      "tickets",
-      "events",
+      "agents",
+      "tasks",
       "templates",
       "skills",
       "system",
     ];
     const tab = validTabs.includes(route.tab as TabId)
       ? (route.tab as TabId)
-      : "tickets";
+      : "agents";
     this.activeTab = tab;
 
     if (this.stateAccess.accessState.get() !== "ready") return;
@@ -598,11 +598,11 @@ class BeesApp extends SignalWatcher(LitElement) {
       case "logs":
         if (route.id) this.logStore.selectSession(route.id);
         break;
-      case "tickets":
-        if (route.id) this.ticketStore.selectTicket(route.id);
+      case "agents":
+        if (route.id) this.agentStore.selectAgent(route.id);
         break;
-      case "events":
-        if (route.id) this.selectedEventId = route.id;
+      case "tasks":
+        if (route.id) this.agentStore.selectedTaskId.set(route.id);
         break;
       case "templates":
         if (route.id) this.templateStore.selectTemplate(route.id);
@@ -619,13 +619,13 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   private handleNavigate(e: CustomEvent) {
     const { id } = e.detail;
-    // Normalize: log-detail emits "ticket" (singular).
-    const tab = e.detail.tab === "ticket" ? "tickets" : e.detail.tab;
+    // Normalize: log-detail emits "agent" (singular).
+    const tab = e.detail.tab === "agent" ? "agents" : e.detail.tab;
     this.activeTab = tab;
 
     switch (tab) {
-      case "tickets":
-        this.ticketStore.selectTicket(id);
+      case "agents":
+        this.agentStore.selectAgent(id);
         break;
       case "templates":
         this.templateStore.selectTemplate(id);
@@ -636,8 +636,8 @@ class BeesApp extends SignalWatcher(LitElement) {
       case "logs":
         this.logStore.selectSession(id);
         break;
-      case "events":
-        this.selectedEventId = id;
+      case "tasks":
+        this.agentStore.selectedTaskId.set(id);
         break;
     }
 
@@ -647,7 +647,7 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   /**
    * Get the currently active editable panel, if one exists for the
-   * current tab. Returns null for tabs without editing (tickets, events, logs).
+   * current tab. Returns null for tabs without editing (tasks, logs).
    */
   #getActiveEditor(): EditablePanel | null {
     if (this.activeTab === "templates") {
@@ -758,8 +758,8 @@ class BeesApp extends SignalWatcher(LitElement) {
     }
 
     // Flash state for currently updated items.
-    const recentUpdate = this.ticketStore.recentlyUpdatedTicket.get();
-    const flashTicketId =
+    const recentUpdate = this.agentStore.recentlyUpdatedAgent.get();
+    const flashAgentId =
       recentUpdate && Date.now() - recentUpdate.at < 15000
         ? recentUpdate.id
         : null;
@@ -795,9 +795,9 @@ class BeesApp extends SignalWatcher(LitElement) {
         <div class="top-bar-tabs">
           ${(
             [
-              ["tickets", "Tasks", flashTicketId],
-              ["events", "Events", null],
+              ["agents", "Agents", flashAgentId],
               ["logs", "Sessions", flashLogId],
+              ["tasks", "Tasks", null],
               ["templates", "Templates", null],
               ["skills", "Skills", null],
               ["system", "System", null],
@@ -825,10 +825,10 @@ class BeesApp extends SignalWatcher(LitElement) {
       >
         ${this.maximized ? nothing : html`
         <div class="sidebar">
-          ${this.renderSidebar(flashTicketId, flashLogId)}
+          ${this.renderSidebar(flashAgentId, flashLogId)}
         </div>
         `}
-        <div class="main">${this.renderMain(flashTicketId)}</div>
+        <div class="main">${this.renderMain(flashAgentId)}</div>
       </div>
     `;
   }
@@ -837,15 +837,15 @@ class BeesApp extends SignalWatcher(LitElement) {
     // Only show mutation-powered controls when the box is listening.
     if (!this.mutationClient.boxActive.get()) return nothing;
 
-    const tickets = this.ticketStore.tickets.get();
+    const agents = this.agentStore.agents.get();
 
-    const hasActive = tickets.some(
+    const hasActive = agents.some(
       (t) =>
         t.status === "running" ||
         t.status === "available" ||
         t.status === "suspended"
     );
-    const hasPaused = tickets.some((t) => t.status === "paused");
+    const hasPaused = agents.some((t) => t.status === "paused");
 
     if (hasActive) {
       return html`
@@ -896,28 +896,27 @@ class BeesApp extends SignalWatcher(LitElement) {
   }
 
   private renderSidebar(
-    flashTicketId: string | null,
+    flashAgentId: string | null,
     flashLogId: string | null
   ) {
     switch (this.activeTab) {
-      case "tickets":
-        return html`<bees-ticket-list
-          .store=${this.ticketStore}
-          .flashTicketId=${flashTicketId}
+      case "agents":
+        return html`<bees-agent-list
+          .store=${this.agentStore}
+          .flashAgentId=${flashAgentId}
           @select=${(e: CustomEvent) => {
-            this.ticketStore.selectTicket(e.detail.id);
+            this.agentStore.selectAgent(e.detail.id);
             this.syncHash();
           }}
-        ></bees-ticket-list>`;
-      case "events":
-        return html`<bees-event-list
-          .store=${this.ticketStore}
-          .selectedEventId=${this.selectedEventId}
+        ></bees-agent-list>`;
+      case "tasks":
+        return html`<bees-task-list
+          .store=${this.agentStore}
           @select=${(e: CustomEvent) => {
-            this.selectedEventId = e.detail.id;
+            this.agentStore.selectedTaskId.set(e.detail.id);
             this.syncHash();
           }}
-        ></bees-event-list>`;
+        ></bees-task-list>`;
       case "logs":
         return html`<bees-log-list
           .store=${this.logStore}
@@ -965,27 +964,26 @@ class BeesApp extends SignalWatcher(LitElement) {
     }
   }
 
-  private renderMain(flashTicketId: string | null) {
+  private renderMain(flashAgentId: string | null) {
     switch (this.activeTab) {
-      case "tickets":
-        return html`<bees-ticket-pane
-          .ticketStore=${this.ticketStore}
+      case "agents":
+        return html`<bees-agent-pane
+          .agentStore=${this.agentStore}
           .stateAccess=${this.stateAccess}
           .mutationClient=${this.mutationClient}
           .templateStore=${this.templateStore}
           .skillStore=${this.skillStore}
-          .flashTicketId=${flashTicketId}
+          .flashAgentId=${flashAgentId}
           .maximized=${this.maximized}
-        ></bees-ticket-pane>`;
-      case "events":
-        return html`<bees-event-detail
-          .ticketStore=${this.ticketStore}
-          .selectedEventId=${this.selectedEventId}
-        ></bees-event-detail>`;
+        ></bees-agent-pane>`;
+      case "tasks":
+        return html`<bees-task-detail
+          .agentStore=${this.agentStore}
+        ></bees-task-detail>`;
       case "logs":
         return html`<bees-log-detail
           .stateAccess=${this.stateAccess}
-          .ticketStore=${this.ticketStore}
+          .agentStore=${this.agentStore}
           .mutationClient=${this.mutationClient}
           .sessionId=${this.logStore.selectedSessionId.get()}
         ></bees-log-detail>`;
@@ -993,13 +991,13 @@ class BeesApp extends SignalWatcher(LitElement) {
         return html`<bees-template-detail
           .templateStore=${this.templateStore}
           .skillStore=${this.skillStore}
-          .ticketStore=${this.ticketStore}
+          .agentStore=${this.agentStore}
         ></bees-template-detail>`;
       case "skills":
         return html`<bees-skill-detail
           .skillStore=${this.skillStore}
           .templateStore=${this.templateStore}
-          .ticketStore=${this.ticketStore}
+          .agentStore=${this.agentStore}
         ></bees-skill-detail>`;
       case "system":
         return html`<bees-system-detail

@@ -9,7 +9,7 @@
  *
  * Manages a registry of directory handles in IndexedDB, allowing
  * the user to add, remove, and switch between multiple hive directories.
- * Multiple consumers (LogStore, TicketStore) share a single instance.
+ * Multiple consumers (LogStore, AgentStore) share a single instance.
  */
 
 import { Signal } from "signal-polyfill";

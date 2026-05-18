@@ -14,7 +14,7 @@
 import { Signal } from "signal-polyfill";
 import type { StateAccess } from "./state-access.js";
 import type {
-  TaskGroupedSessions,
+  AgentGroupedSessions,
   SidebarSessionInfo,
 } from "./types.js";
 
@@ -30,18 +30,18 @@ class LogStore {
 
   // ── Public reactive state (read via .get() in render methods) ──
 
-  readonly taskGroups = new Signal.State<TaskGroupedSessions[]>([]);
+  readonly agentGroups = new Signal.State<AgentGroupedSessions[]>([]);
   readonly selectedSessionId = new Signal.State<string | null>(null);
   readonly recentlyUpdatedSession = new Signal.State<{ id: string; at: number } | null>(null);
 
-  /** Resolved active task for the currently selected session. */
-  readonly selectedTaskId = new Signal.Computed(() => {
+  /** Resolved active agent for the currently selected session. */
+  readonly selectedAgentId = new Signal.Computed(() => {
     const selectedSid = this.selectedSessionId.get();
     if (!selectedSid) return null;
-    for (const group of this.taskGroups.get()) {
-      if (group.taskId === selectedSid) return group.taskId; // selected by ticket ID fallback
+    for (const group of this.agentGroups.get()) {
+      if (group.agentId === selectedSid) return group.agentId; // selected by agent ID fallback
       if (group.sessions.some((s) => s.sessionId === selectedSid)) {
-        return group.taskId;
+        return group.agentId;
       }
     }
     return null;
@@ -79,7 +79,7 @@ class LogStore {
   async scan(): Promise<void> {
     if (!this.#entityHandle) return;
 
-    const groups: TaskGroupedSessions[] = [];
+    const groups: AgentGroupedSessions[] = [];
 
     try {
       for await (const [name, entry] of (
@@ -94,7 +94,7 @@ class LogStore {
         if (!metadata) continue;
         if (metadata.kind === "coordination") continue;
 
-        const title = (metadata.title as string) || `Task ${name.slice(0, 8)}`;
+        const title = (metadata.title as string) || `Agent ${name.slice(0, 8)}`;
         const status = (metadata.status as string) || "unknown";
         const activeSessionId = (metadata.active_session as string) || null;
 
@@ -151,7 +151,7 @@ class LogStore {
         sessions.sort((a, b) => b.lastModified - a.lastModified);
 
         groups.push({
-          taskId: name,
+          agentId: name,
           title,
           status,
           activeSessionId,
@@ -169,7 +169,7 @@ class LogStore {
       return bMax - aMax;
     });
 
-    this.taskGroups.set(groups);
+    this.agentGroups.set(groups);
   }
 
   /** Select a session ID. */
@@ -183,7 +183,7 @@ class LogStore {
     this.#observer = null;
     this.#entityHandle = null;
     this.#activated = false;
-    this.taskGroups.set([]);
+    this.agentGroups.set([]);
     this.selectedSessionId.set(null);
     this.recentlyUpdatedSession.set(null);
   }
