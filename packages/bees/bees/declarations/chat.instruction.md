@@ -29,8 +29,8 @@ they were user input.
 ## Awaiting Context Updates
 
 The "chat_await_context_update" function suspends your session until an external
-context update arrives. It is equivalent to "tasks_await" from the tasks
-function group. If you have access to tasks functions, prefer "tasks_await"
+context update arrives. It is equivalent to "agents_await" from the agents
+function group. If you have access to agents functions, prefer "agents_await"
 instead — it works identically and is available to all agents.
 
 **Only call this function when your objective explicitly instructs you to wait
