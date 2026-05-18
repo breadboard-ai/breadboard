@@ -653,6 +653,207 @@ class TestRollbackToTurn:
         # File system workspace should hydrate from session_1's snapshot
         assert (new_sdir / "workspace" / "notes.md").read_text() == "hello from session 1"
 
+    def _create_swarm_agent_for_rollback(
+        self, hive: Path, *, session_id: str = "test-session-999"
+    ) -> tuple[str, Path]:
+        """Helper: create a suspended swarm agent with a session, turns, and interaction."""
+        from bees.agent import AgentMetadata
+        from bees.agent_store import AgentStore
+
+        agent_store = AgentStore(hive)
+        agent = agent_store.create(
+            type="infinite-poet",
+            slug="poet",
+            finite=False,
+            runner="generate",
+        )
+        agent.metadata.status = "suspended"
+        agent.metadata.active_session = session_id
+        agent.metadata.turns = 4
+        agent_store.save_metadata(agent)
+
+        # Write objective for backward compat.
+        (agent.dir / "objective.md").write_text("Write poems")
+
+        sdir = agent.dir / "sessions" / session_id
+        sdir.mkdir(parents=True, exist_ok=True)
+
+        # Minimal interaction state.
+        interaction_data = {
+            "session_id": session_id,
+            "contents": [
+                {"parts": [{"text": f"Turn {i}"}], "role": "user"} for i in range(8)
+            ],
+            "file_system": {"files": {}, "routes": {}, "file_count": 0},
+            "function_call_part": {},
+            "task_tree": {"tree": None},
+            "consents_granted": [],
+            "flags": {},
+            "graph": {},
+            "model": "gemini-2.5-pro",
+            "completed_function_responses": [],
+            "is_precondition_check": False,
+        }
+        (sdir / "interaction.json").write_text(json.dumps(interaction_data))
+
+        # Turn checkpoints.
+        turns_data = [
+            {"turn": i, "context_length": (i + 1) * 2, "file_system": None, "token_metadata": None}
+            for i in range(4)
+        ]
+        (sdir / "turns.json").write_text(json.dumps(turns_data))
+
+        # Events (minimal — one sendRequest per turn).
+        events_lines = [
+            json.dumps({"sendRequest": {"body": {"contents": [{"parts": [{"text": f"Turn {i}"}], "role": "user"}]}}})
+            for i in range(4)
+        ]
+        (sdir / "events.jsonl").write_text("\n".join(events_lines) + "\n")
+
+        return agent.id, sdir
+
+    def test_rollback_requeues_tasks_after_fork_point(self, tmp_path):
+        """Tasks completed after the fork turn revert to available."""
+        from bees.task_file_store import TaskFileStore
+
+        hive = tmp_path
+        (hive / "mutations").mkdir(parents=True, exist_ok=True)
+
+        agent_id, sdir = self._create_swarm_agent_for_rollback(hive)
+
+        # Create three completed tasks via TaskFileStore.
+        task_store = TaskFileStore(hive)
+        task_a = task_store.create(objective="Task A", assignee=agent_id)
+        task_a.status = "completed"
+        task_a.outcome = "Done A"
+        task_a.completed_at = "2026-05-01T00:00:00Z"
+        task_store.save(task_a)
+
+        task_b = task_store.create(objective="Task B", assignee=agent_id)
+        task_b.status = "completed"
+        task_b.outcome = "Done B"
+        task_b.completed_at = "2026-05-02T00:00:00Z"
+        task_store.save(task_b)
+
+        task_c = task_store.create(objective="Task C", assignee=agent_id)
+        task_c.status = "completed"
+        task_c.outcome = "Done C"
+        task_c.completed_at = "2026-05-03T00:00:00Z"
+        task_store.save(task_c)
+
+        # Write task_completions.json: A at turn 1, B at turn 2, C at turn 3.
+        completions = [
+            {"task_id": task_a.id, "turn": 1, "completed_at": task_a.completed_at},
+            {"task_id": task_b.id, "turn": 2, "completed_at": task_b.completed_at},
+            {"task_id": task_c.id, "turn": 3, "completed_at": task_c.completed_at},
+        ]
+        (sdir / "task_completions.json").write_text(json.dumps(completions))
+
+        # Rollback to turn 1 — tasks B and C should be re-queued.
+        _write_mutation(hive, {
+            "type": "rollback-to-turn",
+            "task_id": agent_id,
+            "turn_index": 1,
+        })
+        manager = MutationManager(hive)
+        outcome = asyncio.run(manager.process_inline())
+        assert outcome.hot_processed == 1
+
+        # Task A stays completed (turn 1 <= fork point 1).
+        assert task_store.get(task_a.id).status == "completed"
+        assert task_store.get(task_a.id).outcome == "Done A"
+
+        # Task B reverts to available (turn 2 > fork point 1).
+        reloaded_b = task_store.get(task_b.id)
+        assert reloaded_b.status == "available"
+        assert reloaded_b.outcome is None
+        assert reloaded_b.completed_at is None
+
+        # Task C reverts to available (turn 3 > fork point 1).
+        reloaded_c = task_store.get(task_c.id)
+        assert reloaded_c.status == "available"
+        assert reloaded_c.outcome is None
+
+        # New session should carry only the pre-fork completion (task A).
+        from bees.unified_agent_store import UnifiedAgentStore
+        store = UnifiedAgentStore(hive)
+        agent = store.get(agent_id)
+        new_sdir = agent.dir / "sessions" / agent.metadata.active_session
+        new_completions = json.loads(
+            (new_sdir / "task_completions.json").read_text()
+        )
+        assert len(new_completions) == 1
+        assert new_completions[0]["task_id"] == task_a.id
+
+        # Re-queued tasks should be buffered as pending context updates
+        # so the agent receives them on resume.
+        pending = agent.metadata.pending_context_updates
+        assert pending is not None
+        assert len(pending) == 2
+        objectives = {u["objective"] for u in pending}
+        assert "Task B" in objectives
+        assert "Task C" in objectives
+        assert all(u["type"] == "task_assigned" for u in pending)
+
+    def test_rollback_no_completions_file_is_backward_compat(self, tmp_path):
+        """Rollback works if there's no task_completions.json (legacy/finite agent)."""
+        hive = tmp_path
+        (hive / "mutations").mkdir(parents=True, exist_ok=True)
+
+        agent_id, sdir = self._create_swarm_agent_for_rollback(hive)
+
+        # No task_completions.json — simulate a legacy or finite agent.
+        _write_mutation(hive, {
+            "type": "rollback-to-turn",
+            "task_id": agent_id,
+            "turn_index": 1,
+        })
+        manager = MutationManager(hive)
+        outcome = asyncio.run(manager.process_inline())
+        assert outcome.hot_processed == 1
+
+        # Agent should still be rolled back correctly.
+        from bees.unified_agent_store import UnifiedAgentStore
+        store = UnifiedAgentStore(hive)
+        agent = store.get(agent_id)
+        assert agent.metadata.status == "available"
+        assert agent.metadata.turns == 1
+
+    def test_rollback_all_tasks_before_fork_point(self, tmp_path):
+        """When all completions are before the fork point, nothing is re-queued."""
+        from bees.task_file_store import TaskFileStore
+
+        hive = tmp_path
+        (hive / "mutations").mkdir(parents=True, exist_ok=True)
+
+        agent_id, sdir = self._create_swarm_agent_for_rollback(hive)
+
+        task_store = TaskFileStore(hive)
+        task_a = task_store.create(objective="Task A", assignee=agent_id)
+        task_a.status = "completed"
+        task_a.outcome = "Done A"
+        task_a.completed_at = "2026-05-01T00:00:00Z"
+        task_store.save(task_a)
+
+        completions = [
+            {"task_id": task_a.id, "turn": 1, "completed_at": task_a.completed_at},
+        ]
+        (sdir / "task_completions.json").write_text(json.dumps(completions))
+
+        # Rollback to turn 2 — task A at turn 1 is before fork point.
+        _write_mutation(hive, {
+            "type": "rollback-to-turn",
+            "task_id": agent_id,
+            "turn_index": 2,
+        })
+        manager = MutationManager(hive)
+        outcome = asyncio.run(manager.process_inline())
+        assert outcome.hot_processed == 1
+
+        # Task A stays completed.
+        assert task_store.get(task_a.id).status == "completed"
+        assert task_store.get(task_a.id).outcome == "Done A"
+
 
 # ---------------------------------------------------------------------------
 # Unknown mutations

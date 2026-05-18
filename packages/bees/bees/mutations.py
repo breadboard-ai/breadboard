@@ -790,7 +790,78 @@ class MutationManager:
         except Exception as e:
             logger.warning("Failed to clean up child tasks during rollback: %s", e)
 
-        return {}
+        # 14. Re-queue tasks completed after the fork point.
+        # Read task_completions.json from the source session to find
+        # which tasks were completed at which turns. Tasks completed
+        # after turn_index revert to available; pre-fork completions
+        # are copied to the new session.
+        requeued_tasks: list[str] = []
+        try:
+            completions_file = sdir / "task_completions.json"
+            if completions_file.exists():
+                completions = json.loads(
+                    completions_file.read_text(encoding="utf-8")
+                )
+
+                pre_fork: list[dict[str, Any]] = []
+                for entry in completions:
+                    if entry.get("turn", 0) > turn_index:
+                        # Revert this task to available.
+                        task_record = store._task_file_store.get(
+                            entry["task_id"]
+                        )
+                        if task_record and task_record.status == "completed":
+                            task_record.status = "available"
+                            task_record.outcome = None
+                            task_record.outcome_content = None
+                            task_record.completed_at = None
+                            store._task_file_store.save(task_record)
+                            requeued_tasks.append(entry["task_id"])
+                            logger.info(
+                                "Re-queued task %s (completed at turn %d)",
+                                entry["task_id"][:8],
+                                entry.get("turn", -1),
+                            )
+                    else:
+                        pre_fork.append(entry)
+
+                # Copy pre-fork completions to the new session.
+                if pre_fork:
+                    new_completions_file = new_sdir / "task_completions.json"
+                    new_completions_file.write_text(
+                        json.dumps(
+                            pre_fork, indent=2, ensure_ascii=False
+                        ) + "\n",
+                        encoding="utf-8",
+                    )
+        except Exception as e:
+            logger.warning("Failed to re-queue tasks during rollback: %s", e)
+
+        # 15. Buffer re-queued tasks as pending context updates so the
+        # agent receives them on resume — mirrors how agents_assign_task
+        # delivers tasks via scheduler.deliver_to_task.
+        if requeued_tasks and store.layout == "swarm":
+            pending = agent.metadata.pending_context_updates or []
+            for task_id in requeued_tasks:
+                task_record = store._task_file_store.get(task_id)
+                if task_record:
+                    pending.append({
+                        "type": "task_assigned",
+                        "objective": task_record.objective,
+                    })
+            agent.metadata.pending_context_updates = pending
+            store.save_metadata(agent)
+
+        result: dict[str, Any] = {}
+        if requeued_tasks:
+            result["requeued_tasks"] = requeued_tasks
+            logger.info(
+                "Rollback re-queued %d task(s): %s",
+                len(requeued_tasks),
+                ", ".join(tid[:8] for tid in requeued_tasks),
+            )
+        return result
+
 
     # -- Utilities ---------------------------------------------------------
 
