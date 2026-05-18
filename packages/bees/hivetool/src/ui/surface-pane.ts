@@ -24,7 +24,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 
-import type { TicketStore } from "../data/ticket-store.js";
+import type { AgentStore } from "../data/agent-store.js";
 import type { MutationClient } from "../data/mutation-client.js";
 import type { SurfaceManifest, SurfaceItem, SurfaceSection } from "../data/types.js";
 import type { SdkHandlers } from "../../../common/bundle-types.js";
@@ -177,45 +177,45 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
   ];
 
   @property({ attribute: false })
-  accessor ticketStore: TicketStore | null = null;
+  accessor agentStore: AgentStore | null = null;
 
   @property({ attribute: false })
   accessor mutationClient: MutationClient | null = null;
 
   @property({ type: String })
-  accessor ticketId: string | null = null;
+  accessor agentId: string | null = null;
 
   @state() accessor surface: SurfaceManifest | null = null;
   @state() accessor resolvedBundles: ResolvedBundle[] = [];
   @state() accessor iframeBlobUrl: string | null = null;
   @state() accessor activeSection: string | null = null;
 
-  /** Track which ticket ID we last loaded for. */
+  /** Track which agent ID we last loaded for. */
   #loadedFor: string | null = null;
 
   /** Deduplicate filesystem change processing. */
   #lastFsChangeAt = 0;
 
   render() {
-    if (!this.ticketStore || !this.ticketId) {
+    if (!this.agentStore || !this.agentId) {
       return html`<div class="empty-state">No surface available</div>`;
     }
 
-    // Reload surface when ticket changes.
-    if (this.#loadedFor !== this.ticketId) {
+    // Reload surface when agent changes.
+    if (this.#loadedFor !== this.agentId) {
       this.surface = null;
       this.resolvedBundles = [];
       this.activeSection = null;
-      this.#loadedFor = this.ticketId;
+      this.#loadedFor = this.agentId;
       this.#lastFsChangeAt = 0;
       this.loadSurface();
     }
 
-    // React to filesystem changes for the current ticket.
-    const fsChange = this.ticketStore?.filesystemChange.get();
+    // React to filesystem changes for the current agent.
+    const fsChange = this.agentStore?.filesystemChange.get();
     if (
       fsChange &&
-      fsChange.ticketId === this.ticketId &&
+      fsChange.agentId === this.agentId &&
       fsChange.at > this.#lastFsChangeAt
     ) {
       this.#lastFsChangeAt = fsChange.at;
@@ -231,8 +231,8 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
     }
 
     // Determine what we have.
-    const ticket = this.ticketStore.selectedTicket.get();
-    const showChat = !!ticket && hasChatContent(ticket);
+    const agent = this.agentStore.selectedAgent.get();
+    const showChat = !!agent && hasChatContent(agent);
     const hasSurfaceItems = !!this.surface && this.surface.items.length > 0;
 
     if (!showChat && !hasSurfaceItems) return nothing;
@@ -259,7 +259,7 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
         ${showChat
           ? html`<bees-chat-panel
               class="chat-cell"
-              .ticketStore=${this.ticketStore}
+              .agentStore=${this.agentStore}
               .mutationClient=${this.mutationClient}
             ></bees-chat-panel>`
           : nothing}
@@ -358,10 +358,10 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
     `;
   }
 
-  /** Reload the surface — called on ticket change and by the parent on fs updates. */
+  /** Reload the surface — called on agent change and by the parent on fs updates. */
   async loadSurface(): Promise<void> {
-    if (!this.ticketStore || !this.ticketId) return;
-    this.surface = await this.ticketStore.readSurface(this.ticketId);
+    if (!this.agentStore || !this.ticketId) return;
+    this.surface = await this.agentStore.readSurface(this.ticketId);
 
     if (this.surface) {
       await this.#resolveBundles(this.surface);
@@ -399,8 +399,8 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
       if (!item.path) continue;
 
       const jsPath = item.path.split("/");
-      const code = await this.ticketStore!.readFileContent(
-        this.ticketId!,
+      const code = await this.agentStore!.readFileContent(
+        this.agentId!,
         jsPath
       );
       if (!code) {
@@ -413,8 +413,8 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
       // Conventionally discover CSS by same stem: bundle.js → bundle.css
       const stem = item.path.replace(/\.js$/, "");
       const cssPath = (stem + ".css").split("/");
-      const bundleCss = await this.ticketStore!.readFileContent(
-        this.ticketId!,
+      const bundleCss = await this.agentStore!.readFileContent(
+        this.agentId!,
         cssPath
       );
 
@@ -424,16 +424,16 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
     this.resolvedBundles = resolved;
   }
 
-  /** Build the SDK handler registry for this ticket context. */
+  /** Build the SDK handler registry for this agent context. */
   #makeSdkHandlers(): SdkHandlers {
-    const store = this.ticketStore!;
-    const ticketId = this.ticketId!;
+    const store = this.agentStore!;
+    const agentId = this.agentId!;
 
     const handlers: SdkHandlers = new Map();
 
     handlers.set("readFile", async (path: unknown) => {
       const segments = String(path).split("/").filter(Boolean);
-      return store.readFileContent(ticketId, segments);
+      return store.readFileContent(agentId, segments);
     });
 
     handlers.set("navigateTo", async () => {
@@ -449,9 +449,9 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
 
   /** Load file content by path — passed to surface-view as contentLoader. */
   #contentLoader = async (path: string): Promise<string | null> => {
-    if (!this.ticketStore || !this.ticketId) return null;
+    if (!this.agentStore || !this.ticketId) return null;
     const segments = path.split("/").filter(Boolean);
-    return this.ticketStore.readFileContent(this.ticketId, segments);
+    return this.agentStore.readFileContent(this.ticketId, segments);
   };
 
   /** Push an event to all active bundle frames in this surface. */

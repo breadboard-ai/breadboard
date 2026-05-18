@@ -19,7 +19,7 @@ import { customElement, property, state } from "lit/decorators.js";
 
 import type { TemplateStore, TemplateData, OptionPropertySchema } from "../data/template-store.js";
 import type { SkillStore } from "../data/skill-store.js";
-import type { TicketStore } from "../data/ticket-store.js";
+import type { AgentStore } from "../data/agent-store.js";
 import { sharedStyles } from "./shared-styles.js";
 import "./truncated-text.js";
 import "./primitives/editable-field.js";
@@ -480,7 +480,7 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
   accessor skillStore: SkillStore | null = null;
 
   @property({ attribute: false })
-  accessor ticketStore: TicketStore | null = null;
+  accessor agentStore: AgentStore | null = null;
 
   // ── Edit state ──
   @state() accessor editing = false;
@@ -768,7 +768,7 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
             : nothing}
 
           <div class="edit-form">
-            ${isNew && this.ticketStore?.selectedTicketId.get()
+            ${isNew && this.agentStore?.selectedAgentId.get()
               ? html`
                   <div class="edit-row" style="align-items:center;margin-bottom:8px">
                     <label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:#cbd5e1;cursor:pointer">
@@ -1025,13 +1025,13 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
     this.saving = true;
     this.error = null;
 
-    const activeTicketId = this.ticketStore?.selectedTicketId.get();
+    const activeAgentId = this.agentStore?.selectedAgentId.get();
 
     try {
       if (this.creating) {
-        await this.templateStore.createTemplate(this.draft, activeTicketId, this.saveLocal);
+        await this.templateStore.createTemplate(this.draft, activeAgentId, this.saveLocal);
       } else if (this.#originalName) {
-        await this.templateStore.saveTemplate(this.#originalName, this.draft, activeTicketId);
+        await this.templateStore.saveTemplate(this.#originalName, this.draft, activeAgentId);
         // If name changed, update selection.
         if (this.draft.name !== this.#originalName) {
           this.templateStore.selectTemplate(this.draft.name);
@@ -1061,10 +1061,10 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
     this.saving = true;
     this.error = null;
 
-    const activeTicketId = this.ticketStore?.selectedTicketId.get();
+    const activeAgentId = this.agentStore?.selectedAgentId.get();
 
     try {
-      await this.templateStore.deleteTemplate(this.#originalName, activeTicketId);
+      await this.templateStore.deleteTemplate(this.#originalName, activeAgentId);
       this.cancelEditing();
     } catch (e) {
       this.error =
@@ -1078,24 +1078,24 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
   // ── Backlinks ──
 
   private renderBacklinks(templateName: string) {
-    if (!this.ticketStore) return nothing;
-    const usingTickets = this.ticketStore.tickets
+    if (!this.agentStore) return nothing;
+    const usingAgents = this.agentStore.agents
       .get()
       .filter(
         (t) => t.kind !== "coordination" && t.playbook_id === templateName
       );
-    if (usingTickets.length === 0) return nothing;
+    if (usingAgents.length === 0) return nothing;
     return html`
       <div class="block">
         <div class="block-header">
-          Used by Tickets (${usingTickets.length})
+          Used by Agents (${usingAgents.length})
         </div>
         <div class="block-content">
           <div class="backlink-list">
-            ${usingTickets.map(
+            ${usingAgents.map(
               (t) => html`<span
                 class="backlink-chip linkable"
-                @click=${() => this.navigateToTicket(t.id)}
+                @click=${() => this.navigateToAgent(t.id)}
                 >${t.title || t.id.slice(0, 8)}</span
               >`
             )}
@@ -1125,10 +1125,10 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
     );
   }
 
-  private navigateToTicket(ticketId: string) {
+  private navigateToAgent(agentId: string) {
     this.dispatchEvent(
       new CustomEvent("navigate", {
-        detail: { tab: "tickets", id: ticketId },
+        detail: { tab: "agents", id: agentId },
         bubbles: true,
       })
     );
@@ -1310,10 +1310,10 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
     context: string | undefined,
     options?: Record<string, unknown>,
   ) {
-    if (!this.ticketStore) return;
+    if (!this.agentStore) return;
 
     try {
-      const taskId = await this.ticketStore.createTask({
+      const taskId = await this.agentStore.createTask({
         objective: template.objective ?? "",
         playbook_id: template.name,
         title: template.title,
@@ -1331,7 +1331,7 @@ class BeesTemplateDetail extends SignalWatcher(LitElement) {
       // Navigate to the new task.
       this.dispatchEvent(
         new CustomEvent("navigate", {
-          detail: { tab: "tickets", id: taskId },
+          detail: { tab: "agents", id: taskId },
           bubbles: true,
         })
       );

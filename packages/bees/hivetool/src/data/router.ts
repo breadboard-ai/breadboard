@@ -8,7 +8,7 @@
  * Hash-based URL router for DevTools deep linking.
  *
  * URL format: #/{tab}/{selectionId}
- * Examples: #/logs/abc123, #/tickets/def456, #/events/ghi789
+ * Examples: #/logs/abc123, #/agents/def456, #/tasks/ghi789
  *
  * Uses history.pushState so each navigation creates a history entry,
  * enabling browser back/forward buttons.
@@ -17,11 +17,9 @@
 export { parseRoute, writeRoute, type Route };
 
 type RoutableTab =
-  | "jobs"
-  | "daemons"
+  | "agents"
   | "logs"
-  | "tickets"
-  | "events"
+  | "tasks"
   | "templates"
   | "skills";
 
@@ -31,25 +29,23 @@ interface Route {
 }
 
 const VALID_TABS = new Set<string>([
-  "jobs",
-  "daemons",
+  "agents",
   "logs",
-  "tickets",
-  "events",
+  "tasks",
   "templates",
   "skills",
 ]);
 
 function parseRoute(hash = location.hash): Route {
   const path = hash.replace(/^#\/?/, "");
-  if (!path) return { tab: "jobs" };
+  if (!path) return { tab: "agents" };
 
   const slashIdx = path.indexOf("/");
   const tab = slashIdx === -1 ? path : path.slice(0, slashIdx);
   const id =
     slashIdx === -1 ? undefined : path.slice(slashIdx + 1) || undefined;
 
-  if (!VALID_TABS.has(tab)) return { tab: "jobs" };
+  if (!VALID_TABS.has(tab)) return { tab: "agents" };
   return { tab: tab as RoutableTab, id };
 }
 

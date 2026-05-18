@@ -18,7 +18,7 @@ import { customElement, property, state } from "lit/decorators.js";
 
 import type { SkillStore, SkillData } from "../data/skill-store.js";
 import type { TemplateStore } from "../data/template-store.js";
-import type { TicketStore } from "../data/ticket-store.js";
+import type { AgentStore } from "../data/agent-store.js";
 import { sharedStyles } from "./shared-styles.js";
 import "./truncated-text.js";
 import "./primitives/editable-field.js";
@@ -103,7 +103,7 @@ class BeesSkillDetail extends SignalWatcher(LitElement) {
   accessor templateStore: TemplateStore | null = null;
 
   @property({ attribute: false })
-  accessor ticketStore: TicketStore | null = null;
+  accessor agentStore: AgentStore | null = null;
 
   // ── Edit state ──
   @state() accessor editing = false;
@@ -211,7 +211,7 @@ class BeesSkillDetail extends SignalWatcher(LitElement) {
             </div>
           </div>
           ${this.renderTemplateBacklinks(skill.dirName)}
-          ${this.renderTicketBacklinks(skill.dirName)}
+          ${this.renderAgentBacklinks(skill.dirName)}
         </div>
       </div>
     `;
@@ -474,25 +474,25 @@ class BeesSkillDetail extends SignalWatcher(LitElement) {
     `;
   }
 
-  private renderTicketBacklinks(dirName: string) {
-    if (!this.ticketStore) return nothing;
-    const usingTickets = this.ticketStore.tickets
+  private renderAgentBacklinks(dirName: string) {
+    if (!this.agentStore) return nothing;
+    const usingAgents = this.agentStore.agents
       .get()
       .filter(
         (t) => t.kind !== "coordination" && t.skills?.includes(dirName)
       );
-    if (usingTickets.length === 0) return nothing;
+    if (usingAgents.length === 0) return nothing;
     return html`
       <div class="block">
         <div class="block-header">
-          Used by Tickets (${usingTickets.length})
+          Used by Agents (${usingAgents.length})
         </div>
         <div class="block-content">
           <div class="backlink-list">
-            ${usingTickets.map(
+            ${usingAgents.map(
               (t) => html`<span
                 class="backlink-chip linkable"
-                @click=${() => this.navigateToTicket(t.id)}
+                @click=${() => this.navigateToAgent(t.id)}
                 >${t.title || t.id.slice(0, 8)}</span
               >`
             )}
@@ -513,10 +513,10 @@ class BeesSkillDetail extends SignalWatcher(LitElement) {
     );
   }
 
-  private navigateToTicket(ticketId: string) {
+  private navigateToAgent(agentId: string) {
     this.dispatchEvent(
       new CustomEvent("navigate", {
-        detail: { tab: "tickets", id: ticketId },
+        detail: { tab: "agents", id: agentId },
         bubbles: true,
       })
     );

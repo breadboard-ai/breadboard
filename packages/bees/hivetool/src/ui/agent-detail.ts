@@ -1,0 +1,779 @@
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
+ * Timeline content for a selected agent — the "Detail" tab body.
+ *
+ * Renders context, objective, chat history, outcome, error, suspend
+ * event, tags, functions, watch events, and the agent's file tree.
+ * The header, identity chips, and tab bar are owned by
+ * `<bees-agent-pane>`.
+ */
+
+import { SignalWatcher } from "@lit-labs/signals";
+import { LitElement, html, css, nothing } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+
+import type { AgentStore, FileTreeNode } from "../data/agent-store.js";
+import type { TaskItemData } from "../data/types.js";
+import type { MutationClient } from "../data/mutation-client.js";
+import { SessionStoreReader, type SessionLineageInfo } from "../data/session-store-reader.js";
+import type { StateAccess } from "../data/state-access.js";
+import "./session-lineage.js";
+import { sharedStyles } from "./shared-styles.js";
+import { renderJson } from "./json-tree.js";
+import { jsonTreeStyles } from "./json-tree.styles.js";
+import "./truncated-text.js";
+
+export { BeesAgentDetail };
+
+@customElement("bees-agent-detail")
+class BeesAgentDetail extends SignalWatcher(LitElement) {
+  static styles = [
+    sharedStyles,
+    jsonTreeStyles,
+    css`
+      /* ── Task queue ── */
+      .task-queue-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border: 1px solid #1e293b;
+        border-radius: 6px;
+        margin-bottom: 6px;
+        background: #0a0f1a;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+      }
+
+      .task-queue-item:hover {
+        background: #111827;
+        border-color: #334155;
+      }
+
+      .task-queue-status {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .task-queue-status.available { background: #475569; }
+      .task-queue-status.in_progress { background: #3b82f6; }
+      .task-queue-status.completed { background: #22c55e; }
+      .task-queue-status.failed { background: #ef4444; }
+      .task-queue-status.cancelled { background: #64748b; }
+
+      .task-queue-body {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .task-queue-title {
+        font-size: 0.8rem;
+        color: #e2e8f0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .task-queue-outcome {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 2px;
+      }
+
+      /* ── File tree ── */
+      .file-tree {
+        font-family: "Google Mono", "Roboto Mono", monospace;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        white-space: normal;
+        padding: 8px 12px;
+      }
+
+      .file-tree details {
+        border: none;
+        border-radius: 0;
+        overflow: visible;
+      }
+
+      .file-tree summary {
+        cursor: pointer;
+        user-select: none;
+        padding: 3px 0;
+        color: #e2e8f0;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 4px;
+        padding-left: 4px;
+        transition: background 0.1s;
+      }
+
+      .file-tree summary:hover {
+        background: #1e293b;
+      }
+
+      .file-tree summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .file-dir > summary::before {
+        content: "▸";
+        color: #475569;
+        font-size: 0.6rem;
+        width: 10px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+
+      .file-dir[open] > summary::before {
+        content: "▾";
+      }
+
+      .file-leaf > summary::before {
+        content: "";
+        width: 10px;
+        flex-shrink: 0;
+      }
+
+      .file-children {
+        margin-left: 16px;
+        border-left: 1px solid #1e293b;
+        padding-left: 4px;
+      }
+
+      .file-content {
+        margin: 2px 0 6px 20px;
+        padding: 8px 12px;
+        background: #0a0b0e;
+        border: 1px solid #1e293b;
+        border-radius: 6px;
+        overflow-x: auto;
+        max-height: 400px;
+        overflow-y: auto;
+        white-space: normal;
+      }
+
+      .file-text {
+        margin: 0;
+        padding: 0;
+        font-family: "Google Mono", "Roboto Mono", monospace;
+        font-size: 0.7rem;
+        line-height: 1.5;
+        color: #cbd5e1;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      /* ── Live session panel ── */
+
+      .live-panel {
+        border: 1px solid #1e3a5f;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .live-panel-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: #0c1929;
+        border-bottom: 1px solid #1e3a5f;
+      }
+
+      .live-status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        transition: background 0.3s;
+      }
+
+      .live-status-dot.idle { background: #475569; }
+      .live-status-dot.connecting { background: #f59e0b; animation: pulse 1s infinite; }
+      .live-status-dot.connected { background: #22c55e; animation: pulse 2s infinite; }
+      .live-status-dot.disconnected { background: #64748b; }
+      .live-status-dot.error { background: #ef4444; }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      .live-status-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94a3b8;
+        flex: 1;
+      }
+
+      .live-btn {
+        padding: 4px 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.15s;
+        border: 1px solid;
+      }
+
+      .live-btn.connect {
+        background: #1d4ed8;
+        color: #dbeafe;
+        border-color: #2563eb;
+      }
+      .live-btn.connect:hover { background: #2563eb; }
+
+      .live-btn.disconnect {
+        background: transparent;
+        color: #f87171;
+        border-color: #991b1b;
+      }
+      .live-btn.disconnect:hover { background: #1c1917; }
+
+      .live-btn.mic {
+        background: transparent;
+        color: #94a3b8;
+        border-color: #334155;
+      }
+      .live-btn.mic:hover { background: #1e293b; color: #e2e8f0; }
+      .live-btn.mic.active {
+        background: #065f4633;
+        color: #34d399;
+        border-color: #10b981;
+      }
+      .live-btn.mic.active:hover { background: #065f4666; }
+
+      .live-mic-bar {
+        padding: 8px 14px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        border-top: 1px solid #1e293b;
+      }
+
+      .live-transcript {
+        padding: 10px 14px;
+        max-height: 200px;
+        overflow-y: auto;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        color: #cbd5e1;
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: #0a0f1a;
+      }
+
+      .live-transcript-empty {
+        color: #475569;
+        font-style: italic;
+      }
+    `,
+  ];
+
+  @property({ attribute: false })
+  accessor agentStore: AgentStore | null = null;
+
+  @property({ attribute: false })
+  accessor mutationClient: MutationClient | null = null;
+
+  /** ID of a recently updated agent (for flash animation). */
+  @property({ attribute: false })
+  accessor flashAgentId: string | null = null;
+
+  @state() accessor fileTree: FileTreeNode[] = [];
+  @state() accessor fileContents: Record<string, string | null> = {};
+  @state() accessor lineage: SessionLineageInfo[] = [];
+  @state() accessor selectedSessionId: string | null = null;
+
+  @property({ attribute: false })
+  accessor stateAccess: StateAccess | null = null;
+
+  #sessionReader: SessionStoreReader | null = null;
+
+  get sessionReader() {
+    if (!this.#sessionReader && this.stateAccess) {
+      this.#sessionReader = new SessionStoreReader(this.stateAccess);
+    }
+    return this.#sessionReader;
+  }
+
+  /** Track the agent ID we loaded the tree for. */
+  #treeLoadedFor: string | null = null;
+  #lastLoadedAt = 0;
+
+  private async loadLineage(agentId: string) {
+    if (!this.sessionReader) return;
+    const lineage = await this.sessionReader.readLineage(agentId);
+    this.lineage = lineage;
+  }
+
+  render() {
+    if (!this.agentStore) return nothing;
+    const agent = this.agentStore.selectedAgent.get();
+    if (!agent)
+      return html`<div class="empty-state">
+        Select an agent to view details
+      </div>`;
+
+    const recentUpdate = this.agentStore.recentlyUpdatedAgent.get();
+
+    // Reload if selected agent ID changed, OR if a disk update was observed for this agent
+    const idChanged = this.#treeLoadedFor !== agent.id;
+    const diskUpdated = recentUpdate && recentUpdate.id === agent.id && recentUpdate.at > this.#lastLoadedAt;
+
+    if (idChanged || diskUpdated) {
+      this.fileTree = [];
+      this.fileContents = {};
+      this.lineage = [];
+      this.selectedSessionId = null;
+      this.#treeLoadedFor = agent.id;
+      this.#lastLoadedAt = Date.now();
+      
+      this.loadLineage(agent.id);
+      this.loadFileTree(agent.id);
+    }
+
+
+
+    return html`
+      <div class="timeline">
+        ${agent.context
+          ? html`
+              <div class="context-card">
+                <div class="context-label">Context</div>
+                <bees-truncated-text
+                  threshold="300"
+                  max-height="150"
+                  fadeBg="#111827"
+                  >${agent.context}</bees-truncated-text
+                >
+              </div>
+            `
+          : nothing}
+        ${agent.objective &&
+        agent.objective.trim() !== (agent.context ?? "").trim()
+          ? html`
+              <div class="block">
+                <div class="block-header">Objective</div>
+                <div class="block-content">
+                  <bees-truncated-text
+                    threshold="500"
+                    max-height="200"
+                    fadeBg="#0f1115"
+                    >${agent.objective}</bees-truncated-text
+                  >
+                </div>
+              </div>
+            `
+          : nothing}
+
+        ${agent.outcome
+          ? html`
+              <div class="block outcome">
+                <div class="block-header">Outcome</div>
+                <div class="block-content">
+                  <bees-truncated-text
+                    threshold="300"
+                    max-height="150"
+                    fadeBg="#0f1115"
+                    >${agent.outcome}</bees-truncated-text
+                  >
+                </div>
+              </div>
+            `
+          : nothing}
+        ${this.renderTaskQueue(agent.id)}
+        ${agent.error
+          ? html`
+              <div class="block error">
+                <div class="block-header">Error</div>
+                <div class="block-content">${agent.error}</div>
+              </div>
+            `
+          : nothing}
+        ${agent.runner === "live"
+          ? this.renderLiveSessionPanel(agent.id)
+          : nothing}
+        ${agent.status === "suspended" && agent.suspend_event
+          ? this.renderSuspendedBlock(agent.suspend_event)
+          : nothing}
+        ${agent.tags && agent.tags.length > 0
+          ? html`
+              <div class="block">
+                <div class="block-header">Tags</div>
+                <div class="block-content">
+                  ${agent.tags.map(
+                    (tag) =>
+                      html`<span class="tool-badge" style="margin-right:6px"
+                        >${tag}</span
+                      >`
+                  )}
+                </div>
+              </div>
+            `
+          : nothing}
+        ${agent.options && Object.keys(agent.options).length > 0
+          ? html`
+              <div class="block">
+                <div class="block-header">Options</div>
+                <div class="block-content">
+                  <div class="identity-row">
+                    ${Object.entries(agent.options).map(
+                      ([key, val]) => html`
+                        <span class="identity-chip">
+                          <span class="identity-label">${key}</span>
+                          ${String(val)}
+                        </span>
+                      `
+                    )}
+                  </div>
+                </div>
+              </div>
+            `
+          : nothing}
+        ${agent.functions && agent.functions.length > 0
+          ? html`
+              <div class="block">
+                <div class="block-header">Functions</div>
+                <div class="block-content">
+                  ${agent.functions.map(
+                    (fn) =>
+                      html`<span class="tool-badge" style="margin-right:6px"
+                        >${fn}</span
+                      >`
+                  )}
+                </div>
+              </div>
+            `
+          : nothing}
+        ${agent.watch_events && agent.watch_events.length > 0
+          ? html`
+              <div class="block">
+                <div class="block-header">Listening For</div>
+                <div class="block-content">
+                  ${agent.watch_events.map(
+                    (ev) =>
+                      html`<span
+                        class="signal-chip"
+                        style="margin-right:6px"
+                        >${ev.type}</span
+                      >`
+                  )}
+                </div>
+              </div>
+            `
+          : nothing}
+        ${this.lineage.length > 0
+          ? html`
+              <bees-session-lineage
+                .lineage=${this.lineage}
+                .activeSessionId=${agent.active_session}
+                .selectedSessionId=${this.selectedSessionId}
+                @select-session=${(e: CustomEvent) => {
+                  this.selectedSessionId = e.detail.sessionId;
+                  this.dispatchEvent(
+                    new CustomEvent("navigate", {
+                      detail: { tab: "logs", id: e.detail.sessionId },
+                      bubbles: true,
+                      composed: true,
+                    })
+                  );
+                }}
+              ></bees-session-lineage>
+            `
+          : nothing}
+        ${this.renderFileTree(agent.id)}
+      </div>
+    `;
+  }
+
+  // --- Task Queue ---
+
+  /**
+   * Render the task queue for an agent — the work items from `tasks/`
+   * assigned to this entity.
+   */
+  private renderTaskQueue(agentId: string) {
+    if (!this.agentStore) return nothing;
+    const tasks = this.agentStore.getTasksForAgent(agentId);
+    if (tasks.length === 0) return nothing;
+
+    return html`
+      <div class="block">
+        <div class="block-header">Tasks (${tasks.length})</div>
+        <div class="block-content">
+          ${tasks.map((task) => this.renderTaskQueueItem(task))}
+        </div>
+      </div>
+    `;
+  }
+
+  private renderTaskQueueItem(task: TaskItemData) {
+    return html`
+      <div class="task-queue-item" @click=${() => this.navigateToTask(task.id)}>
+        <span class="task-queue-status ${task.status ?? "available"}"></span>
+        <div class="task-queue-body">
+          <div class="task-queue-title">
+            ${task.title ?? task.objective?.slice(0, 80) ?? task.id.slice(0, 8)}
+          </div>
+          ${task.outcome
+            ? html`<div class="task-queue-outcome">${task.outcome}</div>`
+            : nothing}
+        </div>
+      </div>
+    `;
+  }
+
+  private navigateToTask(taskId: string) {
+    this.dispatchEvent(
+      new CustomEvent("navigate", {
+        detail: { tab: "tasks", id: taskId },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  // --- File Tree ---
+
+  private renderFileTree(agentId: string) {
+    const tree = this.fileTree;
+    if (tree.length === 0) {
+      this.loadFileTree(agentId);
+      return nothing;
+    }
+
+    return html`
+      <div class="block">
+        <div class="block-header">Files</div>
+        <div class="file-tree">
+          ${tree.map((node) => this.renderFileNode(node, agentId, []))}
+        </div>
+      </div>
+    `;
+  }
+
+  private renderFileNode(
+    node: FileTreeNode,
+    agentId: string,
+    parentPath: string[]
+  ): unknown {
+    const currentPath = [...parentPath, node.name];
+
+    if (node.kind === "directory") {
+      return html`
+        <details class="file-dir">
+          <summary>📁 ${node.name}</summary>
+          <div class="file-children">
+            ${node.children?.map((child) =>
+              this.renderFileNode(child, agentId, currentPath)
+            )}
+          </div>
+        </details>
+      `;
+    }
+
+    const pathKey = currentPath.join("/");
+    const icon = this.fileIcon(node.name);
+    const cachedContent = this.fileContents[pathKey];
+
+    return html`
+      <details
+        class="file-leaf"
+        @toggle=${(e: Event) => {
+          const det = e.currentTarget as HTMLDetailsElement;
+          if (det.open && cachedContent === undefined) {
+            this.loadFileContent(agentId, currentPath, pathKey);
+          }
+        }}
+      >
+        <summary>${icon} ${node.name}</summary>
+        <div class="file-content">
+          ${cachedContent === undefined
+            ? html`<div style="color:#64748b;font-size:0.75rem">Loading…</div>`
+            : cachedContent === null
+              ? html`<div style="color:#64748b;font-size:0.75rem">
+                  Unable to read file
+                </div>`
+              : this.renderFileContent(node.name, cachedContent)}
+        </div>
+      </details>
+    `;
+  }
+
+  private renderFileContent(filename: string, content: string): unknown {
+    if (content.startsWith("data:image/")) {
+      return html`<img src="${content}" alt="${filename}" style="max-width: 100%; border-radius: 6px; display: block;" />`;
+    }
+    if (content.startsWith("data:video/")) {
+      return html`<video src="${content}" controls style="max-width: 100%; border-radius: 6px; display: block;"></video>`;
+    }
+    if (content.startsWith("data:audio/")) {
+      return html`<audio src="${content}" controls style="max-width: 100%; display: block;"></audio>`;
+    }
+    if (filename.endsWith(".json")) {
+      try {
+        const parsed = JSON.parse(content);
+        return html`<div class="json-tree">${renderJson(parsed)}</div>`;
+      } catch {
+        // Fall through to plain text.
+      }
+    }
+    return html`<pre class="file-text">${content}</pre>`;
+  }
+
+  private fileIcon(name: string): string {
+    const lower = name.toLowerCase();
+    if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".gif") || lower.endsWith(".webp") || lower.endsWith(".svg")) return "🖼️";
+    if (lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mov")) return "🎥";
+    if (lower.endsWith(".mp3") || lower.endsWith(".wav")) return "🎵";
+    if (name.endsWith(".json")) return "📊";
+    if (name.endsWith(".md")) return "📝";
+    if (name.endsWith(".py")) return "🐍";
+    if (name.endsWith(".ts") || name.endsWith(".js")) return "📜";
+    if (name.endsWith(".jsx") || name.endsWith(".tsx")) return "⚛️";
+    if (name.endsWith(".css")) return "🎨";
+    if (name.endsWith(".html")) return "🌐";
+    if (name.endsWith(".mjs")) return "📦";
+    return "📄";
+  }
+
+  private async loadFileTree(agentId: string) {
+    if (!this.agentStore) return;
+    const tree = await this.agentStore.readTree(agentId);
+    this.fileTree = tree;
+  }
+
+  private async loadFileContent(
+    agentId: string,
+    path: string[],
+    pathKey: string
+  ) {
+    if (!this.agentStore) return;
+    const content = await this.agentStore.readFileContent(agentId, path);
+    this.fileContents = {
+      ...this.fileContents,
+      [pathKey]: content,
+    };
+  }
+
+  // ── Suspend ──
+
+  /**
+   * Render the suspended block — raw JSON tree for non-interactive
+   * suspensions. User-facing interactive input (chat) is handled by
+   * `<bees-chat-panel>` in the surface pane.
+   */
+  private renderSuspendedBlock(
+    suspendEvent: Record<string, unknown>
+  ) {
+    const functionName = suspendEvent.function_name as string | undefined;
+    const label =
+      functionName === "chat_await_context_update" ||
+      functionName === "tasks_await" ||
+      functionName === "agents_await"
+        ? "Waiting for Event"
+        : functionName === "events_yield"
+          ? "Waiting for Task"
+          : "Suspended";
+    return html`
+      <div class="block">
+        <div class="block-header">${label}</div>
+        <div class="block-content">
+          <div class="json-tree">
+            ${renderJson(suspendEvent)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Live session ──
+
+  private renderLiveSessionPanel(agentId: string) {
+    const hasActive = this.agentStore?.activeLiveSessions
+      .get()
+      .has(agentId);
+
+    const client = this.agentStore?.activeConnection.get();
+    const isThisAgent = client?.taskId === agentId;
+    const status = isThisAgent ? (client!.status.get()) : "idle";
+    const transcript = isThisAgent ? (client!.transcript.get()) : "";
+    const isTalking = isThisAgent ? (client!.talking.get()) : false;
+
+    if (!hasActive && status === "idle") return nothing;
+
+    const isConnected = status === "connected";
+    const isConnecting = status === "connecting";
+
+    return html`
+      <div class="block live-panel">
+        <div class="live-panel-header">
+          <span class="live-status-dot ${status}"></span>
+          <span class="live-status-label">Live Session — ${status}</span>
+          <button
+            class="live-btn ${isConnected ? "disconnect" : "connect"}"
+            ?disabled=${isConnecting}
+            @click=${() => this.handleLiveConnectToggle(agentId)}
+          >
+            ${isConnecting
+              ? "Connecting…"
+              : isConnected
+                ? "Stop Session"
+                : "Start Session"}
+          </button>
+        </div>
+        ${isConnected
+          ? html`<div class="live-mic-bar" style="font-size:0.8rem; color:#94a3b8; display:flex; align-items:center; gap:8px;">
+              <span class="live-status-dot ${isTalking ? "connected" : "idle"}" style="animation: none;"></span>
+              <span>${isTalking ? "Streaming audio (Voice active)" : "Microphone active (Quiet)"}</span>
+            </div>`
+          : nothing}
+        ${transcript
+          ? html`<div class="live-transcript">${transcript}</div>`
+          : isConnected
+            ? html`<div class="live-transcript">
+                <span class="live-transcript-empty"
+                  >Waiting for agent response…</span
+                >
+              </div>`
+            : nothing}
+      </div>
+    `;
+  }
+
+  private async handleLiveConnectToggle(agentId: string): Promise<void> {
+    if (!this.agentStore) return;
+
+    const client = this.agentStore.activeConnection.get();
+
+    if (client && client.taskId === agentId) {
+      // Already connected to this agent, stop it
+      this.agentStore.disconnectLiveSession();
+    } else {
+      // Start connection
+      await this.agentStore.connectLiveSession(agentId);
+    }
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "bees-agent-detail": BeesAgentDetail;
+  }
+}

@@ -173,19 +173,19 @@ class BeesLogList extends SignalWatcher(LitElement) {
 
   render() {
     if (!this.store) return nothing;
-    const taskGroups = this.store.taskGroups.get();
+    const agentGroups = this.store.agentGroups.get();
     const selectedSid = this.store.selectedSessionId.get();
-    const selectedTaskId = this.store.selectedTaskId.get();
+    const selectedAgentId = this.store.selectedAgentId.get();
 
-    if (taskGroups.length === 0) {
+    if (agentGroups.length === 0) {
       return html`<div class="empty-state">No log sessions found.</div>`;
     }
 
     return html`
       <div class="jobs-list">
-        ${taskGroups.map(
+        ${agentGroups.map(
           (group) => html`
-            <div class="task-group ${selectedTaskId === group.taskId ? "selected" : ""}">
+            <div class="task-group ${selectedAgentId === group.agentId ? "selected" : ""}">
               <div class="task-group-header">
                 <span class="task-title" title="${group.title}">${group.title}</span>
                 <div class="job-status ${group.status}"></div>

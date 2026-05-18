@@ -132,6 +132,17 @@ const sharedStyles = css`
   .job-status.paused {
     background: #f87171;
   }
+  .job-status.available {
+    background: #f59e0b;
+  }
+  .job-status.in_progress {
+    background: #3b82f6;
+    box-shadow: 0 0 8px #3b82f688;
+    animation: pulse 2s infinite;
+  }
+  .job-status.cancelled {
+    background: #64748b;
+  }
 
   .job-meta {
     font-size: 0.75rem;
@@ -204,6 +215,21 @@ const sharedStyles = css`
     background: #991b1b33;
     color: #f87171;
     border: 1px solid #991b1b;
+  }
+  .job-detail-badge.available {
+    background: #92400e33;
+    color: #fbbf24;
+    border: 1px solid #92400e;
+  }
+  .job-detail-badge.in_progress {
+    background: #1d4ed833;
+    color: #60a5fa;
+    border: 1px solid #1d4ed8;
+  }
+  .job-detail-badge.cancelled {
+    background: #33415533;
+    color: #94a3b8;
+    border: 1px solid #334155;
   }
 
   .job-detail-meta {

@@ -12,7 +12,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
-import type { TicketStore } from "../data/ticket-store.js";
+import type { AgentStore } from "../data/agent-store.js";
 import { getRelativeTime } from "../utils.js";
 import { sharedStyles } from "./shared-styles.js";
 
@@ -32,14 +32,14 @@ class BeesEventList extends SignalWatcher(LitElement) {
   ];
 
   @property({ attribute: false })
-  accessor store: TicketStore | null = null;
+  accessor store: AgentStore | null = null;
 
   @property({ attribute: false })
   accessor selectedEventId: string | null = null;
 
   render() {
     if (!this.store) return nothing;
-    const allTickets = this.store.tickets.get();
+    const allTickets = this.store.agents.get();
     const events = allTickets.filter((t) => t.kind === "coordination");
 
     if (events.length === 0) {

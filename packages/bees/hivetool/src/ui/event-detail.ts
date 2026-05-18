@@ -12,7 +12,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
-import type { TicketStore } from "../data/ticket-store.js";
+import type { AgentStore } from "../data/agent-store.js";
 import { sharedStyles } from "./shared-styles.js";
 import "./truncated-text.js";
 
@@ -42,18 +42,18 @@ class BeesEventDetail extends SignalWatcher(LitElement) {
   ];
 
   @property({ attribute: false })
-  accessor ticketStore: TicketStore | null = null;
+  accessor agentStore: AgentStore | null = null;
 
   @property({ attribute: false })
   accessor selectedEventId: string | null = null;
 
   render() {
-    if (!this.ticketStore || !this.selectedEventId)
+    if (!this.agentStore || !this.selectedEventId)
       return html`<div class="empty-state">
         Select an event to inspect
       </div>`;
 
-    const allTickets = this.ticketStore.tickets.get();
+    const allTickets = this.agentStore.agents.get();
     const event = allTickets.find(
       (t) => t.id === this.selectedEventId && t.kind === "coordination"
     );
