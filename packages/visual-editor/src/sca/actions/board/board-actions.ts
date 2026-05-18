@@ -955,27 +955,29 @@ async function runBoard(): Promise<void> {
       const graphUrl = gc.url || "";
 
       // Build consent info for assets that haven't been consented yet.
+      // The consent scope uses only stable identifiers (fileId +
+      // resourceKey) so that hasConsent() matches on subsequent runs.
+      // Display metadata (fileName, iconLink) is passed separately.
       const unconsented = driveAssets
         .map((asset) => {
-          const scopeObj = {
-            fileId: asset.fileId.id,
-            fileName: asset.fileId.id,
-            iconLink: "",
-            resourceKey: asset.fileId.resourceKey || "",
-          };
           const request = {
             type: ConsentType.ACCESS_DRIVE_FILE_CONTENT as const,
-            scope: JSON.stringify(scopeObj),
+            scope: JSON.stringify({
+              fileId: asset.fileId.id,
+              resourceKey: asset.fileId.resourceKey || "",
+            }),
             graphUrl,
           };
-          return { asset, scopeObj, request };
+          return { asset, request };
         })
         .filter(({ request }) => !consentCtrl.hasConsent(request));
 
       if (unconsented.length > 0) {
-        // Fetch metadata (name, iconLink) for all unconsented assets.
+        // Fetch metadata (name, iconLink) for the modal display.
         const assetInfos = await Promise.all(
-          unconsented.map(async ({ asset, scopeObj, request }) => {
+          unconsented.map(async ({ asset, request }) => {
+            let fileName = asset.fileId.id;
+            let iconLink = "";
             try {
               const meta =
                 await services.googleDriveClient.getFileMetadata(
@@ -985,18 +987,16 @@ async function runBoard(): Promise<void> {
                   },
                   { fields: ["name", "iconLink"] }
                 );
-              if (meta?.name) scopeObj.fileName = meta.name;
-              if (meta?.iconLink) scopeObj.iconLink = meta.iconLink;
+              if (meta?.name) fileName = meta.name;
+              if (meta?.iconLink) iconLink = meta.iconLink;
             } catch {
               // Fallback: use file ID as name
             }
-            // Update the scope with the fetched metadata.
-            request.scope = JSON.stringify(scopeObj);
             return {
               fileId: asset.fileId.id,
-              fileName: scopeObj.fileName,
-              iconLink: scopeObj.iconLink,
-              resourceKey: scopeObj.resourceKey,
+              fileName,
+              iconLink,
+              resourceKey: asset.fileId.resourceKey || "",
               request,
             };
           })
