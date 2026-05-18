@@ -119,7 +119,7 @@ export class VEBatchConsentModal extends SignalWatcher(LitElement) {
       modalTitle="Opal App - Drive Assets Used"
       .showCloseButton=${true}
       .showSaveCancel=${true}
-      .blurBackground=${true}
+      .blurBackground=${false}
       appearance="basic"
       saveButtonLabel="Allow & Continue"
       @bbmodaldismissed=${this.#handleModalDismissed}
