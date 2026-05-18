@@ -16,7 +16,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
 import type { AgentStore } from "../data/agent-store.js";
-import type { TaskItemData } from "../data/types.js";
+import type { AgentData, TaskItemData } from "../data/types.js";
 import { getRelativeTime } from "../utils.js";
 import { sharedStyles } from "./shared-styles.js";
 import { renderJson } from "./json-tree.js";
@@ -31,45 +31,159 @@ class BeesTaskDetail extends SignalWatcher(LitElement) {
     sharedStyles,
     jsonTreeStyles,
     css`
-      .status-timeline {
+      /* ── Metadata field table ── */
+      .fields {
+        display: grid;
+        grid-template-columns: 100px 1fr;
+        gap: 0;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 16px;
+        font-size: 0.8rem;
+      }
+
+      .field-label,
+      .field-value {
+        padding: 8px 12px;
+        border-bottom: 1px solid #1e293b;
+      }
+
+      .field-label {
+        background: #0c1018;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        display: flex;
+        align-items: center;
+      }
+
+      .field-value {
+        background: #0a0f1a;
+        color: #e2e8f0;
         display: flex;
         align-items: center;
         gap: 6px;
         flex-wrap: wrap;
       }
 
-      .status-step {
+      /* Remove bottom border from last row. */
+      .field-label:nth-last-child(2),
+      .field-value:last-child {
+        border-bottom: none;
+      }
+
+      .field-link {
+        color: #60a5fa;
+        cursor: pointer;
+        transition: color 0.15s;
+      }
+
+      .field-link:hover {
+        color: #93bbfc;
+        text-decoration: underline;
+      }
+
+      .field-badge {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
+        gap: 5px;
+        padding: 2px 8px;
+        border-radius: 4px;
         font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .field-badge.available {
+        background: #92400e33;
+        color: #fbbf24;
+      }
+      .field-badge.in_progress {
+        background: #1d4ed833;
+        color: #60a5fa;
+      }
+      .field-badge.completed {
+        background: #06603833;
+        color: #34d399;
+      }
+      .field-badge.failed {
+        background: #7f1d1d33;
+        color: #f87171;
+      }
+      .field-badge.cancelled {
+        background: #33415533;
         color: #94a3b8;
       }
 
-      .status-step .dot {
+      .field-badge .status-dot {
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        flex-shrink: 0;
       }
 
-      .status-step .dot.created { background: #64748b; }
-      .status-step .dot.in_progress { background: #3b82f6; }
-      .status-step .dot.completed { background: #10b981; }
-      .status-step .dot.failed { background: #ef4444; }
-      .status-step .dot.available { background: #f59e0b; }
+      .field-badge.available .status-dot { background: #f59e0b; }
+      .field-badge.in_progress .status-dot { background: #3b82f6; }
+      .field-badge.completed .status-dot { background: #10b981; }
+      .field-badge.failed .status-dot { background: #ef4444; }
+      .field-badge.cancelled .status-dot { background: #64748b; }
 
-      .status-arrow {
-        color: #334155;
-        font-size: 0.6rem;
+      .field-mono {
+        font-family: "Google Mono", "Roboto Mono", monospace;
+        font-size: 0.75rem;
+        color: #94a3b8;
       }
 
-      .depends-list {
+      .field-time {
+        color: #cbd5e1;
+      }
+
+      .field-time .relative {
+        color: #94a3b8;
+        margin-left: 4px;
+        font-size: 0.7rem;
+      }
+
+      /* ── Agent card in field ── */
+      .agent-card {
         display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
+        flex-direction: column;
+        gap: 2px;
+        cursor: pointer;
+        padding: 2px 0;
       }
 
+      .agent-card:hover .agent-card-title {
+        text-decoration: underline;
+      }
+
+      .agent-card-title {
+        color: #60a5fa;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: color 0.15s;
+      }
+
+      .agent-card:hover .agent-card-title {
+        color: #93bbfc;
+      }
+
+      .agent-card-meta {
+        font-size: 0.7rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .agent-card-meta .sep {
+        color: #334155;
+      }
+
+      /* ── Dependencies ── */
       .depends-chip {
         padding: 3px 8px;
         border-radius: 4px;
@@ -78,22 +192,23 @@ class BeesTaskDetail extends SignalWatcher(LitElement) {
         background: #1e293b;
         color: #94a3b8;
         border: 1px solid #334155;
+        cursor: pointer;
+        transition: border-color 0.15s;
       }
 
-      .outcome-json {
-        font-family: "Google Mono", "Roboto Mono", monospace;
-        font-size: 0.75rem;
-        white-space: pre-wrap;
-        word-break: break-all;
-        color: #cbd5e1;
-        padding: 8px 12px;
-        background: #0b0c0f;
-        border-radius: 6px;
-        border: 1px solid #1e293b;
-        max-height: 300px;
-        overflow-y: auto;
+      .depends-chip:hover {
+        border-color: #60a5fa;
+        color: #e2e8f0;
       }
 
+      /* ── Separator ── */
+      .section-divider {
+        border: none;
+        border-top: 1px solid #1e293b;
+        margin: 16px 0;
+      }
+
+      /* ── Outcome content ── */
       .outcome-parts {
         display: flex;
         flex-direction: column;
@@ -151,16 +266,7 @@ class BeesTaskDetail extends SignalWatcher(LitElement) {
       ? agents.find((a) => a.id === task.created_by)
       : null;
 
-    const assigneeLabel = assigneeAgent?.slug?.split("/").pop()
-      ?? assigneeAgent?.title;
-    const assigneeName = assigneeLabel
-      ? `${assigneeLabel} (${task.assignee!.slice(0, 8)})`
-      : task.assignee?.slice(0, 8);
-    const creatorLabel = creatorAgent?.slug?.split("/").pop()
-      ?? creatorAgent?.title;
-    const creatorName = creatorLabel
-      ? `${creatorLabel} (${task.created_by!.slice(0, 8)})`
-      : task.created_by?.slice(0, 8);
+    // No longer need flat labels — renderAgentField handles the full card.
 
     return html`
       <div class="job-detail">
@@ -169,82 +275,92 @@ class BeesTaskDetail extends SignalWatcher(LitElement) {
             <h2 class="job-detail-title">
               ${task.title || task.objective?.slice(0, 80) || "Task"}
             </h2>
-            <div class="job-detail-badge ${task.status}">${task.status}</div>
           </div>
           <div class="job-detail-meta">
-            <span>ID: <code class="mono">${task.id.slice(0, 13)}...</code></span>
-            <span>Created: ${task.created_at ? new Date(task.created_at).toLocaleString() : "—"}</span>
-            ${task.completed_at
-              ? html`<span>Completed: ${new Date(task.completed_at).toLocaleString()}</span>`
-              : nothing}
+            <span class="field-mono">${task.id}</span>
           </div>
         </div>
 
         <div class="timeline">
-          <!-- Identity chips -->
-          <div class="identity-row">
-            ${task.assignee
-              ? html`
-                  <span
-                    class="identity-chip linkable"
-                    @click=${() => this.navigateTo("agents", task.assignee!)}
-                  >
-                    <span class="identity-label">assignee</span>
-                    ${assigneeName}
-                  </span>
-                `
-              : html`
-                  <span class="identity-chip">
-                    <span class="identity-label">assignee</span>
-                    unassigned
-                  </span>
-                `}
-            ${task.created_by
-              ? html`
-                  <span
-                    class="identity-chip linkable"
-                    @click=${() => this.navigateTo("agents", task.created_by!)}
-                  >
-                    <span class="identity-label">creator</span>
-                    ${creatorName}
-                  </span>
-                `
-              : nothing}
-            ${task.kind
-              ? html`
-                  <span class="identity-chip ${task.kind === "coordination" ? "playbook" : ""}">
-                    <span class="identity-label">kind</span>
-                    ${task.kind}
-                  </span>
-                `
-              : nothing}
-          </div>
-
-          <!-- Status timeline -->
-          <div class="block">
-            <div class="block-header">Lifecycle</div>
-            <div class="block-content">
-              <div class="status-timeline">
-                <span class="status-step">
-                  <span class="dot created"></span>
-                  created ${getRelativeTime(task.created_at)}
-                </span>
-                ${task.assignee ? html`
-                  <span class="status-arrow">→</span>
-                  <span class="status-step">
-                    <span class="dot in_progress"></span>
-                    assigned
-                  </span>
-                ` : nothing}
-                ${task.completed_at ? html`
-                  <span class="status-arrow">→</span>
-                  <span class="status-step">
-                    <span class="dot ${task.status}"></span>
-                    ${task.status} ${getRelativeTime(task.completed_at)}
-                  </span>
-                ` : nothing}
-              </div>
+          <!-- Metadata fields -->
+          <div class="fields">
+            <!-- Status -->
+            <div class="field-label">Status</div>
+            <div class="field-value">
+              <span class="field-badge ${task.status}">
+                <span class="status-dot"></span>
+                ${task.status}
+              </span>
             </div>
+
+            <!-- Assignee -->
+            <div class="field-label">Assignee</div>
+            <div class="field-value">
+              ${task.assignee
+                ? this.renderAgentField(task.assignee, assigneeAgent)
+                : html`<span style="color:#475569">unassigned</span>`}
+            </div>
+
+            <!-- Creator -->
+            ${task.created_by ? html`
+              <div class="field-label">Created by</div>
+              <div class="field-value">
+                ${this.renderAgentField(task.created_by, creatorAgent)}
+              </div>
+            ` : nothing}
+
+            <!-- Kind -->
+            ${task.kind ? html`
+              <div class="field-label">Kind</div>
+              <div class="field-value">
+                <span class="tool-badge" style="font-size:0.7rem">${task.kind}</span>
+              </div>
+            ` : nothing}
+
+            <!-- Created -->
+            <div class="field-label">Created</div>
+            <div class="field-value">
+              <span class="field-time">
+                ${task.created_at ? new Date(task.created_at).toLocaleString() : "—"}
+                <span class="relative">${getRelativeTime(task.created_at)}</span>
+              </span>
+            </div>
+
+            <!-- Completed -->
+            ${task.completed_at ? html`
+              <div class="field-label">Completed</div>
+              <div class="field-value">
+                <span class="field-time">
+                  ${new Date(task.completed_at).toLocaleString()}
+                  <span class="relative">${getRelativeTime(task.completed_at)}</span>
+                </span>
+              </div>
+            ` : nothing}
+
+            <!-- Tags -->
+            ${task.tags && task.tags.length > 0 ? html`
+              <div class="field-label">Tags</div>
+              <div class="field-value">
+                ${task.tags.map(
+                  (tag) => html`<span class="tool-badge" style="font-size:0.7rem">${tag}</span>`
+                )}
+              </div>
+            ` : nothing}
+
+            <!-- Dependencies -->
+            ${task.depends_on && task.depends_on.length > 0 ? html`
+              <div class="field-label">Depends on</div>
+              <div class="field-value">
+                ${task.depends_on.map(
+                  (depId) => html`<span
+                    class="depends-chip"
+                    @click=${() => {
+                      this.agentStore!.selectedTaskId.set(depId);
+                    }}
+                  >${depId.slice(0, 8)}</span>`
+                )}
+              </div>
+            ` : nothing}
           </div>
 
           <!-- Objective -->
@@ -309,46 +425,6 @@ class BeesTaskDetail extends SignalWatcher(LitElement) {
                 </div>
               `
             : nothing}
-
-          <!-- Tags -->
-          ${task.tags && task.tags.length > 0
-            ? html`
-                <div class="block">
-                  <div class="block-header">Tags</div>
-                  <div class="block-content">
-                    <div class="identity-row">
-                      ${task.tags.map(
-                        (tag) => html`<span class="tool-badge" style="font-size:0.7rem">${tag}</span>`
-                      )}
-                    </div>
-                  </div>
-                </div>
-              `
-            : nothing}
-
-          <!-- Dependencies -->
-          ${task.depends_on && task.depends_on.length > 0
-            ? html`
-                <div class="block">
-                  <div class="block-header">Depends On</div>
-                  <div class="block-content">
-                    <div class="depends-list">
-                      ${task.depends_on.map(
-                        (depId) => html`
-                          <span
-                            class="depends-chip"
-                            style="cursor:pointer"
-                            @click=${() => {
-                              this.agentStore!.selectedTaskId.set(depId);
-                            }}
-                          >${depId.slice(0, 8)}</span>
-                        `
-                      )}
-                    </div>
-                  </div>
-                </div>
-              `
-            : nothing}
         </div>
       </div>
     `;
@@ -361,6 +437,43 @@ class BeesTaskDetail extends SignalWatcher(LitElement) {
         bubbles: true,
       })
     );
+  }
+
+  /**
+   * Render an agent reference as a rich card inside a metadata field.
+   *
+   * Shows: title (clickable), type · slug descriptor, and partial UUID.
+   * Falls back gracefully when the agent record isn't resolved.
+   */
+  private renderAgentField(agentId: string, agent: AgentData | null | undefined) {
+    const slug = agent?.slug?.split("/").pop();
+    const title = agent?.title ?? slug ?? agentId.slice(0, 8);
+    const type = agent?.playbook_id;
+
+    // Build descriptor parts: type · slug (if both exist and differ).
+    const descriptorParts: string[] = [];
+    if (type) descriptorParts.push(type);
+    if (slug && slug !== type) descriptorParts.push(slug);
+
+    return html`
+      <div
+        class="agent-card"
+        @click=${() => this.navigateTo("agents", agentId)}
+      >
+        <span class="agent-card-title">${title}</span>
+        ${descriptorParts.length > 0 || agent
+          ? html`<span class="agent-card-meta">
+              ${descriptorParts.length > 0
+                ? descriptorParts.map((p, i) => html`${i > 0 ? html`<span class="sep">·</span>` : nothing}${p}`)
+                : nothing}
+              ${descriptorParts.length > 0
+                ? html`<span class="sep">·</span>`
+                : nothing}
+              ${agentId.slice(0, 8)}
+            </span>`
+          : nothing}
+      </div>
+    `;
   }
 
   /**
