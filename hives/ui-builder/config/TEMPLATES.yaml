@@ -1,4 +1,4 @@
-# Ticket templates — see docs/patterns.md for the field reference.
+# Agent templates — see docs/patterns.md for the field reference.
 
 - name: ui-builder
   title: React App Builder
