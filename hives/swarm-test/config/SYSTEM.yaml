@@ -4,4 +4,3 @@
 # Root auto-boots an orchestrator that autostarts a writer.
 title: swarm-test
 description: "Smoke test for Swarm layout"
-root: orchestrator

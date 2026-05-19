@@ -512,43 +512,47 @@ class TestResumeStateBlobFormat(unittest.TestCase):
 
 
 class TestGeminiRunnerForkPrehydration(unittest.TestCase):
-    """GeminiRunner.run() correctly pre-hydrates DiskFileSystem for forked runs."""
+    """GeminiRunner.run() skips pre-hydration for DiskFileSystem.
 
-    def test_pre_hydration_on_fork(self):
+    Disk-backed workspaces treat the on-disk state as authoritative.
+    Hydrating from a stale snapshot would clobber changes made by
+    sibling agents sharing the workspace.  The rollback handler in
+    mutations.py takes care of intentional restoration separately.
+    """
+
+    def test_disk_fs_skips_pre_hydration_on_fork(self):
+        """DiskFileSystem is NOT hydrated from a fork snapshot."""
         from bees.runners.gemini import GeminiRunner
         from bees.protocols.session import SessionConfiguration
-        from opal_backend.sessions.file_store import FileBasedSessionStore
-        from opal_backend.interaction_store import InteractionState
-        
-        # Setup temp dirs
+        from bees.disk_file_system import DiskFileSystem
+
         import tempfile
         import shutil
         from pathlib import Path
-        
+
         tmp_dir = tempfile.mkdtemp()
         try:
             ticket_dir = Path(tmp_dir)
             session_id = "test-fork-session-456"
-            
+
             # Setup the FileBasedSessionStore directories
             sessions_dir = ticket_dir / "sessions"
             sdir = sessions_dir / session_id
             sdir.mkdir(parents=True, exist_ok=True)
-            
-            # Setup mock workspace dir for hydration target
+
             ws_dir = sdir / "workspace"
-            
+
             # Seed interaction.json with mock filesystem snapshot
             fs_snapshot_dict = {
                 "files": {
                     "notes.md": {
                         "data": "fork pre-seeded",
                         "mime_type": "text/plain",
-                        "type": "text"
+                        "type": "text",
                     }
                 },
                 "routes": {},
-                "file_count": 1
+                "file_count": 1,
             }
             interaction_data = {
                 "session_id": session_id,
@@ -561,21 +565,15 @@ class TestGeminiRunnerForkPrehydration(unittest.TestCase):
                 "graph": {},
                 "model": "gemini-2.5-pro",
                 "completed_function_responses": [],
-                "is_precondition_check": False
+                "is_precondition_check": False,
             }
             (sdir / "interaction.json").write_text(json.dumps(interaction_data))
-            
-            # Mock HttpBackendClient
+
             backend = MagicMock()
-            
-            # Setup runner
             runner = GeminiRunner(backend)
-            
-            # Setup DiskFileSystem as target of hydration
-            from bees.disk_file_system import DiskFileSystem
+
             dfs = DiskFileSystem(ws_dir)
-            
-            # SessionConfiguration
+
             config = SessionConfiguration(
                 ticket_id="test-ticket",
                 ticket_dir=ticket_dir,
@@ -584,26 +582,112 @@ class TestGeminiRunnerForkPrehydration(unittest.TestCase):
                 segments=[],
                 function_groups=[],
                 function_filter=None,
-                model="gemini-2.5-pro"
+                model="gemini-2.5-pro",
             )
-            
-            # Mock new_session and start_session
+
             from unittest.mock import patch
-            with patch("bees.runners.gemini.new_session") as mock_new_session, \
-                 patch("bees.runners.gemini.start_session") as mock_start_session, \
-                 patch("bees.runners.gemini.Subscribers") as mock_subscribers:
-                 
-                # Call run()
+
+            with (
+                patch("bees.runners.gemini.new_session") as mock_new_session,
+                patch("bees.runners.gemini.start_session"),
+                patch("bees.runners.gemini.Subscribers"),
+            ):
                 async def run_test():
                     fut = asyncio.Future()
                     fut.set_result(None)
                     mock_new_session.return_value = fut
                     await runner.run(config)
+
                 asyncio.run(run_test())
-                
-            # Confirm workspace file_system was hydrated successfully from snapshot
-            self.assertEqual((ws_dir / "notes.md").read_text(), "fork pre-seeded")
-            
+
+            # DiskFileSystem should NOT have been hydrated — the file
+            # should not exist because we didn't write it ourselves.
+            self.assertFalse(
+                (ws_dir / "notes.md").exists(),
+                "DiskFileSystem was hydrated from snapshot — expected skip",
+            )
+        finally:
+            shutil.rmtree(tmp_dir)
+
+    def test_non_disk_fs_hydrates_on_fork(self):
+        """A non-DiskFileSystem IS hydrated from a fork snapshot."""
+        from bees.runners.gemini import GeminiRunner
+        from bees.protocols.session import SessionConfiguration
+
+        import tempfile
+        import shutil
+        from pathlib import Path
+
+        tmp_dir = tempfile.mkdtemp()
+        try:
+            ticket_dir = Path(tmp_dir)
+            session_id = "test-fork-session-789"
+
+            sessions_dir = ticket_dir / "sessions"
+            sdir = sessions_dir / session_id
+            sdir.mkdir(parents=True, exist_ok=True)
+
+            fs_snapshot_dict = {
+                "files": {
+                    "notes.md": {
+                        "data": "fork pre-seeded",
+                        "mime_type": "text/plain",
+                        "type": "text",
+                    }
+                },
+                "routes": {},
+                "file_count": 1,
+            }
+            interaction_data = {
+                "session_id": session_id,
+                "contents": [],
+                "file_system": fs_snapshot_dict,
+                "function_call_part": {},
+                "task_tree": {"tree": None},
+                "consents_granted": [],
+                "flags": {},
+                "graph": {},
+                "model": "gemini-2.5-pro",
+                "completed_function_responses": [],
+                "is_precondition_check": False,
+            }
+            (sdir / "interaction.json").write_text(json.dumps(interaction_data))
+
+            backend = MagicMock()
+            runner = GeminiRunner(backend)
+
+            # Use a mock file system that is NOT DiskFileSystem.
+            mock_fs = MagicMock()
+            mock_fs.hydrate_from_snapshot = MagicMock()
+
+            config = SessionConfiguration(
+                ticket_id="test-ticket",
+                ticket_dir=ticket_dir,
+                session_id=session_id,
+                file_system=mock_fs,
+                segments=[],
+                function_groups=[],
+                function_filter=None,
+                model="gemini-2.5-pro",
+            )
+
+            from unittest.mock import patch
+
+            with (
+                patch("bees.runners.gemini.new_session") as mock_new_session,
+                patch("bees.runners.gemini.start_session"),
+                patch("bees.runners.gemini.Subscribers"),
+            ):
+                async def run_test():
+                    fut = asyncio.Future()
+                    fut.set_result(None)
+                    mock_new_session.return_value = fut
+                    await runner.run(config)
+
+                asyncio.run(run_test())
+
+            # Non-DiskFileSystem SHOULD have been hydrated.
+            mock_fs.hydrate_from_snapshot.assert_called_once()
         finally:
             shutil.rmtree(tmp_dir)
 
