@@ -47,6 +47,7 @@ async function findUserOpalFolder(
   const googleDriveClient = new GoogleDriveClient({ fetchWithCreds });
   const query = `name=${quote(userFolderName)}
   and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"
+  and 'me' in owners
   and trashed=false`;
 
   try {
