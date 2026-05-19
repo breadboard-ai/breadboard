@@ -25,6 +25,7 @@ from collections.abc import AsyncIterator
 from typing import Any, Callable
 
 from opal_backend.local.backend_client_impl import HttpBackendClient
+from bees.disk_file_system import DiskFileSystem
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
 from opal_backend.interaction_store import InteractionState, InteractionStore
 from opal_backend.sessions.api import (
@@ -285,8 +286,13 @@ class GeminiRunner:
 
         session_id = config.session_id or str(uuid.uuid4())
 
-        # Pre-hydrate the disk workspace if this is a pre-seeded fork session
-        if isinstance(interaction_store, FileBasedSessionStore):
+        # Pre-hydrate the disk workspace if this is a pre-seeded fork session.
+        # Skip for DiskFileSystem — the disk is the source of truth and the
+        # rollback handler (mutations.py) already hydrates the workspace.
+        if (
+            isinstance(interaction_store, FileBasedSessionStore)
+            and not isinstance(config.file_system, DiskFileSystem)
+        ):
             sdir = interaction_store._session_dir(session_id)
             int_file = sdir / "interaction.json"
             if int_file.exists():
@@ -363,10 +369,15 @@ class GeminiRunner:
             state_data["interaction_state"],
         )
 
-        # Hydrate the disk workspace from the captured snapshot on resume.
+        # Hydrate the workspace from the captured snapshot on resume —
+        # but NOT for DiskFileSystem.  Disk-backed workspaces treat the
+        # on-disk state as authoritative; hydrating from a stale snapshot
+        # would clobber changes made by sibling agents that share the
+        # workspace via workspace_root_id.
         if (
             interaction_state.file_system is not None
             and hasattr(config.file_system, "hydrate_from_snapshot")
+            and not isinstance(config.file_system, DiskFileSystem)
         ):
             config.file_system.hydrate_from_snapshot(
                 interaction_state.file_system,

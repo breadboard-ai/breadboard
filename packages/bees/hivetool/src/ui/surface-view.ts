@@ -310,6 +310,24 @@ class BeesSurfaceView extends LitElement {
       color: #94a3b8;
       font-weight: 600;
     }
+
+    /* ── Media previews ── */
+    .content-media img {
+      max-width: 100%;
+      border-radius: 6px;
+      display: block;
+    }
+
+    .content-media video {
+      max-width: 100%;
+      border-radius: 6px;
+      display: block;
+    }
+
+    .content-media audio {
+      width: 100%;
+      display: block;
+    }
   `;
 
   @property({ attribute: false })
@@ -507,7 +525,28 @@ class BeesSurfaceView extends LitElement {
       </div>`;
     }
 
-    const isMarkdown = item.path?.endsWith(".md");
+    const ext = item.path?.split(".").pop()?.toLowerCase() ?? "";
+    const imageExts = new Set(["png", "jpg", "jpeg", "gif", "webp", "svg"]);
+    const videoExts = new Set(["mp4", "webm", "mov"]);
+    const audioExts = new Set(["mp3", "wav"]);
+
+    if (imageExts.has(ext)) {
+      return html`<div class="content-preview content-media">
+        <img src=${content} alt=${item.title ?? ""} />
+      </div>`;
+    }
+    if (videoExts.has(ext)) {
+      return html`<div class="content-preview content-media">
+        <video src=${content} controls></video>
+      </div>`;
+    }
+    if (audioExts.has(ext)) {
+      return html`<div class="content-preview content-media">
+        <audio src=${content} controls></audio>
+      </div>`;
+    }
+
+    const isMarkdown = ext === "md";
     return html`<div class="content-preview">
       ${isMarkdown
         ? html`<div class="content-markdown">${markdown(content)}</div>`

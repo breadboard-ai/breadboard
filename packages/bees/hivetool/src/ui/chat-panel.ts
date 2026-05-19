@@ -27,6 +27,14 @@ import { sharedStyles } from "./shared-styles.js";
 
 export { BeesChatPanel };
 
+// Pidgin file-tag patterns (mirrors bees/pidgin.py).
+const FILE_SPLIT_REGEX = /(<file\s+src\s*=\s*"[^"]*"\s*\/>)/;
+const FILE_PARSE_REGEX = /^<file\s+src\s*=\s*"([^"]*)"\s*\/>$/;
+
+const IMAGE_EXTS = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"]);
+const VIDEO_EXTS = new Set([".mp4", ".webm", ".mov"]);
+const AUDIO_EXTS = new Set([".mp3", ".wav", ".ogg"]);
+
 @customElement("bees-chat-panel")
 class BeesChatPanel extends SignalWatcher(LitElement) {
   static styles = [
@@ -137,6 +145,57 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
 
       .chat-text a {
         color: #60a5fa;
+      }
+
+      /* ── Embedded media from pidgin <file> tags ── */
+
+      .chat-media {
+        max-width: 100%;
+        border-radius: 6px;
+        margin: 8px 0;
+        display: block;
+      }
+
+      .chat-audio {
+        width: 100%;
+        margin: 8px 0;
+      }
+
+      .file-placeholder {
+        padding: 12px;
+        background: #1e293b;
+        border: 1px dashed #334155;
+        border-radius: 6px;
+        color: #64748b;
+        font-size: 0.75rem;
+        text-align: center;
+        margin: 8px 0;
+      }
+
+      .file-error {
+        padding: 8px 12px;
+        background: #1c1917;
+        border: 1px solid #991b1b;
+        border-radius: 6px;
+        color: #f87171;
+        font-size: 0.75rem;
+        margin: 8px 0;
+      }
+
+      .chat-file-link {
+        display: inline-block;
+        padding: 6px 12px;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        color: #60a5fa;
+        font-size: 0.8rem;
+        text-decoration: none;
+        margin: 4px 0;
+      }
+
+      .chat-file-link:hover {
+        background: #334155;
       }
 
       .chat-text strong {
@@ -481,7 +540,7 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
                        class="chat-turn ${m.role === "user" ? "user" : "agent"}"
                     >
                       <div class="chat-role">${m.role}</div>
-                      <div class="chat-text">${markdown(m.text)}</div>
+                      <div class="chat-text">${this.#renderChatText(agent.id, m.text)}</div>
                     </div>
                   `
                 )}
@@ -494,6 +553,70 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
           : nothing}
       </div>
     `;
+  }
+
+  // ── Pidgin file-tag resolution ──
+
+  /** Cache of resolved file data URLs. Keys are `agentId:path`. */
+  #fileCache = new Map<string, string | null>();
+
+  /**
+   * Look up (or kick off) an async file read.
+   *
+   * Returns the data-URL string when resolved, `null` while loading,
+   * or `""` when the file could not be read.
+   */
+  #resolveFile(agentId: string, src: string): string | null {
+    const key = `${agentId}:${src}`;
+    if (this.#fileCache.has(key)) return this.#fileCache.get(key)!;
+
+    // Mark as in-flight.
+    this.#fileCache.set(key, null);
+    const segments = src.split("/");
+    this.agentStore!.readFileContent(agentId, segments).then((dataUrl) => {
+      this.#fileCache.set(key, dataUrl ?? "");
+      this.requestUpdate();
+    });
+    return null;
+  }
+
+  /** Render chat text, replacing `<file>` tags with embedded media. */
+  #renderChatText(agentId: string, text: string): unknown {
+    if (!text.includes("<file")) return markdown(text);
+
+    const segments = text.split(FILE_SPLIT_REGEX);
+    return segments.map((segment) => {
+      const match = segment.match(FILE_PARSE_REGEX);
+      if (match) {
+        const src = match[1];
+        const resolved = this.#resolveFile(agentId, src);
+        if (resolved === null) {
+          return html`<div class="file-placeholder">Loading ${src}…</div>`;
+        }
+        if (resolved === "") {
+          return html`<div class="file-error">⚠ Could not load ${src}</div>`;
+        }
+        return this.#renderMedia(src, resolved);
+      }
+      return segment ? markdown(segment) : nothing;
+    });
+  }
+
+  /** Render a resolved file as the appropriate media element. */
+  #renderMedia(src: string, dataUrl: string): unknown {
+    const ext = "." + (src.split(".").pop()?.toLowerCase() ?? "");
+    if (IMAGE_EXTS.has(ext)) {
+      return html`<img class="chat-media" src="${dataUrl}" alt="${src}" />`;
+    }
+    if (VIDEO_EXTS.has(ext)) {
+      return html`<video class="chat-media" src="${dataUrl}" controls></video>`;
+    }
+    if (AUDIO_EXTS.has(ext)) {
+      return html`<audio class="chat-audio" src="${dataUrl}" controls></audio>`;
+    }
+    return html`<a class="chat-file-link" href="${dataUrl}" download="${src}"
+      >📎 ${src}</a
+    >`;
   }
 
   private renderLiveSessionPanel(agentId: string) {
@@ -580,12 +703,40 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
     return null;
   }
 
-  /** Extract displayable text from an LLMContent prompt. */
-  private extractPromptText(prompt: unknown): string {
-    if (!prompt || typeof prompt !== "object") return "";
-    const p = prompt as { parts?: Array<{ text?: string }> };
-    if (!Array.isArray(p.parts)) return "";
-    return p.parts.map((part) => part.text ?? "").join("");
+  /**
+   * Render an LLMContent prompt, including both text and inline media.
+   *
+   * After pidgin resolution on the server, prompts contain a mix of
+   * text parts and inlineData parts (images, audio, video). This method
+   * renders all of them instead of discarding non-text parts.
+   */
+  #renderPromptContent(prompt: unknown): unknown {
+    if (!prompt || typeof prompt !== "object") return null;
+    const p = prompt as {
+      parts?: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>;
+    };
+    if (!Array.isArray(p.parts) || p.parts.length === 0) return null;
+
+    const rendered = p.parts.map((part) => {
+      if (part.text) return markdown(part.text);
+      if (part.inlineData) {
+        const { mimeType, data } = part.inlineData;
+        const dataUrl = `data:${mimeType};base64,${data}`;
+        if (mimeType.startsWith("image/")) {
+          return html`<img class="chat-media" src="${dataUrl}" alt="embedded image" />`;
+        }
+        if (mimeType.startsWith("video/")) {
+          return html`<video class="chat-media" src="${dataUrl}" controls></video>`;
+        }
+        if (mimeType.startsWith("audio/")) {
+          return html`<audio class="chat-audio" src="${dataUrl}" controls></audio>`;
+        }
+      }
+      return nothing;
+    });
+
+    // Return null if every part resolved to nothing.
+    return rendered.some((r) => r !== nothing) ? rendered : null;
   }
 
   /** Interactive text reply form for waitForInput suspensions. */
@@ -593,12 +744,12 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
     ticketId: string,
     waitForInput: Record<string, unknown>
   ) {
-    const promptText = this.extractPromptText(waitForInput.prompt);
+    const promptContent = this.#renderPromptContent(waitForInput.prompt);
 
     return html`
       <div class="response-form">
-        ${promptText
-          ? html`<div class="agent-prompt">${markdown(promptText)}</div>`
+        ${promptContent
+          ? html`<div class="agent-prompt">${promptContent}</div>`
           : nothing}
         <textarea
           class="reply-textarea"
@@ -635,7 +786,7 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
     ticketId: string,
     waitForChoice: Record<string, unknown>
   ) {
-    const promptText = this.extractPromptText(waitForChoice.prompt);
+    const promptContent = this.#renderPromptContent(waitForChoice.prompt);
     const choices = (waitForChoice.choices ?? []) as Array<{
       id: string;
       content?: { parts?: Array<{ text?: string }> };
@@ -645,14 +796,14 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
 
     return html`
       <div class="response-form">
-        ${promptText
-          ? html`<div class="agent-prompt">${markdown(promptText)}</div>`
+        ${promptContent
+          ? html`<div class="agent-prompt">${promptContent}</div>`
           : nothing}
         <div class="choices-grid">
           ${choices.map((choice) => {
             const selected = this.selectedChoiceIds.has(choice.id);
-            const label =
-              this.extractPromptText(choice.content) || choice.id;
+            const choiceContent = this.#renderPromptContent(choice.content);
+            const label = choiceContent || choice.id;
             return html`
               <div
                 class="choice-card ${selected ? "selected" : ""}"

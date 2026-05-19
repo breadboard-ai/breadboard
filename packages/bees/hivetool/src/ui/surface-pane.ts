@@ -360,8 +360,8 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
 
   /** Reload the surface — called on agent change and by the parent on fs updates. */
   async loadSurface(): Promise<void> {
-    if (!this.agentStore || !this.ticketId) return;
-    this.surface = await this.agentStore.readSurface(this.ticketId);
+    if (!this.agentStore || !this.agentId) return;
+    this.surface = await this.agentStore.readSurface(this.agentId);
 
     if (this.surface) {
       await this.#resolveBundles(this.surface);
@@ -449,9 +449,9 @@ class BeesSurfacePane extends SignalWatcher(LitElement) {
 
   /** Load file content by path — passed to surface-view as contentLoader. */
   #contentLoader = async (path: string): Promise<string | null> => {
-    if (!this.agentStore || !this.ticketId) return null;
+    if (!this.agentStore || !this.agentId) return null;
     const segments = path.split("/").filter(Boolean);
-    return this.agentStore.readFileContent(this.ticketId, segments);
+    return this.agentStore.readFileContent(this.agentId, segments);
   };
 
   /** Push an event to all active bundle frames in this surface. */
