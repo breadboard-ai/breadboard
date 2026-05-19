@@ -44,6 +44,9 @@ export class ConsentController extends RootController {
   @field({ persist: "idb", deep: true })
   private accessor _consents = new Map<ConsentKey, ConsentRecord>();
 
+  @field({ persist: "idb", deep: true })
+  private accessor _sharedAssetsConsents = new Set<string>();
+
   @field({ deep: true })
   private accessor _pendingConsents = new Map<
     PendingConsent,
@@ -174,5 +177,18 @@ export class ConsentController extends RootController {
 
   async clearAllConsents(): Promise<void> {
     this._consents.clear();
+    this._sharedAssetsConsents.clear();
+  }
+
+  hasSharedAssetsConsent(graphUrl: string): boolean {
+    return this._sharedAssetsConsents.has(graphUrl);
+  }
+
+  grantSharedAssetsConsent(graphUrl: string): void {
+    this._sharedAssetsConsents.add(graphUrl);
+  }
+
+  revokeSharedAssetsConsent(graphUrl: string): void {
+    this._sharedAssetsConsents.delete(graphUrl);
   }
 }

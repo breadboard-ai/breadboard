@@ -12,6 +12,8 @@ import {
   InlineDataCapabilityPart,
   Outcome,
   StoredDataCapabilityPart,
+  ConsentType,
+  ConsentUIType,
 } from "@breadboard-ai/types";
 import { err, ok, isNotebookLmUrl } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
@@ -93,6 +95,42 @@ async function driveFileToGeminiFile(
 ): Promise<Outcome<FileDataPart>> {
   const driveFileId = part.fileData.fileUri.replace(/^drive:\/+/, "");
   const { resourceKey } = part.fileData;
+  const consentController = moduleArgs.getConsentController();
+  const graphUrl = moduleArgs.context.currentGraph?.url || "";
+
+  let fileName = driveFileId;
+  try {
+    const meta = await moduleArgs.googleDriveClient.getFileMetadata(
+      { id: driveFileId, resourceKey },
+      { fields: ["name"] }
+    );
+    if (meta?.name) {
+      fileName = meta.name;
+    }
+  } catch {
+    // Fallback to file ID
+  }
+
+  const scopeObj = {
+    fileId: driveFileId,
+    fileName,
+    resourceKey: resourceKey || "",
+  };
+
+  const allowed = await consentController.queryConsent(
+    {
+      type: ConsentType.ACCESS_DRIVE_FILE_CONTENT,
+      scope: JSON.stringify(scopeObj),
+      graphUrl,
+    },
+    ConsentUIType.IN_APP
+  );
+
+  if (!allowed) {
+    return err(
+      `Execution stopped: Consent denied to read and process the contents of Google Drive asset "${fileName}".`
+    );
+  }
   const request: UploadGeminiFileRequest = { driveFileId };
   if (resourceKey) {
     request.driveResourceKey = resourceKey;
@@ -153,6 +191,44 @@ async function driveFileToBlob(
   }
 
   const driveFileId = existingHandle.replace("drive:/", "");
+  const { resourceKey } = part.storedData;
+
+  const consentController = moduleArgs.getConsentController();
+  const graphUrl = moduleArgs.context.currentGraph?.url || "";
+
+  let fileName = driveFileId;
+  try {
+    const meta = await moduleArgs.googleDriveClient.getFileMetadata(
+      { id: driveFileId, resourceKey },
+      { fields: ["name"] }
+    );
+    if (meta?.name) {
+      fileName = meta.name;
+    }
+  } catch {
+    // Fallback to file ID
+  }
+
+  const scopeObj = {
+    fileId: driveFileId,
+    fileName,
+    resourceKey: resourceKey || "",
+  };
+
+  const allowed = await consentController.queryConsent(
+    {
+      type: ConsentType.ACCESS_DRIVE_FILE_CONTENT,
+      scope: JSON.stringify(scopeObj),
+      graphUrl,
+    },
+    ConsentUIType.IN_APP
+  );
+
+  if (!allowed) {
+    return err(
+      `Execution stopped: Consent denied to read and process the contents of Google Drive asset "${fileName}".`
+    );
+  }
   const request: UploadBlobFileRequest = { driveFileId };
   const response: Outcome<UploadBlobFileResponse> = await callBackend(
     moduleArgs,

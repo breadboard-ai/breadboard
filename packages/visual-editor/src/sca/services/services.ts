@@ -155,6 +155,7 @@ export function services(
       agentContext,
       agentService,
       notebookLmApiClient,
+      googleDriveClient,
     });
     const googleDriveBoardServer = createGoogleDriveBoardServer(
       signinAdapter,

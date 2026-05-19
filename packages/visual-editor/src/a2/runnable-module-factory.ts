@@ -5,6 +5,7 @@
  */
 
 import type { NodeHandlerContext } from "@breadboard-ai/types";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { McpClientManager } from "../mcp/index.js";
