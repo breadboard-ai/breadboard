@@ -532,6 +532,7 @@ export interface PendingEdit {
   graphId: GraphIdentifier;
   nodeId: NodeIdentifier;
   values: InputValues;
+  metadata?: NodeMetadata;
   /** Incoming port connections (from chiclets) to autowire */
   ins?: InPort[];
   /** Graph version when edit was captured - used to detect stale edits */

@@ -1772,6 +1772,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         graphId: prepared.editGraphId,
         nodeId,
         values: prepared.configuration,
+        metadata: prepared.metadata,
         ins: prepared.ins,
         graphVersion: this.sca.controller.editor.graph.version,
       });
