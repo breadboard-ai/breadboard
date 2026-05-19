@@ -161,3 +161,40 @@ class TestTaskRecordRoundTrip:
         assert task.status == "available"
         assert task.kind == "work"
         assert task.assignee is None
+
+
+class TestDelete:
+    def test_delete_existing(self, store: TaskFileStore) -> None:
+        task = store.create("Find pricing")
+        task_path = store.tasks_dir / f"{task.id}.json"
+        assert task_path.exists()
+
+        result = store.delete(task.id)
+        assert result is True
+        assert not task_path.exists()
+        assert store.get(task.id) is None
+
+    def test_delete_nonexistent_returns_false(self, store: TaskFileStore) -> None:
+        assert store.delete("nonexistent-id") is False
+
+
+class TestDeleteByAssignee:
+    def test_deletes_matching_tasks(self, store: TaskFileStore) -> None:
+        store.create("Task 1", assignee="agent-1")
+        store.create("Task 2", assignee="agent-1")
+        store.create("Task 3", assignee="agent-2")
+
+        deleted = store.delete_by_assignee("agent-1")
+        assert len(deleted) == 2
+
+        # Only agent-2's task should remain.
+        remaining = store.query_all()
+        assert len(remaining) == 1
+        assert remaining[0].assignee == "agent-2"
+
+    def test_no_matching_tasks(self, store: TaskFileStore) -> None:
+        store.create("Unrelated", assignee="agent-x")
+        deleted = store.delete_by_assignee("agent-y")
+        assert deleted == []
+        assert len(store.query_all()) == 1
+

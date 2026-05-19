@@ -166,3 +166,25 @@ class TaskFileStore:
         task_path.write_text(
             json.dumps(task.to_dict(), indent=2, ensure_ascii=False) + "\n"
         )
+
+    def delete(self, task_id: str) -> bool:
+        """Remove a task file by ID.
+
+        Returns True if the file existed and was removed.
+        """
+        task_path = self.tasks_dir / f"{task_id}.json"
+        if task_path.exists():
+            task_path.unlink()
+            return True
+        return False
+
+    def delete_by_assignee(self, agent_id: str) -> list[str]:
+        """Remove all task files assigned to the given agent.
+
+        Returns the IDs of deleted task records.
+        """
+        deleted: list[str] = []
+        for task in self.query_by_assignee(agent_id):
+            if self.delete(task.id):
+                deleted.append(task.id)
+        return deleted

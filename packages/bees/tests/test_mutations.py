@@ -855,6 +855,65 @@ class TestRollbackToTurn:
 
 
 # ---------------------------------------------------------------------------
+# Delete task
+# ---------------------------------------------------------------------------
+
+
+class TestDeleteTask:
+    """delete-task mutation removes agent directories AND task records."""
+
+    def test_delete_removes_task_records(self, hive, store):
+        """Deleting an agent also removes its tasks/*.json files."""
+        agent_id = _create_task(store)
+
+        # Verify task records exist.
+        tasks_before = store._task_file_store.query_by_assignee(agent_id)
+        assert len(tasks_before) == 1
+
+        _write_mutation(hive, {"type": "delete-task", "task_id": agent_id})
+        manager = MutationManager(hive)
+        outcome = asyncio.run(manager.process_inline())
+
+        assert outcome.hot_processed == 1
+
+        # Agent directory should be gone.
+        assert not store.entity_dir(agent_id).exists()
+
+        # Task records should also be gone.
+        tasks_after = store._task_file_store.query_by_assignee(agent_id)
+        assert tasks_after == []
+
+    def test_delete_recursive_cleans_child_task_records(self, hive, store):
+        """Deleting a parent removes task records for all descendants."""
+        parent_id = _create_task(store)
+        child_id = _create_task(store, parent_task_id=parent_id)
+
+        # Verify both have task records.
+        assert len(store._task_file_store.query_by_assignee(parent_id)) == 1
+        assert len(store._task_file_store.query_by_assignee(child_id)) == 1
+
+        _write_mutation(hive, {"type": "delete-task", "task_id": parent_id})
+        manager = MutationManager(hive)
+        outcome = asyncio.run(manager.process_inline())
+
+        assert outcome.hot_processed == 1
+
+        # Both agent dirs gone.
+        assert not store.entity_dir(parent_id).exists()
+        assert not store.entity_dir(child_id).exists()
+
+        # Both task records gone.
+        assert store._task_file_store.query_by_assignee(parent_id) == []
+        assert store._task_file_store.query_by_assignee(child_id) == []
+
+    def test_delete_missing_task_id(self, hive):
+        _write_mutation(hive, {"type": "delete-task"})
+        manager = MutationManager(hive)
+        outcome = asyncio.run(manager.process_inline())
+        assert outcome.hot_processed == 0
+
+
+# ---------------------------------------------------------------------------
 # Unknown mutations
 # ---------------------------------------------------------------------------
 
