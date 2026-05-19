@@ -126,10 +126,8 @@ export class VEBatchConsentModal extends SignalWatcher(LitElement) {
     >
       <div class="consent-body">
         <p>
-          This Opal app uses the following Google Drive
-          ${assets.length === 1 ? "file" : "files"}. By continuing, you allow
-          the app to read and process ${assets.length === 1 ? "its" : "their"}
-          contents.
+          This Opal requires access to the following Google Drive
+          ${assets.length === 1 ? "file" : "files"}.
         </p>
 
         <ul class="asset-list">
@@ -137,9 +135,7 @@ export class VEBatchConsentModal extends SignalWatcher(LitElement) {
             const iconSrc = asset.iconLink?.replace(/\/16\//, "/32/") || "";
             return html`
               <li class="asset-item">
-                ${iconSrc
-                  ? html`<img src=${iconSrc} alt="" />`
-                  : nothing}
+                ${iconSrc ? html`<img src=${iconSrc} alt="" />` : nothing}
                 <a href=${this.#buildDriveUrl(asset)} target="_blank">
                   ${asset.fileName}
                 </a>
@@ -149,7 +145,8 @@ export class VEBatchConsentModal extends SignalWatcher(LitElement) {
         </ul>
 
         <p>
-          If you do not trust this app, click Cancel to stop execution.
+          If you don't trust these files or the person who sent you this Opal,
+          click cancel to exit.
         </p>
       </div>
     </bb-modal>`;
