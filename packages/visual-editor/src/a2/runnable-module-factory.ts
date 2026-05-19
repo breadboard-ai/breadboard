@@ -24,6 +24,7 @@ export type A2ModuleFactoryArgs = {
   agentContext: AgentContext;
   agentService: AgentService;
   notebookLmApiClient: NotebookLmApiClient;
+  googleDriveClient: GoogleDriveClient;
 };
 
 export type A2ModuleArgs = A2ModuleFactoryArgs & {
