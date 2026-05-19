@@ -83,7 +83,7 @@ export const applyPendingNodeEdit = asAction(
       pendingEdit.nodeId,
       pendingEdit.graphId,
       pendingEdit.values,
-      null, // metadata
+      pendingEdit.metadata ?? null, // metadata
       pendingEdit.ins ?? null // portsToAutowire
     );
 
@@ -264,7 +264,7 @@ export const applyPendingEditsForNodeAction = asAction(
             pendingEdit.nodeId,
             pendingEdit.graphId,
             pendingEdit.values,
-            null,
+            pendingEdit.metadata ?? null,
             pendingEdit.ins ?? null
           );
           await editor.apply(updateNodeTransform);

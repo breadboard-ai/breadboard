@@ -12,6 +12,7 @@ import { ToastType } from "../../../../src/ui/events/events.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import { createMockEnvironment } from "../../helpers/mock-environment.js";
 import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
+import { UpdateNode } from "../../../../src/ui/transforms/index.js";
 
 suite("Step Actions", () => {
   beforeEach(() => {
@@ -79,6 +80,54 @@ suite("Step Actions", () => {
         true,
         "clearPendingEdit should be called before applying (to prevent re-triggers on failure)"
       );
+    });
+
+    test("applies pending node edit with metadata/title when present", async () => {
+      const result: { transform: UpdateNode | null } = { transform: null };
+
+      const mockController = {
+        editor: {
+          step: {
+            pendingEdit: {
+              nodeId: "node-123",
+              graphId: "graph-456",
+              graphVersion: 5,
+              values: { key: "value" },
+              metadata: { title: "New Node Title" },
+            },
+            clearPendingEdit: () => {},
+          },
+          graph: {
+            version: 5,
+            editor: {
+              apply: async (transform: unknown) => {
+                result.transform = transform as UpdateNode;
+                return { success: true };
+              },
+            },
+            lastNodeConfigChange: null,
+          },
+        },
+        global: {
+          toasts: {
+            toast: () => {},
+          },
+        },
+      };
+
+      stepActions.bind({
+        services: {} as never,
+        controller: mockController as never,
+        env: createMockEnvironment(defaultRuntimeFlags),
+      });
+
+      await stepActions.applyPendingNodeEdit();
+
+      assert.ok(result.transform, "apply should be called with transform");
+      assert.strictEqual(result.transform.id, "node-123");
+      assert.strictEqual(result.transform.graphId, "graph-456");
+      assert.deepStrictEqual(result.transform.configuration, { key: "value" });
+      assert.deepStrictEqual(result.transform.metadata, { title: "New Node Title" });
     });
 
     test("shows warning toast and discards edit when graph version mismatches", async () => {
