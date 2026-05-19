@@ -37,7 +37,6 @@ while sequential dependencies are strictly preserved without blocking the system
 
 from __future__ import annotations
 
-import shutil
 
 import asyncio
 import logging
@@ -303,10 +302,8 @@ class Scheduler:
         self._deleted_tasks.add(task_id)
         self._running_tasks.discard(task_id)
 
-        # Remove entity directory.
-        entity_dir = self.store.entity_dir(task_id)
-        if entity_dir.exists():
-            shutil.rmtree(entity_dir)
+        # Remove agent directory and associated task records.
+        self.store.delete_agent(task_id)
 
         # Remove matching session logs.
         logs_dir = self.store.hive_dir / "logs"

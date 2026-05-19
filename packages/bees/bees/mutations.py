@@ -576,10 +576,8 @@ class MutationManager:
         for child in children:
             self._delete_fs_recursive(child.id, store, deleted)
 
-        # Remove entity directory.
-        entity_dir = store.entity_dir(task_id)
-        if entity_dir.exists():
-            shutil.rmtree(entity_dir)
+        # Remove agent directory and associated task records.
+        store.delete_agent(task_id)
 
         # Remove matching session logs.
         logs_dir = self._hive_dir / "logs"

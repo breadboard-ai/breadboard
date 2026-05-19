@@ -50,6 +50,22 @@ class UnifiedAgentStore:
         """Resolve the directory for an agent by ID."""
         return self._hive_dir / "agents" / agent_id
 
+    def delete_agent(self, agent_id: str) -> None:
+        """Remove an agent's directory and its associated task records.
+
+        Callers handle recursion into children and log cleanup — this
+        method only deletes the single agent's own data.
+        """
+        import shutil
+
+        # Remove the agent directory (sessions, workspace, metadata).
+        agent_dir = self.entity_dir(agent_id)
+        if agent_dir.exists():
+            shutil.rmtree(agent_dir)
+
+        # Remove task records assigned to this agent.
+        self._task_file_store.delete_by_assignee(agent_id)
+
     # -- Read operations ---------------------------------------------------
 
     def get(self, agent_id: str) -> Agent | None:
