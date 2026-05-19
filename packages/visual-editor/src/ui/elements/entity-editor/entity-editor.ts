@@ -37,7 +37,9 @@ import { until } from "lit/directives/until.js";
 import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import {
   FastAccessSelectEvent,
+  HideTooltipEvent,
   IterateOnPromptEvent,
+  ShowTooltipEvent,
   StateEvent,
   ToastEvent,
 } from "../../events/events.js";
@@ -1473,6 +1475,18 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               ${hasTextEditor
                 ? html`<button
                     id="tools"
+                    @pointerover=${(evt: PointerEvent) => {
+                      this.dispatchEvent(
+                        new ShowTooltipEvent(
+                          Strings.from("COMMAND_ADD_TOOLS"),
+                          evt.clientX,
+                          evt.clientY
+                        )
+                      );
+                    }}
+                    @pointerout=${() => {
+                      this.dispatchEvent(new HideTooltipEvent());
+                    }}
                     @pointerdown=${() => {
                       if (!this.#editorRef.value) {
                         return;
@@ -1481,6 +1495,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
                       this.#editorRef.value.storeLastRange();
                     }}
                     @click=${(evt: PointerEvent) => {
+                      this.dispatchEvent(new HideTooltipEvent());
                       const bounds = new DOMRect(
                         evt.clientX,
                         evt.clientY,

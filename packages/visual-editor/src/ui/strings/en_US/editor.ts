@@ -11,6 +11,9 @@ export default {
   COMMAND_ADD_MISSING_ITEM: {
     str: "Add",
   },
+  COMMAND_ADD_TOOLS: {
+    str: "Add tools",
+  },
   COMMAND_SHOW_LIBRARY: {
     str: "Show Library",
   },
