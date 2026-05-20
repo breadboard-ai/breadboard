@@ -388,57 +388,6 @@ async def test_agents_check_status_nested_tree():
     assert orch["agents"][0]["outcome"] == "Done!"
 
 
-# ---------------------------------------------------------------------------
-# agents_send_event
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_agents_send_event_by_slug():
-    parent = GLOBAL_STORE.create("Parent")
-
-    child = GLOBAL_STORE.create("Child")
-    child.metadata.parent_id = parent.id
-    child.metadata.slug = "researcher"
-    child.metadata.status = "suspended"
-    GLOBAL_STORE.save_metadata(child)
-
-    scheduler = _scheduler_mock()
-    scope = SubagentScope(workspace_root_id=parent.id)
-    handlers = _make_handlers(
-        scope=scope, caller_agent_id=parent.id, scheduler=scheduler,
-    )
-
-    result = await handlers["agents_send_event"]({
-        "slug": "researcher",
-        "type": "clarification",
-        "message": "Please focus on pricing",
-    }, None)
-
-    assert result["delivered"] is True
-    assert result["agent_slug"] == "researcher"
-    scheduler.deliver_to_task.assert_called_once()
-    call_args = scheduler.deliver_to_task.call_args
-    assert call_args[0][0] == child.id
-
-
-@pytest.mark.asyncio
-async def test_agents_send_event_not_found():
-    parent = GLOBAL_STORE.create("Parent")
-
-    scheduler = _scheduler_mock()
-    handlers = _make_handlers(
-        caller_agent_id=parent.id, scheduler=scheduler,
-    )
-
-    result = await handlers["agents_send_event"]({
-        "slug": "nonexistent",
-        "type": "clarification",
-        "message": "Hello",
-    }, None)
-
-    assert "error" in result
-    assert "not found" in result["error"]
 
 
 # ---------------------------------------------------------------------------

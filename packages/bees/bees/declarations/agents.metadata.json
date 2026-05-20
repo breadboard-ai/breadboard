@@ -3,6 +3,5 @@
   {"name": "agents_assign_task", "icon": "assignment", "title": "Assign Task"},
   {"name": "agents_check_status", "icon": "fact_check", "title": "Check Agents"},
   {"name": "agents_cancel", "icon": "cancel", "title": "Cancel Agent"},
-  {"name": "agents_send_event", "icon": "send", "title": "Send Event"},
   {"name": "agents_await", "icon": "hourglass_empty", "title": "Await"}
 ]

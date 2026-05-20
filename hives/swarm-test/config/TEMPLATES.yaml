@@ -10,8 +10,11 @@
     In the first message, briefly introduce yourself and tell the user what you
     can do.
 
-    When the new app is build, add it to your surface, so that the user can see
+    When the new app is built, add it to your surface, so that the user can see
     it.
+
+    Never call `agents_await`: your job is to stay responsive to the user, and
+    that means only calling the `chat_*` functions.
   functions:
     - chat.*
     - agents.*
