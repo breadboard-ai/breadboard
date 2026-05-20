@@ -11,10 +11,7 @@ import type {
   OutputValues,
 } from "@breadboard-ai/types";
 import { ConsentType, ConsentUIType } from "@breadboard-ai/types";
-import {
-  findGoogleDriveAssetsInGraph,
-  partToDriveFileId,
-} from "@breadboard-ai/utils/google-drive/utils.js";
+import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/utils/google-drive/utils.js";
 import { SnackType, type SnackbarUUID } from "../../types.js";
 import type { StateEvent } from "../../../ui/events/events.js";
 import { parseUrl } from "../../../ui/navigation/urls.js";
@@ -953,21 +950,9 @@ async function runBoard(): Promise<void> {
   // This shows a single modal listing all Drive files instead of one per asset.
   // Gated behind the enableAssetAccessConsent flag.
   if (bind.env.flags.get("enableAssetAccessConsent") && gc.readOnly && gc.graph) {
-    // Collect splash screen file IDs to exclude — these are decorative
-    // theme images, not data assets the Opal processes.
-    const splashScreenIds = new Set<string>();
-    const themes = gc.graph.metadata?.visual?.presentation?.themes;
-    if (themes) {
-      for (const { splashScreen } of Object.values(themes)) {
-        if (splashScreen) {
-          const fileId = partToDriveFileId(splashScreen);
-          if (fileId) splashScreenIds.add(fileId.id);
-        }
-      }
-    }
-
-    const driveAssets = findGoogleDriveAssetsInGraph(gc.graph)
-      .filter((asset) => !splashScreenIds.has(asset.fileId.id));
+    const driveAssets = findGoogleDriveAssetsInGraph(gc.graph, {
+      omitSplashImages: true,
+    });
     if (driveAssets.length > 0) {
       const consentCtrl = controller.global.consent;
       const graphUrl = gc.url || "";
