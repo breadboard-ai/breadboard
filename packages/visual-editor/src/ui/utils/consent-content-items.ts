@@ -47,7 +47,7 @@ export const CONSENT_RENDER_INFO: ConsentRenderInfoMap = {
       <p>Only click allow if you recognize this site and trust the Opal.</p>
     `,
   },
-  [ConsentType.ACCESS_DRIVE_FILE_CONTENT]: {
+  [ConsentType.ACCESS_ASSET]: {
     name: "Opal App - Sensitive Content Awareness",
     description: (request) => {
       let fileId = "";

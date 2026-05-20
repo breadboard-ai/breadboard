@@ -978,7 +978,7 @@ async function runBoard(): Promise<void> {
       const unconsented = driveAssets
         .map((asset) => {
           const request = {
-            type: ConsentType.ACCESS_DRIVE_FILE_CONTENT as const,
+            type: ConsentType.ACCESS_ASSET as const,
             scope: JSON.stringify({
               fileId: asset.fileId.id,
               resourceKey: asset.fileId.resourceKey || "",
