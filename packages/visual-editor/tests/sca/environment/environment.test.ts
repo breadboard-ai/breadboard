@@ -41,10 +41,6 @@ function makeRuntimeConfig(
         outputTemplates: false,
         googleOne: false,
 
-
-
-
-
         enableGoogleDriveTools: false,
         enableResumeAgentRun: false,
         enableNotebookLm: false,
@@ -55,7 +51,6 @@ function makeRuntimeConfig(
         enableOpalBackend: false,
         enableSessionsBackend: false,
         enableSingletonPrefixCache: false,
-
       },
     },
     shellHost: {
@@ -79,10 +74,6 @@ const testFlags: RuntimeFlags = {
   outputTemplates: false,
   googleOne: false,
 
-
-
-
-
   enableGoogleDriveTools: false,
   enableResumeAgentRun: false,
   enableNotebookLm: false,
@@ -93,7 +84,7 @@ const testFlags: RuntimeFlags = {
   enableOpalBackend: false,
   enableSessionsBackend: false,
   enableSingletonPrefixCache: false,
-
+  enableAssetAccessConsent: false,
 };
 
 suite("createEnvironment", () => {

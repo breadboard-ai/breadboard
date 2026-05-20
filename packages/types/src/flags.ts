@@ -43,8 +43,6 @@ export type RuntimeFlags = {
    */
   outputTemplates: boolean;
 
-
-
   /**
    * Enables "export to Drive" capability for the agent
    */
@@ -89,6 +87,11 @@ export type RuntimeFlags = {
    * backend and reuse the cached content ID across client calls.
    */
   enableSingletonPrefixCache: boolean;
+
+  /**
+   * Show the asset access consent dialog when running a shared Opal.
+   */
+  enableAssetAccessConsent: boolean;
 };
 
 /**
@@ -174,8 +177,6 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     visibility: "experimental",
   },
 
-
-
   enableGoogleDriveTools: {
     title: "Google Drive Tools",
     description: "Enable 'export to Drive' capability",
@@ -221,6 +222,12 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     title: "Singleton Prefix Cache",
     description:
       "Cache agent prefix on the backend and reuse the cached content ID",
+    visibility: "experimental",
+  },
+  enableAssetAccessConsent: {
+    title: "Asset Access Consent",
+    description:
+      "Show the asset access consent dialog when running a shared Opal.",
     visibility: "experimental",
   },
 };

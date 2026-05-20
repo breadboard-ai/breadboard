@@ -951,7 +951,8 @@ async function runBoard(): Promise<void> {
 
   // Check batch consent for all Drive assets in the graph before running.
   // This shows a single modal listing all Drive files instead of one per asset.
-  if (gc.readOnly && gc.graph) {
+  // Gated behind the enableAssetAccessConsent flag.
+  if (bind.env.flags.get("enableAssetAccessConsent") && gc.readOnly && gc.graph) {
     // Collect splash screen file IDs to exclude — these are decorative
     // theme images, not data assets the Opal processes.
     const splashScreenIds = new Set<string>();
