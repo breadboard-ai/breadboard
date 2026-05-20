@@ -43,13 +43,14 @@ export class OverflowMenu extends LitElement {
           light-dark(var(--n-100), var(--n-15))
         );
         border-radius: var(--bb-grid-size-2);
-        z-index: 2;
+        z-index: 2000;
         box-shadow:
           0px 4px 8px 3px rgba(0, 0, 0, 0.05),
           0px 1px 3px rgba(0, 0, 0, 0.1);
         max-height: 380px;
         scrollbar-width: none;
         overflow-y: scroll;
+        width: max-content;
       }
 
       button {

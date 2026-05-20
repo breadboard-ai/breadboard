@@ -3,14 +3,13 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { LitElement, html, css } from "lit";
+import { customElement, property } from "lit/decorators.js";
 import { OverflowAction } from "../../../types/types.js";
 import { notebookLmIcon } from "../../../styles/svg-icons.js";
-import { styleMap } from "lit/directives/style-map.js";
 import {
   AddAssetRequestEvent,
-  OverflowMenuActionEvent,
+  ShowOverflowMenuEvent,
 } from "../../../events/events.js";
 import { icons } from "../../../styles/icons.js";
 
@@ -42,12 +41,6 @@ export class AddAssetButton extends LitElement {
 
   @property()
   accessor anchor: "above" | "below" = "below";
-
-  @state()
-  accessor _showOverflowMenu = false;
-
-  @state()
-  accessor _assetType = "file";
 
   static styles = [
     icons,
@@ -93,118 +86,86 @@ export class AddAssetButton extends LitElement {
           }
         }
       }
-
-      bb-overflow-menu {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: min-content;
-        --border-color: transparent;
-        --inner-border-color: light-dark(var(--n-90), var(--n-30));
-        --background-color: light-dark(var(--p-98), var(--n-20));
-        --text-color: light-dark(var(--n-30), var(--nv-95));
-      }
     `,
   ];
 
-  #overflowMenu: { x: number; y: number } = { x: 0, y: 0 };
-
   render() {
-    let overflowMenu: HTMLTemplateResult | symbol = nothing;
-    const overflowMenuPosition = { ...this.#overflowMenu };
-    if (this._showOverflowMenu) {
-      const actions: OverflowAction[] = [];
+    const actions: OverflowAction[] = [];
 
-      if (this.supportedActions.upload) {
-        actions.push({
-          icon: "upload",
-          name: "upload",
-          title: "Upload from Device",
-        });
-      }
+    if (this.supportedActions.upload) {
+      actions.push({
+        icon: "upload",
+        name: "upload",
+        title: "Upload from Device",
+      });
+    }
 
-      if (this.supportedActions.youtube) {
-        actions.push({
-          icon: "youtube",
-          name: "youtube",
-          title: "Add YouTube Video",
-        });
-      }
+    if (this.supportedActions.youtube) {
+      actions.push({
+        icon: "youtube",
+        name: "youtube",
+        title: "Add YouTube Video",
+      });
+    }
 
-      if (this.supportedActions.gdrive && this.showGDrive) {
-        actions.push({
-          icon: "gdrive",
-          title: "Add from Google Drive",
-          name: "gdrive",
-        });
-      }
+    if (this.supportedActions.gdrive && this.showGDrive) {
+      actions.push({
+        icon: "gdrive",
+        title: "Add from Google Drive",
+        name: "gdrive",
+      });
+    }
 
-      if (this.supportedActions.drawable) {
-        actions.push({
-          icon: "drawable",
-          name: "drawable",
-          title: "Add a Drawing",
-        });
-      }
+    if (this.supportedActions.drawable) {
+      actions.push({
+        icon: "drawable",
+        name: "drawable",
+        title: "Add a Drawing",
+      });
+    }
 
-      if (this.supportedActions.webcamVideo) {
-        actions.push({
-          icon: "videocam",
-          name: "webcam-video",
-          title: "Add a Webcam Video",
-        });
-      }
+    if (this.supportedActions.webcamVideo) {
+      actions.push({
+        icon: "videocam",
+        name: "webcam-video",
+        title: "Add a Webcam Video",
+      });
+    }
 
-      if (this.supportedActions.notebooklm && this.showNotebookLm) {
-        actions.push({
-          icon: notebookLmIcon,
-          name: "notebooklm",
-          title: "NotebookLM",
-        });
-      }
-
-      if (this.anchor === "above") {
-        overflowMenuPosition.y -= 12; // Clearance.
-        overflowMenuPosition.y -= actions.length * BUTTON_HEIGHT; // Menu height.
-      }
-
-      overflowMenu = html`<bb-overflow-menu
-        style=${styleMap({
-          left: `${overflowMenuPosition.x}px`,
-          top: `${overflowMenuPosition.y}px`,
-        })}
-        .actions=${actions}
-        .disabled=${false}
-        @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
-          evt.stopImmediatePropagation();
-          this._showOverflowMenu = false;
-
-          this.dispatchEvent(
-            new AddAssetRequestEvent(evt.action, this.allowedUploadMimeTypes)
-          );
-        }}
-        @bboverflowmenudismissed=${() => {
-          this._showOverflowMenu = false;
-        }}
-      ></bb-overflow-menu>`;
+    if (this.supportedActions.notebooklm && this.showNotebookLm) {
+      actions.push({
+        icon: notebookLmIcon,
+        name: "notebooklm",
+        title: "NotebookLM",
+      });
     }
 
     return html`<button
-        ?disabled=${this.disabled}
-        @click=${(evt: Event) => {
-          if (!(evt.target instanceof HTMLButtonElement)) {
-            return;
-          }
+      ?disabled=${this.disabled}
+      @click=${(evt: Event) => {
+        if (!(evt.target instanceof HTMLButtonElement)) {
+          return;
+        }
 
-          this.#overflowMenu.x = 0;
-          this.#overflowMenu.y = 0;
+        const bounds = evt.target.getBoundingClientRect();
+        const x = bounds.left;
+        let y = bounds.bottom;
 
-          this._showOverflowMenu = true;
-        }}
-        id="add-asset"
-      >
-        <span class="g-icon">add_circle</span>
-      </button>
-      ${overflowMenu}`;
+        if (this.anchor === "above") {
+          y = bounds.top - 12 - actions.length * BUTTON_HEIGHT;
+        }
+
+        this.dispatchEvent(
+          new ShowOverflowMenuEvent(actions, x, y, (action) => {
+            this.dispatchEvent(
+              new AddAssetRequestEvent(action, this.allowedUploadMimeTypes)
+            );
+          })
+        );
+      }}
+      id="add-asset"
+    >
+      <span class="g-icon">add_circle</span>
+    </button>`;
   }
 }
