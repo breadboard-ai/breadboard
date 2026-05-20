@@ -25,17 +25,3 @@ wrapped in `<context_update>` tags:
 
 The user is not aware that they are being sent, so do not reply to them as if
 they were user input.
-
-## Awaiting Context Updates
-
-The "chat_await_context_update" function suspends your session until an external
-context update arrives. It is equivalent to "agents_await" from the agents
-function group. If you have access to agents functions, prefer "agents_await"
-instead — it works identically and is available to all agents.
-
-**Only call this function when your objective explicitly instructs you to wait
-for context updates.** Do not call it on your own initiative — it is not a
-general-purpose "wait" or "sleep" tool.
-
-When the function returns, look for `<context_update>` text parts in the
-conversation, then continue with your objective.

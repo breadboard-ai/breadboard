@@ -1,7 +1,7 @@
 [
   {
     "name": "agents_list_types",
-    "description": "List available agent types that can be assigned tasks.",
+    "description": "List available agent types that can be assigned tasks. New agent templates or overrides can be created or modified inside the`templates/` directory of your workspace during execution, so call this function to discover the current list. The `options_schema` of an agent specifies configuration overrides (if any) can be supplied via the `options` parameter of `agents_assign_task`.",
     "parametersJsonSchema": {
       "type": "object",
       "properties": {}
@@ -9,7 +9,7 @@
   },
   {
     "name": "agents_assign_task",
-    "description": "Assign a task to a named agent. If the agent doesn't exist yet, it is created automatically from the specified type. If it previously completed a task, a fresh instance is created (same name, new session, workspace persists).",
+    "description": "Assign a task to a named agent. If the agent doesn't exist yet, it is created automatically from the specified type. If it previously completed a task, a fresh instance is created (same name, new session, workspace persists). Agents run tasks asynchronously -- this function returns immediately",
     "parametersJsonSchema": {
       "type": "object",
       "properties": {
@@ -19,7 +19,7 @@
         },
         "slug": {
           "type": "string",
-          "description": "The agent's name. Use a short, descriptive, lowercase identifier (e.g., 'researcher', 'deep-dive'). The same slug always refers to the same agent."
+          "description": "The agent's name. Use a short, descriptive, lowercase identifier (e.g., 'researcher', 'deep-dive'). The same slug always refers to the same agent. This will give the agent have access to a sub-directory by this name in your filesystem. You provide a simple directory name (e.g., `research`)"
         },
         "objective": {
           "type": "string",
@@ -65,30 +65,8 @@
     }
   },
   {
-    "name": "agents_send_event",
-    "description": "Send a typed event to a named agent. The agent receives the event as a context update. Use this to provide additional instructions, clarifications, or data to a running agent.",
-    "parametersJsonSchema": {
-      "type": "object",
-      "properties": {
-        "slug": {
-          "type": "string",
-          "description": "The name of the agent to send the event to."
-        },
-        "type": {
-          "type": "string",
-          "description": "The type of event (e.g., 'clarification', 'additional_context'). Choose descriptive, stable names."
-        },
-        "message": {
-          "type": "string",
-          "description": "Text payload delivered to the agent. Include all relevant details the agent needs to act on."
-        }
-      },
-      "required": ["slug", "type", "message"]
-    }
-  },
-  {
     "name": "agents_await",
-    "description": "Suspend execution until a context update arrives (e.g. an agent completes a task or a parent sends an event). Returns immediately if updates are already pending. Call this after assigning tasks to wait for their results.",
+    "description": "Wait until the next context update arrives (e.g. an agent completes a task). Call this after assigning tasks to wait for their results, but only if you don't have chat_* functions. When you have chat_*, call them instead -- this allows you to stay responsive to the user while the tasks are being worked on in the background",
     "parametersJsonSchema": {
       "type": "object",
       "properties": {

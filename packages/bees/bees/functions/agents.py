@@ -281,55 +281,6 @@ def _make_handlers(
 
         return {"agents": agents}
 
-    async def _agents_send_event(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
-        """Send a typed event to a named child agent."""
-        slug = args.get("slug", "")
-        event_type = args.get("type", "")
-        message = args.get("message", "")
-
-        if not slug:
-            return {"error": "slug is required"}
-        if not event_type:
-            return {"error": "type is required"}
-        if not scheduler:
-            return {"error": "Scheduler not available"}
-
-        if status_cb:
-            status_cb(f"Sending event to {slug}: {event_type}")
-
-        # Resolve slug to agent ID.
-        child = scheduler.store.find_child_by_slug(caller_agent_id, slug)
-        if not child:
-            return {"error": f"Agent '{slug}' not found"}
-
-        try:
-            update = {
-                "type": event_type,
-                "message": message,
-                "from_agent_id": caller_agent_id,
-                "from_slug": scope.slug_path if scope else None,
-            }
-            error = scheduler.deliver_to_task(
-                child.id,
-                update,
-                expected_creator=caller_agent_id,
-            )
-        except Exception as e:
-            logger.exception("agents_send_event failed")
-            return {"error": str(e)}
-
-        if status_cb:
-            status_cb(None, None)
-
-        if error:
-            return {"error": error}
-
-        return {
-            "agent_slug": slug,
-            "type": event_type,
-            "delivered": True,
-        }
-
     async def _agents_cancel(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
         """Cancel a named child agent."""
         slug = args.get("slug", "")
@@ -395,7 +346,6 @@ def _make_handlers(
         "agents_list_types": _agents_list_types,
         "agents_assign_task": _agents_assign_task,
         "agents_check_status": _agents_check_status,
-        "agents_send_event": _agents_send_event,
         "agents_cancel": _agents_cancel,
         "agents_await": _agents_await,
     }
