@@ -231,6 +231,7 @@ class Main extends MainBase {
           ? this.renderSignInModal()
           : nothing,
         this.renderTooltip(),
+        this.renderOverflowMenu(),
         this.#renderToasts(),
         this.renderSnackbar(),
         this.renderNotebookLmPicker(),

@@ -768,6 +768,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #renderShellUI() {
     return [
       this.renderTooltip(),
+      this.renderOverflowMenu(),
       this.sca.controller.global.main.show.has("NoAccessModal")
         ? this.renderNoAccessModal()
         : nothing,

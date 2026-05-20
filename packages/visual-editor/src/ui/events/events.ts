@@ -17,6 +17,7 @@ import type {
   AppTemplateAdditionalOptionsAvailable,
   Command,
   EdgeData,
+  OverflowAction,
   Tokens,
   UserOutputValues,
   Utterance,
@@ -208,6 +209,19 @@ export class ShowTooltipEvent extends Event {
     }
   ) {
     super(ShowTooltipEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ShowOverflowMenuEvent extends Event {
+  static eventName = "bbshowoverflowmenu";
+  constructor(
+    public readonly actions: OverflowAction[],
+    public readonly x: number,
+    public readonly y: number,
+    public readonly onAction: (action: string, value: string | null) => void,
+    public readonly onDismiss?: () => void
+  ) {
+    super(ShowOverflowMenuEvent.eventName, { ...eventInit });
   }
 }
 

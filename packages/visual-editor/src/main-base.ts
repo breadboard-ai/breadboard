@@ -13,6 +13,7 @@ import { html, LitElement, nothing } from "lit";
 import { state } from "lit/decorators.js";
 
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
+import { styleMap } from "lit/directives/style-map.js";
 import { styles as mainStyles } from "./index.styles.js";
 import "./ui/lite/step-list-view/step-list-view.js";
 import "./ui/lite/input/editor-input-lite.js";
@@ -77,6 +78,22 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   @state()
   protected accessor tosStatus: CheckAppAccessResponse | null = null;
 
+  @state()
+  protected accessor overflowMenuActions:
+    | BreadboardUI.Types.OverflowAction[]
+    | null = null;
+
+  @state()
+  protected accessor overflowMenuX = 0;
+
+  @state()
+  protected accessor overflowMenuY = 0;
+
+  protected overflowMenuOnAction:
+    | ((action: string, value: string | null) => void)
+    | null = null;
+  protected overflowMenuOnDismiss: (() => void) | null = null;
+
   // References.
   // NOTE: selectionState field removed. Selection is now managed
   // entirely by SelectionController via SCA.
@@ -97,6 +114,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
   readonly #hideTooltipBound = this.#hideTooltip.bind(this);
+  readonly #onShowOverflowMenuBound = this.#onShowOverflowMenu.bind(this);
   #urlEffectDisposer: (() => void) | null = null;
   #lastHandledUrl: string | null = null;
 
@@ -238,6 +256,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     window.addEventListener("bbshowtooltip", this.#onShowTooltipBound);
     window.addEventListener("bbhidetooltip", this.#hideTooltipBound);
     window.addEventListener("pointerdown", this.#hideTooltipBound);
+    window.addEventListener(
+      "bbshowoverflowmenu",
+      this.#onShowOverflowMenuBound
+    );
 
     if (this.sca.services.embedHandler) {
       this.embedState = embedState();
@@ -271,6 +293,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     window.removeEventListener("bbshowtooltip", this.#onShowTooltipBound);
     window.removeEventListener("bbhidetooltip", this.#hideTooltipBound);
     window.removeEventListener("pointerdown", this.#hideTooltipBound);
+    window.removeEventListener(
+      "bbshowoverflowmenu",
+      this.#onShowOverflowMenuBound
+    );
 
     // Dispose URL change effect
     if (this.#urlEffectDisposer) {
@@ -564,6 +590,15 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.tooltipRef.value.visible = false;
   }
 
+  #onShowOverflowMenu(evt: Event) {
+    const overflowMenuEvent = evt as BreadboardUI.Events.ShowOverflowMenuEvent;
+    this.overflowMenuActions = overflowMenuEvent.actions;
+    this.overflowMenuX = overflowMenuEvent.x;
+    this.overflowMenuY = overflowMenuEvent.y;
+    this.overflowMenuOnAction = overflowMenuEvent.onAction;
+    this.overflowMenuOnDismiss = overflowMenuEvent.onDismiss ?? null;
+  }
+
   /**
    * @deprecated File drop to create new tab is no longer supported
    */
@@ -629,6 +664,44 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   protected renderTooltip() {
     return html`<bb-tooltip ${ref(this.tooltipRef)}></bb-tooltip>`;
+  }
+
+  protected renderOverflowMenu() {
+    if (!this.overflowMenuActions) {
+      return nothing;
+    }
+
+    return html`<bb-overflow-menu
+      style=${styleMap({
+        left: `${this.overflowMenuX}px`,
+        top: `${this.overflowMenuY}px`,
+      })}
+      .actions=${this.overflowMenuActions}
+      .disabled=${false}
+      @bboverflowmenuaction=${(
+        evt: BreadboardUI.Events.OverflowMenuActionEvent
+      ) => {
+        evt.stopImmediatePropagation();
+        const action = evt.action;
+        const value = evt.value;
+        const onAction = this.overflowMenuOnAction;
+        this.overflowMenuActions = null;
+        this.overflowMenuOnAction = null;
+        this.overflowMenuOnDismiss = null;
+        if (onAction) {
+          onAction(action, value);
+        }
+      }}
+      @bboverflowmenudismissed=${() => {
+        const onDismiss = this.overflowMenuOnDismiss;
+        this.overflowMenuActions = null;
+        this.overflowMenuOnAction = null;
+        this.overflowMenuOnDismiss = null;
+        if (onDismiss) {
+          onDismiss();
+        }
+      }}
+    ></bb-overflow-menu>`;
   }
 
   protected invokeRemixEventRouteWith(
