@@ -344,10 +344,16 @@ async def test_assign_task_queues_for_infinite_agent(tmp_path):
         status="suspended",
         parent_id="parent-000",
     )
+    # Set assignee to "user" to simulate idle state (waiting for task).
+    agent.metadata.assignee = "user"
+    (agent.dir / "metadata.json").write_text(
+        json.dumps(agent.metadata.to_dict(), indent=2)
+    )
 
     store = UnifiedAgentStore(tmp_path)
     scheduler = _mock_scheduler(store)
     scheduler.deliver_to_task = MagicMock(return_value=None)
+    scheduler.drain_task_queue = MagicMock(return_value=True)
 
     # Create the playbook data that load_playbook would return.
     import yaml
@@ -383,25 +389,23 @@ async def test_assign_task_queues_for_infinite_agent(tmp_path):
     assert result.get("status") == "queued"
     assert result.get("agent_slug") == "deep-dive"
 
-    # Verify task record was created.
+    # Verify task record was created with "queued" status.
     task_file_store = store._task_file_store
     tasks = task_file_store.query_by_assignee("child-222")
-    assert len(tasks) >= 1
-    queued_task = tasks[0]
-    assert queued_task.objective == "Find pricing for X"
+    queued = [t for t in tasks if t.status == "queued"]
+    assert len(queued) == 1
+    assert queued[0].objective == "Find pricing for X"
 
-    # Verify context update was delivered.
-    scheduler.deliver_to_task.assert_called_once()
-    call_args = scheduler.deliver_to_task.call_args
-    assert call_args[0][0] == "child-222"
-    update = call_args[0][1]
-    assert update["type"] == "task_assigned"
-    assert update["objective"] == "Find pricing for X"
+    # Must NOT deliver context update directly — that's the scheduler's job.
+    scheduler.deliver_to_task.assert_not_called()
+
+    # Agent was idle (suspended+user), so drain should have been called.
+    scheduler.drain_task_queue.assert_called_once_with("child-222")
 
 
 @pytest.mark.asyncio
-async def test_assign_task_rejects_busy_finite_agent(tmp_path):
-    """agents_assign_task returns an error for a non-terminal finite agent."""
+async def test_assign_task_queues_busy_finite_agent(tmp_path):
+    """agents_assign_task queues a task for a non-terminal finite agent."""
     from bees.functions.agents import _make_handlers as _make_agent_handlers
 
     # Create parent agent first.
@@ -455,5 +459,14 @@ async def test_assign_task_rejects_busy_finite_agent(tmp_path):
         None,
     )
 
-    assert "error" in result
-    assert "busy" in result["error"]
+    assert result.get("status") == "queued"
+    assert result.get("agent_slug") == "writer"
+
+    # Verify queued task record exists.
+    task_file_store = store._task_file_store
+    queued = [
+        t for t in task_file_store.query_by_assignee("child-333")
+        if t.status == "queued"
+    ]
+    assert len(queued) == 1
+    assert queued[0].objective == "Write a poem"

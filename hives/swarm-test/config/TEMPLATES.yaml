@@ -1,3 +1,5 @@
+# Ticket templates — see docs/patterns.md for the field reference.
+
 - name: async-chat
   title: Async Opie
   description: A chat app that makes apps and multimedia
@@ -29,8 +31,7 @@
 - name: workspace-test
   title: Test Workspace MCP 2
   description: Tests workspace MCP integration
-  objective:
-    Chat with the user and fulfill their requests with the tools that you have.
+  objective: Chat with the user and fulfill their requests with the tools that you have.
   functions:
     - chat.*
     - drive.*
@@ -67,12 +68,14 @@
     types, then assign two sequential tasks to an "infinite-poet" agent with
     slug "poet".
 
+
     Task 1: Write a haiku about bees. Save it to haiku.txt. Task 2: Write a
     haiku about ants. Save it to ants.txt.
 
-    After assigning task 1, wait for it to complete using agents_await. Then
-    assign task 2 to the same slug and wait again. When both tasks are complete,
-    mark your objective as fulfilled with a summary of the results.
+    After assigning task 1, don't wait for it to complete, and immediately
+    assign task 2 to the same slug and wait for both tasks to complete. When
+    both tasks are complete, mark your objective as fulfilled with a summary of
+    the results.
   functions:
     - agents.*
     - system.*
@@ -122,9 +125,9 @@
   options_schema:
     aspect_ratio:
       type: string
-      description:
-        "Target aspect ratio. Valid values: '1:1', '3:4', '4:3', '9:16', '16:9',
-        '1:2', '2:1', '3:2', '2:3', '5:4', '4:5', '7:5', '5:7', '21:9', '9:21'."
+      description: >-
+        Target aspect ratio. Valid values: '1:1', '3:4', '4:3', '9:16', '16:9',
+        '1:2', '2:1', '3:2', '2:3', '5:4', '4:5', '7:5', '5:7', '21:9', '9:21'.
       enum:
         - "1:1"
         - "3:4"
@@ -143,22 +146,21 @@
         - "9:21"
     image_size:
       type: string
-      description:
-        "Target resolution or image size. Valid values: '512', '1K', '2K', '4K'."
+      description: "Target resolution or image size. Valid values: '512', '1K', '2K', '4K'."
       enum:
         - "512"
-        - "1K"
-        - "2K"
-        - "4K"
+        - 1K
+        - 2K
+        - 4K
     person_generation:
       type: string
-      description:
-        "Person generation policy. Valid values: 'allow_all', 'dont_allow',
-        'allow_adult'."
+      description: >-
+        Person generation policy. Valid values: 'allow_all', 'dont_allow',
+        'allow_adult'.
       enum:
-        - "allow_all"
-        - "dont_allow"
-        - "allow_adult"
+        - allow_all
+        - dont_allow
+        - allow_adult
   description: >-
     An extremely versatile image generator, powered by Gemini. Use it for any
     tasks that involve generation of images based on a prompt. Always writes its
@@ -182,13 +184,13 @@
         - "1:1"
     resolution:
       type: string
-      description:
-        "Target resolution. Valid values: '720p', '1080p', '4k'. Extension is
-        limited to 720p."
+      description: >-
+        Target resolution. Valid values: '720p', '1080p', '4k'. Extension is
+        limited to 720p.
       enum:
-        - "720p"
-        - "1080p"
-        - "4k"
+        - 720p
+        - 1080p
+        - 4k
     duration_seconds:
       type: number
       description: "Target duration in seconds. Valid values: 4, 6, 8."
@@ -198,13 +200,13 @@
         - 8
     person_generation:
       type: string
-      description:
-        "Person generation policy. Valid values: 'allow_all', 'dont_allow',
-        'allow_adult'."
+      description: >-
+        Person generation policy. Valid values: 'allow_all', 'dont_allow',
+        'allow_adult'.
       enum:
-        - "allow_all"
-        - "dont_allow"
-        - "allow_adult"
+        - allow_all
+        - dont_allow
+        - allow_adult
     first_frame:
       type: string
       description: >-
@@ -271,36 +273,36 @@
         Umbriel (mysterious, atmospheric), Vindemiatrix (articulate, refined),
         Zephyr (bright, perky), Zubenelgenubi (deep, resonant).
       enum:
-        - "Achernar"
-        - "Achird"
-        - "Algenib"
-        - "Algieba"
-        - "Alnilam"
-        - "Aoede"
-        - "Autonoe"
-        - "Callirrhoe"
-        - "Charon"
-        - "Despina"
-        - "Enceladus"
-        - "Erinome"
-        - "Fenrir"
-        - "Gacrux"
-        - "Iapetus"
-        - "Kore"
-        - "Laomedeia"
-        - "Leda"
-        - "Orus"
-        - "Puck"
-        - "Pulcherrima"
-        - "Rasalgethi"
-        - "Sadachbia"
-        - "Sadaltager"
-        - "Schedar"
-        - "Sulafat"
-        - "Umbriel"
-        - "Vindemiatrix"
-        - "Zephyr"
-        - "Zubenelgenubi"
+        - Achernar
+        - Achird
+        - Algenib
+        - Algieba
+        - Alnilam
+        - Aoede
+        - Autonoe
+        - Callirrhoe
+        - Charon
+        - Despina
+        - Enceladus
+        - Erinome
+        - Fenrir
+        - Gacrux
+        - Iapetus
+        - Kore
+        - Laomedeia
+        - Leda
+        - Orus
+        - Puck
+        - Pulcherrima
+        - Rasalgethi
+        - Sadachbia
+        - Sadaltager
+        - Schedar
+        - Sulafat
+        - Umbriel
+        - Vindemiatrix
+        - Zephyr
+        - Zubenelgenubi
     speaker_1:
       type: string
       description: >-

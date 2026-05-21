@@ -23,7 +23,7 @@ from typing import Any, Literal
 
 
 TaskStatus = Literal[
-    "available", "in_progress", "completed", "failed", "cancelled"
+    "available", "queued", "in_progress", "completed", "failed", "cancelled"
 ]
 
 TaskKind = Literal["work", "coordination"]
@@ -100,6 +100,7 @@ class TaskFileStore:
         context: str | None = None,
         tags: list[str] | None = None,
         depends_on: list[str] | None = None,
+        status: TaskStatus = "available",
     ) -> TaskRecord:
         """Create a new task file.
 
@@ -111,7 +112,7 @@ class TaskFileStore:
             objective=objective,
             assignee=assignee,
             created_by=created_by,
-            status="available",
+            status=status,
             kind=kind,
             title=title,
             context=context,
@@ -158,6 +159,50 @@ class TaskFileStore:
     def query_by_assignee(self, agent_id: str) -> list[TaskRecord]:
         """Return all tasks assigned to the given agent."""
         return [t for t in self.query_all() if t.assignee == agent_id]
+
+    def dequeue_next(self, agent_id: str) -> TaskRecord | None:
+        """Dequeue the oldest queued task for an agent.
+
+        Finds the first task with ``status='queued'`` assigned to
+        ``agent_id`` (ordered by ``created_at`` ascending), transitions
+        it to ``in_progress``, persists, and returns it.
+
+        Returns ``None`` if no queued tasks exist.
+        """
+        tasks = self.query_by_assignee(agent_id)
+        queued = [
+            t for t in tasks if t.status == "queued"
+        ]
+        # query_all sorts by created_at descending; we want FIFO.
+        queued.sort(key=lambda t: t.created_at or "")
+        if not queued:
+            return None
+
+        task = queued[0]
+        task.status = "in_progress"
+        self.save(task)
+        return task
+
+    def cancel_queued(self, agent_id: str) -> int:
+        """Cancel all queued tasks for an agent.
+
+        Returns the number of tasks cancelled.
+
+        Called when an agent fails — remaining queued work is no longer
+        viable.  Future alternatives to consider:
+        - Re-queue to a fresh instance of the same agent type.
+        - Leave as queued and let the parent reassign or retry.
+        - Expose a ``retry_failed`` mutation that resets the agent and
+          re-drains the queue.
+        """
+        tasks = self.query_by_assignee(agent_id)
+        count = 0
+        for task in tasks:
+            if task.status == "queued":
+                task.status = "cancelled"
+                self.save(task)
+                count += 1
+        return count
 
     def save(self, task: TaskRecord) -> None:
         """Persist a task to disk as a JSON file."""
