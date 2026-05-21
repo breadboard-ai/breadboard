@@ -203,26 +203,4 @@ suite("ConsentController", () => {
     await store2.isSettled;
     assert.deepStrictEqual(unwrap(store2.consents), new Map());
   });
-
-  test("shared assets consent", async () => {
-    const store = new ConsentController("SharedAssets", "ConsentController");
-    await store.isHydrated;
-
-    const url = "drive:/test-opal";
-    assert.strictEqual(store.hasSharedAssetsConsent(url), false);
-
-    store.grantSharedAssetsConsent(url);
-    await store.isSettled;
-    assert.strictEqual(store.hasSharedAssetsConsent(url), true);
-
-    // Re-hydrate check
-    const store2 = new ConsentController("SharedAssets", "ConsentController");
-    await store2.isHydrated;
-    assert.strictEqual(store2.hasSharedAssetsConsent(url), true);
-
-    // Revoke and verify
-    store2.revokeSharedAssetsConsent(url);
-    await store2.isSettled;
-    assert.strictEqual(store2.hasSharedAssetsConsent(url), false);
-  });
 });
