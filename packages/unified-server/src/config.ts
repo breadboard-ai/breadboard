@@ -79,6 +79,7 @@ export async function createClientConfig(opts: {
       enableOpalBackend: flags.ENABLE_OPAL_BACKEND,
       enableSessionsBackend: flags.ENABLE_SESSIONS_BACKEND,
       enableSingletonPrefixCache: flags.ENABLE_SINGLETON_PREFIX_CACHE,
+      enableAssetAccessConsent: flags.ENABLE_ASSET_ACCESS_CONSENT,
     },
   };
 }

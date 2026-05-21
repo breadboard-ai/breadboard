@@ -11,7 +11,11 @@ import {
 } from "@breadboard-ai/types";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
-import { PendingConsent } from "../../../types.js";
+import {
+  PendingConsent,
+  type DriveAssetConsentInfo,
+  type PendingBatchConsent,
+} from "../../../types.js";
 
 // eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ConsentRecord {
@@ -40,11 +44,16 @@ export class ConsentController extends RootController {
   @field({ persist: "idb", deep: true })
   private accessor _consents = new Map<ConsentKey, ConsentRecord>();
 
+
+
   @field({ deep: true })
   private accessor _pendingConsents = new Map<
     PendingConsent,
     (value: ConsentAction) => void
   >();
+
+  @field()
+  accessor pendingBatchConsent: PendingBatchConsent | null = null;
 
   get consents(): ReadonlyMap<ConsentKey, ConsentRecord> {
     return this._consents;
@@ -127,7 +136,46 @@ export class ConsentController extends RootController {
     return Boolean(allow);
   }
 
+  /**
+   * Checks if consent has already been granted for a request without
+   * triggering any UI. Returns true if consented, false otherwise.
+   */
+  hasConsent(request: ConsentRequest): boolean {
+    const consentKey = createConsentKey(request);
+    const record = this._consents.get(consentKey);
+    return record?.allow === true;
+  }
+
+  /**
+   * Shows a batch consent modal for multiple Drive assets and awaits the
+   * user's decision. Returns true if all assets were approved.
+   */
+  requestBatchConsent(assets: DriveAssetConsentInfo[]): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
+      this.pendingBatchConsent = { assets, resolve };
+    });
+  }
+
+  /**
+   * Resolves the pending batch consent with the user's decision.
+   * If allowed, persists consent for all assets.
+   */
+  resolveBatchConsent(allowed: boolean): void {
+    const pending = this.pendingBatchConsent;
+    if (!pending) return;
+
+    if (allowed) {
+      for (const asset of pending.assets) {
+        this.#setConsent(asset.request, true);
+      }
+    }
+
+    this.pendingBatchConsent = null;
+    pending.resolve(allowed);
+  }
+
   async clearAllConsents(): Promise<void> {
     this._consents.clear();
   }
+
 }

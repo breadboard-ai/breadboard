@@ -84,7 +84,6 @@ import { scaContext } from "../../../sca/context/context.js";
 import { SCA } from "../../../sca/sca.js";
 import { AppScreenPresenter } from "../../presenters/app-screen-presenter.js";
 
-
 function getHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
   const singleOutput = outputs.length === 1;
@@ -356,12 +355,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     // TypeScript struggles to disambiguate this, so marking it as `any`.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const detypedConsentRequest = consentRequest as any;
+    const detypedRequest = consentRequest.request as any;
     return html`
       <div id="consent" class="default">
         <section id="consent-content-container">
           <h1>${renderInfo.name}</h1>
-          ${renderInfo.description(detypedConsentRequest)}
+          ${renderInfo.description(detypedRequest)}
           <button
             id="grant-consent"
             @click=${() => {

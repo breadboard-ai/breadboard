@@ -17,6 +17,7 @@ type ConsentRequestOfType<T extends ConsentType> = Extract<
 interface ConsentRenderInfo<T extends ConsentType> {
   name: string;
   description: (request: ConsentRequestOfType<T>) => HTMLTemplateResult;
+  saveButtonLabel?: string;
 }
 
 // The type for the main CONSENT_RENDER_INFO object
@@ -45,5 +46,52 @@ export const CONSENT_RENDER_INFO: ConsentRenderInfoMap = {
       <p class="center" style="word-break: break-all;">${request.scope}</p>
       <p>Only click allow if you recognize this site and trust the Opal.</p>
     `,
+  },
+  [ConsentType.ACCESS_ASSET]: {
+    name: "Opal App - Sensitive Content Awareness",
+    description: (request) => {
+      let fileId = "";
+      let fileName = "Google Drive File";
+      let resourceKey = "";
+      try {
+        const parsed = JSON.parse(request.scope);
+        fileId = parsed.fileId || "";
+        fileName = parsed.fileName || "Google Drive File";
+        resourceKey = parsed.resourceKey || "";
+      } catch {
+        fileId = request.scope;
+        fileName = request.scope;
+      }
+
+      const url = new URL("https://drive.google.com/open");
+      url.searchParams.set("id", fileId);
+      if (resourceKey) {
+        url.searchParams.set("resourcekey", resourceKey);
+      }
+
+      return html`
+        <p>
+          This Opal app would like to read and use the content of the following
+          Google Drive file to run its steps:
+        </p>
+        <p
+          class="center"
+          style="word-break: break-all; margin: var(--bb-grid-size-4) 0;"
+        >
+          <strong>Google Drive File:</strong>
+          <a
+            href=${url.href}
+            target="_blank"
+            style="color: var(--ui-custom-o-100, #1a73e8); text-decoration: none; font-weight: bold; margin-left: 4px;"
+          >
+            ${fileName}
+          </a>
+        </p>
+        <p>
+          Be aware that the contents of this asset will be processed by the Opal
+          app. Click allow to permit reading this file's contents and continue.
+        </p>
+      `;
+    },
   },
 };

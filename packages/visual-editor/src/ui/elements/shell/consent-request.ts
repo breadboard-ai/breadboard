@@ -7,6 +7,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
+
 import "@material/web/tabs/primary-tab.js";
 import "@material/web/tabs/tabs.js";
 import "@material/web/checkbox/checkbox.js";
@@ -49,8 +50,16 @@ export class VEConsentRequestModal extends SignalWatcher(LitElement) {
           max-width: 80%;
         }
       }
-      .center {
-        text-align: center;
+
+      .consent-body {
+        color: var(--light-dark-n-30);
+
+        & p {
+          font-family: var(--bb-font-family, var(--default-font-family));
+          font-size: 14px;
+          line-height: 20px;
+          margin: 0 0 var(--bb-grid-size-3) 0;
+        }
       }
     `,
   ];
@@ -82,13 +91,18 @@ export class VEConsentRequestModal extends SignalWatcher(LitElement) {
       modalTitle=${renderInfo.name}
       .showCloseButton=${true}
       .showSaveCancel=${true}
-      saveButtonLabel="Always Allow"
+      .blurBackground=${true}
+      appearance="basic"
+      saveButtonLabel=${renderInfo.saveButtonLabel ?? "Always Allow"}
       @bbmodaldismissed=${this.#handleModalDismissed}
     >
-      ${renderInfo.description(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        this.consentRequest.request as any
-      )}
+
+      <div class="consent-body">
+        ${renderInfo.description(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          this.consentRequest.request as any
+        )}
+      </div>
     </bb-modal>`;
   }
 }

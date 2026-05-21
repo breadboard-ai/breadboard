@@ -11,6 +11,7 @@ import type {
   OutputValues,
 } from "@breadboard-ai/types";
 import { ConsentType, ConsentUIType } from "@breadboard-ai/types";
+import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/utils/google-drive/utils.js";
 import { SnackType, type SnackbarUUID } from "../../types.js";
 import type { StateEvent } from "../../../ui/events/events.js";
 import { parseUrl } from "../../../ui/navigation/urls.js";
@@ -941,6 +942,81 @@ async function runBoard(): Promise<void> {
 
       if (!hasConsent) {
         return;
+      }
+    }
+  }
+
+  // Check batch consent for all Drive assets in the graph before running.
+  // This shows a single modal listing all Drive files instead of one per asset.
+  // Gated behind the enableAssetAccessConsent flag.
+  if (gc.readOnly && gc.graph && bind.env.flags.get("enableAssetAccessConsent")) {
+    const driveAssets = findGoogleDriveAssetsInGraph(gc.graph, {
+      omitSplashImages: true,
+    });
+    if (driveAssets.length > 0) {
+      const consentCtrl = controller.global.consent;
+      const graphUrl = gc.url || "";
+
+      // Build consent info for assets that haven't been consented yet.
+      // The consent scope uses only stable identifiers (fileId +
+      // resourceKey) so that hasConsent() matches on subsequent runs.
+      // Display metadata (fileName, iconLink) is passed separately.
+      const unconsented = driveAssets
+        .map((asset) => {
+          const request = {
+            type: ConsentType.ACCESS_ASSET as const,
+            scope: JSON.stringify({
+              fileId: asset.fileId.id,
+              resourceKey: asset.fileId.resourceKey || "",
+            }),
+            graphUrl,
+          };
+          return { asset, request };
+        })
+        .filter(({ request }) => !consentCtrl.hasConsent(request));
+
+      if (unconsented.length > 0) {
+        // Fetch metadata (name, iconLink) for the modal display.
+        const assetInfos = await Promise.all(
+          unconsented.map(async ({ asset, request }) => {
+            let fileName = asset.fileId.id;
+            let iconLink = "";
+            try {
+              const meta =
+                await services.googleDriveClient.getFileMetadata(
+                  {
+                    id: asset.fileId.id,
+                    resourceKey: asset.fileId.resourceKey,
+                  },
+                  { fields: ["name", "iconLink"] }
+                );
+              if (meta?.name) fileName = meta.name;
+              if (meta?.iconLink) iconLink = meta.iconLink;
+            } catch {
+              // Fallback: use file ID as name
+            }
+            return {
+              fileId: asset.fileId.id,
+              fileName,
+              iconLink,
+              resourceKey: asset.fileId.resourceKey || "",
+              request,
+            };
+          })
+        );
+
+        const allowed =
+          await consentCtrl.requestBatchConsent(assetInfos);
+
+        if (!allowed) {
+          logger.log(
+            Utils.Logging.Formatter.warning(
+              "Execution stopped: consent denied for Drive assets"
+            ),
+            LABEL
+          );
+          return;
+        }
       }
     }
   }

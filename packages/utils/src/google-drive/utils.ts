@@ -132,7 +132,8 @@ export type GoogleDriveAsset = {
 };
 
 export function findGoogleDriveAssetsInGraph(
-  graph: GraphDescriptor
+  graph: GraphDescriptor,
+  options?: { omitSplashImages?: boolean }
 ): GoogleDriveAsset[] {
   // Use a map because there can be duplicates.
   const files = new Map<string, GoogleDriveAsset>();
@@ -155,17 +156,19 @@ export function findGoogleDriveAssetsInGraph(
   }
 
   // Theme splash images are not listed in assets.
-  const themes = graph.metadata?.visual?.presentation?.themes;
-  if (themes) {
-    for (const { splashScreen } of Object.values(themes)) {
-      if (splashScreen) {
-        const fileId = partToDriveFileId(splashScreen);
-        if (fileId) {
-          files.set(fileId.id, {
-            fileId,
-            managed: true,
-            part: splashScreen,
-          });
+  if (!options?.omitSplashImages) {
+    const themes = graph.metadata?.visual?.presentation?.themes;
+    if (themes) {
+      for (const { splashScreen } of Object.values(themes)) {
+        if (splashScreen) {
+          const fileId = partToDriveFileId(splashScreen);
+          if (fileId) {
+            files.set(fileId.id, {
+              fileId,
+              managed: true,
+              part: splashScreen,
+            });
+          }
         }
       }
     }

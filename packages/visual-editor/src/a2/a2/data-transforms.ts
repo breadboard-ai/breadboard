@@ -93,6 +93,7 @@ async function driveFileToGeminiFile(
 ): Promise<Outcome<FileDataPart>> {
   const driveFileId = part.fileData.fileUri.replace(/^drive:\/+/, "");
   const { resourceKey } = part.fileData;
+
   const request: UploadGeminiFileRequest = { driveFileId };
   if (resourceKey) {
     request.driveResourceKey = resourceKey;
@@ -153,6 +154,7 @@ async function driveFileToBlob(
   }
 
   const driveFileId = existingHandle.replace("drive:/", "");
+
   const request: UploadBlobFileRequest = { driveFileId };
   const response: Outcome<UploadBlobFileResponse> = await callBackend(
     moduleArgs,

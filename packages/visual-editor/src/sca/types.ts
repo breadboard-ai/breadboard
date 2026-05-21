@@ -525,6 +525,27 @@ export interface PendingConsent {
 }
 
 /**
+ * Metadata for a single Drive asset displayed in the batch consent modal.
+ */
+export interface DriveAssetConsentInfo {
+  fileId: string;
+  fileName: string;
+  iconLink: string;
+  resourceKey: string;
+  /** The consent request that will be persisted when approved. */
+  request: ConsentRequest;
+}
+
+/**
+ * Represents a pending batch consent prompt for multiple Drive assets.
+ * The modal shows all assets at once and the user approves or denies all.
+ */
+export interface PendingBatchConsent {
+  assets: DriveAssetConsentInfo[];
+  resolve: (allowed: boolean) => void;
+}
+
+/**
  * Represents a pending edit to a node's configuration.
  * Values should already be transformed to the proper configuration format.
  */

@@ -7,6 +7,7 @@
 export enum ConsentType {
   GET_ANY_WEBPAGE = "GET_ANY_WEBPAGE",
   OPEN_WEBPAGE = "OPEN_WEBPAGE",
+  ACCESS_ASSET = "ACCESS_ASSET",
   // TODO: Add MCP, etc.
 }
 
@@ -29,6 +30,10 @@ export type ConsentRequest = (
     }
   | {
       type: ConsentType.OPEN_WEBPAGE;
+      scope: string;
+    }
+  | {
+      type: ConsentType.ACCESS_ASSET;
       scope: string;
     }
 ) & { graphUrl: string };

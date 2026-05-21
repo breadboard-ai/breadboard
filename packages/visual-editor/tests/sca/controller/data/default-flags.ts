@@ -22,4 +22,5 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   enableOpalBackend: false,
   enableSessionsBackend: false,
   enableSingletonPrefixCache: false,
+  enableAssetAccessConsent: false,
 };
