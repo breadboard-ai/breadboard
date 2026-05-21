@@ -195,18 +195,10 @@ def _make_handlers(
                     status_cb(None, None)
                 return {"agent_slug": slug, "status": "reused"}
 
-            # Non-terminal: agent is busy or suspended.
-            if existing.metadata.finite:
-                # Finite agents process one task at a time via fresh instances.
-                if status_cb:
-                    status_cb(None, None)
-                return {
-                    "error": f"Agent '{slug}' is currently busy "
-                    f"(status: {existing.metadata.status}). "
-                    f"Wait for it to complete before assigning a new task."
-                }
-
-            # Infinite agent: queue the task for delivery.
+            # Non-terminal: agent is busy or suspended — queue the task.
+            # Both finite and infinite agents use the same path: create a
+            # queued TaskRecord and let the scheduler drain it at the right
+            # time (completion for finite, yield for infinite).
             task_file_store = getattr(scheduler.store, '_task_file_store', None)
             if task_file_store:
                 task_file_store.create(
@@ -215,19 +207,18 @@ def _make_handlers(
                     created_by=caller_agent_id,
                     kind="work",
                     title=title or summary,
+                    status="queued",
                 )
 
-            # Deliver task assignment as a context update.
-            task_update = {
-                "type": "task_assigned",
-                "objective": objective,
-                "from_slug": scope.slug_path if scope else None,
-            }
-            scheduler.deliver_to_task(
-                existing.id,
-                task_update,
-                expected_creator=None,  # Allow self-delivery.
-            )
+            # If the infinite agent is already idle (suspended, waiting
+            # for its next task), drain immediately so it doesn't sit
+            # there with work waiting.
+            if (
+                not existing.metadata.finite
+                and existing.metadata.status == "suspended"
+                and existing.metadata.assignee == "user"
+            ):
+                scheduler.drain_task_queue(existing.id)
 
             if status_cb:
                 status_cb(None, None)

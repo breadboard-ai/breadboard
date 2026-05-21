@@ -490,6 +490,9 @@ class TaskRunner:
                 agent.metadata.assignee = "agent"
                 agent.metadata.suspend_event = suspend_event
                 print(f"  [{agent.id[:8]}] 📩 auto-resume with queued update", file=sys.stderr)
+            elif self._drain_queued_task(agent, suspend_event):
+                # Persistent task queue had a waiting task — auto-resume.
+                pass
             else:
                 agent.metadata.status = "suspended"
                 agent.metadata.assignee = "user"
@@ -497,6 +500,45 @@ class TaskRunner:
         else:
             agent.metadata.assignee = None
             agent.metadata.suspend_event = None
+
+    def _drain_queued_task(
+        self, agent: Agent, suspend_event: dict[str, Any],
+    ) -> bool:
+        """Check the persistent task queue for the next queued task.
+
+        If a queued task exists, dequeues it, writes a context update
+        to ``response.json``, and sets the agent to auto-resume.
+
+        Returns True if a task was dequeued (agent will auto-resume),
+        False otherwise.
+        """
+        task_file_store = getattr(self._store, '_task_file_store', None)
+        if not task_file_store:
+            return False
+
+        next_task = task_file_store.dequeue_next(agent.id)
+        if not next_task:
+            return False
+
+        task_update = {
+            "type": "task_assigned",
+            "objective": next_task.objective,
+        }
+        response_path = agent.dir / "response.json"
+        response_path.write_text(
+            json.dumps(
+                {"context_updates": [task_update]},
+                indent=2, ensure_ascii=False,
+            ) + "\n"
+        )
+        agent.metadata.status = "suspended"
+        agent.metadata.assignee = "agent"
+        agent.metadata.suspend_event = suspend_event
+        print(
+            f"  [{agent.id[:8]}] 📩 auto-resume with queued task {next_task.id[:8]}",
+            file=sys.stderr,
+        )
+        return True
 
     def _handle_pause(self, agent: Agent, result: SessionResult) -> None:
         """Handle pause state from transient Gemini API errors."""

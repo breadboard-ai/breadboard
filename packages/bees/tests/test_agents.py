@@ -259,13 +259,13 @@ async def test_agents_assign_task_fresh_instance(write_template):
 
 
 # ---------------------------------------------------------------------------
-# agents_assign_task — busy agent
+# agents_assign_task — task queue
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_agents_assign_task_busy_agent(write_template):
-    """A non-terminal agent returns an error (queuing deferred to Phase 4)."""
+async def test_agents_assign_task_queues_busy_finite(write_template):
+    """A busy finite agent queues the task instead of erroring."""
     write_template({
         "name": "writer",
         "title": "Writer",
@@ -296,7 +296,7 @@ async def test_agents_assign_task_busy_agent(write_template):
     child.metadata.status = "running"
     GLOBAL_STORE.save_metadata(child)
 
-    # Try to assign again — should get error.
+    # Assign again — should queue, not error.
     result = await handlers["agents_assign_task"]({
         "type": "writer",
         "slug": "poet",
@@ -304,8 +304,176 @@ async def test_agents_assign_task_busy_agent(write_template):
         "summary": "Second Haiku",
     }, None)
 
-    assert "error" in result
-    assert "busy" in result["error"]
+    assert result["status"] == "queued"
+    assert result["agent_slug"] == "poet"
+
+    # Verify a TaskRecord was created with status "queued".
+    task_file_store = GLOBAL_STORE._task_file_store
+    tasks = task_file_store.query_by_assignee(child.id)
+    queued = [t for t in tasks if t.status == "queued"]
+    assert len(queued) == 1
+    assert queued[0].objective == "Write haiku #2"
+
+
+@pytest.mark.asyncio
+async def test_agents_assign_task_queues_busy_infinite(write_template):
+    """A busy infinite agent queues without immediate context delivery."""
+    write_template({
+        "name": "researcher",
+        "title": "Researcher",
+        "objective": "Research things.",
+        "functions": ["files.*", "events.*"],  # No system.* = infinite
+    })
+
+    caller = GLOBAL_STORE.create("I'm the orchestrator")
+    caller.metadata.tasks = ["researcher"]
+    GLOBAL_STORE.save_metadata(caller)
+
+    scope = SubagentScope(workspace_root_id=caller.id)
+    scheduler = _scheduler_mock()
+    handlers = _make_handlers(
+        scope=scope, caller_agent_id=caller.id, scheduler=scheduler,
+    )
+
+    # Create agent.
+    await handlers["agents_assign_task"]({
+        "type": "researcher",
+        "slug": "deep-dive",
+        "objective": "Research topic A",
+        "summary": "Topic A",
+    }, None)
+
+    # Mark as running.
+    child = GLOBAL_STORE.find_child_by_slug(caller.id, "deep-dive")
+    child.metadata.status = "running"
+    GLOBAL_STORE.save_metadata(child)
+
+    # Assign another task while busy.
+    result = await handlers["agents_assign_task"]({
+        "type": "researcher",
+        "slug": "deep-dive",
+        "objective": "Research topic B",
+        "summary": "Topic B",
+    }, None)
+
+    assert result["status"] == "queued"
+
+    # Must NOT have delivered a context update — that's the scheduler's job.
+    scheduler.deliver_to_task.assert_not_called()
+
+    # Verify queued task exists.
+    task_file_store = GLOBAL_STORE._task_file_store
+    queued = [
+        t for t in task_file_store.query_by_assignee(child.id)
+        if t.status == "queued"
+    ]
+    assert len(queued) == 1
+    assert queued[0].objective == "Research topic B"
+
+
+@pytest.mark.asyncio
+async def test_agents_assign_task_drains_idle_infinite(write_template):
+    """A suspended infinite agent gets immediate drain when task is queued."""
+    write_template({
+        "name": "researcher",
+        "title": "Researcher",
+        "objective": "Research things.",
+        "functions": ["files.*", "events.*"],
+    })
+
+    caller = GLOBAL_STORE.create("I'm the orchestrator")
+    caller.metadata.tasks = ["researcher"]
+    GLOBAL_STORE.save_metadata(caller)
+
+    scope = SubagentScope(workspace_root_id=caller.id)
+    scheduler = _scheduler_mock()
+    handlers = _make_handlers(
+        scope=scope, caller_agent_id=caller.id, scheduler=scheduler,
+    )
+
+    # Create and mark as idle (suspended, waiting for task).
+    await handlers["agents_assign_task"]({
+        "type": "researcher",
+        "slug": "deep-dive",
+        "objective": "Research topic A",
+        "summary": "Topic A",
+    }, None)
+
+    child = GLOBAL_STORE.find_child_by_slug(caller.id, "deep-dive")
+    child.metadata.status = "suspended"
+    child.metadata.assignee = "user"
+    child.metadata.finite = False
+    GLOBAL_STORE.save_metadata(child)
+
+    # Assign — should call drain_task_queue since agent is idle.
+    result = await handlers["agents_assign_task"]({
+        "type": "researcher",
+        "slug": "deep-dive",
+        "objective": "Research topic B",
+        "summary": "Topic B",
+    }, None)
+
+    assert result["status"] == "queued"
+    scheduler.drain_task_queue.assert_called_once_with(child.id)
+
+
+@pytest.mark.asyncio
+async def test_agents_assign_task_queue_fifo(write_template):
+    """Multiple queued tasks are ordered by creation time (FIFO)."""
+    write_template({
+        "name": "writer",
+        "title": "Writer",
+        "objective": "Write things.",
+        "functions": ["files.*", "system.*"],
+    })
+
+    caller = GLOBAL_STORE.create("I'm the orchestrator")
+    caller.metadata.tasks = ["writer"]
+    GLOBAL_STORE.save_metadata(caller)
+
+    scope = SubagentScope(workspace_root_id=caller.id)
+    scheduler = _scheduler_mock()
+    handlers = _make_handlers(
+        scope=scope, caller_agent_id=caller.id, scheduler=scheduler,
+    )
+
+    # Create agent and mark as running.
+    await handlers["agents_assign_task"]({
+        "type": "writer",
+        "slug": "poet",
+        "objective": "Haiku #1",
+        "summary": "First",
+    }, None)
+
+    child = GLOBAL_STORE.find_child_by_slug(caller.id, "poet")
+    child.metadata.status = "running"
+    GLOBAL_STORE.save_metadata(child)
+
+    # Queue three tasks.
+    for i in range(2, 5):
+        await handlers["agents_assign_task"]({
+            "type": "writer",
+            "slug": "poet",
+            "objective": f"Haiku #{i}",
+            "summary": f"Haiku {i}",
+        }, None)
+
+    # Dequeue — should be FIFO.
+    task_file_store = GLOBAL_STORE._task_file_store
+    first = task_file_store.dequeue_next(child.id)
+    assert first is not None
+    assert first.objective == "Haiku #2"
+
+    second = task_file_store.dequeue_next(child.id)
+    assert second is not None
+    assert second.objective == "Haiku #3"
+
+    third = task_file_store.dequeue_next(child.id)
+    assert third is not None
+    assert third.objective == "Haiku #4"
+
+    # Queue is empty.
+    assert task_file_store.dequeue_next(child.id) is None
 
 
 # ---------------------------------------------------------------------------

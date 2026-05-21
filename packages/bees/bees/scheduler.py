@@ -388,6 +388,66 @@ class Scheduler:
         self._deliver_context_update(task_id, update)
         return None
 
+    def drain_task_queue(self, agent_id: str) -> bool:
+        """Dequeue the next task for an agent and start it.
+
+        For finite agents: ``reset_for_reuse`` with the next task's
+        objective, then trigger the scheduler to pick it up.
+
+        For infinite agents: deliver the task as a context update
+        via the three-path delivery model.
+
+        Returns True if a task was dequeued and started.
+        """
+        agent = self.store.get(agent_id)
+        if not agent:
+            return False
+
+        task_file_store = getattr(self.store, '_task_file_store', None)
+        if not task_file_store:
+            return False
+
+        next_task = task_file_store.dequeue_next(agent_id)
+        if not next_task:
+            return False
+
+        if agent.metadata.finite:
+            self.store.reset_for_reuse(
+                agent, next_task.objective, title=next_task.title,
+            )
+            self.trigger()
+        else:
+            task_update = {
+                "type": "task_assigned",
+                "objective": next_task.objective,
+            }
+            self._deliver_context_update(agent_id, task_update)
+
+        logger.info(
+            "Drained queued task %s for agent %s",
+            next_task.id[:8], agent_id[:8],
+        )
+        return True
+
+    def _cancel_queued_tasks(self, agent_id: str) -> None:
+        """Cancel all queued tasks for an agent that failed.
+
+        Called when an agent reaches a non-recoverable state.
+        Future alternatives to consider:
+        - Re-queue to a fresh instance of the same agent type.
+        - Leave as queued and let the parent reassign or retry.
+        - Expose a ``retry_failed`` mutation that resets the agent
+          and re-drains the queue.
+        """
+        task_file_store = getattr(self.store, '_task_file_store', None)
+        if task_file_store:
+            count = task_file_store.cancel_queued(agent_id)
+            if count:
+                logger.info(
+                    "Cancelled %d queued task(s) for failed agent %s",
+                    count, agent_id[:8],
+                )
+
     # -- context delivery --------------------------------------------------
 
     def _deliver_context_update(self, target_id: str, update: dict[str, Any]) -> None:
@@ -625,6 +685,12 @@ class Scheduler:
                     }
                     self._deliver_context_update(parent_id, update)
 
+                # Drain task queue: feed the next queued task to the agent.
+                if updated.metadata.finite and updated.metadata.status == "completed":
+                    self.drain_task_queue(updated.id)
+                elif updated.metadata.status == "failed":
+                    self._cancel_queued_tasks(updated.id)
+
                 enriched = self._enrich_parent_tags(updated)
                 if enriched:
                     await self._emit(TaskDone(task=enriched))
@@ -673,6 +739,12 @@ class Scheduler:
                     ),
                 }
                 self._deliver_context_update(parent_id, update)
+
+            # Drain task queue: feed the next queued task to the agent.
+            if updated.metadata.finite and updated.metadata.status == "completed":
+                self.drain_task_queue(updated.id)
+            elif updated.metadata.status == "failed":
+                self._cancel_queued_tasks(updated.id)
 
             enriched = self._enrich_parent_tags(updated)
             if enriched:
