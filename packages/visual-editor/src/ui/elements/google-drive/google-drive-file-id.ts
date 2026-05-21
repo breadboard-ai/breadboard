@@ -131,6 +131,9 @@ export class GoogleDriveFileId extends SignalWatcher(LitElement) {
   @property()
   accessor autoTrigger = false;
 
+  @property()
+  accessor allowedMimeTypes: string | null = null;
+
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
@@ -210,8 +213,17 @@ export class GoogleDriveFileId extends SignalWatcher(LitElement) {
     if (this.sca.env.shellHost === undefined) {
       return;
     }
+    const mimeTypes = this.allowedMimeTypes
+      ? ALLOWED_MIME_TYPES.filter((m) => {
+          const pattern = this.allowedMimeTypes!;
+          if (pattern.endsWith("/*")) {
+            return m.startsWith(pattern.slice(0, -1));
+          }
+          return m === pattern;
+        })
+      : ALLOWED_MIME_TYPES;
     const result = await this.sca.env.shellHost.pickDriveFiles({
-      mimeTypes: ALLOWED_MIME_TYPES,
+      mimeTypes,
     });
     switch (result.action) {
       case "cancel": {
