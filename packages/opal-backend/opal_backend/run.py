@@ -94,6 +94,60 @@ class GraphInfo(TypedDict, total=False):
 
 
 # ---------------------------------------------------------------------------
+# Built-in tool mapping
+# ---------------------------------------------------------------------------
+
+# Maps ``builtin.*`` filter entries to Gemini API tool objects.
+# These are server-side tools (Search, Maps, URL Context, Code Execution)
+# that the Gemini API executes internally, as opposed to custom function
+# declarations dispatched by the agent loop.
+BUILTIN_TOOL_MAP: dict[str, dict[str, Any]] = {
+    "builtin.search_grounding": {"googleSearch": {}},
+    "builtin.maps_grounding": {"googleMaps": {}},
+    "builtin.url_context": {"urlContext": {}},
+    "builtin.code_execution": {"codeExecution": {}},
+}
+
+
+def _extract_builtin_tools(
+    function_filter: list[str] | None,
+) -> tuple[list[dict[str, Any]], list[str] | None]:
+    """Split ``builtin.*`` entries from a function filter.
+
+    Returns a ``(builtin_tools, remaining_filter)`` tuple.
+    ``builtin_tools`` is a list of Gemini tool objects ready for the
+    ``tools`` array.  ``remaining_filter`` is the original filter with
+    ``builtin.*`` entries removed (or ``None`` if nothing remains).
+
+    Unknown ``builtin.*`` entries are silently ignored — forward
+    compatibility with new Gemini built-in tools.
+    """
+    if not function_filter:
+        return [], function_filter
+
+    builtin_tools: list[dict[str, Any]] = []
+    remaining: list[str] = []
+
+    for pattern in function_filter:
+        if pattern == "builtin.*":
+            raise ValueError(
+                "builtin.* wildcard is not supported — not all Gemini "
+                "built-in tools can be combined in a single request. "
+                f"Use explicit entries instead: "
+                f"{', '.join(sorted(BUILTIN_TOOL_MAP.keys()))}"
+            )
+        elif (tool := BUILTIN_TOOL_MAP.get(pattern)) is not None:
+            builtin_tools.append(tool)
+        elif pattern.startswith("builtin."):
+            # Unknown builtin — skip silently for forward compat.
+            logger.debug("Ignoring unknown builtin tool: %s", pattern)
+        else:
+            remaining.append(pattern)
+
+    return builtin_tools, remaining or None
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -220,6 +274,11 @@ async def run(
         CHAT_LOG_PATH, lambda: chat_mgr.get_chat_log(run_contents),
     )
 
+    # Extract built-in tools (e.g. google_search, url_context) from the
+    # function filter.  These become separate tool objects in the Gemini
+    # request rather than function declarations.
+    builtin_tools, cleaned_filter = _extract_builtin_tools(function_filter)
+
     function_groups = _build_function_groups(
         controller=controller,
         file_system=file_system,
@@ -231,7 +290,7 @@ async def run(
         consents_granted=consents_granted,
         graph_url=graph.get("url", ""),
         extra_groups=extra_groups,
-        function_filter=function_filter,
+        function_filter=cleaned_filter,
     )
 
     if (function_filter is None or len(function_filter) == 0) and (extra_groups is None or len(extra_groups) == 0):
@@ -249,6 +308,7 @@ async def run(
         singleton_cached_content_name=cached_name,
         model=model,
         context_queue=context_queue,
+        builtin_tools=builtin_tools,
     )
 
     async for event in _stream_loop(
@@ -388,6 +448,12 @@ async def resume(
     )
 
     controller = LoopController()
+
+    # Extract built-in tools from the persisted filter (same as run()).
+    builtin_tools, cleaned_filter = _extract_builtin_tools(
+        state.function_filter,
+    )
+
     function_groups = _build_function_groups(
         controller=controller,
         file_system=file_system,
@@ -399,7 +465,7 @@ async def resume(
         consents_granted=state.consents_granted,
         graph_url=(state.graph or {}).get("url", ""),
         extra_groups=extra_groups,
-        function_filter=state.function_filter,
+        function_filter=cleaned_filter,
     )
 
     # Apply the same cache bypass guard as run() — if a function filter
@@ -420,6 +486,7 @@ async def resume(
         singleton_cached_content_name=cached_name,
         model=model_override,
         context_queue=context_queue,
+        builtin_tools=builtin_tools,
     )
 
     async for event in _stream_loop(

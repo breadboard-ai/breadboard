@@ -76,6 +76,13 @@ class AgentRunArgs:
     singleton_cached_content_name: str | None = None
     model: str | None = None
     context_queue: asyncio.Queue | None = None
+    builtin_tools: list[dict[str, Any]] = field(default_factory=list)
+    """Gemini built-in tool objects (e.g. ``{"googleSearch": {}}``).
+
+    When non-empty, these are merged into the ``tools`` array alongside
+    custom ``functionDeclarations`` and ``includeServerSideToolInvocations``
+    is set in the tool config to enable tool context circulation.
+    """
 
 
 @dataclass
@@ -186,7 +193,11 @@ class Loop:
             for group in args.function_groups:
                 all_declarations.extend(group.declarations)
 
-            tools = [{"functionDeclarations": all_declarations}]
+            tools: list[dict[str, Any]] = [
+                {"functionDeclarations": all_declarations},
+            ]
+            if args.builtin_tools:
+                tools.extend(args.builtin_tools)
 
             # Build the function definition map for dispatch
             definition_map: dict[str, Any] = {}
@@ -211,6 +222,13 @@ class Loop:
             # 0 means the cache only has the static envelope (SI + tools).
             cached_content_count = 0
 
+            # Tool configuration — built once per run.
+            tool_config: dict[str, Any] = {
+                "functionCallingConfig": {"mode": "ANY"},
+            }
+            if args.builtin_tools:
+                tool_config["includeServerSideToolInvocations"] = True
+
             while not self.controller.terminated:
                 generation_config: dict[str, Any] = {
                     "temperature": 1,
@@ -234,9 +252,7 @@ class Loop:
                     body = {
                         "contents": contents,
                         "generationConfig": generation_config,
-                        "toolConfig": {
-                            "functionCallingConfig": {"mode": "ANY"},
-                        },
+                        "toolConfig": tool_config,
                         "tools": tools,
                     }
                     if system_instruction_text:
