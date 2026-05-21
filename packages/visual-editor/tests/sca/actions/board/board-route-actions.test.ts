@@ -361,12 +361,15 @@ suite("Board Route Actions", () => {
         new Set(["drive:/gallery-board"]);
       const services = makeMockServices({ boardServer });
 
+      const env = createMockEnvironment(defaultRuntimeFlags);
+
       Board.bind({
         services,
         controller,
-        env: createMockEnvironment(defaultRuntimeFlags),
+        env,
       });
 
+      await env.isHydrated;
       await Board.onRun();
 
       assert.strictEqual(

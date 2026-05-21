@@ -949,7 +949,7 @@ async function runBoard(): Promise<void> {
   // Check batch consent for all Drive assets in the graph before running.
   // This shows a single modal listing all Drive files instead of one per asset.
   // Gated behind the enableAssetAccessConsent flag.
-  if (gc.readOnly && gc.graph && bind.env.flags.env().enableAssetAccessConsent) {
+  if (gc.readOnly && gc.graph && bind.env.flags.get("enableAssetAccessConsent")) {
     const driveAssets = findGoogleDriveAssetsInGraph(gc.graph, {
       omitSplashImages: true,
     });
