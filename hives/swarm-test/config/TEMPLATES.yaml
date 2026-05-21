@@ -26,6 +26,19 @@
   skills:
     - surface
 
+- name: workspace-test
+  title: Test Workspace MCP 2
+  description: Tests workspace MCP integration
+  objective:
+    Chat with the user and fulfill their requests with the tools that you have.
+  functions:
+    - chat.*
+    - drive.*
+    - gchat.*
+    - gmail.*
+    - calendar.*
+    - people.*
+
 - name: app_builder
   title: App Builder
   description: Builds high-quality React Apps

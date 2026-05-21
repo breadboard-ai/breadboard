@@ -4,3 +4,48 @@
 # Root auto-boots an orchestrator that autostarts a writer.
 title: swarm-test
 description: "Smoke test for Swarm layout"
+
+mcp:
+  - name: gmail
+    description: Gmail MCP Server
+    url: https://gmailmcp.googleapis.com/mcp/v1
+    oauth:
+      client_id: "${GOOGLE_OAUTH_CLIENT_ID}"
+      client_secret: "${GOOGLE_OAUTH_CLIENT_SECRET}"
+      scopes:
+        - https://www.googleapis.com/auth/gmail.readonly
+        - https://www.googleapis.com/auth/gmail.compose
+
+  - name: drive
+    description: Google Drive MCP Server
+    url: https://drivemcp.googleapis.com/mcp/v1
+    oauth:
+      client_id: "${GOOGLE_OAUTH_CLIENT_ID}"
+      client_secret: "${GOOGLE_OAUTH_CLIENT_SECRET}"
+      scopes:
+        - https://www.googleapis.com/auth/drive.readonly
+        - https://www.googleapis.com/auth/drive.file
+
+  - name: calendar
+    description: Google Calendar MCP Server
+    url: https://calendarmcp.googleapis.com/mcp/v1
+    oauth:
+      client_id: "${GOOGLE_OAUTH_CLIENT_ID}"
+      client_secret: "${GOOGLE_OAUTH_CLIENT_SECRET}"
+      scopes:
+        - https://www.googleapis.com/auth/calendar.calendarlist.readonly
+        - https://www.googleapis.com/auth/calendar.events.freebusy
+        - https://www.googleapis.com/auth/calendar.events.readonly
+
+  - name: gchat
+    description: Google Chat MCP Server
+    url: https://chatmcp.googleapis.com/mcp/v1
+    oauth:
+      client_id: "${GOOGLE_OAUTH_CLIENT_ID}"
+      client_secret: "${GOOGLE_OAUTH_CLIENT_SECRET}"
+      scopes:
+        - https://www.googleapis.com/auth/chat.spaces.readonly
+        - https://www.googleapis.com/auth/chat.memberships.readonly
+        - https://www.googleapis.com/auth/chat.messages.readonly
+        - https://www.googleapis.com/auth/chat.messages.create
+        - https://www.googleapis.com/auth/chat.users.readstate.readonly
