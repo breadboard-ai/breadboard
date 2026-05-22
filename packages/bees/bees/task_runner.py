@@ -136,6 +136,8 @@ class TaskRunner:
                     ticket_id=agent.id,
                     on_event=self._make_on_event(agent.id),
                 )
+                # Persist runner-agnostic resume state when suspended.
+                self._persist_resume_state(agent, stream, result)
             finally:
                 self._active_streams.pop(agent.id, None)
 
@@ -269,37 +271,42 @@ class TaskRunner:
             int_file = sdir / "interaction.json"
 
             if not resume_id_file.exists() or not int_file.exists():
-                agent.metadata.status = "failed"
-                agent.metadata.error = "No active resume session files found"
-                self._store.save_metadata(agent)
-                return SessionResult(
-                    session_id="",
-                    status="failed",
-                    events=0,
-                    output="",
-                    error="No active resume session files found",
-                )
-
-            try:
-                interaction_id = resume_id_file.read_text(encoding="utf-8").strip()
-                int_data = json.loads(int_file.read_text(encoding="utf-8"))
-                state_dict = {
-                    "session_id": session_id,
-                    "interaction_id": interaction_id,
-                    "interaction_state": int_data,
-                }
-                state = json.dumps(state_dict, ensure_ascii=False).encode("utf-8")
-            except Exception as e:
-                agent.metadata.status = "failed"
-                agent.metadata.error = f"Failed to load session files: {e}"
-                self._store.save_metadata(agent)
-                return SessionResult(
-                    session_id="",
-                    status="failed",
-                    events=0,
-                    output="",
-                    error=f"Failed to load session files: {e}",
-                )
+                # Check for runner-agnostic resume state file.
+                resume_state_file = sdir / "resume_state.json"
+                if resume_state_file.exists():
+                    state = resume_state_file.read_bytes()
+                else:
+                    agent.metadata.status = "failed"
+                    agent.metadata.error = "No active resume session files found"
+                    self._store.save_metadata(agent)
+                    return SessionResult(
+                        session_id="",
+                        status="failed",
+                        events=0,
+                        output="",
+                        error="No active resume session files found",
+                    )
+            else:
+                try:
+                    interaction_id = resume_id_file.read_text(encoding="utf-8").strip()
+                    int_data = json.loads(int_file.read_text(encoding="utf-8"))
+                    state_dict = {
+                        "session_id": session_id,
+                        "interaction_id": interaction_id,
+                        "interaction_state": int_data,
+                    }
+                    state = json.dumps(state_dict, ensure_ascii=False).encode("utf-8")
+                except Exception as e:
+                    agent.metadata.status = "failed"
+                    agent.metadata.error = f"Failed to load session files: {e}"
+                    self._store.save_metadata(agent)
+                    return SessionResult(
+                        session_id="",
+                        status="failed",
+                        events=0,
+                        output="",
+                        error=f"Failed to load session files: {e}",
+                    )
 
         agent.metadata.status = "running"
         agent.metadata.assignee = "agent"
@@ -366,6 +373,8 @@ class TaskRunner:
                     ticket_id=agent.id,
                     on_event=self._make_on_event(agent.id),
                 )
+                # Persist runner-agnostic resume state when re-suspended.
+                self._persist_resume_state(agent, stream, result)
             finally:
                 self._active_streams.pop(agent.id, None)
 
@@ -397,13 +406,39 @@ class TaskRunner:
         # phantom "Suspended On" indicator.
         if not result.suspended and agent.metadata.active_session:
             sdir = agent.dir / "sessions" / agent.metadata.active_session
-            for stale_file in ("interaction.json", "resume_id"):
+            for stale_file in ("interaction.json", "resume_id", "resume_state.json"):
                 (sdir / stale_file).unlink(missing_ok=True)
 
         self._store.save_metadata(agent)
         return result
 
     # -- internal ----------------------------------------------------------
+
+    def _persist_resume_state(
+        self,
+        agent: Agent,
+        stream: Any,
+        result: SessionResult,
+    ) -> None:
+        """Persist runner-agnostic resume state when a session suspends.
+
+        Writes ``stream.resume_state()`` bytes to a ``resume_state.json``
+        file in the session directory.  This is the runner-agnostic path
+        that ``resume_task()`` prefers over the legacy opal-specific
+        ``resume_id`` + ``interaction.json`` files.
+        """
+        if not result.suspended:
+            return
+        resume_blob = stream.resume_state()
+        if resume_blob is None:
+            return
+        session_id = agent.metadata.active_session
+        if not session_id or not agent.dir:
+            return
+        sdir = agent.dir / "sessions" / session_id
+        sdir.mkdir(parents=True, exist_ok=True)
+        (sdir / "resume_state.json").write_bytes(resume_blob)
+
 
     def _update_metadata(
         self,

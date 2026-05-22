@@ -27,9 +27,10 @@ import contextlib
 import json
 import logging
 import tempfile
+import uuid
 from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from google.antigravity import types as ag_types
 from google.antigravity.agent import Agent
@@ -124,8 +125,15 @@ def _translate_step(step: ag_types.Step) -> list[SessionEvent]:
     ):
         events.append({"complete": {"result": _build_complete_result(step)}})
 
-    # Error → error event.
-    if step.status == ag_types.StepStatus.ERROR:
+    # Error → error event (terminal errors only).
+    # Tool call errors (policy denials, missing files, etc.) are
+    # intermediate — the model sees them and adapts.  Only emit
+    # error events for steps that aren't tool calls, since those
+    # represent unrecoverable model-level failures.
+    if (
+        step.status == ag_types.StepStatus.ERROR
+        and step.type != ag_types.StepType.TOOL_CALL
+    ):
         events.append({"error": {"message": step.error or "Unknown error"}})
 
     # NOTE: WAITING_FOR_USER steps are NOT translated to waitForInput.
@@ -217,11 +225,15 @@ class AntigravityStream:
         exit_stack: contextlib.AsyncExitStack,
         save_dir: str,
         initial_prompt: str,
+        has_chat: bool = False,
+        on_chat_entry: Callable[[str, str], None] | None = None,
     ) -> None:
         self._agent = agent
         self._exit_stack = exit_stack
         self._save_dir = save_dir
         self._initial_prompt = initial_prompt
+        self._has_chat = has_chat
+        self._on_chat_entry = on_chat_entry
 
         self._started = False
         self._exhausted = False
@@ -230,6 +242,7 @@ class AntigravityStream:
         self._resume_blob: bytes | None = None
         self._emitted_send_request = False
         self._emitted_complete = False
+        self._last_user_text: str = ""
 
     # -- async iterator ----------------------------------------------------
 
@@ -279,16 +292,35 @@ class AntigravityStream:
             # The SDK turn is done — the agent went idle.
             self._exhausted = True
             self._capture_resume_state()
-            # If no explicit complete/error event was emitted, synthesize
-            # a complete event — the agent finished by going idle without
-            # calling the FINISH tool.
+
             if not self._emitted_complete:
                 self._emitted_complete = True
+
+                # Chat mode: idle without FINISH = waiting for user input.
+                if self._has_chat and self._last_user_text:
+                    # Log the model's message to the chat log.
+                    if self._on_chat_entry:
+                        self._on_chat_entry("agent", self._last_user_text)
+
+                    # Don't tear down the agent yet — persist state for
+                    # resume, but the cleanup still runs because the
+                    # stream is done from drain_session's perspective.
+                    await self._cleanup()
+                    return {"waitForInput": {
+                        "requestId": str(uuid.uuid4()),
+                        "prompt": {
+                            "parts": [{"text": self._last_user_text}],
+                        },
+                        "inputType": "text",
+                    }}
+
+                # Worker mode: idle without FINISH = done.
                 await self._cleanup()
                 return {"complete": {"result": {
                     "success": True,
                     "outcomes": {"parts": [{"text": ""}]},
                 }}}
+
             await self._cleanup()
             raise
         except Exception as exc:
@@ -303,10 +335,25 @@ class AntigravityStream:
             # Step produced no translatable events — skip to next.
             return await self.__anext__()
 
-        # Track complete/error events.
+        # Track explicit completion events.
+        # NOTE: error events from tool calls (e.g., policy denials) are
+        # intermediate — the model recovers and continues.  Only
+        # explicit complete events gate the idle synthesis.
         for event in events:
-            if "complete" in event or "error" in event:
+            if "complete" in event:
                 self._emitted_complete = True
+
+        # Accumulate user-directed text for chat mode suspend prompt.
+        # Reset when a step has no systemMessage — tool calls, user
+        # input replays, etc. clear the accumulator so only the LAST
+        # contiguous model response becomes the suspend prompt.
+        has_model_text = False
+        for event in events:
+            if "systemMessage" in event:
+                has_model_text = True
+                self._last_user_text += event["systemMessage"].get("text", "")
+        if not has_model_text:
+            self._last_user_text = ""
 
         # Check for suspend events — capture resume state eagerly.
         for event in events:
@@ -459,11 +506,16 @@ class AntigravityRunner:
         # 7. Extract the initial prompt from segments.
         initial_prompt = _extract_initial_prompt(config)
 
+        # 8. Detect chat mode from function filter.
+        has_chat = _has_chat_functions(config.function_filter)
+
         return AntigravityStream(
             agent=agent,
             exit_stack=exit_stack,
             save_dir=save_dir,
             initial_prompt=initial_prompt,
+            has_chat=has_chat,
+            on_chat_entry=config.on_chat_entry,
         )
 
     async def resume(
@@ -523,11 +575,16 @@ class AntigravityRunner:
         # 7. Build the resume prompt from the user's response + context.
         resume_prompt = _build_resume_prompt(response, context_parts)
 
+        # 8. Detect chat mode from function filter.
+        has_chat = _has_chat_functions(config.function_filter)
+
         return AntigravityStream(
             agent=agent,
             exit_stack=exit_stack,
             save_dir=save_dir,
             initial_prompt=resume_prompt,
+            has_chat=has_chat,
+            on_chat_entry=config.on_chat_entry,
         )
 
 
@@ -578,6 +635,12 @@ def _build_resume_prompt(
 
     The prompt combines any pending context updates with the user's
     direct response text.
+
+    Handles multiple response shapes:
+    - ``{"text": "..."}`` — direct text.
+    - ``{"parts": [{"text": "..."}]}`` — LLMContent format.
+    - ``{"input": {"parts": [{"text": "..."}]}}`` — waitForInput response
+      from hivetool UI.
     """
     parts: list[str] = []
 
@@ -587,14 +650,31 @@ def _build_resume_prompt(
             if "text" in part:
                 parts.append(part["text"])
 
-    # Extract the user's response text.
-    # The response dict can have various shapes depending on the
-    # suspend type (waitForInput, waitForChoice, etc.).
+    # Extract the user's response text from various shapes.
     if "text" in response:
         parts.append(response["text"])
+    elif "input" in response:
+        # waitForInput response: {"input": {"parts": [{"text": "..."}]}}
+        input_content = response["input"]
+        if isinstance(input_content, dict):
+            for p in input_content.get("parts", []):
+                if "text" in p:
+                    parts.append(p["text"])
     elif "parts" in response:
         for p in response["parts"]:
             if "text" in p:
                 parts.append(p["text"])
 
     return "\n\n".join(parts) if parts else ""
+
+
+def _has_chat_functions(function_filter: list[str] | None) -> bool:
+    """Check if any function filter entry enables chat mode.
+
+    Returns True if any filter starts with ``chat.``, indicating
+    the agent is interactive and idle-without-FINISH should emit
+    ``waitForInput`` instead of ``complete``.
+    """
+    if not function_filter:
+        return False
+    return any(f.startswith("chat.") for f in function_filter)
