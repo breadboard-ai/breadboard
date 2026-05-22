@@ -28,7 +28,7 @@ AgentStatus = Literal[
     "completed", "failed", "cancelled"
 ]
 
-RunnerType = Literal["generate", "live", "direct_model"]
+RunnerType = Literal["generate", "live", "direct_model", "antigravity"]
 
 
 def has_system_functions(functions: list[str] | None) -> bool:
