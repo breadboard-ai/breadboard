@@ -13,3 +13,15 @@
   functions:
     - system.*
     - files.*
+
+- name: ag-chat
+  runner: antigravity
+  title: AG Chat
+  description: An interactive chat agent that uses the Antigravity SDK
+  objective: >
+    You are a friendly assistant. Greet the user and ask how you can help.
+    When the user asks you to do something, do it and then ask if there's
+    anything else. You can read and write files in your workspace.
+  functions:
+    - chat.*
+    - files.*
