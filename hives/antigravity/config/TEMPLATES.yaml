@@ -32,6 +32,24 @@
     - chat.*
     - files.*
 
+- name: ag-chat-agents
+  runner: antigravity
+  title: AG Chat w/Agents
+  description:
+    An interactive chat agent that uses the Antigravity SDK and Sub-agents
+  objective: >
+    You are a friendly assistant. Greet the user and ask how you can help. When
+    the user asks you to do something, do it and then ask if there's anything
+    else.
+  functions:
+    - chat.*
+    - files.*
+    - agents.*
+  tasks:
+    - generate_images
+    - generate_music
+    - generate_video
+
 - name: weather-orchestrator
   title: Weather Orchestrator
   runner: antigravity
@@ -111,7 +129,8 @@
         - "9:21"
     image_size:
       type: string
-      description: "Target resolution or image size. Valid values: '512', '1K', '2K', '4K'."
+      description:
+        "Target resolution or image size. Valid values: '512', '1K', '2K', '4K'."
       enum:
         - "512"
         - 1K
