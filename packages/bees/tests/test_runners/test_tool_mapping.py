@@ -311,7 +311,7 @@ class TestMapFunctionFilter:
 
     def test_none_filter_enables_all_builtins(self) -> None:
         """None filter enables all SDK builtins except excluded ones."""
-        caps, tools, instructions = map_function_filter(
+        caps, tools, instructions, _sq, _rq = map_function_filter(
             None, [], _StubHooks(),
         )
         enabled = set(caps.enabled_tools)
@@ -324,7 +324,7 @@ class TestMapFunctionFilter:
         fd = _make_func_def(name="agents_list")
         group = _make_group("agents", [fd], instruction="Agents.")
 
-        _caps, tools, instructions = map_function_filter(
+        _caps, tools, instructions, _sq, _rq = map_function_filter(
             None, [group], _StubHooks(),
         )
         assert len(tools) == 1
@@ -333,7 +333,7 @@ class TestMapFunctionFilter:
 
     def test_builtin_filter_enables_correct_tools(self) -> None:
         """'files.*' enables exactly the file-related builtins."""
-        caps, tools, instructions = map_function_filter(
+        caps, tools, instructions, _sq, _rq = map_function_filter(
             ["files.*"], [], _StubHooks(),
         )
         enabled = set(caps.enabled_tools)
@@ -344,7 +344,7 @@ class TestMapFunctionFilter:
 
     def test_multiple_builtin_filters(self) -> None:
         """Multiple builtin filters union their tools."""
-        caps, _, _ = map_function_filter(
+        caps, _, _, _sq, _rq = map_function_filter(
             ["files.*", "sandbox.*"], [], _StubHooks(),
         )
         enabled = set(caps.enabled_tools)
@@ -358,7 +358,7 @@ class TestMapFunctionFilter:
         fd = _make_func_def(name="agents_list")
         group = _make_group("agents", [fd], instruction="Agents.")
 
-        caps, tools, instructions = map_function_filter(
+        caps, tools, instructions, _sq, _rq = map_function_filter(
             ["agents.*"], [group], _StubHooks(),
         )
         # No builtins for agents.
@@ -372,7 +372,7 @@ class TestMapFunctionFilter:
         fd = _make_func_def(name="agents_list")
         group = _make_group("agents", [fd])
 
-        caps, tools, _ = map_function_filter(
+        caps, tools, _, _sq, _rq = map_function_filter(
             ["files.*", "system.*", "agents.*"], [group], _StubHooks(),
         )
         enabled = set(caps.enabled_tools)
@@ -384,24 +384,24 @@ class TestMapFunctionFilter:
 
     def test_excluded_builtins_never_enabled(self) -> None:
         """GENERATE_IMAGE and START_SUBAGENT are never enabled."""
-        caps, _, _ = map_function_filter(None, [], _StubHooks())
+        caps, _, _, _sq, _rq = map_function_filter(None, [], _StubHooks())
         enabled = set(caps.enabled_tools)
         for excluded in _EXCLUDED_BUILTINS:
             assert excluded not in enabled
 
     def test_subagents_always_disabled(self) -> None:
         """enable_subagents is always False."""
-        caps, _, _ = map_function_filter(None, [], _StubHooks())
+        caps, _, _, _sq, _rq = map_function_filter(None, [], _StubHooks())
         assert caps.enable_subagents is False
 
-        caps2, _, _ = map_function_filter(
+        caps2, _, _, _sq, _rq = map_function_filter(
             ["files.*"], [], _StubHooks(),
         )
         assert caps2.enable_subagents is False
 
     def test_enabled_tools_sorted(self) -> None:
         """enabled_tools are sorted by enum value for deterministic output."""
-        caps, _, _ = map_function_filter(None, [], _StubHooks())
+        caps, _, _, _sq, _rq = map_function_filter(None, [], _StubHooks())
         values = [t.value for t in caps.enabled_tools]
         assert values == sorted(values)
 
@@ -410,7 +410,7 @@ class TestMapFunctionFilter:
         fd = _make_func_def(name="agents_assign_task")
         group = _make_group("agents", [fd])
 
-        _caps, tools, _ = map_function_filter(
+        _caps, tools, _, _sq, _rq = map_function_filter(
             ["agents_assign_task"], [group], _StubHooks(),
         )
         assert len(tools) == 1
@@ -418,7 +418,7 @@ class TestMapFunctionFilter:
 
     def test_empty_filter_enables_nothing(self) -> None:
         """An empty filter list enables no builtins and no custom tools."""
-        caps, tools, instructions = map_function_filter(
+        caps, tools, instructions, _sq, _rq = map_function_filter(
             [], [], _StubHooks(),
         )
         assert set(caps.enabled_tools) == set()
@@ -427,7 +427,7 @@ class TestMapFunctionFilter:
 
     def test_unknown_filter_ignored(self) -> None:
         """Unknown filter patterns are silently ignored."""
-        caps, tools, instructions = map_function_filter(
+        caps, tools, instructions, _sq, _rq = map_function_filter(
             ["unknown.*", "nope"], [], _StubHooks(),
         )
         assert set(caps.enabled_tools) == set()
@@ -443,7 +443,7 @@ class TestMapFunctionFilter:
         fd = _make_func_def(name="agents_cancel", schema=schema)
         group = _make_group("agents", [fd])
 
-        _caps, tools, _ = map_function_filter(
+        _caps, tools, _, _sq, _rq = map_function_filter(
             ["agents.*"], [group], _StubHooks(),
         )
         assert len(tools) == 1

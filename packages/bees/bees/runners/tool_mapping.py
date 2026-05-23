@@ -22,6 +22,7 @@ own agent hierarchy and the direct_model subagent is more capable).
 
 from __future__ import annotations
 
+import asyncio
 import fnmatch
 import logging
 from typing import Any, Callable
@@ -35,6 +36,7 @@ from bees.protocols.functions import (
     FunctionGroupFactory,
     SessionHooks,
 )
+from bees.protocols.handler_types import SuspendError
 from bees.disk_file_system import DiskFileSystem
 
 __all__ = ["map_function_filter", "wrap_bees_handler"]
@@ -86,7 +88,12 @@ def map_function_filter(
     function_filter: list[str] | None,
     function_groups: list[FunctionGroupFactory],
     hooks: SessionHooks,
-) -> tuple[ag_types.CapabilitiesConfig, list[Callable[..., Any]], list[str]]:
+) -> tuple[
+    ag_types.CapabilitiesConfig,
+    list[Callable[..., Any]],
+    list[str],
+    asyncio.Queue[SuspendError],
+]:
     """Map bees function filters to SDK capabilities and custom tools.
 
     Args:
@@ -98,7 +105,8 @@ def map_function_filter(
         hooks: Session hooks for late-binding function group factories.
 
     Returns:
-        A ``(capabilities, custom_tools, custom_instructions)`` tuple:
+        A ``(capabilities, custom_tools, custom_instructions, suspend_queue)``
+        tuple:
 
         - ``capabilities``: SDK ``CapabilitiesConfig`` with the appropriate
           ``enabled_tools`` list.
@@ -108,17 +116,23 @@ def map_function_filter(
           custom tool groups (e.g. agents, events, skills).  Groups
           that map to SDK builtins are excluded — the SDK explains
           its own tools.
+        - ``suspend_queue``: Queue that receives ``SuspendError`` instances
+          intercepted by custom tool wrappers.  Pass to
+          ``AntigravityStream`` so it can detect pending suspends.
     """
     enabled_builtins: set[ag_types.BuiltinTools] = set()
     custom_tools: list[Callable[..., Any]] = []
     custom_instructions: list[str] = []
+    suspend_queue: asyncio.Queue[SuspendError] = asyncio.Queue()
 
     if function_filter is None:
         # No filter → enable all SDK builtins (except excluded).
         enabled_builtins = set(ag_types.BuiltinTools) - _EXCLUDED_BUILTINS
         # Also instantiate all custom-tool groups.
         custom_tools, custom_instructions = _extract_custom_tools(
-            function_groups, hooks, include_groups=None,
+            function_groups, hooks,
+            include_groups=None,
+            suspend_queue=suspend_queue,
         )
     else:
         custom_group_names: set[str] = set()
@@ -140,7 +154,9 @@ def map_function_filter(
 
         # Extract custom tools from matching function groups.
         custom_tools, custom_instructions = _extract_custom_tools(
-            function_groups, hooks, include_groups=custom_group_names,
+            function_groups, hooks,
+            include_groups=custom_group_names,
+            suspend_queue=suspend_queue,
         )
 
     capabilities = ag_types.CapabilitiesConfig(
@@ -148,7 +164,7 @@ def map_function_filter(
         enable_subagents=False,  # Bees manages its own agent hierarchy.
     )
 
-    return capabilities, custom_tools, custom_instructions
+    return capabilities, custom_tools, custom_instructions, suspend_queue
 
 
 # ---------------------------------------------------------------------------
@@ -158,12 +174,21 @@ def map_function_filter(
 
 def wrap_bees_handler(
     func_def: FunctionDefinition,
+    *,
+    suspend_queue: asyncio.Queue[SuspendError] | None = None,
 ) -> Callable[..., Any]:
     """Wrap a bees ``FunctionDefinition`` as an SDK-compatible Python tool.
 
     The SDK's tool runner calls Python tools with ``**kwargs`` and expects
     a return value.  Bees handlers have the signature
     ``(args: dict, status_cb) -> dict``.  This wrapper bridges the two.
+
+    When a handler raises ``SuspendError`` (e.g. ``agents_await``,
+    ``events_yield``), the exception is intercepted and converted to a
+    **deferred result** — a normal response that tells the model to go
+    idle and wait for an asynchronous delivery.  The ``SuspendError`` is
+    pushed onto ``suspend_queue`` so ``AntigravityStream`` can detect
+    the pending suspend and emit ``waitForInput`` when the model idles.
 
     Returns a ``ToolWithSchema`` so the SDK's ``callable_to_tool_proto``
     serializes the explicit JSON Schema directly, bypassing signature
@@ -172,9 +197,32 @@ def wrap_bees_handler(
     handler = func_def.handler
 
     async def tool_fn(**kwargs: Any) -> Any:
-        # Bees handlers expect (args_dict, status_callback).
-        result = await handler(kwargs, _noop_status_cb)
-        return result
+        try:
+            # Bees handlers expect (args_dict, status_callback).
+            result = await handler(kwargs, _noop_status_cb)
+            return result
+        except SuspendError as e:
+            # The SDK's tool runner would swallow SuspendError as a
+            # generic tool error.  Instead, return a deferred result
+            # and signal the stream to suspend when the model idles.
+            result_id = e.interaction_id
+            if suspend_queue:
+                await suspend_queue.put(e)
+            logger.info(
+                "Deferred suspend for %s (result_id=%s)",
+                func_def.name, result_id[:8],
+            )
+            return {
+                "status": "pending",
+                "result_id": result_id,
+                "message": (
+                    "Results are pending and will be delivered "
+                    "asynchronously. Please stop and wait for the "
+                    "response — do not take further action until you "
+                    "receive a <context_update> message with this "
+                    "result_id."
+                ),
+            }
 
     # The SDK uses __name__ and __doc__ for tool registration.
     tool_fn.__name__ = func_def.name
@@ -219,6 +267,7 @@ def _extract_custom_tools(
     hooks: SessionHooks,
     *,
     include_groups: set[str] | None,
+    suspend_queue: asyncio.Queue[SuspendError] | None = None,
 ) -> tuple[list[Callable[..., Any]], list[str]]:
     """Instantiate function groups and wrap their definitions as custom tools.
 
@@ -228,6 +277,8 @@ def _extract_custom_tools(
         include_groups: If not None, only include groups whose ``name``
             is in this set.  If None, include all groups that map to
             custom tools.
+        suspend_queue: Queue to pass to ``wrap_bees_handler`` for
+            intercepting ``SuspendError``.
 
     Returns:
         A ``(tools, instructions)`` tuple.  ``instructions`` contains
@@ -265,7 +316,9 @@ def _extract_custom_tools(
             continue
 
         for _name, func_def in group.definitions:
-            tools.append(wrap_bees_handler(func_def))
+            tools.append(wrap_bees_handler(
+                func_def, suspend_queue=suspend_queue,
+            ))
 
         if group.instruction:
             instructions.append(group.instruction)
