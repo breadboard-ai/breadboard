@@ -102,15 +102,30 @@ def _translate_step(step: ag_types.Step) -> list[SessionEvent]:
     ):
         events.append({"systemMessage": {"text": step.content_delta}})
 
-    # Tool calls → functionCall events.
+    # Tool calls / responses.
+    # The SDK emits TOOL_CALL steps twice per invocation:
+    #   1. status=ACTIVE → the model requested the call (functionCall)
+    #   2. status=DONE   → the tool executed and produced a result (functionResponse)
     if step.tool_calls:
+        is_response = (
+            step.type == ag_types.StepType.TOOL_CALL
+            and step.status == ag_types.StepStatus.DONE
+        )
         for tc in step.tool_calls:
             name = tc.name
             if isinstance(name, ag_types.BuiltinTools):
                 name = name.value
-            events.append({
-                "functionCall": {"name": name, "args": tc.args},
-            })
+            if is_response:
+                events.append({
+                    "functionResponse": {
+                        "name": name,
+                        "response": tc.args,
+                    },
+                })
+            else:
+                events.append({
+                    "functionCall": {"name": name, "args": tc.args},
+                })
 
     # Usage metadata → usageMetadata event.
     if step.usage_metadata:
@@ -151,32 +166,63 @@ def _translate_step(step: ag_types.Step) -> list[SessionEvent]:
 
 
 # ---------------------------------------------------------------------------
+# Request config assembly (for Hivetool session header)
+# ---------------------------------------------------------------------------
+
+
+def _build_request_config(
+    capabilities: ag_types.CapabilitiesConfig,
+    custom_tools: list[Callable[..., Any]],
+    custom_instructions: list[str],
+) -> dict[str, Any]:
+    """Build the Hivetool-compatible config dict for the sendRequest body.
+
+    Produces ``systemInstruction`` and ``tools`` fields so Hivetool's
+    session header can render the system prompt and tool list.
+    """
+    result: dict[str, Any] = {}
+
+    # System instruction: join custom tool group instructions.
+    if custom_instructions:
+        text = "\n\n".join(custom_instructions)
+        result["systemInstruction"] = {"parts": [{"text": text}]}
+
+    # Tools: combine SDK builtins + custom tool names.
+    declarations: list[dict[str, str]] = []
+    for bt in capabilities.enabled_tools:
+        name = bt.value if hasattr(bt, "value") else str(bt)
+        declarations.append({"name": name})
+    for tool in custom_tools:
+        declarations.append({"name": getattr(tool, "__name__", "unknown")})
+    if declarations:
+        result["tools"] = [{"functionDeclarations": declarations}]
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # System instruction assembly
 # ---------------------------------------------------------------------------
 
 
 def _assemble_system_instructions(
-    config: SessionConfiguration,
+    custom_instructions: list[str],
 ) -> ag_types.TemplatedSystemInstructions:
-    """Build SDK system instructions from bees session segments.
+    """Build SDK system instructions from custom tool group instructions.
 
-    Segments are the provisioned input (system prompt, function group
-    instructions, skill instructions, etc.).  We pack them as named
-    sections appended to the SDK's default template.
+    Each custom function group (agents, events, skills) carries an
+    ``instruction`` fragment describing how to use those tools.  These
+    are appended as named sections to the SDK's default template.
+
+    Groups that map to SDK builtins (system, chat, files, sandbox) are
+    excluded — the SDK explains its own tools.
     """
-    sections: list[ag_types.SystemInstructionSection] = []
-
-    for i, segment in enumerate(config.segments):
-        # Segments are dicts with a "text" key (from opal's segment format).
-        text = segment.get("text", "")
-        if not text:
-            # Some segments carry only structured data (no text).
-            continue
-        title = segment.get("title", f"segment_{i}")
-        sections.append(
-            ag_types.SystemInstructionSection(content=text, title=title),
+    sections = [
+        ag_types.SystemInstructionSection(
+            content=text, title=f"tools_{i}",
         )
-
+        for i, text in enumerate(custom_instructions)
+    ]
     return ag_types.TemplatedSystemInstructions(sections=sections)
 
 
@@ -227,6 +273,7 @@ class AntigravityStream:
         initial_prompt: str,
         has_chat: bool = False,
         on_chat_entry: Callable[[str, str], None] | None = None,
+        request_config: dict[str, Any] | None = None,
     ) -> None:
         self._agent = agent
         self._exit_stack = exit_stack
@@ -234,6 +281,7 @@ class AntigravityStream:
         self._initial_prompt = initial_prompt
         self._has_chat = has_chat
         self._on_chat_entry = on_chat_entry
+        self._request_config = request_config or {}
 
         self._started = False
         self._exhausted = False
@@ -260,18 +308,16 @@ class AntigravityStream:
         # Synthesize the initial sendRequest event (once).
         if not self._emitted_send_request:
             self._emitted_send_request = True
-            return {
-                "sendRequest": {
-                    "body": {
-                        "contents": [
-                            {
-                                "role": "user",
-                                "parts": [{"text": self._initial_prompt}],
-                            },
-                        ],
+            body: dict[str, Any] = {
+                "contents": [
+                    {
+                        "role": "user",
+                        "parts": [{"text": self._initial_prompt}],
                     },
-                },
+                ],
+                **self._request_config,
             }
+            return {"sendRequest": {"body": body}}
 
         # Start the conversation if not yet started.
         if not self._started:
@@ -464,14 +510,16 @@ class AntigravityRunner:
         """
         # 1. Map function filter to SDK capabilities.
         stub_hooks = _StubSessionHooks(config.file_system)
-        capabilities, custom_tools = map_function_filter(
+        capabilities, custom_tools, custom_instructions = map_function_filter(
             config.function_filter,
             config.function_groups,
             stub_hooks,
         )
 
-        # 2. Assemble system instructions.
-        system_instructions = _assemble_system_instructions(config)
+        # 2. Assemble system instructions from custom tool groups.
+        system_instructions = _assemble_system_instructions(
+            custom_instructions,
+        )
 
         # 3. Build workspace path.
         workspace = _workspace_path(config)
@@ -509,6 +557,10 @@ class AntigravityRunner:
         # 8. Detect chat mode from function filter.
         has_chat = _has_chat_functions(config.function_filter)
 
+        request_config = _build_request_config(
+            capabilities, custom_tools, custom_instructions,
+        )
+
         return AntigravityStream(
             agent=agent,
             exit_stack=exit_stack,
@@ -516,6 +568,7 @@ class AntigravityRunner:
             initial_prompt=initial_prompt,
             has_chat=has_chat,
             on_chat_entry=config.on_chat_entry,
+            request_config=request_config,
         )
 
     async def resume(
@@ -540,14 +593,16 @@ class AntigravityRunner:
 
         # 2. Map function filter to SDK capabilities (same as run).
         stub_hooks = _StubSessionHooks(config.file_system)
-        capabilities, custom_tools = map_function_filter(
+        capabilities, custom_tools, custom_instructions = map_function_filter(
             config.function_filter,
             config.function_groups,
             stub_hooks,
         )
 
-        # 3. Assemble system instructions.
-        system_instructions = _assemble_system_instructions(config)
+        # 3. Assemble system instructions from custom tool groups.
+        system_instructions = _assemble_system_instructions(
+            custom_instructions,
+        )
 
         # 4. Build workspace path.
         workspace = _workspace_path(config)
@@ -578,6 +633,10 @@ class AntigravityRunner:
         # 8. Detect chat mode from function filter.
         has_chat = _has_chat_functions(config.function_filter)
 
+        request_config = _build_request_config(
+            capabilities, custom_tools, custom_instructions,
+        )
+
         return AntigravityStream(
             agent=agent,
             exit_stack=exit_stack,
@@ -585,6 +644,7 @@ class AntigravityRunner:
             initial_prompt=resume_prompt,
             has_chat=has_chat,
             on_chat_entry=config.on_chat_entry,
+            request_config=request_config,
         )
 
 
