@@ -248,6 +248,12 @@ def _tool_result_to_event(
     if isinstance(name, ag_types.BuiltinTools):
         name = name.value
     response = result.result
+    # SDK builtin tools return Pydantic BaseModel instances
+    # (SearchDirectoryResult, EditFileResult, etc.) that aren't
+    # JSON-serializable.  Normalize to plain dicts early so the
+    # downstream isinstance checks and json.dumps work correctly.
+    if hasattr(response, "model_dump"):
+        response = response.model_dump()
     if result.error:
         response = {"error": result.error}
     elif response is None:
@@ -313,6 +319,7 @@ class AntigravityStream:
         request_config: dict[str, Any] | None = None,
         tool_result_queue: asyncio.Queue[ag_types.ToolResult] | None = None,
         suspend_queue: asyncio.Queue[SuspendError] | None = None,
+        resume_after_step: int = -1,
     ) -> None:
         self._agent = agent
         self._exit_stack = exit_stack
@@ -337,6 +344,11 @@ class AntigravityStream:
         self._emitted_complete = False
         self._last_user_text: str = ""
         self._pending_suspend: SuspendError | None = None
+        # On resume, skip steps replayed from the prior trajectory.
+        # Steps with step_index <= this value are old history.
+        self._resume_after_step = resume_after_step
+        # Track highest step_index seen for the resume blob.
+        self._last_step_index: int = -1
 
     # -- async iterator ----------------------------------------------------
 
@@ -380,6 +392,12 @@ class AntigravityStream:
         assert self._step_iter is not None
         try:
             step = await self._step_iter.__anext__()
+            self._last_step_index = max(
+                self._last_step_index, step.step_index,
+            )
+            # On resume, skip steps replayed from prior turns.
+            if step.step_index <= self._resume_after_step:
+                return await self.__anext__()
         except StopAsyncIteration:
             # The SDK turn is done — the agent went idle.
             self._exhausted = True
@@ -455,15 +473,21 @@ class AntigravityStream:
                 self._emitted_complete = True
 
         # Accumulate user-directed text for chat mode suspend prompt.
-        # Reset when a step has no systemMessage — tool calls, user
-        # input replays, etc. clear the accumulator so only the LAST
-        # contiguous model response becomes the suspend prompt.
+        # Reset when a step has active model content (thoughts, tool
+        # calls) but no text — the model switched to non-text work.
+        # Metadata-only steps (usageMetadata, complete) are bookkeeping
+        # and must NOT reset the accumulator, otherwise the greeting
+        # text gets wiped and the chat agent completes instead of
+        # suspending for user input.
         has_model_text = False
+        has_active_content = False
         for event in events:
             if "systemMessage" in event:
                 has_model_text = True
                 self._last_user_text += event["systemMessage"].get("text", "")
-        if not has_model_text:
+            if "functionCall" in event or "thought" in event:
+                has_active_content = True
+        if has_active_content and not has_model_text:
             self._last_user_text = ""
 
         # Check for deferred suspends from tool wrappers.
@@ -534,6 +558,7 @@ class AntigravityStream:
             blob = {
                 "save_dir": self._save_dir,
                 "conversation_id": conversation_id,
+                "last_step_index": self._last_step_index,
             }
             self._resume_blob = json.dumps(
                 blob, ensure_ascii=False,
@@ -673,6 +698,7 @@ class AntigravityRunner:
         resume_data = json.loads(state.decode("utf-8"))
         save_dir = resume_data["save_dir"]
         conversation_id = resume_data["conversation_id"]
+        last_step_index = resume_data.get("last_step_index", -1)
 
         # 2. Map function filter to SDK capabilities (same as run).
         stub_hooks = _StubSessionHooks(config.file_system)
@@ -739,6 +765,7 @@ class AntigravityRunner:
             request_config=request_config,
             tool_result_queue=tool_result_queue,
             suspend_queue=suspend_queue,
+            resume_after_step=last_step_index,
         )
 
 
