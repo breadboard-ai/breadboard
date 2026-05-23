@@ -145,7 +145,7 @@ class TestSessionRunnerConformance(unittest.TestCase):
             self.assertIsInstance(stream, SessionStream)
             self.assertEqual(len(runner.run_calls), 1)
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
     def test_resume_returns_stream(self):
         """resume() returns a SessionStream."""
@@ -168,7 +168,7 @@ class TestSessionRunnerConformance(unittest.TestCase):
             self.assertEqual(call["response"], {"text": "hello"})
             self.assertEqual(call["context_parts"], [{"text": "update"}])
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
     def test_accessible_from_protocols_package(self):
         """SessionRunner is accessible via bees.protocols."""
@@ -221,7 +221,7 @@ class TestDrainSessionComplete(unittest.TestCase):
             self.assertIsNone(result.error)
             self.assertEqual(result.session_id, "test-123")
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
     def test_empty_stream(self):
         """An empty stream produces a completed result with zero events."""
@@ -236,7 +236,7 @@ class TestDrainSessionComplete(unittest.TestCase):
             self.assertEqual(result.events, 0)
             self.assertEqual(result.turns, 0)
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
     def test_on_event_callback(self):
         """on_event is called for each event."""
@@ -261,7 +261,7 @@ class TestDrainSessionComplete(unittest.TestCase):
             self.assertEqual(received[0], events[0])
             self.assertEqual(received[1], events[1])
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
 
 class TestDrainSessionSuspend(unittest.TestCase):
@@ -288,7 +288,7 @@ class TestDrainSessionSuspend(unittest.TestCase):
             self.assertIsNotNone(result.suspend_event)
             self.assertIn("waitForInput", result.suspend_event)
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
     def test_suspend_via_wait_for_choice(self):
         """A waitForChoice event produces a suspended result."""
@@ -308,7 +308,7 @@ class TestDrainSessionSuspend(unittest.TestCase):
             self.assertTrue(result.suspended)
             self.assertEqual(result.status, "suspended")
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
 
 class TestDrainSessionPause(unittest.TestCase):
@@ -333,7 +333,7 @@ class TestDrainSessionPause(unittest.TestCase):
             self.assertTrue(result.paused)
             self.assertEqual(result.error, "Rate limit exceeded")
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
 
 class TestDrainSessionError(unittest.TestCase):
@@ -354,7 +354,7 @@ class TestDrainSessionError(unittest.TestCase):
             self.assertEqual(result.status, "failed")
             self.assertEqual(result.error, "Model unavailable")
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
 
 if __name__ == "__main__":
