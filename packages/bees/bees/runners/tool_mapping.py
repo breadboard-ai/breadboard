@@ -158,43 +158,64 @@ def map_function_filter(
           ``AntigravityStream`` so it can detect pending suspends.
     """
     enabled_builtins: set[ag_types.BuiltinTools] = set()
-    custom_tools: list[Callable[..., Any]] = []
-    custom_instructions: list[str] = []
+    active_instructions: list[str] = []
     suspend_queue: asyncio.Queue[SuspendError] = asyncio.Queue()
 
     if function_filter is None:
         # No filter → enable all SDK builtins (except excluded).
         enabled_builtins = set(ag_types.BuiltinTools) - _EXCLUDED_BUILTINS
         # Also instantiate all custom-tool groups.
-        custom_tools, custom_instructions = _extract_custom_tools(
+        custom_tools, _ = _extract_custom_tools(
             function_groups, hooks,
             include_groups=None,
             suspend_queue=suspend_queue,
         )
+        active_group_names = None
     else:
         custom_group_names: set[str] = set()
+        active_group_names = set()
 
         for pattern in function_filter:
             # Check if this pattern maps to SDK builtins.
             matched_builtins = _resolve_builtin_pattern(pattern)
             if matched_builtins is not None:
                 enabled_builtins.update(matched_builtins)
-            else:
-                # Extract the group name from the pattern (e.g. "agents" from
-                # "agents.*" or "agents_assign_task").
-                group_name = pattern.split(".")[0].split("_")[0]
-                if group_name in _CUSTOM_TOOL_GROUPS:
-                    custom_group_names.add(group_name)
+            
+            # Map pattern to group name (e.g. "agents" from "agents.*" or "agents_assign_task").
+            group_name = pattern.split(".")[0].split("_")[0]
+            active_group_names.add(group_name)
+            if group_name in _CUSTOM_TOOL_GROUPS:
+                custom_group_names.add(group_name)
 
         # Remove any excluded builtins that snuck in.
         enabled_builtins -= _EXCLUDED_BUILTINS
 
         # Extract custom tools from matching function groups.
-        custom_tools, custom_instructions = _extract_custom_tools(
+        custom_tools, _ = _extract_custom_tools(
             function_groups, hooks,
             include_groups=custom_group_names,
             suspend_queue=suspend_queue,
         )
+
+    # Collect instructions for all active groups (built-in and custom).
+    for entry in function_groups:
+        if isinstance(entry, FunctionGroup):
+            group = entry
+        elif callable(entry):
+            try:
+                group = entry(hooks)
+            except Exception:
+                continue
+        else:
+            continue
+
+        if group.name:
+            if active_group_names is None or group.name in active_group_names:
+                if group.name in {"system", "files", "chat"}:
+                    continue
+                if group.instruction:
+                    active_instructions.append(group.instruction)
+
 
     finish_schema = None
     if ag_types.BuiltinTools.FINISH in enabled_builtins:
@@ -206,7 +227,7 @@ def map_function_filter(
         finish_tool_schema_json=finish_schema,
     )
 
-    return capabilities, custom_tools, custom_instructions, suspend_queue
+    return capabilities, custom_tools, active_instructions, suspend_queue
 
 
 # ---------------------------------------------------------------------------

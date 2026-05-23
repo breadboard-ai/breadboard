@@ -342,6 +342,14 @@ class TestMapFunctionFilter:
         assert tools == []
         assert instructions == []
 
+    def test_builtin_filter_collects_instructions(self) -> None:
+        """When a builtin group is in filter and groups list, its instructions are collected."""
+        sandbox_group = _make_group("sandbox", instruction="Use sandbox.")
+        caps, tools, instructions, _sq = map_function_filter(
+            ["sandbox.*"], [sandbox_group], _StubHooks(),
+        )
+        assert instructions == ["Use sandbox."]
+
     def test_multiple_builtin_filters(self) -> None:
         """Multiple builtin filters union their tools."""
         caps, _, _, _sq = map_function_filter(

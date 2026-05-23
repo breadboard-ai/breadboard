@@ -206,7 +206,7 @@ async def _translate_step(
 def _build_request_config(
     capabilities: ag_types.CapabilitiesConfig,
     custom_tools: list[Callable[..., Any]],
-    custom_instructions: list[str],
+    system_instructions: ag_types.CustomSystemInstructions,
 ) -> dict[str, Any]:
     """Build the Hivetool-compatible config dict for the sendRequest body.
 
@@ -215,10 +215,8 @@ def _build_request_config(
     """
     result: dict[str, Any] = {}
 
-    # System instruction: join custom tool group instructions.
-    if custom_instructions:
-        text = "\n\n".join(custom_instructions)
-        result["systemInstruction"] = {"parts": [{"text": text}]}
+    if system_instructions:
+        result["systemInstruction"] = {"parts": [{"text": system_instructions.text}]}
 
     # Tools: combine SDK builtins + custom tool names.
     declarations: list[dict[str, str]] = []
@@ -249,27 +247,21 @@ AGENT_IDENTITY = (
 
 
 def _assemble_system_instructions(
-    custom_instructions: list[str],
-) -> ag_types.TemplatedSystemInstructions:
-    """Build SDK system instructions from custom tool group instructions.
+    active_instructions: list[str],
+) -> ag_types.CustomSystemInstructions:
+    """Build SDK system instructions from all active tool group instructions.
 
-    Each custom function group (agents, events, skills) carries an
-    ``instruction`` fragment describing how to use those tools.  These
-    are appended as named sections to the SDK's default template.
-
-    Groups that map to SDK builtins (system, chat, files, sandbox) are
-    excluded — the SDK explains its own tools.
+    Compiles a structured custom system prompt containing the core identity
+    and active tool guidelines/meta-plan. Bypasses harness defaults to maximize
+    context caching and prevent instruction leakage.
     """
-    sections = [
-        ag_types.SystemInstructionSection(
-            content=text, title=f"tools_{i}",
-        )
-        for i, text in enumerate(custom_instructions)
-    ]
-    return ag_types.TemplatedSystemInstructions(
-        identity=AGENT_IDENTITY,
-        sections=sections,
-    )
+    identity_block = f"<identity>\n{AGENT_IDENTITY}\n</identity>"
+
+    instructions_parts = [inst.strip() for inst in active_instructions if inst.strip()]
+    active_text = "\n\n".join(instructions_parts)
+
+    final_prompt = f"{identity_block}\n\n{active_text}"
+    return ag_types.CustomSystemInstructions(text=final_prompt)
 
 
 # ---------------------------------------------------------------------------
@@ -672,7 +664,7 @@ class AntigravityRunner:
             )
         )
 
-        # 2. Assemble system instructions from custom tool groups.
+        # 2. Assemble system instructions from all active tool groups.
         system_instructions = _assemble_system_instructions(
             custom_instructions,
         )
@@ -721,7 +713,7 @@ class AntigravityRunner:
         has_chat = _has_chat_functions(config.function_filter)
 
         request_config = _build_request_config(
-            capabilities, custom_tools, custom_instructions,
+            capabilities, custom_tools, system_instructions,
         )
 
         return AntigravityStream(
@@ -768,7 +760,7 @@ class AntigravityRunner:
             )
         )
 
-        # 3. Assemble system instructions from custom tool groups.
+        # 3. Assemble system instructions from all active tool groups.
         system_instructions = _assemble_system_instructions(
             custom_instructions,
         )
@@ -810,7 +802,7 @@ class AntigravityRunner:
         has_chat = _has_chat_functions(config.function_filter)
 
         request_config = _build_request_config(
-            capabilities, custom_tools, custom_instructions,
+            capabilities, custom_tools, system_instructions,
         )
 
         return AntigravityStream(
@@ -840,6 +832,8 @@ def _extract_initial_prompt(config: SessionConfiguration) -> str:
     and the actual user prompt.  The user prompt is typically the last
     segment with role='user' or the objective text.
     """
+    from datetime import datetime
+
     # Collect all text from segments — the segments form the full
     # context that the Gemini runner would send as the initial request.
     # Since system instructions are handled separately, we extract
@@ -850,7 +844,53 @@ def _extract_initial_prompt(config: SessionConfiguration) -> str:
         if text:
             texts.append(text)
 
-    return "\n\n".join(texts) if texts else "Begin."
+    objective_text = "\n\n".join(texts) if texts else "Begin."
+
+    now = datetime.now().strftime("%B %-d, %Y %-I:%M %p")
+    workspace = _workspace_path(config)
+    metadata_block = f"<metadata>\n<current_date>{now}</current_date>\n<working_directory>{workspace}</working_directory>\n</metadata>"
+
+    # Check if sandbox orientation is needed
+    has_files_or_sandbox = False
+    if config.function_filter is None:
+        has_files_or_sandbox = True
+    else:
+        has_files_or_sandbox = any(
+            pattern.startswith("files") or pattern.startswith("sandbox")
+            for pattern in config.function_filter
+        )
+
+    slug = None
+    if config.ticket_dir and (config.ticket_dir / "metadata.json").is_file():
+        try:
+            mdata = json.loads((config.ticket_dir / "metadata.json").read_text(encoding="utf-8"))
+            slug = mdata.get("slug")
+        except Exception:
+            pass
+
+    if has_files_or_sandbox and "<sandbox_environment>" not in objective_text:
+        if slug:
+            sandbox_block = (
+                "<sandbox_environment>\n"
+                "Your current working directory is the root of the workspace.\n"
+                f"You are assigned to work in the subdirectory: ./{slug}\n"
+                f"CRITICAL: You must prefix all file paths with {slug}/ "
+                "when creating or writing files (e.g., using files_write_file or "
+                "redirection in bash). Writes to the root directory or other "
+                "directories will fail.\n"
+                "You can read files from anywhere in the workspace.\n"
+                "</sandbox_environment>"
+            )
+        else:
+            sandbox_block = (
+                "<sandbox_environment>\n"
+                "Your current working directory is the root of the workspace.\n"
+                "You can read files from anywhere in the workspace.\n"
+                "</sandbox_environment>"
+            )
+        objective_text = f"{objective_text}\n\n{sandbox_block}"
+
+    return f"{metadata_block}\n<objective>{objective_text}</objective>"
 
 
 def _workspace_path(config: SessionConfiguration) -> str:
