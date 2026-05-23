@@ -280,10 +280,7 @@ def wrap_bees_handler(
                 "result_id": result_id,
                 "message": (
                     "Results are pending and will be delivered "
-                    "asynchronously. Please stop and wait for the "
-                    "response — do not take further action until you "
-                    "receive a <context_update> message with this "
-                    "result_id."
+                    "asynchronously. Now, reply with \"[ack]\" and wait for a " "<context_update> message that will provide the results."
                 ),
             }
 

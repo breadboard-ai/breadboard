@@ -368,6 +368,7 @@ class AntigravityStream:
         suspend_queue: asyncio.Queue[SuspendError] | None = None,
         resume_after_step: int = -1,
         file_system: FileSystem | None = None,
+        ticket_dir: Path | None = None,
     ) -> None:
         self._agent = agent
         self._exit_stack = exit_stack
@@ -383,6 +384,7 @@ class AntigravityStream:
             suspend_queue or asyncio.Queue()
         )
         self._file_system = file_system
+        self._ticket_dir = ticket_dir
 
         self._started = False
         self._exhausted = False
@@ -453,6 +455,27 @@ class AntigravityStream:
 
             self._exhausted = True
             if not self._emitted_complete:
+                # Look ahead: check if there are active child tasks.
+                has_active_tasks = False
+                if self._ticket_dir:
+                    from bees.unified_agent_store import UnifiedAgentStore
+                    try:
+                        store = UnifiedAgentStore(self._ticket_dir.parent.parent)
+                        caller_agent_id = self._ticket_dir.name
+                        has_active_tasks = store.has_pending_tasks(caller_agent_id)
+                    except Exception:
+                        logger.warning("Failed to query active tasks in AntigravityStream", exc_info=True)
+
+                if has_active_tasks and not self._pending_suspend:
+                    from bees.protocols.handler_types import WaitForInputEvent
+                    interaction_id = str(uuid.uuid4())
+                    event = WaitForInputEvent(
+                        request_id=interaction_id,
+                        prompt={},
+                        input_type="any",
+                    )
+                    self._pending_suspend = SuspendError(event, {})
+
                 self._emitted_complete = True
 
                 # Priority 1: A tool requested suspension (deferred
@@ -727,6 +750,7 @@ class AntigravityRunner:
             tool_result_queue=tool_result_queue,
             suspend_queue=suspend_queue,
             file_system=config.file_system,
+            ticket_dir=config.ticket_dir,
         )
 
     async def resume(
@@ -817,6 +841,7 @@ class AntigravityRunner:
             suspend_queue=suspend_queue,
             resume_after_step=last_step_index,
             file_system=config.file_system,
+            ticket_dir=config.ticket_dir,
         )
 
 
