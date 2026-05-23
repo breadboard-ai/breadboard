@@ -40,11 +40,14 @@ def _make_queue(events: list[dict[str, Any] | None]) -> asyncio.Queue:
 
 
 def _make_completed_task() -> asyncio.Task:
-    """Create an already-completed asyncio.Task."""
+    """Create an already-completed asyncio.Task.
+
+    Must be called from within a running event loop (i.e. inside an
+    ``async def``).
+    """
     async def noop():
         pass
-    loop = asyncio.get_event_loop()
-    return loop.create_task(noop())
+    return asyncio.ensure_future(noop())
 
 
 def _make_mock_interaction_store(
@@ -90,16 +93,19 @@ class TestGeminiStreamConformance(unittest.TestCase):
         from bees.protocols.session import SessionStream
         from bees.runners.gemini import GeminiStream
 
-        task = _make_completed_task()
-        stream = GeminiStream(
-            queue=asyncio.Queue(),
-            task=task,
-            context_queue=asyncio.Queue(),
-            session_id="test",
-            session_store=MagicMock(),
-            interaction_store=MagicMock(),
-        )
-        self.assertIsInstance(stream, SessionStream)
+        async def check():
+            task = _make_completed_task()
+            stream = GeminiStream(
+                queue=asyncio.Queue(),
+                task=task,
+                context_queue=asyncio.Queue(),
+                session_id="test",
+                session_store=MagicMock(),
+                interaction_store=MagicMock(),
+            )
+            self.assertIsInstance(stream, SessionStream)
+
+        asyncio.run(check())
 
 
 class TestGeminiRunnerConformance(unittest.TestCase):
@@ -150,7 +156,7 @@ class TestGeminiStreamIteration(unittest.TestCase):
 
             self.assertEqual(received, events)
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
     def test_empty_stream(self):
         """A stream with only None yields no events."""
@@ -174,7 +180,7 @@ class TestGeminiStreamIteration(unittest.TestCase):
 
             self.assertEqual(received, [])
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
     def test_double_iteration_raises(self):
         """Iterating an exhausted stream yields nothing."""
@@ -202,7 +208,7 @@ class TestGeminiStreamIteration(unittest.TestCase):
                 received.append(event)
             self.assertEqual(received, [])
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
 
 # ---------------------------------------------------------------------------
@@ -237,7 +243,7 @@ class TestGeminiStreamResumeState(unittest.TestCase):
 
             self.assertIsNone(stream.resume_state())
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
     def test_suspended_session_captures_state(self):
         """A suspended session captures resume state as JSON bytes."""
@@ -284,7 +290,7 @@ class TestGeminiStreamResumeState(unittest.TestCase):
             self.assertEqual(data["interaction_state"], state_dict)
             self.assertEqual(data["function_name"], "request_user_input")
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
     def test_paused_session_captures_state(self):
         """A paused session captures resume state."""
@@ -324,7 +330,7 @@ class TestGeminiStreamResumeState(unittest.TestCase):
             self.assertEqual(data["session_id"], "s-paused")
             self.assertEqual(data["interaction_id"], interaction_id)
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
     def test_function_name_omitted_when_absent(self):
         """If InteractionState has no function_call_part, function_name
@@ -362,7 +368,7 @@ class TestGeminiStreamResumeState(unittest.TestCase):
             data = json.loads(blob)
             self.assertNotIn("function_name", data)
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
     def test_fallback_to_session_store_resume_id(self):
         """If the suspend event lacks interactionId, falls back to
@@ -399,7 +405,7 @@ class TestGeminiStreamResumeState(unittest.TestCase):
             data = json.loads(blob)
             self.assertEqual(data["interaction_id"], "i-from-store")
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
 
 # ---------------------------------------------------------------------------
@@ -432,7 +438,7 @@ class TestGeminiStreamBackChannel(unittest.TestCase):
             self.assertFalse(ctx_queue.empty())
             self.assertEqual(ctx_queue.get_nowait(), parts)
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
     def test_send_tool_response_is_noop(self):
         """send_tool_response() does not raise."""
@@ -452,7 +458,7 @@ class TestGeminiStreamBackChannel(unittest.TestCase):
             # Should not raise.
             await stream.send_tool_response([{"result": "ok"}])
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
 
 # ---------------------------------------------------------------------------
@@ -508,7 +514,7 @@ class TestResumeStateBlobFormat(unittest.TestCase):
             self.assertIn("interaction_state", data)
             self.assertEqual(data["function_name"], "test_fn")
 
-        asyncio.get_event_loop().run_until_complete(check())
+        asyncio.run(check())
 
 
 class TestGeminiRunnerForkPrehydration(unittest.TestCase):

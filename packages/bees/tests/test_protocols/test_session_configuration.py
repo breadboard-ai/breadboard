@@ -90,6 +90,7 @@ class TestSessionConfigurationConformance(unittest.TestCase):
             "log_path",
             "on_chat_entry",
             "extract_chat_from_context",
+            "persist_events",
             "voice",
         }
         self.assertEqual(field_names, expected)
@@ -186,7 +187,7 @@ class TestSessionStreamConformance(unittest.TestCase):
             async for event in stream:
                 collected.append(event)
 
-        asyncio.get_event_loop().run_until_complete(drain())
+        asyncio.run(drain())
         self.assertEqual(collected, events)
 
     def test_resume_state_none_on_complete(self):
