@@ -183,6 +183,16 @@ class SessionConfiguration:
     function handlers write log entries directly.
     """
 
+    persist_events: bool = False
+    """Persist each event to ``events.jsonl`` during draining.
+
+    When ``True``, ``drain_session`` appends every event to the session
+    store's event log (``events.jsonl``).  Runners that bypass opal's
+    ``_tee_events`` loop (e.g. Antigravity) set this so Hivetool can
+    render the session timeline.  Runners using opal leave this
+    ``False`` — opal writes events itself.
+    """
+
     voice: str | None = None
     """Prebuilt voice name for Live API audio output (e.g. ``'Kore'``)."""
 

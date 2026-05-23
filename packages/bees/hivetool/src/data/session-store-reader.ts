@@ -120,10 +120,22 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
       if ("systemMessage" in event) {
         const sm = event.systemMessage as Record<string, unknown> || {};
         const text = sm.text as string || "";
-        currentTurnGroup.entries.push({
-          role: "model",
-          parts: [{ text, systemMessage: true }]
-        });
+        // Collate consecutive systemMessage events into a single entry
+        // (Antigravity streams text in small deltas).
+        const lastEntry = currentTurnGroup.entries.at(-1);
+        if (
+          lastEntry?.role === "model" &&
+          lastEntry.parts.length === 1 &&
+          lastEntry.parts[0].systemMessage &&
+          lastEntry.parts[0].text !== undefined
+        ) {
+          lastEntry.parts[0].text += text;
+        } else {
+          currentTurnGroup.entries.push({
+            role: "model",
+            parts: [{ text, systemMessage: true }]
+          });
+        }
       }
       
       if ("functionCall" in event) {
@@ -139,6 +151,19 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
           }]
         });
         totalFunctionCalls++;
+      }
+
+      if ("functionResponse" in event) {
+        const fr = event.functionResponse as Record<string, unknown> || {};
+        currentTurnGroup.entries.push({
+          role: "user",
+          parts: [{
+            functionResponse: {
+              name: fr.name as string || "",
+              response: fr.response as Record<string, unknown> || {},
+            }
+          }]
+        });
       }
       
       if ("usageMetadata" in event) {

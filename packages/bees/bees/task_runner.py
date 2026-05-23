@@ -122,6 +122,11 @@ class TaskRunner:
                 voice=agent.metadata.voice,
             )
 
+            # Antigravity bypasses opal's _tee_events, so drain_session
+            # must persist events to events.jsonl itself.
+            if agent.metadata.runner == "antigravity":
+                config.persist_events = True
+
             # Live sessions need context-level chat extraction because
             # they lack function-level chat handlers.
             if agent.metadata.runner == "live":
@@ -353,6 +358,11 @@ class TaskRunner:
                 seed_files=False,  # Files already on disk from previous run.
                 voice=agent.metadata.voice,
             )
+
+            # Antigravity bypasses opal's _tee_events, so drain_session
+            # must persist events to events.jsonl itself.
+            if agent.metadata.runner == "antigravity":
+                config.persist_events = True
 
             # Live sessions need context-level chat extraction because
             # they lack function-level chat handlers.

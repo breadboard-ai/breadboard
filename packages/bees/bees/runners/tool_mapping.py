@@ -85,7 +85,7 @@ def map_function_filter(
     function_filter: list[str] | None,
     function_groups: list[FunctionGroupFactory],
     hooks: SessionHooks,
-) -> tuple[ag_types.CapabilitiesConfig, list[Callable[..., Any]]]:
+) -> tuple[ag_types.CapabilitiesConfig, list[Callable[..., Any]], list[str]]:
     """Map bees function filters to SDK capabilities and custom tools.
 
     Args:
@@ -97,21 +97,26 @@ def map_function_filter(
         hooks: Session hooks for late-binding function group factories.
 
     Returns:
-        A ``(capabilities, custom_tools)`` tuple:
+        A ``(capabilities, custom_tools, custom_instructions)`` tuple:
 
         - ``capabilities``: SDK ``CapabilitiesConfig`` with the appropriate
           ``enabled_tools`` list.
         - ``custom_tools``: Python callables to register with the SDK's
           ``tools=[...]`` parameter.
+        - ``custom_instructions``: System instruction fragments from
+          custom tool groups (e.g. agents, events, skills).  Groups
+          that map to SDK builtins are excluded — the SDK explains
+          its own tools.
     """
     enabled_builtins: set[ag_types.BuiltinTools] = set()
     custom_tools: list[Callable[..., Any]] = []
+    custom_instructions: list[str] = []
 
     if function_filter is None:
         # No filter → enable all SDK builtins (except excluded).
         enabled_builtins = set(ag_types.BuiltinTools) - _EXCLUDED_BUILTINS
         # Also instantiate all custom-tool groups.
-        custom_tools = _extract_custom_tools(
+        custom_tools, custom_instructions = _extract_custom_tools(
             function_groups, hooks, include_groups=None,
         )
     else:
@@ -133,7 +138,7 @@ def map_function_filter(
         enabled_builtins -= _EXCLUDED_BUILTINS
 
         # Extract custom tools from matching function groups.
-        custom_tools = _extract_custom_tools(
+        custom_tools, custom_instructions = _extract_custom_tools(
             function_groups, hooks, include_groups=custom_group_names,
         )
 
@@ -142,7 +147,7 @@ def map_function_filter(
         enable_subagents=False,  # Bees manages its own agent hierarchy.
     )
 
-    return capabilities, custom_tools
+    return capabilities, custom_tools, custom_instructions
 
 
 # ---------------------------------------------------------------------------
@@ -211,7 +216,7 @@ def _extract_custom_tools(
     hooks: SessionHooks,
     *,
     include_groups: set[str] | None,
-) -> list[Callable[..., Any]]:
+) -> tuple[list[Callable[..., Any]], list[str]]:
     """Instantiate function groups and wrap their definitions as custom tools.
 
     Args:
@@ -220,8 +225,13 @@ def _extract_custom_tools(
         include_groups: If not None, only include groups whose ``name``
             is in this set.  If None, include all groups that map to
             custom tools.
+
+    Returns:
+        A ``(tools, instructions)`` tuple.  ``instructions`` contains
+        the non-empty ``group.instruction`` strings from matched groups.
     """
     tools: list[Callable[..., Any]] = []
+    instructions: list[str] = []
 
     for entry in function_groups:
         # function_groups contains both FunctionGroupFactory callables
@@ -254,4 +264,7 @@ def _extract_custom_tools(
         for _name, func_def in group.definitions:
             tools.append(wrap_bees_handler(func_def))
 
-    return tools
+        if group.instruction:
+            instructions.append(group.instruction)
+
+    return tools, instructions

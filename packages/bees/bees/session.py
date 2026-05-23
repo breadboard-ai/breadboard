@@ -422,6 +422,11 @@ async def drain_session(
             event_count += 1
             _print_event_summary(event, prefix=prefix)
 
+            # Persist the raw event to events.jsonl when the runner
+            # doesn't use opal's _tee_events (which writes events itself).
+            if config.persist_events:
+                await session_store.append_event(session_id, event)
+
             # Record turn boundary and checkpoint on sendRequest
             if "sendRequest" in event:
                 contents = event["sendRequest"].get("body", {}).get("contents", [])
