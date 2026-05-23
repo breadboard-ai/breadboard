@@ -47,6 +47,7 @@ from bees.protocols.session import (
     SessionConfiguration,
     SessionEvent,
 )
+from bees.protocols.filesystem import FileSystem
 from bees.runners.tool_mapping import map_function_filter
 
 __all__ = ["AntigravityRunner", "AntigravityStream"]
@@ -74,21 +75,61 @@ def _format_usage(usage: ag_types.UsageMetadata) -> dict[str, Any]:
     }
 
 
-def _build_complete_result(step: ag_types.Step) -> dict[str, Any]:
+async def _build_complete_result(
+    step: ag_types.Step,
+    file_system: FileSystem | None = None,
+) -> dict[str, Any]:
     """Build a ``complete`` event result dict from a FINISH step."""
     # The SDK's finish step carries structured_output when configured.
     # Map it to the bees outcome format.
     outcome_text = step.content or ""
+    if step.structured_output and isinstance(step.structured_output, dict):
+        if "objective_outcome" in step.structured_output:
+            outcome_text = step.structured_output["objective_outcome"]
+        elif "user_message" in step.structured_output:
+            outcome_text = step.structured_output["user_message"]
+
+    from typing import cast
+    outcomes: dict[str, Any]
+    if file_system and outcome_text:
+        from bees.pidgin import from_pidgin_string
+        resolved = await from_pidgin_string(outcome_text, file_system)
+        if isinstance(resolved, dict) and "$error" in resolved:
+            # Fall back to raw text if resolution fails
+            outcomes = {"parts": [{"text": outcome_text}]}
+        else:
+            outcomes = cast(dict[str, Any], resolved)
+    else:
+        outcomes = {"parts": [{"text": outcome_text}]}
+
     result: dict[str, Any] = {
         "success": step.status != ag_types.StepStatus.ERROR,
-        "outcomes": {"parts": [{"text": outcome_text}]},
+        "outcomes": outcomes,
     }
     if step.structured_output is not None:
         result["structured_output"] = step.structured_output
+
+    if file_system:
+        # Collect intermediate files.
+        intermediate = []
+        for path in list(file_system.files.keys()):
+            file_parts = await file_system.get(path)
+            if isinstance(file_parts, dict) and "$error" in file_parts:
+                continue
+            if file_parts:
+                intermediate.append({
+                    "path": path,
+                    "content": {"parts": file_parts},
+                })
+        result["intermediate"] = intermediate
+
     return result
 
 
-def _translate_step(step: ag_types.Step) -> list[SessionEvent]:
+async def _translate_step(
+    step: ag_types.Step,
+    file_system: FileSystem | None = None,
+) -> list[SessionEvent]:
     """Translate a single SDK Step into zero or more SessionEvent dicts."""
     events: list[SessionEvent] = []
 
@@ -129,7 +170,8 @@ def _translate_step(step: ag_types.Step) -> list[SessionEvent]:
         step.type == ag_types.StepType.FINISH
         and step.status == ag_types.StepStatus.DONE
     ):
-        events.append({"complete": {"result": _build_complete_result(step)}})
+        complete_result = await _build_complete_result(step, file_system)
+        events.append({"complete": {"result": complete_result}})
 
     # Error → error event (terminal errors only).
     # Tool call errors (policy denials, missing files, etc.) are
@@ -196,6 +238,16 @@ def _build_request_config(
 # ---------------------------------------------------------------------------
 
 
+AGENT_IDENTITY = (
+    "You are an LLM-powered AI agent, orchestrated within an application alongside "
+    "other AI agents. During this session, your job is to fulfill the objective, "
+    "specified at the start of the conversation context. The objective is provided by "
+    "the application and is not visible to the user of the application. Similarly, "
+    "the outcome you produce is delivered by the orchestration system to another "
+    "agent. The outcome is also not visible to the user to the application."
+)
+
+
 def _assemble_system_instructions(
     custom_instructions: list[str],
 ) -> ag_types.TemplatedSystemInstructions:
@@ -214,7 +266,10 @@ def _assemble_system_instructions(
         )
         for i, text in enumerate(custom_instructions)
     ]
-    return ag_types.TemplatedSystemInstructions(sections=sections)
+    return ag_types.TemplatedSystemInstructions(
+        identity=AGENT_IDENTITY,
+        sections=sections,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -320,6 +375,7 @@ class AntigravityStream:
         tool_result_queue: asyncio.Queue[ag_types.ToolResult] | None = None,
         suspend_queue: asyncio.Queue[SuspendError] | None = None,
         resume_after_step: int = -1,
+        file_system: FileSystem | None = None,
     ) -> None:
         self._agent = agent
         self._exit_stack = exit_stack
@@ -334,6 +390,7 @@ class AntigravityStream:
         self._suspend_queue: asyncio.Queue[SuspendError] = (
             suspend_queue or asyncio.Queue()
         )
+        self._file_system = file_system
 
         self._started = False
         self._exhausted = False
@@ -400,9 +457,9 @@ class AntigravityStream:
                 return await self.__anext__()
         except StopAsyncIteration:
             # The SDK turn is done — the agent went idle.
-            self._exhausted = True
             self._capture_resume_state()
 
+            self._exhausted = True
             if not self._emitted_complete:
                 self._emitted_complete = True
 
@@ -450,7 +507,7 @@ class AntigravityStream:
             return {"error": {"message": str(exc)}}
 
         # Translate the step into events.
-        events = _translate_step(step)
+        events = await _translate_step(step, self._file_system)
 
         # Drain tool results captured by the PostToolCallHook.
         # Done here (after step translation) so functionResponse events
@@ -677,6 +734,7 @@ class AntigravityRunner:
             request_config=request_config,
             tool_result_queue=tool_result_queue,
             suspend_queue=suspend_queue,
+            file_system=config.file_system,
         )
 
     async def resume(
@@ -766,6 +824,7 @@ class AntigravityRunner:
             tool_result_queue=tool_result_queue,
             suspend_queue=suspend_queue,
             resume_after_step=last_step_index,
+            file_system=config.file_system,
         )
 
 

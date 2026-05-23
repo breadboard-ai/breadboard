@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import asyncio
 import fnmatch
+import json
 import logging
 from typing import Any, Callable
 
@@ -77,6 +78,42 @@ _EXCLUDED_BUILTINS = {
     ag_types.BuiltinTools.GENERATE_IMAGE,
     ag_types.BuiltinTools.START_SUBAGENT,
 }
+
+
+DEFAULT_FINISH_SCHEMA = json.dumps({
+    "type": "object",
+    "properties": {
+        "objective_outcome": {
+            "type": "string",
+            "description": "Your return value: the content of the fulfilled objective."
+        }
+    },
+    "required": ["objective_outcome"],
+    "additionalProperties": False,
+})
+
+
+def _find_finish_schema(
+    function_groups: list[FunctionGroupFactory],
+    hooks: SessionHooks,
+) -> str | None:
+    """Find the parametersJsonSchema of system_objective_fulfilled in system group."""
+    for entry in function_groups:
+        group = None
+        if isinstance(entry, FunctionGroup):
+            group = entry
+        elif callable(entry):
+            try:
+                group = entry(hooks)
+            except Exception:
+                continue
+        if group and group.name == "system":
+            for name, func_def in group.definitions:
+                if name == "system_objective_fulfilled":
+                    schema = func_def.parameters_json_schema
+                    if schema:
+                        return json.dumps(schema)
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -159,9 +196,14 @@ def map_function_filter(
             suspend_queue=suspend_queue,
         )
 
+    finish_schema = None
+    if ag_types.BuiltinTools.FINISH in enabled_builtins:
+        finish_schema = _find_finish_schema(function_groups, hooks) or DEFAULT_FINISH_SCHEMA
+
     capabilities = ag_types.CapabilitiesConfig(
         enabled_tools=sorted(enabled_builtins, key=lambda t: t.value),
         enable_subagents=False,  # Bees manages its own agent hierarchy.
+        finish_tool_schema_json=finish_schema,
     )
 
     return capabilities, custom_tools, custom_instructions, suspend_queue

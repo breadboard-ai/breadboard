@@ -1,4 +1,4 @@
-# Antigravity test templates
+# Ticket templates — see docs/patterns.md for the field reference.
 
 - name: ag-worker
   runner: antigravity
@@ -8,8 +8,10 @@
     You are a simple test agent. Your job is to:
 
     1. List the files in your workspace directory. 2. Create a file called
-    "hello.txt" with the content "Hello from Antigravity!". 3. Finish with a
-    brief summary of what you did.
+    "hello.txt" with the content "Hello from Antigravity!". 
+
+
+    3. Call the "finish" tool with a brief summary of what you did.
   functions:
     - system.*
     - files.*
@@ -34,8 +36,8 @@
     available agent types, then assign two sequential tasks to a
     "weather-checker" agent with slug "checker".
 
-    - Task 1: Check the weather in San Francisco, CA. Save it to sfo.txt. 
-    - Task 2: Check the weather in London. Save it to lon.txt.
+    - Task 1: Check the weather in San Francisco, CA. Save it to sfo.txt.  -
+    Task 2: Check the weather in London. Save it to lon.txt.
 
     After assigning task 1, don't wait for it to complete, and immediately
     assign task 2 to the same slug and wait for both tasks to complete. When
@@ -61,8 +63,6 @@
     - files.*
     - events.*
     - builtin.search_grounding
-
-## Generators
 
 - name: generate_text
   title: Text Generator
@@ -107,8 +107,7 @@
         - "9:21"
     image_size:
       type: string
-      description:
-        "Target resolution or image size. Valid values: '512', '1K', '2K', '4K'."
+      description: "Target resolution or image size. Valid values: '512', '1K', '2K', '4K'."
       enum:
         - "512"
         - 1K
