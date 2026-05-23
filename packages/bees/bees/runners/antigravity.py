@@ -41,6 +41,7 @@ from google.antigravity.hooks import policy
 from google.antigravity.hooks.hooks import HookContext, PostToolCallHook
 
 from bees.disk_file_system import DiskFileSystem
+from bees.protocols.handler_types import SuspendError
 from bees.protocols.session import (
     SUSPEND_TYPES,
     SessionConfiguration,
@@ -311,6 +312,7 @@ class AntigravityStream:
         on_chat_entry: Callable[[str, str], None] | None = None,
         request_config: dict[str, Any] | None = None,
         tool_result_queue: asyncio.Queue[ag_types.ToolResult] | None = None,
+        suspend_queue: asyncio.Queue[SuspendError] | None = None,
     ) -> None:
         self._agent = agent
         self._exit_stack = exit_stack
@@ -322,6 +324,9 @@ class AntigravityStream:
         self._tool_result_queue: asyncio.Queue[ag_types.ToolResult] = (
             tool_result_queue or asyncio.Queue()
         )
+        self._suspend_queue: asyncio.Queue[SuspendError] = (
+            suspend_queue or asyncio.Queue()
+        )
 
         self._started = False
         self._exhausted = False
@@ -331,6 +336,7 @@ class AntigravityStream:
         self._emitted_send_request = False
         self._emitted_complete = False
         self._last_user_text: str = ""
+        self._pending_suspend: SuspendError | None = None
 
     # -- async iterator ----------------------------------------------------
 
@@ -340,14 +346,6 @@ class AntigravityStream:
     async def __anext__(self) -> SessionEvent:
         if self._exhausted:
             raise StopAsyncIteration
-
-        # Drain tool results captured by the PostToolCallHook.
-        # These arrive asynchronously but are ordered correctly:
-        # the hook fires after tool execution completes, which is
-        # always after the ACTIVE step that produced the functionCall.
-        while not self._tool_result_queue.empty():
-            result = self._tool_result_queue.get_nowait()
-            self._pending_events.append(_tool_result_to_event(result))
 
         # Drain any buffered events first.
         if self._pending_events:
@@ -390,15 +388,26 @@ class AntigravityStream:
             if not self._emitted_complete:
                 self._emitted_complete = True
 
-                # Chat mode: idle without FINISH = waiting for user input.
+                # Priority 1: A tool requested suspension (deferred
+                # result pattern).  This overrides both chat and
+                # worker idle behavior — the agent MUST suspend.
+                if self._pending_suspend:
+                    await self._cleanup()
+                    return {"waitForInput": {
+                        "requestId": (
+                            self._pending_suspend.interaction_id
+                        ),
+                        "prompt": {},
+                        "inputType": "any",
+                    }}
+
+                # Priority 2: Chat mode — idle without FINISH =
+                # waiting for user input.
                 if self._has_chat and self._last_user_text:
                     # Log the model's message to the chat log.
                     if self._on_chat_entry:
                         self._on_chat_entry("agent", self._last_user_text)
 
-                    # Don't tear down the agent yet — persist state for
-                    # resume, but the cleanup still runs because the
-                    # stream is done from drain_session's perspective.
                     await self._cleanup()
                     return {"waitForInput": {
                         "requestId": str(uuid.uuid4()),
@@ -408,7 +417,7 @@ class AntigravityStream:
                         "inputType": "text",
                     }}
 
-                # Worker mode: idle without FINISH = done.
+                # Default: Worker mode — idle without FINISH = done.
                 await self._cleanup()
                 return {"complete": {"result": {
                     "success": True,
@@ -424,6 +433,14 @@ class AntigravityStream:
 
         # Translate the step into events.
         events = _translate_step(step)
+
+        # Drain tool results captured by the PostToolCallHook.
+        # Done here (after step translation) so functionResponse events
+        # appear adjacent to the step that produced them, rather than
+        # being spliced into the next text chunk.
+        while not self._tool_result_queue.empty():
+            result = self._tool_result_queue.get_nowait()
+            events.append(_tool_result_to_event(result))
 
         if not events:
             # Step produced no translatable events — skip to next.
@@ -448,6 +465,13 @@ class AntigravityStream:
                 self._last_user_text += event["systemMessage"].get("text", "")
         if not has_model_text:
             self._last_user_text = ""
+
+        # Check for deferred suspends from tool wrappers.
+        if not self._pending_suspend:
+            try:
+                self._pending_suspend = self._suspend_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                pass
 
         # Check for suspend events — capture resume state eagerly.
         for event in events:
@@ -558,10 +582,12 @@ class AntigravityRunner:
         """
         # 1. Map function filter to SDK capabilities.
         stub_hooks = _StubSessionHooks(config.file_system)
-        capabilities, custom_tools, custom_instructions = map_function_filter(
-            config.function_filter,
-            config.function_groups,
-            stub_hooks,
+        capabilities, custom_tools, custom_instructions, suspend_queue = (
+            map_function_filter(
+                config.function_filter,
+                config.function_groups,
+                stub_hooks,
+            )
         )
 
         # 2. Assemble system instructions from custom tool groups.
@@ -625,6 +651,7 @@ class AntigravityRunner:
             on_chat_entry=config.on_chat_entry,
             request_config=request_config,
             tool_result_queue=tool_result_queue,
+            suspend_queue=suspend_queue,
         )
 
     async def resume(
@@ -649,10 +676,12 @@ class AntigravityRunner:
 
         # 2. Map function filter to SDK capabilities (same as run).
         stub_hooks = _StubSessionHooks(config.file_system)
-        capabilities, custom_tools, custom_instructions = map_function_filter(
-            config.function_filter,
-            config.function_groups,
-            stub_hooks,
+        capabilities, custom_tools, custom_instructions, suspend_queue = (
+            map_function_filter(
+                config.function_filter,
+                config.function_groups,
+                stub_hooks,
+            )
         )
 
         # 3. Assemble system instructions from custom tool groups.
@@ -709,6 +738,7 @@ class AntigravityRunner:
             on_chat_entry=config.on_chat_entry,
             request_config=request_config,
             tool_result_queue=tool_result_queue,
+            suspend_queue=suspend_queue,
         )
 
 
