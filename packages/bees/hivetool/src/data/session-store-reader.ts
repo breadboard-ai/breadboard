@@ -54,6 +54,10 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
   
   let currentTurnGroup: TurnGroup | null = null;
   let currentTurnIndex = 0;
+  // Set after usageMetadata to split the next content event into a new
+  // turn group.  For Gemini this is a no-op (sendRequest already creates
+  // turns).  For Antigravity it gives per-API-call turn boundaries.
+  let needsNewTurn = false;
 
   for (const event of events) {
     if ("sendRequest" in event) {
@@ -76,6 +80,7 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
       };
       turnGroups.push(currentTurnGroup);
       turnCount++;
+      needsNewTurn = false;
 
       // Parse the incoming user turn / resume turn from sendRequest history
       const contents = body.contents as Array<Record<string, unknown>> || [];
@@ -106,6 +111,24 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
       }
     }
     
+    // After usageMetadata marks the end of a model API call, split
+    // subsequent content into a new turn group.  This fires for
+    // thought, systemMessage, functionCall, and functionResponse —
+    // but NOT for complete (which stays with the final model output).
+    if (needsNewTurn && currentTurnGroup && (
+      "thought" in event || "systemMessage" in event ||
+      "functionCall" in event || "functionResponse" in event
+    )) {
+      currentTurnGroup = {
+        turnIndex: currentTurnIndex++,
+        entries: [],
+        tokenMetadata: null,
+      };
+      turnGroups.push(currentTurnGroup);
+      turnCount++;
+      needsNewTurn = false;
+    }
+
     if (currentTurnGroup) {
       if ("thought" in event) {
         const thought = event.thought as Record<string, unknown> || {};
@@ -176,6 +199,7 @@ function compileEventsToSegment(sessionId: string, events: Record<string, unknow
         totalThoughtsTokens += (metadata.thoughtsTokenCount as number) || 0;
         totalCachedTokens += (metadata.cachedContentTokenCount as number) || 0;
         totalTokens += (metadata.totalTokenCount as number) || 0;
+        needsNewTurn = true;
       }
 
       if ("complete" in event && runnerType !== "generate") {
