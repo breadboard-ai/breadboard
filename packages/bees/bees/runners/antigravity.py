@@ -245,9 +245,22 @@ AGENT_IDENTITY = (
     "agent. The outcome is also not visible to the user to the application."
 )
 
+FILES_INSTRUCTION_ANTIGRAVITY = """## Passing around files
+
+You can pass files around using the `<file src="filename.ext" />` syntax.
+
+Use the <file> tag to present the files to the user. 
+
+The post-processing parser replaces each `<file>` tag with the file's
+contents. Make sure your output reads well after the replacement.
+
+Only reference files that you know to exist. Hypothetical file tags they will cause processing errors.
+"""
+
 
 def _assemble_system_instructions(
     active_instructions: list[str],
+    has_files: bool = False,
 ) -> ag_types.CustomSystemInstructions:
     """Build SDK system instructions from all active tool group instructions.
 
@@ -258,6 +271,8 @@ def _assemble_system_instructions(
     identity_block = f"<identity>\n{AGENT_IDENTITY}\n</identity>"
 
     instructions_parts = [inst.strip() for inst in active_instructions if inst.strip()]
+    if has_files:
+        instructions_parts.append(FILES_INSTRUCTION_ANTIGRAVITY.strip())
     active_text = "\n\n".join(instructions_parts)
 
     final_prompt = f"{identity_block}\n\n{active_text}"
@@ -697,8 +712,13 @@ class AntigravityRunner:
         )
 
         # 2. Assemble system instructions from all active tool groups.
+        has_files = (config.function_filter is None) or any(
+            pattern.startswith("files")
+            for pattern in config.function_filter
+        )
         system_instructions = _assemble_system_instructions(
             custom_instructions,
+            has_files=has_files,
         )
 
         # 3. Build workspace path.
@@ -794,8 +814,13 @@ class AntigravityRunner:
         )
 
         # 3. Assemble system instructions from all active tool groups.
+        has_files = (config.function_filter is None) or any(
+            pattern.startswith("files")
+            for pattern in config.function_filter
+        )
         system_instructions = _assemble_system_instructions(
             custom_instructions,
+            has_files=has_files,
         )
 
         # 4. Build workspace path.
