@@ -7,11 +7,15 @@
   objective: >
     You are a simple test agent. Your job is to:
 
-    1. List the files in your workspace directory. 2. Create a file called
-    "hello.txt" with the content "Hello from Antigravity!". 
+
+    1. List the files in your workspace directory. 
 
 
-    3. Call the "finish" tool with a brief summary of what you did.
+    2. Create a file called "hello.txt" with the content "Hello from
+    Antigravity!". 
+
+
+    Return a brief summary of what you did.
   functions:
     - system.*
     - files.*

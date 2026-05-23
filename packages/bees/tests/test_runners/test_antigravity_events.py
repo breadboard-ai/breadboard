@@ -133,14 +133,90 @@ class TestAntigravitySystemInstructions:
         )
 
         custom = ["custom note 1", "custom note 2"]
-        templated = _assemble_system_instructions(custom)
+        custom_si = _assemble_system_instructions(custom)
 
-        assert templated.identity == AGENT_IDENTITY
-        assert len(templated.sections) == 2
-        assert templated.sections[0].content == "custom note 1"
-        assert templated.sections[0].title == "tools_0"
-        assert templated.sections[1].content == "custom note 2"
-        assert templated.sections[1].title == "tools_1"
+        assert isinstance(custom_si, ag_types.CustomSystemInstructions)
+        assert "<identity>" in custom_si.text
+        assert AGENT_IDENTITY in custom_si.text
+        assert "custom note 1" in custom_si.text
+        assert "custom note 2" in custom_si.text
+
+
+class TestAntigravityExtractInitialPrompt:
+    """Tests for ``_extract_initial_prompt``."""
+
+    def test_extract_initial_prompt_basic(self) -> None:
+        from pathlib import Path
+        from bees.runners.antigravity import _extract_initial_prompt
+        from bees.protocols.session import SessionConfiguration
+        from bees.disk_file_system import DiskFileSystem
+
+        config = SessionConfiguration(
+            segments=[{"text": "My Objective"}],
+            function_groups=[],
+            function_filter=["agents.*"],
+            model="gemini-2.5-flash",
+            file_system=DiskFileSystem(Path("/tmp")),
+        )
+
+        prompt = _extract_initial_prompt(config)
+        assert "<metadata>" in prompt
+        assert "<current_date>" in prompt
+        assert "<working_directory>/tmp</working_directory>" in prompt
+        assert "<objective>My Objective</objective>" in prompt
+        assert "<sandbox_environment>" not in prompt
+
+    def test_extract_initial_prompt_sandbox(self, tmp_path: Path) -> None:
+        from pathlib import Path
+        from bees.runners.antigravity import _extract_initial_prompt
+        from bees.protocols.session import SessionConfiguration
+        from bees.disk_file_system import DiskFileSystem
+        import json
+
+        # Write metadata.json with a slug
+        metadata = {"slug": "sub/agent/slug"}
+        (tmp_path / "metadata.json").write_text(json.dumps(metadata), encoding="utf-8")
+
+        config = SessionConfiguration(
+            segments=[{"text": "My Subagent Objective"}],
+            function_groups=[],
+            function_filter=["files.*"],
+            model="gemini-2.5-flash",
+            file_system=DiskFileSystem(tmp_path),
+            ticket_dir=tmp_path,
+        )
+
+        prompt = _extract_initial_prompt(config)
+        assert "<metadata>" in prompt
+        assert f"<working_directory>{tmp_path.resolve()}</working_directory>" in prompt
+        assert "<objective>" in prompt
+        assert "My Subagent Objective" in prompt
+        assert "<sandbox_environment>" in prompt
+        assert "subdirectory: ./sub/agent/slug" in prompt
+
+    def test_extract_initial_prompt_root_with_files(self) -> None:
+        from pathlib import Path
+        from bees.runners.antigravity import _extract_initial_prompt
+        from bees.protocols.session import SessionConfiguration
+        from bees.disk_file_system import DiskFileSystem
+
+        config = SessionConfiguration(
+            segments=[{"text": "My Root Objective"}],
+            function_groups=[],
+            function_filter=["files.*"],
+            model="gemini-2.5-flash",
+            file_system=DiskFileSystem(Path("/tmp")),
+        )
+
+        prompt = _extract_initial_prompt(config)
+        assert "<metadata>" in prompt
+        assert "<working_directory>/tmp</working_directory>" in prompt
+        assert "<objective>" in prompt
+        assert "My Root Objective" in prompt
+        assert "<sandbox_environment>" in prompt
+        assert "Your current working directory is the root of the workspace." in prompt
+        assert "You can read files from anywhere in the workspace." in prompt
+        assert "assigned to work in the subdirectory" not in prompt
 
 
 class TestAntigravityBuildCompleteResult:
