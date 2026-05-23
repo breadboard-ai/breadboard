@@ -38,6 +38,7 @@ from google.antigravity.connections.local.local_connection_config import (
     LocalAgentConfig,
 )
 from google.antigravity.hooks import policy
+from google.antigravity.hooks.hooks import HookContext, PostToolCallHook
 
 from bees.disk_file_system import DiskFileSystem
 from bees.protocols.session import (
@@ -102,30 +103,19 @@ def _translate_step(step: ag_types.Step) -> list[SessionEvent]:
     ):
         events.append({"systemMessage": {"text": step.content_delta}})
 
-    # Tool calls / responses.
-    # The SDK emits TOOL_CALL steps twice per invocation:
-    #   1. status=ACTIVE → the model requested the call (functionCall)
-    #   2. status=DONE   → the tool executed and produced a result (functionResponse)
-    if step.tool_calls:
-        is_response = (
-            step.type == ag_types.StepType.TOOL_CALL
-            and step.status == ag_types.StepStatus.DONE
-        )
+    # Tool calls.
+    # The SDK may emit TOOL_CALL steps more than once per invocation
+    # (ACTIVE → DONE).  We only emit functionCall for the initial
+    # ACTIVE step.  functionResponse events are captured separately
+    # via a PostToolCallHook (see _ToolResultCapture).
+    if step.tool_calls and step.status != ag_types.StepStatus.DONE:
         for tc in step.tool_calls:
             name = tc.name
             if isinstance(name, ag_types.BuiltinTools):
                 name = name.value
-            if is_response:
-                events.append({
-                    "functionResponse": {
-                        "name": name,
-                        "response": tc.args,
-                    },
-                })
-            else:
-                events.append({
-                    "functionCall": {"name": name, "args": tc.args},
-                })
+            events.append(
+                {"functionCall": {"name": name, "args": tc.args}},
+            )
 
     # Usage metadata → usageMetadata event.
     if step.usage_metadata:
@@ -227,6 +217,52 @@ def _assemble_system_instructions(
 
 
 # ---------------------------------------------------------------------------
+# PostToolCallHook — captures tool results for functionResponse events
+# ---------------------------------------------------------------------------
+
+
+class _ToolResultCapture(PostToolCallHook):
+    """Observes tool completions and queues results for event emission.
+
+    Registered as a hook on the Agent so it fires for every tool call
+    — both SDK built-in tools (file ops, shell) and custom host-side
+    tools (agents_*, events_*).  Results are pushed to an asyncio.Queue
+    that the AntigravityStream drains into ``functionResponse`` events.
+    """
+
+    def __init__(self, queue: asyncio.Queue[ag_types.ToolResult]) -> None:
+        self._queue = queue
+
+    async def run(
+        self, context: HookContext, data: ag_types.ToolResult,
+    ) -> None:
+        self._queue.put_nowait(data)
+
+
+def _tool_result_to_event(
+    result: ag_types.ToolResult,
+) -> dict[str, Any]:
+    """Convert a ToolResult into a ``functionResponse`` SessionEvent."""
+    name = result.name
+    if isinstance(name, ag_types.BuiltinTools):
+        name = name.value
+    response = result.result
+    if result.error:
+        response = {"error": result.error}
+    elif response is None:
+        response = {}
+    elif not isinstance(response, dict):
+        # Wrap scalars / lists so the value is always a JSON object.
+        response = {"result": response}
+    return {
+        "functionResponse": {
+            "name": name,
+            "response": response,
+        },
+    }
+
+
+# ---------------------------------------------------------------------------
 # AntigravityStream — SessionStream wrapping SDK's step stream
 # ---------------------------------------------------------------------------
 
@@ -274,6 +310,7 @@ class AntigravityStream:
         has_chat: bool = False,
         on_chat_entry: Callable[[str, str], None] | None = None,
         request_config: dict[str, Any] | None = None,
+        tool_result_queue: asyncio.Queue[ag_types.ToolResult] | None = None,
     ) -> None:
         self._agent = agent
         self._exit_stack = exit_stack
@@ -282,6 +319,9 @@ class AntigravityStream:
         self._has_chat = has_chat
         self._on_chat_entry = on_chat_entry
         self._request_config = request_config or {}
+        self._tool_result_queue: asyncio.Queue[ag_types.ToolResult] = (
+            tool_result_queue or asyncio.Queue()
+        )
 
         self._started = False
         self._exhausted = False
@@ -300,6 +340,14 @@ class AntigravityStream:
     async def __anext__(self) -> SessionEvent:
         if self._exhausted:
             raise StopAsyncIteration
+
+        # Drain tool results captured by the PostToolCallHook.
+        # These arrive asynchronously but are ordered correctly:
+        # the hook fires after tool execution completes, which is
+        # always after the ACTIVE step that produced the functionCall.
+        while not self._tool_result_queue.empty():
+            result = self._tool_result_queue.get_nowait()
+            self._pending_events.append(_tool_result_to_event(result))
 
         # Drain any buffered events first.
         if self._pending_events:
@@ -531,19 +579,26 @@ class AntigravityRunner:
             save_dir = tempfile.mkdtemp(prefix="bees-ag-")
         Path(save_dir).mkdir(parents=True, exist_ok=True)
 
-        # 5. Build the LocalAgentConfig.
+        # 5. Build the hook that captures tool results.
+        tool_result_queue: asyncio.Queue[ag_types.ToolResult] = (
+            asyncio.Queue()
+        )
+        tool_result_hook = _ToolResultCapture(tool_result_queue)
+
+        # 6. Build the LocalAgentConfig.
         agent_config = LocalAgentConfig(
             api_key=self._api_key,
             system_instructions=system_instructions,
             capabilities=capabilities,
             tools=custom_tools,
             policies=[policy.allow_all()],
+            hooks=[tool_result_hook],
             workspaces=[workspace],
             save_dir=save_dir,
             conversation_id=None,  # Fresh session.
         )
 
-        # 6. Enter the Agent context.
+        # 7. Enter the Agent context.
         exit_stack = contextlib.AsyncExitStack()
         try:
             agent = await exit_stack.enter_async_context(Agent(agent_config))
@@ -551,10 +606,10 @@ class AntigravityRunner:
             await exit_stack.aclose()
             raise
 
-        # 7. Extract the initial prompt from segments.
+        # 8. Extract the initial prompt from segments.
         initial_prompt = _extract_initial_prompt(config)
 
-        # 8. Detect chat mode from function filter.
+        # 9. Detect chat mode from function filter.
         has_chat = _has_chat_functions(config.function_filter)
 
         request_config = _build_request_config(
@@ -569,6 +624,7 @@ class AntigravityRunner:
             has_chat=has_chat,
             on_chat_entry=config.on_chat_entry,
             request_config=request_config,
+            tool_result_queue=tool_result_queue,
         )
 
     async def resume(
@@ -607,19 +663,26 @@ class AntigravityRunner:
         # 4. Build workspace path.
         workspace = _workspace_path(config)
 
-        # 5. Build the LocalAgentConfig with resume state.
+        # 5. Build the hook that captures tool results.
+        tool_result_queue: asyncio.Queue[ag_types.ToolResult] = (
+            asyncio.Queue()
+        )
+        tool_result_hook = _ToolResultCapture(tool_result_queue)
+
+        # 6. Build the LocalAgentConfig with resume state.
         agent_config = LocalAgentConfig(
             api_key=self._api_key,
             system_instructions=system_instructions,
             capabilities=capabilities,
             tools=custom_tools,
             policies=[policy.allow_all()],
+            hooks=[tool_result_hook],
             workspaces=[workspace],
             save_dir=save_dir,
             conversation_id=conversation_id,
         )
 
-        # 6. Enter the Agent context.
+        # 7. Enter the Agent context.
         exit_stack = contextlib.AsyncExitStack()
         try:
             agent = await exit_stack.enter_async_context(Agent(agent_config))
@@ -627,10 +690,10 @@ class AntigravityRunner:
             await exit_stack.aclose()
             raise
 
-        # 7. Build the resume prompt from the user's response + context.
+        # 8. Build the resume prompt from the user's response + context.
         resume_prompt = _build_resume_prompt(response, context_parts)
 
-        # 8. Detect chat mode from function filter.
+        # 9. Detect chat mode from function filter.
         has_chat = _has_chat_functions(config.function_filter)
 
         request_config = _build_request_config(
@@ -645,6 +708,7 @@ class AntigravityRunner:
             has_chat=has_chat,
             on_chat_entry=config.on_chat_entry,
             request_config=request_config,
+            tool_result_queue=tool_result_queue,
         )
 
 

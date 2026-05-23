@@ -7,9 +7,9 @@
   objective: >
     You are a simple test agent. Your job is to:
 
-    1. List the files in your workspace directory.
-    2. Create a file called "hello.txt" with the content "Hello from Antigravity!".
-    3. Finish with a brief summary of what you did.
+    1. List the files in your workspace directory. 2. Create a file called
+    "hello.txt" with the content "Hello from Antigravity!". 3. Finish with a
+    brief summary of what you did.
   functions:
     - system.*
     - files.*
@@ -19,9 +19,293 @@
   title: AG Chat
   description: An interactive chat agent that uses the Antigravity SDK
   objective: >
-    You are a friendly assistant. Greet the user and ask how you can help.
-    When the user asks you to do something, do it and then ask if there's
-    anything else. You can read and write files in your workspace.
+    You are a friendly assistant. Greet the user and ask how you can help. When
+    the user asks you to do something, do it and then ask if there's anything
+    else. You can read and write files in your workspace.
   functions:
     - chat.*
     - files.*
+
+- name: weather-orchestrator
+  title: Weather Orchestrator
+  runner: antigravity
+  objective: >-
+    You are a weather-checking orchestrator. Use agents_list_types to discover
+    available agent types, then assign two sequential tasks to a
+    "weather-checker" agent with slug "checker".
+
+    - Task 1: Check the weather in San Francisco, CA. Save it to sfo.txt. 
+    - Task 2: Check the weather in London. Save it to lon.txt.
+
+    After assigning task 1, don't wait for it to complete, and immediately
+    assign task 2 to the same slug and wait for both tasks to complete. When
+    both tasks are complete, mark your objective as fulfilled with a summary of
+    the results.
+  functions:
+    - agents.*
+    - system.*
+  tasks:
+    - weather-checker
+
+- name: weather-checker
+  title: Weather Checker
+  objective: >-
+    You are a weather checker. You will receive tasks describing what locations
+    to provide the weather information for. For each task, write the requested
+    content to a file in your workspace, then call events_yield with a summary
+    of what you produced.
+
+
+    Your first task: {{system.context}}
+  functions:
+    - files.*
+    - events.*
+    - builtin.search_grounding
+
+## Generators
+
+- name: generate_text
+  title: Text Generator
+  runner: direct_model
+  model: gemini-3-flash-preview
+  objective: "{{system.context}}"
+  functions:
+    - builtin.search_grounding
+  description: >-
+    An extremely versatile text generator, powered by Gemini. Use it for any
+    tasks that involve generation of text. Supports multimodal content input.
+    Always writes its output to {slug}/text.md.
+
+- name: generate_images
+  title: Image Generator
+  runner: direct_model
+  model: gemini-3.1-flash-image-preview
+  tags:
+    - image
+  objective: "{{system.context}}"
+  options_schema:
+    aspect_ratio:
+      type: string
+      description: >-
+        Target aspect ratio. Valid values: '1:1', '3:4', '4:3', '9:16', '16:9',
+        '1:2', '2:1', '3:2', '2:3', '5:4', '4:5', '7:5', '5:7', '21:9', '9:21'.
+      enum:
+        - "1:1"
+        - "3:4"
+        - "4:3"
+        - "9:16"
+        - "16:9"
+        - "1:2"
+        - "2:1"
+        - "3:2"
+        - "2:3"
+        - "5:4"
+        - "4:5"
+        - "7:5"
+        - "5:7"
+        - "21:9"
+        - "9:21"
+    image_size:
+      type: string
+      description:
+        "Target resolution or image size. Valid values: '512', '1K', '2K', '4K'."
+      enum:
+        - "512"
+        - 1K
+        - 2K
+        - 4K
+    person_generation:
+      type: string
+      description: >-
+        Person generation policy. Valid values: 'allow_all', 'dont_allow',
+        'allow_adult'.
+      enum:
+        - allow_all
+        - dont_allow
+        - allow_adult
+  description: >-
+    An extremely versatile image generator, powered by Gemini. Use it for any
+    tasks that involve generation of images based on a prompt. Always writes its
+    output to {slug}/image_0.png. If passing references, pass them as in <file>
+    tags.
+
+- name: generate_video
+  title: Video Generator
+  runner: direct_model
+  model: veo-3.1-generate-preview
+  tags:
+    - video
+  objective: "{{system.context}}"
+  options_schema:
+    aspect_ratio:
+      type: string
+      description: "Target aspect ratio. Valid values: '16:9', '9:16', '1:1'."
+      enum:
+        - "16:9"
+        - "9:16"
+        - "1:1"
+    resolution:
+      type: string
+      description: >-
+        Target resolution. Valid values: '720p', '1080p', '4k'. Extension is
+        limited to 720p.
+      enum:
+        - 720p
+        - 1080p
+        - 4k
+    duration_seconds:
+      type: number
+      description: "Target duration in seconds. Valid values: 4, 6, 8."
+      enum:
+        - 4
+        - 6
+        - 8
+    person_generation:
+      type: string
+      description: >-
+        Person generation policy. Valid values: 'allow_all', 'dont_allow',
+        'allow_adult'.
+      enum:
+        - allow_all
+        - dont_allow
+        - allow_adult
+    first_frame:
+      type: string
+      description: >-
+        Path to a starting frame image for image-to-video generation. The video
+        will begin from this image and animate forward.
+    last_frame:
+      type: string
+      description: >-
+        Path to an ending frame image for keyframe interpolation. Use together
+        with first_frame to generate a video that transitions between two
+        specific frames.
+    extend_video:
+      type: string
+      description: >-
+        Path to a previously generated video to extend by ~7 seconds. The video
+        must have been generated by a prior generate_video task (e.g.
+        'intro/video_0.mp4'). Extension is always 720p and produces a single
+        combined video.
+    reference_images:
+      type: array
+      description: >-
+        Up to 3 paths to reference images that guide the video's visual content.
+        Use to preserve a subject's appearance (e.g. a person, character,
+        product, or outfit).
+  description: >-
+    A cinematic video generator powered by Veo 3.1. Use it to generate
+    high-fidelity 8-second videos with native audio from text prompts.
+
+    Supports advanced cinematic direction via options: - **Image-to-video**: Set
+    first_frame to a starting image. - **Interpolation**: Set both first_frame
+    and last_frame to
+      generate a video transitioning between two keyframes.
+    - **Extension**: Set extend_video to a previously generated video
+      path to extend it by ~7 seconds (always 720p, up to 20 times).
+    - **Reference images**: Set reference_images to up to 3 image paths
+      to guide visual content (subjects, outfits, products).
+    - **Resolution**: Choose 720p, 1080p, or 4k (higher = slower).
+
+    Always writes its output to {slug}/video_0.mp4.
+
+- name: generate_speech
+  title: Speech Generator
+  runner: direct_model
+  model: gemini-3.1-flash-tts-preview
+  tags:
+    - speech
+  objective: "{{system.context}}"
+  options_schema:
+    voice:
+      type: string
+      description: >-
+        Voice preset name. Each voice has a distinct personality: Achernar
+        (clear, friendly), Achird (warm, conversational), Algenib (deep,
+        authoritative), Algieba (rich, dramatic), Alnilam (smooth, neutral),
+        Aoede (breezy, intelligent), Autonoe (mature, wise), Callirrhoe (bright,
+        animated), Charon (informative, calm), Despina (gentle, soothing),
+        Enceladus (breathy, intimate), Erinome (crisp, precise), Fenrir
+        (excitable, energetic), Gacrux (steady, grounded), Iapetus (resonant,
+        measured), Kore (firm, clear), Laomedeia (melodic, expressive), Leda
+        (professional, composed), Orus (bold, commanding), Puck (upbeat,
+        youthful), Pulcherrima (elegant, polished), Rasalgethi (gravelly,
+        textured), Sadachbia (soft, contemplative), Sadaltager (neutral,
+        versatile), Schedar (warm, reassuring), Sulafat (lively, playful),
+        Umbriel (mysterious, atmospheric), Vindemiatrix (articulate, refined),
+        Zephyr (bright, perky), Zubenelgenubi (deep, resonant).
+      enum:
+        - Achernar
+        - Achird
+        - Algenib
+        - Algieba
+        - Alnilam
+        - Aoede
+        - Autonoe
+        - Callirrhoe
+        - Charon
+        - Despina
+        - Enceladus
+        - Erinome
+        - Fenrir
+        - Gacrux
+        - Iapetus
+        - Kore
+        - Laomedeia
+        - Leda
+        - Orus
+        - Puck
+        - Pulcherrima
+        - Rasalgethi
+        - Sadachbia
+        - Sadaltager
+        - Schedar
+        - Sulafat
+        - Umbriel
+        - Vindemiatrix
+        - Zephyr
+        - Zubenelgenubi
+    speaker_1:
+      type: string
+      description: >-
+        First speaker for multi-speaker dialogue, in "Alias:VoiceName" format
+        (e.g. "Host:Aoede"). The alias must match what appears in the
+        transcript. Both speaker_1 and speaker_2 must be set for multi-speaker
+        mode.
+    speaker_2:
+      type: string
+      description: >-
+        Second speaker for multi-speaker dialogue, in "Alias:VoiceName" format
+        (e.g. "Guest:Puck"). The alias must match what appears in the
+        transcript. Both speaker_1 and speaker_2 must be set for multi-speaker
+        mode.
+  description: >-
+    An expressive speech generator powered by Gemini TTS. Use it for narration,
+    voiceover, dialogue, and podcast-style multi-speaker audio.
+
+    **Single speaker**: Set the `voice` option to choose a voice preset.
+    Defaults to Kore if unspecified.
+
+    **Multi-speaker dialogue**: Set `speaker_1` and `speaker_2` options using
+    "Alias:VoiceName" format (e.g. speaker_1: "Host:Aoede", speaker_2:
+    "Guest:Puck"). Write the transcript using "Alias: text" format on each line.
+    The API currently supports exactly 2 speakers.
+
+    **Expressive control**: Embed audio tags directly in the transcript to
+    direct performance: [whispers], [laughs], [excitedly], [slowly, with
+    gravity], [sighs], [pauses]. The model interprets these as stage directions
+    for natural delivery.
+
+    Always writes its output to {slug}/audio_0.wav.
+
+- name: generate_music
+  title: Music Generator
+  runner: direct_model
+  model: lyria-3-pro-preview
+  tags:
+    - music
+  objective: "{{system.context}}"
+  description: >-
+    An extremely versatile music generator, powered by Lyria. Use it for any
+    tasks that involve generation of music or songs based on a prompt. Always
+    writes its output to {slug}/audio_0.wav.
