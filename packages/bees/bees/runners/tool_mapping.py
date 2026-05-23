@@ -27,6 +27,7 @@ import logging
 from typing import Any, Callable
 
 from google.antigravity import types as ag_types
+from google.antigravity.tools.tool_runner import ToolWithSchema
 
 from bees.protocols.functions import (
     FunctionDefinition,
@@ -163,6 +164,10 @@ def wrap_bees_handler(
     The SDK's tool runner calls Python tools with ``**kwargs`` and expects
     a return value.  Bees handlers have the signature
     ``(args: dict, status_cb) -> dict``.  This wrapper bridges the two.
+
+    Returns a ``ToolWithSchema`` so the SDK's ``callable_to_tool_proto``
+    serializes the explicit JSON Schema directly, bypassing signature
+    introspection (which would see only ``**kwargs``).
     """
     handler = func_def.handler
 
@@ -174,13 +179,11 @@ def wrap_bees_handler(
     # The SDK uses __name__ and __doc__ for tool registration.
     tool_fn.__name__ = func_def.name
     tool_fn.__doc__ = func_def.description
-    # Attach the JSON schema so the SDK can declare parameters.
-    if func_def.parameters_json_schema:
-        tool_fn.__annotations__["__json_schema__"] = (
-            func_def.parameters_json_schema
-        )
 
-    return tool_fn
+    schema = func_def.parameters_json_schema or {
+        "type": "object", "properties": {},
+    }
+    return ToolWithSchema(tool_fn, schema)
 
 
 # ---------------------------------------------------------------------------
