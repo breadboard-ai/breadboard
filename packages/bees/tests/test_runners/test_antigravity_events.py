@@ -141,6 +141,33 @@ class TestAntigravitySystemInstructions:
         assert "custom note 1" in custom_si.text
         assert "custom note 2" in custom_si.text
 
+    def test_assemble_system_instructions_with_files(self) -> None:
+        from bees.runners.antigravity import (
+            _assemble_system_instructions,
+            FILES_INSTRUCTION_ANTIGRAVITY,
+        )
+
+        custom = ["custom note 1"]
+        custom_si = _assemble_system_instructions(custom, has_files=True)
+
+        assert isinstance(custom_si, ag_types.CustomSystemInstructions)
+        assert FILES_INSTRUCTION_ANTIGRAVITY.strip() in custom_si.text
+        # Ensure it has been specialized for Antigravity:
+        assert "Use the <file> tag to present the files to the user" in custom_si.text
+        assert "files_list_files" not in custom_si.text
+
+    def test_assemble_system_instructions_without_files(self) -> None:
+        from bees.runners.antigravity import (
+            _assemble_system_instructions,
+            FILES_INSTRUCTION_ANTIGRAVITY,
+        )
+
+        custom = ["custom note 1"]
+        custom_si = _assemble_system_instructions(custom, has_files=False)
+
+        assert isinstance(custom_si, ag_types.CustomSystemInstructions)
+        assert FILES_INSTRUCTION_ANTIGRAVITY.strip() not in custom_si.text
+
 
 class TestAntigravityExtractInitialPrompt:
     """Tests for ``_extract_initial_prompt``."""
