@@ -336,3 +336,12 @@ class UnifiedAgentStore:
             kind="work",
             title=title,
         )
+
+    def has_pending_tasks(self, agent_id: str) -> bool:
+        """Check if an agent has any pending child tasks."""
+        pending_tasks = [
+            t for t in self._task_file_store.query_all()
+            if t.created_by == agent_id
+            and t.status not in ("completed", "failed", "cancelled")
+        ]
+        return len(pending_tasks) > 0

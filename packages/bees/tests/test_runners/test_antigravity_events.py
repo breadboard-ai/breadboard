@@ -298,3 +298,145 @@ class TestAntigravityBuildCompleteResult:
         asyncio.run(run_test())
 
 
+class TestAntigravityStreamTaskStateAwareness:
+    """Tests for AntigravityStream task state awareness."""
+
+    def test_antigravity_stream_awaits_active_tasks(self, tmp_path) -> None:
+        from unittest.mock import AsyncMock, MagicMock, patch
+        from bees.runners.antigravity import AntigravityStream
+        import asyncio
+
+        async def run_test():
+            # Mock the SDK Agent and its conversation step iterator
+            mock_agent = MagicMock()
+            mock_agent.conversation_id = "test-conversation-id"
+            mock_conversation = MagicMock()
+            mock_conversation.send = AsyncMock()
+            mock_agent.conversation = mock_conversation
+            
+            # Step iterator yields nothing, triggering StopAsyncIteration immediately
+            async def mock_receive_steps():
+                if False:
+                    yield None
+            mock_conversation.receive_steps.return_value = mock_receive_steps()
+            
+            # Create a mock UnifiedAgentStore and set has_pending_tasks to True
+            mock_store = MagicMock()
+            mock_store.has_pending_tasks.return_value = True
+            
+            # Set up a ticket_dir structure: tmp_path / "agents" / "parent-id"
+            agents_dir = tmp_path / "agents"
+            agents_dir.mkdir(parents=True, exist_ok=True)
+            ticket_dir = agents_dir / "parent-id"
+            ticket_dir.mkdir(exist_ok=True)
+            
+            with patch("bees.unified_agent_store.UnifiedAgentStore", return_value=mock_store):
+                stream = AntigravityStream(
+                    agent=mock_agent,
+                    exit_stack=AsyncMock(),
+                    save_dir=str(ticket_dir),
+                    initial_prompt="hello",
+                    ticket_dir=ticket_dir,
+                )
+                
+                # Step 1: Initial sendRequest
+                event1 = await stream.__anext__()
+                assert "sendRequest" in event1
+                
+                # Step 2: The model goes idle, but since tasks are active,
+                # stream should yield waitForInput instead of complete!
+                event2 = await stream.__anext__()
+                assert "waitForInput" in event2
+                assert stream._pending_suspend is not None
+
+        asyncio.run(run_test())
+
+    def test_antigravity_stream_completes_when_no_active_tasks(self, tmp_path) -> None:
+        from unittest.mock import AsyncMock, MagicMock, patch
+        from bees.runners.antigravity import AntigravityStream
+        import asyncio
+
+        async def run_test():
+            mock_agent = MagicMock()
+            mock_agent.conversation_id = "test-conversation-id"
+            mock_conversation = MagicMock()
+            mock_conversation.send = AsyncMock()
+            mock_agent.conversation = mock_conversation
+            
+            async def mock_receive_steps():
+                if False:
+                    yield None
+            mock_conversation.receive_steps.return_value = mock_receive_steps()
+            
+            # Create a mock UnifiedAgentStore and set has_pending_tasks to False
+            mock_store = MagicMock()
+            mock_store.has_pending_tasks.return_value = False
+            
+            agents_dir = tmp_path / "agents"
+            agents_dir.mkdir(parents=True, exist_ok=True)
+            ticket_dir = agents_dir / "parent-id"
+            ticket_dir.mkdir(exist_ok=True)
+            
+            with patch("bees.unified_agent_store.UnifiedAgentStore", return_value=mock_store):
+                stream = AntigravityStream(
+                    agent=mock_agent,
+                    exit_stack=AsyncMock(),
+                    save_dir=str(ticket_dir),
+                    initial_prompt="hello",
+                    ticket_dir=ticket_dir,
+                )
+                
+                event1 = await stream.__anext__()
+                assert "sendRequest" in event1
+                
+                # Since no tasks are active, should complete!
+                event2 = await stream.__anext__()
+                assert "complete" in event2
+
+        asyncio.run(run_test())
+
+    def test_antigravity_stream_awaits_queued_tasks(self, tmp_path) -> None:
+        from unittest.mock import AsyncMock, MagicMock, patch
+        from bees.runners.antigravity import AntigravityStream
+        import asyncio
+
+        async def run_test():
+            mock_agent = MagicMock()
+            mock_agent.conversation_id = "test-conversation-id"
+            mock_conversation = MagicMock()
+            mock_conversation.send = AsyncMock()
+            mock_agent.conversation = mock_conversation
+            
+            async def mock_receive_steps():
+                if False:
+                    yield None
+            mock_conversation.receive_steps.return_value = mock_receive_steps()
+            
+            # Create a mock UnifiedAgentStore and set has_pending_tasks to True
+            mock_store = MagicMock()
+            mock_store.has_pending_tasks.return_value = True
+            
+            agents_dir = tmp_path / "agents"
+            agents_dir.mkdir(parents=True, exist_ok=True)
+            ticket_dir = agents_dir / "parent-id"
+            ticket_dir.mkdir(exist_ok=True)
+            
+            with patch("bees.unified_agent_store.UnifiedAgentStore", return_value=mock_store):
+                stream = AntigravityStream(
+                    agent=mock_agent,
+                    exit_stack=AsyncMock(),
+                    save_dir=str(ticket_dir),
+                    initial_prompt="hello",
+                    ticket_dir=ticket_dir,
+                )
+                
+                event1 = await stream.__anext__()
+                assert "sendRequest" in event1
+                
+                event2 = await stream.__anext__()
+                assert "waitForInput" in event2
+                assert stream._pending_suspend is not None
+
+        asyncio.run(run_test())
+
+
