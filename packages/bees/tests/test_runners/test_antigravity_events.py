@@ -440,3 +440,95 @@ class TestAntigravityStreamTaskStateAwareness:
         asyncio.run(run_test())
 
 
+class TestAntigravityStreamStepIndexAdjustment:
+    """Tests for AntigravityStream step index correction for custom client-side tools."""
+
+    def test_antigravity_stream_adjusts_custom_tool_call_step_index(self) -> None:
+        from unittest.mock import AsyncMock, MagicMock
+        from bees.runners.antigravity import AntigravityStream
+        import asyncio
+
+        async def run_test():
+            mock_agent = MagicMock()
+            mock_agent.conversation_id = "test-conversation-id"
+            mock_conversation = MagicMock()
+            mock_conversation.send = AsyncMock()
+            mock_agent.conversation = mock_conversation
+
+            # We mock a sequence of steps yielded by receive_steps()
+            # In Turn 2, let's say the harness replays:
+            # - Step 0 (type = FINISH, index = 0)
+            # - Step 9 (type = FINISH, index = 9, i.e. the last step of the previous turn)
+            # Then the new steps in Turn 2:
+            # - Step 1 (type = TOOL_CALL, index = 1) -> This is the new custom tool call!
+            # - Step 10 (type = FINISH, status = DONE, index = 10)
+            steps = [
+                ag_types.Step(
+                    id="step-0",
+                    step_index=0,
+                    type=ag_types.StepType.FINISH,
+                    status=ag_types.StepStatus.DONE,
+                    source=ag_types.StepSource.MODEL,
+                    target=ag_types.StepTarget.USER,
+                ),
+                ag_types.Step(
+                    id="step-9",
+                    step_index=9,
+                    type=ag_types.StepType.FINISH,
+                    status=ag_types.StepStatus.DONE,
+                    source=ag_types.StepSource.MODEL,
+                    target=ag_types.StepTarget.USER,
+                ),
+                ag_types.Step(
+                    id="custom-tool-call",
+                    step_index=1,
+                    type=ag_types.StepType.TOOL_CALL,
+                    status=ag_types.StepStatus.ACTIVE,
+                    source=ag_types.StepSource.MODEL,
+                    target=ag_types.StepTarget.ENVIRONMENT,
+                    tool_calls=[ag_types.ToolCall(id="tc-0", name="custom_tool", args={})],
+                ),
+                ag_types.Step(
+                    id="finish-step",
+                    step_index=10,
+                    type=ag_types.StepType.FINISH,
+                    status=ag_types.StepStatus.DONE,
+                    source=ag_types.StepSource.MODEL,
+                    target=ag_types.StepTarget.USER,
+                    content="done",
+                ),
+            ]
+
+            async def mock_receive_steps():
+                for s in steps:
+                    yield s
+
+            mock_conversation.receive_steps.return_value = mock_receive_steps()
+
+            stream = AntigravityStream(
+                agent=mock_agent,
+                exit_stack=AsyncMock(),
+                save_dir="/tmp",
+                initial_prompt="hello",
+                resume_after_step=9,  # Skip steps <= 9
+            )
+
+            # Step 1: Initial sendRequest
+            event1 = await stream.__anext__()
+            assert "sendRequest" in event1
+
+            # Step 2: The custom tool call step (index 1) should NOT be skipped
+            # because its index is adjusted to self._last_step_index + 1 = 10,
+            # which is > 9!
+            event2 = await stream.__anext__()
+            assert "functionCall" in event2
+            assert event2["functionCall"]["name"] == "custom_tool"
+
+            # Step 3: The finish step (index 10) should be processed
+            event3 = await stream.__anext__()
+            assert "complete" in event3
+
+        asyncio.run(run_test())
+
+
+
