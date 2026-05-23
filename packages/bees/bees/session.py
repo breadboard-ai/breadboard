@@ -527,6 +527,8 @@ async def drain_session(
     else:
         status = "completed"
 
+    await session_store.set_status(session_id, status)
+
     return SessionResult(
         session_id=ticket_id or "",
         status=status,

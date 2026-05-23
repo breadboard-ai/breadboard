@@ -311,7 +311,7 @@ class TestMapFunctionFilter:
 
     def test_none_filter_enables_all_builtins(self) -> None:
         """None filter enables all SDK builtins except excluded ones."""
-        caps, tools, instructions, _sq, _rq = map_function_filter(
+        caps, tools, instructions, _sq = map_function_filter(
             None, [], _StubHooks(),
         )
         enabled = set(caps.enabled_tools)
@@ -324,7 +324,7 @@ class TestMapFunctionFilter:
         fd = _make_func_def(name="agents_list")
         group = _make_group("agents", [fd], instruction="Agents.")
 
-        _caps, tools, instructions, _sq, _rq = map_function_filter(
+        _caps, tools, instructions, _sq = map_function_filter(
             None, [group], _StubHooks(),
         )
         assert len(tools) == 1
@@ -333,7 +333,7 @@ class TestMapFunctionFilter:
 
     def test_builtin_filter_enables_correct_tools(self) -> None:
         """'files.*' enables exactly the file-related builtins."""
-        caps, tools, instructions, _sq, _rq = map_function_filter(
+        caps, tools, instructions, _sq = map_function_filter(
             ["files.*"], [], _StubHooks(),
         )
         enabled = set(caps.enabled_tools)
@@ -344,7 +344,7 @@ class TestMapFunctionFilter:
 
     def test_multiple_builtin_filters(self) -> None:
         """Multiple builtin filters union their tools."""
-        caps, _, _, _sq, _rq = map_function_filter(
+        caps, _, _, _sq = map_function_filter(
             ["files.*", "sandbox.*"], [], _StubHooks(),
         )
         enabled = set(caps.enabled_tools)
@@ -358,7 +358,7 @@ class TestMapFunctionFilter:
         fd = _make_func_def(name="agents_list")
         group = _make_group("agents", [fd], instruction="Agents.")
 
-        caps, tools, instructions, _sq, _rq = map_function_filter(
+        caps, tools, instructions, _sq = map_function_filter(
             ["agents.*"], [group], _StubHooks(),
         )
         # No builtins for agents.
@@ -372,7 +372,7 @@ class TestMapFunctionFilter:
         fd = _make_func_def(name="agents_list")
         group = _make_group("agents", [fd])
 
-        caps, tools, _, _sq, _rq = map_function_filter(
+        caps, tools, _, _sq = map_function_filter(
             ["files.*", "system.*", "agents.*"], [group], _StubHooks(),
         )
         enabled = set(caps.enabled_tools)
@@ -384,24 +384,24 @@ class TestMapFunctionFilter:
 
     def test_excluded_builtins_never_enabled(self) -> None:
         """GENERATE_IMAGE and START_SUBAGENT are never enabled."""
-        caps, _, _, _sq, _rq = map_function_filter(None, [], _StubHooks())
+        caps, _, _, _sq = map_function_filter(None, [], _StubHooks())
         enabled = set(caps.enabled_tools)
         for excluded in _EXCLUDED_BUILTINS:
             assert excluded not in enabled
 
     def test_subagents_always_disabled(self) -> None:
         """enable_subagents is always False."""
-        caps, _, _, _sq, _rq = map_function_filter(None, [], _StubHooks())
+        caps, _, _, _sq = map_function_filter(None, [], _StubHooks())
         assert caps.enable_subagents is False
 
-        caps2, _, _, _sq, _rq = map_function_filter(
+        caps2, _, _, _sq = map_function_filter(
             ["files.*"], [], _StubHooks(),
         )
         assert caps2.enable_subagents is False
 
     def test_enabled_tools_sorted(self) -> None:
         """enabled_tools are sorted by enum value for deterministic output."""
-        caps, _, _, _sq, _rq = map_function_filter(None, [], _StubHooks())
+        caps, _, _, _sq = map_function_filter(None, [], _StubHooks())
         values = [t.value for t in caps.enabled_tools]
         assert values == sorted(values)
 
@@ -410,7 +410,7 @@ class TestMapFunctionFilter:
         fd = _make_func_def(name="agents_assign_task")
         group = _make_group("agents", [fd])
 
-        _caps, tools, _, _sq, _rq = map_function_filter(
+        _caps, tools, _, _sq = map_function_filter(
             ["agents_assign_task"], [group], _StubHooks(),
         )
         assert len(tools) == 1
@@ -418,7 +418,7 @@ class TestMapFunctionFilter:
 
     def test_empty_filter_enables_nothing(self) -> None:
         """An empty filter list enables no builtins and no custom tools."""
-        caps, tools, instructions, _sq, _rq = map_function_filter(
+        caps, tools, instructions, _sq = map_function_filter(
             [], [], _StubHooks(),
         )
         assert set(caps.enabled_tools) == set()
@@ -427,7 +427,7 @@ class TestMapFunctionFilter:
 
     def test_unknown_filter_ignored(self) -> None:
         """Unknown filter patterns are silently ignored."""
-        caps, tools, instructions, _sq, _rq = map_function_filter(
+        caps, tools, instructions, _sq = map_function_filter(
             ["unknown.*", "nope"], [], _StubHooks(),
         )
         assert set(caps.enabled_tools) == set()
@@ -443,9 +443,41 @@ class TestMapFunctionFilter:
         fd = _make_func_def(name="agents_cancel", schema=schema)
         group = _make_group("agents", [fd])
 
-        _caps, tools, _, _sq, _rq = map_function_filter(
+        _caps, tools, _, _sq = map_function_filter(
             ["agents.*"], [group], _StubHooks(),
         )
         assert len(tools) == 1
         assert isinstance(tools[0], ToolWithSchema)
         assert tools[0].input_schema == schema
+
+    def test_finish_tool_schema_resolved_from_system_group(self) -> None:
+        """When system.* is in filter, finish_tool_schema_json is extracted from system group."""
+        schema = {
+            "type": "object",
+            "properties": {"objective_outcome": {"type": "string"}},
+            "required": ["objective_outcome"],
+        }
+        fd = _make_func_def(name="system_objective_fulfilled", schema=schema)
+        group = _make_group("system", [fd])
+
+        caps, _, _, _sq = map_function_filter(
+            ["system.*"], [group], _StubHooks(),
+        )
+        import json
+        assert caps.finish_tool_schema_json == json.dumps(schema)
+
+    def test_finish_tool_schema_fallback(self) -> None:
+        """When system.* is in filter but no group matches, it falls back to DEFAULT_FINISH_SCHEMA."""
+        caps, _, _, _sq = map_function_filter(
+            ["system.*"], [], _StubHooks(),
+        )
+        from bees.runners.tool_mapping import DEFAULT_FINISH_SCHEMA
+        assert caps.finish_tool_schema_json == DEFAULT_FINISH_SCHEMA
+
+    def test_finish_tool_schema_none_when_disabled(self) -> None:
+        """When system.* is not in filter, finish_tool_schema_json is None."""
+        caps, _, _, _sq = map_function_filter(
+            ["files.*"], [], _StubHooks(),
+        )
+        assert caps.finish_tool_schema_json is None
+
