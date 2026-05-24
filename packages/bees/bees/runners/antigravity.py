@@ -48,6 +48,7 @@ from bees.protocols.session import (
     SessionEvent,
 )
 from bees.protocols.filesystem import FileSystem
+from bees.runners.idle_resolution import IdleInputs, IdleOutcome, resolve_idle
 from bees.runners.tool_mapping import map_function_filter
 
 __all__ = ["AntigravityRunner", "AntigravityStream"]
@@ -479,64 +480,22 @@ class AntigravityStream:
 
             self._exhausted = True
             if not self._emitted_complete:
-                # Look ahead: check if there are active child tasks.
-                has_active_tasks = False
-                if self._ticket_dir:
-                    from bees.unified_agent_store import UnifiedAgentStore
-                    try:
-                        store = UnifiedAgentStore(self._ticket_dir.parent.parent)
-                        caller_agent_id = self._ticket_dir.name
-                        has_active_tasks = store.has_pending_tasks(caller_agent_id)
-                    except Exception:
-                        logger.warning("Failed to query active tasks in AntigravityStream", exc_info=True)
-
-                if has_active_tasks and not self._pending_suspend:
-                    from bees.protocols.handler_types import WaitForInputEvent
-                    interaction_id = str(uuid.uuid4())
-                    event = WaitForInputEvent(
-                        request_id=interaction_id,
-                        prompt={},
-                        input_type="any",
-                    )
-                    self._pending_suspend = SuspendError(event, {})
-
+                idle_inputs = self._build_idle_inputs()
+                outcome, event = resolve_idle(idle_inputs)
                 self._emitted_complete = True
 
-                # Priority 1: A tool requested suspension (deferred
-                # result pattern).  This overrides both chat and
-                # worker idle behavior — the agent MUST suspend.
-                if self._pending_suspend:
-                    await self._cleanup()
-                    return {"waitForInput": {
-                        "requestId": (
-                            self._pending_suspend.interaction_id
-                        ),
-                        "prompt": {},
-                        "inputType": "any",
-                    }}
+                # Side effect: log model text to chat log.
+                if (
+                    outcome == IdleOutcome.SUSPEND_CHAT
+                    and self._last_user_text
+                    and self._on_chat_entry
+                ):
+                    self._on_chat_entry("agent", self._last_user_text)
 
-                # Priority 2: Chat mode — idle without FINISH =
-                # waiting for user input.
-                if self._has_chat and self._last_user_text:
-                    # Log the model's message to the chat log.
-                    if self._on_chat_entry:
-                        self._on_chat_entry("agent", self._last_user_text)
-
-                    await self._cleanup()
-                    return {"waitForInput": {
-                        "requestId": str(uuid.uuid4()),
-                        "prompt": {
-                            "parts": [{"text": self._last_user_text}],
-                        },
-                        "inputType": "text",
-                    }}
-
-                # Default: Worker mode — idle without FINISH = done.
                 await self._cleanup()
-                return {"complete": {"result": {
-                    "success": True,
-                    "outcomes": {"parts": [{"text": ""}]},
-                }}}
+                if outcome == IdleOutcome.ALREADY_COMPLETE:
+                    raise
+                return event
 
             await self._cleanup()
             raise
@@ -646,6 +605,35 @@ class AntigravityStream:
         return self._resume_blob
 
     # -- internal ----------------------------------------------------------
+
+    def _build_idle_inputs(self) -> IdleInputs:
+        """Gather accumulated state for the idle resolution state machine."""
+        has_active_tasks = False
+        if self._ticket_dir:
+            from bees.unified_agent_store import UnifiedAgentStore
+            try:
+                store = UnifiedAgentStore(self._ticket_dir.parent.parent)
+                caller_agent_id = self._ticket_dir.name
+                has_active_tasks = store.has_pending_tasks(caller_agent_id)
+            except Exception:
+                logger.warning(
+                    "Failed to query active tasks in AntigravityStream",
+                    exc_info=True,
+                )
+
+        return IdleInputs(
+            emitted_complete=self._emitted_complete,
+            pending_suspend=self._pending_suspend is not None,
+            suspend_request_id=(
+                self._pending_suspend.interaction_id
+                if self._pending_suspend
+                else ""
+            ),
+            has_active_tasks=has_active_tasks,
+            has_chat=self._has_chat,
+            last_user_text=self._last_user_text,
+        )
+
 
     def _capture_resume_state(self) -> None:
         """Capture resume state from the agent's conversation."""
