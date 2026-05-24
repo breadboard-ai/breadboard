@@ -556,4 +556,97 @@ class TestAntigravityStreamStepIndexAdjustment:
         asyncio.run(run_test())
 
 
+class TestAntigravityStreamEventOrdering:
+    """Tests for chronological event ordering using sdk_event_queue."""
+
+    def test_chronological_ordering_of_tool_results_and_steps(self) -> None:
+        from unittest.mock import AsyncMock, MagicMock
+        from bees.runners.antigravity import AntigravityStream
+        import asyncio
+
+        async def run_test():
+            mock_agent = MagicMock()
+            mock_agent.conversation_id = "test-conversation-id"
+            mock_conversation = MagicMock()
+            mock_conversation.send = AsyncMock()
+            mock_agent.conversation = mock_conversation
+
+            # Empty receive_steps to simulate end of steps stream
+            async def mock_receive_steps():
+                if False:
+                    yield None
+            mock_conversation.receive_steps.return_value = mock_receive_steps()
+
+            # Create the stream with a pre-populated sdk_event_queue
+            sdk_event_queue: asyncio.Queue[tuple[str, Any]] = asyncio.Queue()
+            
+            # 1. Step: tool call requested
+            step_tool_call = ag_types.Step(
+                id="step-1",
+                step_index=1,
+                type=ag_types.StepType.TOOL_CALL,
+                status=ag_types.StepStatus.ACTIVE,
+                source=ag_types.StepSource.MODEL,
+                target=ag_types.StepTarget.ENVIRONMENT,
+                tool_calls=[ag_types.ToolCall(id="tc-0", name="agents_await", args={})],
+            )
+            await sdk_event_queue.put(("step", step_tool_call))
+
+            # 2. Tool result completed
+            tool_result = ag_types.ToolResult(
+                name="agents_await",
+                result={"status": "pending", "message": "Results are pending..."},
+            )
+            await sdk_event_queue.put(("tool_result", tool_result))
+
+            # 3. Model text reply step [ack]
+            step_text = ag_types.Step(
+                id="step-2",
+                step_index=2,
+                type=ag_types.StepType.FINISH,
+                status=ag_types.StepStatus.ACTIVE,
+                source=ag_types.StepSource.MODEL,
+                target=ag_types.StepTarget.USER,
+                content_delta="[ack]",
+            )
+            await sdk_event_queue.put(("step", step_text))
+
+            # 4. Sentinel done
+            await sdk_event_queue.put(("done", None))
+
+            stream = AntigravityStream(
+                agent=mock_agent,
+                exit_stack=AsyncMock(),
+                save_dir="/tmp",
+                initial_prompt="hello",
+                sdk_event_queue=sdk_event_queue,
+            )
+
+            # 1. Initial sendRequest
+            event1 = await stream.__anext__()
+            assert "sendRequest" in event1
+
+            # 2. TOOL_CALL step -> functionCall
+            event2 = await stream.__anext__()
+            assert "functionCall" in event2
+            assert event2["functionCall"]["name"] == "agents_await"
+
+            # 3. tool_result -> functionResponse (MUST be before systemMessage [ack])
+            event3 = await stream.__anext__()
+            assert "functionResponse" in event3
+            assert event3["functionResponse"]["name"] == "agents_await"
+            assert event3["functionResponse"]["response"] == {
+                "status": "pending",
+                "message": "Results are pending...",
+            }
+
+            # 4. Step: model text -> systemMessage [ack]
+            event4 = await stream.__anext__()
+            assert "systemMessage" in event4
+            assert event4["systemMessage"]["text"] == "[ack]"
+
+        asyncio.run(run_test())
+
+
+
 
