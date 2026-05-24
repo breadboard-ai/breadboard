@@ -160,14 +160,19 @@ def _make_handlers(
                     scope=scope,
                     options=options,
                 )
+
                 if status_cb:
                     status_cb(None, None)
-                return {"agent_slug": slug, "status": "created"}
+                return {
+                    "agent_slug": slug,
+                    "status": "created",
+                    "task_id": child.tasks[0].id if child.tasks else None,
+                }
 
             _TERMINAL = {"completed", "failed", "cancelled"}
             if existing.metadata.status in _TERMINAL:
                 # Fresh instance — reuse the agent with a new session.
-                scheduler.store.reset_for_reuse(
+                task = scheduler.store.reset_for_reuse(
                     existing,
                     objective,
                     title=title or summary,
@@ -193,22 +198,21 @@ def _make_handlers(
 
                 if status_cb:
                     status_cb(None, None)
-                return {"agent_slug": slug, "status": "reused"}
+                return {"agent_slug": slug, "status": "reused", "task_id": task.id}
 
             # Non-terminal: agent is busy or suspended — queue the task.
             # Both finite and infinite agents use the same path: create a
             # queued TaskRecord and let the scheduler drain it at the right
             # time (completion for finite, yield for infinite).
-            task_file_store = getattr(scheduler.store, '_task_file_store', None)
-            if task_file_store:
-                task_file_store.create(
+            task_id = None
+            if scheduler.store:
+                task = scheduler.store.queue_task(
                     objective=objective,
                     assignee=existing.id,
                     created_by=caller_agent_id,
-                    kind="work",
                     title=title or summary,
-                    status="queued",
                 )
+                task_id = task.id
 
             # If the infinite agent is already idle (suspended, waiting
             # for its next task), drain immediately so it doesn't sit
@@ -222,7 +226,7 @@ def _make_handlers(
 
             if status_cb:
                 status_cb(None, None)
-            return {"agent_slug": slug, "status": "queued"}
+            return {"agent_slug": slug, "status": "queued", "task_id": task_id}
 
         except Exception as e:
             logger.exception("agents_assign_task failed")
@@ -256,6 +260,21 @@ def _make_handlers(
                         node["outcome"] = a.metadata.outcome
                     if a.metadata.error:
                         node["error"] = a.metadata.error
+
+                    task_id = a.tasks[0].id if a.tasks else None
+                    if task_id:
+                        node["task_id"] = task_id
+
+                    node["tasks"] = [
+                        {
+                            "task_id": t.id,
+                            "objective": t.objective,
+                            "status": t.status,
+                            "outcome": t.outcome,
+                        }
+                        for t in a.tasks
+                    ]
+
                     children = _build_tree(a.id)
                     if children:
                         node["agents"] = children

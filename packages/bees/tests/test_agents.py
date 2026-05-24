@@ -128,6 +128,7 @@ async def test_agents_assign_task_creates_new_agent(write_template):
 
     assert result["agent_slug"] == "poet"
     assert result["status"] == "created"
+    assert result["task_id"] is not None
 
     # Verify the child agent was created.
     child = GLOBAL_STORE.find_child_by_slug(caller.id, "poet")
@@ -231,6 +232,7 @@ async def test_agents_assign_task_fresh_instance(write_template):
         "summary": "First Haiku",
     }, None)
     assert result1["status"] == "created"
+    assert result1["task_id"] is not None
 
     # Mark the agent as completed (simulating scheduler behavior).
     child = GLOBAL_STORE.find_child_by_slug(caller.id, "poet")
@@ -249,6 +251,8 @@ async def test_agents_assign_task_fresh_instance(write_template):
     }, None)
     assert result2["status"] == "reused"
     assert result2["agent_slug"] == "poet"
+    assert result2["task_id"] is not None
+    assert result2["task_id"] != result1["task_id"]
 
     # Same UUID — slug→UUID mapping is stable.
     reused = GLOBAL_STORE.find_child_by_slug(caller.id, "poet")
@@ -306,6 +310,7 @@ async def test_agents_assign_task_queues_busy_finite(write_template):
 
     assert result["status"] == "queued"
     assert result["agent_slug"] == "poet"
+    assert result["task_id"] is not None
 
     # Verify a TaskRecord was created with status "queued".
     task_file_store = GLOBAL_STORE._task_file_store
@@ -505,6 +510,10 @@ async def test_agents_check_status_by_slug():
     assert len(agents) == 1
     assert agents[0]["agent_slug"] == "researcher"
     assert agents[0]["status"] == "running"
+    assert agents[0]["task_id"] is not None
+    assert "tasks" in agents[0]
+    assert len(agents[0]["tasks"]) == 1
+    assert agents[0]["tasks"][0]["task_id"] == agents[0]["task_id"]
 
 
 @pytest.mark.asyncio
@@ -550,12 +559,74 @@ async def test_agents_check_status_nested_tree():
     assert len(result["agents"]) == 1
     orch = result["agents"][0]
     assert orch["agent_slug"] == "orchestrator"
+    assert orch["task_id"] is not None
+    assert "tasks" in orch
+    assert len(orch["tasks"]) == 1
     assert "agents" in orch
     assert len(orch["agents"]) == 1
-    assert orch["agents"][0]["agent_slug"] == "worker"
-    assert orch["agents"][0]["outcome"] == "Done!"
+    worker = orch["agents"][0]
+    assert worker["agent_slug"] == "worker"
+    assert worker["outcome"] == "Done!"
+    assert worker["task_id"] is not None
+    assert "tasks" in worker
+    assert len(worker["tasks"]) == 1
 
 
+
+
+@pytest.mark.asyncio
+async def test_agents_check_status_multiple_tasks():
+    """Status check includes the list of all tasks assigned to the agent."""
+    parent = GLOBAL_STORE.create("Parent objective")
+
+    # Create the agent and assign the first task
+    child = GLOBAL_STORE.create(
+        "First task objective",
+        parent_task_id=parent.id,
+        slug="researcher",
+        playbook_id="researcher",
+    )
+    child.metadata.parent_id = parent.id
+    child.metadata.slug = "researcher"
+    child.metadata.status = "completed"
+    child.metadata.outcome = "First outcome"
+    GLOBAL_STORE.save_metadata(child)
+
+    # Assign a second task (reuse)
+    GLOBAL_STORE.reset_for_reuse(child, "Second task objective")
+    child.metadata.status = "running"
+    GLOBAL_STORE.save_metadata(child)
+
+    # Re-fetch child so tasks are loaded
+    child = GLOBAL_STORE.get(child.id)
+
+    scheduler = _scheduler_mock()
+    handlers = _make_handlers(
+        caller_agent_id=parent.id, scheduler=scheduler,
+    )
+
+    result = await handlers["agents_check_status"]({}, None)
+
+    assert "agents" in result
+    agents = result["agents"]
+    assert len(agents) == 1
+    researcher = agents[0]
+    assert researcher["agent_slug"] == "researcher"
+    assert researcher["status"] == "running"
+
+    # We should have two tasks in the list, sorted by creation time (descending)
+    assert "tasks" in researcher
+    assert len(researcher["tasks"]) == 2
+
+    # Newest task (second task)
+    assert researcher["tasks"][0]["objective"] == "Second task objective"
+    assert researcher["tasks"][0]["status"] == "in_progress"
+    assert researcher["tasks"][0]["task_id"] == researcher["task_id"]
+
+    # Oldest task (first task)
+    assert researcher["tasks"][1]["objective"] == "First task objective"
+    assert researcher["tasks"][1]["status"] == "completed"
+    assert researcher["tasks"][1]["outcome"] == "First outcome"
 
 
 # ---------------------------------------------------------------------------

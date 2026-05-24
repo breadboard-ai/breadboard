@@ -265,6 +265,7 @@ async def test_agents_assign_task_dynamic(temp_hive):
     assert "error" not in result
     assert result.get("agent_slug") == "custom-run"
     assert result.get("status") == "created"
+    assert result.get("task_id") is not None
     
     # Verify child was written to store successfully
     all_agents = store.query_all()

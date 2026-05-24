@@ -22,7 +22,7 @@ from typing import Any
 
 from bees.agent import Agent, AgentMetadata, AgentStatus, has_system_functions
 from bees.agent_store import AgentStore
-from bees.task_file_store import TaskFileStore
+from bees.task_file_store import TaskFileStore, TaskRecord
 
 __all__ = ["UnifiedAgentStore"]
 
@@ -70,15 +70,24 @@ class UnifiedAgentStore:
 
     def get(self, agent_id: str) -> Agent | None:
         """Load an agent by ID."""
-        return self._agent_store.get(agent_id)
+        agent = self._agent_store.get(agent_id)
+        if agent:
+            agent.tasks = self._task_file_store.query_by_assignee(agent.id)
+        return agent
 
     def query_all(self, status: AgentStatus | None = None) -> list[Agent]:
         """List agents, optionally filtered by status."""
-        return self._agent_store.query_all(status=status)
+        agents = self._agent_store.query_all(status=status)
+        for agent in agents:
+            agent.tasks = self._task_file_store.query_by_assignee(agent.id)
+        return agents
 
     def get_children(self, parent_id: str | None = None) -> list[Agent]:
         """Children of an agent, or root agents if parent_id is None."""
-        return self._agent_store.get_children(parent_id)
+        agents = self._agent_store.get_children(parent_id)
+        for agent in agents:
+            agent.tasks = self._task_file_store.query_by_assignee(agent.id)
+        return agents
 
     # -- Write operations --------------------------------------------------
 
@@ -160,7 +169,7 @@ class UnifiedAgentStore:
         agent.objective = objective
 
         # Create lightweight task record.
-        self._task_file_store.create(
+        task = self._task_file_store.create(
             objective=objective,
             assignee=agent.id,
             created_by=kwargs.get("parent_task_id"),
@@ -170,6 +179,7 @@ class UnifiedAgentStore:
             tags=kwargs.get("tags"),
         )
 
+        agent.tasks = [task]
         return agent
 
     # -- Task record sync --------------------------------------------------
@@ -281,7 +291,7 @@ class UnifiedAgentStore:
         *,
         title: str | None = None,
         options: dict[str, Any] | None = None,
-    ) -> None:
+    ) -> TaskRecord:
         """Reset a terminal agent for a new task assignment.
 
         Used by ``agents_assign_task`` when a finite agent that has
@@ -329,12 +339,35 @@ class UnifiedAgentStore:
         self.save_metadata(agent)
 
         # Create new task record for the new assignment.
-        self._task_file_store.create(
+        return self._task_file_store.create(
             objective=objective,
             assignee=agent.id,
             created_by=agent.metadata.parent_id,
             kind="work",
             title=title,
+        )
+
+    def get_active_task_id(self, agent_id: str) -> str | None:
+        """Get the ID of the most recent task assigned to the agent."""
+        tasks = self._task_file_store.query_by_assignee(agent_id)
+        return tasks[0].id if tasks else None
+
+    def queue_task(
+        self,
+        objective: str,
+        *,
+        assignee: str,
+        created_by: str | None = None,
+        title: str | None = None,
+    ) -> TaskRecord:
+        """Create and queue a new work task for an existing agent."""
+        return self._task_file_store.create(
+            objective=objective,
+            assignee=assignee,
+            created_by=created_by,
+            kind="work",
+            title=title,
+            status="queued",
         )
 
     def has_pending_tasks(self, agent_id: str) -> bool:
