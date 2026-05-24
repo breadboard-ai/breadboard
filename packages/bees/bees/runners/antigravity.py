@@ -56,6 +56,50 @@ __all__ = ["AntigravityRunner", "AntigravityStream"]
 logger = logging.getLogger(__name__)
 
 
+# --- RUNTIME HACK FOR GOOGLE SEARCH GROUNDING & URL CONTEXT ---
+import contextvars
+import websockets
+
+_hacked_features_var = contextvars.ContextVar("hacked_features", default=frozenset())
+
+try:
+    _orig_ws_connect = websockets.connect
+
+    async def _hacked_ws_connect(uri, *args, **kwargs):
+        ws = await _orig_ws_connect(uri, *args, **kwargs)
+        _orig_send = ws.send
+
+        async def _hacked_send(message, *args, **kwargs):
+            features = _hacked_features_var.get()
+            if isinstance(message, str) and features:
+                try:
+                    data = json.loads(message)
+                    if "config" in data:
+                        gemini_config = data["config"].get("geminiConfig", data["config"].get("gemini_config", {}))
+                        for feature in features:
+                            gemini_config[feature] = True
+                        data["config"]["geminiConfig"] = gemini_config
+                        message = json.dumps(data)
+                except Exception as e:
+                    logger.warning("Failed to inject hacked features into init message: %s", e)
+            return await _orig_send(message, *args, **kwargs)
+
+        ws.send = _hacked_send
+        ws._orig_send = _orig_send
+        return ws
+
+    websockets.connect = _hacked_ws_connect
+except Exception as e:
+    logger.warning("Failed to apply Google Search Grounding runtime hack: %s", e)
+# -------------------------------------------------------------
+
+
+
+
+
+
+
+
 # ---------------------------------------------------------------------------
 # Step → SessionEvent translation
 # ---------------------------------------------------------------------------
@@ -746,11 +790,25 @@ class AntigravityRunner:
 
         # 7. Enter the Agent context.
         exit_stack = contextlib.AsyncExitStack()
+        token = None
+        hacks = []
+        if config.function_filter:
+            if "builtin.search_grounding" in config.function_filter:
+                hacks.append("enable_google_search")
+            if "builtin.url_context" in config.function_filter:
+                hacks.append("enable_url_context")
+        if hacks:
+            token = _hacked_features_var.set(frozenset(hacks))
         try:
             agent = await exit_stack.enter_async_context(Agent(agent_config))
         except Exception:
             await exit_stack.aclose()
             raise
+        finally:
+            if token:
+                _hacked_features_var.reset(token)
+
+
 
         # 8. Extract the initial prompt from segments.
         initial_prompt = _extract_initial_prompt(config)
@@ -841,11 +899,25 @@ class AntigravityRunner:
 
         # 7. Enter the Agent context.
         exit_stack = contextlib.AsyncExitStack()
+        token = None
+        hacks = []
+        if config.function_filter:
+            if "builtin.search_grounding" in config.function_filter:
+                hacks.append("enable_google_search")
+            if "builtin.url_context" in config.function_filter:
+                hacks.append("enable_url_context")
+        if hacks:
+            token = _hacked_features_var.set(frozenset(hacks))
         try:
             agent = await exit_stack.enter_async_context(Agent(agent_config))
         except Exception:
             await exit_stack.aclose()
             raise
+        finally:
+            if token:
+                _hacked_features_var.reset(token)
+
+
 
         # 8. Build the resume prompt from the user's response + context.
         resume_prompt = _build_resume_prompt(response, context_parts)
