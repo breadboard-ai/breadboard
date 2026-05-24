@@ -207,6 +207,7 @@ export interface TrajectoryData {
   agentTitle: string;
   agentStatus: string;
   trajectoryId: string;
+  sessionId?: string;
   steps: TrajectoryStep[];
   lastModified: number;
 }

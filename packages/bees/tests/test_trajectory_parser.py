@@ -141,3 +141,23 @@ def test_enhanced_trajectory_parsing(tmp_path: Path):
     assert s4["type"] == "complete"
     assert s4["outcome"] == {"objective_outcome": "success"}
 
+def test_trajectory_parsing_with_session(tmp_path: Path):
+    sessions_dir = tmp_path / "sessions" / "session-123" / "antigravity_state"
+    sessions_dir.mkdir(parents=True)
+    traj_file = sessions_dir / "traj-mock"
+    
+    traj_id_payload = b"\x0a\x09mock_traj"
+    cctx = zstd.ZstdCompressor()
+    compressed = cctx.compress(traj_id_payload)
+    traj_file.write_bytes(compressed)
+    
+    dest_json = sessions_dir.parent / "antigravity_traj.json"
+    success = convert_trajectory_to_json(traj_file, dest_json)
+    
+    assert success is True
+    assert dest_json.is_file()
+    
+    data = json.loads(dest_json.read_text(encoding="utf-8"))
+    assert data["trajectory_id"] == "mock_traj"
+    assert data["session_id"] == "session-123"
+

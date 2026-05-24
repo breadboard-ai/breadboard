@@ -69,6 +69,9 @@ class BeesTrajectoryDetail extends SignalWatcher(LitElement) {
         color: #e2e8f0;
         word-break: break-all;
       }
+      .link-chip + .link-chip {
+        margin-left: 0;
+      }
     `,
   ];
 
@@ -121,6 +124,15 @@ class BeesTrajectoryDetail extends SignalWatcher(LitElement) {
             <span class="link-chip-label">agent</span>
             ${t.agentId.slice(0, 8)}
           </span>
+          ${t.sessionId ? html`
+            <span
+              class="link-chip"
+              @click=${() => this.#dispatchNavigate("logs", t.sessionId!)}
+            >
+              <span class="link-chip-label">session</span>
+              ${t.sessionId.slice(0, 8)}
+            </span>
+          ` : nothing}
         </div>
         <div class="header-meta">
           <span>${started ? started : "—"}</span>
