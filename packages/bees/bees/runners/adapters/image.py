@@ -140,15 +140,6 @@ class ImageAdapter:
 # within generationConfig.  See:
 # https://ai.google.dev/gemini-api/docs/image-generation
 
-_IMAGE_SIZE_MAP: dict[str, str] = {
-    "512": "512",
-    "1K": "1024",
-    "1k": "1024",
-    "2K": "2048",
-    "2k": "2048",
-    "4K": "4096",
-    "4k": "4096",
-}
 
 
 def _build_generation_config(
@@ -169,8 +160,7 @@ def _build_generation_config(
 
     image_size = options.get("image_size")
     if image_size:
-        mapped = _IMAGE_SIZE_MAP.get(str(image_size), str(image_size))
-        image_config["imageSize"] = mapped
+        image_config["imageSize"] = str(image_size)
 
     person_generation = options.get("person_generation")
     if person_generation:
