@@ -523,11 +523,7 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
       this.updateComplete.then(() => this.#scrollToBottom());
     }
 
-    // When the input panel is showing, the agent's prompt text duplicates
-    // the last agent message in the log. Drop it to avoid the echo.
-    const displayHistory = inputUi
-      ? this.#dropTrailingAgentMessage(chatHistory)
-      : chatHistory;
+    const displayHistory = chatHistory;
 
     return html`
       <div class="chat-container">
@@ -742,15 +738,10 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
   /** Interactive text reply form for waitForInput suspensions. */
   private renderReplyForm(
     ticketId: string,
-    waitForInput: Record<string, unknown>
+    _waitForInput: Record<string, unknown>
   ) {
-    const promptContent = this.#renderPromptContent(waitForInput.prompt);
-
     return html`
       <div class="response-form">
-        ${promptContent
-          ? html`<div class="agent-prompt">${promptContent}</div>`
-          : nothing}
         <textarea
           class="reply-textarea"
           placeholder="Type your reply…"
@@ -786,7 +777,6 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
     ticketId: string,
     waitForChoice: Record<string, unknown>
   ) {
-    const promptContent = this.#renderPromptContent(waitForChoice.prompt);
     const choices = (waitForChoice.choices ?? []) as Array<{
       id: string;
       content?: { parts?: Array<{ text?: string }> };
@@ -796,9 +786,6 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
 
     return html`
       <div class="response-form">
-        ${promptContent
-          ? html`<div class="agent-prompt">${promptContent}</div>`
-          : nothing}
         <div class="choices-grid">
           ${choices.map((choice) => {
             const selected = this.selectedChoiceIds.has(choice.id);
@@ -887,20 +874,7 @@ class BeesChatPanel extends SignalWatcher(LitElement) {
     }
   }
 
-  /**
-   * Remove the last agent message from the history when it would be
-   * duplicated by the prompt text in the response panel.
-   */
-  #dropTrailingAgentMessage(
-    history: Array<{ role: string; text: string }>
-  ): Array<{ role: string; text: string }> {
-    for (let i = history.length - 1; i >= 0; i--) {
-      if (history[i].role !== "user") {
-        return [...history.slice(0, i), ...history.slice(i + 1)];
-      }
-    }
-    return history;
-  }
+
 
   /** Scroll the chat log container to the bottom. */
   #scrollToBottom() {
