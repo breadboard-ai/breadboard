@@ -37,11 +37,13 @@ import "./task-detail.js";
 import "./log-list.js";
 import "./log-detail.js";
 import "./system-detail.js";
+import "./trajectory-list.js";
+import "./trajectory-detail.js";
 import { scrollbarStyles } from "./shared-styles.js";
 
 export { BeesApp };
 
-type TabId = "logs" | "agents" | "tasks" | "templates" | "skills" | "system";
+type TabId = "logs" | "agents" | "tasks" | "templates" | "skills" | "system" | "trajectories";
 
 /** Shared interface for editable detail panels. */
 interface EditablePanel {
@@ -573,6 +575,9 @@ class BeesApp extends SignalWatcher(LitElement) {
       case "skills":
         id = this.skillStore.selectedSkillDir.get();
         break;
+      case "trajectories":
+        id = this.agentStore.selectedTrajectoryAgentId.get();
+        break;
     }
     writeRoute(this.activeTab, id);
   }
@@ -586,6 +591,7 @@ class BeesApp extends SignalWatcher(LitElement) {
       "templates",
       "skills",
       "system",
+      "trajectories",
     ];
     const tab = validTabs.includes(route.tab as TabId)
       ? (route.tab as TabId)
@@ -610,6 +616,9 @@ class BeesApp extends SignalWatcher(LitElement) {
       case "skills":
         if (route.id) this.skillStore.selectSkill(route.id);
         break;
+      case "trajectories":
+        if (route.id) this.agentStore.selectedTrajectoryAgentId.set(route.id);
+        break;
     }
   }
 
@@ -620,7 +629,7 @@ class BeesApp extends SignalWatcher(LitElement) {
   private handleNavigate(e: CustomEvent) {
     const { id } = e.detail;
     // Normalize: log-detail emits "agent" (singular).
-    const tab = e.detail.tab === "agent" ? "agents" : e.detail.tab;
+    const tab = e.detail.tab === "agent" ? "agents" : (e.detail.tab === "trajectory" ? "trajectories" : e.detail.tab);
     this.activeTab = tab;
 
     switch (tab) {
@@ -638,6 +647,9 @@ class BeesApp extends SignalWatcher(LitElement) {
         break;
       case "tasks":
         this.agentStore.selectedTaskId.set(id);
+        break;
+      case "trajectories":
+        this.agentStore.selectedTrajectoryAgentId.set(id);
         break;
     }
 
@@ -770,6 +782,27 @@ class BeesApp extends SignalWatcher(LitElement) {
         ? recentLogUpdate.id
         : null;
 
+    const recentTrajUpdate = this.agentStore.recentlyUpdatedTrajectory.get();
+    const flashTrajId =
+      recentTrajUpdate && Date.now() - recentTrajUpdate.at < 15000
+        ? recentTrajUpdate.id
+        : null;
+
+    const hasTrajectories = this.agentStore.trajectories.get().length > 0;
+    const tabs: Array<[TabId, string, string | null]> = [
+      ["agents", "Agents", flashAgentId],
+      ["logs", "Sessions", flashLogId],
+      ["tasks", "Tasks", null],
+    ];
+    if (hasTrajectories) {
+      tabs.push(["trajectories", "Trajectories", flashTrajId]);
+    }
+    tabs.push(
+      ["templates", "Templates", null],
+      ["skills", "Skills", null],
+      ["system", "System", null]
+    );
+
     return html`
       ${this.maximized ? nothing : html`
       <div class="top-bar">
@@ -793,16 +826,7 @@ class BeesApp extends SignalWatcher(LitElement) {
           </div>
         </div>
         <div class="top-bar-tabs">
-          ${(
-            [
-              ["agents", "Agents", flashAgentId],
-              ["logs", "Sessions", flashLogId],
-              ["tasks", "Tasks", null],
-              ["templates", "Templates", null],
-              ["skills", "Skills", null],
-              ["system", "System", null],
-            ] as const
-          ).map(
+          ${tabs.map(
             ([id, label, flash]) => html`
               <div
                 class="sidebar-tab ${this.activeTab === id
@@ -825,7 +849,7 @@ class BeesApp extends SignalWatcher(LitElement) {
       >
         ${this.maximized ? nothing : html`
         <div class="sidebar">
-          ${this.renderSidebar(flashAgentId, flashLogId)}
+          ${this.renderSidebar(flashAgentId, flashLogId, flashTrajId)}
         </div>
         `}
         <div class="main">${this.renderMain(flashAgentId)}</div>
@@ -897,7 +921,8 @@ class BeesApp extends SignalWatcher(LitElement) {
 
   private renderSidebar(
     flashAgentId: string | null,
-    flashLogId: string | null
+    flashLogId: string | null,
+    flashTrajId: string | null
   ) {
     switch (this.activeTab) {
       case "agents":
@@ -926,6 +951,15 @@ class BeesApp extends SignalWatcher(LitElement) {
             this.syncHash();
           }}
         ></bees-log-list>`;
+      case "trajectories":
+        return html`<bees-trajectory-list
+          .store=${this.agentStore}
+          .flashTrajId=${flashTrajId}
+          @select=${(e: CustomEvent) => {
+            this.agentStore.selectedTrajectoryAgentId.set(e.detail.agentId);
+            this.syncHash();
+          }}
+        ></bees-trajectory-list>`;
       case "templates":
         return html`<bees-template-list
           .store=${this.templateStore}
@@ -987,6 +1021,11 @@ class BeesApp extends SignalWatcher(LitElement) {
           .mutationClient=${this.mutationClient}
           .sessionId=${this.logStore.selectedSessionId.get()}
         ></bees-log-detail>`;
+      case "trajectories":
+        return html`<bees-trajectory-detail
+          .agentStore=${this.agentStore}
+          .agentId=${this.agentStore.selectedTrajectoryAgentId.get()}
+        ></bees-trajectory-detail>`;
       case "templates":
         return html`<bees-template-detail
           .templateStore=${this.templateStore}
