@@ -648,5 +648,86 @@ class TestAntigravityStreamEventOrdering:
         asyncio.run(run_test())
 
 
+class TestAntigravitySearchGroundingHack:
+    """Tests for the runtime monkeypatch enabling Google Search Grounding and URL Context."""
+
+    @pytest.mark.asyncio
+    async def test_search_grounding_hacked_websocket_send(self) -> None:
+        import websockets
+        import json
+        import unittest.mock
+        from unittest.mock import AsyncMock, MagicMock
+        from bees.runners.antigravity import _hacked_features_var
+        import bees.runners.antigravity as ag_runner
+
+        # Create a mock websocket
+        mock_ws_instance = MagicMock()
+        mock_ws_instance.send = AsyncMock()
+
+        # Mock the original ws connect reference within the module to prevent actual connection,
+        # but let the monkeypatched connect wrapper execute.
+        with unittest.mock.patch.object(ag_runner, "_orig_ws_connect", AsyncMock(return_value=mock_ws_instance)):
+            ws = await websockets.connect("ws://localhost:8000")
+
+            # Set the contextvar to contain search grounding and url context
+            token = _hacked_features_var.set(frozenset(["enable_google_search", "enable_url_context"]))
+            try:
+                # Send a sample initialization message
+                init_msg = json.dumps({
+                    "config": {
+                        "geminiConfig": {
+                            "modelName": "gemini-3.5-flash"
+                        }
+                    }
+                })
+                await ws.send(init_msg)
+            finally:
+                _hacked_features_var.reset(token)
+
+            # Verify that the message sent has the features injected!
+            sent_msg = ws._orig_send.call_args[0][0]
+            data = json.loads(sent_msg)
+            assert data["config"]["geminiConfig"]["enable_google_search"] is True
+            assert data["config"]["geminiConfig"]["enable_url_context"] is True
+
+    @pytest.mark.asyncio
+    async def test_search_grounding_disabled_by_default(self) -> None:
+        import websockets
+        import json
+        import unittest.mock
+        from unittest.mock import AsyncMock, MagicMock
+        from bees.runners.antigravity import _hacked_features_var
+        import bees.runners.antigravity as ag_runner
+
+        mock_ws_instance = MagicMock()
+        mock_ws_instance.send = AsyncMock()
+
+        with unittest.mock.patch.object(ag_runner, "_orig_ws_connect", AsyncMock(return_value=mock_ws_instance)):
+            ws = await websockets.connect("ws://localhost:8000")
+
+            # Contextvar is empty/default
+            init_msg = json.dumps({
+                "config": {
+                    "geminiConfig": {
+                        "modelName": "gemini-3.5-flash"
+                    }
+                }
+            })
+            await ws.send(init_msg)
+
+            # Verify that the message sent does NOT have the features injected!
+            sent_msg = ws._orig_send.call_args[0][0]
+            data = json.loads(sent_msg)
+            assert "enable_google_search" not in data["config"]["geminiConfig"]
+            assert "enable_url_context" not in data["config"]["geminiConfig"]
+
+
+
+
+
+
+
+
+
 
 

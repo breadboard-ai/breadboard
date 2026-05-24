@@ -83,6 +83,7 @@
 
 
     Your first task: {{system.context}}
+  runner: antigravity
   functions:
     - files.*
     - events.*
