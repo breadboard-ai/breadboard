@@ -105,3 +105,8 @@ class TestClassifyChange:
             HIVE / "agents" / "abc-123" / "antigravity_traj.json", HIVE
         ) == "ignore"
 
+    def test_session_trajectory_json_ignored(self):
+        assert classify_change(
+            HIVE / "agents" / "abc-123" / "sessions" / "session-xyz" / "antigravity_traj.json", HIVE
+        ) == "ignore"
+

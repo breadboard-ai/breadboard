@@ -763,7 +763,9 @@ class AntigravityRunner:
         workspace = _workspace_path(config)
 
         # 4. Create a save_dir for session persistence.
-        if config.ticket_dir:
+        if config.ticket_dir and config.session_id:
+            save_dir = str(config.ticket_dir / "sessions" / config.session_id / "antigravity_state")
+        elif config.ticket_dir:
             save_dir = str(config.ticket_dir / "antigravity_state")
         else:
             save_dir = tempfile.mkdtemp(prefix="bees-ag-")

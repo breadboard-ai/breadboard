@@ -257,7 +257,19 @@ class AgentStore {
     for (const agent of entries) {
       try {
         const agentDir = await this.#agentsHandle.getDirectoryHandle(agent.id);
-        const trajFileHandle = await agentDir.getFileHandle("antigravity_traj.json");
+        let trajFileHandle: FileSystemFileHandle | null = null;
+        if (agent.active_session) {
+          try {
+            const sessionsDir = await agentDir.getDirectoryHandle("sessions");
+            const sessionDir = await sessionsDir.getDirectoryHandle(agent.active_session);
+            trajFileHandle = await sessionDir.getFileHandle("antigravity_traj.json");
+          } catch {
+            // Fall through to agent-level root
+          }
+        }
+        if (!trajFileHandle) {
+          trajFileHandle = await agentDir.getFileHandle("antigravity_traj.json");
+        }
         const file = await trajFileHandle.getFile();
         const text = await file.text();
         const data = JSON.parse(text);
@@ -267,6 +279,7 @@ class AgentStore {
           agentTitle: agent.title ?? `Agent ${agent.id.slice(0, 8)}`,
           agentStatus: agent.status ?? "unknown",
           trajectoryId: data.trajectory_id || "",
+          sessionId: data.session_id || agent.active_session,
           steps: data.steps || [],
           lastModified: file.lastModified,
         });
@@ -775,7 +788,10 @@ class AgentStore {
               const fsPath = segments.slice(4).join("/");
               if (!fsChanges.has(agentId)) fsChanges.set(agentId, []);
               fsChanges.get(agentId)!.push(fsPath);
-            } else if (segments.length === 2 && segments[1] === "antigravity_traj.json") {
+            } else if (
+              (segments.length === 2 && segments[1] === "antigravity_traj.json") ||
+              (segments.length === 4 && segments[1] === "sessions" && segments[3] === "antigravity_traj.json")
+            ) {
               this.recentlyUpdatedTrajectory.set({ id: agentId, at: Date.now() });
             }
           }

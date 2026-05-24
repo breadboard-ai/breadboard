@@ -153,7 +153,7 @@ def format_timestamp(step_fields: List[Tuple[int, Any]]) -> str:
     except Exception:
         return "Unknown Time"
 
-def trajectory_to_dict(decompressed_data: bytes) -> Dict[str, Any]:
+def trajectory_to_dict(decompressed_data: bytes, session_id: str | None = None) -> Dict[str, Any]:
     parsed = parse_proto(decompressed_data)
     trajectory_id = get_field(parsed, 1)
     steps = get_fields(parsed, 2)
@@ -256,17 +256,25 @@ def trajectory_to_dict(decompressed_data: bytes) -> Dict[str, Any]:
             
         steps_list.append(step_dict)
         
-    return {
+    result = {
         "trajectory_id": trajectory_id if isinstance(trajectory_id, str) else str(trajectory_id),
         "steps": steps_list,
     }
+    if session_id:
+        result["session_id"] = session_id
+    return result
 
 def convert_trajectory_to_json(filepath: Path, destpath: Path) -> bool:
     try:
         compressed_data = filepath.read_bytes()
         dctx = zstd.ZstdDecompressor()
         decompressed_data = dctx.decompress(compressed_data)
-        traj_dict = trajectory_to_dict(decompressed_data)
+        
+        session_id = None
+        if filepath.parent.name == "antigravity_state" and filepath.parent.parent.parent.name == "sessions":
+            session_id = filepath.parent.parent.name
+            
+        traj_dict = trajectory_to_dict(decompressed_data, session_id=session_id)
         
         destpath.write_text(json.dumps(traj_dict, indent=2), encoding="utf-8")
         return True
