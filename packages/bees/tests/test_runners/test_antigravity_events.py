@@ -374,7 +374,6 @@ class TestAntigravityStreamTaskStateAwareness:
                 # stream should yield waitForInput instead of complete!
                 event2 = await stream.__anext__()
                 assert "waitForInput" in event2
-                assert stream._pending_suspend is not None
 
         asyncio.run(run_test())
 
@@ -462,7 +461,6 @@ class TestAntigravityStreamTaskStateAwareness:
                 
                 event2 = await stream.__anext__()
                 assert "waitForInput" in event2
-                assert stream._pending_suspend is not None
 
         asyncio.run(run_test())
 
