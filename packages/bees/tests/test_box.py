@@ -99,3 +99,9 @@ class TestClassifyChange:
         assert classify_change(
             HIVE / "mutations" / ".box-active", HIVE
         ) == "ignore"
+
+    def test_trajectory_json_ignored(self):
+        assert classify_change(
+            HIVE / "agents" / "abc-123" / "antigravity_traj.json", HIVE
+        ) == "ignore"
+
