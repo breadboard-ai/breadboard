@@ -151,6 +151,41 @@ class TestWrapBeesHandler:
         result = asyncio.run(tool())
         assert result == {"echo": {}}
 
+    def test_handler_suspend_error_non_chat(self) -> None:
+        """When a handler raises SuspendError and has_chat is False, it instructs the agent to say [ack]."""
+        from bees.protocols.handler_types import SuspendError, WaitForInputEvent
+        async def suspend_handler(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
+            event = WaitForInputEvent(request_id="req-1", prompt={}, input_type="any")
+            raise SuspendError(event, {"functionCall": {"name": "test_fn", "args": args}})
+            
+        func_def = FunctionDefinition(
+            name="test_fn",
+            description="Suspends",
+            handler=suspend_handler,
+        )
+        tool = wrap_bees_handler(func_def, has_chat=False)
+        result = asyncio.run(tool())
+        assert result["status"] == "pending"
+        assert "[ack]" in result["message"]
+
+    def test_handler_suspend_error_chat(self) -> None:
+        """When a handler raises SuspendError and has_chat is True, it instructs the agent to converse with the user."""
+        from bees.protocols.handler_types import SuspendError, WaitForInputEvent
+        async def suspend_handler(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
+            event = WaitForInputEvent(request_id="req-1", prompt={}, input_type="any")
+            raise SuspendError(event, {"functionCall": {"name": "test_fn", "args": args}})
+            
+        func_def = FunctionDefinition(
+            name="test_fn",
+            description="Suspends",
+            handler=suspend_handler,
+        )
+        tool = wrap_bees_handler(func_def, has_chat=True)
+        result = asyncio.run(tool())
+        assert result["status"] == "pending"
+        assert "[ack]" not in result["message"]
+        assert "continue conversing" in result["message"].lower()
+
 
 # ---------------------------------------------------------------------------
 # _resolve_builtin_pattern

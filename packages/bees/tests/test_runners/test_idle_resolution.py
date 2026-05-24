@@ -103,7 +103,7 @@ class TestChatMode:
 class TestPriorityOrdering:
     """Verify the priority chain when multiple conditions are true."""
 
-    def test_deferred_suspend_beats_chat(self) -> None:
+    def test_chat_beats_deferred_suspend(self) -> None:
         inputs = IdleInputs(
             pending_suspend=True,
             suspend_request_id="req-456",
@@ -111,17 +111,24 @@ class TestPriorityOrdering:
             last_user_text="Hi there",
         )
         outcome, event = resolve_idle(inputs)
-        assert outcome == IdleOutcome.SUSPEND_DEFERRED
-        assert event["waitForInput"]["requestId"] == "req-456"
+        assert outcome == IdleOutcome.SUSPEND_CHAT
+        assert event["waitForInput"]["inputType"] == "text"
+        assert event["waitForInput"]["prompt"] == {
+            "parts": [{"text": "Hi there"}],
+        }
 
-    def test_active_tasks_beat_chat(self) -> None:
+    def test_chat_beats_active_tasks(self) -> None:
         inputs = IdleInputs(
             has_active_tasks=True,
             has_chat=True,
             last_user_text="Working on it...",
         )
         outcome, event = resolve_idle(inputs)
-        assert outcome == IdleOutcome.SUSPEND_DEFERRED
+        assert outcome == IdleOutcome.SUSPEND_CHAT
+        assert event["waitForInput"]["inputType"] == "text"
+        assert event["waitForInput"]["prompt"] == {
+            "parts": [{"text": "Working on it..."}],
+        }
 
     def test_deferred_suspend_beats_active_tasks(self) -> None:
         """When both are set, the tool's request ID is used."""

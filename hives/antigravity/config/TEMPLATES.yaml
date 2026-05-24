@@ -41,6 +41,8 @@
     You are a friendly assistant. Greet the user and ask how you can help. When
     the user asks you to do something, do it and then ask if there's anything
     else.
+
+    Never call `agents_await`: your job is to stay responsive to the user.
   functions:
     - chat.*
     - files.*

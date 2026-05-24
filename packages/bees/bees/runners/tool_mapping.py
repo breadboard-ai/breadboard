@@ -161,6 +161,10 @@ def map_function_filter(
     active_instructions: list[str] = []
     suspend_queue: asyncio.Queue[SuspendError] = asyncio.Queue()
 
+    has_chat = False
+    if function_filter is not None:
+        has_chat = any(pattern.startswith("chat.") for pattern in function_filter)
+
     if function_filter is None:
         # No filter → enable all SDK builtins (except excluded).
         enabled_builtins = set(ag_types.BuiltinTools) - _EXCLUDED_BUILTINS
@@ -169,6 +173,7 @@ def map_function_filter(
             function_groups, hooks,
             include_groups=None,
             suspend_queue=suspend_queue,
+            has_chat=has_chat,
         )
         active_group_names = None
     else:
@@ -195,6 +200,7 @@ def map_function_filter(
             function_groups, hooks,
             include_groups=custom_group_names,
             suspend_queue=suspend_queue,
+            has_chat=has_chat,
         )
 
     # Collect instructions for all active groups (built-in and custom).
@@ -239,6 +245,7 @@ def wrap_bees_handler(
     func_def: FunctionDefinition,
     *,
     suspend_queue: asyncio.Queue[SuspendError] | None = None,
+    has_chat: bool = False,
 ) -> Callable[..., Any]:
     """Wrap a bees ``FunctionDefinition`` as an SDK-compatible Python tool.
 
@@ -275,13 +282,18 @@ def wrap_bees_handler(
                 "Deferred suspend for %s (result_id=%s)",
                 func_def.name, result_id[:8],
             )
+            message = "Results are pending and will be delivered asynchronously."
+            if has_chat:
+                message += " Continue conversing with the user. The <context_update> message will arrive as soon as the task completes."
+            else:
+                message += (
+                    " Now, reply with \"[ack]\" and wait for a "
+                    "<context_update> message that will provide the results."
+                )
             return {
                 "status": "pending",
                 "result_id": result_id,
-                "message": (
-                    "Results are pending and will be delivered "
-                    "asynchronously. Now, reply with \"[ack]\" and wait for a " "<context_update> message that will provide the results."
-                ),
+                "message": message,
             }
 
     # The SDK uses __name__ and __doc__ for tool registration.
@@ -328,6 +340,7 @@ def _extract_custom_tools(
     *,
     include_groups: set[str] | None,
     suspend_queue: asyncio.Queue[SuspendError] | None = None,
+    has_chat: bool = False,
 ) -> tuple[list[Callable[..., Any]], list[str]]:
     """Instantiate function groups and wrap their definitions as custom tools.
 
@@ -339,6 +352,7 @@ def _extract_custom_tools(
             custom tools.
         suspend_queue: Queue to pass to ``wrap_bees_handler`` for
             intercepting ``SuspendError``.
+        has_chat: True if the session has chat functions enabled.
 
     Returns:
         A ``(tools, instructions)`` tuple.  ``instructions`` contains
@@ -377,7 +391,7 @@ def _extract_custom_tools(
 
         for _name, func_def in group.definitions:
             tools.append(wrap_bees_handler(
-                func_def, suspend_queue=suspend_queue,
+                func_def, suspend_queue=suspend_queue, has_chat=has_chat,
             ))
 
         if group.instruction:
