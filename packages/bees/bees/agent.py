@@ -20,7 +20,10 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
+
+if TYPE_CHECKING:
+    from bees.task_file_store import TaskRecord
 
 
 AgentStatus = Literal[
@@ -208,6 +211,9 @@ class Agent:
     and is populated by the adapter. Once ``TaskRecord`` takes over
     (Phase 3+) this field is removed — objectives belong on tasks.
     """
+
+    tasks: list[TaskRecord] = field(default_factory=list)
+    """List of tasks assigned to this agent, populated from the task store."""
 
     @property
     def fs_dir(self) -> Path:
