@@ -230,6 +230,15 @@ class BeesAgentPane extends SignalWatcher(LitElement) {
       value: sessionVal.slice(0, 8),
       onclick: () => this.navigate("logs", sessionVal),
     });
+    const hasTrajectory = this.agentStore.trajectories.get().some((t) => t.agentId === agent.id);
+    if (hasTrajectory) {
+      identityChips.push({
+        label: "trajectory",
+        value: agent.id.slice(0, 8),
+        cls: "trajectory",
+        onclick: () => this.navigate("trajectories", agent.id),
+      });
+    }
     if (agent.skills && agent.skills.length > 0) {
       const skillDirs = new Set(
         (this.skillStore?.skills.get() ?? []).map((sk) => sk.dirName)

@@ -182,3 +182,33 @@ export interface SurfaceManifest {
   items: SurfaceItem[];
 }
 
+// ---------------------------------------------------------------------------
+// Antigravity Trajectory types (from antigravity_traj.json)
+// ---------------------------------------------------------------------------
+
+export interface TrajectoryStep {
+  step_index: number;
+  timestamp: string;
+  type: "user_input" | "model_output" | "tool_response" | "complete" | "error" | string;
+  content?: string;
+  thought?: string;
+  tool_calls?: Array<{
+    name: string;
+    arguments?: Record<string, unknown> | string;
+  }>;
+  tool_name?: string;
+  response?: Record<string, unknown> | string;
+  outcome?: Record<string, unknown> | string;
+  error?: string;
+}
+
+export interface TrajectoryData {
+  agentId: string;
+  agentTitle: string;
+  agentStatus: string;
+  trajectoryId: string;
+  steps: TrajectoryStep[];
+  lastModified: number;
+}
+
+

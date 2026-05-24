@@ -14,7 +14,7 @@
 
 import { Signal } from "signal-polyfill";
 import type { StateAccess } from "./state-access.js";
-import type { AgentData, TaskItemData, SurfaceManifest } from "./types.js";
+import type { AgentData, TaskItemData, SurfaceManifest, TrajectoryData } from "./types.js";
 import { LiveSessionClient } from "./live-session.js";
 
 export { AgentStore };
@@ -33,6 +33,17 @@ class AgentStore {
   readonly agents = new Signal.State<AgentData[]>([]);
   readonly selectedAgentId = new Signal.State<string | null>(null);
   readonly recentlyUpdatedAgent = new Signal.State<{ id: string; at: number } | null>(null);
+
+  readonly trajectories = new Signal.State<TrajectoryData[]>([]);
+  readonly selectedTrajectoryAgentId = new Signal.State<string | null>(null);
+  readonly recentlyUpdatedTrajectory = new Signal.State<{ id: string; at: number } | null>(null);
+
+  readonly selectedTrajectory = new Signal.Computed(() => {
+    const id = this.selectedTrajectoryAgentId.get();
+    if (!id) return null;
+    return this.trajectories.get().find((t) => t.agentId === id) ?? null;
+  });
+
 
   /**
    * Fires when a file inside an agent's workspace directory changes.
@@ -117,6 +128,8 @@ class AgentStore {
     });
 
     this.agents.set(entries);
+
+    await this.#scanTrajectories(entries);
 
     // Detect active live sessions.
     await this.#detectLiveSessions(entries);
@@ -237,6 +250,36 @@ class AgentStore {
     return entries;
   }
 
+  async #scanTrajectories(entries: AgentData[]): Promise<void> {
+    if (!this.#agentsHandle) return;
+    const trajs: TrajectoryData[] = [];
+
+    for (const agent of entries) {
+      try {
+        const agentDir = await this.#agentsHandle.getDirectoryHandle(agent.id);
+        const trajFileHandle = await agentDir.getFileHandle("antigravity_traj.json");
+        const file = await trajFileHandle.getFile();
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        trajs.push({
+          agentId: agent.id,
+          agentTitle: agent.title ?? `Agent ${agent.id.slice(0, 8)}`,
+          agentStatus: agent.status ?? "unknown",
+          trajectoryId: data.trajectory_id || "",
+          steps: data.steps || [],
+          lastModified: file.lastModified,
+        });
+      } catch {
+        // No trajectory file for this agent, skip.
+      }
+    }
+
+    // Sort by lastModified descending (most recently updated first)
+    trajs.sort((a, b) => b.lastModified - a.lastModified);
+    this.trajectories.set(trajs);
+  }
+
   /**
    * Get task records assigned to a given agent.
    *
@@ -263,6 +306,9 @@ class AgentStore {
     this.selectedAgentId.set(null);
     this.selectedTaskId.set(null);
     this.recentlyUpdatedAgent.set(null);
+    this.trajectories.set([]);
+    this.selectedTrajectoryAgentId.set(null);
+    this.recentlyUpdatedTrajectory.set(null);
     this.filesystemChange.set(null);
     this.activeLiveSessions.set(new Set());
     this.disconnectLiveSession();
@@ -729,6 +775,8 @@ class AgentStore {
               const fsPath = segments.slice(4).join("/");
               if (!fsChanges.has(agentId)) fsChanges.set(agentId, []);
               fsChanges.get(agentId)!.push(fsPath);
+            } else if (segments.length === 2 && segments[1] === "antigravity_traj.json") {
+              this.recentlyUpdatedTrajectory.set({ id: agentId, at: Date.now() });
             }
           }
 

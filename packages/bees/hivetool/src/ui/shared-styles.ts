@@ -348,6 +348,12 @@ const sharedStyles = css`
     border-color: #1e3a5c;
   }
 
+  .identity-chip.trajectory {
+    background: #2d122d22;
+    color: #f472b6;
+    border-color: #5c1e5c;
+  }
+
   .identity-label {
     font-size: 0.6rem;
     font-weight: 700;
