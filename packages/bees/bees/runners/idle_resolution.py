@@ -72,24 +72,22 @@ def resolve_idle(inputs: IdleInputs) -> tuple[IdleOutcome, dict[str, Any]]:
     if inputs.emitted_complete:
         return IdleOutcome.ALREADY_COMPLETE, {}
 
-    # Priority 1: Active child tasks without an existing suspend →
+    # Priority 1: Chat mode — chat sessions are infinite and always suspend
+    # for user input, even if there are pending tool suspends or active child tasks.
+    if inputs.has_chat:
+        return IdleOutcome.SUSPEND_CHAT, _chat_event(inputs.last_user_text)
+
+    # Priority 2: Active child tasks without an existing suspend →
     # synthesize a deferred suspend so the scheduler keeps us alive.
     if inputs.has_active_tasks and not inputs.pending_suspend:
         request_id = str(uuid.uuid4())
         return IdleOutcome.SUSPEND_DEFERRED, _deferred_event(request_id)
 
-    # Priority 2: A tool requested suspension (deferred result pattern).
+    # Priority 3: A tool requested suspension (deferred result pattern).
     if inputs.pending_suspend:
         return IdleOutcome.SUSPEND_DEFERRED, _deferred_event(
             inputs.suspend_request_id,
         )
-
-    # Priority 3: Chat mode — idle without FINISH = waiting for user.
-    # The session is infinite; it must always suspend regardless of
-    # whether the model produced text.  The text is presentation data
-    # for the prompt, not a lifecycle gate.
-    if inputs.has_chat:
-        return IdleOutcome.SUSPEND_CHAT, _chat_event(inputs.last_user_text)
 
     # Default: Worker mode — idle without FINISH = done.
     return IdleOutcome.COMPLETE, _complete_event()
