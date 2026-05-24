@@ -55,6 +55,7 @@ from bees.runners.live import LiveRunner
 from bees.runners.antigravity import AntigravityRunner
 from bees.runners.direct_model import DirectModelRunner
 from bees.agent import Agent
+from bees.trajectory_parser import convert_trajectory_to_json
 from opal_backend.local.backend_client_impl import HttpBackendClient
 
 logger = logging.getLogger("bees.box")
@@ -76,6 +77,9 @@ def classify_change(path: Path, hive_dir: Path) -> ChangeKind:
         ``"mutation"`` for mutation files that need atomic processing,
         ``"ignore"`` for everything else (logs, temp files, etc.).
     """
+    if path.name == "antigravity_traj.json":
+        return "ignore"
+
     try:
         rel = path.relative_to(hive_dir)
     except ValueError:
@@ -213,7 +217,13 @@ async def run(
                 needs_mutation = False
 
                 for _change_type, changed_path in changes:
-                    kind = classify_change(Path(changed_path), hive_dir)
+                    path = Path(changed_path)
+                    # If an antigravity trajectory file changed, write its JSON representation.
+                    if path.name.startswith("traj-") and path.parent.name == "antigravity_state" and path.is_file():
+                        dest_path = path.parent.parent / "antigravity_traj.json"
+                        convert_trajectory_to_json(path, dest_path)
+
+                    kind = classify_change(path, hive_dir)
                     if kind == "config":
                         needs_restart = True
                     elif kind == "task":
