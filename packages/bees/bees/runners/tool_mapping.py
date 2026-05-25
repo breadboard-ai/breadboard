@@ -70,8 +70,10 @@ _FILTER_TO_BUILTINS: dict[str, list[ag_types.BuiltinTools]] = {
     ],
 }
 
-# Function group names that produce custom tools rather than SDK builtins.
-_CUSTOM_TOOL_GROUPS = {"agents", "events", "skills"}
+# Function group names that map directly to SDK built-in capabilities.
+# All other groups are custom Python tools.
+_SDK_BUILTIN_GROUPS = {"files", "sandbox", "chat", "system"}
+
 
 # SDK tools we never enable, regardless of filter.
 _EXCLUDED_BUILTINS = {
@@ -189,7 +191,7 @@ def map_function_filter(
             # Map pattern to group name (e.g. "agents" from "agents.*" or "agents_assign_task").
             group_name = pattern.split(".")[0].split("_")[0]
             active_group_names.add(group_name)
-            if group_name in _CUSTOM_TOOL_GROUPS:
+            if group_name not in _SDK_BUILTIN_GROUPS:
                 custom_group_names.add(group_name)
 
         # Remove any excluded builtins that snuck in.
@@ -381,8 +383,7 @@ def _extract_custom_tools(
 
         group_name = group.name or ""
 
-        # Skip groups that map to SDK builtins.
-        if group_name and group_name not in _CUSTOM_TOOL_GROUPS:
+        if group_name in _SDK_BUILTIN_GROUPS:
             continue
 
         # Skip groups not in the include set (when filtering).

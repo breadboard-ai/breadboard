@@ -28,7 +28,6 @@ from bees.protocols.functions import (
     SessionHooks,
 )
 from bees.runners.tool_mapping import (
-    _CUSTOM_TOOL_GROUPS,
     _EXCLUDED_BUILTINS,
     _FILTER_TO_BUILTINS,
     _extract_custom_tools,
@@ -409,6 +408,35 @@ class TestMapFunctionFilter:
         assert len(tools) == 1
         assert tools[0].__name__ == "agents_list"
         assert instructions == ["Agents."]
+
+    def test_mcp_filter_extracts_tools(self) -> None:
+        """'weather.*' enables the weather MCP custom tool group."""
+        fd = _make_func_def(name="weather_get_forecast")
+        group = _make_group("weather", [fd], instruction="Weather tools.")
+
+        caps, tools, instructions, _sq = map_function_filter(
+            ["weather.*"], [group], _StubHooks(),
+        )
+        assert set(caps.enabled_tools) == set()
+        assert len(tools) == 1
+        assert tools[0].__name__ == "weather_get_forecast"
+        assert instructions == ["Weather tools."]
+
+    def test_none_filter_extracts_all_custom_groups(self) -> None:
+        """None filter extracts tools from both standard and MCP custom groups."""
+        fd1 = _make_func_def(name="agents_list")
+        group1 = _make_group("agents", [fd1], instruction="Agents.")
+        fd2 = _make_func_def(name="weather_get_forecast")
+        group2 = _make_group("weather", [fd2], instruction="Weather.")
+
+        _caps, tools, instructions, _sq = map_function_filter(
+            None, [group1, group2], _StubHooks(),
+        )
+        assert len(tools) == 2
+        names = {t.__name__ for t in tools}
+        assert names == {"agents_list", "weather_get_forecast"}
+        assert set(instructions) == {"Agents.", "Weather."}
+
 
     def test_mixed_filter(self) -> None:
         """Builtin + custom filters work together."""
