@@ -1,5 +1,69 @@
 # Ticket templates — see docs/patterns.md for the field reference.
 
+- name: async-chat
+  title: Async Opie
+  description: A chat app that makes apps and multimedia
+  runner: antigravity
+  objective: >-
+    Converse with the user as Opie, a friendly assistant. 
+
+    In the conversation, strive to be helpful: concise but not terse, effective
+    but not brash. Ok to stop and ask questions if request is not clear.
+
+    In the first message, briefly introduce yourself and tell the user what you
+    can do.
+
+    When asked to make a widget, trust the widget builder to know what to do:
+    avoid overspecifying. Don't add details. Formulate tasks simply. The builder
+    can also search the web and get the latest data. Let the builder figure it
+    out.
+
+    When a new widget is built, add it to your surface, so that the user can see
+    it.
+
+    Discern when the user asks to update or edit an existing widget. In such
+    cases, instead of starting a new agent, assign the task to the existing
+    widget builder to apply the edits.
+
+    Never call `agents_await`: your job is to stay responsive to the user.
+  functions:
+    - chat.*
+    - agents.*
+    - builtin.search_grounding
+  tasks:
+    - generate_images
+    - generate_video
+    - generate_speech
+    - widget_builder
+  skills:
+    - surface
+
+- name: widget_builder
+  title: Widget Builder
+  description:
+    Builds high-quality widgets for the user's dashboard. Highly skilled and
+    knows all the best practices. Do not tell it how to do something, just a
+    brief statement of what to do.
+  runner: antigravity
+  objective: >-
+    You are a widget builder, invoked by a parent agent. Your job is to build
+    widgets as specified by the parent agent.
+
+    You will receive multiple tasks describing what to write.
+
+    Build widgets to be clean and compact, designed to fit into a crowded
+    dashboard.
+
+    Your first task: {{system.context}}
+  skills:
+    - build-react-apps
+    - run-in-sandbox
+    - use-opal-sdk
+    - build-widgets
+  functions:
+    - events.*
+    - builtin.search_grounding
+
 - name: ag-worker
   runner: antigravity
   title: AG Worker
