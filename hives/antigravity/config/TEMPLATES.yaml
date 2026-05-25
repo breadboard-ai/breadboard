@@ -64,6 +64,20 @@
     - events.*
     - builtin.search_grounding
 
+- name: workspace-test
+  runner: antigravity
+  title: Test Workspace MCP 2
+  description: Tests workspace MCP integration
+  objective:
+    Chat with the user and fulfill their requests with the tools that you have.
+  functions:
+    - chat.*
+    - drive.*
+    - gchat.*
+    - gmail.*
+    - calendar.*
+    - people.*
+
 - name: ag-worker
   runner: antigravity
   title: AG Worker
