@@ -117,7 +117,7 @@ jobs:
       # from the trusted codebase. The artifact only contains JSON data files.
       - name: Download coverage artifact
         id: download
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: coverage-report
           path: pr-artifact
