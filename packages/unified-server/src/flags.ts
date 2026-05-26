@@ -42,6 +42,8 @@ export const ENABLE_BACKEND_CLIENT = getBoolean("ENABLE_BACKEND_CLIENT");
 
 export const ENABLE_CONSISTENT_UI = getBoolean("ENABLE_CONSISTENT_UI");
 
+export const ENABLE_DEV_TOOLS = getBoolean("ENABLE_DEV_TOOLS");
+
 export const ENABLE_FORCE_2D_GRAPH = getBoolean("ENABLE_FORCE_2D_GRAPH");
 
 export const ENABLE_GOOGLE_DRIVE_TOOLS = getBoolean(

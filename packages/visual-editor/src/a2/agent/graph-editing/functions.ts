@@ -5,18 +5,19 @@
  */
 
 import type {
+  EditSpec,
   GraphDescriptor,
   NodeDescriptor,
   NodeValue,
 } from "@breadboard-ai/types";
-import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
 import z from "zod";
+import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
+import { A2_TOOLS } from "../../a2-registry.js";
+import type { AgentEventSink } from "../agent-event-sink.js";
 import { defineFunction, mapDefinitions } from "../function-definition.js";
 import type { FunctionGroup } from "../types.js";
-import { A2_TOOLS } from "../../a2-registry.js";
 import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
 import { graphOverviewYaml } from "./graph-overview.js";
-import type { AgentEventSink } from "../agent-event-sink.js";
 import type { ApplyEditsResponse, ReadGraphResponse } from "./types.js";
 
 export { getGraphEditingFunctionGroup };
@@ -369,7 +370,7 @@ function defineGraphEditingFunctions(
    * Applies edits via the suspend mechanism, waiting for confirmation.
    */
   async function applyEdits(
-    edits: import("@breadboard-ai/types").EditSpec[],
+    edits: EditSpec[],
     label: string
   ): Promise<ApplyEditsResponse> {
     return sink.suspend<ApplyEditsResponse>({

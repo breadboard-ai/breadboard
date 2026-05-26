@@ -17,6 +17,7 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   enableNotebookLm: false,
   enableResumeAgentRun: false,
   enableGraphEditorAgent: false,
+  enableDevTools: false,
   textEditorRemix: false,
   showTokenCounter: false,
   enableOpalBackend: false,

@@ -175,6 +175,9 @@ export function makeTestController(options: TestControllerOptions = {}) {
       theme: {
         status: "idle" as string,
       },
+      devtools: {
+        isOpen: false,
+      },
     },
   } as unknown as AppController;
 

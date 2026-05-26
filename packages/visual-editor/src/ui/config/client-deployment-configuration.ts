@@ -25,6 +25,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   enableResumeAgentRun: false,
   enableNotebookLm: false,
   enableGraphEditorAgent: false,
+  enableDevTools: false,
   textEditorRemix: false,
   showTokenCounter: false,
   enableOpalBackend: false,

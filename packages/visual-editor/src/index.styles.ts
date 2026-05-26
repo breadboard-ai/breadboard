@@ -707,5 +707,49 @@ export const styles = [
         opacity: 1;
       }
     }
+
+    #open-devtools {
+      position: absolute;
+      bottom: var(--bb-grid-size-4);
+      right: var(--bb-grid-size-4);
+      z-index: 1000;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: none;
+      background: var(--light-dark-p-50);
+      color: white;
+      box-shadow: var(--bb-elevation-3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+      &:hover,
+      &:focus {
+        background-color: var(--light-dark-p-30);
+      }
+
+      & .g-icon {
+        font-size: 24px;
+      }
+    }
+
+    .devtools-split {
+      height: 100%;
+      width: 100%;
+
+      & [slot="slot-0"] {
+        height: 100%;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      & [slot="slot-1"] {
+        height: 100%;
+      }
+    }
   `,
 ] as CSSResultGroup;
