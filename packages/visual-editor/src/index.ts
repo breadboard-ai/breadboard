@@ -157,8 +157,18 @@ class Main extends MainBase {
   render() {
     const renderValues = this.getRenderValues();
 
-    const enableDevTools = this.sca.env.flags.get("enableDevTools");
-    const devToolsOpen = this.sca.controller.editor.devtools.isOpen;
+    const isHydratingDevTools = Utils.Helpers.isHydrating(
+      () => this.sca.env.flags.get("enableDevTools")
+    ) || Utils.Helpers.isHydrating(
+      () => this.sca.controller.editor.devtools.isOpen
+    );
+
+    const enableDevTools = isHydratingDevTools
+      ? false
+      : this.sca.env.flags.get("enableDevTools");
+    const devToolsOpen = isHydratingDevTools
+      ? false
+      : this.sca.controller.editor.devtools.isOpen;
 
     const mainPanel = html`
       ${this.sca.controller.global.main.show.has("TOS") ||
