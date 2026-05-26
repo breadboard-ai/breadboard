@@ -80,4 +80,61 @@ describe("graphOverviewYaml", () => {
     ok(yaml.includes("Final result"));
     ok(yaml.includes("Translate hello to French"));
   });
+
+  it("shows splashImage: present when graph has custom splashScreen", () => {
+    const translator = new EditingAgentPidginTranslator();
+    const yaml = graphOverviewYaml(
+      {
+        title: "Test Graph",
+        metadata: {
+          visual: {
+            presentation: {
+              theme: "theme-1",
+              themes: {
+                "theme-1": {
+                  splashScreen: {
+                    storedData: {
+                      handle: "some-handle",
+                      mimeType: "image/png",
+                    },
+                  },
+                  isDefaultTheme: false,
+                },
+              },
+            },
+          },
+        },
+      },
+      [],
+      [],
+      translator
+    );
+    ok(yaml.includes("splashImage: present"));
+  });
+
+  it("shows splashImage: default when graph lacks splashScreen or is default theme", () => {
+    const translator = new EditingAgentPidginTranslator();
+    const yaml = graphOverviewYaml(
+      {
+        title: "Test Graph",
+        metadata: {
+          visual: {
+            presentation: {
+              theme: "theme-1",
+              themes: {
+                "theme-1": {
+                  isDefaultTheme: true,
+                },
+              },
+            },
+          },
+        },
+      },
+      [],
+      [],
+      translator
+    );
+    ok(yaml.includes("splashImage: default"));
+  });
 });
+

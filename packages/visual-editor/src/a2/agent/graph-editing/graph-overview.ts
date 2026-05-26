@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Edge, LLMContent, NodeDescriptor } from "@breadboard-ai/types";
+import type { Edge, GraphMetadata, LLMContent, NodeDescriptor } from "@breadboard-ai/types";
+
 import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
 import {
   GENERATE_COMPONENT_URL,
@@ -22,7 +23,11 @@ export { graphOverviewYaml, describeSelection };
  * (converted to pidgin), and an adjacency list of connections.
  */
 function graphOverviewYaml(
-  graph: { title?: string; description?: string },
+  graph: {
+    title?: string;
+    description?: string;
+    metadata?: GraphMetadata;
+  },
   nodes: NodeDescriptor[],
   edges: Edge[],
   translator: EditingAgentPidginTranslator
@@ -38,6 +43,17 @@ function graphOverviewYaml(
   const lines: string[] = [];
   if (graph.title) lines.push(`title: ${graph.title}`);
   if (graph.description) lines.push(`description: ${graph.description}`);
+
+  const presentation = graph.metadata?.visual?.presentation;
+  const themeId = presentation?.theme;
+  const themes = presentation?.themes;
+  const currentTheme =
+    themeId && themes ? themes[themeId] : undefined;
+
+  const isCustom =
+    !!currentTheme?.splashScreen && !currentTheme?.isDefaultTheme;
+  lines.push(`splashImage: ${isCustom ? "present" : "default"}`);
+
 
   lines.push("", "steps:");
   for (const node of nodes) {

@@ -26,6 +26,7 @@ export type {
   TransformDescriptor,
   UpdateNodeDescriptor,
   LayoutGraphDescriptor,
+  UpdateGraphPropertiesDescriptor,
   StartPayload,
   ThoughtPayload,
   FunctionCallPayload,
@@ -156,7 +157,18 @@ type ApplyEditsPayload = {
  * reduced to plain `EditSpec[]`. The client instantiates the
  * appropriate transform class and applies it.
  */
-type TransformDescriptor = UpdateNodeDescriptor | LayoutGraphDescriptor;
+type TransformDescriptor =
+  | UpdateNodeDescriptor
+  | LayoutGraphDescriptor
+  | UpdateGraphPropertiesDescriptor;
+
+type UpdateGraphPropertiesDescriptor = {
+  kind: "updateGraphProperties";
+  title?: string;
+  description?: string;
+  themeIntent?: string;
+};
+
 
 type UpdateNodeDescriptor = {
   kind: "updateNode";

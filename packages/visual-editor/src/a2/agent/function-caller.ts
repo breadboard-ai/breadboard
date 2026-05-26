@@ -77,23 +77,35 @@ class FunctionCallerImpl implements FunctionCaller {
     callId: string,
     part: FunctionCallCapabilityPart,
     statusUpdateCallback: StatusUpdateCallback,
-    reporter: ProgressReporter | null
+    reporter: ProgressReporter | null,
+    onResult?: (callId: string, content: LLMContent) => void
   ): void {
     const name = part.functionCall.name;
     if (this.builtIn.has(name)) {
       this.#functionPromises.push(
         this.#callBuiltIn(part, statusUpdateCallback, reporter).then(
-          (result) => (ok(result) ? { callId, response: result } : result)
+          (result) => {
+            if (ok(result)) {
+              onResult?.(callId, { parts: [result] });
+              return { callId, response: result };
+            }
+            return result;
+          }
         )
       );
     } else {
       this.#functionPromises.push(
-        this.#callCustom(part).then((result) =>
-          ok(result) ? { callId, response: result } : result
-        )
+        this.#callCustom(part).then((result) => {
+          if (ok(result)) {
+            onResult?.(callId, { parts: [result] });
+            return { callId, response: result };
+          }
+          return result;
+        })
       );
     }
   }
+
 
   async getResults(): Promise<
     Outcome<{ combined: LLMContent; results: FunctionCallResult[] } | null>

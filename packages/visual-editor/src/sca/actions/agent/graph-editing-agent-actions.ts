@@ -15,10 +15,17 @@
  */
 
 import type {
+  GraphMetadata,
   LLMContent,
   NodeConfiguration,
   NodeMetadata,
 } from "@breadboard-ai/types";
+import { generateImage, persistTheme } from "../theme/theme-utils.js";
+import { createThemeGenerationPrompt } from "../../../ui/prompts/theme-generation.js";
+
+import { ok } from "@breadboard-ai/utils";
+
+
 
 import { makeAction } from "../binder.js";
 import { buildHooksFromSink } from "../../../a2/agent/loop-setup.js";
@@ -172,7 +179,7 @@ function startGraphEditingAgent(firstMessage: string): void {
 
   // Graph write: apply edits or transforms and return success/failure
   handle.events.on("applyEdits", async (event) => {
-    const { controller } = bind;
+    const { controller, services } = bind;
     const editor = controller.editor.graph.editor;
     if (!editor) {
       return { success: false, error: "No active graph to edit" };
@@ -219,6 +226,81 @@ function startGraphEditingAgent(firstMessage: string): void {
         case "layoutGraph": {
           const graph = editor.raw();
           await layoutGraph(graph.nodes ?? [], graph.edges ?? []);
+          return { success: true };
+        }
+        case "updateGraphProperties": {
+          const { title, description, themeIntent } = transform;
+
+          let metadata: GraphMetadata | undefined;
+
+          if (themeIntent) {
+            const rawGraph = editor.raw();
+            const promptTitle = title ?? rawGraph.title;
+            const promptDesc = description ?? rawGraph.description;
+
+            const appTheme = await generateImage(
+              createThemeGenerationPrompt({
+                random: false,
+                title: promptTitle || "Application",
+                description: promptDesc,
+                userInstruction: themeIntent,
+              }),
+
+              handle.signal,
+              controller,
+              services
+            );
+
+            if (!ok(appTheme)) {
+              return {
+                success: false,
+                error: `Theme generation failed: ${appTheme.$error}`,
+              };
+            }
+
+            const graphThemeResult = await persistTheme(
+              appTheme,
+              controller,
+              services
+            );
+
+            if (!ok(graphThemeResult)) {
+              return {
+                success: false,
+                error: `Failed to persist theme: ${graphThemeResult.$error}`,
+              };
+            }
+
+            metadata = editor.raw().metadata ?? {};
+            metadata.visual ??= {};
+            metadata.visual.presentation ??= {};
+            metadata.visual.presentation.themes ??= {};
+
+            const id = globalThis.crypto.randomUUID();
+            metadata.visual.presentation.themes[id] = graphThemeResult;
+            metadata.visual.presentation.theme = id;
+          }
+
+          const result = await editor.edit(
+            [
+              {
+                type: "changegraphmetadata",
+                title: title ?? undefined,
+                description: description ?? undefined,
+                metadata,
+                graphId: "",
+              },
+            ],
+            "Updating graph properties"
+          );
+
+          if (themeIntent) {
+            controller.editor.theme.updateHash(controller.editor.graph.graph);
+          }
+
+          if (!result.success) {
+            return { success: false, error: result.error };
+          }
           return { success: true };
         }
       }

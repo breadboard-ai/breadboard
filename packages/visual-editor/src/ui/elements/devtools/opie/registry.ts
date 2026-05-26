@@ -6,6 +6,8 @@ import { renderUpsertLegacyStep } from "./renderers/upsert-legacy-step.js";
 import { renderWaitForUserInput } from "./renderers/wait-for-user-input.js";
 import { renderGraphGetOverview } from "./renderers/graph-get-overview.js";
 import { renderGraphRemoveStep } from "./renderers/graph-remove-step.js";
+import { renderGraphEditProperties } from "./renderers/graph-edit-properties.js";
+
 
 export type FunctionRenderer = (
   entry: SessionLogEntry,
@@ -18,6 +20,7 @@ export const FUNCTION_RENDERERS = new Map<string, FunctionRenderer>([
   ["wait_for_user_input", renderWaitForUserInput],
   ["graph_get_overview", renderGraphGetOverview],
   ["graph_remove_step", renderGraphRemoveStep],
+  ["graph_edit_properties", renderGraphEditProperties],
 ]);
 
 export function renderCall(entry: SessionLogEntry, timeString: string): TemplateResult {
