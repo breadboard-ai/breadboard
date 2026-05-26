@@ -19,9 +19,12 @@ import type {
   NodeConfiguration,
   NodeMetadata,
 } from "@breadboard-ai/types";
+
 import { makeAction } from "../binder.js";
 import { buildHooksFromSink } from "../../../a2/agent/loop-setup.js";
 import { invokeGraphEditingAgent } from "../../../a2/agent/graph-editing/main.js";
+import { buildGraphEditingFunctionGroups } from "../../../a2/agent/graph-editing/configurator.js";
+import { EditingAgentPidginTranslator } from "../../../a2/agent/graph-editing/editing-agent-pidgin-translator.js";
 import type { AgentRunHandle } from "../../../a2/agent/agent-service.js";
 import type { LocalAgentRun } from "../../../a2/agent/local-agent-run.js";
 import type { A2ModuleFactory } from "../../../a2/runnable-module-factory.js";
@@ -89,17 +92,46 @@ function startGraphEditingAgent(firstMessage: string): void {
   }) as LocalAgentRun;
   currentRun = handle;
 
-  // Wire consumer handlers to controller mutations
+  const devtools = controller.editor.devtools;
+
+  if (devtools) {
+    const translator = new EditingAgentPidginTranslator();
+    const functionGroups = buildGraphEditingFunctionGroups({
+      sink: handle.sink,
+      translator,
+    });
+    const systemInstruction = functionGroups
+      .map((g) => g.instruction)
+      .filter((ins): ins is string => typeof ins === "string")
+      .join("\n\n");
+    const functionDeclarations = functionGroups.flatMap(
+      (g) => g.declarations
+    );
+
+    devtools.setSystemInstruction(systemInstruction);
+    devtools.setFunctionDeclarations(functionDeclarations);
+    devtools.addObjective(firstMessage);
+  }
+
+
   handle.events
     .on("thought", (event) => {
       agent.addThought(event.text);
+      devtools?.addThought?.(event.text);
     })
     .on("functionCall", (event) => {
       const name = event.name;
       if (name !== "wait_for_user_input") {
         agent.addMessage("system", `${event.title ?? name}…`);
       }
+      devtools?.addCall?.(event.callId, name, event.args);
+    })
+    .on("functionResult", (event) => {
+      devtools?.updateCallResponse?.(event.callId, event.content);
     });
+
+
+
 
   // Build hooks from sink
   const hooks = buildHooksFromSink(handle.sink);

@@ -613,3 +613,14 @@ export type NodeDescriber = (
   type: NodeTypeIdentifier,
   configuration: NodeConfiguration
 ) => Promise<NodeDescriberResult>;
+
+export type SessionLogEntry = {
+  callId: string;
+  kind: "objective" | "thought" | "call";
+  name: string;
+  args: Record<string, unknown>;
+  response?: Record<string, unknown>;
+  timestamp: number;
+};
+
+
