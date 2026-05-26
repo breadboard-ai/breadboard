@@ -729,7 +729,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         .isFreshGraph=${isFreshGraph}
       >
       </bb-app-controller>
-      ${this.#renderShellUI()} ${this.renderConsentRequests()}
     </section>`;
   }
 
@@ -837,7 +836,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         ${content}
       </section>
       ${this.#renderShellUI()} ${this.#renderSharePanel()}
-      ${this.renderSnackbar()} ${this.renderNotebookLmPicker()} `;
+      ${this.renderSnackbar()} ${this.renderNotebookLmPicker()}
+      ${this.renderConsentRequests()} `;
   }
 
   #onSnackbar(event: BreadboardUI.Events.SnackbarEvent) {
