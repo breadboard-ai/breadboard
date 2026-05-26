@@ -63,6 +63,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           var(--sys-color--on-surface-low)
         );
         --example-icon-color: light-dark(#665ef6, #665ef6);
+
+        /* Accomodate top-bar-actions */
+        margin-top: 48px;
       }
 
       #loading,
