@@ -95,6 +95,7 @@ function startGraphEditingAgent(firstMessage: string): void {
   const devtools = controller.editor.devtools;
 
   if (devtools) {
+    devtools.clearLog();
     const translator = new EditingAgentPidginTranslator();
     const functionGroups = buildGraphEditingFunctionGroups({
       sink: handle.sink,
@@ -115,6 +116,12 @@ function startGraphEditingAgent(firstMessage: string): void {
 
 
   handle.events
+    .on("start", (event) => {
+      const devtools = controller.editor.devtools;
+      if (devtools && event.objective) {
+        devtools.addObjective(event.objective);
+      }
+    })
     .on("thought", (event) => {
       agent.addThought(event.text);
       devtools?.addThought?.(event.text);

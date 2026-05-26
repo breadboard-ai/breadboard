@@ -8,6 +8,9 @@ export class DevToolsController extends RootController {
   @field({ persist: "session" })
   accessor isOpen = false;
 
+  @field({ persist: "session" })
+  accessor activeTab = "opie";
+
   @field()
   private accessor _systemInstruction: string = "";
 
@@ -56,15 +59,38 @@ export class DevToolsController extends RootController {
     this._functionDeclarations = [...declarations];
   }
 
-  addObjective(request: string): void {
-    const entry: SessionLogEntry = {
-      callId: crypto.randomUUID(),
-      kind: "objective",
-      name: "objective",
-      args: { user_request: request },
-      timestamp: Date.now(),
-    };
-    this._entries = [...this._entries, entry];
+  addObjective(request: string | LLMContent): void {
+    let resolvedRequest = "";
+    if (typeof request === "string") {
+      resolvedRequest = request;
+    } else if (request && "parts" in request) {
+      resolvedRequest = (request as LLMContent).parts
+        .filter((p): p is { text: string } => "text" in p)
+        .map((p) => p.text)
+        .join("\n");
+    }
+
+    const existingIndex = this._entries.findIndex((e) => e.kind === "objective");
+    if (existingIndex !== -1) {
+      this._entries = this._entries.map((entry, idx) => {
+        if (idx === existingIndex) {
+          return {
+            ...entry,
+            args: { ...entry.args, user_request: resolvedRequest },
+          };
+        }
+        return entry;
+      });
+    } else {
+      const entry: SessionLogEntry = {
+        callId: crypto.randomUUID(),
+        kind: "objective",
+        name: "objective",
+        args: { user_request: resolvedRequest },
+        timestamp: Date.now(),
+      };
+      this._entries = [...this._entries, entry];
+    }
   }
 
   addThought(text: string): void {
