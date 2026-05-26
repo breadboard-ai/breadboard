@@ -63,6 +63,11 @@ export type RuntimeFlags = {
   enableGraphEditorAgent: boolean;
 
   /**
+   * Enable Development Tools
+   */
+  enableDevTools: boolean;
+
+  /**
    * Use the remix text editor (model-driven, Lit-rendered)
    */
   textEditorRemix: boolean;
@@ -195,6 +200,11 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
   enableGraphEditorAgent: {
     title: "Graph Editor Agent",
     description: "Enable conversational graph building",
+    visibility: "experimental",
+  },
+  enableDevTools: {
+    title: "Enable Development Tools",
+    description: "Enable Development Tools",
     visibility: "experimental",
   },
   textEditorRemix: {

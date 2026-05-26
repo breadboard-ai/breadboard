@@ -19,6 +19,8 @@ import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.j
 import { MakeUrlInit } from "./sca/types.js";
 import { repeat } from "lit/directives/repeat.js";
 import { Utils } from "./sca/utils.js";
+import "./ui/elements/splitter/splitter.js";
+import "./ui/elements/devtools/devtools.js";
 
 // Build constant.
 declare const ENABLE_DEBUG_TOOLING: boolean;
@@ -139,14 +141,26 @@ class Main extends MainBase {
     }
   }
 
+  #renderFloatingDevToolsButton() {
+    return html`
+      <button
+        id="open-devtools"
+        @click=${() => {
+          this.sca.controller.editor.devtools.isOpen = true;
+        }}
+      >
+        <span class="g-icon">developer_board</span>
+      </button>
+    `;
+  }
+
   render() {
     const renderValues = this.getRenderValues();
 
-    const content = html`<div
-      id="content"
-      ?inert=${renderValues.showingOverlay ||
-      this.sca.controller.global.main.blockingAction}
-    >
+    const enableDevTools = this.sca.env.flags.get("enableDevTools");
+    const devToolsOpen = this.sca.controller.editor.devtools.isOpen;
+
+    const mainPanel = html`
       ${this.sca.controller.global.main.show.has("TOS") ||
       this.sca.controller.global.main.show.has("MissingShare")
         ? nothing
@@ -158,6 +172,36 @@ class Main extends MainBase {
               ? this.#renderStatusUpdateBar()
               : nothing,
           ]}
+    `;
+
+    let body;
+    if (enableDevTools && devToolsOpen) {
+      body = html`
+        <bb-splitter
+          direction="vertical"
+          name="devtools-splitter"
+          .split=${[0.67, 0.33]}
+          class="devtools-split"
+        >
+          <div slot="slot-0">
+            ${mainPanel}
+          </div>
+          <bb-devtools slot="slot-1"></bb-devtools>
+        </bb-splitter>
+      `;
+    } else {
+      body = html`
+        ${mainPanel}
+        ${enableDevTools && !devToolsOpen ? this.#renderFloatingDevToolsButton() : nothing}
+      `;
+    }
+
+    const content = html`<div
+      id="content"
+      ?inert=${renderValues.showingOverlay ||
+      this.sca.controller.global.main.blockingAction}
+    >
+      ${body}
     </div>`;
 
     /**

@@ -45,6 +45,7 @@ function makeRuntimeConfig(
         enableResumeAgentRun: false,
         enableNotebookLm: false,
         enableGraphEditorAgent: false,
+        enableDevTools: false,
         textEditorRemix: false,
         showTokenCounter: false,
 
@@ -78,6 +79,7 @@ const testFlags: RuntimeFlags = {
   enableResumeAgentRun: false,
   enableNotebookLm: false,
   enableGraphEditorAgent: false,
+  enableDevTools: false,
   textEditorRemix: false,
   showTokenCounter: false,
 

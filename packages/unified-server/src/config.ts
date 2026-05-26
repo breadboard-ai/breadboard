@@ -74,6 +74,7 @@ export async function createClientConfig(opts: {
       enableNotebookLm: flags.ENABLE_NOTEBOOK_LM,
       enableResumeAgentRun: flags.ENABLE_RESUME_AGENT_RUN,
       enableGraphEditorAgent: flags.ENABLE_GRAPH_EDITOR_AGENT,
+      enableDevTools: flags.ENABLE_DEV_TOOLS,
       textEditorRemix: flags.ENABLE_TEXT_EDITOR_REMIX,
       showTokenCounter: flags.ENABLE_SHOW_TOKEN_COUNTER,
       enableOpalBackend: flags.ENABLE_OPAL_BACKEND,
