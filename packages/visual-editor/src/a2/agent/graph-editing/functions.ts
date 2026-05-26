@@ -7,6 +7,7 @@
 import type {
   EditSpec,
   GraphDescriptor,
+  NodeConfiguration,
   NodeDescriptor,
   NodeValue,
 } from "@breadboard-ai/types";
@@ -29,11 +30,35 @@ export { getGraphEditingFunctionGroup };
 const GRAPH_GET_OVERVIEW = "graph_get_overview";
 const GRAPH_REMOVE_STEP = "graph_remove_step";
 const GRAPH_UPSERT_AGENT_STEP = "upsert_agent_step";
+const GRAPH_UPSERT_LEGACY_STEP = "upsert_legacy_step";
 
 /**
  * The Generate component URL from A2_COMPONENTS.
  */
 const GENERATE_COMPONENT_URL = "embed://a2/generate.bgl.json#module:main";
+
+/**
+ * The User Input component URL from A2_COMPONENTS.
+ */
+const USER_INPUT_COMPONENT_URL =
+  "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c";
+
+/**
+ * The Output component URL from A2_COMPONENTS.
+ */
+const OUTPUT_COMPONENT_URL = "embed://a2/a2.bgl.json#module:render-outputs";
+
+const VALID_LEGACY_STEP_TYPES = [
+  "user-input",
+  "output",
+  "text-3-flash",
+  "text-3-pro",
+  "image",
+  "image-pro",
+  "audio",
+  "video",
+  "music",
+] as const;
 
 /**
  * Build the list of available tool names for the instruction text.
@@ -159,9 +184,28 @@ message for you to copy. Want to try that?"
 
 ## Graph Editing
 
-You can inspect, create, edit, and remove steps in the current graph.
-Each step you create is an **agentic step**: an autonomous agent powered by \
-Gemini that interprets its prompt as an objective and uses tools to fulfill it.
+You can inspect, create, edit, and remove steps in the current graph. There are two categories of steps you can add:
+
+### 1. Agentic Steps (\`upsert_agent_step\`)
+An autonomous agent powered by Gemini that interprets its prompt as an objective and uses tools to fulfill it.
+
+### 2. Legacy Steps (\`upsert_legacy_step\`)
+Pre-configured steps for static inputs, simple rendering, or direct content generation. You MUST provide the \`step_type\` when creating them. Valid legacy step types include:
+- \`'user-input'\` — Static user prompt requesting inputs
+- \`'output'\` — Renders multiple inputs into a consolidated display
+- \`'text-3-flash'\`, \`'text-3-pro'\` — Standard Gemini 3 Flash / 3.1 Pro content generators
+- \`'image'\`, \`'image-pro'\`, \`'audio'\`, \`'video'\`, \`'music'\` — Multimodal creators (Imagen, Nano Banana, Veo, AudioLM, Lyria)
+
+You can configure Legacy Steps using the optional \`options\` parameter. Supported legacy options and their valid values are:
+- For \`'user-input'\`:
+  - \`'modality'\`: one of \`'Any'\`, \`'Audio'\`, \`'Image'\`, \`'Text'\`, \`'Upload File'\`, or \`'Video'\`
+  - \`'required'\`: boolean (\`true\` or \`false\`)
+- For \`'output'\`:
+  - \`'render_mode'\`: one of \`'Manual layout'\`, \`'google-doc'\`, \`'google-slides'\`, or \`'google-sheets'\`
+  - \`'doc_title'\`: string (Title of Google Document/Slides/Sheets to save content to)
+- For generation steps:
+  - \`'system_instruction'\`: string (The system instruction / role for the model)
+
 
 ### Writing Prompts
 
@@ -439,6 +483,88 @@ function defineGraphEditingFunctions(
     };
   }
 
+  /**
+   * Resolves pidgin prompt markup references into standard configuration data and auto-wire InPorts.
+   */
+  async function resolvePromptAndPorts(
+    prompt: string,
+    translator: EditingAgentPidginTranslator
+  ) {
+    const resolver = await nodeTitleResolver();
+    const promptContent = translator.fromPidgin(prompt, resolver);
+    const ports = extractParentPorts(prompt, translator);
+    return { promptContent, ports };
+  }
+
+  /**
+   * Resolves a step_id handle into the raw NodeDescriptor and ensures its existence.
+   */
+  async function resolveAndValidateNode(
+    step_id: string,
+    translator: EditingAgentPidginTranslator
+  ): Promise<{ error: string } | { resolvedId: string; node: NodeDescriptor }> {
+    const resolvedId = translator.getNodeId(step_id) ?? step_id;
+    const graph = await readGraph();
+    const node = graph.nodes?.find((n) => n.id === resolvedId);
+    if (!node) {
+      return { error: `Step "${step_id}" not found` };
+    }
+    return { resolvedId, node };
+  }
+
+  type NodeSpec = {
+    type: string;
+    configuration: Record<string, unknown>;
+    portsKey: string;
+  };
+
+  /**
+   * Maps a descriptive legacy step_type to its core Graph configuration.
+   */
+  function buildNodeSpec(
+    stepType: string,
+    promptContent: unknown
+  ): NodeSpec {
+    if (stepType === "user-input") {
+      return {
+        type: USER_INPUT_COMPONENT_URL,
+        configuration: {
+          description: promptContent,
+        },
+        portsKey: "description",
+      };
+    }
+    if (stepType === "output") {
+      return {
+        type: OUTPUT_COMPONENT_URL,
+        configuration: {
+          text: promptContent,
+        },
+        portsKey: "text",
+      };
+    }
+    return {
+      type: GENERATE_COMPONENT_URL,
+      configuration: {
+        "generation-mode": stepType,
+        config$prompt: promptContent,
+      },
+      portsKey: "config$prompt",
+    };
+  }
+
+  /**
+   * Reflows graph elements and encodes raw IDs as handles back for the Agent context.
+   */
+  async function reLayoutAndReturnHandle(
+    stepId: string,
+    translator: EditingAgentPidginTranslator
+  ) {
+    await applyLayout();
+    const handle = translator.getOrCreateHandle(stepId);
+    return { step_id: handle };
+  }
+
   return [
     // =========================================================================
     // graph_get_overview
@@ -548,22 +674,19 @@ function defineGraphEditingFunctions(
         },
       },
       async ({ step_id, title, prompt }) => {
-        const resolver = await nodeTitleResolver();
-        const promptContent = translator.fromPidgin(prompt, resolver);
-        const ports = extractParentPorts(prompt, translator);
+        const { promptContent, ports } = await resolvePromptAndPorts(
+          prompt,
+          translator
+        );
 
         let stepId: string;
 
         if (step_id) {
-          // Resolve pidgin handle to raw ID if needed
-          const resolvedId = translator.getNodeId(step_id) ?? step_id;
-
-          // Check if step exists
-          const graph = await readGraph();
-          const node = graph.nodes?.find((n) => n.id === resolvedId);
-          if (!node) {
-            return { error: `Step "${step_id}" not found` };
+          const resolved = await resolveAndValidateNode(step_id, translator);
+          if ("error" in resolved) {
+            return { error: resolved.error };
           }
+          const { resolvedId } = resolved;
 
           stepId = resolvedId;
           await applyUpdateNode(
@@ -575,11 +698,10 @@ function defineGraphEditingFunctions(
                 unknown
               >,
             },
-            null,
+            { title },
             ports
           );
         } else {
-          // Create new step
           stepId = globalThis.crypto.randomUUID();
           const node: NodeDescriptor = {
             id: stepId,
@@ -596,7 +718,6 @@ function defineGraphEditingFunctions(
             `Add step: ${title}`
           );
 
-          // Auto-wire edges from <parent> references
           if (ports.length > 0) {
             await applyUpdateNode(
               stepId,
@@ -613,12 +734,204 @@ function defineGraphEditingFunctions(
           }
         }
 
-        // Re-layout all nodes based on updated topology
-        await applyLayout();
+        return reLayoutAndReturnHandle(stepId, translator);
+      }
+    ),
 
-        // Return the pidgin handle so the agent stays in handle-land
-        const handle = translator.getOrCreateHandle(stepId);
-        return { step_id: handle };
+    // =========================================================================
+    // upsert_legacy_step
+    // =========================================================================
+    defineFunction(
+      {
+        name: GRAPH_UPSERT_LEGACY_STEP,
+        title: "Updating legacy step",
+        icon: "edit",
+        description:
+          "Create or update a legacy step (User Input, Output, or standard Gemini generation steps like Flash, Pro, Nano Banana, Veo, AudioLM, or Lyria).",
+        parameters: {
+          step_id: z
+            .string()
+            .optional()
+            .describe(
+              "The handle of an existing legacy step to update (e.g. node-1). Omit to create a new step."
+            ),
+          step_type: z
+            .enum(VALID_LEGACY_STEP_TYPES)
+            .optional()
+            .describe(
+              "The type of the legacy step. Required to create a step; optional when updating an existing step. Supported types:\n" +
+                "- 'user-input': User Input step\n" +
+                "- 'output': Output step\n" +
+                "- 'text-3-flash': Gemini 3 Flash\n" +
+                "- 'text-3-pro': Gemini 3.1 Pro\n" +
+                "- 'image': Nano Banana\n" +
+                "- 'image-pro': Nano Banana Pro\n" +
+                "- 'audio': AudioLM\n" +
+                "- 'video': Veo\n" +
+                "- 'music': Lyria 2"
+            ),
+          title: z.string().describe("A descriptive title for the step"),
+          prompt: z.string().describe(PROMPT_DESCRIPTION),
+          options: z
+            .record(z.string(), z.any())
+            .optional()
+            .describe(
+              "Configuration options for the legacy step:\n" +
+                "- For 'user-input':\n" +
+                "  - 'modality': one of 'Any', 'Audio', 'Image', 'Text', 'Upload File', or 'Video'\n" +
+                "  - 'required': boolean (true or false)\n" +
+                "- For 'output':\n" +
+                "  - 'render_mode': one of 'Manual layout', 'google-doc', 'google-slides', or 'google-sheets'\n" +
+                "  - 'doc_title': string (Title of Google Document/Slides/Sheets to save to)\n" +
+                "- For generation steps:\n" +
+                "  - 'system_instruction': string (System instruction for the model)"
+            ),
+        },
+        response: {
+          step_id: z
+            .string()
+            .describe("The handle of the created or updated step")
+            .optional(),
+          error: z
+            .string()
+            .optional()
+            .describe(
+              "If an error has occurred, will contain a description of the error"
+            ),
+        },
+      },
+      async ({ step_id, step_type, title, prompt, options }) => {
+        const { promptContent, ports } = await resolvePromptAndPorts(
+          prompt,
+          translator
+        );
+
+        let stepId: string;
+
+        const LEGACY_OPTION_MAP: Record<string, Record<string, string>> = {
+          "user-input": {
+            modality: "p-modality",
+            required: "p-required",
+          },
+          output: {
+            render_mode: "p-render-mode",
+            doc_title: "b-doc-title",
+          },
+          "text-3-flash": {
+            system_instruction: "b-system-instruction",
+          },
+          "text-3-pro": {
+            system_instruction: "b-system-instruction",
+          },
+          image: {
+            system_instruction: "b-system-instruction",
+          },
+          "image-pro": {
+            system_instruction: "b-system-instruction",
+          },
+          audio: {
+            system_instruction: "b-system-instruction",
+          },
+          video: {
+            system_instruction: "b-system-instruction",
+          },
+          music: {
+            system_instruction: "b-system-instruction",
+          },
+        };
+
+        if (step_id) {
+          const resolved = await resolveAndValidateNode(step_id, translator);
+          if ("error" in resolved) {
+            return { error: resolved.error };
+          }
+          const { resolvedId, node } = resolved;
+
+          // Determine step type for configuration map lookup
+          let inferredStepType: string;
+          if (step_type) {
+            inferredStepType = step_type;
+          } else {
+            if (node.type === USER_INPUT_COMPONENT_URL) {
+              inferredStepType = "user-input";
+            } else if (node.type === OUTPUT_COMPONENT_URL) {
+              inferredStepType = "output";
+            } else if (node.type === GENERATE_COMPONENT_URL) {
+              const genMode =
+                node.configuration &&
+                typeof node.configuration === "object" &&
+                "generation-mode" in node.configuration
+                  ? (node.configuration["generation-mode"] as string)
+                  : undefined;
+              inferredStepType = genMode || "text-3-flash";
+            } else {
+              inferredStepType = "text-3-flash";
+            }
+          }
+
+          const spec = buildNodeSpec(
+            inferredStepType,
+            promptContent as unknown
+          );
+
+          const finalConfig = { ...spec.configuration };
+          const optionMap = LEGACY_OPTION_MAP[inferredStepType];
+          if (optionMap && options) {
+            for (const [optKey, optVal] of Object.entries(options)) {
+              const targetKey =
+                optionMap[optKey] || optionMap[optKey.toLowerCase()];
+              if (targetKey) {
+                finalConfig[targetKey] = optVal;
+              } else {
+                finalConfig[optKey] = optVal;
+              }
+            }
+          }
+
+          stepId = resolvedId;
+          await applyUpdateNode(stepId, "", finalConfig, { title }, ports);
+        } else {
+          if (!step_type) {
+            return {
+              error: "step_type is required to create a new legacy step",
+            };
+          }
+
+          stepId = globalThis.crypto.randomUUID();
+          const spec = buildNodeSpec(step_type, promptContent as unknown);
+
+          const finalConfig = { ...spec.configuration };
+          const optionMap = LEGACY_OPTION_MAP[step_type];
+          if (optionMap && options) {
+            for (const [optKey, optVal] of Object.entries(options)) {
+              const targetKey =
+                optionMap[optKey] || optionMap[optKey.toLowerCase()];
+              if (targetKey) {
+                finalConfig[targetKey] = optVal;
+              } else {
+                finalConfig[optKey] = optVal;
+              }
+            }
+          }
+
+          const node: NodeDescriptor = {
+            id: stepId,
+            type: spec.type,
+            metadata: { title },
+            configuration: finalConfig as unknown as NodeConfiguration,
+          };
+
+          await applyEdits(
+            [{ type: "addnode", graphId: "", node }],
+            `Add legacy step: ${title}`
+          );
+
+          if (ports.length > 0) {
+            await applyUpdateNode(stepId, "", finalConfig, null, ports);
+          }
+        }
+
+        return reLayoutAndReturnHandle(stepId, translator);
       }
     ),
   ];
