@@ -6,6 +6,12 @@
 
 import type { Edge, LLMContent, NodeDescriptor } from "@breadboard-ai/types";
 import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
+import {
+  GENERATE_COMPONENT_URL,
+  USER_INPUT_COMPONENT_URL,
+  OUTPUT_COMPONENT_URL,
+  LEGACY_OPTION_MAP,
+} from "./constants.js";
 
 export { graphOverviewYaml, describeSelection };
 
@@ -40,8 +46,14 @@ function graphOverviewYaml(
     lines.push(`  ${handle}:`);
     lines.push(`    title: ${title}`);
 
+    const config = node.configuration as Record<string, unknown> | undefined;
+
     // Convert prompt back to pidgin for readability
-    const prompt = node.configuration?.["config$prompt"];
+    const prompt =
+      config?.["config$prompt"] ||
+      config?.["description"] ||
+      config?.["text"];
+
     if (prompt && typeof prompt === "object") {
       const pidgin = translator.toPidgin(prompt as LLMContent);
       if (pidgin.text) {
@@ -52,6 +64,49 @@ function graphOverviewYaml(
           .join("\n");
         lines.push(`    prompt: |`);
         lines.push(indented);
+      }
+    }
+
+    let inferredStepType: string | undefined;
+    if (node.type === USER_INPUT_COMPONENT_URL) {
+      inferredStepType = "user-input";
+    } else if (node.type === OUTPUT_COMPONENT_URL) {
+      inferredStepType = "output";
+    } else if (node.type === GENERATE_COMPONENT_URL) {
+      const genMode =
+        config &&
+        typeof config === "object" &&
+        "generation-mode" in config
+          ? (config["generation-mode"] as string)
+          : undefined;
+      inferredStepType = genMode || "text-3-flash";
+    }
+
+    const options: Record<string, unknown> = {};
+    if (inferredStepType && LEGACY_OPTION_MAP[inferredStepType]) {
+      const optionMap = LEGACY_OPTION_MAP[inferredStepType];
+      if (config && typeof config === "object") {
+        for (const [optKey, targetKey] of Object.entries(optionMap)) {
+          if (targetKey in config && config[targetKey] !== undefined) {
+            options[optKey] = config[targetKey];
+          }
+        }
+      }
+    }
+
+    if (Object.keys(options).length > 0) {
+      lines.push(`    options:`);
+      for (const [key, val] of Object.entries(options)) {
+        if (typeof val === "string" && val.includes("\n")) {
+          const indentedVal = val
+            .split("\n")
+            .map((l) => `        ${l}`)
+            .join("\n");
+          lines.push(`      ${key}: |`);
+          lines.push(indentedVal);
+        } else {
+          lines.push(`      ${key}: ${JSON.stringify(val)}`);
+        }
       }
     }
   }
