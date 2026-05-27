@@ -310,7 +310,6 @@ export type GeminiOutputs =
       context: LLMContent[];
     };
 
-const MODEL_ALIASES: Record<string, string> = {};
 
 const MODELS: readonly string[] = [
   MODEL_ALIAS_TEXT_LITE,
@@ -743,9 +742,6 @@ async function generateContent(
   body: GeminiBody,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<GeminiAPIOutputs>> {
-  if (MODEL_ALIASES[model]) {
-    model = MODEL_ALIASES[model];
-  }
   const { fetchWithCreds, context } = moduleArgs;
   try {
     const prefix = await resolvePrefix();
@@ -800,9 +796,6 @@ async function streamGenerateContent(
   body: GeminiBody,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AsyncIterable<GeminiAPIOutputs>>> {
-  if (MODEL_ALIASES[model]) {
-    model = MODEL_ALIASES[model];
-  }
   const { fetchWithCreds, context } = moduleArgs;
   const prefix = await resolvePrefix();
   for (let attempt = 0; attempt < STREAM_MAX_RETRIES; attempt++) {
@@ -920,9 +913,6 @@ async function invoke(
     return validatingInputs;
   }
   let { model } = inputs;
-  if (model && MODEL_ALIASES[model]) {
-    model = MODEL_ALIASES[model];
-  }
   if (!model) {
     model = MODELS[0];
   }
