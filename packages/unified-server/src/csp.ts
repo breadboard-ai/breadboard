@@ -61,6 +61,7 @@ export const SHELL_CSP = {
     "'self'",
     "https://apis.google.com",
     "https://www.googletagmanager.com",
+    "https://www.gstatic.com", // Feedback JS
   ],
   ["style-src"]: [
     "'self'",
