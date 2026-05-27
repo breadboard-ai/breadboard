@@ -29,7 +29,8 @@
     "eval:viewer:build": "wireit",
     "lint": "wireit",
     "export-functions": "wireit",
-    "import-declarations": "wireit"
+    "import-declarations": "wireit",
+    "build:opie-instructions": "wireit"
   },
   "wireit": {
     "build": {
@@ -40,7 +41,8 @@
     },
     "typescript-files-and-deps": {
       "dependencies": [
-        "<dependencies>#build:tsc"
+        "<dependencies>#build:tsc",
+        "build:opie-instructions"
       ],
       "files": [
         "src/**/*.ts",
@@ -247,6 +249,16 @@
       ],
       "output": [
         "src/a2/agent/functions/generated/**/*.ts"
+      ]
+    },
+    "build:opie-instructions": {
+      "command": "tsx scripts/build-opie-instructions.ts",
+      "files": [
+        "scripts/build-opie-instructions.ts",
+        "src/a2/agent/graph-editing/instructions/*.md"
+      ],
+      "output": [
+        "src/a2/agent/graph-editing/instructions/generated.ts"
       ]
     }
   },
