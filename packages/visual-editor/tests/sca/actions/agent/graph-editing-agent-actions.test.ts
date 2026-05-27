@@ -12,10 +12,8 @@ import {
   resolveGraphEditingInput,
   resetGraphEditingAgent,
 } from "../../../../src/sca/actions/agent/graph-editing-agent-actions.js";
-import {
-  GraphEditingAgentController,
-  type ChatEntry,
-} from "../../../../src/sca/controller/subcontrollers/editor/graph-editing-agent-controller.js";
+import { GraphEditingAgentController } from "../../../../src/sca/controller/subcontrollers/editor/graph-editing-agent-controller.js";
+import type { ChatEntry } from "../../../../src/sca/types.js";
 import { DevToolsController } from "../../../../src/sca/controller/subcontrollers/editor/devtools/devtools-controller.js";
 import { AgentService } from "../../../../src/a2/agent/agent-service.js";
 import type { WaitForInputPayload } from "../../../../src/a2/agent/agent-event.js";
@@ -30,10 +28,7 @@ async function makeControllerStub(id: string) {
     id,
     "GraphEditingAgentController"
   );
-  const devtools = new DevToolsController(
-    `${id}_dt`,
-    "DevToolsController"
-  );
+  const devtools = new DevToolsController(`${id}_dt`, "DevToolsController");
   await agent.isHydrated;
   await devtools.isHydrated;
   await devtools.opie.isHydrated;
@@ -95,7 +90,9 @@ suite("graph-editing-agent-actions", () => {
     const devtools = controller.editor.devtools;
     const opie = devtools.opie;
     opie.setSystemInstruction("Do this");
-    opie.setFunctionDeclarations([{ name: "test_func", description: "A test func" }]);
+    opie.setFunctionDeclarations([
+      { name: "test_func", description: "A test func" },
+    ]);
     opie.addObjective("Hello");
     await agent.isSettled;
     await devtools.isSettled;
@@ -466,5 +463,31 @@ suite("graph-editing-agent-actions", () => {
     assert.strictEqual(agent.processing, true);
 
     services.agentService.endRun(handle.runId);
+  });
+
+  test("startGraphEditingAgent clears processing and waiting flags on failure", async () => {
+    const controller = await makeControllerStub("GEA_act_12");
+    const services = makeServicesStub();
+    bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+    const agent = controller.editor.graphEditingAgent;
+
+    // Set initial busy state
+    agent.processing = true;
+    agent.waiting = true;
+    await agent.isSettled;
+
+    startGraphEditingAgent("Build something");
+
+    // Wait for the background promise of invokeGraphEditingAgent to reject
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    await agent.isSettled;
+
+    assert.strictEqual(agent.loopRunning, false, "loopRunning should be false");
+    assert.strictEqual(agent.processing, false, "processing should be false");
+    assert.strictEqual(agent.waiting, false, "waiting should be false");
   });
 });

@@ -6,35 +6,19 @@
 
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
-import {
-  parseThought,
-  type ParsedThought,
-} from "../../../../a2/agent/thought-parser.js";
+import { parseThought } from "../../../../a2/agent/thought-parser.js";
+import type { ChatEntry } from "../../../types.js";
 
-// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
-export { GraphEditingAgentController, type ChatEntry };
+export { GraphEditingAgentController };
 
 const GREETINGS = [
   "Hey there! What would you like to change?",
-  "Hi! How can I help you with this opal?",
+  "Hi! How can I help you with this Opal?",
   "What would you like me to do?",
   "Ready to help! What do you need?",
   "Hi! Tell me what you'd like to change.",
   "What can I do for you today?",
 ];
-
-/**
- * A single chat entry. Can be:
- * - A user or model text message
- * - A system message (function call label)
- * - A thought group (collapsible, shows latest title)
- */
-type ChatEntry =
-  | { kind: "message"; role: "user" | "model" | "system"; text: string }
-  | {
-      kind: "thought-group";
-      thoughts: ParsedThought[];
-    };
 
 /**
  * Reactive state for the graph editing agent chat panel.

@@ -8,35 +8,45 @@ import { consume } from "@lit/context";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import "../input/expanding-textarea.js";
-import type { ExpandingTextarea } from "../input/expanding-textarea.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { scaContext } from "../../../sca/context/context.js";
 import type { SCA } from "../../../sca/sca.js";
-import type { ChatEntry } from "../../../sca/controller/subcontrollers/editor/graph-editing-agent-controller.js";
-import { markdown } from "../../directives/markdown.js";
 import { icons } from "../../styles/icons.js";
-import { floatingPanelStyles } from "../../styles/floating-panel.js";
+import { styleMap } from "lit/directives/style-map.js";
+
+import "./opie-avatar.js";
+import "./chat-panel.js";
+import "../effects/radial-glow.js";
+import type { ChatPanel } from "./chat-panel.js";
+
+if ("registerProperty" in CSS) {
+  const props: Array<[string, string, string]> = [
+    ["--blob-size", "<length>", "-100px"],
+    ["--blob-x", "<percentage>", "10%"],
+    ["--blob-y", "<percentage>", "85%"],
+    ["--blob-blur", "<length>", "100px"],
+  ];
+  for (const [name, syntax, initialValue] of props) {
+    CSS.registerProperty({ name, syntax, inherits: true, initialValue });
+  }
+}
 
 export { GraphEditingChat };
 
 /**
- * A thin rendering shell for the graph editing agent chat panel.
- *
- * All state lives in `GraphEditingAgentController` (reactive via `@field`).
- * All lifecycle orchestration lives in `GraphEditingAgentService`.
- * This component only renders and dispatches user events.
+ * Outer orchestrator for the graph editing chat. Handles positioning,
+ * the Opie avatar, radial glow entrance, and blob-reveal animation.
+ * All chat content is rendered by the child `<bb-chat-panel>`.
  */
 @customElement("bb-graph-editing-chat")
 class GraphEditingChat extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
-  readonly #inputRef = createRef<ExpandingTextarea>();
+  readonly #panelRef = createRef<ChatPanel>();
 
   static styles = [
     icons,
-    floatingPanelStyles,
     css`
       :host {
         position: fixed;
@@ -46,296 +56,148 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
         font-family: "Google Sans", sans-serif;
       }
 
-      /* ── Chat panel ── */
+      radial-glow {
+        z-index: 10;
+      }
+
+      /* ── Layout ── */
 
       #chat-container {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
         gap: var(--bb-grid-size-2);
+
+        & #chat-panel {
+          animation: slide-up 0.15s ease-out both 0.07s;
+        }
       }
 
-      #chat-panel {
-        width: 380px;
-        max-height: 420px;
-        border-radius: var(--bb-grid-size-4);
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
+      /* ── Shadow reveal ── */
+
+      .panel-shadow {
+        position: relative;
+        animation: shadow-in 0.2s ease-out both 0.7s;
+        z-index: 20;
       }
 
-      #chat-header {
-        padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
-        color: var(--light-dark-n-10);
-        font-size: 14px;
-        font-weight: 500;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid var(--light-dark-n-90);
+      .bubble-tail {
+        position: absolute;
+        bottom: -12px;
+        left: 20px;
+        width: 0;
+        height: 0;
+        border-left: 14px solid transparent;
+        border-right: 14px solid transparent;
+        border-top: 14px solid var(--light-dark-n-100);
+        animation: tail-slide 0.15s ease-out both 0.2s;
+        z-index: 20;
       }
 
-      #chat-header button {
-        background: none;
-        border: none;
-        color: var(--light-dark-n-50);
-        cursor: pointer;
-        font-size: 18px;
-        padding: var(--bb-grid-size);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+      @keyframes tail-slide {
+        from {
+          transform: translateY(-12px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
       }
 
-      #chat-header button:hover {
-        background: var(--light-dark-n-95);
+      @keyframes shadow-in {
+        from {
+          filter: drop-shadow(0px 2px 4px rgb(0 0 0 / 0))
+            drop-shadow(0px 8px 12px rgb(0 0 0 / 0));
+        }
+        to {
+          filter: drop-shadow(0px 2px 6px rgb(0 0 0 / 0.1))
+            drop-shadow(0px 8px 12px rgb(0 0 0 / 0.05));
+        }
       }
 
-      #chat-messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: var(--bb-grid-size-4);
-        display: flex;
-        flex-direction: column;
-        gap: var(--bb-grid-size-3);
+      /* ── Blob reveal mask ── */
+
+      bb-chat-panel {
+        --blob-x: 10%;
+        --blob-y: 85%;
+        --blob-size: -300px;
+        --blob-blur: 300px;
+
+        animation:
+          blob-move-x 1s ease-out both 0.15s,
+          blob-move-y 1s ease-in both 0.15s,
+          blob-grow 0.85s ease-out both 0.07s,
+          blob-sharpen 0.65s ease-out both 0.3s;
+        mask-image: radial-gradient(
+          circle at var(--blob-x) var(--blob-y),
+          #000 var(--blob-size),
+          transparent calc(var(--blob-size) + var(--blob-blur))
+        );
+        -webkit-mask-image: radial-gradient(
+          circle at var(--blob-x) var(--blob-y),
+          #000 var(--blob-size),
+          transparent calc(var(--blob-size) + var(--blob-blur))
+        );
       }
 
-      /* ── Messages ── */
+      @keyframes slide-up {
+        from {
+          translate: 0 0;
+        }
 
-      .message {
-        font-size: 14px;
-        line-height: 1.5;
-        max-width: 85%;
-        word-wrap: break-word;
-        white-space: pre-wrap;
+        to {
+          translate: 0 calc(-4 * var(--bb-grid-size));
+        }
       }
 
-      .message.user {
-        background: var(--light-dark-p-90);
-        color: var(--light-dark-n-10);
-        padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-        border-radius: 18px;
-        align-self: flex-end;
+      @keyframes blob-move-x {
+        from {
+          --blob-x: 10%;
+        }
+        to {
+          --blob-x: 50%;
+        }
+      }
+      @keyframes blob-move-y {
+        from {
+          --blob-y: 85%;
+        }
+        to {
+          --blob-y: 50%;
+        }
+      }
+      @keyframes blob-grow {
+        from {
+          --blob-size: -300px;
+        }
+        to {
+          --blob-size: 600px;
+        }
+      }
+      @keyframes blob-sharpen {
+        from {
+          --blob-blur: 300px;
+        }
+        to {
+          --blob-blur: 0px;
+        }
       }
 
-      .message.model {
-        color: var(--light-dark-n-10);
-        align-self: flex-start;
-      }
+      /* ── Opie avatar row ── */
 
-      .message.model p {
-        margin: 0 0 var(--bb-grid-size-2) 0;
-      }
-
-      .message.model p:last-child {
-        margin-bottom: 0;
-      }
-
-      .message.model ul,
-      .message.model ol {
-        margin: 0 0 var(--bb-grid-size-2) 0;
-        padding-left: 20px;
-      }
-
-      .message.model code {
-        background: var(--light-dark-n-95);
-        padding: 1px var(--bb-grid-size);
-        border-radius: var(--bb-grid-size);
-        font-size: 13px;
-      }
-
-      .message.model pre {
-        background: var(--light-dark-n-95);
-        padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-        border-radius: var(--bb-grid-size-2);
-        overflow-x: auto;
-        margin: 0 0 var(--bb-grid-size-2) 0;
-      }
-
-      .message.model pre code {
-        background: none;
-        padding: 0;
-      }
-
-      .message.system {
-        color: var(--light-dark-n-50);
-        align-self: flex-start;
-        font-size: 13px;
-      }
-
-      /* ── Thought groups ── */
-
-      .thought-group {
-        align-self: flex-start;
-      }
-
-      .thought-group-header {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        color: var(--light-dark-n-50);
-        font-size: 13px;
-        user-select: none;
-        list-style: none;
-      }
-
-      .thought-group-header::-webkit-details-marker {
-        display: none;
-      }
-
-      .thought-group-header .chevron {
-        margin-right: var(--bb-grid-size);
-        opacity: 0.6;
-      }
-
-      .thought-group-header .chevron::before {
-        content: "keyboard_arrow_up";
-      }
-
-      .thought-group[open] > .thought-group-header .chevron::before {
-        content: "keyboard_arrow_down";
-      }
-
-      .thought-group-header:hover {
-        color: var(--light-dark-n-10);
-      }
-
-      .thought-group-body {
-        padding: var(--bb-grid-size) 0 var(--bb-grid-size) var(--bb-grid-size-6);
-        display: flex;
-        flex-direction: column;
-        gap: var(--bb-grid-size);
-      }
-
-      .thought-item {
-        font-size: 12px;
-        color: var(--light-dark-n-50);
-        line-height: 1.4;
-      }
-
-      .thought-item-title {
-        font-weight: 500;
-        color: var(--light-dark-n-30);
-      }
-
-      /* ── Input area ── */
-
-      #chat-input-bar {
+      #opie-row {
         display: flex;
         align-items: center;
         gap: var(--bb-grid-size-2);
-        min-width: 280px;
+        margin-left: 14px;
       }
 
-      #chat-input-bar img {
-        width: 32px;
-        height: 32px;
+      #opie-row bb-opie-avatar {
         flex-shrink: 0;
-      }
-
-      bb-expanding-textarea {
-        flex: 1;
-        color: var(--light-dark-n-0);
-        background: var(--light-dark-n-100);
-        border: none;
-        border-radius: var(--bb-grid-size-7);
-        padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
-        --min-lines: 1;
-        --max-lines: 4;
-        font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
-          var(--bb-font-family);
-        line-height: 1lh;
-        caret-color: var(--light-dark-n-0);
-        box-shadow:
-          0 1px 3px rgba(0, 0, 0, 0.12),
-          0 1px 2px rgba(0, 0, 0, 0.08);
-
-        &:focus-within {
-          outline: 1px solid var(--ui-custom-o-100);
-        }
-
-        > [slot~="submit"] {
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          color: light-dark(var(--n-70), var(--n-40));
-          font-size: 22px;
-          width: 22px;
-          height: 22px;
-          transition: color 0.2s ease;
-          cursor: default;
-          pointer-events: none;
-
-          &.active {
-            color: light-dark(var(--n-0), var(--n-100)) !important;
-            cursor: pointer;
-            pointer-events: auto;
-          }
-        }
-
-        &::part(textarea)::placeholder {
-          color: var(--light-dark-n-50);
-        }
-      }
-
-      /* ── Selection indicator ── */
-
-      #selection-strip {
-        display: flex;
-        align-items: center;
-        gap: var(--bb-grid-size);
-        padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
-        flex-wrap: wrap;
-        font-size: 12px;
-        border-top: 1px solid var(--light-dark-n-90);
-      }
-
-      #selection-strip .selection-label {
-        color: var(--light-dark-n-50);
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .selection-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--bb-grid-size);
-        background: var(--light-dark-p-90);
-        color: var(--light-dark-n-10);
-        border-radius: var(--bb-grid-size-3);
-        padding: 2px var(--bb-grid-size) 2px var(--bb-grid-size-2);
-        font-size: 12px;
-        font-weight: 500;
-      }
-
-      .selection-chip button {
-        background: none;
-        border: none;
-        color: var(--light-dark-n-50);
-        cursor: pointer;
-        font-size: 14px;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        width: 16px;
-        height: 16px;
-      }
-
-      .selection-chip button:hover {
-        color: var(--light-dark-n-10);
-        background: var(--light-dark-n-90);
       }
     `,
   ];
-
-  override updated() {
-    this.#scrollToBottom();
-  }
 
   render() {
     const { parsedUrl } = this.sca.controller.router;
@@ -352,158 +214,84 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       agent.currentFlow = parsedUrl.flow ?? null;
     }
 
-    const inputDisabled = agent.processing;
+    const opie = html`<bb-opie-avatar
+      ?highlighted=${agent.open}
+      @click=${() => {
+        agent.open = !agent.open;
+        if (!agent.open) {
+          return;
+        }
+
+        agent.open = true;
+        agent.showGreeting();
+        // Re-focus after Lit update completes
+        this.updateComplete.then(() => {
+          this.#panelRef.value?.focus();
+        });
+      }}
+    ></bb-opie-avatar>`;
 
     return html`
       <div id="chat-container">
         ${agent.open
           ? html`
-              <div id="chat-panel" class="bb-floating-panel">
-                <div id="chat-header">
-                  <span>Chat</span>
-                  <button
-                    @click=${() => {
-                      agent.open = false;
-                    }}
-                  >
-                    <span class="g-icon">close</span>
-                  </button>
-                </div>
-                <div id="chat-messages">
-                  ${agent.entries.map((entry) => this.#renderEntry(entry))}
-                  ${agent.loopRunning && !agent.waiting
-                    ? html`<div class="message system">Thinking…</div>`
-                    : nothing}
-                </div>
-                ${this.#renderSelectionStrip()}
+              <div id="chat-panel">
+                <radial-glow
+                  glow-size="32"
+                  border-radius="16px"
+                  style=${styleMap({
+                    "--start-angle": "140deg",
+                    "--glow-duration": "1.3s",
+                    "--mask-sweep": "360deg",
+                    "--color-sweep": "360deg",
+                    "--glow-colors": `var(--n-100) 0%,
+                    var(--t-70) 30%,
+                    var(--p-70) 50%,
+                    var(--t-70) 70%,
+                    var(--n-100) 100%`,
+                  })}
+                >
+                  <div class="panel-shadow">
+                    <bb-chat-panel
+                      ${ref(this.#panelRef)}
+                      @animationend=${this.#onRevealComplete}
+                    ></bb-chat-panel>
+                    <div class="bubble-tail"></div>
+                  </div>
+                </radial-glow>
               </div>
             `
           : nothing}
-        <div id="chat-input-bar">
-          <img src="/images/favicon.png" alt="" />
-          <bb-expanding-textarea
-            ${ref(this.#inputRef)}
-            .disabled=${inputDisabled}
-            .placeholder=${"Edit Opal with Gemini"}
-            @focus=${() => {
-              if (!agent.open) {
-                agent.open = true;
-                agent.showGreeting();
-                // Re-focus after Lit update completes
-                this.updateComplete.then(() => {
-                  this.#inputRef.value?.focus();
-                });
-              }
-            }}
-            @change=${this.#onSend}
-            @input=${() => this.requestUpdate()}
-          >
-            <span
-              slot="submit"
-              class="g-icon ${this.#inputRef.value?.value ? "active" : ""}"
-              >send_spark</span
-            >
-          </bb-expanding-textarea>
+        <div id="opie-row">
+          ${agent.processing
+            ? html`<radial-glow
+                continuous
+                glow-size="12"
+                border-radius="50%"
+                style=${styleMap({
+                  "--start-angle": "140deg",
+                  "--glow-duration": "1.3s",
+                  "--mask-sweep": "360deg",
+                  "--color-sweep": "360deg",
+                  "--glow-colors": `var(--n-100) 0%,
+                    var(--t-70) 30%,
+                    var(--p-70) 50%,
+                    var(--t-70) 70%,
+                    var(--n-100) 100%`,
+                })}
+                >${opie}</radial-glow
+              >`
+            : opie}
         </div>
       </div>
     `;
   }
 
-  #renderEntry(entry: ChatEntry) {
-    if (entry.kind === "message") {
-      const content =
-        entry.role === "model" ? markdown(entry.text) : entry.text;
-      return html`<div class="message ${entry.role}">${content}</div>`;
-    }
-
-    // Thought group — native <details>/<summary> disclosure
-    const thoughts = entry.thoughts;
-    const latest = thoughts[thoughts.length - 1];
-    const title = latest.title ?? latest.body;
-
-    return html`
-      <details class="thought-group">
-        <summary class="thought-group-header">
-          <span class="chevron g-icon"></span>${title}
-        </summary>
-        <div class="thought-group-body">
-          ${thoughts.map(
-            (t) => html`
-              <div class="thought-item">
-                ${t.title
-                  ? html`<span class="thought-item-title">${t.title}:</span>
-                      ${markdown(t.body)}`
-                  : markdown(t.body)}
-              </div>
-            `
-          )}
-        </div>
-      </details>
-    `;
-  }
-
-  #renderSelectionStrip() {
-    const selection = this.sca.controller.editor.selection;
-    const selectedNodes = selection.selection.nodes;
-    if (selectedNodes.size === 0) return nothing;
-
-    const editor = this.sca.controller.editor.graph.editor;
-    if (!editor) return nothing;
-
-    const inspector = this.sca.controller.editor.graph.inspect("");
-    const chips = [...selectedNodes].map((nodeId) => {
-      const node = inspector.nodeById(nodeId);
-      const title = node?.metadata()?.title ?? "(untitled)";
-      return html`
-        <span class="selection-chip">
-          ${title}
-          <button
-            @click=${() => {
-              selection.removeNode(nodeId);
-              this.#inputRef.value?.focus();
-            }}
-            title="Deselect ${title}"
-          >
-            <span class="g-icon">close</span>
-          </button>
-        </span>
-      `;
-    });
-
-    return html`
-      <div id="selection-strip">
-        <span class="selection-label">Selected</span>
-        ${chips}
-      </div>
-    `;
-  }
-
-  async #onSend() {
-    const input = this.#inputRef.value;
-    if (!input) return;
-
-    const text = input.value.trim();
-    if (!text) return;
-
-    input.value = "";
-    const agent = this.sca.controller.editor.graphEditingAgent;
-
-    agent.addMessage("user", text);
-    this.#scrollToBottom();
-
-    if (!this.sca.actions.graphEditingAgent.resolveGraphEditingInput(text)) {
-      // No pending resolve — this is the first message, start the loop
-      agent.processing = true;
-      this.sca.actions.graphEditingAgent.startGraphEditingAgent(text);
-    }
-  }
-
-  #scrollToBottom() {
-    requestAnimationFrame(() => {
-      const container = this.renderRoot.querySelector("#chat-messages");
-      if (container) {
-        container.scrollTop = container.scrollHeight;
-      }
-    });
+  #onRevealComplete(e: AnimationEvent) {
+    if (e.animationName !== "blob-move-x") return;
+    const panel = this.#panelRef.value;
+    if (!panel) return;
+    panel.style.maskImage = "none";
+    panel.style.webkitMaskImage = "none";
   }
 }
