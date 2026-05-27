@@ -259,12 +259,28 @@ class EditingAgentPidginTranslator {
     return handle;
   }
 
-  #toKebabCase(str: string): string {
+  static toKebabCase(str: string): string {
     return str
       .trim()
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
+  }
+
+  static getToolGlossary(): string {
+    const lines: string[] = [];
+    for (const [, tool] of A2_TOOLS) {
+      if (!tool.title) continue;
+      const tagName = EditingAgentPidginTranslator.toKebabCase(tool.title);
+      lines.push(`- \`<tool name="${tagName}" />\` → "${tool.title}" chip`);
+    }
+    lines.push(`- \`<tool name="memory" />\` → "Use Memory" chip`);
+    lines.push(`- \`<tool name="notebooklm" />\` → "Use NotebookLM" chip`);
+    return lines.join("\n");
+  }
+
+  #toKebabCase(str: string): string {
+    return EditingAgentPidginTranslator.toKebabCase(str);
   }
 
   /**
@@ -277,7 +293,7 @@ class EditingAgentPidginTranslator {
       return { path: NOTEBOOKLM_TOOL_PATH, title: "NotebookLM" };
     // Prefer A2_TOOLS lookup — it has the proper display title
     for (const [url, tool] of A2_TOOLS) {
-      if (tool.title && this.#toKebabCase(tool.title) === name) {
+      if (tool.title && EditingAgentPidginTranslator.toKebabCase(tool.title) === name) {
         return { path: url, title: tool.title };
       }
     }
