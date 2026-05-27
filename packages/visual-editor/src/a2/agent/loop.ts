@@ -13,6 +13,7 @@ import {
   streamGenerateContent,
   Tool,
   UsageMetadata,
+  MODEL_ALIAS_TEXT_FLASH,
 } from "../a2/gemini.js";
 import { llm } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
@@ -80,7 +81,7 @@ type FileData = {
   content: LLMContent;
 };
 
-const AGENT_MODEL = "gemini-3-flash-preview";
+const AGENT_MODEL = MODEL_ALIAS_TEXT_FLASH;
 
 /**
  * When uncached tokens exceed this threshold, create a new cache

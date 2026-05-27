@@ -32,7 +32,14 @@ export {
   generateContent,
   streamGenerateContent,
   conformBody as conformGeminiBody,
+  MODEL_ALIAS_TEXT_LITE,
+  MODEL_ALIAS_TEXT_FLASH,
+  MODEL_ALIAS_TEXT_PRO,
 };
+
+const MODEL_ALIAS_TEXT_LITE = "alias-text-lite";
+const MODEL_ALIAS_TEXT_FLASH = "alias-text-flash";
+const MODEL_ALIAS_TEXT_PRO = "alias-text-pro";
 
 const defaultSafetySettings = (): SafetySetting[] => [
   {
@@ -303,37 +310,12 @@ export type GeminiOutputs =
       context: LLMContent[];
     };
 
-const MODEL_ALIASES: Record<string, string> = {
-  "gemini-2.5-flash": "gemini-3.1-flash-lite",
-};
+const MODEL_ALIASES: Record<string, string> = {};
 
 const MODELS: readonly string[] = [
-  "gemini-3.1-flash-lite",
-  "gemini-3-flash-preview",
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
-  "gemini-2.5-pro",
-  "gemini-2.0-flash",
-  "gemini-2.0-flash-001",
-  "gemini-2.0-flash-lite-preview-02-05",
-  "gemini-2.0-flash-exp",
-  "gemini-2.0-flash-thinking-exp",
-  "gemini-2.0-flash-thinking-exp-01-21",
-  "gemini-2.0-pro-exp-02-05",
-  "gemini-1.5-flash-latest",
-  "gemini-1.5-pro-latest",
-  "gemini-exp-1206",
-  "gemini-exp-1121",
-  "learnlm-1.5-pro-experimental",
-  "gemini-1.5-pro-001",
-  "gemini-1.5-pro-002",
-  "gemini-1.5-pro-exp-0801",
-  "gemini-1.5-pro-exp-0827",
-  "gemini-1.5-flash-001",
-  "gemini-1.5-flash-002",
-  "gemini-1.5-flash-8b-exp-0924",
-  "gemini-1.5-flash-8b-exp-0827",
-  "gemini-1.5-flash-exp-0827",
+  MODEL_ALIAS_TEXT_LITE,
+  MODEL_ALIAS_TEXT_FLASH,
+  MODEL_ALIAS_TEXT_PRO,
 ];
 
 /**
@@ -341,9 +323,8 @@ const MODELS: readonly string[] = [
  * Maps a model to its fallback chain (ordered by preference).
  */
 const MODEL_FALLBACKS: Record<string, readonly string[]> = {
-  "gemini-3-pro": ["gemini-3-flash-preview", "gemini-2.5-pro"],
-  "gemini-2.5-pro": ["gemini-3-flash-preview"],
-  "gemini-3-flash-preview": ["gemini-3.1-flash-lite"],
+  [MODEL_ALIAS_TEXT_PRO]: [MODEL_ALIAS_TEXT_FLASH, MODEL_ALIAS_TEXT_LITE],
+  [MODEL_ALIAS_TEXT_FLASH]: [MODEL_ALIAS_TEXT_LITE],
 };
 
 const NO_RETRY_CODES: readonly number[] = [400, 429, 404, 403];
@@ -495,12 +476,10 @@ async function conformBody(
 
 function calculateDuration(model: string) {
   switch (model) {
-    case "gemini-3.1-flash-lite":
-    case "gemini-2.5-flash":
-      return 20;
-    case "gemini-2.5-pro":
-    case "gemini-3-pro":
+    case MODEL_ALIAS_TEXT_PRO:
       return 50;
+    case MODEL_ALIAS_TEXT_FLASH:
+    case MODEL_ALIAS_TEXT_LITE:
     default:
       return 20;
   }
@@ -1012,42 +991,11 @@ async function invoke(
 
 type DescribeInputs = {
   inputs: {
-    modality?: ValidModalities;
     model: string;
   };
 };
 
-async function describe({ inputs }: DescribeInputs) {
-  const canHaveModalities = inputs.model === "gemini-2.0-flash-exp";
-  const canHaveSystemInstruction =
-    !canHaveModalities || (canHaveModalities && inputs.modality == "Text");
-  const maybeAddSystemInstruction: Schema["properties"] =
-    canHaveSystemInstruction
-      ? {
-          systemInstruction: {
-            type: "object",
-            behavior: ["llm-content", "config"],
-            title: "System Instruction",
-            default: '{"role":"user","parts":[{"text":""}]}',
-            description:
-              "(Optional) Give the model additional context on what to do," +
-              "like specific rules/guidelines to adhere to or specify behavior" +
-              "separate from the provided context",
-          },
-        }
-      : {};
-  const maybeAddModalities: Schema["properties"] = canHaveModalities
-    ? {
-        modality: {
-          type: "string",
-          enum: [...VALID_MODALITIES],
-          title: "Output Modality",
-          behavior: ["config"],
-          description:
-            "(Optional) Tell the model what kind of output you're looking for.",
-        },
-      }
-    : {};
+async function describe(_describeInputs: DescribeInputs) {
   return {
     inputSchema: {
       type: "object",
@@ -1067,8 +1015,16 @@ async function describe({ inputs }: DescribeInputs) {
           description:
             "(Optional) A prompt. Will be added to the end of the the conversation context.",
         },
-        ...maybeAddSystemInstruction,
-        ...maybeAddModalities,
+        systemInstruction: {
+          type: "object",
+          behavior: ["llm-content", "config"],
+          title: "System Instruction",
+          default: '{"role":"user","parts":[{"text":""}]}',
+          description:
+            "(Optional) Give the model additional context on what to do," +
+            "like specific rules/guidelines to adhere to or specify behavior" +
+            "separate from the provided context",
+        },
         context: {
           type: "array",
           items: {

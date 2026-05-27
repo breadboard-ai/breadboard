@@ -39,6 +39,11 @@ import musicGenerator, {
   describe as describeMusicGenerator,
 } from "../music-generator/main.js";
 import type { ModelConstraint } from "../agent/functions/generate.js";
+import {
+  MODEL_ALIAS_TEXT_LITE,
+  MODEL_ALIAS_TEXT_FLASH,
+  MODEL_ALIAS_TEXT_PRO,
+} from "../a2/gemini.js";
 
 export { invoke as default, describe };
 
@@ -99,7 +104,7 @@ const PROMPT_PORT = "config$prompt";
 
 const LIMIT_MSG = "generation has a daily limit";
 
-const DEPRECATED_TEXT_MODEL_FALLBACK = 'gemini-3.1-flash-lite';
+const DEPRECATED_TEXT_MODEL_FALLBACK = MODEL_ALIAS_TEXT_LITE;
 
 const ALL_MODES: Mode[] = [
   {
@@ -109,7 +114,7 @@ const ALL_MODES: Mode[] = [
     title: "Agent",
     description: "Agent can use any models",
     icon: "button_magic",
-    modelName: "gemini-3-flash-preview",
+    modelName: MODEL_ALIAS_TEXT_FLASH,
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
     portMap: new Map([[PROMPT_PORT, "description"]]),
@@ -143,7 +148,7 @@ const ALL_MODES: Mode[] = [
     title: "Gemini 3 Flash",
     description: "Best for everyday tasks",
     icon: "text_analysis",
-    modelName: "gemini-3-flash-preview",
+    modelName: MODEL_ALIAS_TEXT_FLASH,
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
     portMap: new Map([[PROMPT_PORT, "description"]]),
@@ -193,7 +198,7 @@ const ALL_MODES: Mode[] = [
     title: "Gemini 3.1 Pro",
     description: "Best for complex tasks",
     icon: "text_analysis",
-    modelName: "gemini-3.1-pro-preview",
+    modelName: MODEL_ALIAS_TEXT_PRO,
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
     portMap: new Map([[PROMPT_PORT, "description"]]),
