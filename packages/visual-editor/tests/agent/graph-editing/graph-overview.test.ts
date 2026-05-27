@@ -136,5 +136,147 @@ describe("graphOverviewYaml", () => {
     );
     ok(yaml.includes("splashImage: default"));
   });
+
+  it("shows assets list in YAML when graph has assets", () => {
+    const translator = new EditingAgentPidginTranslator();
+    const yaml = graphOverviewYaml(
+      {
+        title: "Test Graph With Assets",
+        assets: {
+          "/assets/background.png": {
+            metadata: {
+              title: "Background Image",
+              type: "file",
+            },
+            data: [
+              {
+                role: "user",
+                parts: [{ storedData: { mimeType: "image/png", handle: "foo" } }],
+              },
+            ],
+          },
+          "/assets/data.json": {
+            metadata: {
+              title: "Data Payload",
+              type: "content",
+              subType: "gdrive",
+            },
+            data: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    storedData: {
+                      mimeType: "application/vnd.google-apps.spreadsheet",
+                      handle: "bar",
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+      [],
+      [],
+      translator
+    );
+
+    ok(yaml.includes("assets:"));
+    ok(yaml.includes("/assets/background.png:"));
+    ok(yaml.includes("title: Background Image"));
+    ok(yaml.includes("type: Image"));
+    ok(yaml.includes("/assets/data.json:"));
+    ok(yaml.includes("title: Data Payload"));
+    ok(yaml.includes("type: Google Sheets spreadsheet"));
+  });
+
+  it("falls back to raw mimeType when friendly mapping is not found", () => {
+    const translator = new EditingAgentPidginTranslator();
+    const yaml = graphOverviewYaml(
+      {
+        title: "Test Graph",
+        assets: {
+          "/assets/document.pdf": {
+            metadata: {
+              title: "Specification",
+              type: "file",
+            },
+            data: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    storedData: {
+                      mimeType: "application/pdf",
+                      handle: "baz",
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+      [],
+      [],
+      translator
+    );
+    ok(yaml.includes("type: application/pdf"));
+  });
+
+  it("infers YouTube, Google Docs, Slides, Drawing, Plain text, and handle/subType assets accurately", () => {
+    const translator = new EditingAgentPidginTranslator();
+    const yaml = graphOverviewYaml(
+      {
+        title: "Comprehensive Type Graph",
+        assets: {
+          "/asset/yt1": {
+            metadata: { title: "yt1", type: "file" },
+            data: [{ role: "user", parts: [{ storedData: { mimeType: "video/mp4", handle: "https://www.youtube.com/watch?v=123" } }] }],
+          },
+          "/asset/yt2": {
+            metadata: { title: "yt2", type: "content", subType: "youtube" },
+            data: [],
+          },
+          "/asset/doc": {
+            metadata: { title: "doc", type: "file" },
+            data: [{ role: "user", parts: [{ storedData: { mimeType: "application/vnd.google-apps.document", handle: "doc1" } }] }],
+          },
+          "/asset/slide": {
+            metadata: { title: "slide", type: "file" },
+            data: [{ role: "user", parts: [{ storedData: { mimeType: "application/vnd.google-apps.presentation", handle: "slide1" } }] }],
+          },
+          "/asset/nl": {
+            metadata: { title: "nl", type: "file" },
+            data: [{ role: "user", parts: [{ storedData: { mimeType: "application/x-notebooklm", handle: "nl1" } }] }],
+          },
+          "/asset/pt": {
+            metadata: { title: "pt", type: "file" },
+            data: [{ role: "user", parts: [{ storedData: { mimeType: "text/plain", handle: "pt1" } }] }],
+          },
+          "/asset/draw": {
+            metadata: { title: "draw", type: "content", subType: "drawing" },
+            data: [],
+          },
+          "/asset/drive_fallback": {
+            metadata: { title: "drive_fallback", type: "file" },
+            data: [{ role: "user", parts: [{ storedData: { mimeType: "", handle: "drive:/123" } }] }],
+          },
+        },
+      },
+      [],
+      [],
+      translator
+    );
+
+    ok(yaml.includes("type: YouTube video"));
+    ok(yaml.includes("type: Google Docs document"));
+    ok(yaml.includes("type: Google Slides presentation"));
+    ok(yaml.includes("type: NotebookLM notebook"));
+    ok(yaml.includes("type: Plain text"));
+    ok(yaml.includes("type: Drawing"));
+    ok(yaml.includes("type: Google Drive file"));
+  });
 });
 

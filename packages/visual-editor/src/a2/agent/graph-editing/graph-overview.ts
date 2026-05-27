@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Edge, GraphMetadata, LLMContent, NodeDescriptor } from "@breadboard-ai/types";
+import type {
+  Asset,
+  AssetPath,
+  Edge,
+  GraphMetadata,
+  LLMContent,
+  NodeDescriptor,
+} from "@breadboard-ai/types";
 
 import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
 import {
@@ -27,6 +34,7 @@ function graphOverviewYaml(
     title?: string;
     description?: string;
     metadata?: GraphMetadata;
+    assets?: Record<AssetPath, Asset>;
   },
   nodes: NodeDescriptor[],
   edges: Edge[],
@@ -53,6 +61,19 @@ function graphOverviewYaml(
   const isCustom =
     !!currentTheme?.splashScreen && !currentTheme?.isDefaultTheme;
   lines.push(`splashImage: ${isCustom ? "present" : "default"}`);
+
+  if (graph.assets && Object.keys(graph.assets).length > 0) {
+    lines.push("", "assets:");
+    for (const [path, asset] of Object.entries(graph.assets)) {
+      const title = asset.metadata?.title ?? "(untitled)";
+      const type = inferAssetFriendlyType(asset);
+      lines.push(`  ${path}:`);
+      lines.push(`    title: ${title}`);
+      lines.push(`    type: ${type}`);
+    }
+  }
+
+
 
 
   lines.push("", "steps:");
@@ -171,4 +192,63 @@ function describeSelection(
     items.push(`${handle} (${title})`);
   }
   return `\n\nSelected steps: ${items.join(", ")}`;
+}
+
+/**
+ * Infer a friendly, user-facing descriptor for an asset.
+ */
+function inferAssetFriendlyType(asset: Asset): string {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data = asset.data as any[];
+  const part = data?.[0]?.parts?.[0];
+  const mimeType =
+    part?.storedData?.mimeType || part?.inlineData?.mimeType;
+  const handle = part?.storedData?.handle;
+
+  if (mimeType) {
+    if (typeof mimeType === "string") {
+      if (mimeType.startsWith("image/")) return "Image";
+      if (mimeType.startsWith("video/")) {
+        if (
+          mimeType.includes("youtube") ||
+          (typeof handle === "string" && handle.includes("youtube.com"))
+        ) {
+          return "YouTube video";
+        }
+        return "Video";
+      }
+      if (mimeType.startsWith("audio/")) return "Audio";
+      if (mimeType === "application/x-notebooklm") return "NotebookLM notebook";
+      if (mimeType === "text/plain") return "Plain text";
+      if (mimeType.startsWith("application/vnd.google-apps.")) {
+        const docType = mimeType.replace("application/vnd.google-apps.", "");
+        if (docType === "spreadsheet") return "Google Sheets spreadsheet";
+        if (docType === "document") return "Google Docs document";
+        if (docType === "presentation") return "Google Slides presentation";
+        return "Google Drive file";
+      }
+    }
+  }
+
+  const subType = asset.metadata?.subType;
+  if (subType) {
+    if (subType === "gdrive") return "Google Drive file";
+    if (subType === "notebooklm") return "NotebookLM notebook";
+    if (subType === "youtube") return "YouTube video";
+    if (subType === "drawing") return "Drawing";
+    if (subType === "text" || subType === "plain-text") return "Plain text";
+  }
+
+  if (typeof handle === "string") {
+    if (handle.includes("youtube.com") || handle.includes("youtu.be")) {
+      return "YouTube video";
+    }
+    if (handle.startsWith("drive:")) return "Google Drive file";
+  }
+
+  if (typeof mimeType === "string" && mimeType) {
+    return mimeType;
+  }
+
+  return asset.metadata?.type || "File";
 }

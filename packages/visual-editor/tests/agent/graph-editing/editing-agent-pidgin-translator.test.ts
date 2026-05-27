@@ -168,6 +168,29 @@ describe("EditingAgentPidginTranslator", () => {
       });
     });
 
+    it("resolves asset title using resolveAssetTitle resolver", () => {
+      const translator = new EditingAgentPidginTranslator();
+      const result = translator.fromPidgin(
+        'Check <file src="/assets/logo.png" />',
+        undefined,
+        (assetPath) => {
+          if (assetPath === "/assets/logo.png") return "Brand Logo";
+          return undefined;
+        }
+      );
+
+      const expectedText = `Check ${Template.part({
+        type: "asset",
+        path: "/assets/logo.png",
+        title: "Brand Logo",
+      })}`;
+
+      deepStrictEqual(result, {
+        parts: [{ text: expectedText }],
+        role: "user",
+      });
+    });
+
     it("reconstructs file asset placeholders", () => {
       const translator = makeTranslator();
       const result = translator.fromPidgin(

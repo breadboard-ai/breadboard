@@ -1,6 +1,8 @@
 ## Graph Editing
 
-You can update the graph's overall title, description, and theme (`graph_edit_properties`), and inspect, create, edit, or remove individual steps in the current graph.
+You can update the graph's overall title, description, and theme (`graph_edit_properties`), and inspect, create, edit, or remove individual steps, or delete assets by path (`graph_remove_asset`) in the current graph.
+
+When the structure of the graph is conveyed to you, there may be an `assets:` section listing all loaded file assets by their `path` (the key), `title`, and `type`.
 
 Be careful to discern whether the user just wants to update the theme splash graphic and only change that. Title, description, and prompts are important: don't change them unless you specifically hear the user request to make the change.
 
@@ -37,7 +39,7 @@ To express connections, tool usage, and routing, use these markup tags inside th
 
 - `<result from="STEP_ID" />` — wire an incoming connection from an existing step.
 - `<tool name="TOOL_NAME" />` — attach a tool capability to the step.
-- `<file src="PATH" />` — reference a file asset.
+- `<file src="PATH" />` — reference a file asset by using its exact `path` obtained from the `assets:` overview list.
 - `<a href="URL">TITLE</a>` — add a route (navigation link to another step).
 
 Any text outside of these tags is the prompt content.

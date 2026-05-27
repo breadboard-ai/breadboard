@@ -122,6 +122,35 @@ suite("Graph editing functions suspend/resume", () => {
     assert.strictEqual(result.success, true);
   });
 
+  // ── graph_remove_asset ────────────────────────────────────────────────────
+
+  test("graph_remove_asset emits applyEdits with removeasset EditSpec", async () => {
+    const consumer = new AgentEventConsumer();
+    const bridge = new LocalAgentEventBridge(consumer);
+    const translator = new EditingAgentPidginTranslator();
+
+    const captured: ApplyEditsPayload[] = [];
+    consumer.on("applyEdits", (payload) => {
+      captured.push(payload);
+      return Promise.resolve({ success: true });
+    });
+
+    const group = getGraphEditingFunctionGroup(bridge, translator);
+    const handler = findHandler(group, "graph_remove_asset");
+    const result = await handler({ path: "/assets/image.png" }, noop, null);
+
+    assert.strictEqual(captured.length, 1);
+    assert.ok(captured[0].requestId, "Should have a requestId");
+    assert.ok(captured[0].edits, "Should have edits");
+    assert.strictEqual(captured[0].edits!.length, 1);
+    assert.deepStrictEqual(captured[0].edits![0], {
+      type: "removeasset",
+      path: "/assets/image.png",
+    });
+
+    assert.strictEqual(result.success, true);
+  });
+
   test("graph_remove_step returns error on failure", async () => {
     const consumer = new AgentEventConsumer();
     const bridge = new LocalAgentEventBridge(consumer);
