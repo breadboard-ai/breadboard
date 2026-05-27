@@ -1,0 +1,574 @@
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { mkdir, writeFile, readFile, stat } from "fs/promises";
+import { mock } from "node:test";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
+import { AgentContext } from "../src/a2/agent/agent-context.js";
+import { McpClientManager } from "../src/mcp/index.js";
+import { autoClearingInterval } from "./auto-clearing-interval.js";
+import { collateContexts } from "./collate-context.js";
+import { Logger } from "./logger.js";
+import {
+  CheckAppAccessResult,
+  FindUserOpalFolderResult,
+  GuestConfiguration,
+  ListUserOpalsResult,
+  OpalShellHostProtocol,
+  PickDriveFilesResult,
+  SignInResult,
+  SignInState,
+  ValidateScopesResult,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
+import { getDriveCollectorFile } from "../src/ui/utils/google-drive-host-operations.js";
+import { HttpBackendClient } from "../src/ui/utils/http-backend-client.js";
+import { getAuthenticatedClient } from "./authenticate.js";
+import { type ConsentController } from "../src/sca/controller/subcontrollers/global/global.js";
+import { AgentService } from "../src/a2/agent/agent-service.js";
+import { invokeGraphEditingAgent } from "../src/a2/agent/graph-editing/main.js";
+import { AgentEventConsumer, LocalAgentEventBridge } from "../src/a2/agent/agent-event-consumer.js";
+import { ok } from "@breadboard-ai/utils";
+import { LLMContent, NodeConfiguration, EditSpec, GraphDescriptor } from "@breadboard-ai/types";
+import { TransformDescriptor } from "../src/a2/agent/agent-event.js";
+
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { GOOGLE_DRIVE_FOLDER_MIME_TYPE, GRAPH_MIME_TYPE } from "../src/ui/utils/google-drive-host-operations.js";
+export { graphEditingSession };
+
+const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
+const ROOT_DIR = join(MODULE_DIR, "..", "..", "..");
+const OUT_DIR = join(ROOT_DIR, "out");
+
+export type GraphEditingEvalHarnessRuntimeArgs = {
+  invokeAgent: (prompt: string) => Promise<{
+    message: string;
+    graph: GraphDescriptor;
+  }>;
+  logger: EvalLogger;
+};
+
+export type EvalHarnessSession = {
+  eval(evalName: string, fn: GraphEditingEvalHarnessFunction): Promise<void>;
+  evalOnly(evalName: string, fn: GraphEditingEvalHarnessFunction): Promise<void>;
+};
+
+export type EvalHarnessSessionFunction = (
+  session: EvalHarnessSession
+) => Promise<void>;
+
+export type GraphEditingEvalHarnessFunction = (
+  args: GraphEditingEvalHarnessRuntimeArgs
+) => Promise<unknown>;
+
+export type EvalHarnessArgs = {
+  name: string;
+  uploadToDrive?: boolean;
+  folderName?: string;
+  batch?: {
+    path: string;
+    concurrency?: number;
+  };
+};
+
+export type EvalLogger = {
+  log(entry: EvalLogEntry): void;
+};
+
+export type EvalLogEntry = { type: string; data: unknown };
+
+function graphEditingSession(
+  args: EvalHarnessArgs,
+  sessionFunction?: EvalHarnessSessionFunction
+) {
+  const harness = new GraphEditingEvalHarness(args);
+  return harness.session(sessionFunction);
+}
+
+class GraphEditingEvalHarness {
+  constructor(private readonly args: EvalHarnessArgs) {}
+
+  async session(sessionFunction?: EvalHarnessSessionFunction) {
+    const client = await getAuthenticatedClient();
+    const accessToken = (await client.getAccessToken()).token;
+    if (!accessToken) {
+      throw new Error("Unable to obtain access token");
+    }
+
+    // @ts-expect-error "Can't define window?"
+    globalThis.window = {
+      location: new URL("https://example.com/"),
+    } as Window;
+
+    mock.method(globalThis, "setInterval", autoClearingInterval.setInterval);
+
+    const runEvalFn = async (
+      evalName: string,
+      evalFunction: GraphEditingEvalHarnessFunction
+    ): Promise<void> => {
+      const logEntries: EvalLogEntry[] = [];
+      const run = new GraphEditingEvalRun(accessToken, evalName, {
+        log: (entry) => logEntries.push(entry),
+      });
+
+      let outcome: unknown;
+      try {
+        outcome = await evalFunction({
+          invokeAgent: async (prompt: string) => {
+            const res = await run.invokeAgent(prompt);
+            return res;
+          },
+          logger: run,
+        });
+      } catch (err: unknown) {
+        if ((err as Error).message === "EVAL_DONE") {
+          // Gracefully caught the single-shot completion.
+          outcome = {
+            graph: run.graph,
+            finalMessage: run.lastMessage,
+          };
+        } else {
+          throw err;
+        }
+      }
+
+      const har = run.requestLogger.getHar();
+      await ensureDir(OUT_DIR);
+      const filename = `${toKebabFilename(this.args.name)}-${toKebabFilename(evalName)}-${timestamp()}`;
+      const harFilename = `${filename}.har`;
+      const logFilename = `${filename}.log.json`;
+      const graphFilename = `${filename}.graph.json`;
+
+      await writeFile(
+        join(OUT_DIR, `${harFilename}`),
+        JSON.stringify(har, null, 2),
+        "utf-8"
+      );
+      const log = collateContexts(har);
+      const outcomeEntry: unknown[] = outcome
+        ? [{ type: "outcome", outcome }]
+        : [];
+      await writeFile(
+        join(OUT_DIR, `${logFilename}`),
+        JSON.stringify([...log, ...logEntries, ...outcomeEntry], null, 2),
+        "utf-8"
+      );
+      await writeFile(
+        join(OUT_DIR, `${graphFilename}`),
+        JSON.stringify(run.graph, null, 2),
+        "utf-8"
+      );
+
+      let driveUrl: string | undefined = undefined;
+
+      if (this.args.uploadToDrive) {
+        try {
+          const driveClient = new GoogleDriveClient({
+            fetchWithCreds: run.fetchWithCreds,
+          });
+
+          const folderName = this.args.folderName || "Opal Eval Outputs";
+          const folderQuery = `name="${folderName}" and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}" and 'me' in owners and trashed=false`;
+          const folderResult = await driveClient.listFiles(folderQuery, { fields: ["id"] });
+          let folderId: string;
+
+          if (folderResult.files && folderResult.files.length > 0) {
+            folderId = folderResult.files[0].id!;
+          } else {
+            console.log(`[Google Drive] Creating folder "${folderName}"...`);
+            const createdFolder = await driveClient.createFile(
+              "",
+              {
+                name: folderName,
+                mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
+              }
+            );
+            folderId = (createdFolder as unknown as { id: string }).id;
+          }
+
+          console.log(`[Google Drive] Uploading Opal "${run.graph.title || "Untitled"}"...`);
+          const graphData = JSON.stringify(run.graph, null, 2);
+          const uploadedFile = await driveClient.createFile(
+            graphData,
+            {
+              name: `${run.graph.title || "Untitled"}.bgl.json`,
+              mimeType: GRAPH_MIME_TYPE,
+              parents: [folderId],
+            }
+          );
+          const fileId = (uploadedFile as unknown as { id?: string }).id;
+          if (fileId) {
+            driveUrl = `http://drive.google.com/open?id=${fileId}`;
+          }
+        } catch (e) {
+          console.error("[Google Drive] Failed to upload graph to Drive:", (e as Error).message);
+        }
+      }
+
+      console.log(`\n\n${evalName}`);
+      console.log(`HAR: "${harFilename}"`);
+      console.log(`Log: "${logFilename}"`);
+      console.log(`Graph: "${graphFilename}"`);
+      if (driveUrl) {
+        console.log(`Drive URL: \x1b[36m${driveUrl}\x1b[0m`);
+      }
+      
+      console.log("\nGenerated Graph Summary:");
+      console.table(
+        (run.graph.nodes ?? []).map((n) => ({
+          ID: n.id,
+          Type: n.type,
+          Title: n.metadata?.title ?? "",
+        }))
+      );
+    };
+
+    const evalTargets = {
+      eval: new Map<string, GraphEditingEvalHarnessFunction>(),
+      evalOnly: new Map<string, GraphEditingEvalHarnessFunction>(),
+    };
+
+    const sessionEvalFn = async (
+      target: "eval" | "evalOnly",
+      evalName: string,
+      evalFunction: GraphEditingEvalHarnessFunction
+    ): Promise<void> => {
+      evalTargets[target].set(evalName, evalFunction);
+    };
+
+    if (sessionFunction) {
+      await sessionFunction({
+        evalOnly: sessionEvalFn.bind(null, "evalOnly"),
+        eval: sessionEvalFn.bind(null, "eval"),
+      });
+    }
+
+    if (this.args.batch) {
+      try {
+        let filePath = join(ROOT_DIR, this.args.batch.path);
+        try {
+          await stat(filePath);
+        } catch {
+          filePath = join(ROOT_DIR, "..", "..", this.args.batch.path);
+          try {
+            await stat(filePath);
+          } catch {
+            filePath = join(ROOT_DIR, "..", this.args.batch.path);
+          }
+        }
+        console.log(`[Batch] Reading intents from "${filePath}"...`);
+        const content = await readFile(filePath, "utf-8");
+        const lines = content
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0 && !line.startsWith("#"));
+
+        console.log(`[Batch] Found ${lines.length} intents.`);
+        for (let i = 0; i < lines.length; i++) {
+          const intent = lines[i];
+          evalTargets.eval.set(`batch-intent-${String(i + 1).padStart(2, "0")}`, async ({ invokeAgent }) => {
+            return await invokeAgent(intent);
+          });
+        }
+      } catch (err) {
+        console.error("[Batch] Failed to load batch intents file:", (err as Error).message);
+      }
+    }
+
+    const runEvalTargets =
+      evalTargets.evalOnly.size > 0
+        ? [...evalTargets.evalOnly]
+        : [...evalTargets.eval];
+    if (evalTargets.evalOnly.size > 0) {
+      console.warn(`Exclusive evaluations: ${evalTargets.evalOnly.size}`);
+    }
+
+    const concurrency = this.args.batch?.concurrency || 1;
+    console.log(`[Batch] Running ${runEvalTargets.length} evaluations with concurrency = ${concurrency}`);
+
+    const chunks: [string, GraphEditingEvalHarnessFunction][][] = [];
+    for (let i = 0; i < runEvalTargets.length; i += concurrency) {
+      chunks.push(runEvalTargets.slice(i, i + concurrency));
+    }
+
+    for (const chunk of chunks) {
+      await Promise.all(chunk.map(([name, fn]) => runEvalFn(name, fn)));
+    }
+
+    mock.restoreAll();
+    autoClearingInterval.clearAllIntervals();
+    process.exit(0);
+  }
+}
+
+async function ensureDir(dir: string) {
+  await mkdir(dir, { recursive: true });
+}
+
+function timestamp(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+  return `${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
+}
+
+function toKebabFilename(str: string): string {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+class GraphEditingEvalRun implements EvalLogger {
+  readonly graph: GraphDescriptor = {
+    title: "",
+    description: "",
+    nodes: [],
+    edges: [],
+  };
+
+  lastMessage: string = "";
+
+  constructor(
+    private readonly accessToken: string,
+    private readonly title: string,
+    public readonly logger: EvalLogger
+  ) {
+    this.graph.title = this.title;
+  }
+
+  readonly requestLogger = new Logger();
+
+  log(entry: EvalLogEntry): void {
+    this.logger.log(entry);
+  }
+
+  public fetchWithCreds = async (
+    url: RequestInfo | URL,
+    init?: RequestInit
+  ) => {
+    let urlStr = String(url);
+    if (urlStr.includes("https://appcatalyst.pa.googleapis.com/v1beta1")) {
+      urlStr = urlStr.replace(
+        "https://appcatalyst.pa.googleapis.com/v1beta1",
+        "https://generativelanguage.googleapis.com/v1beta"
+      );
+    }
+    const entryId = this.requestLogger.request(urlStr, init);
+    const response = await fetch(urlStr, {
+      ...init,
+      headers: {
+        ...init?.headers,
+        Authorization: `Bearer ${this.accessToken}`,
+      },
+    });
+    await this.requestLogger.response(entryId, response.clone());
+    return response;
+  };
+
+  async invokeAgent(promptText: string): Promise<{
+    message: string;
+    graph: GraphDescriptor;
+  }> {
+    const consumer = new AgentEventConsumer();
+    const sink = new LocalAgentEventBridge(consumer);
+
+    consumer.on("readGraph", () => {
+      return Promise.resolve({ graph: this.graph });
+    });
+
+    consumer.on("applyEdits", async (event) => {
+      if (event.edits) {
+        this.applyEditsToGraph(event.edits);
+        return { success: true };
+      }
+      if (event.transform) {
+        this.applyTransformToGraph(event.transform);
+        return { success: true };
+      }
+      return { success: false, error: "Invalid applyEdits payload" };
+    });
+
+    consumer.on("waitForInput", (event) => {
+      const message = event.prompt.parts
+        .filter((p): p is { text: string } => "text" in p)
+        .map((p) => p.text)
+        .join("\n");
+      this.lastMessage = message;
+      // Single-shot termination. Throwing in the suspend handler gracefully
+      // halts Loop execution, bypassing continuing turns.
+      throw new Error("EVAL_DONE");
+    });
+
+    const objective: LLMContent = {
+      role: "user",
+      parts: [{ text: promptText }],
+    };
+
+    const moduleArgs: A2ModuleArgs = {
+      mcpClientManager: {} as unknown as McpClientManager,
+      agentContext: new AgentContext({
+        shell: {} as unknown as OpalShellHostProtocol,
+        fetchWithCreds: this.fetchWithCreds,
+      }),
+      fetchWithCreds: this.fetchWithCreds,
+      getConsentController() {
+        return {
+          async queryConsent() {
+            return true;
+          },
+        } as Partial<ConsentController> as ConsentController;
+      },
+      notebookLmApiClient: {} as never,
+      agentService: new AgentService(),
+      googleDriveClient: {} as never,
+      context: {
+        currentGraph: this.graph,
+        currentStep: {
+          id: "current-step",
+          type: "mock",
+        },
+        getProjectRunState: () => {
+          return {
+            console: new Map(),
+            app: {
+              state: "splash",
+              screens: new Map(),
+              current: new Map(),
+              last: null,
+              consentRequests: [],
+            },
+          };
+        },
+      },
+      shell: {
+        getDriveCollectorFile: (mimeType, connectorId, graphId) => {
+          return getDriveCollectorFile({
+            mimeType,
+            connectorId,
+            graphId,
+            fetchWithCreds: this.fetchWithCreds,
+          });
+        },
+        getSignInState: function (): Promise<SignInState> {
+          throw new Error("Function not implemented.");
+        },
+        validateScopes: function (): Promise<ValidateScopesResult> {
+          throw new Error("Function not implemented.");
+        },
+        getConfiguration: function (): Promise<GuestConfiguration> {
+          throw new Error("Function not implemented.");
+        },
+        fetchWithCreds: globalThis.fetch,
+        getOpalBackendClient: async () => new HttpBackendClient(globalThis.fetch),
+        signIn: function (): Promise<SignInResult> {
+          throw new Error("Function not implemented.");
+        },
+        signOut: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        setUrl: function (): void {
+          throw new Error("Function not implemented.");
+        },
+        pickDriveFiles: function (): Promise<PickDriveFilesResult> {
+          throw new Error("Function not implemented.");
+        },
+        shareDriveFiles: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        findUserOpalFolder: function (): Promise<FindUserOpalFolderResult> {
+          throw new Error("Function not implemented.");
+        },
+        listUserOpals: function (): Promise<ListUserOpalsResult> {
+          throw new Error("Function not implemented.");
+        },
+        checkAppAccess: function (): Promise<CheckAppAccessResult> {
+          throw new Error("Function not implemented.");
+        },
+        sendToEmbedder: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        trackAction: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        trackProperties: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        setTitle: function (_title: string | null): void {
+          throw new Error("Function not implemented.");
+        },
+        setOneGoogleBarVisible: function (_visible: boolean): void {
+          // No-op in eval harness.
+        },
+      } satisfies OpalShellHostProtocol,
+    };
+
+    const outcome = await invokeGraphEditingAgent(objective, moduleArgs, sink);
+    if (!ok(outcome)) {
+      const errPayload = outcome as unknown as { $error?: string; error?: string };
+      if (errPayload.$error === "EVAL_DONE" || errPayload.error === "EVAL_DONE") {
+        return {
+          message: this.lastMessage,
+          graph: this.graph,
+        };
+      }
+      throw new Error(`Agent execution failed: ${errPayload.$error ?? errPayload.error}`);
+    }
+
+    return {
+      message: this.lastMessage,
+      graph: this.graph,
+    };
+  }
+
+  private applyEditsToGraph(edits: EditSpec[]) {
+    for (const edit of edits) {
+      if (edit.type === "addnode") {
+        this.graph.nodes ??= [];
+        this.graph.nodes.push(edit.node);
+      } else if (edit.type === "removenode") {
+        this.graph.nodes = (this.graph.nodes ?? []).filter((n) => n.id !== edit.id);
+        this.graph.edges = (this.graph.edges ?? []).filter(
+          (e) => e.from !== edit.id && e.to !== edit.id
+        );
+      } else if (edit.type === "changegraphmetadata") {
+        if (edit.title !== undefined) this.graph.title = edit.title;
+        if (edit.description !== undefined) this.graph.description = edit.description;
+        if (edit.metadata !== undefined) this.graph.metadata = edit.metadata;
+      }
+    }
+  }
+
+  private applyTransformToGraph(transform: TransformDescriptor) {
+    if (transform.kind === "updateNode") {
+      const node = this.graph.nodes?.find((n) => n.id === transform.nodeId);
+      if (node) {
+        if (transform.configuration) {
+          node.configuration = {
+            ...(node.configuration ?? {}),
+            ...transform.configuration,
+          } as unknown as NodeConfiguration;
+        }
+        if (transform.metadata) {
+          node.metadata = {
+            ...(node.metadata ?? {}),
+            ...transform.metadata,
+          };
+        }
+      }
+    } else if (transform.kind === "updateGraphProperties") {
+      if (transform.title !== undefined) this.graph.title = transform.title;
+      if (transform.description !== undefined) this.graph.description = transform.description;
+    }
+  }
+}
