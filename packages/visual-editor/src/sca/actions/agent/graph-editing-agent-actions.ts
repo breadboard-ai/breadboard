@@ -24,9 +24,8 @@ import { generateImage, persistTheme } from "../theme/theme-utils.js";
 import { createThemeGenerationPrompt } from "../../../ui/prompts/theme-generation.js";
 
 import { ok } from "@breadboard-ai/utils";
-
-
-
+import { asAction, ActionMode } from "../../coordination.js";
+import { onGraphUrlChange } from "./triggers.js";
 import { makeAction } from "../binder.js";
 import { buildHooksFromSink } from "../../../a2/agent/loop-setup.js";
 import { invokeGraphEditingAgent } from "../../../a2/agent/graph-editing/main.js";
@@ -44,7 +43,6 @@ export {
   bind,
   startGraphEditingAgent,
   resolveGraphEditingInput,
-  resetGraphEditingAgent,
 };
 
 const bind = makeAction();
@@ -354,10 +352,18 @@ function resolveGraphEditingInput(text: string): boolean {
 /**
  * Abort the current loop and reset all state.
  */
-function resetGraphEditingAgent(): void {
-  currentRun?.abort();
-  currentRun = null;
-  pendingResolve = null;
-  const { controller } = bind;
-  controller.editor.graphEditingAgent.reset();
-}
+export const resetGraphEditingAgent = asAction(
+  "GraphEditingAgent.reset",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onGraphUrlChange(bind),
+  },
+  async (): Promise<void> => {
+    currentRun?.abort();
+    currentRun = null;
+    pendingResolve = null;
+    const { controller } = bind;
+    controller.editor.graphEditingAgent.reset();
+    controller.editor.devtools?.clearLog();
+  }
+);

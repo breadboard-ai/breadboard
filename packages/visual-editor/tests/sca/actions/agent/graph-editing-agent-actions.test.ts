@@ -16,6 +16,7 @@ import {
   GraphEditingAgentController,
   type ChatEntry,
 } from "../../../../src/sca/controller/subcontrollers/editor/graph-editing-agent-controller.js";
+import { DevToolsController } from "../../../../src/sca/controller/subcontrollers/editor/devtools/devtools-controller.js";
 import { AgentService } from "../../../../src/a2/agent/agent-service.js";
 import type { WaitForInputPayload } from "../../../../src/a2/agent/agent-event.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
@@ -29,9 +30,14 @@ async function makeControllerStub(id: string) {
     id,
     "GraphEditingAgentController"
   );
+  const devtools = new DevToolsController(
+    `${id}_dt`,
+    "DevToolsController"
+  );
   await agent.isHydrated;
+  await devtools.isHydrated;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { editor: { graphEditingAgent: agent } } as any;
+  return { editor: { graphEditingAgent: agent, devtools } } as any;
 }
 
 function makeServicesStub() {
@@ -85,10 +91,16 @@ suite("graph-editing-agent-actions", () => {
     agent.processing = true;
     agent.currentFlow = "flow-1";
     agent.addMessage("user", "Hello");
+    const devtools = controller.editor.devtools;
+    devtools.setSystemInstruction("Do this");
+    devtools.setFunctionDeclarations([{ name: "test_func", description: "A test func" }]);
+    devtools.addObjective("Hello");
     await agent.isSettled;
+    await devtools.isSettled;
 
     resetGraphEditingAgent();
     await agent.isSettled;
+    await devtools.isSettled;
 
     assert.deepStrictEqual(agent.entries, []);
     assert.strictEqual(agent.open, false);
@@ -96,6 +108,10 @@ suite("graph-editing-agent-actions", () => {
     assert.strictEqual(agent.waiting, false);
     assert.strictEqual(agent.processing, false);
     assert.strictEqual(agent.currentFlow, null);
+
+    assert.deepStrictEqual(devtools.entries, []);
+    assert.strictEqual(devtools.systemInstruction, "");
+    assert.deepStrictEqual(devtools.functionDeclarations, []);
   });
 
   test("resetGraphEditingAgent is safe to call multiple times", async () => {
