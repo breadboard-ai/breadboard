@@ -140,6 +140,7 @@ export const MAIN_APP_CSP = {
     "opal-feedback-url",
     "goog#html",
     "uf-api#html",
+    "uf-fload#html",
   ],
 };
 
