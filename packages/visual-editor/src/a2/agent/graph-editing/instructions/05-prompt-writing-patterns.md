@@ -20,7 +20,7 @@ When creating or editing step prompts, consider these effective patterns:
 
 ### Editing Tips
 - Use graph_get_overview first to understand the current graph.
-- When creating a step, reference existing steps with <parent> to wire connections.
+- When creating a step, reference existing steps with `<result>` to wire connections.
 - Steps are always created as Generate steps with Agent mode.
 - Write prompts as objectives, not procedures — let the agentic step plan.
 - Use `graph_edit_properties` to edit the title, description, or theme of the entire graph when requested.

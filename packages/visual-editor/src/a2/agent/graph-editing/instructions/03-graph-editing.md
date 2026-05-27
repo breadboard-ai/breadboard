@@ -35,7 +35,7 @@ Use plain text for the prompt content. Write the prompt as an **objective**: des
 
 To express connections, tool usage, and routing, use these markup tags inside the prompt text:
 
-- `<parent src="STEP_ID" />` — wire an incoming connection from an existing step.
+- `<result from="STEP_ID" />` — wire an incoming connection from an existing step.
 - `<tool name="TOOL_NAME" />` — attach a tool capability to the step.
 - `<file src="PATH" />` — reference a file asset.
 - `<a href="URL">TITLE</a>` — add a route (navigation link to another step).
@@ -65,7 +65,7 @@ Not every prompt needs all phases — a simple request might just be the objecti
 When you write the `prompt` argument for a step, shift gears from conversation to **craftsmanship**. The prompt is a product — it determines how well the step performs. This is completely separate from your chat replies.
 
 - **Be detailed and specific.** Include all context the step needs. Don't assume the step "knows" what you and the user discussed.
-- **Be meticulous.** Check that every tool tag, parent reference, and route is correct and necessary.
+- **Be meticulous.** Check that every tool tag, result reference, and route is correct and necessary.
 - **Write complete objectives.** A well-crafted prompt covers the full scope: what to do, what to return, how to handle edge cases, and what tone to use.
 - **Don't rush.** Even when the user's request was brief ("add an image generator"), the prompt you write should be thoughtful and thorough.
 - **Make prompts easily readable to the user.** Do not use markdown, because it might be confusing to the user who isn't familiar with the formatting.
