@@ -10,7 +10,13 @@ import {
   TextCapabilityPart,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
-import { GenerationConfig, Tool } from "../../a2/gemini.js";
+import {
+  type GenerationConfig,
+  type Tool,
+  MODEL_ALIAS_TEXT_LITE,
+  MODEL_ALIAS_TEXT_FLASH,
+  MODEL_ALIAS_TEXT_PRO,
+} from "../../a2/gemini.js";
 import { type ExecuteStepArgs } from "../../a2/step-executor.js";
 import { A2ModuleArgs } from "../../runnable-module-factory.js";
 import { AgentFileSystem } from "../file-system.js";
@@ -49,10 +55,10 @@ const GENERATE_TEXT_FUNCTION = "generate_text";
 
 const VIDEO_MODEL_NAME = "veo-3.1-generate-preview";
 
-const FLASH_MODEL_NAME = "gemini-3-flash-preview";
-const CODE_GENERATION_MODEL_NAME = "gemini-3-flash-preview";
-const PRO_MODEL_NAME = "gemini-3.1-pro-preview";
-const LITE_MODEL_NAME = "gemini-2.5-flash-lite";
+const FLASH_MODEL_NAME = MODEL_ALIAS_TEXT_FLASH;
+const CODE_GENERATION_MODEL_NAME = MODEL_ALIAS_TEXT_FLASH;
+const PRO_MODEL_NAME = MODEL_ALIAS_TEXT_PRO;
+const LITE_MODEL_NAME = MODEL_ALIAS_TEXT_LITE;
 
 const IMAGE_FLASH_MODEL_NAME = "gemini-2.5-flash-image";
 const IMAGE_PRO_MODEL_NAME = "gemini-3-pro-image-preview";

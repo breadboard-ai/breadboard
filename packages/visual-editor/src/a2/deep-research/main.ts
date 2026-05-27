@@ -9,6 +9,7 @@ import invokeGemini, {
   type GeminiInputs,
   type Tool,
   defaultSafetySettings,
+  MODEL_ALIAS_TEXT_LITE,
 } from "../a2/gemini.js";
 import { ArgumentNameGenerator } from "../a2/introducer.js";
 import { report } from "../a2/output.js";
@@ -48,7 +49,7 @@ const RESEARCH_TOOLS: DefaultToolDescriptor[] = [
   },
 ];
 
-const RESEARCH_MODEL = "gemini-3.1-flash-lite";
+const RESEARCH_MODEL = MODEL_ALIAS_TEXT_LITE;
 
 const MAX_ITERATIONS = 7;
 
