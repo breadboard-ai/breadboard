@@ -9,7 +9,8 @@ import { A2ModuleArgs } from "../../runnable-module-factory.js";
 import { Loop, AgentResult } from "../loop.js";
 import { buildGraphEditingFunctionGroups } from "./configurator.js";
 import { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
-import { graphOverviewYaml } from "./graph-overview.js";
+import { graphOverviewYaml, describeSelection } from "./graph-overview.js";
+import { bind } from "../../../sca/actions/graph/graph-actions.js";
 import type { LoopHooks } from "../types.js";
 import type { AgentEventSink } from "../agent-event-sink.js";
 import type { ReadGraphResponse } from "./types.js";
@@ -49,9 +50,16 @@ async function invokeGraphEditingAgent(
     translator
   );
 
-  // TODO: Selection info comes from the controller — needs a suspend event
-  // for "readSelection" or similar. For now, skip selection info.
-  const selectionInfo = "";
+  let selectionInfo = "";
+  try {
+    const { controller } = bind;
+    const selectedNodes = controller?.editor?.selection?.selection?.nodes;
+    if (selectedNodes && graph.nodes) {
+      selectionInfo = describeSelection(selectedNodes, graph.nodes, translator);
+    }
+  } catch {
+    // Gracefully fallback if bind hasn’t set the controller yet (e.g. in standalone environments or tests).
+  }
 
   objective = {
     parts: [
