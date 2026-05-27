@@ -27,14 +27,14 @@
   },
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.2",
-    "@lit/localize-tools": "^0.8.1",
+    "@lit/localize-tools": "^0.8.2",
     "vite": "^7.3.2",
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
     "@lit-labs/signals": "^0.2.0",
     "@lit/localize": "^0.12.2",
-    "lit": "^3.3.2",
+    "lit": "^3.3.3",
     "urlpattern-polyfill": "^10.1.0"
   }
 }
