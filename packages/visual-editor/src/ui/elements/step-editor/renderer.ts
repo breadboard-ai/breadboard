@@ -1084,6 +1084,7 @@ export class Renderer extends SignalWatcher(LitElement) {
   #updateCamera(animated = false, targetMatrix: DOMMatrix) {
     if (!animated) {
       this.camera.transform = targetMatrix;
+      this.tick++;
     } else {
       this.#addEffect("camera", () => {
         if (!this.camera) {
