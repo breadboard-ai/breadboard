@@ -21,6 +21,8 @@
     "test": "wireit",
     "test:file": "wireit",
     "eval:agent": "wireit",
+    "eval:graph-editing": "wireit",
+    "eval:graph-editing:batch": "wireit",
     "eval:a2ui": "wireit",
     "eval:autoname": "wireit",
     "eval:viewer": "wireit",
@@ -160,6 +162,22 @@
     },
     "eval:agent": {
       "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/agent/index.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "eval:graph-editing": {
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/graph-editing/index.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "eval:graph-editing:batch": {
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/graph-editing/batch.js",
       "dependencies": [
         "build:tsc"
       ],
