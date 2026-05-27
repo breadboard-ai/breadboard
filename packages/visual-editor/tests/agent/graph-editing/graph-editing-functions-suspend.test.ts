@@ -276,4 +276,55 @@ suite("Graph editing functions suspend/resume", () => {
       `Error should mention not found, got: ${result.error}`
     );
   });
+
+  // ── graph_edit_properties ──────────────────────────────────────────────────
+
+  test("graph_edit_properties emits applyEdits with updateGraphProperties transform", async () => {
+    const consumer = new AgentEventConsumer();
+    const bridge = new LocalAgentEventBridge(consumer);
+    const translator = new EditingAgentPidginTranslator();
+
+    const captured: ApplyEditsPayload[] = [];
+    consumer.on("applyEdits", (payload) => {
+      captured.push(payload);
+      return Promise.resolve({ success: true });
+    });
+
+    const group = getGraphEditingFunctionGroup(bridge, translator);
+    const handler = findHandler(group, "graph_edit_properties");
+    const result = await handler(
+      {
+        title: "Updated Title",
+        description: "Updated Description",
+        theme_intent: "sunset vibe",
+      },
+      noop,
+      null
+    );
+
+    assert.strictEqual(captured.length, 1);
+    assert.ok(captured[0].requestId, "Should have a requestId");
+    assert.ok(captured[0].transform, "Should have a transform");
+    assert.strictEqual(
+      captured[0].transform!.kind,
+      "updateGraphProperties"
+    );
+    if (captured[0].transform!.kind === "updateGraphProperties") {
+      assert.strictEqual(
+        captured[0].transform!.title,
+        "Updated Title"
+      );
+      assert.strictEqual(
+        captured[0].transform!.description,
+        "Updated Description"
+      );
+      assert.strictEqual(
+        captured[0].transform!.themeIntent,
+        "sunset vibe"
+      );
+    }
+
+    assert.strictEqual(result.success, true);
+  });
 });
+

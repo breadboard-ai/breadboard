@@ -68,9 +68,11 @@ export type FunctionCaller = {
     callId: string,
     part: FunctionCallCapabilityPart,
     statusUpdateCallback: StatusUpdateCallback,
-    reporter: ProgressReporter | null
+    reporter: ProgressReporter | null,
+    onResult?: (callId: string, content: LLMContent) => void
   ): void;
   getResults(): Promise<
+
     Outcome<{
       combined: LLMContent;
       results: { callId: string; response: FunctionResponseCapabilityPart }[];

@@ -302,7 +302,8 @@ class Loop {
                 part,
                 (status, opts) =>
                   hooks.onFunctionCallUpdate?.(callId, status, opts),
-                reporter
+                reporter,
+                (cId, content) => hooks.onFunctionResult?.(cId, content)
               );
             }
           }
@@ -318,10 +319,7 @@ class Loop {
           // chance to consider alternatives and fail more gracefully.
           return functionResults;
         }
-        // Report each function result individually
-        for (const { callId, response } of functionResults.results) {
-          hooks.onFunctionResult?.(callId, { parts: [response] });
-        }
+
         contents.push(functionResults.combined);
         hooks.onContent?.(functionResults.combined);
         hooks.onTurnComplete?.();

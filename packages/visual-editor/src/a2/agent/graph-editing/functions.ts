@@ -37,6 +37,8 @@ const GRAPH_GET_OVERVIEW = "graph_get_overview";
 const GRAPH_REMOVE_STEP = "graph_remove_step";
 const GRAPH_UPSERT_AGENT_STEP = "upsert_agent_step";
 const GRAPH_UPSERT_LEGACY_STEP = "upsert_legacy_step";
+const GRAPH_EDIT_PROPERTIES = "graph_edit_properties";
+
 
 const VALID_LEGACY_STEP_TYPES = [
   "user-input",
@@ -174,7 +176,13 @@ message for you to copy. Want to try that?"
 
 ## Graph Editing
 
-You can inspect, create, edit, and remove steps in the current graph. There are two categories of steps you can add:
+You can update the graph's overall title, description, and theme (\`graph_edit_properties\`), and inspect, create, edit, or remove individual steps in the current graph. 
+
+Be careful to discern whether the user just wants to update the theme splash graphic and only change that. Title, description, and prompts are important: don't change them unless you specifically hear the user request to make the change.
+
+After editing a blank or untitled graph, make it real: add title, description, and a theme that works best with what user has so far. Once that's done, never change the theme without user's specific instruction.
+
+There are two categories of steps you can add:
 
 ### 1. Agentic Steps (\`upsert_agent_step\`)
 An autonomous agent powered by Gemini that interprets its prompt as an objective and uses tools to fulfill it.
@@ -349,8 +357,11 @@ on first run and recall it in subsequent sessions.
 - When creating a step, reference existing steps with <parent> to wire connections.
 - Steps are always created as Generate steps with Agent mode.
 - Write prompts as objectives, not procedures — let the agentic step plan.
+- Use \`graph_edit_properties\` to edit the title, description, or theme of the entire graph when requested.
+
 - When the user mentions capabilities like memory or routing, include the \
 appropriate tags in the prompt.
+
 
 ### Talking to the User
 
@@ -458,6 +469,29 @@ function defineGraphEditingFunctions(
       },
     });
   }
+
+  /**
+   * Applies an updateGraphProperties transform via the suspend mechanism.
+   */
+  async function applyUpdateGraphProperties(
+    title?: string,
+    description?: string,
+    themeIntent?: string
+  ): Promise<ApplyEditsResponse> {
+    return sink.suspend<ApplyEditsResponse>({
+      applyEdits: {
+        requestId: crypto.randomUUID(),
+        label: "Update graph properties",
+        transform: {
+          kind: "updateGraphProperties",
+          title,
+          description,
+          themeIntent,
+        },
+      },
+    });
+  }
+
 
   /**
    * Creates a resolver that looks up node titles from the current graph.
@@ -623,6 +657,60 @@ function defineGraphEditingFunctions(
           return {
             success: false,
             error: `Failed to remove step "${step_id}"`,
+          };
+        }
+
+        return { success: true };
+      }
+    ),
+
+    // =========================================================================
+    // graph_edit_properties
+    // =========================================================================
+    defineFunction(
+      {
+        name: GRAPH_EDIT_PROPERTIES,
+        title: "Updating graph metadata",
+        icon: "edit",
+        description:
+          "Edit the title, description, and theme of the graph. You can provide one, two, or all parameters.",
+        parameters: {
+          title: z
+            .string()
+            .optional()
+            .describe("The new title for the graph"),
+          description: z
+            .string()
+            .optional()
+            .describe("The new description for the graph"),
+          theme_intent: z
+            .string()
+            .optional()
+            .describe(
+              "A description of the theme/vibe to generate for the graph (e.g., 'sunset vibe', 'sleek dark mode')"
+            ),
+        },
+        response: {
+          success: z.boolean(),
+          error: z
+            .string()
+            .optional()
+            .describe(
+              "If an error has occurred, will contain a description of the error"
+            ),
+        },
+      },
+      async ({ title, description, theme_intent }) => {
+        const result = await applyUpdateGraphProperties(
+          title,
+          description,
+          theme_intent
+        );
+
+        if (!result.success) {
+          return {
+            success: false,
+            error: result.error ?? "Failed to update graph properties",
           };
         }
 
