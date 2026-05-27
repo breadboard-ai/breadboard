@@ -353,6 +353,49 @@ class ChatPanel extends SignalWatcher(LitElement) {
         color: var(--light-dark-n-10);
         background: var(--light-dark-n-90);
       }
+
+      .feedback-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px;
+        margin-top: calc(-1 * var(--bb-grid-size-3) + 2px);
+        box-sizing: border-box;
+        padding-right: var(--bb-grid-size-2);
+      }
+
+      .feedback-button {
+        background: none;
+        border: none;
+        color: var(--light-dark-n-60);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        transition: background 0.15s ease, color 0.15s ease;
+      }
+
+      .feedback-button .g-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        line-height: 16px;
+        overflow: visible;
+      }
+
+      .feedback-button:hover {
+        color: var(--light-dark-n-10);
+        background: var(--light-dark-n-95);
+      }
+
+      .feedback-button.active .g-icon {
+        font-variation-settings: 'FILL' 1;
+        color: var(--light-dark-p-40);
+      }
     `,
   ];
 
@@ -377,6 +420,47 @@ class ChatPanel extends SignalWatcher(LitElement) {
               ? nothing
               : this.#renderEntry(entry)
           )}
+          ${(() => {
+            const lastEntry = agent.entries[agent.entries.length - 1];
+            const hasUser = agent.entries.some(
+              (e) => e.kind === "message" && e.role === "user"
+            );
+            const showFeedback =
+              lastEntry &&
+              lastEntry.kind === "message" &&
+              lastEntry.role === "model" &&
+              hasUser;
+            return showFeedback
+              ? html`
+                  <div class="feedback-row">
+                    <button
+                      class="feedback-button ${agent.feedbackReaction === "up"
+                        ? "active"
+                        : ""}"
+                      @click=${() =>
+                        this.sca.actions.graphEditingAgent.setOpieReaction(
+                          "up"
+                        )}
+                      title="Thumbs Up"
+                    >
+                      <span class="g-icon">thumb_up</span>
+                    </button>
+                    <button
+                      class="feedback-button ${agent.feedbackReaction === "down"
+                        ? "active"
+                        : ""}"
+                      @click=${() =>
+                        this.sca.actions.graphEditingAgent.setOpieReaction(
+                          "down"
+                        )}
+                      title="Thumbs Down"
+                    >
+                      <span class="g-icon">thumb_down</span>
+                    </button>
+                  </div>
+                `
+              : nothing;
+          })()}
           ${agent.loopRunning && !agent.waiting
             ? html`<div class="msg-row">
                 <div class="avatar">

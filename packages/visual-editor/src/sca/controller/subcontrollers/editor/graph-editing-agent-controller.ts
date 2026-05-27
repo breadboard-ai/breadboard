@@ -42,6 +42,9 @@ class GraphEditingAgentController extends RootController {
   accessor processing = false;
 
   @field()
+  accessor feedbackReaction: "up" | "down" | "none" = "none";
+
+  @field()
   accessor loopRunning = false;
 
   /**
@@ -64,6 +67,9 @@ class GraphEditingAgentController extends RootController {
   // ═══════════════════════════════════════════════════════════════════════════
 
   addMessage(role: "user" | "model" | "system", text: string) {
+    if (role === "user") {
+      this.feedbackReaction = "none";
+    }
     this._entries = [...this._entries, { kind: "message", role, text }];
   }
 
@@ -101,5 +107,6 @@ class GraphEditingAgentController extends RootController {
     this.processing = false;
     this.loopRunning = false;
     this.currentFlow = null;
+    this.feedbackReaction = "none";
   }
 }

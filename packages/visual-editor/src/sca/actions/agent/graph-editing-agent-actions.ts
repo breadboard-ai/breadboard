@@ -38,6 +38,7 @@ import type { ChatResponse } from "../../../a2/agent/types.js";
 import { UpdateNode } from "../../../ui/transforms/update-node.js";
 import { layoutGraph } from "../../../a2/agent/graph-editing/layout-graph.js";
 import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
+import type { ChatEntry } from "../../types.js";
 
 export { bind, startGraphEditingAgent, resolveGraphEditingInput };
 
@@ -359,5 +360,56 @@ export const resetGraphEditingAgent = asAction(
     const { controller } = bind;
     controller.editor.graphEditingAgent.reset();
     controller.editor.devtools?.opie?.clearLog();
+  }
+);
+
+let feedbackTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+function formatConversation(entries: readonly ChatEntry[], n = 10): string {
+  const lastN = entries.slice(-n);
+  return lastN
+    .map((entry) => {
+      if (entry.kind === "message") {
+        return `${entry.role.toUpperCase()}: ${entry.text}`;
+      }
+      if (entry.kind === "thought-group") {
+        const thoughts = entry.thoughts
+          .map((t) => `${t.title ?? "Thought"}: ${t.body}`)
+          .join("\n");
+        return `THOUGHTS:\n${thoughts}`;
+      }
+      return "";
+    })
+    .join("\n---\n");
+}
+
+export const setOpieReaction = asAction(
+  "GraphEditingAgent.setOpieReaction",
+  {
+    mode: ActionMode.Immediate,
+  },
+  async (reaction: "up" | "down"): Promise<void> => {
+    const { controller } = bind;
+    const agent = controller.editor.graphEditingAgent;
+
+    if (feedbackTimeoutId) {
+      clearTimeout(feedbackTimeoutId);
+      feedbackTimeoutId = null;
+    }
+
+    const currentReaction = agent.feedbackReaction;
+    const newReaction = currentReaction === reaction ? "none" : reaction;
+    agent.feedbackReaction = newReaction;
+
+    if (newReaction !== "none") {
+      feedbackTimeoutId = setTimeout(() => {
+        feedbackTimeoutId = null;
+        const productData = {
+          reaction: newReaction,
+          conversation: formatConversation(agent.entries, 10),
+        };
+        controller.global.feedback.open("opie", productData, "submit");
+      }, 3000);
+    }
   }
 );
