@@ -215,7 +215,7 @@ function defineGraphEditingFunctions(
   ) {
     const resolver = await nodeTitleResolver();
     const promptContent = translator.fromPidgin(prompt, resolver);
-    const ports = extractParentPorts(prompt, translator);
+    const ports = extractResultPorts(prompt, translator);
     return { promptContent, ports };
   }
 
@@ -680,20 +680,20 @@ function defineGraphEditingFunctions(
 // Helpers
 // =============================================================================
 
-const PARENT_SRC_REGEX = /<parent\s+src\s*=\s*"([^"]*)"\s*\/>/g;
+const RESULT_FROM_REGEX = /<result\s+from\s*=\s*"([^"]*)"\s*\/>/g;
 
 /**
- * Extract parent ports from pidgin text. Each <parent src="STEP_ID" /> tag
+ * Extract result ports from pidgin text. Each <result from="STEP_ID" /> tag
  * becomes an InPort for auto-wiring.
  */
-function extractParentPorts(
+function extractResultPorts(
   pidginText: string,
   translator: EditingAgentPidginTranslator
 ): InPort[] {
   const ports: InPort[] = [];
   const seen = new Set<string>();
 
-  for (const match of pidginText.matchAll(PARENT_SRC_REGEX)) {
+  for (const match of pidginText.matchAll(RESULT_FROM_REGEX)) {
     const handle = match[1];
     // The handle could be a raw step ID (from the LLM) or a translator handle
     const nodeId = translator.getNodeId(handle) ?? handle;

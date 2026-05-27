@@ -24,9 +24,9 @@ export type ToPidginResult = {
 };
 
 const SPLIT_REGEX =
-  /(<parent\s+src\s*=\s*"[^"]*"\s*\/>|<file\s+src\s*=\s*"[^"]*"\s*\/>|<tool\s+name\s*=\s*"[^"]*"\s*\/>|<a\s+href\s*=\s*"[^"]*"\s*>[^<]*<\/a>)/g;
+  /(<result\s+from\s*=\s*"[^"]*"\s*\/>|<file\s+src\s*=\s*"[^"]*"\s*\/>|<tool\s+name\s*=\s*"[^"]*"\s*\/>|<a\s+href\s*=\s*"[^"]*"\s*>[^<]*<\/a>)/g;
 
-const PARENT_PARSE_REGEX = /<parent\s+src\s*=\s*"([^"]*)"\s*\/>/;
+const RESULT_PARSE_REGEX = /<result\s+from\s*=\s*"([^"]*)"\s*\/>/;
 const FILE_PARSE_REGEX = /<file\s+src\s*=\s*"([^"]*)"\s*\/>/;
 const TOOL_PARSE_REGEX = /<tool\s+name\s*=\s*"([^"]*)"\s*\/>/;
 const LINK_PARSE_REGEX = /<a\s+href\s*=\s*"([^"]*)"\s*>\s*([^<]*)\s*<\/a>/;
@@ -34,21 +34,21 @@ const LINK_PARSE_REGEX = /<a\s+href\s*=\s*"([^"]*)"\s*>\s*([^<]*)\s*<\/a>/;
 /**
  * Translates to and from a graph-editing variant of Agent pidgin.
  *
- * This pidgin format conveys graph topology — edges (parents),
+ * This pidgin format conveys graph topology — edges (results),
  * file assets, and tool dependencies — rather than runtime data.
  *
  * Mapping:
- * - `in` params  → `<parent src="node-N" />`
+ * - `in` params  → `<result from="node-N" />`
  * - `asset` params → `<file src="path" />`
  * - `tool` params  → `<tool name="friendly-name" />` (or `<a href>` for routes)
  * - `param` params → ignored
  */
 class EditingAgentPidginTranslator {
   /** node path → handle (e.g. "node-1") */
-  #parentHandles = new Map<string, string>();
+  #resultHandles = new Map<string, string>();
   /** handle → node path (reverse) */
-  #parentReverse = new Map<string, string>();
-  #parentCounter = 0;
+  #resultReverse = new Map<string, string>();
+  #resultCounter = 0;
 
   /** tool path → friendly name */
   #toolHandles = new Map<string, string>();
@@ -69,8 +69,8 @@ class EditingAgentPidginTranslator {
       const { type } = param;
       switch (type) {
         case "in": {
-          const handle = this.#getOrCreateParentHandle(param.path);
-          return `<parent src="${handle}" />`;
+          const handle = this.#getOrCreateResultHandle(param.path);
+          return `<result from="${handle}" />`;
         }
         case "asset": {
           return `<file src="${param.path}" />`;
@@ -101,9 +101,9 @@ class EditingAgentPidginTranslator {
     for (const segment of segments) {
       if (segment === "") continue;
 
-      const parentMatch = segment.match(PARENT_PARSE_REGEX);
-      if (parentMatch) {
-        const handle = parentMatch[1];
+      const resultMatch = segment.match(RESULT_PARSE_REGEX);
+      if (resultMatch) {
+        const handle = resultMatch[1];
         // Resolve handle to node ID, or use the handle itself if it's already
         // a raw node ID (e.g. from graph_get_overview).
         const nodePath = this.getNodeId(handle) ?? handle;
@@ -162,10 +162,10 @@ class EditingAgentPidginTranslator {
   }
 
   /**
-   * Resolve a parent handle back to the original node path.
+   * Resolve a result handle back to the original node path.
    */
   getNodeId(handle: string): string | undefined {
-    return this.#parentReverse.get(handle);
+    return this.#resultReverse.get(handle);
   }
 
   /**
@@ -186,18 +186,18 @@ class EditingAgentPidginTranslator {
    * Register a node ID and return (or reuse) its pidgin handle.
    */
   getOrCreateHandle(nodeId: string): string {
-    return this.#getOrCreateParentHandle(nodeId);
+    return this.#getOrCreateResultHandle(nodeId);
   }
 
   // ---- Private helpers ----
 
-  #getOrCreateParentHandle(nodePath: string): string {
-    const existing = this.#parentHandles.get(nodePath);
+  #getOrCreateResultHandle(nodePath: string): string {
+    const existing = this.#resultHandles.get(nodePath);
     if (existing) return existing;
-    this.#parentCounter++;
-    const handle = `node-${this.#parentCounter}`;
-    this.#parentHandles.set(nodePath, handle);
-    this.#parentReverse.set(handle, nodePath);
+    this.#resultCounter++;
+    const handle = `node-${this.#resultCounter}`;
+    this.#resultHandles.set(nodePath, handle);
+    this.#resultReverse.set(handle, nodePath);
     return handle;
   }
 

@@ -13,6 +13,6 @@ In the user's prompt editor, tags appear as **chips** — small clickable elemen
 - `<a href="URL">TITLE</a>` → "Go to: TITLE" chip
 
 **Connection wires:**
-- `<parent src="STEP_ID" />` → an incoming wire drawn between steps on the canvas
+- `<result from="STEP_ID" />` → an incoming wire drawn between steps on the canvas
 
 For example, if the user asks "how do I add memory to my step?", say "Add the **Use Memory** chip from the @ menu" — not "add a memory tool tag".

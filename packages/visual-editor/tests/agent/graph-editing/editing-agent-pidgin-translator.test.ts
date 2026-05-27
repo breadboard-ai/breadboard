@@ -20,7 +20,7 @@ function makeTranslator(): EditingAgentPidginTranslator {
 
 describe("EditingAgentPidginTranslator", () => {
   describe("toPidgin", () => {
-    it("translates 'in' params to parent handles", () => {
+    it("translates 'in' params to result handles", () => {
       const translator = makeTranslator();
       const content = llm`Hello ${Template.part({
         type: "in",
@@ -29,7 +29,7 @@ describe("EditingAgentPidginTranslator", () => {
       })} world`.asContent();
 
       const result = translator.toPidgin(content);
-      strictEqual(result.text, `Hello <parent src="node-1" /> world`);
+      strictEqual(result.text, `Hello <result from="node-1" /> world`);
     });
 
     it("deduplicates same node paths", () => {
@@ -47,7 +47,7 @@ describe("EditingAgentPidginTranslator", () => {
       const result = translator.toPidgin(content);
       strictEqual(
         result.text,
-        `<parent src="node-1" /> and <parent src="node-1" />`
+        `<result from="node-1" /> and <result from="node-1" />`
       );
     });
 
@@ -66,7 +66,7 @@ describe("EditingAgentPidginTranslator", () => {
       const result = translator.toPidgin(content);
       strictEqual(
         result.text,
-        `<parent src="node-1" /> and <parent src="node-2" />`
+        `<result from="node-1" /> and <result from="node-2" />`
       );
     });
 
@@ -145,7 +145,7 @@ describe("EditingAgentPidginTranslator", () => {
   });
 
   describe("fromPidgin", () => {
-    it("reconstructs parent placeholders via roundtrip", () => {
+    it("reconstructs result placeholders via roundtrip", () => {
       const translator = makeTranslator();
       // First toPidgin to populate handle maps
       const original = llm`Hello ${Template.part({
@@ -244,10 +244,10 @@ describe("EditingAgentPidginTranslator", () => {
       });
     });
 
-    it("creates chip for unknown parent handles using handle as path", () => {
+    it("creates chip for unknown result handles using handle as path", () => {
       const translator = makeTranslator();
       const result = translator.fromPidgin(
-        `Hello <parent src="node-999" /> world`
+        `Hello <result from="node-999" /> world`
       );
       const expectedChip = Template.part({
         type: "in",
@@ -275,7 +275,7 @@ describe("EditingAgentPidginTranslator", () => {
       translator.toPidgin(original);
 
       const result = translator.fromPidgin(
-        `<parent src="node-1" /> then <tool name="get-weather" />`
+        `<result from="node-1" /> then <tool name="get-weather" />`
       );
       const expectedText = `${Template.part({
         type: "in",
@@ -294,7 +294,7 @@ describe("EditingAgentPidginTranslator", () => {
   });
 
   describe("reverse lookups", () => {
-    it("resolves parent handle to node path", () => {
+    it("resolves result handle to node path", () => {
       const translator = makeTranslator();
       const content = llm`${Template.part({
         type: "in",
