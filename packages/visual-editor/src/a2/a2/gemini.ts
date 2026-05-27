@@ -79,8 +79,7 @@ async function resolvePrefix(): Promise<string> {
 const STREAM_RETRY_DELAY_MS = 700;
 const STREAM_MAX_RETRIES = 5;
 
-const VALID_MODALITIES = ["Text", "Text and Image", "Audio"] as const;
-type ValidModalities = (typeof VALID_MODALITIES)[number];
+type ValidModalities = "Text" | "Text and Image" | "Audio";
 
 export type HarmBlockThreshold =
   // Content with NEGLIGIBLE will be allowed.
