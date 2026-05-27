@@ -36,6 +36,7 @@ async function makeControllerStub(id: string) {
   );
   await agent.isHydrated;
   await devtools.isHydrated;
+  await devtools.opie.isHydrated;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return { editor: { graphEditingAgent: agent, devtools } } as any;
 }
@@ -92,9 +93,10 @@ suite("graph-editing-agent-actions", () => {
     agent.currentFlow = "flow-1";
     agent.addMessage("user", "Hello");
     const devtools = controller.editor.devtools;
-    devtools.setSystemInstruction("Do this");
-    devtools.setFunctionDeclarations([{ name: "test_func", description: "A test func" }]);
-    devtools.addObjective("Hello");
+    const opie = devtools.opie;
+    opie.setSystemInstruction("Do this");
+    opie.setFunctionDeclarations([{ name: "test_func", description: "A test func" }]);
+    opie.addObjective("Hello");
     await agent.isSettled;
     await devtools.isSettled;
 
@@ -109,9 +111,9 @@ suite("graph-editing-agent-actions", () => {
     assert.strictEqual(agent.processing, false);
     assert.strictEqual(agent.currentFlow, null);
 
-    assert.deepStrictEqual(devtools.entries, []);
-    assert.strictEqual(devtools.systemInstruction, "");
-    assert.deepStrictEqual(devtools.functionDeclarations, []);
+    assert.deepStrictEqual(opie.entries, []);
+    assert.strictEqual(opie.systemInstruction, "");
+    assert.deepStrictEqual(opie.functionDeclarations, []);
   });
 
   test("resetGraphEditingAgent is safe to call multiple times", async () => {

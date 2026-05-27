@@ -141,9 +141,10 @@ export class DevTools extends SignalWatcher(LitElement) {
 
   render() {
     const devtools = this.sca.controller.editor.devtools;
-    const systemInstruction = devtools.systemInstruction;
-    const functions = devtools.functionDeclarations;
-    const entries = devtools.entries;
+    const opie = devtools.opie;
+    const systemInstruction = opie.systemInstruction;
+    const functions = opie.functionDeclarations;
+    const entries = opie.entries;
 
     return html`
       <div id="devtools-header">

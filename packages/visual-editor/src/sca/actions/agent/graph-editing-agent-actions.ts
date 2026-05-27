@@ -97,7 +97,7 @@ function startGraphEditingAgent(firstMessage: string): void {
   }) as LocalAgentRun;
   currentRun = handle;
 
-  const devtools = controller.editor.devtools;
+  const devtools = controller.editor.devtools?.opie;
 
   if (devtools) {
     devtools.clearLog();
@@ -122,7 +122,7 @@ function startGraphEditingAgent(firstMessage: string): void {
 
   handle.events
     .on("start", (event) => {
-      const devtools = controller.editor.devtools;
+      const devtools = controller.editor.devtools?.opie;
       if (devtools && event.objective) {
         devtools.addObjective(event.objective);
       }
@@ -364,6 +364,6 @@ export const resetGraphEditingAgent = asAction(
     pendingResolve = null;
     const { controller } = bind;
     controller.editor.graphEditingAgent.reset();
-    controller.editor.devtools?.clearLog();
+    controller.editor.devtools?.opie?.clearLog();
   }
 );
