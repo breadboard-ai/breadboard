@@ -17,6 +17,7 @@ type UserFeedbackApi = {
       productId: string;
       bucket?: string;
       productVersion?: string;
+      flow?: string;
       callback?: () => void;
       onLoadCallback?: () => void;
     },
@@ -72,7 +73,11 @@ export class FeedbackController extends RootController {
     this.#env = env;
   }
 
-  async open() {
+  async open(
+    bucketOverride?: string,
+    productData?: Record<string, string>,
+    flow?: "submit"
+  ) {
     const LABEL = "Feedback.open";
     const logger = Utils.Logging.getLogger();
 
@@ -97,7 +102,7 @@ export class FeedbackController extends RootController {
       );
       return;
     }
-    const bucket = this.#env.deploymentConfig.GOOGLE_FEEDBACK_BUCKET;
+    const bucket = bucketOverride ?? this.#env.deploymentConfig.GOOGLE_FEEDBACK_BUCKET;
     if (!bucket) {
       logger.log(
         Utils.Logging.Formatter.error(
@@ -109,8 +114,13 @@ export class FeedbackController extends RootController {
     }
     const { packageJsonVersion: version, gitCommitHash } = this.#env.buildInfo;
 
-    this.status = "loading";
-    this.#env.shellHost.setOneGoogleBarVisible(false);
+    const isSilent = flow === "submit";
+
+    if (!isSilent) {
+      this.status = "loading";
+      this.#env.shellHost.setOneGoogleBarVisible(false);
+    }
+
     let api;
     try {
       api = await loadGoogleFeedbackApi();
@@ -123,33 +133,42 @@ export class FeedbackController extends RootController {
         ),
         LABEL
       );
-      this.status = "closed";
-      this.#env.shellHost.setOneGoogleBarVisible(true);
+      if (!isSilent) {
+        this.status = "closed";
+        this.#env.shellHost.setOneGoogleBarVisible(true);
+      }
       return;
     }
 
-    if (this.status !== "loading") {
+    if (!isSilent && this.status !== "loading") {
       /* c8 ignore next 4 */
       // The user might have pressed Escape on the loading panel in the
       // meantime.
       return;
     }
 
-    api.startFeedback({
+    const config: Parameters<UserFeedbackApi["startFeedback"]>[0] = {
       productId,
       bucket,
       productVersion: `${version} (${gitCommitHash})`,
-      onLoadCallback: () => {
+    };
+
+    if (isSilent) {
+      config.flow = "submit";
+    } else {
+      config.onLoadCallback = () => {
         // Note that the API we loaded earlier is very tiny. This startFeedback
         // call is what actually loads most of the JavaScript, so we want to
         // keep the loading indicator visible until this callback fires.
         this.status = "open";
-      },
-      callback: () => {
+      };
+      config.callback = () => {
         this.status = "closed";
         this.#env.shellHost.setOneGoogleBarVisible(true);
-      },
-    });
+      };
+    }
+
+    api.startFeedback(config, productData);
   }
 
   close() {
