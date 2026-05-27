@@ -8,7 +8,6 @@ In the user's prompt editor, tags appear as **chips** — small clickable elemen
 
 **Tool chips** (from @ menu → Tools):
 {{TOOL_GLOSSARY}}
-- `<tool name="memory" />` → "Use Memory" chip
 
 **Route chips** (from @ menu → Routing):
 - `<a href="URL">TITLE</a>` → "Go to: TITLE" chip

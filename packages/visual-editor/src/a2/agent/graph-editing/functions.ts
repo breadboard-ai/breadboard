@@ -18,7 +18,7 @@ import { A2_TOOLS } from "../../a2-registry.js";
 import type { AgentEventSink } from "../agent-event-sink.js";
 import { defineFunction, mapDefinitions } from "../function-definition.js";
 import type { FunctionGroup } from "../types.js";
-import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
+import { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
 import { graphOverviewYaml } from "./graph-overview.js";
 import {
   GENERATE_COMPONENT_URL,
@@ -65,10 +65,7 @@ const TOOL_NAMES = A2_TOOLS.map(
  * Used in the system prompt so the agent can explain concepts using the
  * terminology the user sees in the UI.
  */
-const TOOL_GLOSSARY = A2_TOOLS.map(([, tool]) => {
-  const tagName = (tool.title ?? "").toLowerCase().replace(/\s+/g, "-");
-  return `- \`<tool name="${tagName}" />\` → "${tool.title}" chip`;
-}).join("\n");
+const TOOL_GLOSSARY = EditingAgentPidginTranslator.getToolGlossary();
 
 const PROMPT_DESCRIPTION = `The prompt for the step, written as plain text with \
 optional markup tags to express connections and tool usage:
