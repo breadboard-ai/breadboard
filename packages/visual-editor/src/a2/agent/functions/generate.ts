@@ -55,10 +55,7 @@ const GENERATE_TEXT_FUNCTION = "generate_text";
 
 const VIDEO_MODEL_NAME = "veo-3.1-generate-preview";
 
-const FLASH_MODEL_NAME = MODEL_ALIAS_TEXT_FLASH;
 const CODE_GENERATION_MODEL_NAME = MODEL_ALIAS_TEXT_FLASH;
-const PRO_MODEL_NAME = MODEL_ALIAS_TEXT_PRO;
-const LITE_MODEL_NAME = MODEL_ALIAS_TEXT_LITE;
 
 const IMAGE_FLASH_MODEL_NAME = "gemini-2.5-flash-image";
 const IMAGE_PRO_MODEL_NAME = "gemini-3-pro-image-preview";
@@ -470,11 +467,11 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
 function resolveTextModel(model: "pro" | "lite" | "flash"): string {
   switch (model) {
     case "pro":
-      return PRO_MODEL_NAME;
+      return MODEL_ALIAS_TEXT_PRO;
     case "flash":
-      return FLASH_MODEL_NAME;
+      return MODEL_ALIAS_TEXT_FLASH;
     default:
-      return LITE_MODEL_NAME;
+      return MODEL_ALIAS_TEXT_LITE;
   }
 }
 
