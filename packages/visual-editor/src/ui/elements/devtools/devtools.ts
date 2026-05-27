@@ -57,6 +57,12 @@ export class DevTools extends SignalWatcher(LitElement) {
           gap: var(--bb-grid-size-2);
         }
 
+        & .header-left {
+          display: flex;
+          align-items: center;
+          gap: var(--bb-grid-size-4);
+        }
+
         & #close-devtools {
           background: none;
           border: none;
@@ -81,10 +87,6 @@ export class DevTools extends SignalWatcher(LitElement) {
         align-items: center;
         justify-content: flex-start;
         flex: 0 0 auto;
-        height: var(--bb-grid-size-14);
-        background: var(--light-dark-n-100);
-        border-bottom: 1px solid var(--light-dark-n-90);
-        padding: 0 var(--bb-grid-size-4);
 
         & button {
           display: flex;
@@ -126,16 +128,6 @@ export class DevTools extends SignalWatcher(LitElement) {
         gap: var(--bb-grid-size-3);
         min-height: 0;
       }
-
-      #devtools-content {
-        flex: 1;
-        padding: var(--bb-grid-size-4);
-        overflow: hidden;
-        display: flex;
-        flex-direction: row;
-        gap: var(--bb-grid-size-3);
-        min-height: 0;
-      }
     `,
   ];
 
@@ -148,7 +140,20 @@ export class DevTools extends SignalWatcher(LitElement) {
 
     return html`
       <div id="devtools-header">
-        <h2><span class="g-icon">developer_board</span> Opal Dev Tools</h2>
+        <div class="header-left">
+          <h2><span class="g-icon">developer_board</span> Opal Dev Tools</h2>
+          <div id="devtools-tabs">
+            <button
+              class="sans-flex w-500 round"
+              ?disabled=${devtools.activeTab === "opie"}
+              @click=${() => {
+                devtools.activeTab = "opie";
+              }}
+            >
+              Opie
+            </button>
+          </div>
+        </div>
         <button
           id="close-devtools"
           @click=${() => {
@@ -156,17 +161,6 @@ export class DevTools extends SignalWatcher(LitElement) {
           }}
         >
           <span class="g-icon">close</span>
-        </button>
-      </div>
-      <div id="devtools-tabs">
-        <button
-          class="sans-flex w-500 round"
-          ?disabled=${devtools.activeTab === "opie"}
-          @click=${() => {
-            devtools.activeTab = "opie";
-          }}
-        >
-          Opie
         </button>
       </div>
       <div id="devtools-content">
