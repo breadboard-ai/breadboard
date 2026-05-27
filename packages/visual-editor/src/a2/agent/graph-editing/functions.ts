@@ -39,7 +39,6 @@ const GRAPH_UPSERT_AGENT_STEP = "upsert_agent_step";
 const GRAPH_UPSERT_LEGACY_STEP = "upsert_legacy_step";
 const GRAPH_EDIT_PROPERTIES = "graph_edit_properties";
 
-
 const VALID_LEGACY_STEP_TYPES = [
   "user-input",
   "output",
@@ -89,8 +88,8 @@ function buildInstruction(): string {
   return `## You are Opie
 
 You are **Opie**, the graph editing agent for **Opal**. You help users build \
-and edit their opals — which are also called "flows" or "graphs". These three \
-terms are interchangeable: "opal", "flow", and "graph" all refer to the same \
+and edit their Opals — which are also called "flows" or "graphs". These three \
+terms are interchangeable: "Opal", "flow", and "graph" all refer to the same \
 thing.
 
 Your tone is **light self-deprecating levity**. You're genuinely helpful \
@@ -138,7 +137,7 @@ jumping into graph editing.
 ### Is the request clear enough?
 
 Check the request against this rubric:
-- **Purpose** — Do you know what the opal should accomplish?
+- **Purpose** — Do you know what the Opal should accomplish?
 - **Audience** — Who will use it? (Sometimes obvious, sometimes not.)
 - **Inputs** — What does it need from the user or other sources?
 - **Key output** — What should it produce at the end?
@@ -176,7 +175,7 @@ message for you to copy. Want to try that?"
 
 ## Graph Editing
 
-You can update the graph's overall title, description, and theme (\`graph_edit_properties\`), and inspect, create, edit, or remove individual steps in the current graph. 
+You can update the graph's overall title, description, and theme (\`graph_edit_properties\`), and inspect, create, edit, or remove individual steps in the current graph.
 
 Be careful to discern whether the user just wants to update the theme splash graphic and only change that. Title, description, and prompts are important: don't change them unless you specifically hear the user request to make the change.
 
@@ -244,7 +243,7 @@ artifact.
 Repeat until satisfied.
 
 3. **What to return** — End with what the step should return. Example: \
-"Return header graphic and final blog post." IMPORTANT: this is the just the final output of the step, not the whole user experience. For example, if the step is an interactive quiz, the return value might be the final grade or the quiz report. The quiz itself is the experience. 
+"Return header graphic and final blog post." IMPORTANT: this is the just the final output of the step, not the whole user experience. For example, if the step is an interactive quiz, the return value might be the final grade or the quiz report. The quiz itself is the experience.
 
 Not every prompt needs all phases — a simple request might just be the \
 objective line. But for richer tasks, this structure helps the agentic step \
@@ -492,7 +491,6 @@ function defineGraphEditingFunctions(
     });
   }
 
-
   /**
    * Creates a resolver that looks up node titles from the current graph.
    * Reads the graph via suspend to get the current state.
@@ -545,10 +543,7 @@ function defineGraphEditingFunctions(
   /**
    * Maps a descriptive legacy step_type to its core Graph configuration.
    */
-  function buildNodeSpec(
-    stepType: string,
-    promptContent: unknown
-  ): NodeSpec {
+  function buildNodeSpec(stepType: string, promptContent: unknown): NodeSpec {
     if (stepType === "user-input") {
       return {
         type: USER_INPUT_COMPONENT_URL,
@@ -675,10 +670,7 @@ function defineGraphEditingFunctions(
         description:
           "Edit the title, description, and theme of the graph. You can provide one, two, or all parameters.",
         parameters: {
-          title: z
-            .string()
-            .optional()
-            .describe("The new title for the graph"),
+          title: z.string().optional().describe("The new title for the graph"),
           description: z
             .string()
             .optional()
@@ -885,8 +877,6 @@ function defineGraphEditingFunctions(
         );
 
         let stepId: string;
-
-
 
         if (step_id) {
           const resolved = await resolveAndValidateNode(step_id, translator);

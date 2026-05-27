@@ -39,6 +39,7 @@ import {
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 import type { InPort } from "../ui/transforms/autowire-in-ports.js";
+import type { ParsedThought } from "../a2/agent/thought-parser.js";
 
 // ── Types migrated from ui/types/types.ts ──────────────────────────────────
 
@@ -623,4 +624,15 @@ export type SessionLogEntry = {
   timestamp: number;
 };
 
-
+/**
+ * A single chat entry. Can be:
+ * - A user or model text message
+ * - A system message (function call label)
+ * - A thought group (collapsible, shows latest title)
+ */
+export type ChatEntry =
+  | { kind: "message"; role: "user" | "model" | "system"; text: string }
+  | {
+      kind: "thought-group";
+      thoughts: ParsedThought[];
+    };

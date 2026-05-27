@@ -199,9 +199,14 @@ export class Renderer extends SignalWatcher(LitElement) {
 
         &.under-chat {
           width: auto;
-          left: var(--bb-grid-size-4);
-          bottom: var(--bb-grid-size-2);
+          left: var(--bb-grid-size-16);
+          bottom: var(--bb-grid-size-15);
           min-width: 280px;
+          animation: none;
+
+          &.visible {
+            animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards 0.8s;
+          }
         }
       }
 
@@ -1642,9 +1647,10 @@ export class Renderer extends SignalWatcher(LitElement) {
       this.showDisclaimer && !this.#gc.readOnly
         ? html`<p
             id="disclaimer"
-            class=${this.sca.env.flags.get("enableGraphEditorAgent")
-              ? "under-chat"
-              : ""}
+            class=${classMap({
+              "under-chat": this.sca.env.flags.get("enableGraphEditorAgent"),
+              visible: this.sca.controller.editor.graphEditingAgent.open,
+            })}
           >
             ${Strings.from("LABEL_DISCLAIMER")}
           </p>`

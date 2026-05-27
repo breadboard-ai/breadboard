@@ -3,16 +3,23 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { type } from "../../styles/host/type.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { ShowVideoModalEvent } from "../../events/events.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
+import { scaContext } from "../../../sca/context/context.js";
+import { SCA } from "../../../sca/sca.js";
 
 @customElement("bb-empty-state")
-export class EmptyState extends LitElement {
+export class EmptyState extends SignalWatcher(LitElement) {
   @property({ type: Boolean, reflect: true })
   accessor narrow = false;
+
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   static styles = [
     baseColors,
@@ -91,6 +98,25 @@ export class EmptyState extends LitElement {
         }
       }
 
+      #agent-variant {
+        position: absolute;
+        bottom: 90px;
+        left: 110px;
+        rotate: 8deg;
+
+        animation: fadeIn 1.5s cubic-bezier(0, 0, 0.3, 1) 4s forwards;
+        opacity: 0;
+
+        & img {
+          left: 0%;
+          transform-origin: 0px 0px;
+          translate: 3% calc(100% + 30px);
+          bottom: 0px;
+          scale: 0.5;
+          rotate: 190deg;
+        }
+      }
+
       #headline {
         translate: 0 -4svh;
         font-size: min(3.5svw, 60px);
@@ -133,7 +159,7 @@ export class EmptyState extends LitElement {
     `,
   ];
 
-  render() {
+  private renderTop() {
     return html`<div id="top" class="message edu-sa-beginner">
         Add a step to get started <img src="/images/arrow-up.png" />
       </div>
@@ -152,9 +178,38 @@ export class EmptyState extends LitElement {
             >demo video</a
           >
         </div>
-      </div>
-      <div id="bottom" class="message edu-sa-beginner">
-        ... or type what you want to build <img src="/images/arrow-down.png" />
-      </div>`;
+      </div> `;
+  }
+
+  private renderBottomNLMarker() {
+    return html`<div id="bottom" class="message edu-sa-beginner">
+      ... or type what you want to build <img src="/images/arrow-down.png" />
+    </div>`;
+  }
+
+  private renderBottomPlaceholder() {
+    return html`<div id="bottom" class=""></div>`;
+  }
+
+  private renderBottomAgentMarker() {
+    return [
+      this.renderBottomPlaceholder(),
+      html` <div id="agent-variant" class="message edu-sa-beginner">
+        ... or chat with the agent<img src="/images/arrow-up.png" />
+      </div>`,
+    ];
+  }
+
+  render() {
+    if (!this.sca.controller.isHydrated) return nothing;
+
+    if (this.sca.env.flags.get("enableGraphEditorAgent")) {
+      if (this.sca.controller.editor.graphEditingAgent.open) {
+        return [this.renderTop(), this.renderBottomPlaceholder()];
+      }
+      return [this.renderTop(), this.renderBottomAgentMarker()];
+    }
+
+    return [this.renderTop(), this.renderBottomNLMarker()];
   }
 }

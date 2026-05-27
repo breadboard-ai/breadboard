@@ -39,11 +39,7 @@ import { UpdateNode } from "../../../ui/transforms/update-node.js";
 import { layoutGraph } from "../../../a2/agent/graph-editing/layout-graph.js";
 import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
 
-export {
-  bind,
-  startGraphEditingAgent,
-  resolveGraphEditingInput,
-};
+export { bind, startGraphEditingAgent, resolveGraphEditingInput };
 
 const bind = makeAction();
 
@@ -110,15 +106,12 @@ function startGraphEditingAgent(firstMessage: string): void {
       .map((g) => g.instruction)
       .filter((ins): ins is string => typeof ins === "string")
       .join("\n\n");
-    const functionDeclarations = functionGroups.flatMap(
-      (g) => g.declarations
-    );
+    const functionDeclarations = functionGroups.flatMap((g) => g.declarations);
 
     devtools.setSystemInstruction(systemInstruction);
     devtools.setFunctionDeclarations(functionDeclarations);
     devtools.addObjective(firstMessage);
   }
-
 
   handle.events
     .on("start", (event) => {
@@ -141,9 +134,6 @@ function startGraphEditingAgent(firstMessage: string): void {
     .on("functionResult", (event) => {
       devtools?.updateCallResponse?.(event.callId, event.content);
     });
-
-
-
 
   // Build hooks from sink
   const hooks = buildHooksFromSink(handle.sink);
@@ -318,6 +308,8 @@ function startGraphEditingAgent(firstMessage: string): void {
   invokeGraphEditingAgent(objective, moduleArgs, handle.sink, hooks)
     .then((result) => {
       agent.loopRunning = false;
+      agent.processing = false;
+      agent.waiting = false;
       if (result && "$error" in result) {
         agent.addMessage("system", `Error: ${result.$error}`);
       }
@@ -326,6 +318,8 @@ function startGraphEditingAgent(firstMessage: string): void {
     })
     .catch((e) => {
       agent.loopRunning = false;
+      agent.processing = false;
+      agent.waiting = false;
       agent.addMessage("system", `Error: ${(e as Error).message}`);
       services.agentService.endRun(handle.runId);
       currentRun = null;

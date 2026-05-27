@@ -450,6 +450,25 @@ export class CanvasController extends SignalWatcher(LitElement) {
     const showStepListView = !graphIsEmpty || isGenerating;
     const prompt =
       gc.graph?.metadata?.raw_intent ?? gc.graph?.metadata?.intent ?? null;
+    const isAgentHydrating = Utils.Helpers.isHydrating(() =>
+      this.sca.env.flags.get("enableGraphEditorAgent")
+    );
+    const enableAgent =
+      !isAgentHydrating && this.sca.env.flags.get("enableGraphEditorAgent");
+
+    let narrowInput: HTMLTemplateResult | typeof nothing = nothing;
+    if (!gc.readOnly && !isAgentHydrating) {
+      if (enableAgent) {
+        narrowInput = html`<bb-graph-editing-chat
+          @pointerdown=${(evt: PointerEvent) => {
+            evt.stopPropagation();
+          }}
+        ></bb-graph-editing-chat>`;
+      } else {
+        narrowInput = html`<bb-flowgen-editor-input></bb-flowgen-editor-input>`;
+      }
+    }
+
     const narrowScreenContent = !graph
       ? nothing
       : html`<section id="narrow-view">
@@ -457,18 +476,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
             ? html`<bb-prompt-view .prompt=${prompt}></bb-prompt-view>
                 <bb-step-list-view></bb-step-list-view>`
             : html`<bb-empty-state narrow></bb-empty-state>`}
-          ${gc.readOnly ||
-          Utils.Helpers.isHydrating(() =>
-            this.sca.env.flags.get("enableGraphEditorAgent")
-          )
-            ? nothing
-            : this.sca.env.flags.get("enableGraphEditorAgent")
-              ? html`<bb-graph-editing-chat
-                  @pointerdown=${(evt: PointerEvent) => {
-                    evt.stopPropagation();
-                  }}
-                ></bb-graph-editing-chat>`
-              : html`<bb-flowgen-editor-input></bb-flowgen-editor-input>`}
+          ${narrowInput}
         </section>`;
 
     const screenSize = this.sca.controller.global.screenSize.size;
@@ -492,18 +500,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   #maybeRenderEmptyState() {
     if (this.#lastKnownNlEditValue !== "") {
-      return nothing;
-    }
-
-    // The empty state callouts reference the flowgen-editor-input which is not
-    // rendered when the graph editing agent is active. Skip it to avoid both
-    // misleading arrows and z-index overlap with the chat panel.
-    if (
-      !Utils.Helpers.isHydrating(() =>
-        this.sca.env.flags.get("enableGraphEditorAgent")
-      ) &&
-      this.sca.env.flags.get("enableGraphEditorAgent")
-    ) {
       return nothing;
     }
 
