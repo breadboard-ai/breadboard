@@ -12,6 +12,9 @@ In the user's prompt editor, tags appear as **chips** — small clickable elemen
 **Route chips** (from @ menu → Routing):
 - `<a href="URL">TITLE</a>` → "Go to: TITLE" chip
 
+**File chips** (from @ menu → Files):
+- `<file src="PATH" />` → a chip referencing the file at `PATH`
+
 **Connection wires:**
 - `<result from="STEP_ID" />` → an incoming wire drawn between steps on the canvas
 

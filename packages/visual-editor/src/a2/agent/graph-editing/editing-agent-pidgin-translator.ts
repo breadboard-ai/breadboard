@@ -93,7 +93,8 @@ class EditingAgentPidginTranslator {
 
   fromPidgin(
     content: string,
-    resolveNodeTitle?: (nodeId: string) => string | undefined
+    resolveNodeTitle?: (nodeId: string) => string | undefined,
+    resolveAssetTitle?: (assetPath: string) => string | undefined
   ): LLMContent {
     const segments = content.split(SPLIT_REGEX);
     const textParts: string[] = [];
@@ -116,7 +117,8 @@ class EditingAgentPidginTranslator {
       const fileMatch = segment.match(FILE_PARSE_REGEX);
       if (fileMatch) {
         const path = fileMatch[1];
-        textParts.push(Template.part({ type: "asset", path, title: path }));
+        const title = resolveAssetTitle?.(path) ?? path;
+        textParts.push(Template.part({ type: "asset", path, title }));
         continue;
       }
 

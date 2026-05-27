@@ -36,9 +36,11 @@ export { getGraphEditingFunctionGroup };
 
 const GRAPH_GET_OVERVIEW = "graph_get_overview";
 const GRAPH_REMOVE_STEP = "graph_remove_step";
+const GRAPH_REMOVE_ASSET = "graph_remove_asset";
 const GRAPH_UPSERT_AGENT_STEP = "upsert_agent_step";
 const GRAPH_UPSERT_LEGACY_STEP = "upsert_legacy_step";
 const GRAPH_EDIT_PROPERTIES = "graph_edit_properties";
+
 
 const VALID_LEGACY_STEP_TYPES = [
   "user-input",
@@ -193,16 +195,23 @@ function defineGraphEditingFunctions(
   }
 
   /**
-   * Creates a resolver that looks up node titles from the current graph.
+   * Creates a resolver that looks up node and asset titles from the current graph.
    * Reads the graph via suspend to get the current state.
    */
-  async function nodeTitleResolver(): Promise<
-    (nodeId: string) => string | undefined
-  > {
+  async function titleResolvers(): Promise<{
+    nodeResolver: (nodeId: string) => string | undefined;
+    assetResolver: (assetPath: string) => string | undefined;
+  }> {
     const graph = await readGraph();
-    return (nodeId: string) => {
-      const node = graph.nodes?.find((n) => n.id === nodeId);
-      return node?.metadata?.title;
+    return {
+      nodeResolver: (nodeId: string) => {
+        const node = graph.nodes?.find((n) => n.id === nodeId);
+        return node?.metadata?.title;
+      },
+      assetResolver: (assetPath: string) => {
+        const asset = graph.assets?.[assetPath];
+        return asset?.metadata?.title;
+      },
     };
   }
 
@@ -213,8 +222,12 @@ function defineGraphEditingFunctions(
     prompt: string,
     translator: EditingAgentPidginTranslator
   ) {
-    const resolver = await nodeTitleResolver();
-    const promptContent = translator.fromPidgin(prompt, resolver);
+    const { nodeResolver, assetResolver } = await titleResolvers();
+    const promptContent = translator.fromPidgin(
+      prompt,
+      nodeResolver,
+      assetResolver
+    );
     const ports = extractResultPorts(prompt, translator);
     return { promptContent, ports };
   }
@@ -353,6 +366,45 @@ function defineGraphEditingFunctions(
           return {
             success: false,
             error: `Failed to remove step "${step_id}"`,
+          };
+        }
+
+        return { success: true };
+      }
+    ),
+
+    // =========================================================================
+    // graph_remove_asset
+    // =========================================================================
+    defineFunction(
+      {
+        name: GRAPH_REMOVE_ASSET,
+        title: "Removing asset",
+        icon: "delete",
+        description: "Remove an asset from the graph by its path.",
+        parameters: {
+          path: z.string().describe("The path of the asset to remove (e.g. /assets/my_image.png)"),
+        },
+        response: {
+          success: z.boolean(),
+          error: z
+            .string()
+            .optional()
+            .describe(
+              "If an error has occurred, will contain a description of the error"
+            ),
+        },
+      },
+      async ({ path }) => {
+        const result = await applyEdits(
+          [{ type: "removeasset", path }],
+          `Remove asset: ${path}`
+        );
+
+        if (!result.success) {
+          return {
+            success: false,
+            error: `Failed to remove asset "${path}"`,
           };
         }
 
