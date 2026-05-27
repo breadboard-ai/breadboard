@@ -20,7 +20,7 @@
     "signal-polyfill": "^0.2.2"
   },
   "devDependencies": {
-    "typescript": "^5.8.3",
+    "typescript": "^6.0.3",
     "vite": "^7.3.2"
   }
 }
