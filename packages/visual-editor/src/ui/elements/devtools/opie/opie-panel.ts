@@ -4,6 +4,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { icons } from "../../../styles/icons.js";
 import { markdown } from "../../../directives/markdown.js";
 import { parseThought } from "../../../../a2/agent/thought-parser.js";
+import { keyed } from "lit/directives/keyed.js";
 import { renderCall } from "./registry.js";
 import type { SessionLogEntry } from "../../../../sca/types.js";
 import type { FunctionDeclaration } from "../../../../a2/a2/gemini.js";
@@ -208,7 +209,34 @@ export class DevToolsOpiePanel extends SignalWatcher(LitElement) {
         font: 500 var(--bb-label-small) / var(--bb-label-line-height-small)
           var(--bb-font-family-mono, monospace);
         border: 1px solid var(--light-dark-n-80);
+        transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
       }
+
+      @keyframes flash-chip {
+        0% {
+          background: var(--light-dark-p-90);
+          color: var(--light-dark-p-20);
+          box-shadow: 0 0 6px oklch(from var(--light-dark-p-40) l c h / 0.2);
+          border-color: var(--light-dark-p-40);
+        }
+        30% {
+          background: var(--light-dark-p-85);
+          color: var(--light-dark-p-15);
+          box-shadow: 0 0 10px oklch(from var(--light-dark-p-40) l c h / 0.3);
+          border-color: var(--light-dark-p-40);
+        }
+        100% {
+          background: var(--light-dark-n-90);
+          color: var(--light-dark-n-20);
+          box-shadow: 0 0 0 transparent;
+          border-color: var(--light-dark-n-80);
+        }
+      }
+
+      .function-tag.flash {
+        animation: flash-chip 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
 
       .call-log {
         display: flex;
@@ -318,12 +346,21 @@ export class DevToolsOpiePanel extends SignalWatcher(LitElement) {
           ${functions && functions.length > 0
             ? html`
                 <div class="function-wrap">
-                  ${functions.map(
-                    (fn) =>
-                      html`<span class="function-tag" title=${fn.description || ""}
-                        >${fn.name}</span
-                      >`
-                  )}
+                  ${functions.map((fn) => {
+                    const lastCallEntry = entries
+                      ? [...entries].reverse().find((e) => e.kind === "call")
+                      : null;
+                    const isLastCall = lastCallEntry && lastCallEntry.name === fn.name;
+                    const lastCallId = isLastCall
+                      ? lastCallEntry.callId || String(lastCallEntry.timestamp)
+                      : "none";
+                    const content = html`<span
+                      class="function-tag ${isLastCall ? "flash" : ""}"
+                      title=${fn.description || ""}
+                      >${fn.name}</span
+                    >`;
+                    return isLastCall ? keyed(lastCallId, content) : content;
+                  })}
                 </div>
               `
             : html`<div class="empty-state">No functions configured yet.</div>`}
