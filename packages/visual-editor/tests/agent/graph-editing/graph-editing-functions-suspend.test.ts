@@ -197,21 +197,13 @@ suite("Graph editing functions suspend/resume", () => {
       null
     );
 
-    // Should have at least 2 applyEdits: addnode + layoutGraph
-    assert.ok(
-      captured.length >= 2,
-      `Expected >= 2 applyEdits events, got ${captured.length}`
-    );
+    // Should have 1 applyEdits event for addnode
+    assert.strictEqual(captured.length, 1);
 
     // First should be addnode
     const addPayload = captured[0];
     assert.ok(addPayload.edits, "Should have raw edits for addnode");
     assert.strictEqual(addPayload.edits![0].type, "addnode");
-
-    // Last should be layoutGraph transform
-    const layoutPayload = captured[captured.length - 1];
-    assert.ok(layoutPayload.transform, "Last event should be a transform");
-    assert.strictEqual(layoutPayload.transform!.kind, "layoutGraph");
 
     assert.ok(result.step_id, "Should return a step_id handle");
   });
@@ -252,11 +244,8 @@ suite("Graph editing functions suspend/resume", () => {
       null
     );
 
-    // Should have at least 2 applyEdits: updateNode + layoutGraph
-    assert.ok(
-      captured.length >= 2,
-      `Expected >= 2 applyEdits events, got ${captured.length}`
-    );
+    // Should have 1 applyEdits event for updateNode
+    assert.strictEqual(captured.length, 1);
 
     // First should be updateNode transform
     const updatePayload = captured[0];
