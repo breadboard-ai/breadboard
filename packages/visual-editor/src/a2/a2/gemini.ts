@@ -35,11 +35,15 @@ export {
   MODEL_ALIAS_TEXT_LITE,
   MODEL_ALIAS_TEXT_FLASH,
   MODEL_ALIAS_TEXT_PRO,
+  MODEL_ALIAS_IMAGE_FLASH,
+  MODEL_ALIAS_IMAGE_PRO,
 };
 
 const MODEL_ALIAS_TEXT_LITE = "alias-text-lite";
 const MODEL_ALIAS_TEXT_FLASH = "alias-text-flash";
 const MODEL_ALIAS_TEXT_PRO = "alias-text-pro";
+const MODEL_ALIAS_IMAGE_FLASH = "alias-image-flash";
+const MODEL_ALIAS_IMAGE_PRO = "alias-image-pro";
 
 const defaultSafetySettings = (): SafetySetting[] => [
   {
