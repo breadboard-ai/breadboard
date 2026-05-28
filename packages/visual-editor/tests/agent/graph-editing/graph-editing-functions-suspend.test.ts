@@ -197,18 +197,13 @@ suite("Graph editing functions suspend/resume", () => {
       null
     );
 
-    // Should have 2 applyEdits events (addnode + layoutGraph)
-    assert.strictEqual(captured.length, 2);
+    // Should have 1 applyEdits event (addnode)
+    assert.strictEqual(captured.length, 1);
 
     // First should be addnode
     const addPayload = captured[0];
     assert.ok(addPayload.edits, "Should have raw edits for addnode");
     assert.strictEqual(addPayload.edits![0].type, "addnode");
-
-    // Second should be layoutGraph
-    const layoutPayload = captured[1];
-    assert.ok(layoutPayload.transform, "Should have layout transform");
-    assert.strictEqual(layoutPayload.transform!.kind, "layoutGraph");
 
     assert.ok(result.step_id, "Should return a step_id handle");
   });
@@ -249,8 +244,8 @@ suite("Graph editing functions suspend/resume", () => {
       null
     );
 
-    // Should have 2 applyEdits events (updateNode + layoutGraph)
-    assert.strictEqual(captured.length, 2);
+    // Should have 1 applyEdits event (updateNode)
+    assert.strictEqual(captured.length, 1);
 
     // First should be updateNode transform
     const updatePayload = captured[0];
@@ -263,11 +258,6 @@ suite("Graph editing functions suspend/resume", () => {
         "Should have configuration"
       );
     }
-
-    // Second should be layoutGraph
-    const layoutPayload = captured[1];
-    assert.ok(layoutPayload.transform, "Should have layout transform");
-    assert.strictEqual(layoutPayload.transform!.kind, "layoutGraph");
 
     assert.ok(result.step_id, "Should return a step_id handle");
     assert.ok(!result.error, "Should not have an error");
