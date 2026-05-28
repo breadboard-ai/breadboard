@@ -7,7 +7,7 @@
 import { createContext, Module, SourceTextModule } from "vm";
 
 export async function prepareToRunInVM<T>(code: string): Promise<T> {
-  const context = createContext({});
+  const context = createContext(Object.create(null));
   const module = new SourceTextModule(code, { context });
   const linker = async (specifier: string): Promise<Module> => {
     throw new Error(
