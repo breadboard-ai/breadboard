@@ -121,6 +121,7 @@ export const MAIN_APP_CSP = {
     "https://drive.google.com",
     "https://www.google.com",
     "https://www.youtube.com",
+    "https://www.youtube-nocookie.com",
     "https://feedback-pa.clients6.google.com",
     "https://accounts.google.com",
   ],
