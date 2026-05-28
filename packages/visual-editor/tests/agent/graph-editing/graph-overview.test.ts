@@ -278,5 +278,43 @@ describe("graphOverviewYaml", () => {
     ok(yaml.includes("type: Drawing"));
     ok(yaml.includes("type: Google Drive file"));
   });
+
+  it("shows x and y coordinates for steps and assets when available", () => {
+    const translator = new EditingAgentPidginTranslator();
+    const nodes: NodeDescriptor[] = [
+      {
+        id: "step-1",
+        type: GENERATE_COMPONENT_URL,
+        metadata: {
+          title: "My Positioned Step",
+          visual: { x: 100.2, y: 200.8 },
+        },
+      },
+    ];
+
+    const yaml = graphOverviewYaml(
+      {
+        title: "Test 2D Graph",
+        assets: {
+          "/assets/logo.png": {
+            metadata: {
+              title: "My Positioned Image",
+              type: "file",
+              visual: { x: 50.4, y: 75.9 },
+            },
+            data: [],
+          },
+        },
+      },
+      nodes,
+      [],
+      translator
+    );
+
+    ok(yaml.includes("x: 100"));
+    ok(yaml.includes("y: 201"));
+    ok(yaml.includes("x: 50"));
+    ok(yaml.includes("y: 76"));
+  });
 });
 

@@ -874,7 +874,9 @@ export class Renderer extends SignalWatcher(LitElement) {
     // Graph topology setup — runs when the graph version changes.
     const graph = this.#gc.editor?.inspect("") ?? null;
     const graphVersion = this.#gc.version;
+    let graphVersionChanged = false;
     if (graph && this.camera && graphVersion !== this.#lastGraphVersion) {
+      graphVersionChanged = true;
       this.#lastGraphVersion = graphVersion;
       const graphUrl = new URL(graph.raw().url ?? window.location.href);
 
@@ -966,7 +968,8 @@ export class Renderer extends SignalWatcher(LitElement) {
     if (
       (changedProperties.has("tick") ||
         changedProperties.has("_boundsDirty") ||
-        changedProperties.has("interactionMode")) &&
+        changedProperties.has("interactionMode") ||
+        graphVersionChanged) &&
       graph &&
       this.camera
     ) {

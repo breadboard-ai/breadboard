@@ -80,7 +80,6 @@ function graphOverviewYaml(
       lines.push(`  ${path}:`);
       lines.push(`    title: ${title}`);
       lines.push(`    type: ${type}`);
-
       const visual = (asset.metadata?.visual ?? {}) as Record<string, unknown>;
       if (typeof visual.x === "number" && typeof visual.y === "number") {
         lines.push(`    x: ${Math.round(visual.x)}`);
@@ -117,7 +116,6 @@ function graphOverviewYaml(
         lines.push(`    height: ${Math.round(dims.height)}`);
       }
     }
-
     const config = node.configuration as Record<string, unknown> | undefined;
 
     // Convert prompt back to pidgin for readability

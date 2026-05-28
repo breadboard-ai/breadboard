@@ -5,10 +5,13 @@
  */
 
 import type {
+  AssetMetadata,
+  AssetType,
   EditSpec,
   GraphDescriptor,
   NodeConfiguration,
   NodeDescriptor,
+  NodeMetadata,
   NodeValue,
 } from "@breadboard-ai/types";
 import z from "zod";
@@ -40,6 +43,7 @@ const GRAPH_REMOVE_ASSET = "graph_remove_asset";
 const GRAPH_UPSERT_AGENT_STEP = "upsert_agent_step";
 const GRAPH_UPSERT_LEGACY_STEP = "upsert_legacy_step";
 const GRAPH_EDIT_PROPERTIES = "graph_edit_properties";
+const GRAPH_POSITION_ITEMS = "graph_position_items";
 
 
 const VALID_LEGACY_STEP_TYPES = [
@@ -155,19 +159,6 @@ function defineGraphEditingFunctions(
               title: p.title,
             })) ?? null,
         },
-      },
-    });
-  }
-
-  /**
-   * Triggers a layout via the suspend mechanism.
-   */
-  async function applyLayout(): Promise<ApplyEditsResponse> {
-    return sink.suspend<ApplyEditsResponse>({
-      applyEdits: {
-        requestId: crypto.randomUUID(),
-        label: "Layout graph",
-        transform: { kind: "layoutGraph" },
       },
     });
   }
@@ -293,7 +284,6 @@ function defineGraphEditingFunctions(
     stepId: string,
     translator: EditingAgentPidginTranslator
   ) {
-    await applyLayout();
     const handle = translator.getOrCreateHandle(stepId);
     return { step_id: handle };
   }
@@ -457,6 +447,108 @@ function defineGraphEditingFunctions(
             success: false,
             error: result.error ?? "Failed to update graph properties",
           };
+        }
+
+        return { success: true };
+      }
+    ),
+
+    // =========================================================================
+    // graph_position_items
+    // =========================================================================
+    defineFunction(
+      {
+        name: GRAPH_POSITION_ITEMS,
+        title: "Positioning items on canvas",
+        icon: "place",
+        description:
+          "Positions steps or assets on the 2D canvas by providing their coordinates.",
+        parameters: {
+          items: z
+            .array(
+              z.object({
+                id: z
+                  .string()
+                  .describe("The step handle (e.g. node-1) or asset path"),
+                x: z.number().describe("The x coordinate on canvas"),
+                y: z.number().describe("The y coordinate on canvas"),
+              })
+            )
+            .describe("List of items with their new coordinates"),
+        },
+        response: {
+          success: z.boolean(),
+          error: z
+            .string()
+            .optional()
+            .describe(
+              "If an error has occurred, will contain a description of the error"
+            ),
+        },
+      },
+      async ({ items }) => {
+        const graph = await readGraph();
+        const edits: EditSpec[] = [];
+
+        for (const item of items) {
+          const resolvedId = translator.getNodeId(item.id) ?? item.id;
+          const node = graph.nodes?.find((n) => n.id === resolvedId);
+          if (node) {
+            const existingMetadata = (node.metadata ?? {}) as Record<
+              string,
+              unknown
+            >;
+            const existingVisual = (existingMetadata.visual ?? {}) as Record<
+              string,
+              unknown
+            >;
+            const metadata: NodeMetadata = {
+              ...existingMetadata,
+              visual: { ...existingVisual, x: item.x, y: item.y },
+            };
+            edits.push({
+              type: "changemetadata",
+              id: resolvedId,
+              graphId: "",
+              metadata,
+            });
+          } else if (graph.assets && graph.assets[item.id]) {
+            const asset = graph.assets[item.id];
+            const existingMetadata = (asset.metadata ?? {}) as Record<string, unknown>;
+            const existingVisual = (existingMetadata.visual ?? {}) as Record<
+              string,
+              unknown
+            >;
+            const metadata: AssetMetadata = {
+              title: (existingMetadata.title as string) ?? "",
+              type: (existingMetadata.type as AssetType) ?? "file",
+              ...existingMetadata,
+              visual: { ...existingVisual, x: item.x, y: item.y },
+            };
+            edits.push({
+              type: "changeassetmetadata",
+              path: item.id,
+              metadata,
+            });
+          } else {
+            return {
+              success: false,
+              error: `Item "${item.id}" not found in graph steps or assets`,
+            };
+          }
+        }
+
+        if (edits.length > 0) {
+          const result = await applyEdits(
+            edits,
+            `Position ${edits.length} items`
+          );
+          if (!result.success) {
+            return {
+              success: false,
+              error: result.error ?? "Failed to position items",
+            };
+          }
         }
 
         return { success: true };
