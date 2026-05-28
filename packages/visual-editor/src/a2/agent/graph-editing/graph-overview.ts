@@ -14,6 +14,7 @@ import type {
 } from "@breadboard-ai/types";
 
 import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
+import type { CanvasController } from "../../../sca/controller/subcontrollers/editor/canvas/canvas-controller.js";
 import {
   GENERATE_COMPONENT_URL,
   USER_INPUT_COMPONENT_URL,
@@ -38,7 +39,8 @@ function graphOverviewYaml(
   },
   nodes: NodeDescriptor[],
   edges: Edge[],
-  translator: EditingAgentPidginTranslator
+  translator: EditingAgentPidginTranslator,
+  canvas?: CanvasController
 ): string {
   // Register all nodes with the translator to get stable pidgin handles.
   const handleMap = new Map<string, string>();
@@ -62,6 +64,14 @@ function graphOverviewYaml(
     !!currentTheme?.splashScreen && !currentTheme?.isDefaultTheme;
   lines.push(`splashImage: ${isCustom ? "present" : "default"}`);
 
+  if (canvas && canvas.viewport && canvas.viewport.width > 0) {
+    lines.push("", "viewport:");
+    lines.push(`  left: ${Math.round(canvas.viewport.left)}`);
+    lines.push(`  top: ${Math.round(canvas.viewport.top)}`);
+    lines.push(`  width: ${Math.round(canvas.viewport.width)}`);
+    lines.push(`  height: ${Math.round(canvas.viewport.height)}`);
+  }
+
   if (graph.assets && Object.keys(graph.assets).length > 0) {
     lines.push("", "assets:");
     for (const [path, asset] of Object.entries(graph.assets)) {
@@ -70,11 +80,22 @@ function graphOverviewYaml(
       lines.push(`  ${path}:`);
       lines.push(`    title: ${title}`);
       lines.push(`    type: ${type}`);
+
+      const visual = (asset.metadata?.visual ?? {}) as Record<string, unknown>;
+      if (typeof visual.x === "number" && typeof visual.y === "number") {
+        lines.push(`    x: ${Math.round(visual.x)}`);
+        lines.push(`    y: ${Math.round(visual.y)}`);
+      }
+
+      if (canvas && typeof canvas.getAssetDimensions === "function") {
+        const dims = canvas.getAssetDimensions(path);
+        if (dims && dims.height > 0) {
+          lines.push(`    width: ${Math.round(dims.width)}`);
+          lines.push(`    height: ${Math.round(dims.height)}`);
+        }
+      }
     }
   }
-
-
-
 
   lines.push("", "steps:");
   for (const node of nodes) {
@@ -82,6 +103,20 @@ function graphOverviewYaml(
     const title = node.metadata?.title ?? "(untitled)";
     lines.push(`  ${handle}:`);
     lines.push(`    title: ${title}`);
+
+    const visual = (node.metadata?.visual ?? {}) as Record<string, unknown>;
+    if (typeof visual.x === "number" && typeof visual.y === "number") {
+      lines.push(`    x: ${Math.round(visual.x)}`);
+      lines.push(`    y: ${Math.round(visual.y)}`);
+    }
+
+    if (canvas && typeof canvas.getStepDimensions === "function") {
+      const dims = canvas.getStepDimensions(node.id);
+      if (dims && dims.height > 0) {
+        lines.push(`    width: ${Math.round(dims.width)}`);
+        lines.push(`    height: ${Math.round(dims.height)}`);
+      }
+    }
 
     const config = node.configuration as Record<string, unknown> | undefined;
 

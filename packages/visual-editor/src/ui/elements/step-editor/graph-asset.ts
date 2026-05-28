@@ -281,6 +281,15 @@ export class GraphAsset
       this.#containerRef.value.offsetHeight
     );
 
+    try {
+      this.sca?.controller?.editor?.canvas?.setAssetDimensions(this.assetPath, {
+        width: this.#containerRef.value.offsetWidth,
+        height: this.#containerRef.value.offsetHeight,
+      });
+    } catch {
+      // Gracefully handle fallback
+    }
+
     this.dispatchEvent(new NodeBoundsUpdateRequestEvent());
   });
 
