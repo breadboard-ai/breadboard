@@ -16,6 +16,8 @@ import {
   MODEL_ALIAS_TEXT_LITE,
   MODEL_ALIAS_TEXT_FLASH,
   MODEL_ALIAS_TEXT_PRO,
+  MODEL_ALIAS_IMAGE_FLASH,
+  MODEL_ALIAS_IMAGE_PRO,
 } from "../../a2/gemini.js";
 import { type ExecuteStepArgs } from "../../a2/step-executor.js";
 import { A2ModuleArgs } from "../../runnable-module-factory.js";
@@ -53,12 +55,9 @@ export { getGenerateFunctionGroup, GENERATE_TEXT_FUNCTION };
 
 const GENERATE_TEXT_FUNCTION = "generate_text";
 
-const VIDEO_MODEL_NAME = "veo-3.1-generate-preview";
 
 const CODE_GENERATION_MODEL_NAME = MODEL_ALIAS_TEXT_FLASH;
 
-const IMAGE_FLASH_MODEL_NAME = "gemini-2.5-flash-image";
-const IMAGE_PRO_MODEL_NAME = "gemini-3-pro-image-preview";
 
 export type ModelConstraint =
   | "none"
@@ -111,7 +110,7 @@ function getGenerateFunctionGroup(args: GenerateFunctionArgs): FunctionGroup {
       if (!ok(imageParts)) return { error: imageParts.$error };
 
       const modelName =
-        model == "pro" ? IMAGE_PRO_MODEL_NAME : IMAGE_FLASH_MODEL_NAME;
+        model == "pro" ? MODEL_ALIAS_IMAGE_PRO : MODEL_ALIAS_IMAGE_FLASH;
 
       // Use provided reporter if available, otherwise create one
       const effectiveReporter =
@@ -277,11 +276,10 @@ function getGenerateFunctionGroup(args: GenerateFunctionArgs): FunctionGroup {
         prompt,
         imageParts.map((part) => ({ parts: [part] })),
         false,
-        aspect_ratio ?? "16:9",
-        VIDEO_MODEL_NAME
+        aspect_ratio ?? "16:9"
       );
       if (!ok(generating))
-        return toErrorOrResponse(expandVeoError(generating, VIDEO_MODEL_NAME));
+        return toErrorOrResponse(expandVeoError(generating));
       const dataPart = generating.parts.at(0);
       if (!dataPart || !("storedData" in dataPart)) {
         return { error: `No video was generated` };

@@ -38,48 +38,14 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { driveFileToBlob, toGcsAwareChunk } from "../a2/data-transforms.js";
 import { createReporter } from "../agent/progress-work-item.js";
 
-type Model = {
-  id: string;
-  title: string;
-  description: string;
-  modelName: string;
-};
-
 const ASPECT_RATIOS = ["16:9", "9:16"];
 const OUTPUT_NAME = "generated_video";
-const MODELS: Model[] = [
-  {
-    id: "veo-3",
-    title: "Veo 3",
-    description: "State of the art video generation with audio",
-    modelName: "veo-3.0-generate-preview",
-  },
-  {
-    id: "veo-3.1",
-    title: "Veo 3.1",
-    description: "Latest state of the art video generation with audio",
-    modelName: "veo-3.1-generate-preview",
-  },
-  {
-    id: "veo-2",
-    title: "Veo 2",
-    description: "Faster video generation, no audio",
-    modelName: "veo-2.0-generate-001",
-  },
-];
-
-const modelMap = new Map(MODELS.map((model) => [model.id, model]));
-
-function getModel(modelId: string | undefined): Model {
-  return modelMap.get(modelId || "veo-3") || MODELS[0];
-}
 
 type VideoGeneratorInputs = {
   context: LLMContent[];
   instruction?: LLMContent;
   "p-disable-prompt-rewrite": boolean;
   "p-aspect-ratio": string;
-  "b-model-name": string;
 };
 
 type VideoGeneratorOutputs = {
@@ -107,8 +73,7 @@ async function callVideoGen(
   prompt: string,
   imageContent: LLMContent[],
   disablePromptRewrite: boolean,
-  aspectRatio: string,
-  modelName: string
+  aspectRatio: string
 ): Promise<Outcome<LLMContent>> {
   const executionInputs: ContentMap = {};
   executionInputs["text_instruction"] = {
@@ -168,7 +133,6 @@ async function callVideoGen(
       output: OUTPUT_NAME,
       options: {
         disablePromptRewrite,
-        modelName,
       },
     },
     execution_inputs: executionInputs,
@@ -189,12 +153,10 @@ async function invoke(
     instruction,
     "p-disable-prompt-rewrite": disablePromptRewrite,
     "p-aspect-ratio": aspectRatio,
-    "b-model-name": modelId,
     ...params
   }: VideoGeneratorInputs,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<VideoGeneratorOutputs>> {
-  const { modelName } = getModel(modelId);
   context ??= [];
   let instructionText = "";
   if (instruction) {
@@ -250,7 +212,7 @@ async function invoke(
     });
   }
 
-  console.log(`PROMPT(${modelName}): ${combinedInstruction}`);
+  console.log(`PROMPT: ${combinedInstruction}`);
 
   // 2) Call backend to generate video.
   const reporter = createReporter(moduleArgs, {
@@ -263,10 +225,9 @@ async function invoke(
     combinedInstruction,
     imageContext,
     disablePromptRewrite,
-    aspectRatio,
-    modelName
+    aspectRatio
   );
-  if (!ok(content)) return expandVeoError(content, modelName);
+  if (!ok(content)) return expandVeoError(content);
   return { context: [content] };
 }
 
@@ -316,8 +277,7 @@ const SUPPORT_CODES = new Map<number, ErrorReason>([
 ]);
 
 function expandVeoError(
-  e: ErrorWithMetadata,
-  model: string
+  e: ErrorWithMetadata
 ): ErrorWithMetadata {
   const match = e.$error.match(/Support codes: (\d+(?:, \d+)*)/);
   const reasons = new Set<ErrorReason>();
@@ -336,7 +296,7 @@ function expandVeoError(
         origin: "server",
         kind: "safety",
         reasons: Array.from(reasons.values()),
-        model,
+        model: "veo",
       },
     };
   }
@@ -378,13 +338,6 @@ async function describe({ inputs: { instruction } }: DescribeInputs) {
           enum: ASPECT_RATIOS,
           description: "The aspect ratio of the generated video",
           default: ASPECT_RATIOS[0],
-        },
-        "b-model-name": {
-          type: "string",
-          enum: MODELS,
-          behavior: ["llm-content", "config", "hint-advanced"],
-          title: "Model Version",
-          description: "The Veo version to use",
         },
         ...template.schemas(),
       },

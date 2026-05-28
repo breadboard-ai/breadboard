@@ -43,6 +43,7 @@ import {
   MODEL_ALIAS_TEXT_LITE,
   MODEL_ALIAS_TEXT_FLASH,
   MODEL_ALIAS_TEXT_PRO,
+  MODEL_ALIAS_IMAGE_PRO,
 } from "../a2/gemini.js";
 
 export { invoke as default, describe };
@@ -282,7 +283,7 @@ const ALL_MODES: Mode[] = [
     title: "Nano Banana Pro",
     description: "For complex visuals with text",
     icon: "photo_spark",
-    modelName: "gemini-3-pro-image-preview",
+    modelName: MODEL_ALIAS_IMAGE_PRO,
     promptPlaceholderText:
       "Type your image prompt here. Use @ to include other content.",
     info: `Image ${LIMIT_MSG}`,

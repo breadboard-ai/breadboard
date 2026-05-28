@@ -21,9 +21,11 @@ import type { AppController } from "../../controller/controller.js";
 import type { AppServices } from "../../services/services.js";
 import { Utils } from "../../utils.js";
 
+import { MODEL_ALIAS_IMAGE_FLASH } from "../../../a2/a2/gemini.js";
+
 export { generateImage, persistTheme };
 
-const IMAGE_GENERATOR = "gemini-2.5-flash-image";
+const IMAGE_GENERATOR = MODEL_ALIAS_IMAGE_FLASH;
 
 function endpointURL(model: string) {
   return `${geminiApiPrefix()}/${encodeURIComponent(model)}:generateContent`;
