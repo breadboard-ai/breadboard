@@ -137,6 +137,7 @@ packages/visual-editor/build
 *.local.json
 *.local.md
 *.local.txt
+*.local.csv
 
 .wireit
 *.vsix
