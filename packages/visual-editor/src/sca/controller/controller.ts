@@ -88,6 +88,10 @@ class Controller implements AppController {
         "Editor_DevTools",
         "DevToolsController"
       ),
+      canvas: new Editor.Canvas.CanvasController(
+        "Editor_Canvas",
+        "CanvasController"
+      ),
     };
 
     this.home = {
@@ -255,6 +259,7 @@ export interface AppController extends DebuggableAppController {
     graphEditingAgent: Editor.GraphEditingAgent.GraphEditingAgentController;
     notebookLmPicker: Editor.NotebookLmPicker.NotebookLmPickerController;
     devtools: Editor.DevTools.DevToolsController;
+    canvas: Editor.Canvas.CanvasController;
   };
   home: {
     recent: Home.RecentBoardsController;

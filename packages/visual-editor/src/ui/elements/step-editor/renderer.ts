@@ -974,6 +974,26 @@ export class Renderer extends SignalWatcher(LitElement) {
       for (const graph of this.#graphs.values()) {
         graph.updateEntity(inverseCameraMatrix);
 
+        if (graph.graphId === MAIN_BOARD_ID) {
+          try {
+            const inverseMatrix = graph.worldTransform.inverse();
+            const ptTopLeft = new DOMPoint(0, 0).matrixTransform(inverseMatrix);
+            const ptBottomRight = new DOMPoint(
+              this.#boundsForInteraction.width,
+              this.#boundsForInteraction.height
+            ).matrixTransform(inverseMatrix);
+
+            this.sca.controller.editor.canvas.setViewport({
+              left: ptTopLeft.x,
+              top: ptTopLeft.y,
+              width: ptBottomRight.x - ptTopLeft.x,
+              height: ptBottomRight.y - ptTopLeft.y,
+            });
+          } catch {
+            // Gracefully handle if worldTransform inverse fails (e.g. scale is 0)
+          }
+        }
+
         if (this.interactionMode === "selection") {
           // Drag-select.
           if (this.#dragRect) {

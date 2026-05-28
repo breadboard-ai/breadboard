@@ -607,6 +607,15 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       this.#containerRef.value.offsetWidth,
       this.#containerRef.value.offsetHeight
     );
+
+    try {
+      this.sca?.controller?.editor?.canvas?.setStepDimensions(this.nodeId, {
+        width: this.#containerRef.value.offsetWidth,
+        height: this.#containerRef.value.offsetHeight,
+      });
+    } catch {
+      // Gracefully handle if sca is not hydrated or available
+    }
   }
 
   #watchingResize = false;

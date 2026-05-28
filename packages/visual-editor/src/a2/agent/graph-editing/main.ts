@@ -43,22 +43,32 @@ async function invokeGraphEditingAgent(
     },
   });
 
-  const overview = graphOverviewYaml(
-    graph,
-    graph.nodes ?? [],
-    graph.edges ?? [],
-    translator
-  );
-
+  let overview = "";
   let selectionInfo = "";
   try {
     const { controller } = bind;
+    const canvas = controller?.editor?.canvas;
+    
+    overview = graphOverviewYaml(
+      graph,
+      graph.nodes ?? [],
+      graph.edges ?? [],
+      translator,
+      canvas
+    );
+
     const selectedNodes = controller?.editor?.selection?.selection?.nodes;
     if (selectedNodes && graph.nodes) {
       selectionInfo = describeSelection(selectedNodes, graph.nodes, translator);
     }
   } catch {
-    // Gracefully fallback if bind hasn’t set the controller yet (e.g. in standalone environments or tests).
+    // Gracefully fallback if bind hasn’t set the controller yet
+    overview = graphOverviewYaml(
+      graph,
+      graph.nodes ?? [],
+      graph.edges ?? [],
+      translator
+    );
   }
 
   objective = {
