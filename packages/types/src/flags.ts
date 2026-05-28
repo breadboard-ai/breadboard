@@ -198,9 +198,9 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     visibility: "public",
   },
   enableGraphEditorAgent: {
-    title: "Graph Editor Agent",
-    description: "Enable conversational graph building",
-    visibility: "experimental",
+    title: "Opie",
+    description: "Enable conversational graph-editing agent",
+    visibility: "public",
   },
   enableDevTools: {
     title: "Enable Development Tools",
