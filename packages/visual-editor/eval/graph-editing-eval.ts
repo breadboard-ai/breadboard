@@ -33,6 +33,9 @@ import { AgentService } from "../src/a2/agent/agent-service.js";
 import { invokeGraphEditingAgent } from "../src/a2/agent/graph-editing/main.js";
 import { AgentEventConsumer, LocalAgentEventBridge } from "../src/a2/agent/agent-event-consumer.js";
 import { ok } from "@breadboard-ai/utils";
+import { generateContent, GeminiBody, GeminiSchema } from "../src/a2/a2/gemini.js";
+import { toLLMContent } from "../src/a2/a2/utils.js";
+import { A2_TOOLS } from "../src/a2/a2-registry.js";
 import { LLMContent, NodeConfiguration, EditSpec, GraphDescriptor } from "@breadboard-ai/types";
 import { TransformDescriptor } from "../src/a2/agent/agent-event.js";
 
@@ -72,7 +75,14 @@ export type EvalHarnessArgs = {
   batch?: {
     path: string;
     concurrency?: number;
+    evaluateWithGemini?: boolean;
+    outputCsvPath?: string;
   };
+};
+
+type BatchCSVEntry = {
+  intent: string;
+  breadboard_json: string;
 };
 
 export type EvalLogger = {
@@ -98,6 +108,17 @@ class GraphEditingEvalHarness {
     if (!accessToken) {
       throw new Error("Unable to obtain access token");
     }
+
+    const batchRowMap = new Map<string, BatchCSVEntry>();
+    let capabilitiesMdContent = "";
+    const batchCSVRows: {
+      translated_intent: string;
+      breadboard_json: string;
+      opie_output: string;
+      score: string;
+      explanation: string;
+      original_intent: string;
+    }[] = [];
 
     // @ts-expect-error "Can't define window?"
     globalThis.window = {
@@ -134,6 +155,175 @@ class GraphEditingEvalHarness {
         } else {
           throw err;
         }
+      }
+
+      let score = "SKIPPED";
+      let explanation = "";
+      let translatedIntent = "";
+      const isCSVBatch = this.args.batch?.path.endsWith(".csv");
+      const csvEntry = batchRowMap.get(evalName);
+
+      if (isCSVBatch && csvEntry) {
+        try {
+          console.log(`[Eval] Evaluating "${evalName}" with gemini-3.5-flash...`);
+          const evalResponseSchema: GeminiSchema = {
+            type: "object",
+            properties: {
+              translated_intent: {
+                type: "string",
+                description: "The original User Intent translated accurately into English.",
+              },
+              overall_judgement: {
+                type: "string",
+                enum: ["PASS", "PARTIAL", "FAIL"],
+              },
+              overall_rationale: {
+                type: "string",
+              },
+              dimensions: {
+                type: "object",
+                properties: {
+                  intent_fulfillment: {
+                    type: "object",
+                    properties: {
+                      score: { 
+                        type: "integer", 
+                        description: "Score from 1 (Poor) to 5 (Excellent). Does the generated graph conceptually and functionally satisfy the User's original objective and instructions?" 
+                      },
+                      rationale: { type: "string" },
+                    },
+                    required: ["score", "rationale"],
+                  },
+                  architectural_elegance: {
+                    type: "object",
+                    properties: {
+                      score: { 
+                        type: "integer", 
+                        description: "Score from 1 (Poor) to 5 (Excellent). Evaluates integrity of data flows, resilience of connections, and whether Opie gracefully leveraged modern Agentic Steps to surpass outdated reference pipelines (without leaving disconnected edges)." 
+                      },
+                      rationale: { type: "string" },
+                    },
+                    required: ["score", "rationale"],
+                  },
+                  capability_utilization: {
+                    type: "object",
+                    properties: {
+                      score: { 
+                        type: "integer", 
+                        description: "Score from 1 (Poor) to 5 (Excellent). Checks whether Opie correctly selected and configured the optimal Opal tools (Python sandboxing, Veo 3 video with native audio, multi-turn chat, memory, etc.) for the specific task at hand." 
+                      },
+                      rationale: { type: "string" },
+                    },
+                    required: ["score", "rationale"],
+                  },
+                  output_and_polish: {
+                    type: "object",
+                    properties: {
+                      score: { 
+                        type: "integer", 
+                        description: "Score from 1 (Poor) to 5 (Excellent). If rendering or interactive output is requested, assesses whether the design requirements, aesthetic keywords, and UI structural paradigms were gracefully set up for premium display." 
+                      },
+                      rationale: { type: "string" },
+                    },
+                    required: ["score", "rationale"],
+                  },
+                },
+                required: ["intent_fulfillment", "architectural_elegance", "capability_utilization", "output_and_polish"],
+              },
+              detailed_comparison: {
+                type: "string",
+              },
+            },
+            required: ["translated_intent", "overall_judgement", "overall_rationale", "dimensions"],
+          };
+
+          const body: GeminiBody = {
+            contents: [
+              toLLMContent(JSON.stringify({
+                intent: csvEntry.intent,
+                expected_graph: JSON.parse(csvEntry.breadboard_json),
+                generated_graph: run.graph,
+              })),
+            ],
+            systemInstruction: toLLMContent(
+              `You are an expert system evaluator for an AI graph editing agent named Opie in the Opal application.
+Your objective is to evaluate Opie's generated graph compared to a reference graph ('breadboard_json'), keeping in mind the original User Intent.
+
+### CRITICAL ARCHITECTURE GUIDANCE: The Resilient Agentic Step
+In Opal, an "Agentic Step" is a single, highly powerful, and resilient component that can orchestrate multiple capabilities (Text, Image, Veo 3 Video with native audio, Python Code Execution, Chat with User, Google Drive Memory, Routing, and Multi-modality rendering) IN ONE STEP.
+- A single, well-configured Agentic Step that collapses a multi-node pipeline from the reference graph into a unified solution is a legitimate and often superior approach. Grade collapsing pipelines into simple Agentic steps as a PASS or EXCELLENT (provided it meets the functional needs of the Intent).
+- The reference graph ('breadboard_json') is a reference implementation, not a strict gold standard. Do NOT penalize Opie for streamlining it, improving upon it, or safely omitting unrequested steps.
+
+### Opal Step Capabilities
+${capabilitiesMdContent}
+
+### Evaluation Rules: What constitutes a TRUE FAIL vs PASS
+- **PASS**: Opie surpasses or meets the intent using agentic steps, or builds a workflow fulfilling the user's explicit instructions and functional requirements.
+- **FAIL - Disconnected/Broken Architecture**: Opie generates graphs with missing edges between data flows, or isolated input nodes.
+- **FAIL - Missed Modality / Functional Requirements**: Opie missed an explicitly requested output modality (interactive UI, PDF, game, etc.).
+- **FAIL - Hypothetical Tool Hallucination**: Opie invokes nonexistent components instead of real available Opal capabilities.
+
+### Rhetoric Constraint
+Adopt a strictly objective, matter-of-fact, and neutral tone. Avoid hyperbolic, promotional, or overly dramatic rhetoric (e.g., do NOT use phrases like 'brittle', 'elegant', 'highly resilient', or 'architecturally superior'). Simply state the functional facts of what Opie generated in relation to the intent and the reference graph.
+
+Rate each dimension on a 1 (Very Poor) to 5 (Excellent) Likert scale. Accurately translate the User's original Intent into English and provide it in the "translated_intent" field.`,
+              "user"
+            ),
+            generationConfig: {
+              responseMimeType: "application/json",
+              responseSchema: evalResponseSchema,
+            },
+          };
+
+          const evalOutcome = await withRetry(async () => {
+            const res = await generateContent("gemini-3.5-flash", body, {
+              fetchWithCreds: run.fetchWithCreds,
+              context: { signal: undefined },
+            } as unknown as A2ModuleArgs);
+            return res;
+          });
+
+          if (ok(evalOutcome) && typeof evalOutcome === "object" && !("$error" in evalOutcome)) {
+            const candidates = (evalOutcome as { candidates?: { content?: { parts?: { text?: string }[] } }[] }).candidates;
+            const firstPart = candidates?.[0]?.content?.parts?.[0];
+            let parsed: { translated_intent?: string; overall_judgement?: string; overall_rationale?: string } | null = null;
+            if (typeof evalOutcome === "string") {
+              try {
+                parsed = JSON.parse(evalOutcome);
+              } catch {
+                // Ignore parse error.
+              }
+            } else if (firstPart && typeof firstPart === "object" && "text" in firstPart && typeof firstPart.text === "string") {
+              try {
+                parsed = JSON.parse(firstPart.text);
+              } catch {
+                // Ignore parse error.
+              }
+            }
+            
+            translatedIntent = parsed?.translated_intent || csvEntry.intent;
+            score = parsed?.overall_judgement || "Parsed Result Missing Score";
+            explanation = parsed?.overall_rationale || "";
+          } else {
+            const errPayload = evalOutcome as { $error?: string };
+            console.error("[Eval] Gemini evaluation API failed:", errPayload?.$error || "Unknown Error");
+            score = "EVAL API ERROR";
+            explanation = errPayload?.$error || "Unknown Error";
+          }
+        } catch (e) {
+          console.error("[Eval] Exception during Gemini evaluation:", (e as Error).message);
+          score = "EVAL EXCEPTION";
+          explanation = (e as Error).message;
+        }
+
+        batchCSVRows.push({
+          translated_intent: translatedIntent,
+          breadboard_json: csvEntry.breadboard_json,
+          opie_output: JSON.stringify(run.graph, null, 2),
+          score: score,
+          explanation: explanation,
+          original_intent: csvEntry.intent,
+        });
       }
 
       const har = run.requestLogger.getHar();
@@ -249,6 +439,18 @@ class GraphEditingEvalHarness {
 
     if (this.args.batch) {
       try {
+        const capabilitiesPath = join(ROOT_DIR, "src", "a2", "agent", "graph-editing", "instructions", "04-capabilities.md");
+        try {
+          const rawCapabilities = await readFile(capabilitiesPath, "utf-8");
+          const TOOL_NAMES = A2_TOOLS.map(
+            ([, tool]) =>
+              `- ${(tool.title ?? "").toLowerCase().replace(/\s+/g, "-")} — ${tool.description}`
+          ).join("\n");
+          capabilitiesMdContent = rawCapabilities.replaceAll("{{TOOL_NAMES}}", TOOL_NAMES);
+        } catch {
+          console.warn(`[Batch] Could not locate capabilities.md at ${capabilitiesPath}`);
+        }
+        
         let filePath = join(ROOT_DIR, this.args.batch.path);
         try {
           await stat(filePath);
@@ -262,17 +464,78 @@ class GraphEditingEvalHarness {
         }
         console.log(`[Batch] Reading intents from "${filePath}"...`);
         const content = await readFile(filePath, "utf-8");
-        const lines = content
-          .split("\n")
-          .map((line) => line.trim())
-          .filter((line) => line.length > 0 && !line.startsWith("#"));
 
-        console.log(`[Batch] Found ${lines.length} intents.`);
-        for (let i = 0; i < lines.length; i++) {
-          const intent = lines[i];
-          evalTargets.eval.set(`batch-intent-${String(i + 1).padStart(2, "0")}`, async ({ invokeAgent }) => {
-            return await invokeAgent(intent);
-          });
+        const entries: [string, string][] = [];
+        const isCSVBatch = filePath.endsWith(".csv");
+
+        if (isCSVBatch) {
+          let inQuotes = false;
+          let currentField = "";
+          let currentRow: string[] = [];
+
+          for (let i = 0; i < content.length; i++) {
+            const char = content[i];
+            const nextChar = content[i + 1];
+
+            if (char === '"') {
+              if (inQuotes && nextChar === '"') {
+                currentField += '"';
+                i++;
+              } else {
+                inQuotes = !inQuotes;
+              }
+            } else if (char === ',' && !inQuotes) {
+              currentRow.push(currentField.trim());
+              currentField = "";
+            } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
+              if (char === '\r') i++;
+              currentField = currentField.trim();
+              if (currentField || currentRow.length > 0) {
+                currentRow.push(currentField);
+                if (currentRow.length === 2) {
+                  if (currentRow[0] !== "intent" || currentRow[1] !== "breadboard_json") {
+                    entries.push([currentRow[0], currentRow[1]]);
+                  }
+                }
+              }
+              currentRow = [];
+              currentField = "";
+            } else {
+              currentField += char;
+            }
+          }
+
+          if (currentField || currentRow.length > 0) {
+            currentRow.push(currentField.trim());
+            if (currentRow.length === 2) {
+              if (currentRow[0] !== "intent" || currentRow[1] !== "breadboard_json") {
+                entries.push([currentRow[0], currentRow[1]]);
+              }
+            }
+          }
+
+          console.log(`[Batch] Parsed ${entries.length} CSV rows.`);
+          for (let i = 0; i < entries.length; i++) {
+            const [intent, breadboard_json] = entries[i];
+            const evalName = `batch-intent-${String(i + 1).padStart(2, "0")}`;
+            batchRowMap.set(evalName, { intent, breadboard_json });
+            evalTargets.eval.set(evalName, async ({ invokeAgent }) => {
+              return await invokeAgent(intent);
+            });
+          }
+        } else {
+          const lines = content
+            .split("\n")
+            .map((line) => line.trim())
+            .filter((line) => line.length > 0 && !line.startsWith("#"));
+
+          console.log(`[Batch] Found ${lines.length} intents.`);
+          for (let i = 0; i < lines.length; i++) {
+            const intent = lines[i];
+            evalTargets.eval.set(`batch-intent-${String(i + 1).padStart(2, "0")}`, async ({ invokeAgent }) => {
+              return await invokeAgent(intent);
+            });
+          }
         }
       } catch (err) {
         console.error("[Batch] Failed to load batch intents file:", (err as Error).message);
@@ -299,10 +562,81 @@ class GraphEditingEvalHarness {
       await Promise.all(chunk.map(([name, fn]) => runEvalFn(name, fn)));
     }
 
+    if (batchCSVRows.length > 0) {
+      const outputCsvPath = this.args.batch?.outputCsvPath || 
+                           join(OUT_DIR, `batch-results-${timestamp()}.csv`);
+      await ensureDir(dirname(outputCsvPath));
+      console.log(`[Batch] Writing ${batchCSVRows.length} results to "${outputCsvPath}"...`);
+
+      const toCSVCell = (str: string): string => {
+        if (str === undefined || str === null) return '""';
+        const escaped = String(str).replace(/"/g, '""');
+        return `"${escaped}"`;
+      };
+
+      let csvContent = "translated_intent,breadboard_json,opie_output,score,explanation,original_intent\n";
+      for (const row of batchCSVRows) {
+        csvContent += `${toCSVCell(row.translated_intent)},${toCSVCell(row.breadboard_json)},${toCSVCell(row.opie_output)},${toCSVCell(row.score)},${toCSVCell(row.explanation)},${toCSVCell(row.original_intent)}\n`;
+      }
+
+      await writeFile(outputCsvPath, csvContent, "utf-8");
+      console.log(`[Batch] Completed writing CSV!`);
+    }
+
     mock.restoreAll();
     autoClearingInterval.clearAllIntervals();
     process.exit(0);
   }
+}
+
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries = 5,
+  initialDelayMs = 4000
+): Promise<T> {
+  let delay = initialDelayMs;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await fn();
+      if (result && typeof result === "object" && "$error" in result) {
+        const errPayload = result as { $error?: string; error?: string };
+        const errMsg = errPayload.$error || errPayload.error || "";
+        if (
+          errMsg.includes("high demand") || 
+          errMsg.includes("429") || 
+          errMsg.includes("resource_exhausted") ||
+          errMsg.includes("Spikes in demand")
+        ) {
+          if (attempt === maxRetries) {
+             throw new Error(errMsg);
+          }
+          console.log(`[Retry] Model experiencing high demand. Retrying in ${delay / 1000}s (attempt ${attempt}/${maxRetries})...`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay *= 2;
+          continue;
+        }
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = (err as Error).message || "";
+      if (
+        msg.includes("high demand") || 
+        msg.includes("429") || 
+        msg.includes("resource_exhausted") ||
+        msg.includes("Spikes in demand")
+      ) {
+        if (attempt === maxRetries) {
+           throw err;
+        }
+        console.log(`[Retry] Hit demand limits. Retrying in ${delay / 1000}s (attempt ${attempt}/${maxRetries})...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        delay *= 2;
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error("Retry exhausted");
 }
 
 async function ensureDir(dir: string) {
@@ -513,7 +847,11 @@ class GraphEditingEvalRun implements EvalLogger {
       } satisfies OpalShellHostProtocol,
     };
 
-    const outcome = await invokeGraphEditingAgent(objective, moduleArgs, sink);
+    const outcome = await withRetry(async () => {
+      const res = await invokeGraphEditingAgent(objective, moduleArgs, sink);
+      return res;
+    });
+
     if (!ok(outcome)) {
       const errPayload = outcome as unknown as { $error?: string; error?: string };
       if (errPayload.$error === "EVAL_DONE" || errPayload.error === "EVAL_DONE") {

@@ -8,9 +8,10 @@ import { graphEditingSession } from "../../graph-editing-eval.js";
 
 graphEditingSession({
   name: "Batch Graph Editing",
-  uploadToDrive: true,
+  uploadToDrive: false,
   batch: {
-    path: "intents.local.txt",
-    concurrency: 1,
+    path: "intents.local.csv",
+    concurrency: 5,
+    evaluateWithGemini: true,
   },
 });
