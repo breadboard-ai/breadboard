@@ -58,9 +58,22 @@ function loadGoogleFeedbackApi(): Promise<UserFeedbackApi> {
 // eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type FeedbackStatus = "closed" | "loading" | "open";
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
+export type FeedbackLogEntry = {
+  timestamp: number;
+  bucketOverride?: string;
+  productData?: Record<string, string>;
+  flow?: "submit";
+  status: "pending" | "loaded" | "error" | "closed";
+  errorMessage?: string;
+};
+
 export class FeedbackController extends RootController {
   @field()
   accessor status: FeedbackStatus = "closed";
+
+  @field({ deep: false })
+  accessor entries: FeedbackLogEntry[] = [];
 
   readonly #env: Readonly<AppEnvironment>;
 
@@ -71,6 +84,37 @@ export class FeedbackController extends RootController {
   ) {
     super(controllerId, persistenceId);
     this.#env = env;
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("securitypolicyviolation", (event) => {
+        const url = event.blockedURI || "";
+        if (
+          url.includes("google.com/tools/feedback") ||
+          url.includes("support.google.com") ||
+          url.includes("feedback")
+        ) {
+          const lastEntry = this.entries[this.entries.length - 1];
+          if (
+            lastEntry &&
+            (lastEntry.status === "pending" ||
+              lastEntry.status === "loaded" ||
+              lastEntry.status === "closed") // Catch it even if closed callback raced
+          ) {
+            const newEntries = [...this.entries];
+            const idx = newEntries.length - 1;
+            const existingMsg = newEntries[idx].errorMessage
+              ? `${newEntries[idx].errorMessage}\n\n`
+              : "";
+            newEntries[idx] = {
+              ...newEntries[idx],
+              status: "error",
+              errorMessage: `${existingMsg}CSP Violation: Loading '${url}' violates directive '${event.violatedDirective}'.`,
+            };
+            this.entries = newEntries;
+          }
+        }
+      });
+    }
   }
 
   async open(
@@ -85,11 +129,39 @@ export class FeedbackController extends RootController {
       return;
     }
 
+    const entryIndex = this.entries.length;
+    this.entries = [
+      ...this.entries,
+      {
+        timestamp: Date.now(),
+        bucketOverride,
+        productData,
+        flow,
+        status: "pending",
+      },
+    ];
+
+    const updateEntryStatus = (
+      status: FeedbackLogEntry["status"],
+      errorMessage?: string
+    ) => {
+      const newEntries = [...this.entries];
+      if (newEntries[entryIndex]) {
+        newEntries[entryIndex] = {
+          ...newEntries[entryIndex],
+          status,
+          ...(errorMessage ? { errorMessage } : {}),
+        };
+        this.entries = newEntries;
+      }
+    };
+
     if (!this.#env) {
       logger.log(
         Utils.Logging.Formatter.error("No environment was provided."),
         LABEL
       );
+      updateEntryStatus("error", "No environment was provided.");
       return;
     }
     const productId = this.#env.deploymentConfig.GOOGLE_FEEDBACK_PRODUCT_ID;
@@ -100,6 +172,7 @@ export class FeedbackController extends RootController {
         ),
         LABEL
       );
+      updateEntryStatus("error", "No GOOGLE_FEEDBACK_PRODUCT_ID was set in the client deployment configuration.");
       return;
     }
     const bucket = bucketOverride ?? this.#env.deploymentConfig.GOOGLE_FEEDBACK_BUCKET;
@@ -110,6 +183,7 @@ export class FeedbackController extends RootController {
         ),
         LABEL
       );
+      updateEntryStatus("error", "No GOOGLE_FEEDBACK_BUCKET was set in the client deployment configuration.");
       return;
     }
     const { packageJsonVersion: version, gitCommitHash } = this.#env.buildInfo;
@@ -126,6 +200,7 @@ export class FeedbackController extends RootController {
       api = await loadGoogleFeedbackApi();
     } catch (e) {
       /* c8 ignore next 4 */
+      const msg = e instanceof Error ? e.message : String(e);
       logger.log(
         Utils.Logging.Formatter.error(
           "Error loading Google Feedback script:",
@@ -133,6 +208,7 @@ export class FeedbackController extends RootController {
         ),
         LABEL
       );
+      updateEntryStatus("error", `Error loading Google Feedback script: ${msg}`);
       if (!isSilent) {
         this.status = "closed";
         this.#env.shellHost.setOneGoogleBarVisible(true);
@@ -144,6 +220,7 @@ export class FeedbackController extends RootController {
       /* c8 ignore next 4 */
       // The user might have pressed Escape on the loading panel in the
       // meantime.
+      updateEntryStatus("closed", "Cancelled by user during load.");
       return;
     }
 
@@ -155,24 +232,42 @@ export class FeedbackController extends RootController {
 
     if (isSilent) {
       config.flow = "submit";
+      updateEntryStatus("loaded");
     } else {
       config.onLoadCallback = () => {
         // Note that the API we loaded earlier is very tiny. This startFeedback
         // call is what actually loads most of the JavaScript, so we want to
         // keep the loading indicator visible until this callback fires.
         this.status = "open";
+        updateEntryStatus("loaded");
       };
       config.callback = () => {
         this.status = "closed";
         this.#env.shellHost.setOneGoogleBarVisible(true);
+        updateEntryStatus("closed");
       };
     }
 
-    api.startFeedback(config, productData);
+    try {
+      api.startFeedback(config, productData);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      updateEntryStatus("error", `Error starting feedback: ${msg}`);
+    }
   }
 
   close() {
     this.status = "closed";
     this.#env.shellHost.setOneGoogleBarVisible(true);
+    // Find the last pending/loaded entry and mark it closed
+    const lastEntry = this.entries[this.entries.length - 1];
+    if (lastEntry && (lastEntry.status === "pending" || lastEntry.status === "loaded")) {
+      const newEntries = [...this.entries];
+      newEntries[newEntries.length - 1] = {
+        ...lastEntry,
+        status: "closed",
+      };
+      this.entries = newEntries;
+    }
   }
 }

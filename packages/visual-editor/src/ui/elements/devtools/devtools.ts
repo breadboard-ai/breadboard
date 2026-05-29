@@ -13,6 +13,7 @@ import { type SCA } from "../../../sca/sca.js";
 import { icons } from "../../styles/icons.js";
 import "../json-tree/json-tree.js";
 import "./opie/opie-panel.js";
+import "./feedback/feedback-panel.js";
 
 @customElement("bb-devtools")
 export class DevTools extends SignalWatcher(LitElement) {
@@ -137,6 +138,7 @@ export class DevTools extends SignalWatcher(LitElement) {
     const systemInstruction = opie.systemInstruction;
     const functions = opie.functionDeclarations;
     const entries = opie.entries;
+    const feedbackEntries = this.sca.controller.global.feedback.entries;
 
     return html`
       <div id="devtools-header">
@@ -151,6 +153,15 @@ export class DevTools extends SignalWatcher(LitElement) {
               }}
             >
               Opie
+            </button>
+            <button
+              class="sans-flex w-500 round"
+              ?disabled=${devtools.activeTab === "feedback"}
+              @click=${() => {
+                devtools.activeTab = "feedback";
+              }}
+            >
+              Feedback
             </button>
           </div>
         </div>
@@ -171,6 +182,13 @@ export class DevTools extends SignalWatcher(LitElement) {
                 .systemInstruction=${systemInstruction}
                 .functions=${functions}
               ></bb-devtools-opie-panel>
+            `
+          : ""}
+        ${devtools.activeTab === "feedback"
+          ? html`
+              <bb-devtools-feedback-panel
+                .entries=${feedbackEntries}
+              ></bb-devtools-feedback-panel>
             `
           : ""}
       </div>
