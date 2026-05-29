@@ -83,9 +83,8 @@ class ContextsViewer extends LitElement {
         context.config?.generationConfig?.responseMimeType ===
         "application/json";
       const { generationConfig, systemInstruction } = context.config || {};
-      const systemInstructionText = (
-        systemInstruction?.parts?.[0] as TextCapabilityPart
-      )?.text;
+      const systemInstructionText =
+        (systemInstruction?.parts?.[0] as TextCapabilityPart)?.text || "";
       return html`<details class="item" ?open=${idx === 0}>
         <summary>
           Context ${idx + 1} (${context.turnCount} turns,
