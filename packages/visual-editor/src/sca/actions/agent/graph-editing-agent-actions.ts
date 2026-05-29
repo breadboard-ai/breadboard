@@ -180,6 +180,15 @@ function startGraphEditingAgent(firstMessage: string): void {
       if (!result.success) {
         return { success: false, error: "Failed to apply edits" };
       }
+      const isPositioning =
+        (event.label && event.label.startsWith("Position")) ||
+        (event.edits.length > 0 &&
+          event.edits.every(
+            (e) => e.type === "changemetadata" || e.type === "changeassetmetadata"
+          ));
+      if (isPositioning) {
+        controller.editor.canvas.requestFitToView();
+      }
       return { success: true };
     }
 
@@ -215,6 +224,7 @@ function startGraphEditingAgent(firstMessage: string): void {
         case "layoutGraph": {
           const graph = editor.raw();
           await layoutGraph(graph.nodes ?? [], graph.edges ?? []);
+          controller.editor.canvas.requestFitToView();
           return { success: true };
         }
         case "updateGraphProperties": {

@@ -37,8 +37,19 @@ export class CanvasController extends RootController {
   @field({ deep: true })
   private accessor _assetDimensions: Map<string, StepDimensions> = new Map();
 
+  @field()
+  private accessor _fitToViewTrigger: number = 0;
+
   constructor(controllerId: string, persistenceId: string) {
     super(controllerId, persistenceId);
+  }
+
+  get fitToViewTrigger(): number {
+    return this._fitToViewTrigger;
+  }
+
+  requestFitToView(): void {
+    this._fitToViewTrigger++;
   }
 
   get viewport(): Readonly<Viewport> {

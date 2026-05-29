@@ -266,6 +266,7 @@ export class Renderer extends SignalWatcher(LitElement) {
   #boundsForInteraction = new DOMRect();
   #fitToViewPre = false;
   #fitToViewPost = false;
+  #lastFitToViewTrigger = 0;
   #attemptAdjustToNewBounds = false;
   #firstResize = true;
 
@@ -826,6 +827,21 @@ export class Renderer extends SignalWatcher(LitElement) {
   // check handles skipping redundant inbound pushes instead.
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
+    const canvasController = this.sca?.controller?.editor?.canvas;
+    if (canvasController) {
+      const currentTrigger = canvasController.fitToViewTrigger;
+      if (currentTrigger > this.#lastFitToViewTrigger) {
+        this.#lastFitToViewTrigger = currentTrigger;
+        let animate = true;
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          animate = false;
+        }
+        requestAnimationFrame(() => {
+          this.fitToView(animate);
+        });
+      }
+    }
+
     if (this.#fitToViewPre) {
       this.#fitToViewPre = false;
       this.fitToView(false);
@@ -1491,6 +1507,8 @@ export class Renderer extends SignalWatcher(LitElement) {
     if (!this.#graphs || !this.camera) {
       return nothing;
     }
+
+    void this.sca?.controller?.editor?.canvas?.fitToViewTrigger;
 
     const inspectableGraph = this.#gc.editor?.inspect("") ?? null;
     const hasNoAssets = (inspectableGraph?.assets() ?? new Map()).size === 0;
