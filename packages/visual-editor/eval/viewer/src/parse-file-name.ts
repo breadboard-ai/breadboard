@@ -23,7 +23,7 @@ export type GroupedByType = {
   items: GroupedByName[];
 };
 
-function parseFileName(fullPath: string): ParsedFileMedata {
+function parseFileName(fullPath: string): ParsedFileMedata | null {
   const fileName = fullPath.split("/").at(-1)!;
   const regex =
     /^([^-]+)-(.+)-(\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2})\.log\.json$/;
@@ -31,7 +31,8 @@ function parseFileName(fullPath: string): ParsedFileMedata {
   const match = fileName.match(regex);
 
   if (!match) {
-    throw new Error(`Invalid file format: ${fileName}`);
+    console.warn(`Invalid file format: ${fileName}`);
+    return null;
   }
 
   const [, type, rawName, dateString] = match;

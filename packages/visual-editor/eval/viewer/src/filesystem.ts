@@ -240,7 +240,10 @@ export class FileSystemEvalBackend {
         }
 
         const fullPath = this.#getFullFilePath(path, name);
-        queryEntries.push(parseFileName(fullPath));
+        const parsed = parseFileName(fullPath);
+        if (parsed) {
+          queryEntries.push(parsed);
+        }
       }
 
       return buildFileHierarchy(queryEntries);
