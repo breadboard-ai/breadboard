@@ -22,6 +22,11 @@ type UserFeedbackConfig = {
   productId: string;
   bucket?: string;
   productVersion?: string;
+  flow?: string;
+  report?: {
+    description: string;
+    [key: string]: unknown;
+  };
   callback?: () => void;
   onLoadCallback?: () => void;
 };
@@ -168,5 +173,36 @@ suite("FeedbackController", () => {
     const openPromise2 = controller.open();
     await Promise.all([openPromise, openPromise2]);
     assert.strictEqual(controller.status, "open");
+  });
+
+  test("open() with flow='submit' and explicit description configures api correctly", async () => {
+    const description = "Test Headless Feedback";
+    const productData = { foo: "bar" };
+    await controller.open({
+      productData,
+      flow: "submit",
+      description,
+    });
+
+    assert.strictEqual(providedConfig.flow, "submit");
+    assert.deepStrictEqual(providedConfig.report, { description });
+    assert.strictEqual(controller.entries[controller.entries.length - 1].status, "loaded");
+  });
+
+  test("open() with flow='submit' triggers an error status if description is missing", async () => {
+    const productData = { foo: "bar", baz: "qux" };
+    
+    // Reset spy captured config
+    providedConfig = undefined as unknown as UserFeedbackConfig;
+    
+    await controller.open({
+      productData,
+      flow: "submit",
+    } as unknown as Parameters<FeedbackController["open"]>[0]);
+
+    assert.strictEqual(providedConfig, undefined); // API not called
+    const lastEntry = controller.entries[controller.entries.length - 1];
+    assert.strictEqual(lastEntry.status, "error");
+    assert.match(lastEntry.errorMessage || "", /Headless feedback submission requires a valid 'description'/);
   });
 });

@@ -216,10 +216,19 @@ export class DevToolsFeedbackPanel extends SignalWatcher(LitElement) {
                               </div>`
                             : ""}
 
+                          ${entry.description
+                            ? html`<div>
+                                <div class="label">Report Payload (Headless Submission):</div>
+                                <bb-json-tree
+                                  .json=${{ description: entry.description }}
+                                ></bb-json-tree>
+                              </div>`
+                            : ""}
+
                           ${entry.productData &&
                           Object.keys(entry.productData).length > 0
                             ? html`<div>
-                                <div class="label">Product Data (Payload):</div>
+                                <div class="label">Product Data (PSD):</div>
                                 <bb-json-tree
                                   .json=${entry.productData}
                                 ></bb-json-tree>
