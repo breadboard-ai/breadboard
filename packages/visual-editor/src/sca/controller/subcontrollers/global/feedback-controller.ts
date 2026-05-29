@@ -65,7 +65,7 @@ export type FeedbackStatus = "closed" | "loading" | "open";
 // eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type FeedbackLogEntry = {
   timestamp: number;
-  bucketOverride?: string;
+  bucketSuffix?: string;
   productData?: Record<string, string>;
   flow?: "submit";
   description?: string;
@@ -122,9 +122,17 @@ export class FeedbackController extends RootController {
     }
   }
 
+  /**
+   * Opens the feedback flow.
+   *
+   * @param options Feedback options.
+   * @param options.bucketSuffix Conceptually refines the default bucket.
+   * If provided, it is appended to `GOOGLE_FEEDBACK_BUCKET` using an underscore
+   * (e.g. producing "dev_opie" or "prod_opie").
+   */
   async open(
     options: {
-      bucketOverride?: string;
+      bucketSuffix?: string;
       productData?: Record<string, string>;
     } & (
       | { flow?: undefined; description?: never }
@@ -134,7 +142,7 @@ export class FeedbackController extends RootController {
     const LABEL = "Feedback.open";
     const logger = Utils.Logging.getLogger();
 
-    const { bucketOverride, productData, flow } = options;
+    const { bucketSuffix, productData, flow } = options;
     const description = "description" in options ? options.description : undefined;
 
     if (this.status !== "closed") {
@@ -146,7 +154,7 @@ export class FeedbackController extends RootController {
       ...this.entries,
       {
         timestamp: Date.now(),
-        bucketOverride,
+        bucketSuffix,
         productData,
         flow,
         description,
@@ -188,7 +196,10 @@ export class FeedbackController extends RootController {
       updateEntryStatus("error", "No GOOGLE_FEEDBACK_PRODUCT_ID was set in the client deployment configuration.");
       return;
     }
-    const bucket = bucketOverride ?? this.#env.deploymentConfig.GOOGLE_FEEDBACK_BUCKET;
+    const baseBucket = this.#env.deploymentConfig.GOOGLE_FEEDBACK_BUCKET;
+    const bucket = (baseBucket && bucketSuffix)
+      ? `${baseBucket}_${bucketSuffix}`
+      : (bucketSuffix || baseBucket);
     if (!bucket) {
       logger.log(
         Utils.Logging.Formatter.error(

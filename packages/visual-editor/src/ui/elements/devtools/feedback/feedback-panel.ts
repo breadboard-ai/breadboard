@@ -202,10 +202,10 @@ export class DevToolsFeedbackPanel extends SignalWatcher(LitElement) {
                             <div>
                               <span class="label">Status:</span> ${entry.status}
                             </div>
-                            ${entry.bucketOverride
+                            ${entry.bucketSuffix
                               ? html`<div>
-                                  <span class="label">Bucket Override:</span>
-                                  ${entry.bucketOverride}
+                                  <span class="label">Bucket Suffix:</span>
+                                  ${entry.bucketSuffix}
                                 </div>`
                               : ""}
                           </div>
