@@ -15,10 +15,7 @@
  */
 
 import type {
-  GraphMetadata,
   LLMContent,
-  NodeConfiguration,
-  NodeMetadata,
 } from "@breadboard-ai/types";
 import { generateImage, persistTheme } from "../theme/theme-utils.js";
 import { createThemeGenerationPrompt } from "../../../ui/prompts/theme-generation.js";
@@ -35,9 +32,7 @@ import type { AgentRunHandle } from "../../../a2/agent/agent-service.js";
 import type { LocalAgentRun } from "../../../a2/agent/local-agent-run.js";
 import type { A2ModuleFactory } from "../../../a2/runnable-module-factory.js";
 import type { ChatResponse } from "../../../a2/agent/types.js";
-import { UpdateNode } from "../../../ui/transforms/update-node.js";
-import { layoutGraph } from "../../../a2/agent/graph-editing/layout-graph.js";
-import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
+import { GraphEditingManager, GraphThemeGenerator } from "../../../a2/agent/graph-editing/graph-editing-manager.js";
 import type { ChatEntry } from "../../types.js";
 
 export { bind, startGraphEditingAgent, resolveGraphEditingInput };
@@ -95,10 +90,10 @@ function startGraphEditingAgent(firstMessage: string): void {
   currentRun = handle;
 
   const devtools = controller.editor.devtools?.opie;
+  const translator = new EditingAgentPidginTranslator();
 
   if (devtools) {
     devtools.clearLog();
-    const translator = new EditingAgentPidginTranslator();
     const functionGroups = buildGraphEditingFunctionGroups({
       sink: handle.sink,
       translator,
@@ -174,138 +169,57 @@ function startGraphEditingAgent(firstMessage: string): void {
       return { success: false, error: "No active graph to edit" };
     }
 
-    if (event.edits) {
-      // Raw EditSpec[] — apply directly
-      const result = await editor.edit(event.edits, event.label);
-      if (!result.success) {
-        return { success: false, error: "Failed to apply edits" };
+    const themeGenerator: GraphThemeGenerator = async (ctx) => {
+      const appTheme = await generateImage(
+        createThemeGenerationPrompt({
+          random: false,
+          title: ctx.title,
+          description: ctx.description,
+          userInstruction: ctx.userInstruction,
+        }),
+        ctx.signal || handle.signal,
+        controller,
+        services
+      );
+
+      if (!ok(appTheme)) {
+        return appTheme;
       }
-      const isPositioning =
-        (event.label && event.label.startsWith("Position")) ||
-        (event.edits.length > 0 &&
-          event.edits.every(
-            (e) => e.type === "changemetadata" || e.type === "changeassetmetadata"
-          ));
-      if (isPositioning) {
-        controller.editor.canvas.requestFitToView();
-      }
-      return { success: true };
+
+      const graphThemeResult = await persistTheme(
+        appTheme,
+        controller,
+        services
+      );
+
+      return graphThemeResult;
+    };
+
+    const manager = new GraphEditingManager(editor, themeGenerator);
+    const result = await manager.applyEdits(event, {
+      signal: handle.signal,
+      onNodeConfigChanged: (ctx) => {
+        controller.editor.graph.lastNodeConfigChange = ctx;
+      },
+      onThemeUpdated: () => {
+        controller.editor.theme.updateHash(controller.editor.graph.graph);
+      },
+    });
+
+    const isPositioning =
+      (event.label && event.label.startsWith("Position")) ||
+      (event.edits &&
+        event.edits.length > 0 &&
+        event.edits.every(
+          (e) => e.type === "changemetadata" || e.type === "changeassetmetadata"
+        )) ||
+      (event.transform && event.transform.kind === "layoutGraph");
+
+    if (result.success && isPositioning) {
+      controller.editor.canvas.requestFitToView();
     }
 
-    if (event.transform) {
-      // Transform descriptor — instantiate and apply
-      const { transform } = event;
-      switch (transform.kind) {
-        case "updateNode": {
-          const t = new UpdateNode(
-            transform.nodeId,
-            transform.graphId,
-            transform.configuration as NodeConfiguration | null,
-            transform.metadata as NodeMetadata | null,
-            transform.portsToAutowire as InPort[] | null
-          );
-          const result = await editor.apply(t);
-
-          // Side effect: trigger autoname if config changed
-          if (transform.configuration) {
-            controller.editor.graph.lastNodeConfigChange = {
-              nodeId: transform.nodeId,
-              graphId: transform.graphId,
-              configuration: transform.configuration as NodeConfiguration,
-              titleUserModified: t.titleUserModified,
-            };
-          }
-
-          if (!result.success) {
-            return { success: false, error: result.error };
-          }
-          return { success: true };
-        }
-        case "layoutGraph": {
-          const graph = editor.raw();
-          await layoutGraph(graph.nodes ?? [], graph.edges ?? []);
-          controller.editor.canvas.requestFitToView();
-          return { success: true };
-        }
-        case "updateGraphProperties": {
-          const { title, description, themeIntent } = transform;
-
-          let metadata: GraphMetadata | undefined;
-
-          if (themeIntent) {
-            const rawGraph = editor.raw();
-            const promptTitle = title ?? rawGraph.title;
-            const promptDesc = description ?? rawGraph.description;
-
-            const appTheme = await generateImage(
-              createThemeGenerationPrompt({
-                random: false,
-                title: promptTitle || "Application",
-                description: promptDesc,
-                userInstruction: themeIntent,
-              }),
-
-              handle.signal,
-              controller,
-              services
-            );
-
-            if (!ok(appTheme)) {
-              return {
-                success: false,
-                error: `Theme generation failed: ${appTheme.$error}`,
-              };
-            }
-
-            const graphThemeResult = await persistTheme(
-              appTheme,
-              controller,
-              services
-            );
-
-            if (!ok(graphThemeResult)) {
-              return {
-                success: false,
-                error: `Failed to persist theme: ${graphThemeResult.$error}`,
-              };
-            }
-
-            metadata = editor.raw().metadata ?? {};
-            metadata.visual ??= {};
-            metadata.visual.presentation ??= {};
-            metadata.visual.presentation.themes ??= {};
-
-            const id = globalThis.crypto.randomUUID();
-            metadata.visual.presentation.themes[id] = graphThemeResult;
-            metadata.visual.presentation.theme = id;
-          }
-
-          const result = await editor.edit(
-            [
-              {
-                type: "changegraphmetadata",
-                title: title ?? undefined,
-                description: description ?? undefined,
-                metadata,
-                graphId: "",
-              },
-            ],
-            "Updating graph properties"
-          );
-
-          if (themeIntent) {
-            controller.editor.theme.updateHash(controller.editor.graph.graph);
-          }
-
-          if (!result.success) {
-            return { success: false, error: result.error };
-          }
-          return { success: true };
-        }
-      }
-    }
-
-    return { success: false, error: "Invalid applyEdits event" };
+    return result;
   });
 
   const context = {
@@ -316,7 +230,7 @@ function startGraphEditingAgent(firstMessage: string): void {
 
   const moduleArgs = factory.createModuleArgs(context);
 
-  invokeGraphEditingAgent(objective, moduleArgs, handle.sink, hooks)
+  invokeGraphEditingAgent(objective, moduleArgs, handle.sink, translator, hooks)
     .then((result) => {
       agent.loopRunning = false;
       agent.processing = false;
