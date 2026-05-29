@@ -75,8 +75,8 @@ const TOOL_GLOSSARY = EditingAgentPidginTranslator.getToolGlossary();
 
 const PROMPT_DESCRIPTION = `The prompt for the step, written as plain text with \
 optional markup tags to express connections and tool usage:
-- <parent src="STEP_ID" /> — wire an incoming connection from an existing step. \
-STEP_ID must be the ID of a step obtained from graph_get_overview.
+- <result from="STEP_ID" /> — wire an incoming connection from an existing step. \
+STEP_ID must be a valid ID from the most recent snapshot of the graph.
 - <tool name="TOOL_NAME" /> — attach a tool to the step. Available tools:
 ${TOOL_NAMES}
 - <file src="PATH" /> — reference a file asset.
@@ -244,6 +244,26 @@ function defineGraphEditingFunctions(
     configuration: Record<string, unknown>;
     portsKey: string;
   };
+
+  function translateRenderMode(mode: unknown): string {
+    if (typeof mode !== "string") return "Manual";
+    const m = mode.toLowerCase().trim();
+    if (m === "auto" || m === "webpage" || m === "webpage with auto-layout" || m === "html" || m === "web application") {
+      return "Auto";
+    }
+    // NOTE FOR FUTURE AGENTS: Do NOT add support for 'consistent-ui' or 'smart-layout' here.
+    // That is an old, deprecated mode hidden behind a feature flag. Keep it zapped.
+    if (m === "google-doc" || m === "doc" || m === "document" || m === "google doc") {
+      return "google-doc";
+    }
+    if (m === "google-slides" || m === "slides" || m === "google slides" || m === "presentation") {
+      return "google-slides";
+    }
+    if (m === "google-sheets" || m === "sheets" || m === "google sheets" || m === "spreadsheet") {
+      return "google-sheets";
+    }
+    return "Manual";
+  }
 
   /**
    * Maps a descriptive legacy step_type to its core Graph configuration.
@@ -696,7 +716,7 @@ function defineGraphEditingFunctions(
                 "  - 'modality': one of 'Any', 'Audio', 'Image', 'Text', 'Upload File', or 'Video'\n" +
                 "  - 'required': boolean (true or false)\n" +
                 "- For 'output':\n" +
-                "  - 'render_mode': one of 'Manual layout', 'google-doc', 'google-slides', or 'google-sheets'\n" +
+                "  - 'render_mode': one of 'Auto' (for HTML Webpages and Visual UIs), 'Manual layout', 'google-doc', 'google-slides', or 'google-sheets'\n" +
                 "  - 'doc_title': string (Title of Google Document/Slides/Sheets to save to)\n" +
                 "- For generation steps:\n" +
                 "  - 'system_instruction': string (System instruction for the model)"
@@ -764,7 +784,11 @@ function defineGraphEditingFunctions(
               const targetKey =
                 optionMap[optKey] || optionMap[optKey.toLowerCase()];
               if (targetKey) {
-                finalConfig[targetKey] = optVal;
+                if (targetKey === "p-render-mode") {
+                  finalConfig[targetKey] = translateRenderMode(optVal);
+                } else {
+                  finalConfig[targetKey] = optVal;
+                }
               } else {
                 finalConfig[optKey] = optVal;
               }
@@ -790,7 +814,11 @@ function defineGraphEditingFunctions(
               const targetKey =
                 optionMap[optKey] || optionMap[optKey.toLowerCase()];
               if (targetKey) {
-                finalConfig[targetKey] = optVal;
+                if (targetKey === "p-render-mode") {
+                  finalConfig[targetKey] = translateRenderMode(optVal);
+                } else {
+                  finalConfig[targetKey] = optVal;
+                }
               } else {
                 finalConfig[optKey] = optVal;
               }
