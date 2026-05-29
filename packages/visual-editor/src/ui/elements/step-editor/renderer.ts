@@ -1508,7 +1508,7 @@ export class Renderer extends SignalWatcher(LitElement) {
       return nothing;
     }
 
-    this.sca?.controller?.editor?.canvas?.fitToViewTrigger;
+    void this.sca?.controller?.editor?.canvas?.fitToViewTrigger;
 
     const inspectableGraph = this.#gc.editor?.inspect("") ?? null;
     const hasNoAssets = (inspectableGraph?.assets() ?? new Map()).size === 0;
