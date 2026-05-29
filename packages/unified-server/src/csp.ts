@@ -54,6 +54,7 @@ export const SHELL_CSP = {
   ["frame-src"]: [
     "https://docs.google.com",
     "https://drive.google.com",
+    "https://www.google.com",
     flags.SHELL_GUEST_ORIGIN,
   ],
   ["img-src"]: ["'self'", "https://*.gstatic.com"],
