@@ -189,6 +189,25 @@ suite("FeedbackController", () => {
     assert.strictEqual(controller.entries[controller.entries.length - 1].status, "loaded");
   });
 
+  test("open() with bucketSuffix and baseBucket concatenates correctly", async () => {
+    await controller.open({
+      bucketSuffix: "opie",
+    });
+    assert.strictEqual(providedConfig.bucket, "test-bucket_opie");
+  });
+
+  test("open() with bucketSuffix and missing baseBucket uses bucketSuffix", async () => {
+    (
+      mockEnv as {
+        deploymentConfig: { GOOGLE_FEEDBACK_BUCKET: string | undefined };
+      }
+    ).deploymentConfig.GOOGLE_FEEDBACK_BUCKET = undefined;
+    await controller.open({
+      bucketSuffix: "opie",
+    });
+    assert.strictEqual(providedConfig.bucket, "opie");
+  });
+
   test("open() with flow='submit' triggers an error status if description is missing", async () => {
     const productData = { foo: "bar", baz: "qux" };
     

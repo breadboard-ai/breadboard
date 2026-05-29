@@ -145,6 +145,7 @@ export const MAIN_APP_CSP = {
     "goog#html",
     "uf-api#html",
     "uf-fload#html",
+    "'allow-duplicates'"
   ],
 };
 

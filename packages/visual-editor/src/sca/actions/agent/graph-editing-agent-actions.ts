@@ -419,7 +419,7 @@ export const setOpieReaction = asAction(
           conversation,
         };
         controller.global.feedback.open({
-          bucketOverride: "opie",
+          bucketSuffix: "opie",
           productData,
           flow: "submit",
           description: `User sentiment: ${newReaction}`,
