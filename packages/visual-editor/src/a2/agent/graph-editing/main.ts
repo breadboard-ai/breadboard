@@ -28,9 +28,9 @@ async function invokeGraphEditingAgent(
   objective: LLMContent,
   moduleArgs: A2ModuleArgs,
   sink: AgentEventSink,
+  translator: EditingAgentPidginTranslator,
   hooks?: LoopHooks
 ): Promise<Outcome<AgentResult>> {
-  const translator = new EditingAgentPidginTranslator();
   const functionGroups = buildGraphEditingFunctionGroups({
     sink,
     translator,

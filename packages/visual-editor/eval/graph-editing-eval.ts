@@ -31,13 +31,15 @@ import { getAuthenticatedClient } from "./authenticate.js";
 import { type ConsentController } from "../src/sca/controller/subcontrollers/global/global.js";
 import { AgentService } from "../src/a2/agent/agent-service.js";
 import { invokeGraphEditingAgent } from "../src/a2/agent/graph-editing/main.js";
+import { EditingAgentPidginTranslator } from "../src/a2/agent/graph-editing/editing-agent-pidgin-translator.js";
 import { AgentEventConsumer, LocalAgentEventBridge } from "../src/a2/agent/agent-event-consumer.js";
 import { ok } from "@breadboard-ai/utils";
 import { generateContent, GeminiBody, GeminiSchema } from "../src/a2/a2/gemini.js";
 import { toLLMContent } from "../src/a2/a2/utils.js";
 import { A2_TOOLS } from "../src/a2/a2-registry.js";
-import { LLMContent, NodeConfiguration, EditSpec, GraphDescriptor } from "@breadboard-ai/types";
-import { TransformDescriptor } from "../src/a2/agent/agent-event.js";
+import { HeadlessGraphEditor } from "./headless-graph-editor.js";
+import { GraphEditingManager } from "../src/a2/agent/graph-editing/graph-editing-manager.js";
+import { LLMContent, GraphDescriptor } from "@breadboard-ai/types";
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { GOOGLE_DRIVE_FOLDER_MIME_TYPE, GRAPH_MIME_TYPE } from "../src/ui/utils/google-drive-host-operations.js";
@@ -661,6 +663,7 @@ class GraphEditingEvalRun implements EvalLogger {
   };
 
   lastMessage: string = "";
+  private readonly translator = new EditingAgentPidginTranslator();
 
   constructor(
     private readonly accessToken: string,
@@ -711,15 +714,10 @@ class GraphEditingEvalRun implements EvalLogger {
     });
 
     consumer.on("applyEdits", async (event) => {
-      if (event.edits) {
-        this.applyEditsToGraph(event.edits);
-        return { success: true };
-      }
-      if (event.transform) {
-        this.applyTransformToGraph(event.transform);
-        return { success: true };
-      }
-      return { success: false, error: "Invalid applyEdits payload" };
+      const editor = HeadlessGraphEditor.create(this.graph);
+      const manager = new GraphEditingManager(editor);
+      const result = await manager.applyEdits(event);
+      return result;
     });
 
     consumer.on("waitForInput", (event) => {
@@ -837,7 +835,7 @@ class GraphEditingEvalRun implements EvalLogger {
     };
 
     const outcome = await withRetry(async () => {
-      const res = await invokeGraphEditingAgent(objective, moduleArgs, sink);
+      const res = await invokeGraphEditingAgent(objective, moduleArgs, sink, this.translator);
       return res;
     });
 
@@ -856,46 +854,5 @@ class GraphEditingEvalRun implements EvalLogger {
       message: this.lastMessage,
       graph: this.graph,
     };
-  }
-
-  private applyEditsToGraph(edits: EditSpec[]) {
-    for (const edit of edits) {
-      if (edit.type === "addnode") {
-        this.graph.nodes ??= [];
-        this.graph.nodes.push(edit.node);
-      } else if (edit.type === "removenode") {
-        this.graph.nodes = (this.graph.nodes ?? []).filter((n) => n.id !== edit.id);
-        this.graph.edges = (this.graph.edges ?? []).filter(
-          (e) => e.from !== edit.id && e.to !== edit.id
-        );
-      } else if (edit.type === "changegraphmetadata") {
-        if (edit.title !== undefined) this.graph.title = edit.title;
-        if (edit.description !== undefined) this.graph.description = edit.description;
-        if (edit.metadata !== undefined) this.graph.metadata = edit.metadata;
-      }
-    }
-  }
-
-  private applyTransformToGraph(transform: TransformDescriptor) {
-    if (transform.kind === "updateNode") {
-      const node = this.graph.nodes?.find((n) => n.id === transform.nodeId);
-      if (node) {
-        if (transform.configuration) {
-          node.configuration = {
-            ...(node.configuration ?? {}),
-            ...transform.configuration,
-          } as unknown as NodeConfiguration;
-        }
-        if (transform.metadata) {
-          node.metadata = {
-            ...(node.metadata ?? {}),
-            ...transform.metadata,
-          };
-        }
-      }
-    } else if (transform.kind === "updateGraphProperties") {
-      if (transform.title !== undefined) this.graph.title = transform.title;
-      if (transform.description !== undefined) this.graph.description = transform.description;
-    }
   }
 }
