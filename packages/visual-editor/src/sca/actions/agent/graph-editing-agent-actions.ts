@@ -413,12 +413,17 @@ export const setOpieReaction = asAction(
 
     if (newReaction !== "none") {
       feedbackTimeoutId = setTimeout(() => {
-        feedbackTimeoutId = null;
+        const conversation = formatConversation(agent.entries, 10);
         const productData = {
           reaction: newReaction,
-          conversation: formatConversation(agent.entries, 10),
+          conversation,
         };
-        controller.global.feedback.open("opie", productData, "submit");
+        controller.global.feedback.open({
+          bucketOverride: "opie",
+          productData,
+          flow: "submit",
+          description: `User sentiment: ${newReaction}`,
+        });
       }, 3000);
     }
   }

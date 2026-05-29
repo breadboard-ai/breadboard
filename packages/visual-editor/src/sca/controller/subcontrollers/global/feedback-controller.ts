@@ -18,6 +18,10 @@ type UserFeedbackApi = {
       bucket?: string;
       productVersion?: string;
       flow?: string;
+      report?: {
+        description: string;
+        [key: string]: unknown;
+      };
       callback?: () => void;
       onLoadCallback?: () => void;
     },
@@ -64,6 +68,7 @@ export type FeedbackLogEntry = {
   bucketOverride?: string;
   productData?: Record<string, string>;
   flow?: "submit";
+  description?: string;
   status: "pending" | "loaded" | "error" | "closed";
   errorMessage?: string;
 };
@@ -118,12 +123,19 @@ export class FeedbackController extends RootController {
   }
 
   async open(
-    bucketOverride?: string,
-    productData?: Record<string, string>,
-    flow?: "submit"
+    options: {
+      bucketOverride?: string;
+      productData?: Record<string, string>;
+    } & (
+      | { flow?: undefined; description?: never }
+      | { flow: "submit"; description: string }
+    ) = {}
   ) {
     const LABEL = "Feedback.open";
     const logger = Utils.Logging.getLogger();
+
+    const { bucketOverride, productData, flow } = options;
+    const description = "description" in options ? options.description : undefined;
 
     if (this.status !== "closed") {
       return;
@@ -137,14 +149,15 @@ export class FeedbackController extends RootController {
         bucketOverride,
         productData,
         flow,
+        description,
         status: "pending",
       },
     ];
 
-    const updateEntryStatus = (
+    const updateEntryStatus: (
       status: FeedbackLogEntry["status"],
       errorMessage?: string
-    ) => {
+    ) => void = (status, errorMessage) => {
       const newEntries = [...this.entries];
       if (newEntries[entryIndex]) {
         newEntries[entryIndex] = {
@@ -229,6 +242,17 @@ export class FeedbackController extends RootController {
       bucket,
       productVersion: `${version} (${gitCommitHash})`,
     };
+
+    if (isSilent && (!description || description.trim() === "")) {
+      const msg = "Headless feedback submission requires a valid 'description'.";
+      logger.log(Utils.Logging.Formatter.error(msg), LABEL);
+      updateEntryStatus("error", msg);
+      return;
+    }
+
+    if (description) {
+      config.report = { description };
+    }
 
     if (isSilent) {
       config.flow = "submit";
