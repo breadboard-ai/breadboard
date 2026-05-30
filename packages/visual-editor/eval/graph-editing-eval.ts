@@ -160,6 +160,14 @@ class GraphEditingEvalHarness {
         }
       }
 
+      await ensureDir(OUT_DIR);
+      const filename = `${toKebabFilename(this.args.name)}-${toKebabFilename(evalName)}-${timestamp()}`;
+      const harFilename = `${filename}.har`;
+      const logFilename = `${filename}.log.json`;
+      const graphFilename = `${filename}.bgl.json`;
+      const raterFilename = `${filename}.rater.json`;
+      let wroteRater = false;
+
       let score = "SKIPPED";
       let explanation = "";
       let translatedIntent = "";
@@ -167,6 +175,7 @@ class GraphEditingEvalHarness {
       const csvEntry = batchRowMap.get(evalName);
 
       if (isCSVBatch && csvEntry) {
+        let raterOutput: unknown = null;
         try {
           console.log(`[Eval] Evaluating "${evalName}" with gemini-3.5-flash...`);
           const evalResponseSchema: GeminiSchema = {
@@ -270,15 +279,19 @@ class GraphEditingEvalHarness {
             if (typeof evalOutcome === "string") {
               try {
                 parsed = JSON.parse(evalOutcome);
+                raterOutput = parsed;
               } catch {
-                // Ignore parse error.
+                raterOutput = { raw_text: evalOutcome, error: "JSON Parse Failed" };
               }
             } else if (firstPart && typeof firstPart === "object" && "text" in firstPart && typeof firstPart.text === "string") {
               try {
                 parsed = JSON.parse(firstPart.text);
+                raterOutput = parsed;
               } catch {
-                // Ignore parse error.
+                raterOutput = { raw_text: firstPart.text, error: "JSON Parse Failed" };
               }
+            } else {
+              raterOutput = { api_response: evalOutcome, error: "No candidates or text parts in response" };
             }
             
             translatedIntent = parsed?.translated_intent || csvEntry.intent;
@@ -289,11 +302,33 @@ class GraphEditingEvalHarness {
             console.error("[Eval] Gemini evaluation API failed:", errPayload?.$error || "Unknown Error");
             score = "EVAL API ERROR";
             explanation = errPayload?.$error || "Unknown Error";
+            raterOutput = {
+              error: "Gemini evaluation API failed",
+              details: errPayload?.$error || evalOutcome,
+            };
           }
         } catch (e) {
           console.error("[Eval] Exception during Gemini evaluation:", (e as Error).message);
           score = "EVAL EXCEPTION";
           explanation = (e as Error).message;
+          raterOutput = {
+            error: "Exception during Gemini evaluation",
+            details: (e as Error).message,
+          };
+        }
+
+        if (raterOutput) {
+          try {
+            console.log(`[Eval] Writing rater output to "${raterFilename}"...`);
+            await writeFile(
+              join(OUT_DIR, raterFilename),
+              JSON.stringify(raterOutput, null, 2),
+              "utf-8"
+            );
+            wroteRater = true;
+          } catch (writeErr) {
+            console.error("[Eval] Failed to write rater output file:", (writeErr as Error).message);
+          }
         }
 
         batchCSVRows.push({
@@ -307,12 +342,6 @@ class GraphEditingEvalHarness {
       }
 
       const har = run.requestLogger.getHar();
-      await ensureDir(OUT_DIR);
-      const filename = `${toKebabFilename(this.args.name)}-${toKebabFilename(evalName)}-${timestamp()}`;
-      const harFilename = `${filename}.har`;
-      const logFilename = `${filename}.log.json`;
-      const graphFilename = `${filename}.bgl.json`;
-
       await writeFile(
         join(OUT_DIR, `${harFilename}`),
         JSON.stringify(har, null, 2),
@@ -383,6 +412,9 @@ class GraphEditingEvalHarness {
       console.log(`HAR: "${harFilename}"`);
       console.log(`Log: "${logFilename}"`);
       console.log(`Graph: "${graphFilename}"`);
+      if (wroteRater) {
+        console.log(`Rater Output: "${raterFilename}"`);
+      }
       if (driveUrl) {
         console.log(`Drive URL: \x1b[36m${driveUrl}\x1b[0m`);
       }
