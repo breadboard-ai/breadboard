@@ -455,7 +455,7 @@ class GraphEditingEvalHarness {
 
     if (this.args.batch) {
       try {
-        const capabilitiesPath = join(ROOT_DIR, "src", "a2", "agent", "graph-editing", "instructions", "04-capabilities.md");
+        const capabilitiesPath = join(ROOT_DIR, "src", "a2", "agent", "graph-editing", "instructions", "04-agent-step.md");
         try {
           const rawCapabilities = await readFile(capabilitiesPath, "utf-8");
           const TOOL_NAMES = A2_TOOLS.map(
