@@ -89,6 +89,9 @@ class BGLViewer extends LitElement {
   @property()
   accessor graph: GraphDescriptor | null = null;
 
+  @property()
+  accessor rater: Record<string, unknown> | null = null;
+
   @provide({ context: scaContext })
   accessor sca: any = {
     controller: {
@@ -134,6 +137,7 @@ class BGLViewer extends LitElement {
   accessor #selectedNode: any = null;
 
   #dialogRef: Ref<HTMLDialogElement> = createRef();
+  #raterDialogRef: Ref<HTMLDialogElement> = createRef();
 
   static styles = [
     icons,
@@ -162,9 +166,13 @@ class BGLViewer extends LitElement {
       position: absolute;
       top: var(--bb-grid-size-5);
       left: var(--bb-grid-size-6);
-      z-index: 5;
+      right: var(--bb-grid-size-6);
+      z-index: 10;
       pointer-events: none;
-      max-width: 600px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--bb-grid-size-4);
 
       h1 {
         margin: 0 0 var(--bb-grid-size) 0;
@@ -181,6 +189,67 @@ class BGLViewer extends LitElement {
       }
     }
 
+    #rater-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--bb-grid-size-2);
+      background: var(--light-dark-n-100);
+      padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
+      border-radius: var(--bb-grid-size-4);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px oklch(from var(--light-dark-n-10) l c h / 0.1);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--light-dark-n-0);
+      flex-shrink: 0;
+
+      .status-row {
+        display: flex;
+        align-items: center;
+        gap: var(--bb-grid-size-2);
+        margin-bottom: var(--bb-grid-size);
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+
+        &.pass { background: #34a853; }
+        &.fail { background: #ea4335; }
+        &.partial { background: #fbbc04; }
+        &.unknown { background: #9aa0a6; }
+      }
+
+      button {
+        background: var(--light-dark-n-95);
+        color: var(--light-dark-n-10);
+        border: 1px solid var(--border-color);
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+        border-radius: var(--bb-grid-size-2);
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 500;
+        transition: background 0.2s, color 0.2s;
+        pointer-events: auto;
+        width: 100%;
+        text-align: center;
+
+        &:hover {
+          background: var(--light-dark-n-90);
+          color: var(--light-dark-n-0);
+        }
+      }
+    }
+
+    dialog[open] {
+      display: flex;
+      flex-direction: column;
+      max-height: 85vh;
+    }
+
     dialog {
       border: none;
       border-radius: var(--bb-grid-size-4);
@@ -190,8 +259,6 @@ class BGLViewer extends LitElement {
       box-shadow: 0 16px 48px oklch(from var(--light-dark-n-10) l c h / 0.3);
       max-width: 720px;
       width: 85vw;
-      max-height: 85vh;
-      overflow: hidden;
       font-family: var(--font-family);
 
       &::backdrop {
@@ -203,7 +270,9 @@ class BGLViewer extends LitElement {
         margin: 0;
         display: flex;
         flex-direction: column;
-        height: 100%;
+        flex-grow: 1;
+        min-height: 0;
+        overflow: hidden;
       }
 
       #dialog-header {
@@ -241,6 +310,51 @@ class BGLViewer extends LitElement {
       #dialog-body {
         overflow-y: auto;
         flex-grow: 1;
+        min-height: 0;
+
+        .dimensions-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: var(--bb-grid-size-2);
+          font-size: 13px;
+          line-height: 1.5;
+          color: var(--light-dark-n-10);
+          background: var(--light-dark-n-98);
+          border-radius: var(--bb-grid-size-2);
+          overflow: hidden;
+
+          th {
+            background: var(--light-dark-n-90);
+            color: var(--light-dark-n-0);
+            text-align: left;
+            font-weight: 600;
+            padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+          }
+
+          td {
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
+            vertical-align: top;
+
+            &:first-child {
+              color: var(--light-dark-n-0);
+              white-space: nowrap;
+            }
+
+            &.score-cell {
+              font-weight: 600;
+              white-space: nowrap;
+              color: var(--light-dark-n-0);
+            }
+          }
+
+          tr:last-child td {
+            border-bottom: none;
+          }
+        }
 
         pre {
           background: var(--light-dark-n-95);
@@ -606,6 +720,68 @@ class BGLViewer extends LitElement {
     </dialog>`;
   }
 
+  #showRaterModal() {
+    this.requestUpdate();
+    requestAnimationFrame(() => {
+      this.#raterDialogRef.value?.showModal();
+    });
+  }
+
+  #renderRaterModal() {
+    if (!this.rater) {
+      return nothing;
+    }
+
+    const title = "Evaluation Results";
+
+    return html`<dialog ${ref(this.#raterDialogRef)}>
+      <form method="dialog">
+        <div id="dialog-header">
+          <h2>${title}</h2>
+          <button type="submit" aria-label="Close">
+            <span class="g-icon filled round">close</span>
+          </button>
+        </div>
+        <div id="dialog-body">
+          ${Object.entries(this.rater || {}).map(([key, value]) => {
+            if (key === "dimensions" && typeof value === "object" && value !== null) {
+              return html`<div class="config-item">
+                <h3>Dimensions</h3>
+                <table class="dimensions-table">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>Score</th>
+                      <th>Rationale</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${Object.entries(value).map(([dimKey, dimVal]: [string, any]) => {
+                      const category = dimKey.replace(/_/g, " ").replace(/^./, (str) => str.toUpperCase());
+                      const score = dimVal?.score ?? "-";
+                      const rationale = dimVal?.rationale ?? "";
+                      return html`<tr>
+                        <td><strong>${category}</strong></td>
+                        <td class="score-cell">${score}/5</td>
+                        <td>${rationale}</td>
+                      </tr>`;
+                    })}
+                  </tbody>
+                </table>
+              </div>`;
+            }
+            
+            const formattedValue = typeof value === "object" ? JSON.stringify(value, null, 2) : String(value);
+            return html`<div class="config-item">
+              <h3>${key.replace(/_/g, " ").replace(/^./, (str) => str.toUpperCase())}</h3>
+              <pre>${formattedValue}</pre>
+            </div>`;
+          })}
+        </div>
+      </form>
+    </dialog>`;
+  }
+
   render() {
     if (!this.#graphComponent) {
       return html`<div
@@ -618,9 +794,22 @@ class BGLViewer extends LitElement {
     const title = this.graph?.title || "Untitled Topology";
     const description = this.graph?.description || "";
 
-    return html`<div id="bgl-header">
-        <h1>${title}</h1>
-        ${description ? html`<p>${description}</p>` : nothing}
+    const judgement = ((this.rater as any)?.overall_judgement || ((this.rater as any)?.error ? 'FAIL' : 'UNKNOWN')) as string;
+    const statusClass = judgement.toLowerCase();
+
+    return html`
+      <div id="bgl-header">
+        <div style="max-width: calc(100% - 220px);">
+          <h1>${title}</h1>
+          ${description ? html`<p>${description}</p>` : nothing}
+        </div>
+        ${this.rater ? html`<div id="rater-indicator" style="pointer-events: auto;">
+          <div class="status-row">
+            <div class="status-dot ${statusClass}"></div>
+            <span>Eval: ${judgement}</span>
+          </div>
+          <button @click=${() => this.#showRaterModal()}>Show Details</button>
+        </div>` : nothing}
       </div>
       <div
         id="container"
@@ -641,6 +830,7 @@ class BGLViewer extends LitElement {
       >
         ${this.#graphComponent}
       </div>
-      ${this.#renderModal()}`;
+      ${this.#renderModal()}
+      ${this.#renderRaterModal()}`;
   }
 }

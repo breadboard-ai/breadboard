@@ -11,6 +11,7 @@ export type ParsedFileMedata = {
   type: string;
   name: string;
   date: Date;
+  judgement?: string;
 };
 
 export type GroupedByName = {

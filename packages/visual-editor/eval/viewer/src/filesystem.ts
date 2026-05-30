@@ -234,14 +234,37 @@ export class FileSystemEvalBackend {
 
     try {
       const queryEntries: ParsedFileMedata[] = [];
+      const raterMap = new Map<string, string>();
+
+      try {
+        for await (const [name, descriptor] of handle.entries()) {
+          if (name.endsWith(".rater.json") && descriptor.kind === "file") {
+            try {
+              const fileBlob = await (descriptor as FileSystemFileHandle).getFile();
+              const text = await fileBlob.text();
+              const parsed = JSON.parse(text);
+              const judgement = parsed?.overall_judgement || (parsed?.error ? 'FAIL' : 'UNKNOWN');
+              const baseName = name.replace(/\.rater\.json$/, "");
+              raterMap.set(baseName, judgement);
+            } catch {
+              // Ignore failure.
+            }
+          }
+        }
+      } catch {
+        // Ignore listing failure.
+      }
+
       for await (const [name] of handle.entries()) {
-        if (!name.endsWith(".json")) {
+        if (!name.endsWith(".log.json")) {
           continue;
         }
 
         const fullPath = this.#getFullFilePath(path, name);
         const parsed = parseFileName(fullPath);
         if (parsed) {
+          const baseName = name.replace(/\.log\.json$/, "");
+          parsed.judgement = raterMap.get(baseName);
           queryEntries.push(parsed);
         }
       }

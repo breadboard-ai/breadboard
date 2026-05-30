@@ -73,6 +73,9 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   @state()
   accessor bgl: GraphDescriptor | null = null;
 
+  @state()
+  accessor rater: unknown = null;
+
   @property()
   accessor selectedPath: FileSystemEvalBackendHandle | null = null;
 
@@ -682,6 +685,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
         this.contexts = [];
         this.outcome = null;
         this.bgl = null;
+        this.rater = null;
       }
       this.#updateUrl();
     }
@@ -731,6 +735,18 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
       } else {
         this.bgl = null;
       }
+
+      const raterPath = path.replace(/\.log\.json$/, ".rater.json");
+      const raterData = await this.#fileSystem.read(raterPath as FileSystemPath);
+      if (ok(raterData)) {
+        try {
+          this.rater = JSON.parse(raterData);
+        } catch {
+          this.rater = null;
+        }
+      } else {
+        this.rater = null;
+      }
     } catch (err) {
       console.warn(err);
       this.renderMode = "messages";
@@ -763,7 +779,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   #renderContents() {
     if (this.renderMode === "topology") {
       return html`<section id="topology" style="width: 100%; height: 100%;">
-        <bgl-viewer .graph=${this.bgl}></bgl-viewer>
+        <bgl-viewer .graph=${this.bgl} .rater=${this.rater}></bgl-viewer>
       </section>`;
     }
 
@@ -974,14 +990,31 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                               this.selectedFile = f;
                               this.selectedFilePath = f.path;
                             }}
+                            style="display: flex; align-items: center; justify-content: space-between; width: 100%;"
                           >
-                            ${f.date.toLocaleString(
-                              Intl.DateTimeFormat().resolvedOptions().locale,
-                              {
-                                dateStyle: "short",
-                                timeStyle: "medium",
-                              }
-                            )}
+                            <span style="flex-grow: 1; text-align: left;">
+                              ${f.date.toLocaleString(
+                                Intl.DateTimeFormat().resolvedOptions().locale,
+                                {
+                                  dateStyle: "short",
+                                  timeStyle: "medium",
+                                }
+                              )}
+                            </span>
+                            ${f.judgement ? (() => {
+                              const judgement = f.judgement;
+                              const isPass = judgement === 'PASS';
+                              const isPartial = judgement === 'PARTIAL';
+                              const isFail = judgement === 'FAIL';
+                              const color = isPass ? '#34a853' : (isPartial ? '#fbbc04' : (isFail ? '#ea4335' : 'transparent'));
+                              const icon = isPass ? 'check_circle' : (isPartial ? 'warning' : (isFail ? 'cancel' : ''));
+                              if (!icon) return nothing;
+                              return html`<span 
+                                class="g-icon filled round" 
+                                style="color: ${color}; font-size: 16px; margin-left: 8px; flex-shrink: 0;"
+                                title="Evaluation Judgement: ${judgement}"
+                              >${icon}</span>`;
+                            })() : nothing}
                           </button>
                         </li>`;
                       })}
