@@ -25,7 +25,6 @@ export type {
   AgentInputResponse,
   TransformDescriptor,
   UpdateNodeDescriptor,
-  LayoutGraphDescriptor,
   UpdateGraphPropertiesDescriptor,
   StartPayload,
   ThoughtPayload,
@@ -159,7 +158,6 @@ type ApplyEditsPayload = {
  */
 type TransformDescriptor =
   | UpdateNodeDescriptor
-  | LayoutGraphDescriptor
   | UpdateGraphPropertiesDescriptor;
 
 type UpdateGraphPropertiesDescriptor = {
@@ -179,9 +177,6 @@ type UpdateNodeDescriptor = {
   portsToAutowire: { path: string; title: string }[] | null;
 };
 
-type LayoutGraphDescriptor = {
-  kind: "layoutGraph";
-};
 
 /**
  * Suspend: server needs user consent for an operation.

@@ -6,7 +6,7 @@
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { computePositions } from "../../src/a2/agent/graph-editing/layout-graph.js";
+import { computePositions } from "../../eval/viewer/src/ui/layout-graph.js";
 import type { Edge, NodeDescriptor } from "@breadboard-ai/types";
 
 /**

@@ -212,8 +212,7 @@ function startGraphEditingAgent(firstMessage: string): void {
         event.edits.length > 0 &&
         event.edits.every(
           (e) => e.type === "changemetadata" || e.type === "changeassetmetadata"
-        )) ||
-      (event.transform && event.transform.kind === "layoutGraph");
+        ));
 
     if (result.success && isPositioning) {
       controller.editor.canvas.requestFitToView();

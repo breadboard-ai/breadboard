@@ -5,33 +5,12 @@
  */
 
 import type { Edge, NodeDescriptor } from "@breadboard-ai/types";
-import { changeNodeConfiguration } from "../../../sca/actions/graph/graph-actions.js";
-import { groupBy } from "../../../utils/group-by.js";
+import { groupBy } from "../../../../src/utils/group-by.js";
 
-export { layoutGraph, computePositions };
+export { computePositions };
 
 const HORIZONTAL_SPACING = 400;
 const VERTICAL_SPACING = 200;
-
-/**
- * Automatically position all nodes in the graph based on DAG topology.
- *
- * Algorithm:
- * 1. Compute depth for each node: depth = max(depth(parent) + 1), roots = 0
- * 2. x = depth × HORIZONTAL_SPACING
- * 3. Within each depth, stack nodes vertically: y = index × VERTICAL_SPACING
- * 4. Update each node's visual metadata
- */
-async function layoutGraph(
-  nodes: NodeDescriptor[],
-  edges: Edge[]
-): Promise<void> {
-  const positions = computePositions(nodes, edges);
-
-  for (const [nodeId, { x, y }] of positions) {
-    await changeNodeConfiguration(nodeId, "", {}, { visual: { x, y } });
-  }
-}
 
 /**
  * Compute node positions from the graph's DAG topology.
