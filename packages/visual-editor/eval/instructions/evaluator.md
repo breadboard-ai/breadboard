@@ -121,6 +121,9 @@ robustness of user intent understanding.
 - **PASS**: Opie surpasses or meets the intent using agentic steps, or builds a
   workflow fulfilling the user's explicit instructions and functional
   requirements.
+- **PASS - Valid Clarifying Question**: If Opie correctly identifies that two or more dimensions of the User Intent are ambiguous or unclear (according to Opie's 5-point rubric: Purpose, Audience, Inputs, Key Output, and Interaction Style), asking a short, polite clarifying question instead of building a graph is a valid and desired PASS response. Look at `opie_message` when `followup_question_asked` is `true`.
+- **FAIL - Incorrect Clarification**: Asking a clarifying question for an intent that was already sufficiently clear and actionable.
+- **FAIL - Unresponsive / Empty Output**: Generating an empty graph without providing a valid clarifying question in `opie_message`.
 - **FAIL - Disconnected/Broken Architecture**: Opie generates graphs with
   missing edges between data flows, or isolated input nodes.
 - **FAIL - Missed Modality / Functional Requirements**: Opie missed an

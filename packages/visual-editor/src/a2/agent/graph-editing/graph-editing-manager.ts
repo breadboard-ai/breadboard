@@ -12,7 +12,6 @@ import type {
   Outcome,
 } from "@breadboard-ai/types";
 import { UpdateNode } from "../../../ui/transforms/update-node.js";
-import { computePositions } from "./layout-graph.js";
 import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
 import type { ApplyEditsResponse } from "./types.js";
 import type { TransformDescriptor } from "../agent-event.js";
@@ -97,32 +96,6 @@ class GraphEditingManager {
           return { success: true };
         }
 
-        case "layoutGraph": {
-          const graph = editor.raw();
-          const positions = computePositions(graph.nodes ?? [], graph.edges ?? []);
-          const edits: EditSpec[] = [];
-          for (const [nodeId, { x, y }] of positions) {
-            const node = graph.nodes?.find((n) => n.id === nodeId);
-            const existingMetadata = node?.metadata ?? {};
-            const existingVisual = (existingMetadata.visual ?? {}) as Record<string, unknown>;
-            edits.push({
-              type: "changemetadata",
-              id: nodeId,
-              graphId: "",
-              metadata: {
-                ...existingMetadata,
-                visual: { ...existingVisual, x, y },
-              },
-            });
-          }
-          if (edits.length > 0) {
-            const result = await editor.edit(edits, "Layout graph");
-            if (!result.success) {
-              return { success: false, error: result.error };
-            }
-          }
-          return { success: true };
-        }
 
         case "updateGraphProperties": {
           const { title, description, themeIntent } = transform;

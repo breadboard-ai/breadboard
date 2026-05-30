@@ -27,6 +27,7 @@ import {
   A2_COMPONENT_MAP,
   A2_TOOL_MAP,
 } from "../../../../src/a2/a2-registry.js";
+import { computePositions } from "./layout-graph.js";
 
 const PARSING_REGEX = /{(?<json>{(?:.*?)})}/gim;
 
@@ -435,8 +436,34 @@ class BGLViewer extends LitElement {
       return;
     }
 
+    const graphDescriptor = JSON.parse(JSON.stringify(this.graph)) as GraphDescriptor;
+    const graphNodes = graphDescriptor.nodes || [];
+    const graphEdges = graphDescriptor.edges || [];
+
+    const allNodesAtZero = graphNodes.every((node) => {
+      const visual = (node.metadata?.visual || {}) as any;
+      return typeof visual.x !== "number" || typeof visual.y !== "number" || (visual.x === 0 && visual.y === 0);
+    });
+
+    if (allNodesAtZero && graphNodes.length > 0) {
+      const positions = computePositions(graphNodes, graphEdges);
+      for (const node of graphNodes) {
+        const pos = positions.get(node.id);
+        if (pos) {
+          if (!node.metadata) {
+            node.metadata = {};
+          }
+          if (!node.metadata.visual) {
+            node.metadata.visual = {};
+          }
+          (node.metadata.visual as any).x = pos.x;
+          (node.metadata.visual as any).y = pos.y;
+        }
+      }
+    }
+
     const graphComponent = new Graph(MAIN_BOARD_ID);
-    const nodes = (this.graph.nodes || []).map((nodeDescriptor) => {
+    const nodes = graphNodes.map((nodeDescriptor) => {
       const inspectableNode: InspectableNode = {
         descriptor: nodeDescriptor,
         title: () => nodeDescriptor.metadata?.title || nodeDescriptor.id,
@@ -518,7 +545,7 @@ class BGLViewer extends LitElement {
       nodesLookup.set(node.descriptor.id, node);
     }
 
-    const edges = (this.graph.edges || []).map((edgeDescriptor) => {
+    const edges = graphEdges.map((edgeDescriptor) => {
       const inspectableEdge: InspectableEdge = {
         raw: () => edgeDescriptor,
         get from() {
@@ -553,7 +580,7 @@ class BGLViewer extends LitElement {
     let minY = Number.POSITIVE_INFINITY;
     let maxY = Number.NEGATIVE_INFINITY;
 
-    for (const node of this.graph.nodes || []) {
+    for (const node of graphNodes) {
       const visual = (node.metadata?.visual || {}) as any;
       const x = visual.x ?? 0;
       const y = visual.y ?? 0;

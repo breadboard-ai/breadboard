@@ -255,6 +255,8 @@ class GraphEditingEvalHarness {
                 intent: csvEntry.intent,
                 expected_graph: JSON.parse(csvEntry.breadboard_json),
                 generated_graph: run.graph,
+                opie_message: run.lastMessage || null,
+                followup_question_asked: (run.graph.nodes?.length ?? 0) === 0 && !!run.lastMessage,
               })),
             ],
             systemInstruction: toLLMContent(evalSystemInstruction, "user"),
@@ -334,7 +336,9 @@ class GraphEditingEvalHarness {
         batchCSVRows.push({
           translated_intent: translatedIntent,
           breadboard_json: csvEntry.breadboard_json,
-          opie_output: JSON.stringify(run.graph, null, 2),
+          opie_output: (run.graph.nodes?.length ?? 0) === 0 && run.lastMessage 
+            ? `[Clarifying Question]: ${run.lastMessage}` 
+            : JSON.stringify(run.graph, null, 2),
           score: score,
           explanation: explanation,
           original_intent: csvEntry.intent,
