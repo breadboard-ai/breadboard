@@ -15,3 +15,4 @@
  */
 
 export { Splitter } from "./splitter.js";
+export { BGLViewer } from "./bgl-viewer.js";
