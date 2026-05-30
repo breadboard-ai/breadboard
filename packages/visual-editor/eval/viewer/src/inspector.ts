@@ -22,7 +22,8 @@ import * as Theme from "../../../src/theme/index.js";
 import "../../../src/ui/app-templates/basic/a2ui-custom-elements/index.js";
 import "./ui/ui.js";
 
-import { FileSystemPath, Outcome } from "@breadboard-ai/types";
+import { FileSystemPath, GraphDescriptor, Outcome } from "@breadboard-ai/types";
+import "./ui/bgl-viewer.js";
 import { ok } from "@breadboard-ai/utils";
 import { map } from "lit/directives/map.js";
 import { signal } from "signal-utils";
@@ -42,7 +43,7 @@ import { OutcomePayload, EvalFileData } from "../../../src/types/types.js";
 import "./ui/contexts-viewer.js";
 import "./ui/outcome-viewer.js";
 
-type RenderMode = "surfaces" | "messages" | "contexts" | "outcome";
+type RenderMode = "surfaces" | "messages" | "contexts" | "outcome" | "topology";
 
 const RENDER_MODE_KEY = "eval-inspector-render-mode";
 
@@ -68,6 +69,9 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
   @state()
   accessor outcome: OutcomePayload | null = null;
+
+  @state()
+  accessor bgl: GraphDescriptor | null = null;
 
   @property()
   accessor selectedPath: FileSystemEvalBackendHandle | null = null;
@@ -176,7 +180,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
     if (
       mode &&
-      ["surfaces", "messages", "contexts", "outcome"].includes(mode)
+      ["surfaces", "messages", "contexts", "outcome", "topology"].includes(mode)
     ) {
       this.renderMode = mode;
     }
@@ -677,6 +681,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
         this.#surfaces = [];
         this.contexts = [];
         this.outcome = null;
+        this.bgl = null;
       }
       this.#updateUrl();
     }
@@ -714,6 +719,18 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           this.#processor.processMessages(surface);
         }
       }
+
+      const bglPath = path.replace(/\.log\.json$/, ".bgl.json");
+      const bglData = await this.#fileSystem.read(bglPath as FileSystemPath);
+      if (ok(bglData)) {
+        try {
+          this.bgl = JSON.parse(bglData) as GraphDescriptor;
+        } catch {
+          this.bgl = null;
+        }
+      } else {
+        this.bgl = null;
+      }
     } catch (err) {
       console.warn(err);
       this.renderMode = "messages";
@@ -744,6 +761,12 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   }
 
   #renderContents() {
+    if (this.renderMode === "topology") {
+      return html`<section id="topology" style="width: 100%; height: 100%;">
+        <bgl-viewer .graph=${this.bgl}></bgl-viewer>
+      </section>`;
+    }
+
     if (this.#requesting) {
       return html`<section id="surfaces">
         <div id="generating-surfaces">
@@ -1020,6 +1043,18 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
               >
                 <span class="g-icon filled round">forum</span>Contexts
               </button>
+
+              ${this.bgl
+                ? html`<button
+                    class=${classMap({
+                      active: this.#renderMode === "topology",
+                    })}
+                    @click=${() => (this.renderMode = "topology")}
+                    title="View BGL Topology"
+                  >
+                    <span class="g-icon filled round">hub</span>Topology
+                  </button>`
+                : nothing}
 
               <button
                 class=${classMap({ active: this.#renderMode === "outcome" })}

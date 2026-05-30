@@ -1,0 +1,646 @@
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import {
+  GraphDescriptor,
+  InspectableEdge,
+  InspectableNode,
+  InspectableEdgeType,
+} from "@breadboard-ai/types";
+import { icons } from "../../../../src/ui/styles/icons.js";
+import { css, html, LitElement, nothing, PropertyValues } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+import { createRef, Ref, ref } from "lit/directives/ref.js";
+import { classMap } from "lit/directives/class-map.js";
+import { Graph } from "../../../../src/ui/elements/step-editor/graph.js";
+import { MAIN_BOARD_ID } from "../../../../src/sca/constants.js";
+import { provide } from "@lit/context";
+import { scaContext } from "../../../../src/sca/context/context.js";
+import { ok } from "@breadboard-ai/utils";
+import { A2_TOOLS } from "../../../../src/a2/a2-registry.js";
+import {
+  A2_COMPONENT_MAP,
+  A2_TOOL_MAP,
+} from "../../../../src/a2/a2-registry.js";
+
+const PARSING_REGEX = /{(?<json>{(?:.*?)})}/gim;
+
+function isTemplatePart(o: unknown): o is any {
+  if (!o || typeof o !== "object") return false;
+  return "type" in o && "path" in o && "title" in o;
+}
+
+function splitToParts(value: string): any[] {
+  const parts: any[] = [];
+  const matches = value.matchAll(PARSING_REGEX);
+  let start = 0;
+
+  for (const match of matches) {
+    const json = match.groups?.json;
+    const end = match.index;
+    if (end > start) {
+      parts.push(value.slice(start, end));
+    }
+    if (json) {
+      let maybeTemplatePart;
+      try {
+        maybeTemplatePart = JSON.parse(json);
+        if (isTemplatePart(maybeTemplatePart)) {
+          parts.push(maybeTemplatePart);
+        } else {
+          maybeTemplatePart = null;
+        }
+      } catch {
+        // do nothing
+      } finally {
+        if (!maybeTemplatePart) {
+          parts.push(value.slice(end, end + match[0].length));
+        }
+      }
+    }
+    start = end + match[0].length;
+  }
+  if (start < value.length) {
+    parts.push(value.slice(start));
+  }
+  const merged: any[] = [];
+  for (const part of parts) {
+    if (typeof part === "string") {
+      const last = merged.at(-1);
+      if (last && typeof last === "string") {
+        merged[merged.length - 1] = last + part;
+        continue;
+      }
+    }
+    merged.push(part);
+  }
+  return merged;
+}
+
+export { BGLViewer };
+
+@customElement("bgl-viewer")
+class BGLViewer extends LitElement {
+  @property()
+  accessor graph: GraphDescriptor | null = null;
+
+  @provide({ context: scaContext })
+  accessor sca: any = {
+    controller: {
+      editor: {
+        graph: {
+          getMetadataForNode: (id: string, _gId: string) => {
+            const node = this.graph?.nodes.find((n: any) => n.id === id);
+            const a2Component = node ? A2_COMPONENT_MAP.get(node.type) : undefined;
+            return ok({
+              icon: node?.metadata?.icon || a2Component?.icon || "hub",
+              tags: node?.metadata?.tags || [],
+            });
+          },
+          getPortsForNode: (_id: string, _gId: string) =>
+            ok({
+              inputs: { ports: [] },
+              outputs: { ports: [] },
+            }),
+          getTitleForNode: (id: string, _gId: string) => {
+            const node = this.graph?.nodes.find((n: any) => n.id === id);
+            const a2Component = node ? A2_COMPONENT_MAP.get(node.type) : undefined;
+            return ok(node?.metadata?.title || a2Component?.title || id);
+          },
+          tools: new Map(A2_TOOLS),
+          graphAssets: new Map(),
+        },
+        integrations: {
+          registered: new Map(),
+        },
+      },
+    },
+    env: {
+      flags: {
+        get: (_flag: string) => false,
+      },
+    },
+  };
+
+  @state()
+  accessor #graphComponent: Graph | null = null;
+
+  @state()
+  accessor #selectedNode: any = null;
+
+  #dialogRef: Ref<HTMLDialogElement> = createRef();
+
+  static styles = [
+    icons,
+    css`
+    :host {
+      display: block;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background: var(--light-dark-n-95);
+      overflow: hidden;
+    }
+
+    #container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform: translate(0, 0);
+      contain: strict;
+      overflow: hidden;
+    }
+
+    #bgl-header {
+      position: absolute;
+      top: var(--bb-grid-size-5);
+      left: var(--bb-grid-size-6);
+      z-index: 5;
+      pointer-events: none;
+      max-width: 600px;
+
+      h1 {
+        margin: 0 0 var(--bb-grid-size) 0;
+        font-size: 22px;
+        font-weight: 500;
+        color: light-dark(var(--n-10), var(--n-90));
+      }
+
+      p {
+        margin: 0;
+        font-size: 14px;
+        color: light-dark(var(--n-30), var(--n-70));
+        line-height: 1.5;
+      }
+    }
+
+    dialog {
+      border: none;
+      border-radius: var(--bb-grid-size-4);
+      padding: var(--bb-grid-size-6);
+      background: var(--light-dark-n-100);
+      color: var(--light-dark-n-0);
+      box-shadow: 0 16px 48px oklch(from var(--light-dark-n-10) l c h / 0.3);
+      max-width: 720px;
+      width: 85vw;
+      max-height: 85vh;
+      overflow: hidden;
+      font-family: var(--font-family);
+
+      &::backdrop {
+        background: oklch(from var(--light-dark-n-10) l c h / 0.5);
+        backdrop-filter: blur(4px);
+      }
+
+      form {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      #dialog-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--bb-grid-size-4);
+        flex-shrink: 0;
+
+        h2 {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 500;
+        }
+
+        button {
+          background: none;
+          border: none;
+          color: var(--light-dark-n-60);
+          cursor: pointer;
+          padding: var(--bb-grid-size-2);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.2s cubic-bezier(0, 0, 0.3, 1), color 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+          &:hover {
+            background: var(--light-dark-n-95);
+            color: var(--light-dark-n-0);
+          }
+        }
+      }
+
+      #dialog-body {
+        overflow-y: auto;
+        flex-grow: 1;
+
+        pre {
+          background: var(--light-dark-n-95);
+          padding: var(--bb-grid-size-4);
+          border-radius: var(--bb-grid-size-2);
+          margin: 0;
+          white-space: pre-wrap;
+          font-family: var(--font-family-mono);
+          font-size: 13px;
+          line-height: 1.6;
+          color: var(--light-dark-n-10);
+
+          .chip-chiclet {
+            display: inline-flex;
+            background: oklch(from var(--primary) l c h / calc(alpha * 0.18));
+            border: 1px solid oklch(from var(--primary) l c h / calc(alpha * 0.3));
+            border-radius: var(--bb-grid-size-4);
+            padding: 1px var(--bb-grid-size-2) 1px var(--bb-grid-size);
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--light-dark-n-0);
+            margin: 0 3px;
+            vertical-align: text-bottom;
+            height: 18px;
+            line-height: 16px;
+            box-sizing: border-box;
+
+            &.invalid {
+              border-color: var(--light-dark-e-40);
+              background: oklch(from var(--light-dark-e-40) l c h / 0.15);
+              color: var(--light-dark-e-20);
+
+              & .g-icon {
+                color: var(--light-dark-e-20);
+              }
+            }
+
+            .g-icon {
+              font-size: 13px;
+              width: 14px;
+              height: 14px;
+              margin-right: var(--bb-grid-size);
+              color: var(--primary);
+              vertical-align: middle;
+            }
+          }
+        }
+
+        .config-item {
+          margin-bottom: var(--bb-grid-size-4);
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 var(--bb-grid-size-2) 0;
+            color: var(--light-dark-n-40);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+        }
+      }
+    `,
+  ];
+
+  protected updated(changedProperties: PropertyValues<this>) {
+    if (changedProperties.has("graph")) {
+      this.#rebuildGraph();
+    }
+  }
+
+  #rebuildGraph() {
+    if (!this.graph) {
+      this.#graphComponent = null;
+      return;
+    }
+
+    const graphComponent = new Graph(MAIN_BOARD_ID);
+    const nodes = (this.graph.nodes || []).map((nodeDescriptor) => {
+      const inspectableNode: InspectableNode = {
+        descriptor: nodeDescriptor,
+        title: () => nodeDescriptor.metadata?.title || nodeDescriptor.id,
+        description: () =>
+          nodeDescriptor.metadata?.description ||
+          nodeDescriptor.metadata?.title ||
+          nodeDescriptor.id,
+        incoming: () => [],
+        outgoing: () => [],
+        isEntry: () => false,
+        isExit: () => false,
+        isStart: () => false,
+        type: () => {
+          const a2Component = A2_COMPONENT_MAP.get(nodeDescriptor.type);
+          const a2Tool = A2_TOOL_MAP.get(nodeDescriptor.type);
+          const icon =
+            nodeDescriptor.metadata?.icon ||
+            a2Component?.icon ||
+            a2Tool?.icon ||
+            undefined;
+          const tags =
+            nodeDescriptor.metadata?.tags ||
+            (a2Component as any)?.category ? [ (a2Component as any).category ] :
+            [];
+
+          return {
+            currentMetadata: () => ({
+              icon,
+              tags,
+            }),
+            type: () => nodeDescriptor.type,
+          } as any;
+        },
+        configuration: () => nodeDescriptor.configuration || {},
+        metadata: () => nodeDescriptor.metadata || {},
+        describe: async () =>
+          ({
+            current: { inputSchema: {}, outputSchema: {} },
+            latest: { inputSchema: {}, outputSchema: {} },
+          }) as any,
+        currentDescribe: () =>
+          ({
+            current: { inputSchema: {}, outputSchema: {} },
+            latest: { inputSchema: {}, outputSchema: {} },
+          }) as any,
+        currentPorts: () => {
+          const config = nodeDescriptor.configuration || {};
+          const synthesizedPorts = Object.entries(config).map(([key, value]) => {
+            return {
+              name: key,
+              title: key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()),
+              value: value,
+              schema: {
+                type: typeof value === "object" && value !== null ? "object" : "string",
+                behavior: ["hint-preview", "llm-content"],
+              },
+            };
+          });
+
+          return {
+            inputs: { ports: synthesizedPorts },
+            outputs: { ports: [] },
+            updating: false,
+          } as any;
+        },
+        ports: async () =>
+          ({
+            inputs: { ports: [] },
+            outputs: { ports: [] },
+            updating: false,
+          }) as any,
+        routes: () => [],
+      };
+      return inspectableNode;
+    });
+
+    const nodesLookup = new Map<string, InspectableNode>();
+    for (const node of nodes) {
+      nodesLookup.set(node.descriptor.id, node);
+    }
+
+    const edges = (this.graph.edges || []).map((edgeDescriptor) => {
+      const inspectableEdge: InspectableEdge = {
+        raw: () => edgeDescriptor,
+        get from() {
+          return nodesLookup.get(edgeDescriptor.from)!;
+        },
+        get to() {
+          return nodesLookup.get(edgeDescriptor.to)!;
+        },
+        get out() {
+          return (edgeDescriptor.out as string) || "";
+        },
+        get in() {
+          return edgeDescriptor.out === "*"
+            ? "*"
+            : (edgeDescriptor.in as string) || "";
+        },
+        get type() {
+          if (edgeDescriptor.out === "*") return InspectableEdgeType.Star;
+          if (edgeDescriptor.out === "") return InspectableEdgeType.Control;
+          if (edgeDescriptor.constant) return InspectableEdgeType.Constant;
+          return InspectableEdgeType.Ordinary;
+        },
+        metadata: () => edgeDescriptor.metadata || {},
+        outPort: () => undefined as any,
+        inPort: () => undefined as any,
+      };
+      return inspectableEdge;
+    });
+
+    let minX = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+
+    for (const node of this.graph.nodes || []) {
+      const visual = (node.metadata?.visual || {}) as any;
+      const x = visual.x ?? 0;
+      const y = visual.y ?? 0;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+
+    graphComponent.boundsLabel = this.graph.title || "Topology";
+    graphComponent.nodes = nodes;
+    graphComponent.edges = edges;
+    graphComponent.readOnly = true;
+    graphComponent.allowEdgeAttachmentMove = false;
+    graphComponent.resetTransform();
+
+    // Call updateEntity to arrange the nodes and compute world transforms
+    requestAnimationFrame(() => {
+      try {
+        const rect = this.getBoundingClientRect();
+        const W = rect.width > 0 ? rect.width : 800;
+        const H = rect.height > 0 ? rect.height : 600;
+
+        if (
+          Number.isFinite(minX) &&
+          Number.isFinite(maxX) &&
+          Number.isFinite(minY) &&
+          Number.isFinite(maxY)
+        ) {
+          const maxXWithWidth = maxX + 300;
+          const maxYWithHeight = maxY + 150;
+          const graphWidth = maxXWithWidth - minX;
+          const graphHeight = maxYWithHeight - minY;
+
+          const centerX = minX + graphWidth / 2;
+          const centerY = minY + graphHeight / 2;
+
+          const padding = 128;
+          const paddedW = Math.max(W - padding, 200);
+          const paddedH = Math.max(H - padding, 200);
+
+          const scaleX = paddedW / graphWidth;
+          const scaleY = paddedH / graphHeight;
+
+          let scale = Math.min(scaleX, scaleY);
+          scale = Math.max(0.1, Math.min(1.0, scale));
+
+          graphComponent.transform.a = scale;
+          graphComponent.transform.d = scale;
+
+          graphComponent.transform.e = W / 2 - centerX * scale;
+          graphComponent.transform.f = H / 2 - centerY * scale;
+        }
+
+        graphComponent.updateEntity();
+        this.requestUpdate();
+      } catch (err) {
+        console.warn("BGLViewer: updateEntity failed", err);
+      }
+    });
+
+    this.#graphComponent = graphComponent;
+  }
+
+  #showModal(node: any) {
+    this.#selectedNode = node;
+    this.requestUpdate();
+    requestAnimationFrame(() => {
+      this.#dialogRef.value?.showModal();
+    });
+  }
+
+  #renderModal() {
+    if (!this.#selectedNode) {
+      return nothing;
+    }
+
+    const config = this.#selectedNode.configuration || {};
+    const metadata = this.#selectedNode.metadata || {};
+    const title = metadata.title || this.#selectedNode.id;
+
+    return html`<dialog ${ref(this.#dialogRef)}>
+      <form method="dialog">
+        <div id="dialog-header">
+          <h2>${title}</h2>
+          <button type="submit" aria-label="Close">
+            <span class="g-icon filled round">close</span>
+          </button>
+        </div>
+        <div id="dialog-body">
+          <div class="config-item">
+            <h3>Type</h3>
+            <pre>${this.#selectedNode.type}</pre>
+          </div>
+          ${Object.entries(config).map(([key, value]) => {
+            let isLLMContent = false;
+            let formattedValue: any = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+            if ((key === "config$prompt" || key === "description" || key === "text") && typeof value === "object" && value !== null && "parts" in (value as any)) {
+              isLLMContent = true;
+              const parts = (value as any).parts || [];
+              const textParts = parts.filter((p: any) => typeof p.text === "string").map((p: any) => p.text);
+              if (textParts.length > 0) {
+                formattedValue = textParts.join("\n\n");
+              }
+            }
+
+            const renderChiclets = (text: string) => {
+              const parts = splitToParts(text);
+              return parts.map((part) => {
+                if (typeof part === "string") {
+                  return html`${part}`;
+                }
+
+                let icon: any = "hub";
+                let title = part.title || part.path;
+
+                if (part.type === "tool") {
+                  const toolInfo = A2_TOOL_MAP.get(part.path);
+                  if (toolInfo) {
+                    icon = toolInfo.icon || "spark";
+                    title = toolInfo.title || title;
+                  } else {
+                    icon = "spark";
+                  }
+                } else if (part.type === "in") {
+                  const sourceNode = this.graph?.nodes.find((n: any) => n.id === part.path);
+                  if (sourceNode) {
+                    const a2Component = A2_COMPONENT_MAP.get(sourceNode.type);
+                    icon = sourceNode.metadata?.icon || a2Component?.icon || "arrow_forward";
+                    title = sourceNode.metadata?.title || a2Component?.title || title;
+                  } else {
+                    icon = "arrow_forward";
+                  }
+                } else if (part.type === "asset") {
+                  icon = "attach_file";
+                }
+
+                if (icon === "ask-user") {
+                  icon = "chat_mirror";
+                }
+
+                const classes = {
+                  "chip-chiclet": true,
+                  "invalid": !!part.invalid,
+                  "tool": part.type === "tool",
+                  "asset": part.type === "asset",
+                  "in": part.type === "in",
+                };
+
+                return html`<span class=${classMap(classes)} title=${part.path}>
+                  <span class="g-icon filled round">${icon}</span>
+                  ${title}
+                </span>`;
+              });
+            };
+
+            return html`<div class="config-item">
+              <h3>${key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}</h3>
+              <pre>${isLLMContent && typeof formattedValue === "string" ? renderChiclets(formattedValue) : formattedValue}</pre>
+            </div>`;
+          })}
+        </div>
+      </form>
+    </dialog>`;
+  }
+
+  render() {
+    if (!this.#graphComponent) {
+      return html`<div
+        style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--light-dark-n-60);"
+      >
+        No BGL Topology Available
+      </div>`;
+    }
+
+    const title = this.graph?.title || "Untitled Topology";
+    const description = this.graph?.description || "";
+
+    return html`<div id="bgl-header">
+        <h1>${title}</h1>
+        ${description ? html`<p>${description}</p>` : nothing}
+      </div>
+      <div
+        id="container"
+        @click=${(evt: Event) => {
+          const path = evt.composedPath();
+          const graphNode = path.find(
+            (el) => el instanceof HTMLElement && el.tagName === "BB-GRAPH-NODE"
+          ) as any;
+
+          if (graphNode) {
+            const nodeId = graphNode.nodeId;
+            const nodeDescriptor = this.graph?.nodes.find((n) => n.id === nodeId);
+            if (nodeDescriptor) {
+              this.#showModal(nodeDescriptor);
+            }
+          }
+        }}
+      >
+        ${this.#graphComponent}
+      </div>
+      ${this.#renderModal()}`;
+  }
+}

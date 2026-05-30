@@ -311,7 +311,7 @@ class GraphEditingEvalHarness {
       const filename = `${toKebabFilename(this.args.name)}-${toKebabFilename(evalName)}-${timestamp()}`;
       const harFilename = `${filename}.har`;
       const logFilename = `${filename}.log.json`;
-      const graphFilename = `${filename}.graph.json`;
+      const graphFilename = `${filename}.bgl.json`;
 
       await writeFile(
         join(OUT_DIR, `${harFilename}`),
