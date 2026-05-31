@@ -810,7 +810,55 @@ class BGLViewer extends LitElement {
           </button>
         </div>
         <div id="dialog-body">
-          ${Object.entries(this.rater || {}).map(([key, value]) => {
+          ${(() => {
+            const raterObj = this.rater || {};
+            const overallJudgement = (raterObj as any)?.overall_judgement;
+            if (!overallJudgement) return nothing;
+
+            const isPass = overallJudgement === 'PASS';
+            const isPartial = overallJudgement === 'PARTIAL';
+            const isFail = overallJudgement === 'FAIL';
+            const color = isPass ? '#34a853' : (isPartial ? '#fbbc04' : (isFail ? '#ea4335' : 'var(--light-dark-n-60)'));
+            const bgColor = isPass ? 'oklch(from #34a853 l c h / 0.12)' : (isPartial ? 'oklch(from #fbbc04 l c h / 0.12)' : (isFail ? 'oklch(from #ea4335 l c h / 0.12)' : 'var(--elevated-background-light)'));
+            const borderColor = isPass ? '#34a853' : (isPartial ? '#fbbc04' : (isFail ? '#ea4335' : 'var(--border-color)'));
+            const icon = isPass ? 'check_circle' : (isPartial ? 'warning' : (isFail ? 'cancel' : 'info'));
+            
+            const location: NoteLocation = {
+              type: "rater",
+              fieldName: "overall_judgement",
+            };
+
+            return html`<div style="background: ${bgColor}; border: 1px solid oklch(from ${borderColor} l c h / 0.4); border-radius: var(--bb-grid-size-3); padding: var(--bb-grid-size-4); margin-bottom: var(--bb-grid-size-5); display: flex; flex-direction: column; gap: var(--bb-grid-size-3);">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: var(--bb-grid-size-3);">
+                  <span class="g-icon filled round" style="color: ${color}; font-size: 28px;">${icon}</span>
+                  <div>
+                    <h3 style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--light-dark-n-40); letter-spacing: 0.5px; margin: 0 0 4px 0;">Overall Judgement</h3>
+                    <div style="font-size: 22px; font-weight: 700; color: var(--light-dark-n-0);">${overallJudgement}</div>
+                  </div>
+                </div>
+                ${(() => {
+                  const humanReactionNote = Array.isArray(this.notes) 
+                    ? this.notes.find((n) => n.location.type === "rater" && n.location.fieldName === "overall_judgement" && n.reaction)
+                    : null;
+                  const humanReaction = humanReactionNote?.reaction;
+                  if (!humanReaction) return nothing;
+
+                  const isGood = humanReaction === "good";
+                  const hColor = isGood ? "#34a853" : "#ea4335";
+                  const hText = isGood ? "Human Agrees" : "Marked AI Wrong";
+                  const hIcon = isGood ? "thumb_up" : "thumb_down";
+
+                  return html`<div style="display: flex; align-items: center; gap: var(--bb-grid-size-2); font-size: 12px; font-weight: 600; background: var(--light-dark-n-100); padding: var(--bb-grid-size-2) var(--bb-grid-size-3); border-radius: 20px; border: 1px solid var(--border-color); color: ${hColor}; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <span class="g-icon filled round" style="font-size: 14px; color: ${hColor};">${hIcon}</span>
+                    <span>${hText}</span>
+                  </div>`;
+                })()}
+              </div>
+              <ui-notes-container .location=${location} .notes=${this.#getNotesForLocation(location)}></ui-notes-container>
+            </div>`;
+          })()}
+          ${Object.entries(this.rater || {}).filter(([k]) => k !== "overall_judgement").map(([key, value]) => {
             if (key === "dimensions" && typeof value === "object" && value !== null) {
               return html`<div class="config-item">
                 <h3>Dimensions</h3>
@@ -1099,7 +1147,7 @@ class BGLViewer extends LitElement {
               <span>${text}</span>
             </div>`;
           })()}
-          <button @click=${() => this.#showRaterModal()}>Show Details</button>
+          <button @click=${() => this.#showRaterModal()}>Rating Details</button>
           <button 
             style="margin-top: var(--bb-grid-size); ${(this.notes || []).length > 0 ? '' : 'opacity: 0.5;'}" 
             @click=${() => this.#showAllNotesModal()}
