@@ -20,8 +20,10 @@ import { A2UIRenderer } from "../types.js";
 
 export { SmartLayoutPipeline };
 
-const SPEC_MODEL = "gemini-3-flash-preview";
-const TEMPLATE_MODEL = "gemini-3-flash-preview";
+import { MODEL_ALIAS_TEXT_FLASH } from "../../a2/gemini.js";
+
+const SPEC_MODEL = MODEL_ALIAS_TEXT_FLASH;
+const TEMPLATE_MODEL = MODEL_ALIAS_TEXT_FLASH;
 
 export type SmartLayoutPipelineArgs = {
   moduleArgs: A2ModuleArgs;

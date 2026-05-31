@@ -39,6 +39,12 @@ import musicGenerator, {
   describe as describeMusicGenerator,
 } from "../music-generator/main.js";
 import type { ModelConstraint } from "../agent/functions/generate.js";
+import {
+  MODEL_ALIAS_TEXT_LITE,
+  MODEL_ALIAS_TEXT_FLASH,
+  MODEL_ALIAS_TEXT_PRO,
+  MODEL_ALIAS_IMAGE_PRO,
+} from "../a2/gemini.js";
 
 export { invoke as default, describe };
 
@@ -99,6 +105,8 @@ const PROMPT_PORT = "config$prompt";
 
 const LIMIT_MSG = "generation has a daily limit";
 
+const DEPRECATED_TEXT_MODEL_FALLBACK = MODEL_ALIAS_TEXT_LITE;
+
 const ALL_MODES: Mode[] = [
   {
     id: "agent",
@@ -107,7 +115,7 @@ const ALL_MODES: Mode[] = [
     title: "Agent",
     description: "Agent can use any models",
     icon: "button_magic",
-    modelName: "gemini-3-flash-preview",
+    modelName: MODEL_ALIAS_TEXT_FLASH,
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
     portMap: new Map([[PROMPT_PORT, "description"]]),
@@ -117,6 +125,7 @@ const ALL_MODES: Mode[] = [
     describe: describeGenerateText,
   },
   {
+    // DEPRECATED (included in HIDDEN_MODE_IDS); fallback to DEPRECATED_TEXT_MODEL_FALLBACK
     id: "text-2.0-flash",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
@@ -124,7 +133,7 @@ const ALL_MODES: Mode[] = [
     description: "Older model, use sparingly",
     hidden: true,
     icon: "text_analysis",
-    modelName: "gemini-2.0-flash",
+    modelName: DEPRECATED_TEXT_MODEL_FALLBACK,
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
     portMap: new Map([[PROMPT_PORT, "description"]]),
@@ -140,7 +149,7 @@ const ALL_MODES: Mode[] = [
     title: "Gemini 3 Flash",
     description: "Best for everyday tasks",
     icon: "text_analysis",
-    modelName: "gemini-3-flash-preview",
+    modelName: MODEL_ALIAS_TEXT_FLASH,
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
     portMap: new Map([[PROMPT_PORT, "description"]]),
@@ -150,13 +159,14 @@ const ALL_MODES: Mode[] = [
     describe: describeGenerateText,
   },
   {
+    // DEPRECATED (included in HIDDEN_MODE_IDS); fallback to DEPRECATED_TEXT_MODEL_FALLBACK
     id: "text",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 3.1 Flash Lite",
     description: "Good model for everyday tasks",
     icon: "text_analysis",
-    modelName: "gemini-3.1-flash-lite",
+    modelName: DEPRECATED_TEXT_MODEL_FALLBACK,
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
     portMap: new Map([[PROMPT_PORT, "description"]]),
@@ -166,13 +176,14 @@ const ALL_MODES: Mode[] = [
     describe: describeGenerateText,
   },
   {
+    // DEPRECATED (included in HIDDEN_MODE_IDS); fallback to DEPRECATED_TEXT_MODEL_FALLBACK
     id: "text-2.5-pro",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.5 Pro",
     description: "Good model for complex tasks",
     icon: "text_analysis",
-    modelName: "gemini-2.5-pro",
+    modelName: DEPRECATED_TEXT_MODEL_FALLBACK,
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
     portMap: new Map([[PROMPT_PORT, "description"]]),
@@ -188,7 +199,7 @@ const ALL_MODES: Mode[] = [
     title: "Gemini 3.1 Pro",
     description: "Best for complex tasks",
     icon: "text_analysis",
-    modelName: "gemini-3.1-pro-preview",
+    modelName: MODEL_ALIAS_TEXT_PRO,
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
     portMap: new Map([[PROMPT_PORT, "description"]]),
@@ -198,13 +209,14 @@ const ALL_MODES: Mode[] = [
     describe: describeGenerateText,
   },
   {
+    // DEPRECATED (included in HIDDEN_MODE_IDS); fallback to DEPRECATED_TEXT_MODEL_FALLBACK
     id: "think",
     type: "think",
     url: "embed://a2/go-over-list.bgl.json#module:main",
     title: "Plan and Execute with Gemini 3.1 Flash Lite",
     description: "Plans and executes complex tasks",
     icon: "spark",
-    modelName: "gemini-3.1-flash-lite",
+    modelName: DEPRECATED_TEXT_MODEL_FALLBACK,
     promptPlaceholderText:
       "Type your goal here. Use @ to include other content.",
     portMap: new Map([[PROMPT_PORT, "plan"]]),
@@ -214,13 +226,14 @@ const ALL_MODES: Mode[] = [
     describe: describeGoOverList,
   },
   {
+    // DEPRECATED (included in HIDDEN_MODE_IDS); fallback to DEPRECATED_TEXT_MODEL_FALLBACK
     id: "deep-research",
     type: "deep-research",
     url: "embed://a2/deep-research.bgl.json#module:main",
     title: "Deep Research with Gemini 3.1 Flash Lite",
     description: "In-depth research on your topic",
     icon: "spark",
-    modelName: "gemini-3.1-flash-lite",
+    modelName: DEPRECATED_TEXT_MODEL_FALLBACK,
     promptPlaceholderText:
       "Type your research query here. Use @ to include other content.",
     portMap: new Map([[PROMPT_PORT, "query"]]),
@@ -230,6 +243,7 @@ const ALL_MODES: Mode[] = [
     describe: describeDeepResearch,
   },
   {
+    // DEPRECATED (included in HIDDEN_MODE_IDS)
     id: "image-gen",
     type: "image-gen",
     url: "embed://a2/a2.bgl.json#module:image-generator",
@@ -269,7 +283,7 @@ const ALL_MODES: Mode[] = [
     title: "Nano Banana Pro",
     description: "For complex visuals with text",
     icon: "photo_spark",
-    modelName: "gemini-3-pro-image-preview",
+    modelName: MODEL_ALIAS_IMAGE_PRO,
     promptPlaceholderText:
       "Type your image prompt here. Use @ to include other content.",
     info: `Image ${LIMIT_MSG}`,

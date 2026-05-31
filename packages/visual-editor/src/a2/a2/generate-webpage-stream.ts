@@ -54,7 +54,6 @@ type StreamingRequestPart = {
 
 type StreamingRequestBody = {
   intent: string;
-  modelName: string;
   userInstruction: string;
   contents: Array<{
     parts: StreamingRequestPart[];
@@ -73,8 +72,7 @@ type StreamingRequestBody = {
  */
 function buildStreamingRequestBody(
   instruction: string,
-  content: LLMContent[],
-  modelName: string
+  content: LLMContent[]
 ): StreamingRequestBody {
   const contents: StreamingRequestBody["contents"] = [];
   const driveResourceKeys: StreamingRequestBody["driveResourceKeys"] = {};
@@ -139,7 +137,6 @@ function buildStreamingRequestBody(
 
   const requestBody: StreamingRequestBody = {
     intent: "",
-    modelName,
     userInstruction: instruction,
     contents,
   };
@@ -188,18 +185,17 @@ function parseStoredDataUrl(handle: string): string {
 async function executeWebpageStream(
   moduleArgs: A2ModuleArgs,
   instruction: string,
-  content: LLMContent[],
-  modelName: string
+  content: LLMContent[]
 ): Promise<Outcome<LLMContent>> {
   const reporter = createReporter(moduleArgs, {
-    title: `Generating webpage with ${modelName}`,
+    title: `Generating webpage`,
     icon: "web",
   });
 
   const { appScreen } = getCurrentStepState(moduleArgs);
 
   try {
-    reporter.addJson("Preparing request", { modelName }, "upload");
+    reporter.addJson("Preparing request", {}, "upload");
 
     if (appScreen) appScreen.progress = "Generating HTML";
 
@@ -209,8 +205,7 @@ async function executeWebpageStream(
 
     const requestBody = buildStreamingRequestBody(
       instruction,
-      content,
-      modelName
+      content
     );
 
     const response = await moduleArgs.fetchWithCreds(url.toString(), {
