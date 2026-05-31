@@ -23,6 +23,9 @@ import { provide } from "@lit/context";
 import { scaContext } from "../../../../src/sca/context/context.js";
 import { ok } from "@breadboard-ai/utils";
 import { A2_TOOLS } from "../../../../src/a2/a2-registry.js";
+import "../../../../src/ui/elements/graph-editing-chat/opie-avatar.js";
+import "../../../../src/ui/elements/json-tree/json-tree.js";
+import { parseThought } from "../../../../src/a2/agent/thought-parser.js";
 import {
   A2_COMPONENT_MAP,
   A2_TOOL_MAP,
@@ -93,6 +96,9 @@ class BGLViewer extends LitElement {
   @property()
   accessor rater: Record<string, unknown> | null = null;
 
+  @property()
+  accessor transcript: unknown[] | null = null;
+
   @provide({ context: scaContext })
   accessor sca: any = {
     controller: {
@@ -139,6 +145,7 @@ class BGLViewer extends LitElement {
 
   #dialogRef: Ref<HTMLDialogElement> = createRef();
   #raterDialogRef: Ref<HTMLDialogElement> = createRef();
+  #transcriptDialogRef: Ref<HTMLDialogElement> = createRef();
 
   static styles = [
     icons,
@@ -809,6 +816,85 @@ class BGLViewer extends LitElement {
     </dialog>`;
   }
 
+  #showTranscriptModal() {
+    this.requestUpdate();
+    requestAnimationFrame(() => {
+      this.#transcriptDialogRef.value?.showModal();
+    });
+  }
+
+  #renderTranscriptModal() {
+    if (!this.transcript || this.transcript.length === 0) {
+      return nothing;
+    }
+
+    return html`<dialog ${ref(this.#transcriptDialogRef)}>
+      <form method="dialog">
+        <div id="dialog-header">
+          <h2>Agent Session Transcript</h2>
+          <button type="submit" aria-label="Close">
+            <span class="g-icon filled round">close</span>
+          </button>
+        </div>
+        <div id="dialog-body" style="padding: var(--bb-grid-size-4); display: flex; flex-direction: column; gap: var(--bb-grid-size-4);">
+          ${this.transcript.map((turn: any) => {
+            const eventsHtml = (turn.events || []).map((evt: any) => {
+              if (evt.type === "objective") {
+                return html`<div class="config-item" style="background: var(--light-dark-n-95); padding: var(--bb-grid-size-3); border-radius: var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);">
+                  <h4 style="margin: 0 0 var(--bb-grid-size-2) 0; color: var(--primary);">Objective</h4>
+                  <pre style="white-space: pre-wrap; font-family: monospace; margin: 0; font-size: 12px; color: var(--light-dark-n-20);">${evt.text}</pre>
+                </div>`;
+              }
+              if (evt.type === "thought") {
+                const parsed = parseThought(evt.text);
+                return html`<div style="border-left: 3px solid var(--primary); padding-left: var(--bb-grid-size-3); margin-bottom: var(--bb-grid-size-2);">
+                  <h4 style="margin: 0 0 var(--bb-grid-size-1) 0; color: var(--light-dark-n-40);">${parsed.title || "Thoughts"}</h4>
+                  <div style="font-style: italic; font-size: 13px; color: var(--light-dark-n-40); white-space: pre-wrap;">${parsed.body}</div>
+                </div>`;
+              }
+              if (evt.type === "functionCall") {
+                return html`<div style="background: var(--elevated-background-light); border: 1px solid var(--border-color); border-radius: var(--bb-grid-size-2); padding: var(--bb-grid-size-3); display: flex; flex-direction: column; gap: var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);">
+                  <div style="display: flex; align-items: center; gap: var(--bb-grid-size-2);">
+                    <strong style="font-size: 13px; color: var(--light-dark-n-10);">${evt.name}</strong>
+                    <span style="background: oklch(from var(--primary) l c h / 0.15); color: var(--primary); font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; border: 1px solid oklch(from var(--primary) l c h / 0.25);">call</span>
+                  </div>
+                  <bb-json-tree .json=${evt.args as any} autoExpand></bb-json-tree>
+                </div>`;
+              }
+              if (evt.type === "functionResponse") {
+                const responseData = evt.parts && evt.parts.length > 0 ? (evt.parts[0] as any)?.functionResponse?.response ?? evt.parts : {};
+                const functionName = evt.parts && evt.parts.length > 0 ? (evt.parts[0] as any)?.functionResponse?.name ?? "response" : "response";
+                return html`<div style="background: var(--elevated-background-light); border: 1px solid var(--border-color); border-radius: var(--bb-grid-size-2); padding: var(--bb-grid-size-3); display: flex; flex-direction: column; gap: var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);">
+                  <div style="display: flex; align-items: center; gap: var(--bb-grid-size-2);">
+                    <strong style="font-size: 13px; color: var(--light-dark-n-10);">${functionName}</strong>
+                    <span style="background: oklch(0.75 0.12 150 / 0.15); color: oklch(0.75 0.12 150); font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; border: 1px solid oklch(0.75 0.12 150 / 0.25);">response</span>
+                  </div>
+                  <bb-json-tree .json=${responseData as any}></bb-json-tree>
+                </div>`;
+              }
+              if (evt.type === "usageMetadata") {
+                const meta = evt.metadata || {};
+                return html`<div class="config-item" style="font-size: 11px; color: var(--light-dark-n-50); margin-top: var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);">
+                  <span>Tokens: Prompt: ${meta.promptTokenCount ?? '-'} | Cached: ${meta.cachedContentTokenCount ?? '-'} | Output: ${meta.candidatesTokenCount ?? '-'} | Total: ${meta.totalTokenCount ?? '-'}</span>
+                </div>`;
+              }
+              return nothing;
+            });
+
+            return html`<div class="turn-record" style="padding-bottom: var(--bb-grid-size-4); display: flex; flex-direction: column;">
+              <div style="display: flex; align-items: center; gap: var(--bb-grid-size-3); margin-bottom: var(--bb-grid-size-4); font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--light-dark-n-60); letter-spacing: 0.5px;">
+                <span>Turn ${turn.turn}</span>
+                <div style="flex-grow: 1; height: 1px; background: var(--light-dark-n-80);"></div>
+              </div>
+              ${eventsHtml}
+            </div>`;
+          })}
+        </div>
+      </form>
+    </dialog>`;
+  }
+
+
   render() {
     if (!this.#graphComponent) {
       return html`<div
@@ -856,8 +942,13 @@ class BGLViewer extends LitElement {
         }}
       >
         ${this.#graphComponent}
+        ${this.transcript && this.transcript.length > 0 ? html`<bb-opie-avatar 
+          style="position: absolute; left: var(--bb-grid-size-5); bottom: var(--bb-grid-size-5); z-index: 100;"
+          @click=${() => this.#showTranscriptModal()}
+        ></bb-opie-avatar>` : nothing}
       </div>
       ${this.#renderModal()}
-      ${this.#renderRaterModal()}`;
+      ${this.#renderRaterModal()}
+      ${this.#renderTranscriptModal()}`;
   }
 }
