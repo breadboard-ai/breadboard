@@ -947,34 +947,71 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     </section>`;
   }
 
-  async #handleAddNote(e: CustomEvent<{ location: NoteLocation; text: string }>) {
-    if (!this.selectedFilePath) return;
+  async #handleAddNote(e: CustomEvent<{ location: NoteLocation; text: string; reaction?: "good" | "bad" }>) {
+    if (!this.selectedFilePath) {
+      console.warn("Inspector: No selectedFilePath available!");
+      return;
+    }
 
     const newNote: UserNote = {
       id: crypto.randomUUID(),
       location: e.detail.location,
       text: e.detail.text,
       timestamp: new Date().toISOString(),
+      reaction: e.detail.reaction,
     };
 
-    const updatedNotes = [...this.notes, newNote];
+    let updatedNotes = [...this.notes];
+
+    if (e.detail.reaction) {
+      // Enforce Singleton & Mutually Exclusive: Filter out any existing reaction note for this location.
+      updatedNotes = updatedNotes.filter((n) => {
+        const isSameLoc = (locA: NoteLocation, locB: NoteLocation) => {
+          if (locA.type !== locB.type) return false;
+          if (locA.type === "node-config" && locB.type === "node-config") {
+            return locA.nodeId === locB.nodeId && locA.fieldName === locB.fieldName;
+          }
+          if (locA.type === "rater" && locB.type === "rater") {
+            return locA.dimension === locB.dimension && locA.fieldName === locB.fieldName;
+          }
+          if (locA.type === "transcript" && locB.type === "transcript") {
+            return locA.turn === locB.turn && locA.eventIndex === locB.eventIndex && locA.fieldName === locB.fieldName;
+          }
+          return false;
+        };
+
+        const hasReaction = n.reaction !== undefined;
+        const isSame = isSameLoc(n.location, e.detail.location);
+
+        // Keep the note if it's NOT a reaction note at the same location.
+        return !(hasReaction && isSame);
+      });
+    }
+
+    updatedNotes.push(newNote);
+
     const result = await this.#fileSystem.writeNotes(this.selectedFilePath, { notes: updatedNotes });
     if (ok(result)) {
       this.notes = updatedNotes;
-      this.#updateSidebarNoteCount(this.selectedFilePath, updatedNotes.length);
+      const nonReactionCount = updatedNotes.filter((n) => !n.reaction).length;
+      this.#updateSidebarNoteCount(this.selectedFilePath, nonReactionCount);
     } else {
       console.warn("Failed to save note:", result.$error);
     }
   }
 
   async #handleDeleteNote(e: CustomEvent<{ noteId: string }>) {
-    if (!this.selectedFilePath) return;
+    if (!this.selectedFilePath) {
+      console.warn("Inspector: No selectedFilePath available!");
+      return;
+    }
 
     const updatedNotes = this.notes.filter((n) => n.id !== e.detail.noteId);
     const result = await this.#fileSystem.writeNotes(this.selectedFilePath, { notes: updatedNotes });
     if (ok(result)) {
       this.notes = updatedNotes;
-      this.#updateSidebarNoteCount(this.selectedFilePath, updatedNotes.length);
+      const nonReactionCount = updatedNotes.filter((n) => !n.reaction).length;
+      this.#updateSidebarNoteCount(this.selectedFilePath, nonReactionCount);
     } else {
       console.warn("Failed to delete note:", result.$error);
     }

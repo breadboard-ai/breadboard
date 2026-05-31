@@ -262,7 +262,7 @@ export class FileSystemEvalBackend {
               const fileBlob = await (descriptor as FileSystemFileHandle).getFile();
               const text = await fileBlob.text();
               const parsed = JSON.parse(text) as RunNotes;
-              const count = parsed?.notes?.length || 0;
+              const count = (parsed?.notes || []).filter((n) => !n.reaction).length;
               const baseName = name.replace(/\.notes\.json$/, "");
               notesCountMap.set(baseName, count);
             } catch {

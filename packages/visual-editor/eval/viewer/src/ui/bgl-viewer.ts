@@ -989,7 +989,8 @@ class BGLViewer extends LitElement {
   }
 
   #renderAllNotesModal() {
-    if (!this.notes || this.notes.length === 0) {
+    const nonReactionNotes = (this.notes || []).filter((n) => !n.reaction);
+    if (nonReactionNotes.length === 0) {
       return html`<dialog ${ref(this.#allNotesDialogRef)}>
         <form method="dialog">
           <div id="dialog-header">
@@ -1006,7 +1007,7 @@ class BGLViewer extends LitElement {
     }
 
     const groups = new Map<string, UserNote[]>();
-    for (const note of this.notes) {
+    for (const note of nonReactionNotes) {
       const section = this.#getSectionTitle(note.location);
       if (!groups.has(section)) {
         groups.set(section, []);
@@ -1017,7 +1018,7 @@ class BGLViewer extends LitElement {
     return html`<dialog ${ref(this.#allNotesDialogRef)}>
       <form method="dialog">
         <div id="dialog-header">
-          <h2>All Comments (${this.notes.length})</h2>
+          <h2>All Comments (${nonReactionNotes.length})</h2>
           <button type="submit" aria-label="Close">
             <span class="g-icon filled round">close</span>
           </button>
@@ -1036,7 +1037,14 @@ class BGLViewer extends LitElement {
                       <span style="font-weight: 600; color: var(--light-dark-n-20);">${fieldRef}</span>
                       <span>${new Date(note.timestamp).toLocaleString()}</span>
                     </div>
-                    <div style="white-space: pre-wrap;">${note.text}</div>
+                    <div style="display: flex; align-items: center; gap: var(--bb-grid-size-2);">
+                      ${note.reaction ? html`<span 
+                        class="g-icon round" 
+                        style="color: ${note.reaction === 'good' ? '#34a853' : '#ea4335'}; font-size: 16px; flex-shrink: 0;"
+                        title=${note.reaction === 'good' ? 'Marked as Good' : 'Marked as Bad'}
+                      >${note.reaction === 'good' ? 'thumb_up' : 'thumb_down'}</span>` : nothing}
+                      <div style="white-space: pre-wrap;">${note.text}</div>
+                    </div>
                   </div>`;
                 })}
               </div>
@@ -1076,9 +1084,9 @@ class BGLViewer extends LitElement {
           </div>
           <button @click=${() => this.#showRaterModal()}>Show Details</button>
           <button 
-            style="margin-top: var(--bb-grid-size); ${this.notes && this.notes.length > 0 ? '' : 'opacity: 0.5;'}" 
+            style="margin-top: var(--bb-grid-size); ${(this.notes || []).filter((n) => !n.reaction).length > 0 ? '' : 'opacity: 0.5;'}" 
             @click=${() => this.#showAllNotesModal()}
-          >All Comments (${this.notes?.length || 0})</button>
+          >All Comments (${(this.notes || []).filter((n) => !n.reaction).length})</button>
         </div>` : nothing}
       </div>
       <div
