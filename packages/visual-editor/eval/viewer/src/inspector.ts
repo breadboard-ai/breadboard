@@ -22,10 +22,11 @@ import * as Theme from "../../../src/theme/index.js";
 import "../../../src/ui/app-templates/basic/a2ui-custom-elements/index.js";
 import "./ui/ui.js";
 
-import { FileSystemPath, GraphDescriptor, Outcome } from "@breadboard-ai/types";
+import { FileSystemPath, GraphDescriptor } from "@breadboard-ai/types";
 import "./ui/bgl-viewer.js";
 import { ok } from "@breadboard-ai/utils";
 import { map } from "lit/directives/map.js";
+import { EvalStateStore } from "./eval-state-store.js";
 import { signal } from "signal-utils";
 import * as UI from "../../../src/a2ui/0.8/ui/ui.js";
 import { v0_8 } from "../../../src/a2ui/index.js";
@@ -36,7 +37,6 @@ import {
   FileSystemEvalBackendHandle,
 } from "./filesystem.js";
 import {
-  GroupedByType,
   ParsedFileMedata,
   parseFileName,
 } from "./parse-file-name.js";
@@ -81,9 +81,6 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   @state()
   accessor transcript: unknown[] | null = null;
 
-  @state()
-  accessor notes: UserNote[] = [];
-
 
   @property()
   accessor selectedPath: FileSystemEvalBackendHandle | null = null;
@@ -98,9 +95,6 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   accessor #showPromptOption: string | null = null;
 
   @signal
-  accessor #filesInMountedDir: GroupedByType[] = [];
-
-  @signal
   accessor #dirs: FileSystemEvalBackendHandle[] = [];
 
   @signal
@@ -108,12 +102,6 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
   @signal
   accessor #surfaces: v0_8.Types.ServerToClientMessage[][] | null = null;
-  @signal
-  accessor #flatFiles: ParsedFileMedata[] = [];
-
-  @signal
-  accessor #hasSidecars: boolean = false;
-
   #processor = v0_8.Data.createSignalA2UIModelProcessor();
 
   @state()
@@ -129,8 +117,11 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   #fileSystem = new FileSystemEvalBackend();
   #urlRestored = false;
 
+  #store: EvalStateStore;
+
   constructor() {
     super();
+    this.#store = new EvalStateStore(this.#fileSystem);
     this.#refresh();
   }
 
@@ -703,29 +694,33 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
   protected async willUpdate(changedProperties: PropertyValues<this>) {
     if (changedProperties.has("selectedPath")) {
-      if (this.selectedPath) {
-        const path = this.selectedPath.path;
-        this.#fileSystem.query(path).then((f) => this.#updateFiles(f, path));
-      } else {
-        this.#filesInMountedDir = [];
-      }
+      this.#store.selectDirectory(this.selectedPath);
     }
 
     if (changedProperties.has("selectedFilePath")) {
       if (this.selectedFilePath) {
         await this.#loadFile(this.selectedFilePath);
+        await this.#store.selectFile(this.selectedFilePath);
       } else {
         this.#surfaces = [];
         this.contexts = [];
         this.outcome = null;
         this.bgl = null;
         this.rater = null;
+        await this.#store.selectFile(null);
       }
       this.#updateUrl();
     }
 
     if (changedProperties.has("renderMode")) {
       this.#updateUrl();
+    }
+
+    const hasSidecars = this.#store.hasSidecars.get();
+    this.classList.toggle("sidecar", hasSidecars);
+    this.toggleAttribute("sidecar", hasSidecars);
+    if (hasSidecars && this.renderMode !== "topology" && this.renderMode !== "messages" && this.renderMode !== "contexts" && this.renderMode !== "outcome") {
+      this.renderMode = "topology";
     }
   }
 
@@ -795,45 +790,11 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
         this.transcript = null;
       }
 
-      const notesResult = await this.#fileSystem.readNotes(path);
-      if (ok(notesResult)) {
-        this.notes = notesResult.notes || [];
-      } else {
-        this.notes = [];
-      }
+
     } catch (err) {
       console.warn(err);
       this.renderMode = "messages";
       return;
-    }
-  }
-
-  #updateFiles(f: Outcome<GroupedByType[]>, path: string) {
-    if (!ok(f)) {
-      this.#filesInMountedDir = [];
-      this.#flatFiles = [];
-      this.#hasSidecars = false;
-      if (f.$error === "prompt") {
-        this.#showPromptOption = path;
-      }
-      return;
-    }
-
-    this.#showPromptOption = null;
-    this.#filesInMountedDir = f;
-
-    const flatFiles: ParsedFileMedata[] = [];
-    for (const group of f) {
-      for (const item of group.items) {
-        flatFiles.push(...item.files);
-      }
-    }
-    this.#flatFiles = flatFiles;
-    this.#hasSidecars = flatFiles.some((f) => !!f.hasSidecars);
-    this.classList.toggle("sidecar", this.#hasSidecars);
-    this.toggleAttribute("sidecar", this.#hasSidecars);
-    if (this.#hasSidecars) {
-      this.renderMode = "topology";
     }
   }
 
@@ -853,7 +814,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           .graph=${this.bgl}
           .rater=${this.rater}
           .transcript=${this.transcript}
-          .notes=${this.notes}
+          .notes=${this.#store.notes.get()}
           @add-note=${this.#handleAddNote}
           @delete-note=${this.#handleDeleteNote}
         ></bgl-viewer>
@@ -1003,7 +964,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
       reaction: e.detail.reaction,
     };
 
-    let updatedNotes = [...this.notes];
+    let updatedNotes = [...this.#store.notes.get()];
 
     if (e.detail.reaction) {
       // Enforce Singleton & Mutually Exclusive: Filter out any existing reaction note for this location.
@@ -1032,11 +993,8 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
     updatedNotes.push(newNote);
 
-    const result = await this.#fileSystem.writeNotes(this.selectedFilePath, { notes: updatedNotes });
-    if (ok(result)) {
-      this.notes = updatedNotes;
-      this.#updateSidebarNoteCount(this.selectedFilePath, updatedNotes.length);
-    } else {
+    const result = await this.#store.addNote(this.selectedFilePath, updatedNotes);
+    if (!ok(result)) {
       console.warn("Failed to save note:", result.$error);
     }
   }
@@ -1047,43 +1005,10 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
       return;
     }
 
-    const updatedNotes = this.notes.filter((n) => n.id !== e.detail.noteId);
-    const result = await this.#fileSystem.writeNotes(this.selectedFilePath, { notes: updatedNotes });
-    if (ok(result)) {
-      this.notes = updatedNotes;
-      this.#updateSidebarNoteCount(this.selectedFilePath, updatedNotes.length);
-    } else {
+    const updatedNotes = this.#store.notes.get().filter((n) => n.id !== e.detail.noteId);
+    const result = await this.#store.deleteNote(this.selectedFilePath, updatedNotes);
+    if (!ok(result)) {
       console.warn("Failed to delete note:", result.$error);
-    }
-  }
-
-  #updateSidebarNoteCount(filePath: string, count: number) {
-    if (!this.#filesInMountedDir) return;
-
-    let updated = false;
-    const newDirs = this.#filesInMountedDir.map((dir) => {
-      return {
-        ...dir,
-        items: dir.items.map((item) => {
-          return {
-            ...item,
-            files: item.files.map((f) => {
-              if (f.path === filePath) {
-                updated = true;
-                return {
-                  ...f,
-                  noteCount: count,
-                };
-              }
-              return f;
-            }),
-          };
-        }),
-      };
-    });
-
-    if (updated) {
-      this.#filesInMountedDir = newDirs;
     }
   }
 
@@ -1120,7 +1045,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           "typography-w-400": true,
           "typography-f-s": true,
           "typography-sz-bl": true,
-          sidecar: this.#hasSidecars,
+          sidecar: this.#store.hasSidecars.get(),
         })}
       >
         ${this.#showPromptOption
@@ -1140,19 +1065,16 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                     return;
                   }
 
-                  const files = await this.#fileSystem.query(
-                    this.#showPromptOption
-                  );
-                  this.#updateFiles(files, this.#showPromptOption!);
+                  await this.#store.scanMountedDirectory(this.#showPromptOption!);
                 }}
               >
                 Request access
               </button>
             </div>`
           : nothing}
-        ${this.#hasSidecars
+        ${this.#store.hasSidecars.get()
           ? html`<eval-simplified-file-list
-              .files=${this.#flatFiles}
+              .files=${this.#store.flatFiles.get()}
               .selectedFilePath=${this.selectedFilePath}
               @file-selected=${(evt: CustomEvent) => {
                 const { file, path } = evt.detail;
@@ -1161,7 +1083,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
               }}
             ></eval-simplified-file-list>`
           : html`<ul id="file-list">
-              ${this.#filesInMountedDir.map((file) => {
+              ${this.#store.filesInMountedDir.get().map((file) => {
                 return html`<li>
                   <h2>${file.type}</h2>
                   <ul>
@@ -1259,8 +1181,8 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           </h2>
           ${this.#renderInput()}
         </div>
-        <div id="surface-container" class=${classMap({ sidecar: this.#hasSidecars })} slot="slot-1">
-          ${this.#hasSidecars
+        <div id="surface-container" class=${classMap({ sidecar: this.#store.hasSidecars.get() })} slot="slot-1">
+          ${this.#store.hasSidecars.get()
             ? nothing
             : html`<h2
                 class="typography-w-400 typography-f-s typography-sz-tl layout-sp-bt"
@@ -1319,7 +1241,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   }
 
   #renderUI() {
-    if (this.#hasSidecars) {
+    if (this.#store.hasSidecars.get()) {
       return [this.#renderMain()];
     }
     return [this.#renderHeader(), this.#renderMain()];
