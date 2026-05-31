@@ -14,6 +14,7 @@ export type UserNote = {
   location: NoteLocation;
   text: string;
   timestamp: string;
+  reaction?: "good" | "bad";
 };
 
 export type RunNotes = {
