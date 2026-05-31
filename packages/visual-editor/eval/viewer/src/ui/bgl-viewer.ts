@@ -989,8 +989,8 @@ class BGLViewer extends LitElement {
   }
 
   #renderAllNotesModal() {
-    const nonReactionNotes = (this.notes || []).filter((n) => !n.reaction);
-    if (nonReactionNotes.length === 0) {
+    const allNotes = Array.isArray(this.notes) ? this.notes : [];
+    if (allNotes.length === 0) {
       return html`<dialog ${ref(this.#allNotesDialogRef)}>
         <form method="dialog">
           <div id="dialog-header">
@@ -1007,7 +1007,7 @@ class BGLViewer extends LitElement {
     }
 
     const groups = new Map<string, UserNote[]>();
-    for (const note of nonReactionNotes) {
+    for (const note of allNotes) {
       const section = this.#getSectionTitle(note.location);
       if (!groups.has(section)) {
         groups.set(section, []);
@@ -1018,7 +1018,7 @@ class BGLViewer extends LitElement {
     return html`<dialog ${ref(this.#allNotesDialogRef)}>
       <form method="dialog">
         <div id="dialog-header">
-          <h2>All Comments (${nonReactionNotes.length})</h2>
+          <h2>All Comments (${allNotes.length})</h2>
           <button type="submit" aria-label="Close">
             <span class="g-icon filled round">close</span>
           </button>
@@ -1084,9 +1084,9 @@ class BGLViewer extends LitElement {
           </div>
           <button @click=${() => this.#showRaterModal()}>Show Details</button>
           <button 
-            style="margin-top: var(--bb-grid-size); ${(this.notes || []).filter((n) => !n.reaction).length > 0 ? '' : 'opacity: 0.5;'}" 
+            style="margin-top: var(--bb-grid-size); ${(this.notes || []).length > 0 ? '' : 'opacity: 0.5;'}" 
             @click=${() => this.#showAllNotesModal()}
-          >All Comments (${(this.notes || []).filter((n) => !n.reaction).length})</button>
+          >All Comments (${(this.notes || []).length})</button>
         </div>` : nothing}
       </div>
       <div

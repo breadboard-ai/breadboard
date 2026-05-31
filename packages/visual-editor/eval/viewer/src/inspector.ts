@@ -993,8 +993,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     const result = await this.#fileSystem.writeNotes(this.selectedFilePath, { notes: updatedNotes });
     if (ok(result)) {
       this.notes = updatedNotes;
-      const nonReactionCount = updatedNotes.filter((n) => !n.reaction).length;
-      this.#updateSidebarNoteCount(this.selectedFilePath, nonReactionCount);
+      this.#updateSidebarNoteCount(this.selectedFilePath, updatedNotes.length);
     } else {
       console.warn("Failed to save note:", result.$error);
     }
@@ -1010,8 +1009,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     const result = await this.#fileSystem.writeNotes(this.selectedFilePath, { notes: updatedNotes });
     if (ok(result)) {
       this.notes = updatedNotes;
-      const nonReactionCount = updatedNotes.filter((n) => !n.reaction).length;
-      this.#updateSidebarNoteCount(this.selectedFilePath, nonReactionCount);
+      this.#updateSidebarNoteCount(this.selectedFilePath, updatedNotes.length);
     } else {
       console.warn("Failed to delete note:", result.$error);
     }
