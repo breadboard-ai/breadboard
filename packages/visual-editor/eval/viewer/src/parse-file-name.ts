@@ -13,6 +13,9 @@ export type ParsedFileMedata = {
   date: Date;
   judgement?: string;
   noteCount?: number;
+  title?: string;
+  rating?: string | number;
+  hasSidecars?: boolean;
 };
 
 export type GroupedByName = {

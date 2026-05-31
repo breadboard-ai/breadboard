@@ -241,7 +241,10 @@ export class FileSystemEvalBackend {
     try {
       const queryEntries: ParsedFileMedata[] = [];
       const raterMap = new Map<string, string>();
+      const ratingScoreMap = new Map<string, number>();
       const notesCountMap = new Map<string, number>();
+      const bglTitleMap = new Map<string, string>();
+      const transcriptMap = new Set<string>();
 
       try {
         for await (const [name, descriptor] of handle.entries()) {
@@ -251,11 +254,31 @@ export class FileSystemEvalBackend {
               const text = await fileBlob.text();
               const parsed = JSON.parse(text);
               const judgement = parsed?.overall_judgement || (parsed?.error ? 'FAIL' : 'UNKNOWN');
+              const score = parsed?.dimensions?.intent_fulfillment?.score;
               const baseName = name.replace(/\.rater\.json$/, "");
               raterMap.set(baseName, judgement);
+              if (typeof score === 'number') {
+                ratingScoreMap.set(baseName, score);
+              }
             } catch {
               // Ignore failure.
             }
+          }
+          if (name.endsWith(".bgl.json") && descriptor.kind === "file") {
+            try {
+              const fileBlob = await (descriptor as FileSystemFileHandle).getFile();
+              const text = await fileBlob.text();
+              const parsed = JSON.parse(text);
+              const title = parsed?.title || "";
+              const baseName = name.replace(/\.bgl\.json$/, "");
+              bglTitleMap.set(baseName, title);
+            } catch {
+              // Ignore failure.
+            }
+          }
+          if (name.endsWith(".transcript.jsonl") && descriptor.kind === "file") {
+            const baseName = name.replace(/\.transcript\.jsonl$/, "");
+            transcriptMap.add(baseName);
           }
           if (name.endsWith(".notes.json") && descriptor.kind === "file") {
             try {
@@ -284,7 +307,10 @@ export class FileSystemEvalBackend {
         if (parsed) {
           const baseName = name.replace(/\.log\.json$/, "");
           parsed.judgement = raterMap.get(baseName);
+          parsed.rating = ratingScoreMap.get(baseName) || parsed.judgement;
           parsed.noteCount = notesCountMap.get(baseName) || 0;
+          parsed.title = bglTitleMap.get(baseName);
+          parsed.hasSidecars = bglTitleMap.has(baseName) || raterMap.has(baseName) || notesCountMap.has(baseName) || transcriptMap.has(baseName);
           queryEntries.push(parsed);
         }
       }

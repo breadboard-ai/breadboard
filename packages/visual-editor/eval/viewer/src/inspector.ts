@@ -43,6 +43,7 @@ import {
 import { OutcomePayload, EvalFileData } from "../../../src/types/types.js";
 import "./ui/contexts-viewer.js";
 import "./ui/outcome-viewer.js";
+import "./ui/simplified-file-list.js";
 
 type RenderMode = "surfaces" | "messages" | "contexts" | "outcome" | "topology";
 
@@ -107,6 +108,12 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
   @signal
   accessor #surfaces: v0_8.Types.ServerToClientMessage[][] | null = null;
+  @signal
+  accessor #flatFiles: ParsedFileMedata[] = [];
+
+  @signal
+  accessor #hasSidecars: boolean = false;
+
   #processor = v0_8.Data.createSignalA2UIModelProcessor();
 
   @state()
@@ -250,6 +257,11 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
         grid-template-rows: 42px 1fr;
 
         --light-dark-n-10: var(--primary);
+      }
+
+      :host(.sidecar),
+      :host([sidecar]) {
+        grid-template-rows: 1fr;
       }
 
       header {
@@ -396,6 +408,12 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
             width: 100%;
             overflow: auto;
 
+            &.sidecar {
+              border: none;
+              padding: 0;
+              background: none;
+            }
+
             & #file-list {
               padding: 0;
               margin: 0;
@@ -473,6 +491,14 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           display: grid;
           grid-template-rows: 32px 1fr;
           gap: var(--bb-grid-size-4);
+          height: 100%;
+
+          &.sidecar {
+            padding: 0;
+            display: block;
+            gap: 0;
+            height: 100%;
+          }
 
           & #current-file {
             flex: 1;
@@ -785,6 +811,8 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   #updateFiles(f: Outcome<GroupedByType[]>, path: string) {
     if (!ok(f)) {
       this.#filesInMountedDir = [];
+      this.#flatFiles = [];
+      this.#hasSidecars = false;
       if (f.$error === "prompt") {
         this.#showPromptOption = path;
       }
@@ -793,6 +821,20 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
     this.#showPromptOption = null;
     this.#filesInMountedDir = f;
+
+    const flatFiles: ParsedFileMedata[] = [];
+    for (const group of f) {
+      for (const item of group.items) {
+        flatFiles.push(...item.files);
+      }
+    }
+    this.#flatFiles = flatFiles;
+    this.#hasSidecars = flatFiles.some((f) => !!f.hasSidecars);
+    this.classList.toggle("sidecar", this.#hasSidecars);
+    this.toggleAttribute("sidecar", this.#hasSidecars);
+    if (this.#hasSidecars) {
+      this.renderMode = "topology";
+    }
   }
 
   async #refresh() {
@@ -1078,6 +1120,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           "typography-w-400": true,
           "typography-f-s": true,
           "typography-sz-bl": true,
+          sidecar: this.#hasSidecars,
         })}
       >
         ${this.#showPromptOption
@@ -1107,67 +1150,77 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
               </button>
             </div>`
           : nothing}
-        <ul id="file-list">
-          ${this.#filesInMountedDir.map((file) => {
-            return html`<li>
-              <h2>${file.type}</h2>
-              <ul>
-                ${file.items.map((item) => {
-                  return html`<li>
-                    <h2>${item.name}</h2>
-                    <ul>
-                      ${item.files.map((f) => {
-                        return html`<li>
-                          <button
-                            ?selected=${f.path === this.selectedFilePath}
-                            @click=${async () => {
-                              this.selectedFile = f;
-                              this.selectedFilePath = f.path;
-                            }}
-                            style="display: flex; align-items: center; justify-content: space-between; width: 100%;"
-                          >
-                            <span style="flex-grow: 1; text-align: left;">
-                              ${f.date.toLocaleString(
-                                Intl.DateTimeFormat().resolvedOptions().locale,
-                                {
-                                  dateStyle: "short",
-                                  timeStyle: "medium",
-                                }
-                              )}
-                            </span>
-                            ${f.judgement ? (() => {
-                              const judgement = f.judgement;
-                              const isPass = judgement === 'PASS';
-                              const isPartial = judgement === 'PARTIAL';
-                              const isFail = judgement === 'FAIL';
-                              const color = isPass ? '#34a853' : (isPartial ? '#fbbc04' : (isFail ? '#ea4335' : 'transparent'));
-                              const icon = isPass ? 'check_circle' : (isPartial ? 'warning' : (isFail ? 'cancel' : ''));
-                              if (!icon) return nothing;
-                              return html`<div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
-                                ${f.noteCount && f.noteCount > 0 ? html`<span 
-                                  style="background: var(--light-dark-n-0); color: var(--light-dark-n-100); font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 8px; border: 1px solid var(--border-color);"
+        ${this.#hasSidecars
+          ? html`<eval-simplified-file-list
+              .files=${this.#flatFiles}
+              .selectedFilePath=${this.selectedFilePath}
+              @file-selected=${(evt: CustomEvent) => {
+                const { file, path } = evt.detail;
+                this.selectedFile = file;
+                this.selectedFilePath = path;
+              }}
+            ></eval-simplified-file-list>`
+          : html`<ul id="file-list">
+              ${this.#filesInMountedDir.map((file) => {
+                return html`<li>
+                  <h2>${file.type}</h2>
+                  <ul>
+                    ${file.items.map((item) => {
+                      return html`<li>
+                        <h2>${item.name}</h2>
+                        <ul>
+                          ${item.files.map((f) => {
+                            return html`<li>
+                              <button
+                                ?selected=${f.path === this.selectedFilePath}
+                                @click=${async () => {
+                                  this.selectedFile = f;
+                                  this.selectedFilePath = f.path;
+                                }}
+                                style="display: flex; align-items: center; justify-content: space-between; width: 100%;"
+                              >
+                                <span style="flex-grow: 1; text-align: left;">
+                                  ${f.date.toLocaleString(
+                                    Intl.DateTimeFormat().resolvedOptions().locale,
+                                    {
+                                      dateStyle: "short",
+                                      timeStyle: "medium",
+                                    }
+                                  )}
+                                </span>
+                                ${f.judgement ? (() => {
+                                  const judgement = f.judgement;
+                                  const isPass = judgement === 'PASS';
+                                  const isPartial = judgement === 'PARTIAL';
+                                  const isFail = judgement === 'FAIL';
+                                  const color = isPass ? '#34a853' : (isPartial ? '#fbbc04' : (isFail ? '#ea4335' : 'transparent'));
+                                  const icon = isPass ? 'check_circle' : (isPartial ? 'warning' : (isFail ? 'cancel' : ''));
+                                  if (!icon) return nothing;
+                                  return html`<div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                                    ${f.noteCount && f.noteCount > 0 ? html`<span 
+                                      style="background: var(--light-dark-n-0); color: var(--light-dark-n-100); font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 8px; border: 1px solid var(--border-color);"
+                                      title="${f.noteCount} notes"
+                                    >${f.noteCount}</span>` : nothing}
+                                    <span 
+                                      class="g-icon filled round" 
+                                      style="color: ${color}; font-size: 16px;"
+                                      title="Evaluation Judgement: ${judgement}"
+                                    >${icon}</span>
+                                  </div>`;
+                                })() : (f.noteCount && f.noteCount > 0 ? html`<span 
+                                  style="background: var(--light-dark-n-0); color: var(--light-dark-n-100); font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 8px; border: 1px solid var(--border-color); margin-left: 8px; flex-shrink: 0;"
                                   title="${f.noteCount} notes"
-                                >${f.noteCount}</span>` : nothing}
-                                <span 
-                                  class="g-icon filled round" 
-                                  style="color: ${color}; font-size: 16px;"
-                                  title="Evaluation Judgement: ${judgement}"
-                                >${icon}</span>
-                              </div>`;
-                            })() : (f.noteCount && f.noteCount > 0 ? html`<span 
-                              style="background: var(--light-dark-n-0); color: var(--light-dark-n-100); font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 8px; border: 1px solid var(--border-color); margin-left: 8px; flex-shrink: 0;"
-                              title="${f.noteCount} notes"
-                            >${f.noteCount}</span>` : nothing)}
-                          </button>
-                        </li>`;
-                      })}
-                    </ul>
-                  </li>`;
-                })}
-              </ul>
-            </li>`;
-          })}
-        </ul>
+                                >${f.noteCount}</span>` : nothing)}
+                              </button>
+                            </li>`;
+                          })}
+                        </ul>
+                      </li>`;
+                    })}
+                  </ul>
+                </li>`;
+              })}
+            </ul>`}
       </div>`;
   }
 
@@ -1206,57 +1259,59 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           </h2>
           ${this.#renderInput()}
         </div>
-        <div id="surface-container" slot="slot-1">
-          <h2
-            class="typography-w-400 typography-f-s typography-sz-tl layout-sp-bt"
-          >
-            <div id="current-file">${this.selectedFile?.name}</div>
-            <div id="render-mode">
-              <button
-                class=${classMap({ active: this.#renderMode === "contexts" })}
-                @click=${() => (this.renderMode = "contexts")}
-                title="View Conversation Contexts"
+        <div id="surface-container" class=${classMap({ sidecar: this.#hasSidecars })} slot="slot-1">
+          ${this.#hasSidecars
+            ? nothing
+            : html`<h2
+                class="typography-w-400 typography-f-s typography-sz-tl layout-sp-bt"
               >
-                <span class="g-icon filled round">forum</span>Contexts
-              </button>
-
-              ${this.bgl
-                ? html`<button
-                    class=${classMap({
-                      active: this.#renderMode === "topology",
-                    })}
-                    @click=${() => (this.renderMode = "topology")}
-                    title="View BGL Topology"
+                <div id="current-file">${this.selectedFile?.title || this.selectedFile?.name}</div>
+                <div id="render-mode">
+                  <button
+                    class=${classMap({ active: this.#renderMode === "contexts" })}
+                    @click=${() => (this.renderMode = "contexts")}
+                    title="View Conversation Contexts"
                   >
-                    <span class="g-icon filled round">hub</span>Topology
-                  </button>`
-                : nothing}
+                    <span class="g-icon filled round">forum</span>Contexts
+                  </button>
 
-              <button
-                class=${classMap({ active: this.#renderMode === "outcome" })}
-                @click=${() => (this.renderMode = "outcome")}
-                title="View Outcome"
-              >
-                <span class="g-icon filled round">data_check</span>Outcome
-              </button>
+                  ${this.bgl
+                    ? html`<button
+                        class=${classMap({
+                          active: this.#renderMode === "topology",
+                        })}
+                        @click=${() => (this.renderMode = "topology")}
+                        title="View BGL Topology"
+                      >
+                        <span class="g-icon filled round">hub</span>Topology
+                      </button>`
+                    : nothing}
 
-              <button
-                class=${classMap({ active: this.#renderMode === "surfaces" })}
-                @click=${() => (this.renderMode = "surfaces")}
-                title="View Generated Surfaces"
-              >
-                <span class="g-icon filled round">mobile_layout</span>Surfaces
-              </button>
+                  <button
+                    class=${classMap({ active: this.#renderMode === "outcome" })}
+                    @click=${() => (this.renderMode = "outcome")}
+                    title="View Outcome"
+                  >
+                    <span class="g-icon filled round">data_check</span>Outcome
+                  </button>
 
-              <button
-                class=${classMap({ active: this.#renderMode === "messages" })}
-                @click=${() => (this.renderMode = "messages")}
-                title="View A2UI Messages"
-              >
-                <span class="g-icon filled round">communication</span>A2UI
-              </button>
-            </div>
-          </h2>
+                  <button
+                    class=${classMap({ active: this.#renderMode === "surfaces" })}
+                    @click=${() => (this.renderMode = "surfaces")}
+                    title="View Generated Surfaces"
+                  >
+                    <span class="g-icon filled round">mobile_layout</span>Surfaces
+                  </button>
+
+                  <button
+                    class=${classMap({ active: this.#renderMode === "messages" })}
+                    @click=${() => (this.renderMode = "messages")}
+                    title="View A2UI Messages"
+                  >
+                    <span class="g-icon filled round">communication</span>A2UI
+                  </button>
+                </div>
+              </h2>`}
           ${this.#renderContents()}
         </div>
       </ui-splitter>
@@ -1264,6 +1319,9 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   }
 
   #renderUI() {
+    if (this.#hasSidecars) {
+      return [this.#renderMain()];
+    }
     return [this.#renderHeader(), this.#renderMain()];
   }
 
