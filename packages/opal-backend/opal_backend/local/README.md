@@ -11,10 +11,12 @@ Everything outside this directory IS synced to production.
 | Module                      | Purpose                                                                         |
 | --------------------------- | ------------------------------------------------------------------------------- |
 | `api_surface.py`            | FastAPI router factory + `AgentBackend`/`ProxyBackend` protocols                |
-| `backend_client_impl.py`    | `HttpBackendClient` — HTTP-based `BackendClient` (POSTs to OP + streams Gemini) |
-| `event_bus_impl.py`         | `InMemoryEventBus` — asyncio.Queue-based `EventBus` for live event delivery     |
-| `interaction_store_impl.py` | `InMemoryInteractionStore` — dict-based `InteractionStore`                      |
-| `pending_requests.py`       | `PendingRequestMap` — asyncio futures for fake server suspend/resume            |
+| `backend_client_impl.py`         | `HttpBackendClient` — HTTP-based `BackendClient` (POSTs to OP + streams Gemini) |
+| `event_bus_impl.py`              | `InMemoryEventBus` — asyncio.Queue-based `EventBus` for live event delivery     |
+| `graph_session_store_impl.py`    | `InMemoryGraphSessionStore` — dict-backed graph execution state                 |
+| `interaction_store_impl.py`      | `InMemoryInteractionStore` — dict-based `InteractionStore`                      |
+| `pending_requests.py`            | `PendingRequestMap` — asyncio futures for fake server suspend/resume            |
+| `task_scheduler_impl.py`         | `LocalTaskScheduler` — asyncio.create_task-based task dispatch                  |
 | `session_router.py`         | FastAPI router factory + `SessionDeps` for session REST endpoints                |
 | `sse_sink.py`               | `SSEAgentEventSink` — bridges `AgentEvent` → SSE strings for fake server        |
 
@@ -37,8 +39,10 @@ Body (resume): {"interactionId": "...", "response": {...}}
 
 ## Protocol → Implementation Mapping
 
-| Protocol (synced)  | Implementation (local)                                   |
-| ------------------ | -------------------------------------------------------- |
-| `BackendClient`    | `HttpBackendClient` (`backend_client_impl.py`)           |
-| `EventBus`         | `InMemoryEventBus` (`event_bus_impl.py`)                 |
-| `InteractionStore` | `InMemoryInteractionStore` (`interaction_store_impl.py`) |
+| Protocol (synced)    | Implementation (local)                                          |
+| -------------------- | --------------------------------------------------------------- |
+| `BackendClient`      | `HttpBackendClient` (`backend_client_impl.py`)                  |
+| `EventBus`           | `InMemoryEventBus` (`event_bus_impl.py`)                        |
+| `GraphSessionStore`  | `InMemoryGraphSessionStore` (`graph_session_store_impl.py`)     |
+| `InteractionStore`   | `InMemoryInteractionStore` (`interaction_store_impl.py`)        |
+| `TaskScheduler`      | `LocalTaskScheduler` (`task_scheduler_impl.py`)                 |

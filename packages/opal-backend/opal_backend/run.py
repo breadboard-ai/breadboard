@@ -152,7 +152,7 @@ def _extract_builtin_tools(
 # ---------------------------------------------------------------------------
 
 
-async def run(
+async def run_agent(
     *,
     segments: list[dict[str, Any]],
     backend: BackendClient,
@@ -329,7 +329,7 @@ async def run(
 
 
 
-async def resume(
+async def resume_agent(
     *,
     interaction_id: str,
     response: dict[str, Any],
@@ -976,3 +976,8 @@ async def _stream_loop(
     finally:
         if not loop_task.done():
             loop_task.cancel()
+
+
+# Backward-compatible aliases.
+run = run_agent
+resume = resume_agent
