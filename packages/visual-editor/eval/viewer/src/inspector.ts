@@ -30,6 +30,7 @@ import { signal } from "signal-utils";
 import * as UI from "../../../src/a2ui/0.8/ui/ui.js";
 import { v0_8 } from "../../../src/a2ui/index.js";
 import { FinalChainReport } from "../../collate-context.js";
+import { UserNote, NoteLocation } from "./types.js";
 import {
   FileSystemEvalBackend,
   FileSystemEvalBackendHandle,
@@ -78,6 +79,10 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
   @state()
   accessor transcript: unknown[] | null = null;
+
+  @state()
+  accessor notes: UserNote[] = [];
+
 
   @property()
   accessor selectedPath: FileSystemEvalBackendHandle | null = null;
@@ -763,6 +768,13 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
       } else {
         this.transcript = null;
       }
+
+      const notesResult = await this.#fileSystem.readNotes(path);
+      if (ok(notesResult)) {
+        this.notes = notesResult.notes || [];
+      } else {
+        this.notes = [];
+      }
     } catch (err) {
       console.warn(err);
       this.renderMode = "messages";
@@ -795,9 +807,17 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   #renderContents() {
     if (this.renderMode === "topology") {
       return html`<section id="topology" style="width: 100%; height: 100%;">
-        <bgl-viewer .graph=${this.bgl} .rater=${this.rater} .transcript=${this.transcript}></bgl-viewer>
+        <bgl-viewer
+          .graph=${this.bgl}
+          .rater=${this.rater}
+          .transcript=${this.transcript}
+          .notes=${this.notes}
+          @add-note=${this.#handleAddNote}
+          @delete-note=${this.#handleDeleteNote}
+        ></bgl-viewer>
       </section>`;
     }
+
 
     if (this.#requesting) {
       return html`<section id="surfaces">
@@ -927,6 +947,69 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     </section>`;
   }
 
+  async #handleAddNote(e: CustomEvent<{ location: NoteLocation; text: string }>) {
+    if (!this.selectedFilePath) return;
+
+    const newNote: UserNote = {
+      id: crypto.randomUUID(),
+      location: e.detail.location,
+      text: e.detail.text,
+      timestamp: new Date().toISOString(),
+    };
+
+    const updatedNotes = [...this.notes, newNote];
+    const result = await this.#fileSystem.writeNotes(this.selectedFilePath, { notes: updatedNotes });
+    if (ok(result)) {
+      this.notes = updatedNotes;
+      this.#updateSidebarNoteCount(this.selectedFilePath, updatedNotes.length);
+    } else {
+      console.warn("Failed to save note:", result.$error);
+    }
+  }
+
+  async #handleDeleteNote(e: CustomEvent<{ noteId: string }>) {
+    if (!this.selectedFilePath) return;
+
+    const updatedNotes = this.notes.filter((n) => n.id !== e.detail.noteId);
+    const result = await this.#fileSystem.writeNotes(this.selectedFilePath, { notes: updatedNotes });
+    if (ok(result)) {
+      this.notes = updatedNotes;
+      this.#updateSidebarNoteCount(this.selectedFilePath, updatedNotes.length);
+    } else {
+      console.warn("Failed to delete note:", result.$error);
+    }
+  }
+
+  #updateSidebarNoteCount(filePath: string, count: number) {
+    if (!this.#filesInMountedDir) return;
+
+    let updated = false;
+    const newDirs = this.#filesInMountedDir.map((dir) => {
+      return {
+        ...dir,
+        items: dir.items.map((item) => {
+          return {
+            ...item,
+            files: item.files.map((f) => {
+              if (f.path === filePath) {
+                updated = true;
+                return {
+                  ...f,
+                  noteCount: count,
+                };
+              }
+              return f;
+            }),
+          };
+        }),
+      };
+    });
+
+    if (updated) {
+      this.#filesInMountedDir = newDirs;
+    }
+  }
+
   #renderInput() {
     return html`<div>
         ${this.#dirs.length > 0
@@ -1025,12 +1108,21 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                               const color = isPass ? '#34a853' : (isPartial ? '#fbbc04' : (isFail ? '#ea4335' : 'transparent'));
                               const icon = isPass ? 'check_circle' : (isPartial ? 'warning' : (isFail ? 'cancel' : ''));
                               if (!icon) return nothing;
-                              return html`<span 
-                                class="g-icon filled round" 
-                                style="color: ${color}; font-size: 16px; margin-left: 8px; flex-shrink: 0;"
-                                title="Evaluation Judgement: ${judgement}"
-                              >${icon}</span>`;
-                            })() : nothing}
+                              return html`<div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                                ${f.noteCount && f.noteCount > 0 ? html`<span 
+                                  style="background: var(--light-dark-n-0); color: var(--light-dark-n-100); font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 8px; border: 1px solid var(--border-color);"
+                                  title="${f.noteCount} notes"
+                                >${f.noteCount}</span>` : nothing}
+                                <span 
+                                  class="g-icon filled round" 
+                                  style="color: ${color}; font-size: 16px;"
+                                  title="Evaluation Judgement: ${judgement}"
+                                >${icon}</span>
+                              </div>`;
+                            })() : (f.noteCount && f.noteCount > 0 ? html`<span 
+                              style="background: var(--light-dark-n-0); color: var(--light-dark-n-100); font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 8px; border: 1px solid var(--border-color); margin-left: 8px; flex-shrink: 0;"
+                              title="${f.noteCount} notes"
+                            >${f.noteCount}</span>` : nothing)}
                           </button>
                         </li>`;
                       })}
