@@ -1,7 +1,7 @@
 # Copyright 2026 Google LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Unit tests for session API (new_session, start_session, Subscribers)."""
+"""Unit tests for session API (new_session, start_session, EventBus)."""
 
 import asyncio
 
@@ -15,11 +15,11 @@ from opal_backend.events import (
     AgentResult,
 )
 from opal_backend.sessions.api import (
-    Subscribers,
     new_session,
     start_session,
     _contexts,
 )
+from opal_backend.local.event_bus_impl import InMemoryEventBus
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
 from opal_backend.sessions.store import SessionStatus
 
@@ -30,53 +30,58 @@ def store():
 
 
 @pytest.fixture
-def subscribers():
-    return Subscribers()
+def event_bus():
+    return InMemoryEventBus()
 
 
-# ── Subscribers ──
+# ── InMemoryEventBus ──
 
 
 @pytest.mark.asyncio
 async def test_subscribe_and_publish():
-    subs = Subscribers()
-    q = subs.subscribe("sess-1")
+    bus = InMemoryEventBus()
+    subscription = bus.subscribe("sess-1")
 
-    await subs.publish("sess-1", {"type": "start"})
-    item = await asyncio.wait_for(q.get(), timeout=1.0)
+    await bus.publish("sess-1", {"type": "start"})
+    item = await asyncio.wait_for(subscription.__anext__(), timeout=1.0)
     assert item == {"type": "start"}
 
 
 @pytest.mark.asyncio
 async def test_unsubscribe():
-    subs = Subscribers()
-    q = subs.subscribe("sess-1")
-    subs.unsubscribe("sess-1", q)
+    bus = InMemoryEventBus()
+    subscription = bus.subscribe("sess-1")
+    bus.unsubscribe("sess-1", subscription)
 
     # Should not raise even with no subscribers.
-    await subs.publish("sess-1", {"type": "start"})
+    await bus.publish("sess-1", {"type": "start"})
 
 
 @pytest.mark.asyncio
 async def test_close_sends_sentinel():
-    subs = Subscribers()
-    q = subs.subscribe("sess-1")
+    bus = InMemoryEventBus()
+    subscription = bus.subscribe("sess-1")
 
-    await subs.close("sess-1")
-    item = await asyncio.wait_for(q.get(), timeout=1.0)
-    assert item is None
+    await bus.close("sess-1")
+    # The async iterator raises StopAsyncIteration on close.
+    items = [item async for item in subscription]
+    assert items == []
 
 
 @pytest.mark.asyncio
 async def test_multiple_subscribers():
-    subs = Subscribers()
-    q1 = subs.subscribe("sess-1")
-    q2 = subs.subscribe("sess-1")
+    bus = InMemoryEventBus()
+    sub1 = bus.subscribe("sess-1")
+    sub2 = bus.subscribe("sess-1")
 
-    await subs.publish("sess-1", {"type": "event"})
+    await bus.publish("sess-1", {"type": "event"})
+    # Close so iteration terminates after the published event.
+    await bus.close("sess-1")
 
-    assert await asyncio.wait_for(q1.get(), timeout=1.0) == {"type": "event"}
-    assert await asyncio.wait_for(q2.get(), timeout=1.0) == {"type": "event"}
+    items1 = [item async for item in sub1]
+    items2 = [item async for item in sub2]
+    assert items1 == [{"type": "event"}]
+    assert items2 == [{"type": "event"}]
 
 
 # ── new_session ──
@@ -117,19 +122,19 @@ async def test_new_session_stashes_context(store):
 
 
 @pytest.mark.asyncio
-async def test_start_session_no_context(store, subscribers):
+async def test_start_session_no_context(store, event_bus):
     """start_session with missing context sets FAILED status."""
     await store.create("sess-missing")
     await start_session(
         session_id="sess-missing",
         store=store,
-        subscribers=subscribers,
+        event_bus=event_bus,
     )
     assert await store.get_status("sess-missing") == SessionStatus.FAILED
 
 
 @pytest.mark.asyncio
-async def test_start_session_tees_events(store, subscribers, monkeypatch):
+async def test_start_session_tees_events(store, event_bus, monkeypatch):
     """Events from run() appear in the store and subscriber queue."""
     # Mock run() to yield a known sequence.
     async def fake_run(**kwargs):
@@ -151,12 +156,12 @@ async def test_start_session_tees_events(store, subscribers, monkeypatch):
     await store.create("sess-tee")
 
     # Subscribe before starting.
-    q = subscribers.subscribe("sess-tee")
+    q = event_bus.subscribe("sess-tee")
 
     await start_session(
         session_id="sess-tee",
         store=store,
-        subscribers=subscribers,
+        event_bus=event_bus,
     )
 
     # Events should be in the store.
@@ -169,16 +174,13 @@ async def test_start_session_tees_events(store, subscribers, monkeypatch):
     # Status should be COMPLETED.
     assert await store.get_status("sess-tee") == SessionStatus.COMPLETED
 
-    # Subscriber queue should have all events + sentinel.
-    received = []
-    while not q.empty():
-        received.append(await q.get())
-    assert len(received) == 4  # 3 events + None sentinel
-    assert received[-1] is None
+    # Subscriber should have received all events.
+    received = [item async for item in q]
+    assert len(received) == 3
 
 
 @pytest.mark.asyncio
-async def test_start_session_failed_status(store, subscribers, monkeypatch):
+async def test_start_session_failed_status(store, event_bus, monkeypatch):
     """CompleteEvent with success=False sets FAILED status."""
     async def fake_run(**kwargs):
         yield CompleteEvent(result=AgentResult(success=False))
@@ -192,14 +194,14 @@ async def test_start_session_failed_status(store, subscribers, monkeypatch):
     await store.create("sess-fail")
 
     await start_session(
-        session_id="sess-fail", store=store, subscribers=subscribers,
+        session_id="sess-fail", store=store, event_bus=event_bus,
     )
 
     assert await store.get_status("sess-fail") == SessionStatus.FAILED
 
 
 @pytest.mark.asyncio
-async def test_start_session_exception_sets_failed(store, subscribers, monkeypatch):
+async def test_start_session_exception_sets_failed(store, event_bus, monkeypatch):
     """Exception during run() sets FAILED status and stores error event."""
     async def fake_run(**kwargs):
         yield StartEvent(objective="test")
@@ -214,7 +216,7 @@ async def test_start_session_exception_sets_failed(store, subscribers, monkeypat
     await store.create("sess-err")
 
     await start_session(
-        session_id="sess-err", store=store, subscribers=subscribers,
+        session_id="sess-err", store=store, event_bus=event_bus,
     )
 
     assert await store.get_status("sess-err") == SessionStatus.FAILED
@@ -229,7 +231,7 @@ async def test_start_session_exception_sets_failed(store, subscribers, monkeypat
 
 @pytest.mark.asyncio
 async def test_start_session_suspend_stashes_resume_id(
-    store, subscribers, monkeypatch,
+    store, event_bus, monkeypatch,
 ):
     """Suspend event → SUSPENDED status, interaction_id stashed."""
     from opal_backend.events import WaitForInputEvent
@@ -252,7 +254,7 @@ async def test_start_session_suspend_stashes_resume_id(
     await store.create("sess-sus")
 
     await start_session(
-        session_id="sess-sus", store=store, subscribers=subscribers,
+        session_id="sess-sus", store=store, event_bus=event_bus,
     )
 
     assert await store.get_status("sess-sus") == SessionStatus.SUSPENDED
@@ -263,7 +265,7 @@ async def test_start_session_suspend_stashes_resume_id(
 
 
 @pytest.mark.asyncio
-async def test_resume_session_lifecycle(store, subscribers, monkeypatch):
+async def test_resume_session_lifecycle(store, event_bus, monkeypatch):
     """Full lifecycle: start (suspend) → resume → complete."""
     from opal_backend.events import WaitForInputEvent
     from opal_backend.sessions.api import _SessionContext, resume_session
@@ -283,7 +285,7 @@ async def test_resume_session_lifecycle(store, subscribers, monkeypatch):
     await store.create("sess-resume")
 
     await start_session(
-        session_id="sess-resume", store=store, subscribers=subscribers,
+        session_id="sess-resume", store=store, event_bus=event_bus,
     )
 
     assert await store.get_status("sess-resume") == SessionStatus.SUSPENDED
@@ -300,7 +302,7 @@ async def test_resume_session_lifecycle(store, subscribers, monkeypatch):
         session_id="sess-resume",
         response={"input": {"role": "user", "parts": [{"text": "Dimitri"}]}},
         store=store,
-        subscribers=subscribers,
+        event_bus=event_bus,
     )
 
     assert await store.get_status("sess-resume") == SessionStatus.COMPLETED
@@ -310,7 +312,7 @@ async def test_resume_session_lifecycle(store, subscribers, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_resume_session_no_context(store, subscribers):
+async def test_resume_session_no_context(store, event_bus):
     """resume_session with missing context sets FAILED."""
     from opal_backend.sessions.api import resume_session
 
@@ -321,7 +323,7 @@ async def test_resume_session_no_context(store, subscribers):
         session_id="sess-no-ctx",
         response={},
         store=store,
-        subscribers=subscribers,
+        event_bus=event_bus,
     )
     assert await store.get_status("sess-no-ctx") == SessionStatus.FAILED
 
@@ -347,7 +349,7 @@ async def test_new_session_stashes_model(store):
 
 
 @pytest.mark.asyncio
-async def test_start_session_passes_model_to_run(store, subscribers, monkeypatch):
+async def test_start_session_passes_model_to_run(store, event_bus, monkeypatch):
     """start_session forwards model from context to run_agent."""
     captured_kwargs = {}
 
@@ -369,7 +371,7 @@ async def test_start_session_passes_model_to_run(store, subscribers, monkeypatch
     await start_session(
         session_id="sess-model-run",
         store=store,
-        subscribers=subscribers,
+        event_bus=event_bus,
     )
 
     assert captured_kwargs.get("model") == "gemini-2.5-pro"
@@ -379,7 +381,7 @@ async def test_start_session_passes_model_to_run(store, subscribers, monkeypatch
 
 
 @pytest.mark.asyncio
-async def test_start_session_paused_status(store, subscribers, monkeypatch):
+async def test_start_session_paused_status(store, event_bus, monkeypatch):
     """PausedEvent → PAUSED status, context re-stashed for resume."""
     from opal_backend.events import PausedEvent
     from opal_backend.sessions.api import _SessionContext
@@ -399,7 +401,7 @@ async def test_start_session_paused_status(store, subscribers, monkeypatch):
     await store.create("sess-pause")
 
     await start_session(
-        session_id="sess-pause", store=store, subscribers=subscribers,
+        session_id="sess-pause", store=store, event_bus=event_bus,
     )
 
     assert await store.get_status("sess-pause") == SessionStatus.PAUSED
@@ -410,7 +412,7 @@ async def test_start_session_paused_status(store, subscribers, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_paused_event_stores_resume_id(store, subscribers, monkeypatch):
+async def test_paused_event_stores_resume_id(store, event_bus, monkeypatch):
     """PausedEvent interaction_id is stashed via set_resume_id."""
     from opal_backend.events import PausedEvent
     from opal_backend.sessions.api import _SessionContext
@@ -430,7 +432,7 @@ async def test_paused_event_stores_resume_id(store, subscribers, monkeypatch):
     await store.create("sess-pause-rid")
 
     await start_session(
-        session_id="sess-pause-rid", store=store, subscribers=subscribers,
+        session_id="sess-pause-rid", store=store, event_bus=event_bus,
     )
 
     # Resume ID should match the PausedEvent's interaction_id.

@@ -5,7 +5,7 @@
 Session API — high-level functions for session-based agent execution.
 
 Wraps the existing ``run()`` async iterator with event teeing to a
-``SessionStore`` and live delivery via subscriber queues.
+``SessionStore`` and live delivery via an ``EventBus``.
 """
 
 from __future__ import annotations
@@ -29,58 +29,19 @@ from ..events import (
 )
 from ..backend_client import BackendClient
 from ..drive_operations_client import DriveOperationsClient
+from ..event_bus import EventBus
 from ..interaction_store import InteractionStore
 from ..run import run as run_agent, resume as resume_agent
 from .store import SessionStatus, SessionStore
 
 __all__ = [
     "new_session", "start_session", "resume_session",
-    "cancel_session_task", "update_context", "Subscribers",
+    "cancel_session_task", "update_context",
 ]
 
 logger = logging.getLogger(__name__)
 
 
-# ---------------------------------------------------------------------------
-# Subscriber management — live event delivery to SSE clients
-# ---------------------------------------------------------------------------
-
-
-class Subscribers:
-    """Per-session subscriber queues for live event delivery.
-
-    Each SSE connection subscribes to a session. ``start_session()``
-    publishes each event to all subscriber queues. When the session
-    ends, all queues receive a ``None`` sentinel.
-    """
-
-    def __init__(self) -> None:
-        self._queues: dict[str, list[asyncio.Queue]] = {}
-
-    def subscribe(self, session_id: str) -> asyncio.Queue:
-        """Create and register a subscriber queue for a session."""
-        queue: asyncio.Queue = asyncio.Queue()
-        self._queues.setdefault(session_id, []).append(queue)
-        return queue
-
-    def unsubscribe(self, session_id: str, queue: asyncio.Queue) -> None:
-        """Remove a subscriber queue."""
-        queues = self._queues.get(session_id, [])
-        if queue in queues:
-            queues.remove(queue)
-
-    async def publish(
-        self, session_id: str, event: dict[str, Any],
-    ) -> None:
-        """Push an event dict to all subscriber queues."""
-        for queue in self._queues.get(session_id, []):
-            await queue.put(event)
-
-    async def close(self, session_id: str) -> None:
-        """Send sentinel to all subscribers and clean up."""
-        for queue in self._queues.get(session_id, []):
-            await queue.put(None)
-        self._queues.pop(session_id, None)
 
 
 # ---------------------------------------------------------------------------
@@ -211,7 +172,7 @@ async def start_session(
     *,
     session_id: str,
     store: SessionStore,
-    subscribers: Subscribers,
+    event_bus: EventBus,
 ) -> None:
     """Run the agent loop for a session, teeing events to store + subscribers.
 
@@ -242,7 +203,7 @@ async def start_session(
             session_id=session_id,
         ),
         store=store,
-        subscribers=subscribers,
+        event_bus=event_bus,
         ctx=ctx,
     )
 
@@ -252,7 +213,7 @@ async def resume_session(
     session_id: str,
     response: dict[str, Any],
     store: SessionStore,
-    subscribers: Subscribers,
+    event_bus: EventBus,
     context_parts: list[dict[str, Any]] | None = None,
 ) -> None:
     """Resume a suspended session.
@@ -294,7 +255,7 @@ async def resume_session(
             context_queue=ctx.context_queue,
         ),
         store=store,
-        subscribers=subscribers,
+        event_bus=event_bus,
         ctx=ctx,
     )
 
@@ -309,13 +270,13 @@ async def _tee_events(
     session_id: str,
     events: AsyncIterator[AgentEvent],
     store: SessionStore,
-    subscribers: Subscribers,
+    event_bus: EventBus,
     ctx: _SessionContext,
 ) -> None:
     """Shared event-tee loop for start_session and resume_session.
 
     Iterates the event stream, pushes each event to the store and
-    subscribers, detects terminal/suspend events, and sets final status.
+    event bus, detects terminal/suspend events, and sets final status.
     On suspend, re-stashes the context and the interaction_id so the
     next resume_session call can pick them up.
     """
@@ -325,7 +286,7 @@ async def _tee_events(
         async for event in events:
             event_dict = event.to_dict()
             await store.append_event(session_id, event_dict)
-            await subscribers.publish(session_id, event_dict)
+            await event_bus.publish(session_id, event_dict)
 
             # Detect terminal events to set the right status.
             if isinstance(event, CompleteEvent):
@@ -356,12 +317,12 @@ async def _tee_events(
     except Exception as e:
         logger.exception("Session %s failed", session_id)
         await store.append_event(session_id, {"error": {"message": str(e)}})
-        await subscribers.publish(session_id, {"error": {"message": str(e)}})
+        await event_bus.publish(session_id, {"error": {"message": str(e)}})
         terminal_status = SessionStatus.FAILED
 
     finally:
         await store.set_status(session_id, terminal_status)
-        await subscribers.close(session_id)
+        await event_bus.close(session_id)
         _tasks.pop(session_id, None)
 
 

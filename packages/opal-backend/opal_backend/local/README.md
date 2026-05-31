@@ -12,6 +12,7 @@ Everything outside this directory IS synced to production.
 | --------------------------- | ------------------------------------------------------------------------------- |
 | `api_surface.py`            | FastAPI router factory + `AgentBackend`/`ProxyBackend` protocols                |
 | `backend_client_impl.py`    | `HttpBackendClient` — HTTP-based `BackendClient` (POSTs to OP + streams Gemini) |
+| `event_bus_impl.py`         | `InMemoryEventBus` — asyncio.Queue-based `EventBus` for live event delivery     |
 | `interaction_store_impl.py` | `InMemoryInteractionStore` — dict-based `InteractionStore`                      |
 | `pending_requests.py`       | `PendingRequestMap` — asyncio futures for fake server suspend/resume            |
 | `session_router.py`         | FastAPI router factory + `SessionDeps` for session REST endpoints                |
@@ -39,4 +40,5 @@ Body (resume): {"interactionId": "...", "response": {...}}
 | Protocol (synced)  | Implementation (local)                                   |
 | ------------------ | -------------------------------------------------------- |
 | `BackendClient`    | `HttpBackendClient` (`backend_client_impl.py`)           |
+| `EventBus`         | `InMemoryEventBus` (`event_bus_impl.py`)                 |
 | `InteractionStore` | `InMemoryInteractionStore` (`interaction_store_impl.py`) |
