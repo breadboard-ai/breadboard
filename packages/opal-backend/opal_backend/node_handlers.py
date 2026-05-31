@@ -70,6 +70,100 @@ class NodeHandlerDeps:
     graph_info: dict[str, Any] | None = None
 
 
+def _extract_text_from_content(content: dict[str, Any]) -> str:
+    """Extract plain text from an LLMContent dict."""
+    parts = content.get("parts", [])
+    texts = []
+    for part in parts:
+        if isinstance(part, dict) and "text" in part:
+            texts.append(part["text"])
+    return "\n".join(texts)
+
+# ---------------------------------------------------------------------------
+# Config normalization helpers
+# ---------------------------------------------------------------------------
+
+# Explicit map of known Breadboard embed URLs to canonical node types.
+# The URL structure isn't guaranteed to be semantic, so we map each one
+# explicitly rather than parsing the path.
+_EMBED_URL_MAP: dict[str, str] = {
+    "embed://a2/generate.bgl.json#module:main": "generate",
+    "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c": "generate",
+    "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c": "input",
+    "embed://a2/ask-user.bgl.json#module:main": "input",
+    "embed://a2/a2.bgl.json#module:render-outputs": "output",
+    # Media generators — generate nodes with specialized output types.
+    "embed://a2/a2.bgl.json#module:image-generator": "generate",
+    "embed://a2/a2.bgl.json#module:image-editor": "generate",
+    "embed://a2/audio-generator.bgl.json#module:main": "generate",
+    "embed://a2/video-generator.bgl.json#module:main": "generate",
+    "embed://a2/music-generator.bgl.json#module:main": "generate",
+    # Compound nodes — run as subgraphs.
+    "embed://a2/go-over-list.bgl.json#module:main": "generate",
+    "embed://a2/deep-research.bgl.json#module:main": "generate",
+}
+
+
+def _effective_node_type(raw_type: str) -> str:
+    """Map a raw node type to a canonical handler type.
+
+    Real Breadboard graphs use embed URLs like
+    ``embed://a2/generate.bgl.json#module:main``.  Subgraph nodes
+    start with ``#``.  Simple types like ``"generate"`` pass through.
+    """
+    # Subgraph nodes.
+    if raw_type.startswith("#"):
+        return "subgraph"
+
+    # Explicit URL lookup.
+    if raw_type in _EMBED_URL_MAP:
+        return _EMBED_URL_MAP[raw_type]
+
+    return raw_type
+
+
+def _get_mode(config: dict[str, Any]) -> str:
+    """Read the generation mode from config.
+
+    Real Breadboard uses ``generation-mode``; simplified test format
+    uses ``mode``.
+    """
+    return config.get("generation-mode", config.get("mode", "text"))
+
+
+def _get_system_instruction(config: dict[str, Any]) -> str:
+    """Extract system instruction text from config.
+
+    Handles both:
+    - Simple string: ``{"systemInstruction": "Be helpful"}``
+    - LLMContent: ``{"b-system-instruction": {"parts": [{"text": "..."}]}}``
+    """
+    # Simple string format.
+    simple = config.get("systemInstruction")
+    if isinstance(simple, str):
+        return simple
+
+    # Real Breadboard LLMContent format.
+    llm_content = config.get("b-system-instruction")
+    if isinstance(llm_content, dict):
+        return _extract_text_from_content(llm_content)
+
+    return ""
+
+
+def _get_prompt(config: dict[str, Any]) -> str:
+    """Extract the initial prompt text from config.
+
+    Real Breadboard uses ``config$prompt`` (LLMContent format).
+    """
+    prompt = config.get("config$prompt")
+    if isinstance(prompt, dict):
+        return _extract_text_from_content(prompt)
+    if isinstance(prompt, str):
+        return prompt
+    return ""
+
+
 async def dispatch_handler(
     node_type: str,
     inputs: dict[str, list[Any]],
@@ -81,17 +175,17 @@ async def dispatch_handler(
     Returns node outputs. May raise ``NodeSuspended`` if the node
     needs user input.
     """
-    # Subgraph nodes (type starts with "#") are passthrough for now.
-    if node_type.startswith("#"):
-        return await passthrough_handler(inputs, config)
+    # Normalize node type — real Breadboard embeds use URLs like
+    # "embed://a2/generate.bgl.json#module:main".
+    effective_type = _effective_node_type(node_type)
 
-    match node_type:
+    match effective_type:
         case "output" | "render-outputs":
             return await passthrough_handler(inputs, config)
         case "input":
             return await input_handler(inputs, config)
         case "generate":
-            mode = config.get("mode", "text")
+            mode = _get_mode(config)
             if mode == "agent" and deps and deps.run_agent_fn:
                 return await agent_handler(inputs, config, deps)
             return await text_gen_handler(inputs, config)
@@ -241,37 +335,39 @@ def _build_segments_from_inputs(
     """Build agent segments from node inputs and config.
 
     Converts upstream outputs into the ``segments`` format that
-    ``run_agent()`` expects.
+    ``run_agent()`` → ``to_pidgin()`` expects.
+
+    Wire format (flat):  ``{"type": "text", "text": "hello"}``
     """
     segments: list[dict[str, Any]] = []
 
-    # System instruction from config.
-    system_instruction = config.get("systemInstruction")
+    # System instruction from config (supports both simple string
+    # and real Breadboard LLMContent format).
+    system_instruction = _get_system_instruction(config)
     if system_instruction:
-        segments.append({
-            "kind": "text",
-            "parts": [{"text": system_instruction}],
-        })
+        segments.append({"type": "text", "text": system_instruction})
 
-    # Input context from upstream nodes.
-    for port, values in inputs.items():
+    # Initial prompt from config (real Breadboard config$prompt).
+    prompt = _get_prompt(config)
+    if prompt:
+        segments.append({"type": "text", "text": prompt})
+
+    # Input context from upstream nodes — extract text from LLMContent.
+    for _port, values in inputs.items():
         for value in values:
             if isinstance(value, list):
-                # Already a list of LLMContent.
+                # List of LLMContent dicts.
                 for item in value:
-                    segments.append({
-                        "kind": "text",
-                        "parts": item.get("parts", []) if isinstance(item, dict) else [],
-                    })
+                    if isinstance(item, dict):
+                        text = _extract_text_from_content(item)
+                        if text:
+                            segments.append({"type": "text", "text": text})
             elif isinstance(value, dict):
-                segments.append({
-                    "kind": "text",
-                    "parts": value.get("parts", []),
-                })
+                text = _extract_text_from_content(value)
+                if text:
+                    segments.append({"type": "text", "text": text})
             elif isinstance(value, str):
-                segments.append({
-                    "kind": "text",
-                    "parts": [{"text": value}],
-                })
+                segments.append({"type": "text", "text": value})
 
     return segments
+
