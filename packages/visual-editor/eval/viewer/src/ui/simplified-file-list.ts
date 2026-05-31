@@ -81,17 +81,18 @@ class EvalSimplifiedFileList extends LitElement {
           display: flex;
           align-items: center;
           gap: 4px;
-          font-size: 11px;
-          font-weight: 600;
+          font-size: 10px;
+          font-weight: 700;
           padding: 2px 8px;
-          border-radius: 8px;
-          border: 1px solid var(--border-color);
-          background: var(--light-dark-n-0);
-          color: var(--light-dark-n-100);
+          border-radius: 4px;
+          background: #fef08a; /* Yellow Post-it */
+          color: #854d0e; /* Brownish yellow text */
+          border: 1px solid #facc15;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 
           & .g-icon {
             font-size: 12px;
-            color: var(--light-dark-n-100);
+            color: #854d0e;
           }
         }
 

@@ -1198,7 +1198,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                                   if (!icon) return nothing;
                                   return html`<div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
                                     ${f.noteCount && f.noteCount > 0 ? html`<span 
-                                      style="background: var(--light-dark-n-0); color: var(--light-dark-n-100); font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 8px; border: 1px solid var(--border-color);"
+                                      style="background: #fef08a; color: #854d0e; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; border: 1px solid #facc15; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"
                                       title="${f.noteCount} notes"
                                     >${f.noteCount}</span>` : nothing}
                                     <span 
@@ -1208,7 +1208,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                                     >${icon}</span>
                                   </div>`;
                                 })() : (f.noteCount && f.noteCount > 0 ? html`<span 
-                                  style="background: var(--light-dark-n-0); color: var(--light-dark-n-100); font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 8px; border: 1px solid var(--border-color); margin-left: 8px; flex-shrink: 0;"
+                                  style="background: #fef08a; color: #854d0e; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; border: 1px solid #facc15; margin-left: 8px; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"
                                   title="${f.noteCount} notes"
                                 >${f.noteCount}</span>` : nothing)}
                               </button>

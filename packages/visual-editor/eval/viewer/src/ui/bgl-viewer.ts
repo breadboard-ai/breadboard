@@ -1029,12 +1029,12 @@ class BGLViewer extends LitElement {
               <h3 style="font-size: 14px; font-weight: 600; color: var(--primary); margin: 0 0 var(--bb-grid-size-3) 0; border-bottom: 1px solid var(--border-color); padding-bottom: var(--bb-grid-size-2);">
                 ${section}
               </h3>
-              <div style="display: flex; flex-direction: column; gap: var(--bb-grid-size-2);">
+              <div style="display: flex; flex-direction: column; gap: var(--bb-grid-size-2); padding: var(--bb-grid-size) var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);">
                 ${notes.map((note) => {
                   const fieldRef = this.#getFieldReference(note.location);
-                  return html`<div style="background: var(--light-dark-n-98); border: 1px solid var(--border-color); border-radius: var(--bb-grid-size-2); padding: var(--bb-grid-size-3); font-size: 13px; color: var(--light-dark-n-10);">
-                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--light-dark-n-40); margin-bottom: var(--bb-grid-size-2); font-weight: 500;">
-                      <span style="font-weight: 600; color: var(--light-dark-n-20);">${fieldRef}</span>
+                  return html`<div style="background: #fef08a; border: 1px solid #facc15; border-bottom-right-radius: 12px 4px; border-radius: 4px; padding: var(--bb-grid-size-3); font-size: 13px; color: #1e293b; box-shadow: 1px 3px 6px oklch(0 0 0 / 0.08), 0 1px 2px oklch(0 0 0 / 0.04); margin: 2px 4px 8px 4px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-bottom: var(--bb-grid-size-2); font-weight: 500; border-bottom: 1px dashed oklch(from #facc15 l c h / 0.5); padding-bottom: var(--bb-grid-size);">
+                      <span style="font-weight: 600; color: #475569;">${fieldRef}</span>
                       <span>${new Date(note.timestamp).toLocaleString()}</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: var(--bb-grid-size-2);">
@@ -1043,7 +1043,7 @@ class BGLViewer extends LitElement {
                         style="color: ${note.reaction === 'good' ? '#34a853' : '#ea4335'}; font-size: 16px; flex-shrink: 0;"
                         title=${note.reaction === 'good' ? 'Marked as Good' : 'Marked as Bad'}
                       >${note.reaction === 'good' ? 'thumb_up' : 'thumb_down'}</span>` : nothing}
-                      <div style="white-space: pre-wrap;">${note.text}</div>
+                      <div style="white-space: pre-wrap; line-height: 1.5;">${note.text}</div>
                     </div>
                   </div>`;
                 })}
