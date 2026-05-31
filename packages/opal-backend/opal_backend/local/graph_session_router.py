@@ -174,4 +174,41 @@ def create_graph_session_router(
             "sessionId": session_id, "status": "cancelled",
         })
 
+    @router.post("/{session_id}:resume")
+    async def resume_graph_session(
+        request: Request, session_id: str,
+    ) -> JSONResponse:
+        """Resume a suspended node after user input.
+
+        Body: {interactionId: str, response: dict}
+        """
+        status = await store.get_status(session_id)
+        if status is None:
+            return JSONResponse(
+                {"error": "Graph session not found"}, status_code=404,
+            )
+
+        body = await request.json()
+        interaction_id = body.get("interactionId")
+        if not interaction_id:
+            return JSONResponse(
+                {"error": "Missing 'interactionId' in request body"},
+                status_code=400,
+            )
+
+        response = body.get("response", {})
+
+        try:
+            await runner.resume_node(
+                session_id, interaction_id, response,
+            )
+        except ValueError as exc:
+            return JSONResponse(
+                {"error": str(exc)}, status_code=404,
+            )
+
+        return JSONResponse({
+            "sessionId": session_id, "status": "running",
+        })
+
     return router

@@ -55,16 +55,16 @@ def _simple_graph() -> dict:
 
 
 def _three_node_graph() -> dict:
-    """input → generate → output."""
+    """generate → generate → output."""
     return {
         "nodes": [
-            {"id": "inp", "type": "input"},
-            {"id": "gen", "type": "generate"},
+            {"id": "gen1", "type": "generate"},
+            {"id": "gen2", "type": "generate"},
             {"id": "out", "type": "output"},
         ],
         "edges": [
-            {"from": "inp", "to": "gen", "out": "data", "in": "input"},
-            {"from": "gen", "to": "out", "out": "context", "in": "result"},
+            {"from": "gen1", "to": "gen2", "out": "context", "in": "input"},
+            {"from": "gen2", "to": "out", "out": "context", "in": "result"},
         ],
     }
 
@@ -228,6 +228,102 @@ class TestCancelEndpoint:
         assert resp.status_code == 404
 
 
+def _input_output_graph() -> dict:
+    """An input → output graph that will suspend at input."""
+    return {
+        "nodes": [
+            {"id": "inp", "type": "input", "configuration": {
+                "prompt": "Enter something",
+            }},
+            {"id": "out", "type": "output"},
+        ],
+        "edges": [
+            {"from": "inp", "to": "out", "out": "data", "in": "result"},
+        ],
+    }
+
+
+class TestResumeEndpoint:
+    def test_resume_completes_suspended_graph(self):
+        app, store, bus = _create_app()
+        client = TestClient(app)
+
+        # Create — will suspend at input.
+        resp = client.post(
+            "/v1beta1/graphSessions/new",
+            json={"graph": _input_output_graph()},
+        )
+        session_id = resp.json()["sessionId"]
+
+        # Verify suspended.
+        resp = client.get(f"/v1beta1/graphSessions/{session_id}/status")
+        assert resp.json()["status"] == "suspended"
+
+        # Get interaction ID from stored events.
+        state = store._sessions[session_id]
+        input_req = next(
+            e for e in state.events if e.get("type") == "inputRequired"
+        )
+        interaction_id = input_req["interactionId"]
+
+        # Resume.
+        resp = client.post(
+            f"/v1beta1/graphSessions/{session_id}:resume",
+            json={
+                "interactionId": interaction_id,
+                "response": {"text": "Hello!"},
+            },
+        )
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "running"
+
+        # Verify completed.
+        resp = client.get(f"/v1beta1/graphSessions/{session_id}/status")
+        assert resp.json()["status"] == "completed"
+
+    def test_resume_missing_interaction_id(self):
+        app, *_ = _create_app()
+        client = TestClient(app)
+
+        resp = client.post(
+            "/v1beta1/graphSessions/new",
+            json={"graph": _input_output_graph()},
+        )
+        session_id = resp.json()["sessionId"]
+
+        resp = client.post(
+            f"/v1beta1/graphSessions/{session_id}:resume",
+            json={"response": {}},
+        )
+        assert resp.status_code == 400
+
+    def test_resume_invalid_interaction_id(self):
+        app, *_ = _create_app()
+        client = TestClient(app)
+
+        resp = client.post(
+            "/v1beta1/graphSessions/new",
+            json={"graph": _input_output_graph()},
+        )
+        session_id = resp.json()["sessionId"]
+
+        resp = client.post(
+            f"/v1beta1/graphSessions/{session_id}:resume",
+            json={"interactionId": "bogus", "response": {}},
+        )
+        assert resp.status_code == 404
+
+    def test_resume_not_found_session(self):
+        app, *_ = _create_app()
+        client = TestClient(app)
+
+        resp = client.post(
+            "/v1beta1/graphSessions/missing:resume",
+            json={"interactionId": "x", "response": {}},
+        )
+        assert resp.status_code == 404
+
+
 # ── helpers ──
 
 
@@ -244,3 +340,4 @@ def _parse_sse_events(raw: str) -> list[dict]:
                 except json.JSONDecodeError:
                     pass
     return events
+

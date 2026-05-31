@@ -32,35 +32,35 @@ def _two_node_plan() -> GraphPlan:
 
 
 def _three_node_plan() -> GraphPlan:
-    """input → gen → output (three-node linear plan)."""
-    inp = NodeDescriptor(id="inp", type="input")
-    gen = NodeDescriptor(id="gen", type="generate")
+    """gen1 → gen2 → output (three-node linear plan)."""
+    gen1 = NodeDescriptor(id="gen1", type="generate")
+    gen2 = NodeDescriptor(id="gen2", type="generate")
     out = NodeDescriptor(id="out", type="output")
 
-    e1 = Edge(from_node="inp", to_node="gen", out_port="data", in_port="input")
-    e2 = Edge(from_node="gen", to_node="out", out_port="context", in_port="result")
+    e1 = Edge(from_node="gen1", to_node="gen2", out_port="context", in_port="input")
+    e2 = Edge(from_node="gen2", to_node="out", out_port="context", in_port="result")
 
     return GraphPlan(stages=[
-        [PlanNodeInfo(node=inp, downstream=[e1], upstream=[])],
-        [PlanNodeInfo(node=gen, downstream=[e2], upstream=[e1])],
+        [PlanNodeInfo(node=gen1, downstream=[e1], upstream=[])],
+        [PlanNodeInfo(node=gen2, downstream=[e2], upstream=[e1])],
         [PlanNodeInfo(node=out, downstream=[], upstream=[e2])],
     ])
 
 
 def _diamond_plan() -> GraphPlan:
-    """input → (gen1, gen2) → output."""
-    inp = NodeDescriptor(id="inp", type="input")
+    """root → (gen1, gen2) → output."""
+    root = NodeDescriptor(id="root", type="generate")
     gen1 = NodeDescriptor(id="gen1", type="generate")
     gen2 = NodeDescriptor(id="gen2", type="generate")
     out = NodeDescriptor(id="out", type="output")
 
-    e1 = Edge(from_node="inp", to_node="gen1", out_port="data", in_port="i1")
-    e2 = Edge(from_node="inp", to_node="gen2", out_port="data", in_port="i2")
+    e1 = Edge(from_node="root", to_node="gen1", out_port="context", in_port="i1")
+    e2 = Edge(from_node="root", to_node="gen2", out_port="context", in_port="i2")
     e3 = Edge(from_node="gen1", to_node="out", out_port="context", in_port="c1")
     e4 = Edge(from_node="gen2", to_node="out", out_port="context", in_port="c2")
 
     return GraphPlan(stages=[
-        [PlanNodeInfo(node=inp, downstream=[e1, e2], upstream=[])],
+        [PlanNodeInfo(node=root, downstream=[e1, e2], upstream=[])],
         [PlanNodeInfo(node=gen1, downstream=[e3], upstream=[e1]),
          PlanNodeInfo(node=gen2, downstream=[e4], upstream=[e2])],
         [PlanNodeInfo(node=out, downstream=[], upstream=[e3, e4])],
@@ -185,10 +185,10 @@ class TestThreeNodeLinear:
         node_starts = [e for e in events if e["type"] == "nodeStart"]
         assert len(node_starts) == 3
 
-        # Verify ordering: inp before gen before out.
+        # Verify ordering: gen1 before gen2 before out.
         start_ids = [e["nodeId"] for e in node_starts]
-        assert start_ids.index("inp") < start_ids.index("gen")
-        assert start_ids.index("gen") < start_ids.index("out")
+        assert start_ids.index("gen1") < start_ids.index("gen2")
+        assert start_ids.index("gen2") < start_ids.index("out")
 
 
 class TestDiamondGraph:
