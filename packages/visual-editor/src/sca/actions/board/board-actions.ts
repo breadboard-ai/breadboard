@@ -1021,6 +1021,15 @@ async function runBoard(): Promise<void> {
     }
   }
 
+  // Backend graph runner: delegate to Heartstone backend.
+  if (services.graphRunService.enabled) {
+    const { startBackendRun } = await import(
+      "../run/backend-run-action.js"
+    );
+    await startBackendRun();
+    return;
+  }
+
   controller.run.main.runner.start();
 }
 

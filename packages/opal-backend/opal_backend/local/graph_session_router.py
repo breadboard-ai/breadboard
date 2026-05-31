@@ -115,10 +115,11 @@ def create_graph_session_router(
             events = await store.get_events(session_id, after=after)
             next_index = after + 1
             for i, event in enumerate(events):
+                idx = next_index + i
                 yield {
                     "event": "event",
-                    "id": str(next_index + i),
-                    "data": json.dumps(event),
+                    "id": str(idx),
+                    "data": json.dumps({**event, "index": idx}),
                 }
             next_index += len(events)
 
@@ -131,7 +132,9 @@ def create_graph_session_router(
                         yield {
                             "event": "event",
                             "id": str(next_index),
-                            "data": json.dumps(item),
+                            "data": json.dumps(
+                                {**item, "index": next_index},
+                            ),
                         }
                         next_index += 1
                 finally:
