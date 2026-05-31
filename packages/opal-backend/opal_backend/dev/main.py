@@ -37,10 +37,11 @@ from opal_backend.local.drive_operations_client_impl import (
 )
 
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
+from opal_backend.local.event_bus_impl import InMemoryEventBus
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
 from opal_backend.local.session_router import SessionDeps, create_session_router
 from opal_backend.sessions.api import (
-    Subscribers, new_session, register_task, start_session,
+    new_session, register_task, start_session,
     resume_session as resume_session_fn, update_context,
 )
 from opal_backend.sessions.store import SessionStatus
@@ -75,7 +76,7 @@ _interaction_store = InMemoryInteractionStore()
 
 # In-memory store for sessions (dev only).
 _session_store = InMemorySessionStore()
-_subscribers = Subscribers()
+_event_bus = InMemoryEventBus()
 _session_deps = SessionDeps(
     backend_factory=lambda token, origin: HttpBackendClient(
         upstream_base=UPSTREAM_BASE,
@@ -91,7 +92,7 @@ _session_deps = SessionDeps(
     interaction_store=_interaction_store,
 )
 _session_router = create_session_router(
-    _session_store, _subscribers, deps=_session_deps,
+    _session_store, _event_bus, deps=_session_deps,
 )
 
 
@@ -230,13 +231,13 @@ class DevAgentBackend:
         )
 
         # Subscribe BEFORE starting the loop so we don't miss events.
-        queue = _subscribers.subscribe(session_id)
+        queue = _event_bus.subscribe(session_id)
 
         task = asyncio.create_task(
             start_session(
                 session_id=session_id,
                 store=_session_store,
-                subscribers=_subscribers,
+                event_bus=_event_bus,
             ),
             name=f"shim-{session_id}",
         )
@@ -280,14 +281,14 @@ class DevAgentBackend:
         )
 
         # Subscribe BEFORE resuming.
-        queue = _subscribers.subscribe(session_id)
+        queue = _event_bus.subscribe(session_id)
 
         task = asyncio.create_task(
             resume_session_fn(
                 session_id=session_id,
                 response=response,
                 store=_session_store,
-                subscribers=_subscribers,
+                event_bus=_event_bus,
             ),
             name=f"shim-resume-{session_id}",
         )
@@ -296,18 +297,15 @@ class DevAgentBackend:
         return self._stream_queue(session_id, queue)
 
     def _stream_queue(
-        self, session_id: str, queue: asyncio.Queue,
+        self, session_id: str, queue,
     ) -> EventSourceResponse:
-        """Stream events from a subscriber queue as SSE."""
+        """Stream events from an EventBus subscription as SSE."""
         async def stream():
             try:
-                while True:
-                    item = await queue.get()
-                    if item is None:
-                        break  # Session ended.
+                async for item in queue:
                     yield {"data": json.dumps(item)}
             finally:
-                _subscribers.unsubscribe(session_id, queue)
+                _event_bus.unsubscribe(session_id, queue)
         return EventSourceResponse(content=stream())
 
 

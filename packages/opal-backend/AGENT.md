@@ -34,17 +34,19 @@ your change. The how-to checklists below include these reminders explicitly.
 external dependencies.** No `httpx`, `fastapi`, `pydantic`, or `sse_starlette`
 imports. Only Python stdlib + typing.
 
-All transport is injected through two protocols:
+All transport is injected through protocols:
 
 | Protocol           | File                   | What it abstracts                   |
 | ------------------ | ---------------------- | ----------------------------------- |
 | `BackendClient`    | `backend_client.py`    | One Platform ops + Gemini streaming |
 | `InteractionStore` | `interaction_store.py` | Suspend/resume state persistence    |
+| `EventBus`         | `event_bus.py`         | Live event delivery to SSE clients  |
 
 Implementations live in `local/`:
 
 - `HttpBackendClient` → `local/backend_client_impl.py`
 - `InMemoryInteractionStore` → `local/interaction_store_impl.py`
+- `InMemoryEventBus` → `local/event_bus_impl.py`
 
 ## Entry Points
 
