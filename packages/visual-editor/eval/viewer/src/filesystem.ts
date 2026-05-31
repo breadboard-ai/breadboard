@@ -7,12 +7,14 @@
 import { Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { openDB, DBSchema } from "idb";
+import { RunNotes } from "./types.js";
 import {
   buildFileHierarchy,
   GroupedByType,
   ParsedFileMedata,
   parseFileName,
 } from "./parse-file-name.js";
+
 
 export type FileSystemWalkerEntry =
   | FileSystemDirectoryHandle
@@ -78,7 +80,7 @@ declare global {
 
 const HANDLES_DB = "evalfilesystemhandles";
 
-type Mode = "read";
+type Mode = "read" | "readwrite";
 
 type HandleKey = [path: string];
 
@@ -156,8 +158,8 @@ export class FileSystemEvalBackend {
     let handle = await handlesDb.get("handles", key);
     handlesDb.close();
 
-    if (!createIfNeeded) {
-      return handle?.handle ?? null;
+    if (!createIfNeeded && !handle) {
+      return null;
     }
 
     // 2. If the handle doesn't exist, create it.
@@ -169,11 +171,15 @@ export class FileSystemEvalBackend {
     }
 
     // 3. Check the permission on the handle.
-    const permission = await handle.handle.queryPermission({ mode });
+    let permission = await handle.handle.queryPermission({ mode });
     if (permission !== "granted") {
-      return permission;
-      // 4. Renew the permission if needed.
-      // permission = await handle.handle.requestPermission({ mode });
+      if (mode === "readwrite") {
+        // Try to request permission for readwrite.
+        permission = await handle.handle.requestPermission({ mode });
+      }
+      if (permission !== "granted") {
+        return permission;
+      }
     }
 
     // 5. Return the handle.
@@ -235,6 +241,7 @@ export class FileSystemEvalBackend {
     try {
       const queryEntries: ParsedFileMedata[] = [];
       const raterMap = new Map<string, string>();
+      const notesCountMap = new Map<string, number>();
 
       try {
         for await (const [name, descriptor] of handle.entries()) {
@@ -246,6 +253,18 @@ export class FileSystemEvalBackend {
               const judgement = parsed?.overall_judgement || (parsed?.error ? 'FAIL' : 'UNKNOWN');
               const baseName = name.replace(/\.rater\.json$/, "");
               raterMap.set(baseName, judgement);
+            } catch {
+              // Ignore failure.
+            }
+          }
+          if (name.endsWith(".notes.json") && descriptor.kind === "file") {
+            try {
+              const fileBlob = await (descriptor as FileSystemFileHandle).getFile();
+              const text = await fileBlob.text();
+              const parsed = JSON.parse(text) as RunNotes;
+              const count = parsed?.notes?.length || 0;
+              const baseName = name.replace(/\.notes\.json$/, "");
+              notesCountMap.set(baseName, count);
             } catch {
               // Ignore failure.
             }
@@ -265,6 +284,7 @@ export class FileSystemEvalBackend {
         if (parsed) {
           const baseName = name.replace(/\.log\.json$/, "");
           parsed.judgement = raterMap.get(baseName);
+          parsed.noteCount = notesCountMap.get(baseName) || 0;
           queryEntries.push(parsed);
         }
       }
@@ -303,4 +323,51 @@ export class FileSystemEvalBackend {
 
     return { $error: `Unable to read file in directory: ${path}` };
   }
+
+  async write(path: string, content: string): Promise<Outcome<boolean>> {
+    const handle = await this.#obtainFileDirHandle(path, "readwrite", true);
+    if (!handle) {
+      return { $error: "Permission to write to directory was refused" };
+    }
+    if (handle === "prompt") {
+      return { $error: "prompt" };
+    }
+
+    try {
+      const fileName = path.split("/").at(-1);
+      if (!fileName) {
+        return { $error: "Invalid file path" };
+      }
+
+      const fileHandle = await handle.getFileHandle(fileName, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      return true;
+    } catch (err) {
+      console.warn(err);
+      return { $error: `Unable to write file in directory: ${path}` };
+    }
+  }
+
+  async readNotes(logPath: string): Promise<Outcome<RunNotes>> {
+    const notesPath = logPath.replace(/\.log\.json$/, ".notes.json");
+    const result = await this.read(notesPath);
+    if (!ok(result)) {
+      // If file not found, return empty notes instead of error, or handle error accordingly.
+      // For now, let's assume empty notes if error.
+      return { notes: [] };
+    }
+    try {
+      return JSON.parse(result) as RunNotes;
+    } catch {
+      return { notes: [] };
+    }
+  }
+
+  async writeNotes(logPath: string, notes: RunNotes): Promise<Outcome<boolean>> {
+    const notesPath = logPath.replace(/\.log\.json$/, ".notes.json");
+    return this.write(notesPath, JSON.stringify(notes, null, 2));
+  }
 }
+
