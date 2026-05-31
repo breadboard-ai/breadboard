@@ -128,12 +128,11 @@ class GraphEditingEvalHarness {
     let capabilitiesMdContent = "";
     let evalSystemInstruction = "";
     const batchCSVRows: {
-      translated_intent: string;
-      breadboard_json: string;
-      opie_output: string;
-      score: string;
-      explanation: string;
       original_intent: string;
+      breadboard_json: string;
+      bgl_json: string;
+      rater_json: string;
+      transcript_jsonl: string;
     }[] = [];
 
     // @ts-expect-error "Can't define window?"
@@ -182,9 +181,7 @@ class GraphEditingEvalHarness {
       const transcriptFilename = `${filename}.transcript.jsonl`;
       let wroteRater = false;
 
-      let score = "SKIPPED";
-      let explanation = "";
-      let translatedIntent = "";
+
       const isCSVBatch = this.args.batch?.path.endsWith(".csv");
       const csvEntry = batchRowMap.get(evalName);
 
@@ -310,14 +307,11 @@ class GraphEditingEvalHarness {
               raterOutput = { api_response: evalOutcome, error: "No candidates or text parts in response" };
             }
             
-            translatedIntent = parsed?.translated_intent || csvEntry.intent;
-            score = parsed?.overall_judgement || "Parsed Result Missing Score";
-            explanation = parsed?.overall_rationale || "";
+
           } else {
             const errPayload = evalOutcome as { $error?: string };
             console.error("[Eval] Gemini evaluation API failed:", errPayload?.$error || "Unknown Error");
-            score = "EVAL API ERROR";
-            explanation = errPayload?.$error || "Unknown Error";
+
             raterOutput = {
               error: "Gemini evaluation API failed",
               details: errPayload?.$error || evalOutcome,
@@ -325,8 +319,7 @@ class GraphEditingEvalHarness {
           }
         } catch (e) {
           console.error("[Eval] Exception during Gemini evaluation:", (e as Error).message);
-          score = "EVAL EXCEPTION";
-          explanation = (e as Error).message;
+
           raterOutput = {
             error: "Exception during Gemini evaluation",
             details: (e as Error).message,
@@ -347,15 +340,18 @@ class GraphEditingEvalHarness {
           }
         }
 
+        const transcriptJsonl = (run.transcriptTurns && run.transcriptTurns.length > 0)
+          ? run.transcriptTurns
+              .map((turn) => JSON.stringify(turn))
+              .join("\n")
+          : "";
+
         batchCSVRows.push({
-          translated_intent: translatedIntent,
-          breadboard_json: csvEntry.breadboard_json,
-          opie_output: (run.graph.nodes?.length ?? 0) === 0 && run.lastMessage 
-            ? `[Clarifying Question]: ${run.lastMessage}` 
-            : JSON.stringify(run.graph, null, 2),
-          score: score,
-          explanation: explanation,
           original_intent: csvEntry.intent,
+          breadboard_json: csvEntry.breadboard_json,
+          bgl_json: JSON.stringify(run.graph, null, 2),
+          rater_json: raterOutput ? JSON.stringify(raterOutput, null, 2) : "",
+          transcript_jsonl: transcriptJsonl,
         });
       }
 
@@ -630,9 +626,9 @@ class GraphEditingEvalHarness {
         return `"${escaped}"`;
       };
 
-      let csvContent = "translated_intent,breadboard_json,opie_output,score,explanation,original_intent\n";
+      let csvContent = "original_intent,breadboard_json,bgl_json,rater_json,transcript_jsonl\n";
       for (const row of batchCSVRows) {
-        csvContent += `${toCSVCell(row.translated_intent)},${toCSVCell(row.breadboard_json)},${toCSVCell(row.opie_output)},${toCSVCell(row.score)},${toCSVCell(row.explanation)},${toCSVCell(row.original_intent)}\n`;
+        csvContent += `${toCSVCell(row.original_intent)},${toCSVCell(row.breadboard_json)},${toCSVCell(row.bgl_json)},${toCSVCell(row.rater_json)},${toCSVCell(row.transcript_jsonl)}\n`;
       }
 
       await writeFile(outputCsvPath, csvContent, "utf-8");
