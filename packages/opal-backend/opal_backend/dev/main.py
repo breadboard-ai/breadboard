@@ -38,6 +38,10 @@ from opal_backend.local.drive_operations_client_impl import (
 
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
 from opal_backend.local.event_bus_impl import InMemoryEventBus
+from opal_backend.local.graph_session_store_impl import InMemoryGraphSessionStore
+from opal_backend.local.graph_session_router import create_graph_session_router
+from opal_backend.local.task_scheduler_impl import LocalTaskScheduler
+from opal_backend.graph_runner import GraphRunner
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
 from opal_backend.local.session_router import SessionDeps, create_session_router
 from opal_backend.sessions.api import (
@@ -93,6 +97,22 @@ _session_deps = SessionDeps(
 )
 _session_router = create_session_router(
     _session_store, _event_bus, deps=_session_deps,
+)
+
+# Graph session infrastructure (Heartstone).
+_graph_session_store = InMemoryGraphSessionStore()
+_graph_runner = GraphRunner(
+    store=_graph_session_store,
+    event_bus=_event_bus,
+    scheduler=None,  # Set below — circular dep.
+)
+_graph_scheduler = LocalTaskScheduler(run_fn=_graph_runner.run_node)
+_graph_runner._scheduler = _graph_scheduler
+_graph_session_router = create_graph_session_router(
+    store=_graph_session_store,
+    event_bus=_event_bus,
+    runner=_graph_runner,
+    scheduler=_graph_scheduler,
 )
 
 
@@ -541,6 +561,7 @@ router = create_api_router(
     proxy=_proxy,
     agent=_agent,
     sessions=_session_router,
+    graph_sessions=_graph_session_router,
 )
 app.include_router(router)
 

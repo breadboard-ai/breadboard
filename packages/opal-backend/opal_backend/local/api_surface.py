@@ -63,6 +63,7 @@ def create_api_router(
     *,
     agent: AgentBackend | None = None,
     sessions: APIRouter | None = None,
+    graph_sessions: APIRouter | None = None,
     proxy: ProxyBackend | None = None,
 ) -> APIRouter:
     """Create a FastAPI router with the shared Opal API surface.
@@ -70,6 +71,7 @@ def create_api_router(
     Args:
         agent: Handler for POST /v1beta1/streamRunAgent (optional).
         sessions: Router for session endpoints (optional).
+        graph_sessions: Router for graph session endpoints (optional).
         proxy: Handler for v1beta1/* proxy endpoints (optional).
     """
     router = APIRouter()
@@ -85,6 +87,10 @@ def create_api_router(
     if sessions is not None:
         router.include_router(sessions)
 
+    # ----- Graph session endpoints (must come before catch-all proxy) -----
+    if graph_sessions is not None:
+        router.include_router(graph_sessions)
+
     # ----- Proxy endpoints -----
     if proxy is not None:
 
@@ -96,3 +102,4 @@ def create_api_router(
             return await proxy.proxy(request)
 
     return router
+
