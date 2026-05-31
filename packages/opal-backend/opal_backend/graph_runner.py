@@ -7,11 +7,14 @@ Orchestrates the full lifecycle of a single node task:
 1. Emit ``nodeStart`` event
 2. Load inputs from ``GraphSessionStore``
 3. Load config from the stored plan
-4. Run the appropriate handler
+4. Run the appropriate handler (with agent event forwarding)
 5. Save outputs via ``complete_node()``
 6. Schedule newly-ready downstream nodes
 7. Check if graph is complete → emit ``graphComplete``
 8. Emit ``nodeEnd`` event
+
+Handles ``NodeSuspended`` — saves node state and emits
+``inputRequired`` without completing the node.
 
 Only stdlib + typing — no external deps (synced to production).
 """
@@ -19,11 +22,15 @@ Only stdlib + typing — no external deps (synced to production).
 from __future__ import annotations
 
 import traceback
-from typing import Any
+import uuid
+from typing import Any, AsyncIterator, Callable
 
+from .backend_client import BackendClient
 from .event_bus import EventBus
-from .graph_session_store import GraphSessionStore
-from .node_handlers import dispatch_handler
+from .events import AgentEvent
+from .graph_session_store import GraphSessionStore, SuspendedNodeState
+from .interaction_store import InteractionStore
+from .node_handlers import NodeHandlerDeps, NodeSuspended, dispatch_handler
 from .task_scheduler import TaskScheduler
 
 __all__ = ["GraphRunner"]
@@ -33,8 +40,8 @@ class GraphRunner:
     """Runs individual node tasks and coordinates the graph lifecycle.
 
     Wired together by the server entry point (``dev/main.py`` or
-    ``fake/main.py``) with concrete implementations of the three
-    protocol dependencies.
+    ``fake/main.py``) with concrete implementations of the protocol
+    dependencies.
     """
 
     def __init__(
@@ -42,18 +49,37 @@ class GraphRunner:
         store: GraphSessionStore,
         event_bus: EventBus,
         scheduler: TaskScheduler,
+        *,
+        backend_factory: Callable[[str, str], BackendClient] | None = None,
+        interaction_store: InteractionStore | None = None,
+        run_agent_fn: Callable[..., AsyncIterator[AgentEvent]] | None = None,
     ) -> None:
         self._store = store
         self._event_bus = event_bus
         self._scheduler = scheduler
+        self._backend_factory = backend_factory
+        self._interaction_store = interaction_store
+        self._run_agent_fn = run_agent_fn
+        # Per-session auth context, set by start_graph().
+        self._session_auth: dict[str, tuple[str, str]] = {}
 
     async def start_graph(
         self, session_id: str,
+        *,
+        access_token: str = "",
+        origin: str = "",
     ) -> None:
         """Start execution by scheduling all initially-ready nodes.
 
         Called once after ``store.create()`` has stored the plan.
+
+        Args:
+            access_token: User's OAuth token for backend API calls.
+            origin: Request origin header for backend API calls.
         """
+        # Store auth context so node tasks can create authenticated clients.
+        self._session_auth[session_id] = (access_token, origin)
+
         plan = await self._store.get_plan(session_id)
         if not plan:
             return
@@ -82,6 +108,11 @@ class GraphRunner:
         """
         try:
             await self._run_node_inner(session_id, node_id)
+        except NodeSuspended as suspended:
+            # Node needs user input — save state, emit event, end task.
+            await self._handle_suspend(
+                session_id, node_id, suspended,
+            )
         except Exception as exc:
             # Node failed — mark it and skip dependents.
             error_msg = f"{type(exc).__name__}: {exc}"
@@ -91,6 +122,57 @@ class GraphRunner:
             )
             for nid in newly_ready:
                 await self._scheduler.schedule(session_id, nid)
+            await self._check_graph_complete(session_id)
+
+    async def resume_node(
+        self, session_id: str, interaction_id: str,
+        response: dict[str, Any],
+    ) -> None:
+        """Resume a suspended node after user input.
+
+        Loads the suspended node state, provides the response as
+        input, re-runs the handler, and completes the node normally.
+        """
+        loaded = await self._store.load_suspended_node(
+            session_id, interaction_id,
+        )
+        if not loaded:
+            raise ValueError(
+                f"No suspended node for interaction {interaction_id}",
+            )
+
+        node_id, suspended_state = loaded
+
+        # Resume: provide the response as the node's output.
+        # For agent nodes, we'd resume the agent loop here.
+        # For now, treat the response as node outputs directly.
+        outputs = {"context": [response]} if response else {"context": []}
+
+        try:
+            newly_ready = await self._store.complete_node(
+                session_id, node_id, outputs,
+            )
+
+            # Emit nodeEnd.
+            await self._store.append_event(session_id, {
+                "type": "nodeEnd", "nodeId": node_id,
+            })
+            await self._event_bus.publish(session_id, {
+                "type": "nodeEnd", "nodeId": node_id,
+            })
+
+            # Schedule downstream.
+            for nid in newly_ready:
+                await self._scheduler.schedule(session_id, nid)
+
+            await self._check_graph_complete(session_id)
+
+        except Exception as exc:
+            error_msg = f"{type(exc).__name__}: {exc}"
+            await self._emit_node_error(session_id, node_id, error_msg)
+            await self._store.mark_node_failed(
+                session_id, node_id, error_msg,
+            )
             await self._check_graph_complete(session_id)
 
     async def _run_node_inner(
@@ -111,16 +193,19 @@ class GraphRunner:
         # 3. Load node config.
         config = await self._store.get_node_config(session_id, node_id)
 
-        # 4. Determine node type and dispatch.
-        node_type = await self._get_node_type(session_id, node_id)
-        outputs = await dispatch_handler(node_type, inputs, config)
+        # 4. Build handler deps.
+        deps = self._build_handler_deps(session_id, node_id)
 
-        # 5. Save outputs and get newly-ready downstream nodes.
+        # 5. Determine node type and dispatch.
+        node_type = await self._get_node_type(session_id, node_id)
+        outputs = await dispatch_handler(node_type, inputs, config, deps)
+
+        # 6. Save outputs and get newly-ready downstream nodes.
         newly_ready = await self._store.complete_node(
             session_id, node_id, outputs,
         )
 
-        # 6. Emit nodeEnd.
+        # 7. Emit nodeEnd.
         await self._store.append_event(session_id, {
             "type": "nodeEnd", "nodeId": node_id,
         })
@@ -128,12 +213,61 @@ class GraphRunner:
             "type": "nodeEnd", "nodeId": node_id,
         })
 
-        # 7. Schedule downstream.
+        # 8. Schedule downstream.
         for nid in newly_ready:
             await self._scheduler.schedule(session_id, nid)
 
-        # 8. Check if graph is complete.
+        # 9. Check if graph is complete.
         await self._check_graph_complete(session_id)
+
+    def _build_handler_deps(
+        self, session_id: str, node_id: str,
+    ) -> NodeHandlerDeps:
+        """Build handler dependencies for the current node."""
+
+        async def on_agent_event(event_dict: dict[str, Any]) -> None:
+            """Forward agent events wrapped with nodeId."""
+            wrapped = {
+                "type": "agentEvent",
+                "nodeId": node_id,
+                "event": event_dict,
+            }
+            await self._store.append_event(session_id, wrapped)
+            await self._event_bus.publish(session_id, wrapped)
+
+        token, origin = self._session_auth.get(session_id, ("", ""))
+        return NodeHandlerDeps(
+            on_agent_event=on_agent_event,
+            run_agent_fn=self._run_agent_fn,
+            backend=self._backend_factory(token, origin) if self._backend_factory else None,
+            interaction_store=self._interaction_store,
+        )
+
+    async def _handle_suspend(
+        self, session_id: str, node_id: str,
+        suspended: NodeSuspended,
+    ) -> None:
+        """Handle a NodeSuspended exception from a handler."""
+        state = SuspendedNodeState(
+            node_id=node_id,
+            interaction_id=suspended.interaction_id,
+            context=suspended.context,
+        )
+        await self._store.suspend_node(
+            session_id, node_id,
+            suspended.interaction_id, state,
+        )
+        await self._store.set_status(session_id, "suspended")
+
+        # Emit inputRequired event.
+        event = {
+            "type": "inputRequired",
+            "nodeId": node_id,
+            "interactionId": suspended.interaction_id,
+            "suspendEvent": suspended.suspend_event,
+        }
+        await self._store.append_event(session_id, event)
+        await self._event_bus.publish(session_id, event)
 
     async def _get_node_type(
         self, session_id: str, node_id: str,

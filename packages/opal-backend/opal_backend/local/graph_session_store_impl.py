@@ -178,12 +178,12 @@ class InMemoryGraphSessionStore:
     async def is_graph_complete(
         self, session_id: str,
     ) -> bool:
-        """True when all nodes are completed or skipped."""
+        """True when all nodes are in a terminal state."""
         state = self._sessions.get(session_id)
         if not state:
             return False
         return all(
-            ns.status in ("completed", "skipped")
+            ns.status in ("completed", "skipped", "failed")
             for ns in state.nodes.values()
         )
 

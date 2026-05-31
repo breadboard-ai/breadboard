@@ -42,6 +42,7 @@ from opal_backend.local.graph_session_store_impl import InMemoryGraphSessionStor
 from opal_backend.local.graph_session_router import create_graph_session_router
 from opal_backend.local.task_scheduler_impl import LocalTaskScheduler
 from opal_backend.graph_runner import GraphRunner
+from opal_backend.run import run_agent as run_agent_fn
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
 from opal_backend.local.session_router import SessionDeps, create_session_router
 from opal_backend.sessions.api import (
@@ -74,6 +75,16 @@ UPSTREAM_BASE = os.environ.get(
 
 # Persistent HTTP client for proxying (raw httpx — proxy needs full request control).
 _proxy_client = httpx.AsyncClient(timeout=120.0)
+# Shared backend factory — used by both session and graph runners.
+def _make_backend(token: str, origin: str = "") -> HttpBackendClient:
+    return HttpBackendClient(
+        upstream_base=UPSTREAM_BASE,
+        httpx_client=httpx.AsyncClient(timeout=120.0),
+        access_token=token,
+        origin=origin,
+        gemini_key=GEMINI_KEY,
+    )
+
 
 # In-memory store for suspended interactions (dev only).
 _interaction_store = InMemoryInteractionStore()
@@ -82,13 +93,7 @@ _interaction_store = InMemoryInteractionStore()
 _session_store = InMemorySessionStore()
 _event_bus = InMemoryEventBus()
 _session_deps = SessionDeps(
-    backend_factory=lambda token, origin: HttpBackendClient(
-        upstream_base=UPSTREAM_BASE,
-        httpx_client=httpx.AsyncClient(timeout=120.0),
-        access_token=token,
-        origin=origin,
-        gemini_key=GEMINI_KEY,
-    ),
+    backend_factory=_make_backend,
     drive_factory=lambda token: HttpDriveOperationsClient(
         httpx_client=httpx.AsyncClient(timeout=120.0),
         access_token=token,
@@ -105,6 +110,9 @@ _graph_runner = GraphRunner(
     store=_graph_session_store,
     event_bus=_event_bus,
     scheduler=None,  # Set below — circular dep.
+    backend_factory=_make_backend,
+    interaction_store=_interaction_store,
+    run_agent_fn=run_agent_fn,
 )
 _graph_scheduler = LocalTaskScheduler(run_fn=_graph_runner.run_node)
 _graph_runner._scheduler = _graph_scheduler

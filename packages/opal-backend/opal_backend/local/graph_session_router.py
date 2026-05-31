@@ -54,8 +54,7 @@ def create_graph_session_router(
     async def create_graph_session(request: Request) -> JSONResponse:
         """Start a new graph run.
 
-        Body: {graph: GraphDescriptor, mode?: str, inputs?: dict,
-               accessToken?: str}
+        Body: {graph: GraphDescriptor, accessToken?: str}
         """
         body = await request.json()
         graph_data = body.get("graph")
@@ -64,6 +63,10 @@ def create_graph_session_router(
                 {"error": "Missing 'graph' in request body"},
                 status_code=400,
             )
+
+        # Extract user's OAuth token (same pattern as session_router).
+        access_token = body.get("accessToken", "")
+        origin = request.headers.get("origin", "")
 
         # Parse, condense (break cycles), and plan.
         graph = GraphDescriptor.from_dict(graph_data)
@@ -80,7 +83,9 @@ def create_graph_session_router(
 
         # Store the plan and kick off initial tasks.
         await store.create(session_id, plan)
-        await runner.start_graph(session_id)
+        await runner.start_graph(
+            session_id, access_token=access_token, origin=origin,
+        )
 
         return JSONResponse({"sessionId": session_id})
 
