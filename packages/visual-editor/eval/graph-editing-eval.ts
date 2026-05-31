@@ -9,6 +9,7 @@ import { mock } from "node:test";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
+import { buildHooksFromSink } from "../src/a2/agent/loop-setup.js";
 import { AgentContext } from "../src/a2/agent/agent-context.js";
 import { McpClientManager } from "../src/mcp/index.js";
 import { autoClearingInterval } from "./auto-clearing-interval.js";
@@ -48,6 +49,18 @@ export { graphEditingSession };
 const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = join(MODULE_DIR, "..", "..", "..");
 const OUT_DIR = join(ROOT_DIR, "out");
+
+type TranscriptEvent =
+  | { type: "objective"; text: string }
+  | { type: "thought"; text: string }
+  | { type: "functionCall"; name: string; args: Record<string, unknown>; callId: string }
+  | { type: "functionResponse"; callId: string; parts: unknown[] }
+  | { type: "usageMetadata"; metadata: unknown };
+
+interface TranscriptTurn {
+  turn: number;
+  events: TranscriptEvent[];
+}
 
 export type GraphEditingEvalHarnessRuntimeArgs = {
   invokeAgent: (prompt: string) => Promise<{
@@ -166,6 +179,7 @@ class GraphEditingEvalHarness {
       const logFilename = `${filename}.log.json`;
       const graphFilename = `${filename}.bgl.json`;
       const raterFilename = `${filename}.rater.json`;
+      const transcriptFilename = `${filename}.transcript.jsonl`;
       let wroteRater = false;
 
       let score = "SKIPPED";
@@ -366,6 +380,18 @@ class GraphEditingEvalHarness {
         "utf-8"
       );
 
+      if (run.transcriptTurns && run.transcriptTurns.length > 0) {
+        console.log(`[Eval] Writing transcript to "${transcriptFilename}"...`);
+        const jsonlContent = run.transcriptTurns
+          .map((turn) => JSON.stringify(turn))
+          .join("\n");
+        await writeFile(
+          join(OUT_DIR, transcriptFilename),
+          jsonlContent,
+          "utf-8"
+        );
+      }
+
       let driveUrl: string | undefined = undefined;
 
       if (this.args.uploadToDrive) {
@@ -416,6 +442,9 @@ class GraphEditingEvalHarness {
       console.log(`HAR: "${harFilename}"`);
       console.log(`Log: "${logFilename}"`);
       console.log(`Graph: "${graphFilename}"`);
+      if (run.transcriptTurns && run.transcriptTurns.length > 0) {
+        console.log(`Transcript: "${transcriptFilename}"`);
+      }
       if (wroteRater) {
         console.log(`Rater Output: "${raterFilename}"`);
       }
@@ -699,6 +728,7 @@ class GraphEditingEvalRun implements EvalLogger {
   };
 
   lastMessage: string = "";
+  readonly transcriptTurns: TranscriptTurn[] = [];
   private readonly translator = new EditingAgentPidginTranslator();
 
   constructor(
@@ -744,6 +774,63 @@ class GraphEditingEvalRun implements EvalLogger {
   }> {
     const consumer = new AgentEventConsumer();
     const sink = new LocalAgentEventBridge(consumer);
+
+    const hooks = buildHooksFromSink(sink);
+
+    let currentTurn: TranscriptTurn = {
+      turn: 1,
+      events: [],
+    };
+
+    const finalizeCurrentTurn = () => {
+      if (currentTurn.events.length > 0) {
+        this.transcriptTurns.push({ ...currentTurn });
+        currentTurn = {
+          turn: this.transcriptTurns.length + 1,
+          events: [],
+        };
+      }
+    };
+
+    consumer.on("start", (payload) => {
+      const text = payload.objective.parts
+        .filter((p): p is { text: string } => "text" in p)
+        .map((p) => p.text)
+        .join("\n");
+      currentTurn.events.push({ type: "objective", text });
+    });
+
+    consumer.on("thought", (payload) => {
+      currentTurn.events.push({ type: "thought", text: payload.text });
+    });
+
+    consumer.on("functionCall", (payload) => {
+      currentTurn.events.push({
+        type: "functionCall",
+        name: payload.name,
+        args: payload.args,
+        callId: payload.callId,
+      });
+    });
+
+    consumer.on("functionResult", (payload) => {
+      currentTurn.events.push({
+        type: "functionResponse",
+        callId: payload.callId,
+        parts: payload.content.parts as unknown[],
+      });
+    });
+
+    consumer.on("usageMetadata", (payload) => {
+      currentTurn.events.push({
+        type: "usageMetadata",
+        metadata: payload.metadata,
+      });
+    });
+
+    consumer.on("turnComplete", () => {
+      finalizeCurrentTurn();
+    });
 
     consumer.on("readGraph", () => {
       return Promise.resolve({ graph: this.graph });
@@ -870,25 +957,29 @@ class GraphEditingEvalRun implements EvalLogger {
       } satisfies OpalShellHostProtocol,
     };
 
-    const outcome = await withRetry(async () => {
-      const res = await invokeGraphEditingAgent(objective, moduleArgs, sink, this.translator);
-      return res;
-    });
+    try {
+      const outcome = await withRetry(async () => {
+        const res = await invokeGraphEditingAgent(objective, moduleArgs, sink, this.translator, hooks);
+        return res;
+      });
 
-    if (!ok(outcome)) {
-      const errPayload = outcome as unknown as { $error?: string; error?: string };
-      if (errPayload.$error === "EVAL_DONE" || errPayload.error === "EVAL_DONE") {
-        return {
-          message: this.lastMessage,
-          graph: this.graph,
-        };
+      if (!ok(outcome)) {
+        const errPayload = outcome as unknown as { $error?: string; error?: string };
+        if (errPayload.$error === "EVAL_DONE" || errPayload.error === "EVAL_DONE") {
+          return {
+            message: this.lastMessage,
+            graph: this.graph,
+          };
+        }
+        throw new Error(`Agent execution failed: ${errPayload.$error ?? errPayload.error}`);
       }
-      throw new Error(`Agent execution failed: ${errPayload.$error ?? errPayload.error}`);
-    }
 
-    return {
-      message: this.lastMessage,
-      graph: this.graph,
-    };
+      return {
+        message: this.lastMessage,
+        graph: this.graph,
+      };
+    } finally {
+      finalizeCurrentTurn();
+    }
   }
 }

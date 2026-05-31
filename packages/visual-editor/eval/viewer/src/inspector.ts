@@ -76,6 +76,9 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   @state()
   accessor rater: unknown = null;
 
+  @state()
+  accessor transcript: unknown[] | null = null;
+
   @property()
   accessor selectedPath: FileSystemEvalBackendHandle | null = null;
 
@@ -747,6 +750,19 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
       } else {
         this.rater = null;
       }
+
+      const transcriptPath = path.replace(/\.log\.json$/, ".transcript.jsonl");
+      const transcriptData = await this.#fileSystem.read(transcriptPath as FileSystemPath);
+      if (ok(transcriptData) && typeof transcriptData === "string") {
+        try {
+          const lines = transcriptData.split("\n").filter((l) => l.trim().length > 0);
+          this.transcript = lines.map((l) => JSON.parse(l));
+        } catch {
+          this.transcript = null;
+        }
+      } else {
+        this.transcript = null;
+      }
     } catch (err) {
       console.warn(err);
       this.renderMode = "messages";
@@ -779,7 +795,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   #renderContents() {
     if (this.renderMode === "topology") {
       return html`<section id="topology" style="width: 100%; height: 100%;">
-        <bgl-viewer .graph=${this.bgl} .rater=${this.rater}></bgl-viewer>
+        <bgl-viewer .graph=${this.bgl} .rater=${this.rater} .transcript=${this.transcript}></bgl-viewer>
       </section>`;
     }
 
