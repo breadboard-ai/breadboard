@@ -36,25 +36,29 @@ imports. Only Python stdlib + typing.
 
 All transport is injected through protocols:
 
-| Protocol           | File                   | What it abstracts                   |
-| ------------------ | ---------------------- | ----------------------------------- |
-| `BackendClient`    | `backend_client.py`    | One Platform ops + Gemini streaming |
-| `InteractionStore` | `interaction_store.py` | Suspend/resume state persistence    |
-| `EventBus`         | `event_bus.py`         | Live event delivery to SSE clients  |
+| Protocol              | File                      | What it abstracts                   |
+| --------------------- | ------------------------- | ----------------------------------- |
+| `BackendClient`       | `backend_client.py`       | One Platform ops + Gemini streaming |
+| `InteractionStore`    | `interaction_store.py`    | Suspend/resume state persistence    |
+| `EventBus`            | `event_bus.py`            | Live event delivery to SSE clients  |
+| `GraphSessionStore`   | `graph_session_store.py`  | Graph execution state coordination  |
+| `TaskScheduler`       | `task_scheduler.py`       | Node task dispatch abstraction      |
 
 Implementations live in `local/`:
 
 - `HttpBackendClient` → `local/backend_client_impl.py`
 - `InMemoryInteractionStore` → `local/interaction_store_impl.py`
 - `InMemoryEventBus` → `local/event_bus_impl.py`
+- `InMemoryGraphSessionStore` → `local/graph_session_store_impl.py`
+- `LocalTaskScheduler` → `local/task_scheduler_impl.py`
 
 ## Entry Points
 
-The public API is two async generators in `run.py`:
+The agent loop API is two async generators in `run.py`:
 
 ```python
-# Start a new run
-async for event in opal_backend.run(
+# Start a new agent run (renamed from run() in Heartstone)
+async for event in opal_backend.run_agent(
     objective=objective,
     backend=backend_client,
     store=interaction_store,
@@ -62,8 +66,8 @@ async for event in opal_backend.run(
 ):
     yield event
 
-# Resume a suspended run
-async for event in opal_backend.resume(
+# Resume a suspended agent run (renamed from resume())
+async for event in opal_backend.resume_agent(
     interaction_id=interaction_id,
     response=user_response,
     backend=backend_client,
@@ -71,6 +75,9 @@ async for event in opal_backend.resume(
 ):
     yield event
 ```
+
+> **Note:** `run` and `resume` are still available as backward-compatible
+> aliases.
 
 These create all internal state (file system, task tree, function groups, loop)
 and yield typed `AgentEvent` instances. Callers provide only what varies by
