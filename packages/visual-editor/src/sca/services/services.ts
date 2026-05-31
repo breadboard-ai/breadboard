@@ -41,6 +41,7 @@ import { getLogger, Formatter } from "../utils/logging/logger.js";
 import { NotebookLmApiClient } from "./notebooklm-api-client.js";
 import type { OAuthScope } from "../../ui/connection/oauth-scopes.js";
 import { AgentService } from "../../a2/agent/agent-service.js";
+import { GraphRunService } from "./graph-run-service.js";
 
 // eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface AppServices {
@@ -69,6 +70,7 @@ export interface AppServices {
   integrationManagers: IntegrationManagerService;
   notebookLmApiClient: NotebookLmApiClient;
   runService: RunService;
+  graphRunService: GraphRunService;
   agentService: AgentService;
   sandbox: A2ModuleFactory;
   signinAdapter: SigninAdapter;
@@ -147,6 +149,13 @@ export function services(
       () => env.flags.get("enableSessionsBackend")
     );
 
+    const graphRunService = new GraphRunService();
+    graphRunService.configureRemote(
+      OPAL_BACKEND_API_PREFIX,
+      fetchWithCreds,
+      () => env.flags.get("enableBackendGraphRunner")
+    );
+
     const sandbox = createA2ModuleFactory({
       mcpClientManager: mcpClientManager,
       fetchWithCreds: fetchWithCreds,
@@ -197,6 +206,7 @@ export function services(
       mcpClientManager,
       notebookLmApiClient,
       runService: new RunService(),
+      graphRunService: graphRunService,
       agentService,
       sandbox,
       signinAdapter,

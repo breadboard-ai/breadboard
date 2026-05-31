@@ -19,6 +19,7 @@ import { A2UIInteraction } from "./a2ui-interaction.js";
 import { ChoicePresenter } from "./choice-presenter.js";
 import { Params } from "../a2/common.js";
 import type { ProgressReporter } from "./types.js";
+import { registerProgressHandlers } from "./register-progress-handlers.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { buildAgentRun } from "./loop-setup.js";
@@ -310,68 +311,24 @@ async function invokeRemoteAgent(
   const { consoleEntry, appScreen } = getCurrentStepState(moduleArgs);
   const progress = new ConsoleProgressManager(consoleEntry, appScreen);
 
-  const callIdMap = new Map<string, string>();
-  const reporterMap = new Map<string, ProgressReporter>();
-
   // The `complete` event carries the final AgentResult with outcomes.
   // This mirrors `loop.run()` returning `controller.result` in local mode.
   let remoteResult: { success: boolean; outcomes?: LLMContent } | undefined;
   let remoteError: string | undefined;
 
+  // Register the standard fire-and-forget progress handlers (shared with
+  // the Heartstone backend path).
+  registerProgressHandlers(handle.events, progress, {
+    onComplete: (result) => {
+      remoteResult = result;
+    },
+    onError: (msg) => {
+      remoteError = msg;
+    },
+  });
+
+  // Suspend handlers — these depend on moduleArgs and are path-specific.
   handle.events
-    .on("start", (event) => {
-      progress.startAgent(event.objective);
-    })
-    .on("finish", () => {
-      progress.finish();
-    })
-    .on("complete", (event) => {
-      remoteResult = event.result;
-    })
-    .on("error", (event) => {
-      remoteError = event.message;
-    })
-    .on("thought", (event) => {
-      progress.thought(event.text);
-    })
-    .on("functionCall", (event) => {
-      const { callId: progressCallId, reporter } = progress.functionCall(
-        { functionCall: { name: event.name, args: event.args } },
-        event.icon,
-        event.title
-      );
-      callIdMap.set(event.callId, progressCallId);
-      if (reporter) {
-        reporterMap.set(event.callId, reporter);
-      }
-    })
-    .on("functionCallUpdate", (event) => {
-      const progressCallId = callIdMap.get(event.callId) ?? event.callId;
-      progress.functionCallUpdate(progressCallId, event.status, event.opts);
-    })
-    .on("functionResult", (event) => {
-      const progressCallId = callIdMap.get(event.callId) ?? event.callId;
-      progress.functionResult(progressCallId, event.content);
-      callIdMap.delete(event.callId);
-      reporterMap.delete(event.callId);
-    })
-    .on("sendRequest", (event) => {
-      progress.sendRequest(event.model, event.body);
-    })
-    .on("usageMetadata", (event) => {
-      progress.usageMetadata(event.metadata);
-    })
-    .on("subagentAddJson", (event) => {
-      reporterMap
-        .get(event.callId)
-        ?.addJson(event.title, event.data, event.icon);
-    })
-    .on("subagentError", (event) => {
-      reporterMap.get(event.callId)?.addError(event.error);
-    })
-    .on("subagentFinish", (event) => {
-      reporterMap.get(event.callId)?.finish();
-    })
     .on("waitForInput", (event) => {
       // Display the prompt as a chat output.
       addChatOutput(event.prompt, consoleEntry, appScreen);

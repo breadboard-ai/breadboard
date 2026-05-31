@@ -43,6 +43,7 @@ from opal_backend.local.graph_session_router import create_graph_session_router
 from opal_backend.local.task_scheduler_impl import LocalTaskScheduler
 from opal_backend.graph_runner import GraphRunner
 from opal_backend.run import run_agent as run_agent_fn
+from opal_backend.run import resume_agent as resume_agent_fn
 from opal_backend.sessions.in_memory_store import InMemorySessionStore
 from opal_backend.local.session_router import SessionDeps, create_session_router
 from opal_backend.sessions.api import (
@@ -113,6 +114,7 @@ _graph_runner = GraphRunner(
     backend_factory=_make_backend,
     interaction_store=_interaction_store,
     run_agent_fn=run_agent_fn,
+    resume_agent_fn=resume_agent_fn,
 )
 _graph_scheduler = LocalTaskScheduler(run_fn=_graph_runner.run_node)
 _graph_runner._scheduler = _graph_scheduler
