@@ -281,3 +281,165 @@ class TestEventLog:
         assert "nodeStart" in types
         assert "nodeEnd" in types
         assert "graphComplete" in types
+
+
+# ---------------------------------------------------------------------------
+# Phase 6: Concurrent Nodes
+# ---------------------------------------------------------------------------
+
+
+def _fan_out_plan() -> GraphPlan:
+    """root → out1, root → out2 (fan-out, both start when root completes)."""
+    root = NodeDescriptor(id="root", type="generate")
+    out1 = NodeDescriptor(id="out1", type="output")
+    out2 = NodeDescriptor(id="out2", type="output")
+
+    e1 = Edge(from_node="root", to_node="out1", out_port="context", in_port="r1")
+    e2 = Edge(from_node="root", to_node="out2", out_port="context", in_port="r2")
+
+    return GraphPlan(stages=[
+        [PlanNodeInfo(node=root, downstream=[e1, e2], upstream=[])],
+        [PlanNodeInfo(node=out1, downstream=[], upstream=[e1]),
+         PlanNodeInfo(node=out2, downstream=[], upstream=[e2])],
+    ])
+
+
+def _mixed_plan() -> GraphPlan:
+    """Sequential then parallel: A → (B, C) → D.
+
+    A runs first, then B and C run concurrently, then D runs.
+    """
+    a = NodeDescriptor(id="a", type="generate")
+    b = NodeDescriptor(id="b", type="generate")
+    c = NodeDescriptor(id="c", type="generate")
+    d = NodeDescriptor(id="d", type="output")
+
+    e_ab = Edge(from_node="a", to_node="b", out_port="context", in_port="i1")
+    e_ac = Edge(from_node="a", to_node="c", out_port="context", in_port="i2")
+    e_bd = Edge(from_node="b", to_node="d", out_port="context", in_port="r1")
+    e_cd = Edge(from_node="c", to_node="d", out_port="context", in_port="r2")
+
+    return GraphPlan(stages=[
+        [PlanNodeInfo(node=a, downstream=[e_ab, e_ac], upstream=[])],
+        [PlanNodeInfo(node=b, downstream=[e_bd], upstream=[e_ab]),
+         PlanNodeInfo(node=c, downstream=[e_cd], upstream=[e_ac])],
+        [PlanNodeInfo(node=d, downstream=[], upstream=[e_bd, e_cd])],
+    ])
+
+
+class TestFanOutGraph:
+    """Phase 6: fan-out — both outputs start when root completes."""
+
+    @pytest.mark.asyncio
+    async def test_fan_out_both_start(self):
+        store = InMemoryGraphSessionStore()
+        bus = InMemoryEventBus()
+        runner = GraphRunner(store=store, event_bus=bus, scheduler=None)
+        scheduler = LocalTaskScheduler(run_fn=runner.run_node)
+        runner._scheduler = scheduler
+
+        plan = _fan_out_plan()
+        await store.create("s1", plan)
+
+        events: list[dict] = []
+        subscriber = bus.subscribe("s1")
+        await runner.start_graph("s1")
+
+        async for event in subscriber:
+            events.append(event)
+            if event.get("type") == "graphComplete":
+                break
+
+        # All 3 nodes should have started.
+        node_starts = [e for e in events if e["type"] == "nodeStart"]
+        assert len(node_starts) == 3
+
+        # Both outputs should start after root ends.
+        root_end_idx = next(
+            i for i, e in enumerate(events)
+            if e["type"] == "nodeEnd" and e["nodeId"] == "root"
+        )
+        for out_id in ("out1", "out2"):
+            out_start_idx = next(
+                i for i, e in enumerate(events)
+                if e["type"] == "nodeStart" and e["nodeId"] == out_id
+            )
+            assert out_start_idx > root_end_idx
+
+        assert await store.is_graph_complete("s1")
+
+
+class TestMixedGraph:
+    """Phase 6: A → (B, C) → D — sequential then parallel then merge."""
+
+    @pytest.mark.asyncio
+    async def test_mixed_execution_order(self):
+        store = InMemoryGraphSessionStore()
+        bus = InMemoryEventBus()
+        runner = GraphRunner(store=store, event_bus=bus, scheduler=None)
+        scheduler = LocalTaskScheduler(run_fn=runner.run_node)
+        runner._scheduler = scheduler
+
+        plan = _mixed_plan()
+        await store.create("s1", plan)
+
+        events: list[dict] = []
+        subscriber = bus.subscribe("s1")
+        await runner.start_graph("s1")
+
+        async for event in subscriber:
+            events.append(event)
+            if event.get("type") == "graphComplete":
+                break
+
+        # All 4 nodes should execute.
+        node_starts = [e for e in events if e["type"] == "nodeStart"]
+        assert len(node_starts) == 4
+
+        # A before B and C.
+        a_end = next(
+            i for i, e in enumerate(events)
+            if e["type"] == "nodeEnd" and e["nodeId"] == "a"
+        )
+        for nid in ("b", "c"):
+            start = next(
+                i for i, e in enumerate(events)
+                if e["type"] == "nodeStart" and e["nodeId"] == nid
+            )
+            assert start > a_end, f"{nid} should start after A ends"
+
+        # D after both B and C.
+        d_start = next(
+            i for i, e in enumerate(events)
+            if e["type"] == "nodeStart" and e["nodeId"] == "d"
+        )
+        for nid in ("b", "c"):
+            end = next(
+                i for i, e in enumerate(events)
+                if e["type"] == "nodeEnd" and e["nodeId"] == nid
+            )
+            assert d_start > end, f"D should start after {nid} ends"
+
+        assert await store.is_graph_complete("s1")
+
+    @pytest.mark.asyncio
+    async def test_mixed_outputs_propagate(self):
+        store = InMemoryGraphSessionStore()
+        bus = InMemoryEventBus()
+        runner = GraphRunner(store=store, event_bus=bus, scheduler=None)
+        scheduler = LocalTaskScheduler(run_fn=runner.run_node)
+        runner._scheduler = scheduler
+
+        plan = _mixed_plan()
+        await store.create("s1", plan)
+
+        subscriber = bus.subscribe("s1")
+        await runner.start_graph("s1")
+
+        async for event in subscriber:
+            if event.get("type") == "graphComplete":
+                break
+
+        outputs = await store.get_graph_outputs("s1")
+        assert set(outputs.keys()) == {"a", "b", "c", "d"}
+
