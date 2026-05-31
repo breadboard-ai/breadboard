@@ -28,6 +28,7 @@ __all__ = [
     "dispatch_handler",
     "passthrough_handler",
     "text_gen_handler",
+    "input_handler",
     "agent_handler",
 ]
 
@@ -88,7 +89,7 @@ async def dispatch_handler(
         case "output" | "render-outputs":
             return await passthrough_handler(inputs, config)
         case "input":
-            return await passthrough_handler(inputs, config)
+            return await input_handler(inputs, config)
         case "generate":
             mode = config.get("mode", "text")
             if mode == "agent" and deps and deps.run_agent_fn:
@@ -116,6 +117,33 @@ async def passthrough_handler(
             outputs[port] = values
     return outputs
 
+
+async def input_handler(
+    inputs: dict[str, list[Any]],
+    config: dict[str, Any],
+) -> dict[str, Any]:
+    """Suspend the node to request user input.
+
+    Raises ``NodeSuspended`` with the node's input schema so the
+    graph runner can emit an ``inputRequired`` event. The resume
+    endpoint later provides the user's input as the node output.
+    """
+    interaction_id = str(uuid.uuid4())
+
+    # Build the suspend event payload from config.
+    schema = config.get("schema", {})
+    prompt_text = config.get("prompt", "Please provide input")
+
+    raise NodeSuspended(
+        interaction_id=interaction_id,
+        context={"inputs": inputs, "config": config},
+        suspend_event={
+            "inputNode": {
+                "schema": schema,
+                "prompt": prompt_text,
+            },
+        },
+    )
 
 async def text_gen_handler(
     inputs: dict[str, list[Any]],
