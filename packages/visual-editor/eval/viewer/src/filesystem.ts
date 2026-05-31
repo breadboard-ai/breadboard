@@ -243,6 +243,7 @@ export class FileSystemEvalBackend {
       const raterMap = new Map<string, string>();
       const ratingScoreMap = new Map<string, number>();
       const notesCountMap = new Map<string, number>();
+      const humanJudgementMap = new Map<string, "good" | "bad">();
       const bglTitleMap = new Map<string, string>();
       const transcriptMap = new Set<string>();
 
@@ -288,6 +289,13 @@ export class FileSystemEvalBackend {
               const count = Array.isArray(parsed?.notes) ? parsed.notes.length : 0;
               const baseName = name.replace(/\.notes\.json$/, "");
               notesCountMap.set(baseName, count);
+
+              const reactionNote = Array.isArray(parsed?.notes)
+                ? parsed.notes.find((n) => n.location.type === "rater" && n.location.fieldName === "overall_judgement" && n.reaction)
+                : null;
+              if (reactionNote && reactionNote.reaction) {
+                humanJudgementMap.set(baseName, reactionNote.reaction);
+              }
             } catch {
               // Ignore failure.
             }
@@ -310,6 +318,7 @@ export class FileSystemEvalBackend {
           parsed.rating = ratingScoreMap.get(baseName) || parsed.judgement;
           parsed.noteCount = notesCountMap.get(baseName) || 0;
           parsed.title = bglTitleMap.get(baseName);
+          parsed.humanJudgement = humanJudgementMap.get(baseName);
           parsed.hasSidecars = bglTitleMap.has(baseName) || raterMap.has(baseName) || notesCountMap.has(baseName) || transcriptMap.has(baseName);
           queryEntries.push(parsed);
         }
