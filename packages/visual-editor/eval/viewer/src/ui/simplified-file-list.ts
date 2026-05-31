@@ -181,6 +181,14 @@ class EvalSimplifiedFileList extends LitElement {
                 ${count}
               </span>`
             : nothing}
+          ${f.humanJudgement
+            ? html`<span 
+                style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: ${f.humanJudgement === "good" ? "#34a853" : "#ea4335"}; color: white; border: 1px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex-shrink: 0;"
+                title=${f.humanJudgement === "good" ? "Human Rater Agrees" : "Human Marked AI as Wrong"}
+              >
+                <span class="g-icon filled round" style="font-size: 11px;">${f.humanJudgement === "good" ? "thumb_up" : "thumb_down"}</span>
+              </span>`
+            : nothing}
           ${ratingIcon
             ? html`<span class=${classMap(ratingClass)} title="Rating: ${rating}">
                 <span class="g-icon filled round">${ratingIcon}</span>

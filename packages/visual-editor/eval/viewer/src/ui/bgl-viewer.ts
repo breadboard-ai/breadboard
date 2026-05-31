@@ -1082,6 +1082,23 @@ class BGLViewer extends LitElement {
             <div class="status-dot ${statusClass}"></div>
             <span>Eval: ${judgement}</span>
           </div>
+          ${(() => {
+            const humanReactionNote = Array.isArray(this.notes)
+              ? this.notes.find((n) => n.location.type === "rater" && n.location.fieldName === "overall_judgement" && n.reaction)
+              : null;
+            const humanReaction = humanReactionNote?.reaction;
+            if (!humanReaction) return nothing;
+
+            const isGood = humanReaction === "good";
+            const color = isGood ? "#34a853" : "#ea4335";
+            const text = isGood ? "Human Agrees" : "Marked AI Wrong";
+            const icon = isGood ? "thumb_up" : "thumb_down";
+
+            return html`<div style="display: flex; align-items: center; gap: var(--bb-grid-size-2); font-size: 11px; font-weight: 600; color: ${color}; margin-top: calc(-1 * var(--bb-grid-size)); margin-bottom: var(--bb-grid-size-2);">
+              <span class="g-icon filled round" style="font-size: 14px; color: ${color};">${icon}</span>
+              <span>${text}</span>
+            </div>`;
+          })()}
           <button @click=${() => this.#showRaterModal()}>Show Details</button>
           <button 
             style="margin-top: var(--bb-grid-size); ${(this.notes || []).length > 0 ? '' : 'opacity: 0.5;'}" 

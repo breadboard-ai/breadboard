@@ -16,6 +16,7 @@ export type ParsedFileMedata = {
   title?: string;
   rating?: string | number;
   hasSidecars?: boolean;
+  humanJudgement?: "good" | "bad";
 };
 
 export type GroupedByName = {
