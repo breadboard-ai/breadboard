@@ -162,7 +162,7 @@ class InputAssetShelf extends SignalWatcher(LitElement) {
           break;
         }
         if (part.inlineData.mimeType.includes("pdf")) {
-          icon = "picture_as_pdf";
+          icon = "drive_pdf";
           break;
         }
         if (part.inlineData.mimeType.startsWith("text")) {
