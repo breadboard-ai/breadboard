@@ -54,9 +54,11 @@ class FunctionCallerImpl implements FunctionCaller {
     );
     if (!ok(response)) return response;
 
-    const extraParts = (response as any).$parts;
-    if (extraParts) {
-      delete (response as any).$parts;
+    let extraParts: DataPart[] | undefined;
+    if (response && typeof response === "object" && "$parts" in response) {
+      const obj = response as Record<string, unknown>;
+      extraParts = obj.$parts as DataPart[];
+      delete obj.$parts;
     }
 
     return {

@@ -7,6 +7,8 @@
 import z from "zod";
 import { defineFunction, mapDefinitions } from "../function-definition.js";
 import type { FunctionGroup, ChatResponse } from "../types.js";
+import type { DataPart } from "@breadboard-ai/types";
+
 import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
 import type { AgentEventSink } from "../agent-event-sink.js";
 import { bind } from "../../../sca/actions/graph/graph-actions.js";
@@ -157,7 +159,13 @@ function getChatFunctionGroup(
           ...(selectionText ? { selected_steps: selectionText.trim() } : {}),
           ...(graph_changes ? { graph_changes } : {}),
           $parts: extraParts,
-        } as any;
+        } as {
+          user_message: string;
+          current_graph: string;
+          selected_steps?: string;
+          graph_changes?: string;
+          $parts?: DataPart[];
+        };
       }
     ),
   ];

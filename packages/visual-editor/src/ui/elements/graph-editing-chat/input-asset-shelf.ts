@@ -55,7 +55,8 @@ class InputAssetShelf extends SignalWatcher(LitElement) {
         overflow-x: auto;
         overflow-y: hidden;
         scrollbar-width: none;
-        padding: var(--bb-grid-size-3) var(--bb-grid-size-3) 0;
+        padding: var(--bb-grid-size-3) var(--bb-grid-size-3)
+          var(--bb-grid-size-2);
         gap: var(--bb-grid-size-2);
       }
 
@@ -68,10 +69,20 @@ class InputAssetShelf extends SignalWatcher(LitElement) {
         flex: 0 0 auto;
         width: 80px;
         height: 60px;
+      }
+
+      .thumb-content {
+        box-sizing: border-box;
+        width: 100%;
+        height: 100%;
         border-radius: var(--bb-grid-size-2);
         overflow: hidden;
         background: var(--light-dark-n-95);
         border: 2px solid var(--light-dark-n-90);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .thumb img {
@@ -92,8 +103,8 @@ class InputAssetShelf extends SignalWatcher(LitElement) {
 
       .thumb .remove {
         position: absolute;
-        top: -2px;
-        right: -2px;
+        top: -6px;
+        right: -6px;
         width: 20px;
         height: 20px;
         border-radius: 50%;
@@ -108,6 +119,7 @@ class InputAssetShelf extends SignalWatcher(LitElement) {
         padding: 0;
         opacity: 0;
         transition: opacity 0.15s ease;
+        z-index: 1;
       }
 
       .thumb:hover .remove {
@@ -188,6 +200,13 @@ class InputAssetShelf extends SignalWatcher(LitElement) {
 
     return html`
       <div class="thumb">
+        <div class="thumb-content">
+          ${preview !== nothing
+            ? preview
+            : html`<div class="icon">
+                <span class="g-icon">${icon}</span>
+              </div>`}
+        </div>
         <button
           class="remove"
           @click=${() => inputAssets.remove(asset)}
@@ -195,11 +214,6 @@ class InputAssetShelf extends SignalWatcher(LitElement) {
         >
           <span class="g-icon">close</span>
         </button>
-        ${preview !== nothing
-          ? preview
-          : html`<div class="icon">
-              <span class="g-icon">${icon}</span>
-            </div>`}
       </div>
     `;
   }
