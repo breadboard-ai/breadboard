@@ -351,7 +351,7 @@ function defineGraphEditingFunctions(
         parameters: {
           step_id: z
             .string()
-            .describe("The handle of the step to remove (e.g. node-1)"),
+            .describe("The id of the step to remove"),
         },
         response: {
           success: z.boolean(),
@@ -489,7 +489,7 @@ function defineGraphEditingFunctions(
               z.object({
                 id: z
                   .string()
-                  .describe("The step handle (e.g. node-1) or asset path"),
+                  .describe("The step id or asset path"),
                 x: z.number().describe("The x coordinate on canvas"),
                 y: z.number().describe("The y coordinate on canvas"),
               })
@@ -590,7 +590,7 @@ function defineGraphEditingFunctions(
             .string()
             .optional()
             .describe(
-              "The handle of an existing step to update (e.g. node-1). Omit to create a new step."
+              "The id of an existing step to update. Omit to create a new step."
             ),
           title: z.string().describe("A descriptive title for the step"),
           prompt: z.string().describe(PROMPT_DESCRIPTION),
@@ -688,7 +688,7 @@ function defineGraphEditingFunctions(
             .string()
             .optional()
             .describe(
-              "The handle of an existing legacy step to update (e.g. node-1). Omit to create a new step."
+              "The id of an existing legacy step to update. Omit to create a new step."
             ),
           step_type: z
             .enum(VALID_LEGACY_STEP_TYPES)

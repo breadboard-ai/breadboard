@@ -27,6 +27,7 @@
     "eval:autoname": "wireit",
     "eval:viewer": "wireit",
     "eval:viewer:build": "wireit",
+    "eval:extract-remaining": "wireit",
     "lint": "wireit",
     "export-functions": "wireit",
     "import-declarations": "wireit",
@@ -196,6 +197,14 @@
     },
     "eval:autoname": {
       "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/autoname.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "eval:extract-remaining": {
+      "command": "node --enable-source-maps dist/tsc/eval/extract-remaining-intents.js",
       "dependencies": [
         "build:tsc"
       ],
