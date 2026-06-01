@@ -92,7 +92,7 @@ that runs in a sandboxed iframe:
 - It can't download or upload or store state, or use any of the more powerful
   Web plaform APIs.
 
-The AppCat doesn't realize that and frequently treats HTML Output as a way to
+AppCat doesn't realize that and frequently treats HTML Output as a way to
 deliver "interactive experience", putting request into HTML Output prompt that
 can't be fulfilled.
 
@@ -102,8 +102,24 @@ capabilities (a "Chat Agent" that doesn't have a backend to actually chat), and
 unmet promises (an "Interactive Video Game" that is not functional beyond a
 start screen)
 
-HTML Output is a one-shot generator that's great for presenting data, but isn't
-a sophisticated Web app generator that AppCat believes it to be.
+AppCat also frequently overestimates what is possible with HTML Output. The HTML
+Output is a one-shot generator that's great for visualizing data, but isn't a
+sophisticated Web app generator. Treat any attempts of AppCat to create an app,
+particularly an interactive game as suspect.
+
+Key tells that AppCat is wrong:
+
+- AppCat delegates writing code to one step, and then hands it off to HTML
+  Output to render. That's simply not possible in Opal. HTML Code is rarely a
+  self-contained bundle, and HTML Output certainly doesn't know what to do with
+  it.
+- AppCat accepts the challenge of writing a video game (2D Scroller, platformer,
+  any sort of game). This is not something that Opal can do.
+  [AI Studio](https://aistudio.google.com/) is a much better fit for the job.
+
+As a result, the user is disappointed with a clunky experience. When looking at
+the reference graph, be wary of anything that portends to build a web app. Data
+visualizers are fine. Full fledged web apps are not something Opal can do.
 
 ### The New Gold Standard
 
