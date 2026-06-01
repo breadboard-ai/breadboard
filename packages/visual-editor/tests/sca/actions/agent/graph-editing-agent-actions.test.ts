@@ -185,6 +185,96 @@ suite("graph-editing-agent-actions", () => {
     assert.strictEqual(callArgs.kind, "graph-editing");
   });
 
+  test("startGraphEditingAgent passes assets in objective parts", async () => {
+    const controller = await makeControllerStub("GEA_act_assets");
+    const services = makeServicesStub();
+    bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    const startRunSpy = mock.method(services.agentService, "startRun");
+
+    const mockAssets = [
+      {
+        role: "user",
+        parts: [
+          {
+            inlineData: {
+              mimeType: "image/png",
+              data: "base64data",
+            },
+          },
+        ],
+      },
+    ];
+
+    startGraphEditingAgent("Hello", mockAssets);
+
+    assert.strictEqual(startRunSpy.mock.callCount(), 1);
+    const callArgs = startRunSpy.mock.calls[0].arguments[0];
+    assert.strictEqual(callArgs.objective.parts.length, 2);
+    assert.deepStrictEqual(callArgs.objective.parts[1], mockAssets[0].parts[0]);
+  });
+
+  test("resolveGraphEditingInput with assets resolves with multimodal parts", async () => {
+    const controller = await makeControllerStub("GEA_act_resolve_assets");
+    const services = makeServicesStub();
+    bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    const originalStartRun = services.agentService.startRun.bind(
+      services.agentService
+    );
+    let activeHandle: any = null;
+    mock.method(services.agentService, "startRun", (args: any) => {
+      const handle = originalStartRun(args);
+      activeHandle = handle;
+      return handle;
+    });
+
+    startGraphEditingAgent("Build something");
+
+    assert.ok(activeHandle !== null);
+
+    const resultPromise = activeHandle.events.handle({
+      waitForInput: {
+        requestId: "req-assets-1",
+        prompt: { parts: [{ text: "Hello" }] },
+        inputType: "text",
+      },
+    });
+
+    const mockAssets = [
+      {
+        role: "user",
+        parts: [
+          {
+            inlineData: {
+              mimeType: "image/png",
+              data: "base64data",
+            },
+          },
+        ],
+      },
+    ];
+
+    resolveGraphEditingInput("User response", mockAssets);
+
+    const response = await resultPromise;
+    assert.deepStrictEqual(response, {
+      input: {
+        parts: [{ text: "User response" }, mockAssets[0].parts[0]],
+      },
+    });
+
+    services.agentService.endRun(activeHandle.runId);
+  });
+
   // ── Consumer wiring ────────────────────────────────────────────────────────
   // These tests verify that the consumer handlers wire events to controller
   // mutations correctly. They create a run handle directly (bypassing the
