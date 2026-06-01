@@ -203,61 +203,103 @@ class GraphEditingEvalHarness {
               overall_rationale: {
                 type: "string",
               },
+              disconnects_diagnosis: {
+                type: "object",
+                properties: {
+                  we_cant_build_that: {
+                    type: "object",
+                    properties: {
+                      detected: { type: "boolean" },
+                      severity: { 
+                        type: "integer", 
+                        description: "Score from 1 (Negligible) to 5 (Critical blocker)." 
+                      },
+                      explanation: { type: "string" }
+                    },
+                    required: ["detected", "severity", "explanation"]
+                  },
+                  we_misunderstood_the_user: {
+                    type: "object",
+                    properties: {
+                      detected: { type: "boolean" },
+                      severity: { 
+                        type: "integer", 
+                        description: "Score from 1 (Negligible) to 5 (Critical blocker)." 
+                      },
+                      explanation: { type: "string" }
+                    },
+                    required: ["detected", "severity", "explanation"]
+                  },
+                  we_misunderstood_ourselves: {
+                    type: "object",
+                    properties: {
+                      detected: { type: "boolean" },
+                      severity: { 
+                        type: "integer", 
+                        description: "Score from 1 (Negligible) to 5 (Critical blocker)." 
+                      },
+                      explanation: { type: "string" }
+                    },
+                    required: ["detected", "severity", "explanation"]
+                  }
+                },
+                required: ["we_cant_build_that", "we_misunderstood_the_user", "we_misunderstood_ourselves"]
+              },
               dimensions: {
                 type: "object",
                 properties: {
-                  intent_fulfillment: {
+                  intent_comprehension: {
                     type: "object",
                     properties: {
                       score: { 
                         type: "integer", 
-                        description: "Score from 1 (Poor) to 5 (Excellent). Does the generated graph conceptually and functionally satisfy the User's original objective and instructions?" 
+                        description: "Score from 1 (Poor) to 5 (Excellent). Did Opie accurately identify the user's objective, inputs, and desired interaction style?" 
                       },
                       rationale: { type: "string" },
                     },
                     required: ["score", "rationale"],
                   },
-                  architectural_elegance: {
+                  capability_selection: {
                     type: "object",
                     properties: {
                       score: { 
                         type: "integer", 
-                        description: "Score from 1 (Poor) to 5 (Excellent). Evaluates integrity of data flows, resilience of connections, and whether Opie gracefully leveraged modern Agentic Steps to surpass outdated reference pipelines (without leaving disconnected edges)." 
+                        description: "Score from 1 (Poor) to 5 (Excellent). Did Opie select and correctly configure the optimal Opal tools for the task at hand?" 
                       },
                       rationale: { type: "string" },
                     },
                     required: ["score", "rationale"],
                   },
-                  capability_utilization: {
+                  architectural_integrity: {
                     type: "object",
                     properties: {
                       score: { 
                         type: "integer", 
-                        description: "Score from 1 (Poor) to 5 (Excellent). Checks whether Opie correctly selected and configured the optimal Opal tools (Python sandboxing, Veo 3 video with native audio, multi-turn chat, memory, etc.) for the specific task at hand." 
+                        description: "Score from 1 (Poor) to 5 (Excellent). Does the generated graph possess complete, resilient data flows with all necessary edges connected correctly?" 
                       },
                       rationale: { type: "string" },
                     },
                     required: ["score", "rationale"],
                   },
-                  output_and_polish: {
+                  output_fidelity: {
                     type: "object",
                     properties: {
                       score: { 
                         type: "integer", 
-                        description: "Score from 1 (Poor) to 5 (Excellent). If rendering or interactive output is requested, assesses whether the design requirements, aesthetic keywords, and UI structural paradigms were gracefully set up for premium display." 
+                        description: "Score from 1 (Poor) to 5 (Excellent). Assesses whether Opie correctly generated accurate graph and step metadata (titles, descriptions, theme) for polished presentation." 
                       },
                       rationale: { type: "string" },
                     },
                     required: ["score", "rationale"],
                   },
                 },
-                required: ["intent_fulfillment", "architectural_elegance", "capability_utilization", "output_and_polish"],
+                required: ["intent_comprehension", "capability_selection", "architectural_integrity", "output_fidelity"],
               },
               detailed_comparison: {
                 type: "string",
               },
             },
-            required: ["translated_intent", "overall_judgement", "overall_rationale", "dimensions"],
+            required: ["translated_intent", "overall_judgement", "overall_rationale", "disconnects_diagnosis", "dimensions"],
           };
 
           const body: GeminiBody = {
