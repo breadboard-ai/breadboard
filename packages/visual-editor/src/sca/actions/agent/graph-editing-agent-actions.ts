@@ -14,9 +14,8 @@
  * (Controller), which is exactly what Actions are for.
  */
 
-import type {
-  LLMContent,
-} from "@breadboard-ai/types";
+import type { LLMContent, DataPart } from "@breadboard-ai/types";
+
 import { generateImage, persistTheme } from "../theme/theme-utils.js";
 import { createThemeGenerationPrompt } from "../../../ui/prompts/theme-generation.js";
 
@@ -32,7 +31,10 @@ import type { AgentRunHandle } from "../../../a2/agent/agent-service.js";
 import type { LocalAgentRun } from "../../../a2/agent/local-agent-run.js";
 import type { A2ModuleFactory } from "../../../a2/runnable-module-factory.js";
 import type { ChatResponse } from "../../../a2/agent/types.js";
-import { GraphEditingManager, GraphThemeGenerator } from "../../../a2/agent/graph-editing/graph-editing-manager.js";
+import {
+  GraphEditingManager,
+  GraphThemeGenerator,
+} from "../../../a2/agent/graph-editing/graph-editing-manager.js";
 import type { ChatEntry } from "../../types.js";
 
 export { bind, startGraphEditingAgent, resolveGraphEditingInput };
@@ -62,7 +64,10 @@ let pendingResolve: ((response: ChatResponse) => void) | null = null;
  * `GraphEditingAgentController`, and invokes the agent loop with
  * sink-based hooks.
  */
-function startGraphEditingAgent(firstMessage: string): void {
+function startGraphEditingAgent(
+  firstMessage: string,
+  assets?: LLMContent[]
+): void {
   const { controller, services } = bind;
   const agent = controller.editor.graphEditingAgent;
   if (agent.loopRunning) return;
@@ -75,6 +80,10 @@ function startGraphEditingAgent(firstMessage: string): void {
       },
     ],
   };
+
+  if (assets && assets.length > 0) {
+    objective.parts.push(...assets.flatMap((a) => a.parts));
+  }
 
   const factory = services.sandbox as A2ModuleFactory;
 
@@ -255,7 +264,10 @@ function startGraphEditingAgent(firstMessage: string): void {
  * Constructs a `ChatResponse` and resolves the consumer handler's Promise.
  * Returns true if there was a pending resolve (agent was waiting).
  */
-function resolveGraphEditingInput(text: string): boolean {
+function resolveGraphEditingInput(
+  text: string,
+  assets?: LLMContent[]
+): boolean {
   if (!pendingResolve) return false;
   const resolve = pendingResolve;
   pendingResolve = null;
@@ -263,7 +275,13 @@ function resolveGraphEditingInput(text: string): boolean {
   const agent = controller.editor.graphEditingAgent;
   agent.waiting = false;
   agent.processing = true;
-  resolve({ input: { parts: [{ text }] } });
+
+  const parts: DataPart[] = [{ text }];
+  if (assets && assets.length > 0) {
+    parts.push(...assets.flatMap((a) => a.parts));
+  }
+
+  resolve({ input: { parts } });
   return true;
 }
 

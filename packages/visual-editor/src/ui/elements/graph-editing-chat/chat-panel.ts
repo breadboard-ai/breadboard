@@ -20,6 +20,13 @@ import type { ExpandingTextarea } from "../input/expanding-textarea.js";
 import "./opie-avatar.js";
 import "../effects/radial-glow.js";
 import { styleMap } from "lit/directives/style-map.js";
+import type {
+  AddAssetRequestEvent,
+  AddAssetEvent,
+} from "../../events/events.js";
+import "../input/add-asset/add-asset-button.js";
+import "../input/add-asset/add-asset-modal.js";
+import "./input-asset-shelf.js";
 
 export { ChatPanel };
 
@@ -38,6 +45,10 @@ class ChatPanel extends SignalWatcher(LitElement) {
 
   readonly #inputRef = createRef<ExpandingTextarea>();
 
+  #showAddAssetModal = false;
+  #addAssetType: string | null = null;
+  #allowedMimeTypes: string | null = null;
+
   static styles = [
     icons,
     Styles.HostType.type,
@@ -55,7 +66,8 @@ class ChatPanel extends SignalWatcher(LitElement) {
         border-radius: var(--bb-grid-size-4);
         display: flex;
         flex-direction: column;
-        width: 380px;
+        width: 80svw;
+        max-width: 430px;
         max-height: 480px;
       }
 
@@ -246,15 +258,20 @@ class ChatPanel extends SignalWatcher(LitElement) {
 
       .input-area {
         display: flex;
-        align-items: center;
-        gap: var(--bb-grid-size-2);
-        padding: var(--bb-grid-size-3) var(--bb-grid-size-3);
+        flex-direction: column;
+        gap: 0;
         border-top: 1px solid var(--light-dark-n-95);
       }
 
+      .input-row {
+        display: flex;
+        align-items: center;
+        gap: var(--bb-grid-size-2);
+        padding: var(--bb-grid-size-3) var(--bb-grid-size-3);
+      }
       bb-expanding-textarea {
         flex: 1;
-        background: var(--light-dark-n-97, #f5f5f5);
+        background: var(--light-dark-n-98);
         border: 1px solid var(--light-dark-n-90);
         border-radius: var(--bb-grid-size-7);
         padding: var(--bb-grid-size) var(--bb-grid-size-3);
@@ -376,7 +393,9 @@ class ChatPanel extends SignalWatcher(LitElement) {
         width: 24px;
         height: 24px;
         padding: 0;
-        transition: background 0.15s ease, color 0.15s ease;
+        transition:
+          background 0.15s ease,
+          color 0.15s ease;
       }
 
       .feedback-button .g-icon {
@@ -393,7 +412,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
       }
 
       .feedback-button.active .g-icon {
-        font-variation-settings: 'FILL' 1;
+        font-variation-settings: "FILL" 1;
         color: var(--light-dark-p-40);
       }
     `,
@@ -409,6 +428,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
 
   render() {
     const agent = this.sca.controller.editor.graphEditingAgent;
+    const inputAssets = this.sca.controller.editor.inputAssets;
     const inputDisabled = agent.processing;
     const hasInput = !!this.#inputRef.value?.value;
 
@@ -491,22 +511,45 @@ class ChatPanel extends SignalWatcher(LitElement) {
         ${this.#renderSelectionStrip()}
 
         <div class="input-area">
-          <bb-expanding-textarea
-            ${ref(this.#inputRef)}
-            .disabled=${inputDisabled}
-            .placeholder=${"Ask a question or make a change..."}
-            @change=${this.#onSend}
-            @input=${() => this.requestUpdate()}
-            ><span slot="submit" style="display:none"></span
-          ></bb-expanding-textarea>
-          <button
-            class="send-button ${hasInput ? "active" : ""}"
-            @click=${() => this.#onSend()}
-          >
-            <span class="g-icon">send</span>
-          </button>
+          ${this.#renderAssetShelf()}
+          <div class="input-row">
+            <bb-add-asset-button
+              .anchor=${"above"}
+              .showGDrive=${true}
+              .showNotebookLm=${!!this.sca.env.flags.get("enableNotebookLm")}
+              @bbaddassetrequest=${(evt: AddAssetRequestEvent) => {
+                if (evt.assetType === "notebooklm") {
+                  this.sca.actions.notebookLmPicker.open((notebooks) => {
+                    this.sca.actions.inputAsset.addFromNotebookLm(notebooks);
+                  });
+                  return;
+                }
+                this.#showAddAssetModal = true;
+                this.#addAssetType = evt.assetType;
+                this.#allowedMimeTypes = evt.allowedMimeTypes;
+                this.requestUpdate();
+              }}
+            ></bb-add-asset-button>
+            <bb-expanding-textarea
+              ${ref(this.#inputRef)}
+              .disabled=${inputDisabled}
+              .placeholder=${"Ask a question or make a change..."}
+              @change=${this.#onSend}
+              @input=${() => this.requestUpdate()}
+              ><span slot="submit" style="display:none"></span
+            ></bb-expanding-textarea>
+            <button
+              class="send-button ${hasInput || inputAssets.populated
+                ? "active"
+                : ""}"
+              @click=${() => this.#onSend()}
+            >
+              <span class="g-icon">send</span>
+            </button>
+          </div>
         </div>
       </div>
+      ${this.#renderAddAssetModal()}
     `;
   }
 
@@ -616,17 +659,37 @@ class ChatPanel extends SignalWatcher(LitElement) {
     if (!input) return;
 
     const text = input.value.trim();
-    if (!text) return;
+    const inputAssets = this.sca.controller.editor.inputAssets;
+    const hasAssets = inputAssets.populated;
+
+    if (!text && !hasAssets) return;
+
+    // Drain assets before clearing text so the message includes them.
+    const assets = inputAssets.drain();
 
     input.value = "";
     const agent = this.sca.controller.editor.graphEditingAgent;
 
-    agent.addMessage("user", text);
+    // Build the display text. If there are assets, note them.
+    const assetSuffix =
+      assets.length > 0
+        ? ` [${assets.length} attachment${assets.length > 1 ? "s" : ""}]`
+        : "";
+    const displayText = text || "(attachments)";
+    agent.addMessage("user", displayText + assetSuffix);
     this.#scrollToBottom();
 
-    if (!this.sca.actions.graphEditingAgent.resolveGraphEditingInput(text)) {
+    if (
+      !this.sca.actions.graphEditingAgent.resolveGraphEditingInput(
+        text || "(see attachments)",
+        assets
+      )
+    ) {
       agent.processing = true;
-      this.sca.actions.graphEditingAgent.startGraphEditingAgent(text);
+      this.sca.actions.graphEditingAgent.startGraphEditingAgent(
+        text || "(see attachments)",
+        assets
+      );
     }
   }
 
@@ -641,5 +704,35 @@ class ChatPanel extends SignalWatcher(LitElement) {
 
   focus() {
     this.#inputRef.value?.focus();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ASSET SHELF RENDERING
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  #renderAssetShelf() {
+    return html`<bb-input-asset-shelf></bb-input-asset-shelf>`;
+  }
+
+  #renderAddAssetModal() {
+    if (!this.#showAddAssetModal) return nothing;
+
+    return html`<bb-add-asset-modal
+      .assetType=${this.#addAssetType}
+      .allowedMimeTypes=${this.#allowedMimeTypes}
+      @bboverlaydismissed=${() => {
+        this.#showAddAssetModal = false;
+        this.#addAssetType = null;
+        this.#allowedMimeTypes = null;
+        this.requestUpdate();
+      }}
+      @bbaddasset=${(evt: AddAssetEvent) => {
+        this.#showAddAssetModal = false;
+        this.#addAssetType = null;
+        this.#allowedMimeTypes = null;
+        this.sca.actions.inputAsset.addFromModal(evt.asset);
+        this.requestUpdate();
+      }}
+    ></bb-add-asset-modal>`;
   }
 }

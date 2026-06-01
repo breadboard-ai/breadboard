@@ -25,6 +25,7 @@ export { FunctionCallerImpl };
 export type FunctionCallResult = {
   callId: string;
   response: FunctionResponseCapabilityPart;
+  extraParts?: DataPart[];
 };
 
 class FunctionCallerImpl implements FunctionCaller {
@@ -39,7 +40,9 @@ class FunctionCallerImpl implements FunctionCaller {
     part: FunctionCallCapabilityPart,
     statusUpdateCallback: StatusUpdateCallback,
     reporter: ProgressReporter | null
-  ): Promise<Outcome<FunctionResponseCapabilityPart>> {
+  ): Promise<
+    Outcome<FunctionResponseCapabilityPart & { extraParts?: DataPart[] }>
+  > {
     const { functionCall } = part;
     const { name, args } = functionCall;
     const definition = this.builtIn.get(name)!;
@@ -50,11 +53,18 @@ class FunctionCallerImpl implements FunctionCaller {
       reporter
     );
     if (!ok(response)) return response;
+
+    const extraParts = (response as any).$parts;
+    if (extraParts) {
+      delete (response as any).$parts;
+    }
+
     return {
       functionResponse: {
         name,
         response,
       },
+      ...(extraParts ? { extraParts } : {}),
     };
   }
 
@@ -86,8 +96,9 @@ class FunctionCallerImpl implements FunctionCaller {
         this.#callBuiltIn(part, statusUpdateCallback, reporter).then(
           (result) => {
             if (ok(result)) {
-              onResult?.(callId, { parts: [result] });
-              return { callId, response: result };
+              const { extraParts, ...responseOnly } = result;
+              onResult?.(callId, { parts: [responseOnly] });
+              return { callId, response: responseOnly, extraParts };
             }
             return result;
           }
@@ -105,7 +116,6 @@ class FunctionCallerImpl implements FunctionCaller {
       );
     }
   }
-
 
   async getResults(): Promise<
     Outcome<{ combined: LLMContent; results: FunctionCallResult[] } | null>
@@ -128,7 +138,10 @@ class FunctionCallerImpl implements FunctionCaller {
     }
     const successResults = functionResponses.filter(ok) as FunctionCallResult[];
     const combined: LLMContent = {
-      parts: successResults.map((r) => r.response) as DataPart[],
+      parts: [
+        ...successResults.map((r) => r.response),
+        ...successResults.flatMap((r) => r.extraParts || []),
+      ] as DataPart[],
       role: "user",
     };
     return { combined, results: successResults };

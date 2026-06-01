@@ -17,3 +17,4 @@ export * as GraphEditingAgent from "./graph-editing-agent-controller.js";
 export * as NotebookLmPicker from "./notebooklm-picker-controller.js";
 export * as DevTools from "./devtools/devtools-controller.js";
 export * as Canvas from "./canvas/canvas.js";
+export * as InputAssets from "./input-assets/input-asset-controller.js";

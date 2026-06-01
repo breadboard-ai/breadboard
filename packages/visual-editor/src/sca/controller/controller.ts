@@ -92,6 +92,10 @@ class Controller implements AppController {
         "Editor_Canvas",
         "CanvasController"
       ),
+      inputAssets: new Editor.InputAssets.InputAssetController(
+        "Editor_InputAssets",
+        "InputAssetController"
+      ),
     };
 
     this.home = {
@@ -105,7 +109,11 @@ class Controller implements AppController {
       main: new Global.GlobalController("Global", "GlobalController"),
       flags: new Global.FlagController("Flags", "FlagController", env.flags),
       debug: new Global.DebugController("Debug", "DebugController"),
-      feedback: new Global.FeedbackController("Feedback", "FeedbackController", env),
+      feedback: new Global.FeedbackController(
+        "Feedback",
+        "FeedbackController",
+        env
+      ),
       flowgenInput: new Global.FlowgenInputController(
         "FlowgenInput",
         "FlowgenInputController"
@@ -260,6 +268,7 @@ export interface AppController extends DebuggableAppController {
     notebookLmPicker: Editor.NotebookLmPicker.NotebookLmPickerController;
     devtools: Editor.DevTools.DevToolsController;
     canvas: Editor.Canvas.CanvasController;
+    inputAssets: Editor.InputAssets.InputAssetController;
   };
   home: {
     recent: Home.RecentBoardsController;

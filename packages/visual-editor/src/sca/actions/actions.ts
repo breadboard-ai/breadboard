@@ -15,6 +15,7 @@ import * as Flowgen from "./flowgen/flowgen-actions.js";
 import * as Graph from "./graph/graph-actions.js";
 import * as Integration from "./integration/integration-actions.js";
 import * as Host from "./host/host-actions.js";
+import * as InputAsset from "./input-asset/input-asset-actions.js";
 import * as Node from "./node/node-actions.js";
 import * as NotebookLmPicker from "./notebooklm/notebooklm-picker-actions.js";
 import * as Router from "./router/router-actions.js";
@@ -38,6 +39,7 @@ export interface AppActions {
   graph: typeof Graph;
   integration: typeof Integration;
   host: typeof Host;
+  inputAsset: typeof InputAsset;
   node: typeof Node;
   notebookLmPicker: typeof NotebookLmPicker;
   router: typeof Router;
@@ -67,6 +69,7 @@ export function actions(
     Graph.bind({ controller, services, env });
     Integration.bind({ controller, services, env });
     Host.bind({ controller, services, env });
+    InputAsset.bind({ controller, services, env });
     Node.bind({ controller, services, env });
     NotebookLmPicker.bind({ controller, services, env });
     Router.bind({ controller, services, env });
@@ -86,6 +89,7 @@ export function actions(
       graph: Graph,
       integration: Integration,
       host: Host,
+      inputAsset: InputAsset,
       node: Node,
       notebookLmPicker: NotebookLmPicker,
       router: Router,
@@ -125,6 +129,7 @@ export function activateTriggers(): () => void {
     ...Object.values(Graph),
     ...Object.values(Integration),
     ...Object.values(Host),
+    ...Object.values(InputAsset),
     ...Object.values(Node),
     ...Object.values(NotebookLmPicker),
     ...Object.values(Router),
@@ -231,6 +236,7 @@ export {
   Graph,
   Integration,
   Host,
+  InputAsset,
   Node,
   NotebookLmPicker,
   Router,

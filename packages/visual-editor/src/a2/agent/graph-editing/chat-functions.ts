@@ -114,6 +114,9 @@ function getChatFunctionGroup(
           .map((p) => p.text)
           .join("\n");
 
+        // Extract non-text parts (assets/attachments)
+        const extraParts = response.input.parts.filter((p) => !("text" in p));
+
         // After user responds, check whether they edited the graph.
         const afterData = await readGraphData(sink);
         let graph_changes: string | undefined;
@@ -153,7 +156,8 @@ function getChatFunctionGroup(
           current_graph: overview,
           ...(selectionText ? { selected_steps: selectionText.trim() } : {}),
           ...(graph_changes ? { graph_changes } : {}),
-        };
+          $parts: extraParts,
+        } as any;
       }
     ),
   ];
