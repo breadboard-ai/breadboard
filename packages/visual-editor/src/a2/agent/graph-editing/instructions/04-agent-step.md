@@ -43,7 +43,7 @@ images (provide an image + text prompt to modify it) and compose from multiple
 images (style transfer, scene composition). Generates multiple images in a
 single call for consistency.
 
-**Video generation** — 8-second videos via Veo 3.1 with \*\*natively generated
+**Video generation** — 8-second videos via Veo 3.1 with natively generated
 audio. Supports reference images as starting frames.
 
 **Speech** — text-to-speech with voice selection.
@@ -66,6 +66,13 @@ sheets, retrieve, update, and delete entries.
 **Routing** — the step can choose one of its outgoing connections instead of
 following all of them. Add route tags (`<a>`) for each possible destination, and
 describe in the prompt when to go where.
+
+### Important Notes about Capabilities
+
+- Videos longer than 8 seconds can not be generated, and only one reference
+  image (and no other modality is supported).
+- There is no capability to trim or join videos.
+- The user is limited to a small number of daily video generations.
 
 ### Tools
 

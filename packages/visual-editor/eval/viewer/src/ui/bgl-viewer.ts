@@ -434,7 +434,69 @@ class BGLViewer extends LitElement {
             letter-spacing: 0.5px;
           }
         }
+
+        .disconnect-banner {
+          display: flex;
+          align-items: flex-start;
+          gap: var(--bb-grid-size-3);
+          padding: var(--bb-grid-size-4);
+          border-radius: var(--bb-grid-size-3);
+          margin-bottom: var(--bb-grid-size-3);
+          background: var(--elevated-background-light);
+          border: 1px solid var(--border-color);
+        }
+
+        .disconnect-banner.detected {
+          background: oklch(from #ea4335 l c h / 0.08);
+          border-color: oklch(from #ea4335 l c h / 0.3);
+        }
+
+        .disconnect-banner.cleared {
+          background: oklch(from #34a853 l c h / 0.08);
+          border-color: oklch(from #34a853 l c h / 0.3);
+        }
+
+        .disconnect-banner .g-icon {
+          font-size: 24px;
+          flex-shrink: 0;
+        }
+
+        .disconnect-banner.detected .g-icon {
+          color: #ea4335;
+        }
+
+        .disconnect-banner.cleared .g-icon {
+          color: #34a853;
+        }
+
+        .disconnect-banner h4 {
+          margin: 0 0 var(--bb-grid-size) 0;
+          font-size: 14px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: var(--bb-grid-size-2);
+        }
+
+        .disconnect-banner p {
+          margin: 0 0 var(--bb-grid-size-2) 0;
+          font-size: 13px;
+          line-height: 1.5;
+          color: var(--light-dark-n-10);
+        }
+
+        .disconnect-banner .severity {
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          color: #ea4335;
+          background: oklch(from #ea4335 l c h / 0.12);
+          padding: 2px 6px;
+          border-radius: 4px;
+          border: 1px solid oklch(from #ea4335 l c h / 0.3);
+        }
       }
+
     `,
   ];
 
@@ -858,7 +920,9 @@ class BGLViewer extends LitElement {
               <ui-notes-container .location=${location} .notes=${this.#getNotesForLocation(location)}></ui-notes-container>
             </div>`;
           })()}
-          ${Object.entries(this.rater || {}).filter(([k]) => k !== "overall_judgement").map(([key, value]) => {
+          ${(this.rater as any)?.disconnects_diagnosis ? this.#renderDisconnectsDiagnosis((this.rater as any).disconnects_diagnosis) : nothing}
+          ${Object.entries(this.rater || {}).filter(([k]) => k !== "overall_judgement" && k !== "disconnects_diagnosis").map(([key, value]) => {
+
             if (key === "dimensions" && typeof value === "object" && value !== null) {
               return html`<div class="config-item">
                 <h3>Dimensions</h3>
@@ -907,6 +971,52 @@ class BGLViewer extends LitElement {
         </div>
       </form>
     </dialog>`;
+  }
+
+  #renderDisconnectsDiagnosis(diagnosis: any) {
+    if (!diagnosis) return nothing;
+
+    const cantBuild = diagnosis.we_cant_build_that;
+    const misunderstoodUser = diagnosis.we_misunderstood_the_user;
+    const misunderstoodOurselves = diagnosis.we_misunderstood_ourselves;
+
+    const renderBanner = (title: string, severity: number, explanation: string, detected: boolean, locationKey: string) => {
+      const icon = detected ? 'warning' : 'check_circle';
+      const className = detected ? 'detected' : 'cleared';
+      const location: NoteLocation = {
+        type: "rater",
+        fieldName: locationKey,
+      };
+
+      let displayExplanation = explanation;
+      if (!detected) {
+        displayExplanation = explanation.replace(/^(?:None\.|No issues detected\.)\s*/i, "");
+        if (!displayExplanation) {
+           displayExplanation = "No issues detected.";
+        }
+      }
+
+      return html`<div class="disconnect-banner ${className}">
+        <span class="g-icon filled round">${icon}</span>
+        <div style="flex-grow: 1;">
+          <h4>
+            <span>${title}</span> 
+            ${detected && severity > 0 ? html`<span class="severity">Severity: ${severity}/5</span>` : nothing}
+          </h4>
+          <p>${displayExplanation}</p>
+          <ui-notes-container .location=${location} .notes=${this.#getNotesForLocation(location)}></ui-notes-container>
+        </div>
+      </div>`;
+    };
+
+    return html`<div class="config-item">
+      <h3>Root Cause Diagnosis</h3>
+      <div style="margin-top: var(--bb-grid-size-4);">
+        ${renderBanner("Disconnect 1: 'We can't build that'", cantBuild.severity, cantBuild.explanation, cantBuild.detected, "we_cant_build_that")}
+        ${renderBanner("Disconnect 2: 'We misunderstood the user'", misunderstoodUser.severity, misunderstoodUser.explanation, misunderstoodUser.detected, "we_misunderstood_the_user")}
+        ${renderBanner("Disconnect 3: 'We misunderstood ourselves'", misunderstoodOurselves.severity, misunderstoodOurselves.explanation, misunderstoodOurselves.detected, "we_misunderstood_ourselves")}
+      </div>
+    </div>`;
   }
 
   #showTranscriptModal() {

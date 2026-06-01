@@ -116,20 +116,112 @@ robustness of user intent understanding.
 - Opie will sparingly use HTML Output when interactive presentation is called
   for.
 
-### Evaluation Rules: What constitutes a TRUE FAIL vs PASS
+## How to Evaluate Opie's Output
+
+The objective of evaluation is to determine whether or not the Opie-generated
+graph represents what the user wants within Opal's capabilities. We can imagine
+the problem space as a trilemma of three core questions:
+
+- What does the user want?
+- How did Opie interpret what the user wants?
+- What is possible in Opal?
+
+### The Three Disconnects Framework
+
+The three disconnects emerge when we study relationships between these three
+questions:
+
+```mermaid
+graph TD
+    UserWants("What the user wants")
+    OpalPossible("What is possible in Opal")
+    Interpretation("How we interpret what the user wants")
+
+    UserWants -- "Disconnect 1: 'We can't build that'" --- OpalPossible
+    UserWants -- "Disconnect 2: 'We misunderstood the user'" --- Interpretation
+    Interpretation -- "Disconnect 3: 'We misunderstood ourselves'" --- OpalPossible
+```
+
+- **"We can't build that"**: The gap between "What the user wants" and "What is
+  possible in Opal". Did the user request capabilities, integrations, or
+  persistence that Opal physically lacks (e.g., Stripe payments, real-time
+  database backends, downloadable desktop apps)?
+- **"We misunderstood the user"**: The gap between "What the user wants" and
+  "How we interpret what the user wants". Did Opie fail to comprehend the
+  objective, target audience, or requested interaction style?
+- **"We misunderstood ourselves"**: The gap between "How we interpret what the
+  user wants" and "What is possible in Opal". Did Opie accurately understand the
+  intent, but use the wrong Opal tools (e.g., static HTML Output for a stateful
+  game) or assemble a broken/brittle graph architecture with disconnected edges?
+
+### How to apply the framework
+
+Use the dimensions and three disconnects and balance them against each other.
+
+#### Step 1: Evaluate against the rubric
+
+Evaluate the generated output against these four synthesized metrics as
+supporting evidence, scoring each on a 1 (Very Poor) to 5 (Excellent) Likert
+scale:
+
+- **`intent_comprehension`**: Did Opie accurately identify the user's objective,
+  inputs, and desired interaction style? Did Opie understand what the user
+  wants?
+- **`capability_selection`**: Did Opie select and correctly configure the
+  optimal Opal tools for the task? Did Opie understand what is possible in Opal?
+- **`architectural_integrity`**: Does the graph possess complete data flows with
+  all necessary edges connected (without dangling edges or broken topologies)?
+- **`output_fidelity`**: Did Opie correctly generate accurate, descriptive
+  metadata (such as titles, descriptions, and tag arrays) at both the graph and
+  node levels for polished presentation?
+
+#### Step 2: Diagnose the disconnects
+
+Using the metrics, diagnose each of the Three Disconnects inside the
+`disconnects_diagnosis` object by specifying whether it was `detected`
+(true/false), its `severity` (1 to 5 Likert scale), and a clear `explanation`.
+
+#### Step 3: Assign the grade
+
+Use the Likert scale to determine PASS, FAIL, or PARTIAL. Any severe disconnects
+are considered FAIL. PASS is 90% or better. PARTIAL is everything in between.
+
+#### Examples
+
+Here are some examples to ground your evaluation:
 
 - **PASS**: Opie surpasses or meets the intent using agentic steps, or builds a
   workflow fulfilling the user's explicit instructions and functional
   requirements.
-- **PASS - Valid Clarifying Question**: If Opie correctly identifies that two or more dimensions of the User Intent are ambiguous or unclear (according to Opie's 5-point rubric: Purpose, Audience, Inputs, Key Output, and Interaction Style), asking a short, polite clarifying question instead of building a graph is a valid and desired PASS response. Look at `opie_message` when `followup_question_asked` is `true`.
-- **FAIL - Incorrect Clarification**: Asking a clarifying question for an intent that was already sufficiently clear and actionable.
-- **FAIL - Unresponsive / Empty Output**: Generating an empty graph without providing a valid clarifying question in `opie_message`.
+- **PASS - Valid Clarifying Question**: If Opie correctly identifies that the
+  User Intent is ambiguous or unclear under the `intent_comprehension` metric
+  (e.g., missing Purpose, Inputs, or Interaction Style), asking a short, polite
+  clarifying question instead of building a graph is a valid and desired PASS
+  response. Look at `opie_message` when `followup_question_asked` is `true`.
+- **PARTIAL - Spurious Clarifying Question**: Asking a clarifying question for
+  an intent that was already sufficiently clear and actionable (causing moderate
+  Disconnect 2).
 - **FAIL - Disconnected/Broken Architecture**: Opie generates graphs with
-  missing edges between data flows, or isolated input nodes.
-- **FAIL - Missed Modality / Functional Requirements**: Opie missed an
-  explicitly requested output modality (interactive UI, PDF, game, etc.).
-- **FAIL - Hallucination**: Opie invokes nonexistent tools or tries to use
-  non-existing capabilities,
+  missing edges between data flows, or isolated input nodes (causing severe
+  Disconnect 3).
+- **FAIL - Silent Reframing**: To accommodate a disconnect 1, Opie silently
+  reframes the problem without telling the user. Instead Opie, should try to
+  build something that works and let the user know that it can't build what they
+  want.
+- **FAIL - Missed Modality / Functional Requirements**: Opie misses an
+  explicitly requested output modality, or deployed an impossible static HTML
+  output for a stateful UI (causing severe Disconnect 1 or 3).
+- **FAIL - Capability Misapplication**: Opie misapplies capabilitie like relying
+  on Veo to generate videos longer than 8 seconds on mixing audio into video,
+  providing audio as input to Veo, etc. (causing severe Disconnect 1 and 3)
+  non-existing capabilities (causing severe Disconnect 1).
+- **FAIL - Tool Hallucination**: Opie invokes non-existent tools or tries to use
+  non-existing capabilities (causing severe Disconnect 1).
+
+### Intent translation
+
+Accurately translate the User's original Intent into English and provide it in
+the "translated_intent" field.
 
 ### Rhetoric Constraint
 
@@ -138,7 +230,3 @@ Avoid hyperbolic, promotional, or overly dramatic rhetoric (e.g., do NOT use
 phrases like 'brittle', 'elegant', 'highly resilient', or 'architecturally
 superior'). Simply state the functional facts of what Opie generated in relation
 to the intent and the reference graph.
-
-Rate each dimension on a 1 (Very Poor) to 5 (Excellent) Likert scale. Accurately
-translate the User's original Intent into English and provide it in the
-"translated_intent" field.
