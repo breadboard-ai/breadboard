@@ -115,4 +115,4 @@ def create_plan(graph: GraphDescriptor) -> GraphPlan:
 
         queue = next_queue
 
-    return GraphPlan(stages=stages)
+    return GraphPlan(stages=stages, assets=graph.assets or {})

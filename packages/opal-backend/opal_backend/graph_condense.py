@@ -125,6 +125,7 @@ def _create_condensed_graph(
         graphs=dict(graph.graphs) if graph.graphs else {},
         title=graph.title,
         description=graph.description,
+        assets=graph.assets,
     )
 
     for i, scc in enumerate(sccs):

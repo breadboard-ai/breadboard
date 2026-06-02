@@ -72,6 +72,10 @@ class NodeHandlerDeps:
     interaction_store: Any = None
     graph_info: dict[str, Any] | None = None
 
+    # Graph-level assets — {path: {data: LLMContent[], metadata: ...}}.
+    # Used by template substitution to resolve asset references.
+    assets: dict[str, Any] | None = None
+
 
 def _extract_text_from_content(content: dict[str, Any]) -> str:
     """Extract plain text from an LLMContent dict."""
@@ -339,7 +343,7 @@ async def agent_handler(
         raise RuntimeError("agent_handler requires run_agent_fn in deps")
 
     # Build segments from inputs.
-    segments = _build_segments_from_inputs(inputs, config)
+    segments = _build_segments_from_inputs(inputs, config, deps.assets)
 
     agent_iter = deps.run_agent_fn(
         segments=segments,
@@ -402,6 +406,7 @@ async def consume_agent_events(
 def _build_segments_from_inputs(
     inputs: dict[str, list[Any]],
     config: dict[str, Any],
+    assets: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Build agent segments from node inputs and config.
 
@@ -421,9 +426,18 @@ def _build_segments_from_inputs(
     # Initial prompt from config (real Breadboard config$prompt).
     prompt = _get_prompt(config)
     if prompt:
-        # Substitute template placeholders with upstream input values.
-        prompt = _substitute_template(prompt, inputs)
+        # Substitute template placeholders with upstream input values
+        # and text-based assets.
+        prompt = _substitute_template(prompt, inputs, assets)
         segments.append({"type": "text", "text": prompt})
+
+        # Collect multimodal asset segments (images, PDFs, etc.).
+        # These are resolved from template placeholders with
+        # {"type": "asset"} — text substitution returns the text
+        # part, but binary parts need to be sent as separate
+        # asset segments for `to_pidgin()` to handle.
+        asset_segments = _collect_asset_segments(prompt, config, assets)
+        segments.extend(asset_segments)
 
     # Input context from upstream nodes — extract text from LLMContent.
     # Only include ports that were NOT consumed by template substitution.
@@ -450,6 +464,119 @@ def _build_segments_from_inputs(
 
 
 # ---------------------------------------------------------------------------
+# Asset resolution — port of Template.loadAsset() from template.ts
+# ---------------------------------------------------------------------------
+
+
+def _get_last_non_metadata(content_list: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Return the last LLMContent item whose role is not 'metadata'.
+
+    Mirrors ``#getLastNonMetadata()`` in template.ts.
+    """
+    for item in reversed(content_list):
+        if isinstance(item, dict) and item.get("role") != "$metadata":
+            return item
+    return None
+
+
+def _resolve_asset_text(
+    param: dict[str, Any],
+    assets: dict[str, Any] | None,
+) -> str:
+    """Resolve an asset placeholder to its text content.
+
+    For text assets, returns the extracted text. For binary assets
+    (images, PDFs), returns empty string — the binary parts are
+    handled separately by ``_collect_asset_segments()``.
+
+    Mirrors ``Template.loadAsset()`` + the text extraction in
+    ``Template.substitute()`` from template.ts.
+    """
+    if not assets:
+        return param.get("title", "")
+
+    path = param.get("path", "")
+    asset = assets.get(path)
+    if not asset or not asset.get("data"):
+        return param.get("title", "")
+
+    data = asset["data"]
+    if not isinstance(data, list):
+        return param.get("title", "")
+
+    last = _get_last_non_metadata(data)
+    if not last:
+        return param.get("title", "")
+
+    return _extract_text_from_content(last)
+
+
+def _collect_asset_segments(
+    raw_prompt: str,
+    config: dict[str, Any],
+    assets: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Collect asset segments for multimodal content in the prompt.
+
+    Scans the original (pre-substitution) prompt for ``"asset"``
+    placeholders and builds structured ``assetSegment`` objects for
+    any assets that contain non-text parts (inlineData, storedData).
+    These segments are consumed by ``to_pidgin()`` which already
+    knows how to handle ``"asset"`` type segments.
+
+    Text-only assets are already handled by ``_substitute_template``
+    and don't need separate segments.
+    """
+    if not assets:
+        return []
+
+    # Re-scan the raw prompt text from config for asset references.
+    # We use the original config$prompt (pre-substitution) because
+    # _substitute_template has already replaced the placeholders.
+    raw_text = _get_prompt(config)
+    if not raw_text:
+        return []
+
+    segments: list[dict[str, Any]] = []
+    for m in _TEMPLATE_RE.finditer(raw_text):
+        try:
+            param = json.loads(m.group(1))
+        except (json.JSONDecodeError, TypeError):
+            continue
+        if not isinstance(param, dict) or param.get("type") != "asset":
+            continue
+
+        path = param.get("path", "")
+        asset = assets.get(path)
+        if not asset or not asset.get("data"):
+            continue
+
+        data = asset["data"]
+        if not isinstance(data, list):
+            continue
+
+        last = _get_last_non_metadata(data)
+        if not last:
+            continue
+
+        # Check if this asset has any non-text parts (binary data).
+        parts = last.get("parts", [])
+        has_binary = any(
+            isinstance(p, dict) and ("inlineData" in p or "storedData" in p)
+            for p in parts
+        )
+        if has_binary:
+            title = param.get("title", "asset")
+            segments.append({
+                "type": "asset",
+                "title": title,
+                "content": last,
+            })
+
+    return segments
+
+
+# ---------------------------------------------------------------------------
 # Template substitution — port of Template.substitute() from template.ts
 # ---------------------------------------------------------------------------
 
@@ -462,13 +589,15 @@ _TEMPLATE_RE = re.compile(r"\{(\{(?:.*?)\})\}", re.IGNORECASE | re.DOTALL)
 def _substitute_template(
     text: str,
     inputs: dict[str, list[Any]],
+    assets: dict[str, Any] | None = None,
 ) -> str:
     """Replace template placeholders in prompt text with input values.
 
     Mirrors ``Template.substitute()`` + ``#replaceParam()`` from
-    ``template.ts``. For ``{"type": "in", "path": "<node-id>"}``
-    placeholders, looks up the input port ``p-z-<node-id>`` and
-    substitutes the text content of the upstream node's output.
+    ``template.ts``.
+
+    - ``{"type": "in", ...}`` — upstream node outputs
+    - ``{"type": "asset", ...}`` — graph-level assets
     """
     def replace_match(m: re.Match[str]) -> str:
         inner_json = m.group(1)
@@ -477,18 +606,23 @@ def _substitute_template(
         except (json.JSONDecodeError, TypeError):
             return m.group(0)  # Not valid JSON — leave as-is.
 
-        if not isinstance(param, dict) or param.get("type") != "in":
-            return m.group(0)  # Not an "in" param — leave as-is.
+        if not isinstance(param, dict):
+            return m.group(0)
 
-        path = param.get("path", "")
-        title = param.get("title", "")
-        port_name = f"p-z-{path}"
+        param_type = param.get("type")
 
-        if port_name not in inputs:
-            # Fallback to title, same as TS #replaceParam.
-            return title
+        if param_type == "in":
+            path = param.get("path", "")
+            title = param.get("title", "")
+            port_name = f"p-z-{path}"
+            if port_name not in inputs:
+                return title
+            return _extract_input_text(inputs[port_name])
 
-        return _extract_input_text(inputs[port_name])
+        if param_type == "asset":
+            return _resolve_asset_text(param, assets)
+
+        return m.group(0)  # Unknown param type — leave as-is.
 
     return _TEMPLATE_RE.sub(replace_match, text)
 
