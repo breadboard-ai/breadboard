@@ -39,6 +39,8 @@ class _SessionState:
     suspended: dict[str, SuspendedNodeState] = field(default_factory=dict)
     # interaction_id → node_id
     interaction_index: dict[str, str] = field(default_factory=dict)
+    # Headless mode: node_id → pre-supplied LLMContent value.
+    headless_inputs: dict[str, Any] | None = None
 
 
 class InMemoryGraphSessionStore:
@@ -55,9 +57,11 @@ class InMemoryGraphSessionStore:
 
     async def create(
         self, session_id: str, plan: GraphPlan,
+        *,
+        headless_inputs: dict[str, Any] | None = None,
     ) -> None:
         """Store plan with initial dependency counts."""
-        state = _SessionState(plan=plan)
+        state = _SessionState(plan=plan, headless_inputs=headless_inputs)
 
         # Compute per-node pending dep counts from plan stages.
         for stage in plan.stages:
@@ -143,6 +147,26 @@ class InMemoryGraphSessionStore:
                 if info.node.id == node_id:
                     return info.node.configuration or {}
         return {}
+
+    # ── Headless Inputs ──
+
+    async def get_headless_input(
+        self, session_id: str, node_id: str,
+    ) -> Any | None:
+        """Look up a pre-supplied input for headless mode."""
+        state = self._sessions.get(session_id)
+        if not state or state.headless_inputs is None:
+            return None
+        return state.headless_inputs.get(node_id)
+
+    async def is_headless_session(
+        self, session_id: str,
+    ) -> bool:
+        """Return True if the session was created in headless mode."""
+        state = self._sessions.get(session_id)
+        if not state:
+            return False
+        return state.headless_inputs is not None
 
     # ── Suspend / Resume ──
 

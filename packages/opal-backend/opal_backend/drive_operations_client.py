@@ -29,6 +29,10 @@ class DriveOperationsClient(Protocol):
         """Get file metadata."""
         ...
 
+    async def get_file_media(self, file_id: str) -> bytes:
+        """Download raw file content as bytes (alt=media)."""
+        ...
+
     async def delete_file(self, file_id: str) -> None:
         """Trash a file."""
         ...

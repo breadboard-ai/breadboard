@@ -71,6 +71,28 @@ class HttpDriveOperationsClient:
         url = f"{GOOGLE_DRIVE_FILES_API}/{quote(file_id, safe='')}"
         return await self._api(url, "GET")
 
+    async def get_file_media(self, file_id: str) -> bytes:
+        """Download raw file content as bytes.
+
+        Port of ``GET /drive/v3/files/{id}?alt=media``.
+        Unlike JSON API calls, this returns raw bytes so we bypass
+        ``_api()`` and read the response content directly.
+        """
+        url = (
+            f"{GOOGLE_DRIVE_FILES_API}/{quote(file_id, safe='')}"
+            f"?alt=media"
+        )
+        response = await self._httpx.request(
+            "GET", url, headers={
+                "Authorization": f"Bearer {self._access_token}",
+            },
+        )
+        if response.status_code != 200:
+            raise ValueError(
+                f"Drive API error: {response.status_code} {response.reason_phrase}"
+            )
+        return response.content
+
     async def delete_file(self, file_id: str) -> None:
         """Trash a file.
 

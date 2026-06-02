@@ -38,6 +38,20 @@ from .task_scheduler import TaskScheduler
 
 __all__ = ["GraphRunner"]
 
+_HEADLESS_AGENT_NOTE = (
+    "Note to agent: You are currently running in headless mode and the "
+    "user is not present to answer questions. Do your best to make "
+    "decisions without their input, and fail the objective if you "
+    "determine you cannot."
+)
+
+_HEADLESS_AGENT_NOTE_WITH_CONTEXT = (
+    "Note to agent: You are currently running in headless mode and the "
+    "user is not present to answer questions, however they provided the "
+    "following context for you to consider. Do your best to make "
+    "decisions based on this context, and fail the objective if you "
+    "determine you cannot."
+)
 
 class GraphRunner:
     """Runs individual node tasks and coordinates the graph lifecycle.
@@ -292,7 +306,114 @@ class GraphRunner:
         self, session_id: str, node_id: str,
         suspended: NodeSuspended,
     ) -> None:
-        """Handle a NodeSuspended exception from a handler."""
+        """Handle a NodeSuspended exception from a handler.
+
+        In headless mode, nodes auto-resolve instead of emitting
+        ``inputRequired``:
+
+        **Input nodes** (``"inputs"`` in context):
+        - Headless input exists → auto-resume with ``{"context": [value]}``
+        - No input and ``p-required`` is true → error the node
+        - No input and not required → skip with ``{"context": []}``
+
+        **Agent nodes** (``"segments"`` in context):
+        - Save suspend state, then immediately call ``resume_node``
+          with the headless mode note (+ any pre-supplied context).
+        - Subsequent suspends also auto-resume with just the note.
+        """
+        is_input_node = "inputs" in suspended.context
+
+        # Headless auto-resolve for input nodes.
+        if is_input_node:
+            headless_value = await self._store.get_headless_input(
+                session_id, node_id,
+            )
+            if headless_value is not None:
+                # Pre-supplied input → auto-resume.
+                outputs = {"context": [headless_value]}
+                try:
+                    await self._complete_node(session_id, node_id, outputs)
+                except Exception as exc:
+                    await self._handle_node_error(session_id, node_id, exc)
+                return
+
+            # No pre-supplied value — check if headless mode.
+            config = await self._store.get_node_config(session_id, node_id)
+            is_headless = await self._is_headless_session(session_id)
+            if is_headless:
+                is_required = config.get("p-required", False)
+                if is_required:
+                    # Required input missing in headless mode → error.
+                    await self._handle_node_error(
+                        session_id, node_id,
+                        ValueError(
+                            f"Required input for node '{node_id}' "
+                            f"not provided in headless inputs",
+                        ),
+                    )
+                    return
+                else:
+                    # Optional input missing → skip with empty context.
+                    outputs: dict[str, Any] = {"context": []}
+                    try:
+                        await self._complete_node(
+                            session_id, node_id, outputs,
+                        )
+                    except Exception as exc:
+                        await self._handle_node_error(
+                            session_id, node_id, exc,
+                        )
+                    return
+
+        # Headless auto-resolve for agent nodes.
+        if not is_input_node and await self._is_headless_session(session_id):
+            # Save suspend state so resume_node can load it.
+            state = SuspendedNodeState(
+                node_id=node_id,
+                interaction_id=suspended.interaction_id,
+                context=suspended.context,
+            )
+            await self._store.suspend_node(
+                session_id, node_id,
+                suspended.interaction_id, state,
+            )
+
+            # Build the auto-response with headless mode note.
+            # Prepend the note as a text part, then append the user's
+            # original parts (preserving multimodal content).
+            headless_value = await self._store.get_headless_input(
+                session_id, node_id,
+            )
+            if headless_value is not None:
+                note = _HEADLESS_AGENT_NOTE_WITH_CONTEXT
+                # Extract parts from the pre-supplied context.
+                if isinstance(headless_value, dict):
+                    user_parts = list(headless_value.get("parts", []))
+                elif isinstance(headless_value, str):
+                    user_parts = [{"text": headless_value}]
+                else:
+                    user_parts = [{"text": str(headless_value)}]
+                parts = [{"text": note}] + user_parts
+            else:
+                parts = [{"text": _HEADLESS_AGENT_NOTE}]
+
+            response = {
+                "input": {
+                    "role": "user",
+                    "parts": parts,
+                },
+            }
+
+            # Immediately resume the agent — no inputRequired event.
+            try:
+                await self.resume_node(
+                    session_id, suspended.interaction_id, response,
+                )
+            except Exception as exc:
+                await self._handle_node_error(session_id, node_id, exc)
+            return
+
+        # Interactive mode — suspend normally.
         state = SuspendedNodeState(
             node_id=node_id,
             interaction_id=suspended.interaction_id,
@@ -313,6 +434,12 @@ class GraphRunner:
         }
         await self._store.append_event(session_id, event)
         await self._event_bus.publish(session_id, event)
+
+    async def _is_headless_session(
+        self, session_id: str,
+    ) -> bool:
+        """Check if the session is running in headless mode."""
+        return await self._store.is_headless_session(session_id)
 
     async def _get_node_type(
         self, session_id: str, node_id: str,
