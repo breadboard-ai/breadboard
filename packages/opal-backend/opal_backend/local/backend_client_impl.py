@@ -20,6 +20,7 @@ import httpx
 from ..backend_client import (
     BackendClient,
     EXECUTE_STEP_ENDPOINT,
+    GENERATE_WEBPAGE_ENDPOINT,
     UPLOAD_GEMINI_FILE_ENDPOINT,
     UPLOAD_BLOB_FILE_ENDPOINT,
 )
@@ -189,6 +190,42 @@ class HttpBackendClient:
                         logger.warning(
                             "Failed to parse SSE chunk: %s", json_str[:100]
                         )
+
+    async def stream_generate_webpage(
+        self, body: dict[str, Any],
+    ) -> AsyncIterator[dict[str, Any]]:
+        """Stream from AppCatalyst generateWebpageStream via SSE."""
+        url = (
+            f"{self._upstream_base.rstrip('/')}"
+            f"{GENERATE_WEBPAGE_ENDPOINT}?alt=sse"
+        )
+        headers = self._headers()
+
+        # AppCatalyst requires the access token in the JSON body.
+        augmented_body = {**body, "accessToken": self._access_token}
+
+        async with self._httpx.stream(
+            "POST", url, json=augmented_body, headers=headers
+        ) as response:
+            if response.status_code != 200:
+                error_text = await response.aread()
+                raise ValueError(
+                    f"generateWebpageStream failed: {response.status_code} "
+                    f"{error_text.decode()[:500]}"
+                )
+
+            async for line in response.aiter_lines():
+                line = line.strip()
+                if line.startswith("data: "):
+                    json_str = line[len("data: "):]
+                    try:
+                        yield json.loads(json_str)
+                    except json.JSONDecodeError:
+                        logger.warning(
+                            "Failed to parse webpage SSE chunk: %s",
+                            json_str[:100],
+                        )
+
 
     async def create_cached_content(
         self,

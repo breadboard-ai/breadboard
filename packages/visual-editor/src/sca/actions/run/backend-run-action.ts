@@ -52,7 +52,7 @@ import {
 const LABEL = "Backend Run";
 
 export { startBackendRun, processEvent };
-export type { ProcessResult, NodeAgentBridge };
+export type { ProcessResult, NodeEventBridge };
 
 export const bind = makeAction();
 
@@ -81,12 +81,13 @@ function raceAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
 }
 
 // ---------------------------------------------------------------------------
-// Per-node agent bridge
+// Per-node event bridge
 // ---------------------------------------------------------------------------
 
 /**
  * Tracks the AgentEventConsumer and progress state for a single node
- * so we can dispatch agent events to the correct consumer.
+ * so we can dispatch agent events and thought events to the correct
+ * consumer.
  *
  * Also captures the agent's `outcomes` from the `complete` event so
  * that `nodeEnd` can populate the console entry's output map.
@@ -96,7 +97,7 @@ function raceAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
  * between the `waitForInput` agent event (which shows the UI) and
  * the `inputRequired` graph event (which triggers the resume flow).
  */
-interface NodeAgentBridge {
+interface NodeEventBridge {
   consumer: AgentEventConsumer;
   progress: ConsoleProgressManager;
   /** Captured from the `complete` agent event — the agent's final output. */
@@ -159,8 +160,8 @@ async function startBackendRun(): Promise<void> {
   const abortController = new AbortController();
   controller.run.main.abortController = abortController;
 
-  // Per-node agent bridges for dispatching agent events.
-  const bridges = new Map<string, NodeAgentBridge>();
+  // Per-node event bridges for dispatching agent and thought events.
+  const bridges = new Map<string, NodeEventBridge>();
 
   try {
     const session = await graphRunService.createSession(
@@ -369,7 +370,7 @@ type ProcessResult = "continue" | "done" | "suspend";
 function processEvent(
   event: GraphRunEvent,
   controller: AppController,
-  bridges: Map<string, NodeAgentBridge>
+  bridges: Map<string, NodeEventBridge>
 ): ProcessResult {
   switch (event.type) {
     case "nodeStart": {
@@ -506,6 +507,14 @@ function processEvent(
       return "continue";
     }
 
+    case "thoughtEvent": {
+      const bridge = bridges.get(event.nodeId);
+      if (bridge) {
+        bridge.progress.thought(event.text);
+      }
+      return "continue";
+    }
+
     case "inputRequired": {
       // Signal the main loop to suspend and handle input.
       return "suspend";
@@ -542,7 +551,7 @@ function processEvent(
 // ---------------------------------------------------------------------------
 
 /**
- * Creates a per-node agent bridge and registers progress handlers.
+ * Creates a per-node event bridge and registers progress handlers.
  *
  * Also registers a `waitForInput` handler that bridges the frontend
  * input UI to the backend suspend/resume flow. When the agent emits
@@ -557,12 +566,12 @@ function createBridge(
   consoleEntry: ConsoleEntry | undefined,
   appScreen: AppScreen | undefined,
   controller: AppController,
-  bridges: Map<string, NodeAgentBridge>
+  bridges: Map<string, NodeEventBridge>
 ): void {
   const consumer = new AgentEventConsumer();
   const progress = new ConsoleProgressManager(consoleEntry, appScreen);
 
-  const bridge: NodeAgentBridge = { consumer, progress };
+  const bridge: NodeEventBridge = { consumer, progress };
 
   registerProgressHandlers(consumer, progress, {
     onComplete: (result) => {

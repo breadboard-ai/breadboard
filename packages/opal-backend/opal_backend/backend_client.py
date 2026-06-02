@@ -30,6 +30,7 @@ __all__ = ["BackendClient"]
 EXECUTE_STEP_ENDPOINT = "/v1beta1/executeStep"
 UPLOAD_GEMINI_FILE_ENDPOINT = "/v1beta1/uploadGeminiFile"
 UPLOAD_BLOB_FILE_ENDPOINT = "/v1beta1/uploadBlobFile"
+GENERATE_WEBPAGE_ENDPOINT = "/v1beta1/generateWebpageStream"
 
 
 @runtime_checkable
@@ -120,6 +121,18 @@ class BackendClient(Protocol):
         """
         ...
 
+    def stream_generate_webpage(
+        self,
+        body: dict[str, Any],
+    ) -> AsyncIterator[dict[str, Any]]:
+        """Stream webpage generation from the AppCatalyst backend.
+
+        Calls the ``generateWebpageStream`` endpoint via SSE. Each
+        yielded dict contains ``parts`` with ``partMetadata.chunk_type``
+        of ``"thought"``, ``"html"``, or ``"error"``.
+        """
+        ...
+
     async def create_cached_content(
         self,
         body: dict[str, Any],
@@ -163,3 +176,4 @@ class BackendClient(Protocol):
             GeminiAPIError: If the API returns a non-200 status.
         """
         ...
+
