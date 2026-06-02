@@ -16,8 +16,10 @@ import { MainBase } from "./main-base.js";
 import { classMap } from "lit/directives/class-map.js";
 import { StateEvent, StateEventDetailMap } from "./ui/events/events.js";
 import { LiteEditInputController } from "./ui/lite/input/editor-input-lite.js";
+import "./ui/lite/input/editor-input-lite-opie.js";
 
 import { reactive } from "./sca/reactive.js";
+import { isHydrating } from "./sca/utils/helpers/helpers.js";
 
 import { blankBoard } from "./ui/utils/blank-board.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -108,8 +110,12 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           }
         }
 
-        & bb-editor-input-lite {
+        & bb-editor-input-lite,
+        & bb-editor-input-lite-opie {
           flex: 0 0 auto;
+        }
+
+        & bb-editor-input-lite {
           box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.16);
         }
 
@@ -302,7 +308,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             }
           }
 
-          & bb-editor-input-lite {
+          & bb-editor-input-lite,
+          & bb-editor-input-lite-opie {
             max-width: 90%;
             width: 100%;
             margin: 0 auto;
@@ -593,6 +600,20 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #renderUserInput() {
     const editable =
       !this.sca.controller.editor.graph.readOnly || this.#viewType !== "editor";
+
+    const isHydratingAgent = isHydrating(() =>
+      this.sca.env.flags.get("enableGraphEditorAgent")
+    );
+    const enableGraphEditorAgent =
+      !isHydratingAgent && this.sca.env.flags.get("enableGraphEditorAgent");
+
+    if (enableGraphEditorAgent && this.#viewType === "home") {
+      return html`<bb-editor-input-lite-opie
+        ?inert=${this.#isInert()}
+        .editable=${editable}
+      ></bb-editor-input-lite-opie>`;
+    }
+
     return html`<bb-editor-input-lite
       ?inert=${this.#isInert()}
       .controller=${this}

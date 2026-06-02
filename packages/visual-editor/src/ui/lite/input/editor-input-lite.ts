@@ -112,9 +112,10 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     return this.sca.controller.global.flowgenInput.currentExampleIntent;
   }
 
-  /** Get empty state from SCA */
-  get #empty() {
-    return this.sca.controller.editor.graph.empty;
+  /** Get fresh flow state from SCA */
+  get #isFresh() {
+    const state = this.sca.controller.editor.graph.graphContentState;
+    return state === "loading" || state === "empty";
   }
 
   /** Get graph URL from SCA */
@@ -138,7 +139,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
           .classes=${"sans-flex w-400 md-body-large"}
           .orientation=${"vertical"}
           .value=${this.#currentExampleIntent}
-          .placeholder=${this.#empty
+          .placeholder=${this.#isFresh
             ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW_ALT")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
           @change=${this.#onInputChange}
