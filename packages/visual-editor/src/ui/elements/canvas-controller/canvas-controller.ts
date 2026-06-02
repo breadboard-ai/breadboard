@@ -499,7 +499,10 @@ export class CanvasController extends SignalWatcher(LitElement) {
   }
 
   #maybeRenderEmptyState() {
-    if (this.#lastKnownNlEditValue !== "") {
+    if (
+      this.#lastKnownNlEditValue !== "" ||
+      this.sca.controller.editor.graphEditingAgent.loopRunning
+    ) {
       return nothing;
     }
 

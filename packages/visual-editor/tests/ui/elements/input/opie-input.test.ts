@@ -13,10 +13,10 @@ import {
   makeTestController,
   makeTestServices,
 } from "../../../sca/helpers/index.js";
-import { EditorInputLiteOpie } from "../../../../src/ui/lite/input/editor-input-lite-opie.js";
+import { OpieInput } from "../../../../src/ui/elements/input/opie-input.js";
 import type { SCA } from "../../../../src/sca/sca.js";
 
-suite("editor-input-lite-opie", () => {
+suite("opie-input", () => {
   before(() => {
     setDOM();
   });
@@ -50,7 +50,7 @@ suite("editor-input-lite-opie", () => {
     } as unknown as SCA;
 
     // Instantiate element class directly
-    const element = new EditorInputLiteOpie();
+    const element = new OpieInput();
     element.sca = mockSca;
     element.editable = true;
 

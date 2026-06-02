@@ -49,11 +49,12 @@ const GlobalStrings = Strings.forSection("Global");
  * 4. Wait for the board to finish loading
  * 5. If an intent is provided, start the Graph Editing Agent loop
  *
- * Uses `Exclusive` mode to prevent concurrent create operations.
+ * Uses `Immediate` mode — this action triggers Board.load (Exclusive) via
+ * navigation, so it must not hold any coordination slot.
  */
 const createNew = asAction(
   "Opie.createNew",
-  { mode: ActionMode.Exclusive },
+  { mode: ActionMode.Immediate },
   async (intent?: string): Promise<CreateNewResult> => {
     const { controller, services } = bind;
 

@@ -21,8 +21,35 @@ import "../shared/expanding-search-button.js";
 import { ExpandingSearchButton } from "../shared/expanding-search-button.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
+import { chipStyles } from "../../styles/chip.js";
+import { isHydrating } from "../../../sca/utils/helpers/helpers.js";
+import "../input/opie-input.js";
+import "../graph-editing-chat/opie-avatar.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
+
+const CHIP_SUGGESTIONS = [
+  {
+    label: "Create an interactive quiz",
+    intent:
+      "Help me prepare for a quiz on a given topic by creating sample questions with hints as an interactive quiz",
+  },
+  {
+    label: "Generate recipe ideas",
+    intent:
+      "Take a photo of the leftovers in the fridge and generate different recipes with photos of the final dish",
+  },
+  {
+    label: "Draft key takeaways",
+    intent:
+      "Analyze a meeting transcript and draft an email of the key takeaways and action items",
+  },
+  {
+    label: "Critique a resume",
+    intent:
+      "An app that takes a given resume and a job description the candidate is interested in, then provides a critique of the resume",
+  },
+];
 
 const NARROW_PAGE_SIZE = 4;
 const WIDE_PAGE_SIZE = 8;
@@ -50,6 +77,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
     icons,
     baseColors,
     type,
+    chipStyles,
     css`
       * {
         box-sizing: border-box;
@@ -90,15 +118,40 @@ export class ProjectListing extends SignalWatcher(LitElement) {
         min-height: 100%;
 
         & #hero {
-          padding: 0 var(--bb-grid-size-16);
+          padding: var(--bb-grid-size-9) var(--bb-grid-size-16) 0
+            var(--bb-grid-size-16);
           display: flex;
           flex-direction: column;
           align-items: center;
+          gap: var(--bb-grid-size-4);
+
+          &.opie {
+            padding: var(--bb-grid-size-12) var(--bb-grid-size-12)
+              var(--bb-grid-size-16) var(--bb-grid-size-12);
+          }
 
           & h1 {
-            margin: var(--bb-grid-size-9) 0 0 0;
+            margin: 0 0 var(--bb-grid-size-4) 0;
             text-align: center;
             max-width: 560px;
+          }
+
+          & bb-opie-input {
+            max-width: 560px;
+            width: 100%;
+          }
+
+          & #chips-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: var(--bb-grid-size-2);
+            max-width: 700px;
+            margin-top: var(--bb-grid-size-2);
+
+            & .bb-chip {
+              margin: 0;
+            }
           }
         }
 
@@ -367,6 +420,43 @@ export class ProjectListing extends SignalWatcher(LitElement) {
   }
 
   #renderHero() {
+    const isHydratingAgent = isHydrating(() =>
+      this.sca.env.flags.get("enableGraphEditorAgent")
+    );
+    const enableGraphEditorAgent =
+      !isHydratingAgent && this.sca.env.flags.get("enableGraphEditorAgent");
+
+    if (enableGraphEditorAgent) {
+      return html`
+        <section id="hero" class="opie">
+          <bb-opie-avatar mode="hero" .supportsHover=${false}></bb-opie-avatar>
+
+          <h1 class="sans-flex w-500 round md-headline-large">
+            ${Strings.from("LABEL_WELCOME_OPIE")}
+          </h1>
+
+          <bb-opie-input .editable=${true}></bb-opie-input>
+
+          <div id="chips-container">
+            ${CHIP_SUGGESTIONS.map((example) => {
+              return html`
+                <button
+                  class="bb-chip"
+                  @click=${() => {
+                    this.sca.controller.global.flowgenInput.currentExampleIntent =
+                      example.intent;
+                  }}
+                >
+                  <span class="g-icon">search_spark</span>
+                  <span>${example.label}</span>
+                </button>
+              `;
+            })}
+          </div>
+        </section>
+      `;
+    }
+
     return html`
       <section id="hero">
         <h1 class="sans-flex w-500 round md-headline-large">

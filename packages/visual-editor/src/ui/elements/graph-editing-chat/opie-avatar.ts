@@ -12,7 +12,7 @@ import { styleMap } from "lit/directives/style-map.js";
 @customElement("bb-opie-avatar")
 export class OpieAvatar extends SignalWatcher(LitElement) {
   @property({ type: String, reflect: true })
-  accessor mode: "hero" | "normal" | "small" = "normal";
+  accessor mode: "hero" | "large" | "normal" | "small" = "normal";
 
   @property({ type: Boolean, reflect: true })
   accessor selected = false;
@@ -55,6 +55,9 @@ export class OpieAvatar extends SignalWatcher(LitElement) {
       height: var(--bb-grid-size-10);
       box-sizing: border-box;
       position: relative;
+    }
+
+    :host([supportsHover]) {
       cursor: pointer;
     }
 
@@ -192,28 +195,52 @@ export class OpieAvatar extends SignalWatcher(LitElement) {
       border-radius: 1px;
     }
 
-    :host([mode="hero"]) {
+    :host([mode="large"]) {
       width: var(--bb-grid-size-12);
       height: var(--bb-grid-size-12);
     }
 
-    :host([mode="hero"]) .eyes {
+    :host([mode="large"]) .eyes {
       gap: 5px;
       margin-top: 12px;
     }
 
-    :host([mode="hero"]) .eyes.left {
+    :host([mode="large"]) .eyes.left {
       transform: translateX(-3px);
     }
 
-    :host([mode="hero"]) .eyes.right {
+    :host([mode="large"]) .eyes.right {
       transform: translateX(3px);
     }
 
-    :host([mode="hero"]) .eye {
+    :host([mode="large"]) .eye {
       width: 6px;
       height: 12px;
-      border-radius: 3px;
+      border-radius: 4px;
+    }
+
+    :host([mode="hero"]) {
+      width: var(--bb-grid-size-16);
+      height: var(--bb-grid-size-16);
+    }
+
+    :host([mode="hero"]) .eyes {
+      gap: 6px;
+      margin-top: 16px;
+    }
+
+    :host([mode="hero"]) .eyes.left {
+      transform: translateX(-4px);
+    }
+
+    :host([mode="hero"]) .eyes.right {
+      transform: translateX(4px);
+    }
+
+    :host([mode="hero"]) .eye {
+      width: 7px;
+      height: 14px;
+      border-radius: 6px;
     }
   `;
 
