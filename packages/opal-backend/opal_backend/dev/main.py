@@ -146,6 +146,14 @@ class DevProxyBackend:
 
         body = await request.body()
 
+        # Peek at the query to decide if we should stream: the
+        # `alt=sse` parameter signals an SSE streaming response.
+        is_sse = "alt=sse" in (request.url.query or "")
+
+        if is_sse:
+            return await self._stream_proxy(upstream_url, headers, body)
+
+        # Non-streaming: buffer the full response.
         upstream_resp = await _proxy_client.request(
             method=request.method,
             url=upstream_url,
@@ -153,7 +161,6 @@ class DevProxyBackend:
             content=body,
         )
 
-        # Forward the upstream response back to the client.
         # Strip encoding headers — httpx decompresses the body, so
         # forwarding Content-Encoding would cause ERR_CONTENT_DECODING_FAILED.
         resp_headers = dict(upstream_resp.headers)
@@ -164,6 +171,35 @@ class DevProxyBackend:
             content=upstream_resp.content,
             status_code=upstream_resp.status_code,
             headers=resp_headers,
+        )
+
+    async def _stream_proxy(
+        self, url: str, headers: dict, body: bytes
+    ) -> Response:
+        """Stream an SSE response from upstream without buffering."""
+        from starlette.responses import StreamingResponse
+
+        # Use a dedicated client so we don't tie up the shared pool
+        # for the duration of a long-running stream.
+        stream_client = httpx.AsyncClient(timeout=120.0)
+
+        async def generate():
+            try:
+                async with stream_client.stream(
+                    "POST", url, content=body, headers=headers,
+                ) as resp:
+                    if not resp.is_success:
+                        error = await resp.aread()
+                        yield error
+                        return
+                    async for chunk in resp.aiter_bytes():
+                        yield chunk
+            finally:
+                await stream_client.aclose()
+
+        return StreamingResponse(
+            content=generate(),
+            media_type="text/event-stream",
         )
 
 
@@ -414,7 +450,7 @@ async def create_cached_content(request: Request) -> Response:
 # using GEMINI_KEY (same auth pattern as createCachedContent above).
 # ---------------------------------------------------------------------------
 
-GENAI_MODELS_URL = "https://generativelanguage.googleapis.com/v1beta/models"
+
 
 
 # ---------------------------------------------------------------------------
@@ -463,107 +499,6 @@ async def singleton_prefix_cache(request: Request) -> Response:
         content=json.dumps(result),
         status_code=200,
         media_type="application/json",
-    )
-
-@app.post("/v1beta1/models/{model}:generateContent")
-async def proxy_generate_content(model: str, request: Request) -> Response:
-    """Proxy a generateContent call to the Gemini API."""
-    return await _proxy_gemini_model_call(model, "generateContent", request)
-
-
-@app.post("/v1beta1/models/{model}:streamGenerateContent")
-async def proxy_stream_generate_content(
-    model: str, request: Request
-) -> Response:
-    """Proxy a streamGenerateContent call to the Gemini API.
-
-    Uses a streaming response to forward SSE chunks in real time.
-    """
-    return await _stream_gemini_model_call(
-        model, "streamGenerateContent", request
-    )
-
-
-def _gemini_upstream_url(model: str, method: str, query: str) -> str:
-    """Build the upstream Gemini API URL with API key auth."""
-    url = f"{GENAI_MODELS_URL}/{model}:{method}?key={GEMINI_KEY}"
-    if query:
-        url += f"&{query}"
-    return url
-
-
-async def _proxy_gemini_model_call(
-    model: str, method: str, request: Request
-) -> Response:
-    """Forward a non-streaming Gemini model call with API key auth."""
-    if not GEMINI_KEY:
-        return Response(
-            content=json.dumps({"errorMessage": "GEMINI_KEY not set in .env"}),
-            status_code=500,
-            media_type="application/json",
-        )
-
-    upstream_url = _gemini_upstream_url(model, method, request.url.query)
-    body = await request.body()
-
-    resp = await _proxy_client.request(
-        method="POST",
-        url=upstream_url,
-        content=body,
-        headers={"Content-Type": "application/json"},
-    )
-
-    resp_headers = dict(resp.headers)
-    for h in ("content-encoding", "content-length", "transfer-encoding"):
-        resp_headers.pop(h, None)
-
-    return Response(
-        content=resp.content,
-        status_code=resp.status_code,
-        headers=resp_headers,
-    )
-
-
-async def _stream_gemini_model_call(
-    model: str, method: str, request: Request
-) -> Response:
-    """Forward a streaming Gemini model call, passing SSE chunks through."""
-    if not GEMINI_KEY:
-        return Response(
-            content=json.dumps({"errorMessage": "GEMINI_KEY not set in .env"}),
-            status_code=500,
-            media_type="application/json",
-        )
-
-    from starlette.responses import StreamingResponse
-
-    upstream_url = _gemini_upstream_url(model, method, request.url.query)
-    body = await request.body()
-
-    # Use a separate client for streaming so we don't hold the shared
-    # _proxy_client's connection pool open for the duration.
-    stream_client = httpx.AsyncClient(timeout=120.0)
-
-    async def generate():
-        try:
-            async with stream_client.stream(
-                "POST",
-                upstream_url,
-                content=body,
-                headers={"Content-Type": "application/json"},
-            ) as resp:
-                if not resp.is_success:
-                    error = await resp.aread()
-                    yield error
-                    return
-                async for chunk in resp.aiter_bytes():
-                    yield chunk
-        finally:
-            await stream_client.aclose()
-
-    return StreamingResponse(
-        content=generate(),
-        media_type="text/event-stream",
     )
 
 
