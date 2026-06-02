@@ -426,11 +426,10 @@ function processEvent(
           const inspectable = controller.editor.graph.get()?.graphs.get("");
           const node = inspectable?.nodeById(nodeId);
           const outputSchema = node?.currentDescribe()?.outputSchema;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const output = {
-            output: { context: [bridge.outcomes] },
+          const output: AppScreenOutput = {
+            output: { context: [bridge.outcomes] } as OutputValues,
             schema: outputSchema,
-          } as any as AppScreenOutput;
+          };
           screen.outputs.set(nodeId, output);
           screen.last = output;
         }
