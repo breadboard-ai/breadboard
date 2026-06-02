@@ -32,6 +32,15 @@ const COMMON_FILE_EXTENSIONS: ReadonlyMap<string, string> = new Map([
   ["video/mp4", "mp4"],
   ["video/webm", "webm"],
   ["application/pdf", "pdf"],
+  ["image/webp", "webp"],
+  ["application/vnd.google-apps.document", "gdoc"],
+  ["application/vnd.google-apps.spreadsheet", "gsheet"],
+  ["application/vnd.google-apps.presentation", "gslides"],
+  ["application/vnd.google-apps.drawing", "gdraw"],
+  ["application/vnd.google-apps.form", "gform"],
+  ["application/vnd.google-apps.script", "gs"],
+  ["application/vnd.google-apps.folder", "gfolder"],
+  ["application/vnd.google-apps.site", "gsite"],
 ]);
 
 function extensionFromMimeType(mimeType: string): string {
