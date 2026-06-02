@@ -53,6 +53,11 @@ type GraphRunEvent = GraphRunEventBase &
         event: Record<string, unknown>;
       }
     | {
+        type: "thoughtEvent";
+        nodeId: string;
+        text: string;
+      }
+    | {
         type: "inputRequired";
         nodeId: string;
         interactionId: string;

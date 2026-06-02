@@ -270,9 +270,18 @@ class GraphRunner:
             await self._store.append_event(session_id, wrapped)
             await self._event_bus.publish(session_id, wrapped)
 
+        async def on_thought_event(text: str) -> None:
+            """Forward thought events from generateWebpageStream."""
+            await self._event_bus.publish(session_id, {
+                "type": "thoughtEvent",
+                "nodeId": node_id,
+                "text": text,
+            })
+
         token, origin = self._session_auth.get(session_id, ("", ""))
         return NodeHandlerDeps(
             on_agent_event=on_agent_event,
+            on_thought_event=on_thought_event,
             run_agent_fn=self._run_agent_fn,
             backend=self._backend_factory(token, origin) if self._backend_factory else None,
             interaction_store=self._interaction_store,

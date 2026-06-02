@@ -10,7 +10,7 @@ signal that the node needs user input.
 Only stdlib + typing — no external deps (synced to production).
 
 Handler types by phase:
-- ``passthrough_handler`` — returns inputs as outputs (output nodes)
+- ``output_handler`` — mode-aware output (output/render-outputs nodes)
 - ``text_gen_handler`` — direct Gemini text generation
 - ``media_gen_handler`` — executeStep-based media generation
   (image, audio, video, music)
@@ -19,12 +19,13 @@ Handler types by phase:
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import re
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Callable, Coroutine
+from typing import Any, AsyncIterator, Awaitable, Callable, Coroutine
 
 from .backend_client import BackendClient
 from .conform_body import conform_body
@@ -35,7 +36,7 @@ __all__ = [
     "NodeSuspended",
     "consume_agent_events",
     "dispatch_handler",
-    "passthrough_handler",
+    "output_handler",
     "text_gen_handler",
     "media_gen_handler",
     "input_handler",
@@ -81,6 +82,12 @@ class NodeHandlerDeps:
     # Signature: (event_dict) -> None
     on_agent_event: Callable[
         [dict[str, Any]], Coroutine[Any, Any, None],
+    ] | None = None
+
+    # Called for each thought event during webpage generation.
+    # Signature: (text) -> None
+    on_thought_event: Callable[
+        [str], Awaitable[None]
     ] | None = None
 
     # Agent runner — async iterator factory.
@@ -235,7 +242,7 @@ async def dispatch_handler(
 
     match effective_type:
         case "output" | "render-outputs":
-            return await passthrough_handler(inputs, config)
+            return await output_handler(inputs, config, deps)
         case "input":
             return await input_handler(inputs, config)
         case "generate":
@@ -249,17 +256,14 @@ async def dispatch_handler(
             return await text_gen_handler(inputs, config, deps)
         case _:
             # Default passthrough for unknown types.
-            return await passthrough_handler(inputs, config)
+            return _passthrough(inputs)
 
 
-async def passthrough_handler(
-    inputs: dict[str, list[Any]],
-    config: dict[str, Any],
-) -> dict[str, Any]:
-    """Return inputs as outputs.
+def _passthrough(inputs: dict[str, list[Any]]) -> dict[str, Any]:
+    """Simple passthrough — returns inputs as outputs (legacy behavior).
 
     Flattens multi-value input ports: if a port has a single value,
-    unwrap it. This is the behavior for output/render-outputs nodes.
+    unwrap it.
     """
     outputs: dict[str, Any] = {}
     for port, values in inputs.items():
@@ -268,6 +272,252 @@ async def passthrough_handler(
         else:
             outputs[port] = values
     return outputs
+
+
+async def output_handler(
+    inputs: dict[str, list[Any]],
+    config: dict[str, Any],
+    deps: NodeHandlerDeps | None = None,
+) -> dict[str, Any]:
+    """Handle output / render-outputs nodes with mode dispatch.
+
+    Reads ``p-render-mode`` from config and dispatches to the
+    appropriate handler. Modes:
+
+    * ``"Manual layout"`` (default) — passthrough with template substitution.
+    * ``"Auto"`` / ``"consistent-ui"`` — HTML auto-layout via AppCatalyst
+      ``generateWebpageStream``.
+    * ``"google-doc"`` — save to Google Docs (TODO).
+    * ``"google-sheets"`` — save to Google Sheets (TODO).
+    * ``"google-slides"`` — save to Google Slides (TODO).
+    """
+    mode = config.get("p-render-mode", "Manual layout")
+
+    if mode in ("Auto", "consistent-ui"):
+        return await _html_auto_layout_handler(inputs, config, deps)
+    elif mode == "google-doc":
+        # TODO(Phase 9): Implement Google Docs handler.
+        return _manual_output_handler(inputs, config, deps)
+    elif mode == "google-sheets":
+        # TODO(Phase 9): Implement Google Sheets handler.
+        return _manual_output_handler(inputs, config, deps)
+    elif mode == "google-slides":
+        # TODO(Phase 9): Implement Google Slides handler.
+        return _manual_output_handler(inputs, config, deps)
+    else:
+        # "Manual layout" or unknown — passthrough.
+        return _manual_output_handler(inputs, config, deps)
+
+
+def _manual_output_handler(
+    inputs: dict[str, list[Any]],
+    config: dict[str, Any],
+    deps: NodeHandlerDeps | None = None,
+) -> dict[str, Any]:
+    """Manual output mode — passthrough with template substitution.
+
+    The ``text`` template (with ``{{type: "in", ...}}`` placeholders)
+    lives in ``config`` — it's part of the node configuration, not an
+    edge-connected input.  ``inputs`` only contains the upstream port
+    values (``p-z-*``).
+    """
+    # The text template is a config value, not an edge input.
+    text_config = config.get("text")
+    if text_config is None:
+        # Fall back to old passthrough behavior for backward compat.
+        return _passthrough(inputs)
+
+    # Extract the raw text from the config value (may be LLMContent dict).
+    if isinstance(text_config, str):
+        raw_text = text_config
+    elif isinstance(text_config, dict):
+        raw_text = _extract_text_from_content(text_config)
+    else:
+        return _passthrough(inputs)
+
+    # Apply template substitution using edge inputs as params.
+    assets = deps.assets if deps else None
+    substituted = _substitute_template(raw_text, inputs, assets)
+    return {"context": substituted}
+
+
+async def _html_auto_layout_handler(
+    inputs: dict[str, list[Any]],
+    config: dict[str, Any],
+    deps: NodeHandlerDeps | None = None,
+) -> dict[str, Any]:
+    """HTML auto-layout via AppCatalyst ``generateWebpageStream``.
+
+    Builds a request body matching the TS ``buildStreamingRequestBody()``
+    and streams the response. Thought chunks are forwarded via
+    ``deps.on_thought_event`` for frontend progress display.
+
+    The ``text`` template lives in ``config`` (node configuration), not
+    in ``inputs`` (edge-connected ports).  We first substitute the
+    template to get concrete text, then build the webpage request body.
+    """
+    # The text template is a config value, not an edge input.
+    text_config = config.get("text")
+    if text_config is None:
+        return _manual_output_handler(inputs, config, deps)
+
+    # Extract raw text and run template substitution.
+    if isinstance(text_config, str):
+        raw_text = text_config
+    elif isinstance(text_config, dict):
+        raw_text = _extract_text_from_content(text_config)
+    else:
+        return _manual_output_handler(inputs, config, deps)
+
+    assets = deps.assets if deps else None
+
+    # Use multimodal-aware substitution that preserves storedData /
+    # inlineData parts from inputs (e.g. images), matching the TS
+    # Template.substitute() behavior.
+    parts = _substitute_template_parts(raw_text, inputs, assets)
+
+    # Wrap as LLMContent for the request body.
+    content: list[dict[str, Any]] = [
+        {"role": "user", "parts": parts}
+    ]
+
+    # Extract system instruction for the request.
+    si = config.get("b-system-instruction", "")
+    if isinstance(si, list) and si:
+        # System instruction may be LLMContent — extract text.
+        si_parts = si[0].get("parts", []) if isinstance(si[0], dict) else []
+        si = " ".join(p.get("text", "") for p in si_parts if "text" in p)
+    elif isinstance(si, dict):
+        si = _extract_text_from_content(si)
+    elif not isinstance(si, str):
+        si = ""
+
+    body = _build_webpage_request_body(content, si)
+
+    if not deps or not deps.backend:
+        # No backend — fall back to manual mode.
+        return _manual_output_handler(inputs, config, deps)
+
+    # Stream from AppCatalyst generateWebpageStream.
+    html_result = ""
+    async for chunk in deps.backend.stream_generate_webpage(body):
+        for part in chunk.get("parts", []):
+            chunk_type = part.get("partMetadata", {}).get("chunk_type")
+            if chunk_type == "thought" and deps.on_thought_event:
+                await deps.on_thought_event(part.get("text", ""))
+            elif chunk_type == "html":
+                html_result = part.get("text", "")
+            elif chunk_type == "error":
+                raise ValueError(
+                    part.get("text", "Webpage generation failed")
+                )
+
+    if not html_result:
+        # Fallback: return raw content via manual mode.
+        return _manual_output_handler(inputs, config, deps)
+
+    # Return as inlineData text/html (matching TS toLLMContentInline).
+    encoded = base64.b64encode(html_result.encode()).decode()
+    return {
+        "context": [
+            {
+                "role": "model",
+                "parts": [
+                    {
+                        "inlineData": {
+                            "mimeType": "text/html",
+                            "data": encoded,
+                        }
+                    }
+                ],
+            }
+        ]
+    }
+
+
+def _build_webpage_request_body(
+    content: list[dict[str, Any]], user_instruction: str,
+) -> dict[str, Any]:
+    """Build generateWebpageStream request body.
+
+    Ports ``buildStreamingRequestBody`` from
+    ``visual-editor/src/a2/a2/generate-webpage-stream.ts``.
+    """
+    contents: list[dict[str, Any]] = []
+    text_count = 0
+    media_count = 0
+
+    for item in content:
+        if not isinstance(item, dict):
+            continue
+        for part in item.get("parts", []):
+            if "text" in part:
+                text_count += 1
+                contents.append({
+                    "parts": [{
+                        "text": part["text"],
+                        "partMetadata": {"input_name": f"text_{text_count}"},
+                    }],
+                    "role": "user",
+                })
+            elif "inlineData" in part:
+                media_count += 1
+                contents.append({
+                    "parts": [{
+                        "inlineData": {
+                            "mimeType": part["inlineData"]["mimeType"],
+                            "data": part["inlineData"]["data"],
+                        },
+                        "partMetadata": {"input_name": f"media_{media_count}"},
+                    }],
+                    "role": "user",
+                })
+            elif "storedData" in part:
+                media_count += 1
+                handle = part["storedData"].get("handle", "")
+                mime_type = part["storedData"].get("mimeType", "")
+                file_uri = _parse_stored_data_url(handle)
+                contents.append({
+                    "parts": [{
+                        "fileData": {
+                            "mimeType": mime_type,
+                            "fileUri": file_uri,
+                        },
+                        "partMetadata": {"input_name": f"media_{media_count}"},
+                    }],
+                    "role": "user",
+                })
+
+    return {
+        "intent": "",
+        "userInstruction": user_instruction,
+        "contents": contents,
+    }
+
+
+def _parse_stored_data_url(handle: str) -> str:
+    """Parse a stored data URL into the appropriate fileUri format.
+
+    Ports ``parseStoredDataUrl`` from ``generate-webpage-stream.ts``.
+    """
+    # Handle drive:/ prefix.
+    if handle.startswith("drive:/"):
+        drive_id = re.sub(r"^drive:/+", "", handle)
+        return f"drive://{drive_id}"
+
+    # Handle Google Drive preview URLs.
+    drive_match = re.search(
+        r"https?://drive\.google\.com/file/d/([^/]+)", handle,
+    )
+    if drive_match:
+        return f"drive://{drive_match.group(1)}"
+
+    # Handle blob URLs.
+    blob_match = re.search(r"/board/blobs/([^/?#]+)", handle)
+    if blob_match:
+        return f"gs://{blob_match.group(1)}"
+
+    return handle
 
 
 # Maps input node modality config → format icon for the frontend.
@@ -959,6 +1209,9 @@ def _substitute_template(
 ) -> str:
     """Replace template placeholders in prompt text with input values.
 
+    Text-only variant: returns a flat string.  Used by text_gen_handler
+    and _manual_output_handler where multimodal parts aren't needed.
+
     Mirrors ``Template.substitute()`` + ``#replaceParam()`` from
     ``template.ts``.
 
@@ -991,6 +1244,118 @@ def _substitute_template(
         return m.group(0)  # Unknown param type — leave as-is.
 
     return _TEMPLATE_RE.sub(replace_match, text)
+
+
+def _substitute_template_parts(
+    text: str,
+    inputs: dict[str, list[Any]],
+    assets: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Replace template placeholders, preserving multimodal parts.
+
+    Multimodal variant of ``_substitute_template``.  Returns a flat list
+    of LLMContent parts (``{"text": ...}``, ``{"storedData": ...}``,
+    ``{"inlineData": ...}``, etc.) instead of a plain string.
+
+    Mirrors the TS ``Template.substitute()`` which spreads
+    ``LLMContent.parts`` into the result, preserving images and other
+    binary data alongside text.
+    """
+    parts: list[dict[str, Any]] = []
+    last_end = 0
+
+    for m in _TEMPLATE_RE.finditer(text):
+        # Text before this placeholder.
+        before = text[last_end:m.start()]
+        if before:
+            parts.append({"text": before})
+        last_end = m.end()
+
+        inner_json = m.group(1)
+        try:
+            param = json.loads(inner_json)
+        except (json.JSONDecodeError, TypeError):
+            parts.append({"text": m.group(0)})
+            continue
+
+        if not isinstance(param, dict):
+            parts.append({"text": m.group(0)})
+            continue
+
+        param_type = param.get("type")
+
+        if param_type == "in":
+            path = param.get("path", "")
+            title = param.get("title", "")
+            port_name = f"p-z-{path}"
+            if port_name not in inputs:
+                parts.append({"text": title})
+            else:
+                parts.extend(_get_input_parts(inputs[port_name]))
+        elif param_type == "asset":
+            # Assets are text-only for now.
+            parts.append({"text": _resolve_asset_text(param, assets)})
+        else:
+            parts.append({"text": m.group(0)})
+
+    # Trailing text after last placeholder.
+    trailing = text[last_end:]
+    if trailing:
+        parts.append({"text": trailing})
+
+    return _merge_adjacent_text_parts(parts)
+
+
+def _get_input_parts(values: list[Any]) -> list[dict[str, Any]]:
+    """Extract parts from an input port's values, preserving all part types.
+
+    Mirrors the TS ``Template.substitute()`` logic:
+    - ``LLMContent`` → spread its ``.parts``
+    - ``LLMContent[]`` → spread last non-$metadata item's ``.parts``
+    - ``string`` → ``[{"text": value}]``
+    """
+    if not values:
+        return []
+
+    value = values[0]
+
+    if isinstance(value, str):
+        return [{"text": value}]
+
+    if isinstance(value, dict) and "parts" in value:
+        # Single LLMContent.
+        return list(value.get("parts", []))
+
+    if isinstance(value, list):
+        # LLMContent[] — get last non-metadata item.
+        last = _get_last_non_metadata(value)
+        if last:
+            return list(last.get("parts", []))
+
+    return [{"text": json.dumps(value) if value is not None else ""}]
+
+
+def _merge_adjacent_text_parts(
+    parts: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Merge consecutive text parts into single parts.
+
+    Mirrors ``Template.#mergeTextParts()`` from template.ts.
+    """
+    if not parts:
+        return parts
+
+    merged: list[dict[str, Any]] = []
+    for part in parts:
+        if (
+            "text" in part
+            and merged
+            and "text" in merged[-1]
+        ):
+            merged[-1] = {"text": merged[-1]["text"] + part["text"]}
+        else:
+            merged.append(part)
+    return merged
 
 
 def _template_consumed_ports(

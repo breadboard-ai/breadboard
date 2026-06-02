@@ -10,7 +10,7 @@ import { setDOM } from "../../../fake-dom.js";
 import { makeTestController } from "../../helpers/mock-controller.js";
 import {
   processEvent,
-  type NodeAgentBridge,
+  type NodeEventBridge,
 } from "../../../../src/sca/actions/run/backend-run-action.js";
 import type { GraphRunEvent } from "../../../../src/sca/services/graph-run-service.js";
 import type { AppController } from "../../../../src/sca/controller/controller.js";
@@ -80,7 +80,7 @@ function makeControllerWithGraph() {
 function dispatch(
   event: GraphRunEvent,
   controller: AppController,
-  bridges: Map<string, NodeAgentBridge>
+  bridges: Map<string, NodeEventBridge>
 ) {
   return processEvent(event, controller, bridges);
 }
@@ -92,7 +92,7 @@ function dispatch(
 suite("processEvent", () => {
   let controller: AppController;
   let addNode: (id: string, title?: string, outputSchema?: object) => void;
-  let bridges: Map<string, NodeAgentBridge>;
+  let bridges: Map<string, NodeEventBridge>;
 
   beforeEach(() => {
     setDOM();
@@ -199,6 +199,53 @@ suite("processEvent", () => {
       assert.ok(entry);
       // Output should have been populated via toLLMContentArray.
       assert.ok(entry.output.size > 0, "outputs should be populated");
+    });
+  });
+
+  // --- thoughtEvent --------------------------------------------------------
+
+  suite("thoughtEvent", () => {
+    test("forwards thought text to bridge progress", () => {
+      addNode("n1", "Step One");
+
+      // nodeStart to create the bridge.
+      dispatch(
+        { type: "nodeStart", nodeId: "n1", index: 0 },
+        controller,
+        bridges
+      );
+
+      const bridge = bridges.get("n1");
+      assert.ok(bridge, "bridge should exist after nodeStart");
+
+      // Spy on progress.thought.
+      const thoughtCalls: string[] = [];
+      const originalThought = bridge.progress.thought.bind(bridge.progress);
+      bridge.progress.thought = (text: string) => {
+        thoughtCalls.push(text);
+        return originalThought(text);
+      };
+
+      const result = dispatch(
+        { type: "thoughtEvent", nodeId: "n1", text: "Thinking about layout...", index: 1 },
+        controller,
+        bridges
+      );
+
+      assert.strictEqual(result, "continue");
+      assert.strictEqual(thoughtCalls.length, 1);
+      assert.strictEqual(thoughtCalls[0], "Thinking about layout...");
+    });
+
+    test("ignores thoughtEvent for unknown node", () => {
+      // No nodeStart — no bridge exists.
+      const result = dispatch(
+        { type: "thoughtEvent", nodeId: "unknown", text: "Some thought", index: 0 },
+        controller,
+        bridges
+      );
+
+      assert.strictEqual(result, "continue");
     });
   });
 
