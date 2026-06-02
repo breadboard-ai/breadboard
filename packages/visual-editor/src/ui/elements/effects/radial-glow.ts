@@ -46,11 +46,20 @@ export class RadialGlow extends LitElement {
   @property({ type: String, attribute: "border-radius" })
   accessor borderRadius: string | null = null;
 
-  @state()
-  private accessor resolvedBorderRadius = 24;
-
   @property({ type: Boolean, attribute: "continuous" })
   accessor continuous = false;
+
+  @property({ type: String, reflect: true })
+  accessor mode: "once" | "continuous" | "periodic" = "once";
+
+  @property({ type: Number })
+  accessor period = 5000;
+
+  @property({ type: Boolean, reflect: true })
+  accessor glowing = false;
+
+  @state()
+  private accessor resolvedBorderRadius = 24;
 
   @state()
   accessor active = false;
@@ -60,14 +69,25 @@ export class RadialGlow extends LitElement {
       display: inline-flex;
       will-change: transform;
       pointer-events: none;
+    }
 
+    :host([mode="once"]),
+    :host(:not([mode]):not([continuous])) {
       animation:
         mask-spin var(--glow-duration, 3s) cubic-bezier(0.2, 0, 0.5, 1) 1,
         color-spin var(--glow-duration, 3s) cubic-bezier(0.2, 0, 0.5, 1) 1,
         opacity-spin var(--glow-duration, 3s) cubic-bezier(0.2, 0, 0.5, 1) 1;
     }
 
-    :host([continuous]) {
+    :host([glowing]) {
+      animation:
+        mask-spin var(--glow-duration, 3s) cubic-bezier(0.2, 0, 0.5, 1) 1,
+        color-spin var(--glow-duration, 3s) cubic-bezier(0.2, 0, 0.5, 1) 1,
+        opacity-spin var(--glow-duration, 3s) cubic-bezier(0.2, 0, 0.5, 1) 1;
+    }
+
+    :host([continuous]),
+    :host([mode="continuous"]) {
       animation:
         mask-spin var(--glow-duration, 3s) cubic-bezier(0.2, 0, 0.5, 1) infinite,
         color-spin var(--glow-duration, 3s) cubic-bezier(0.2, 0, 0.5, 1)
@@ -86,7 +106,9 @@ export class RadialGlow extends LitElement {
       border-radius: var(--border-radius);
 
       & #content {
-        display: inline-flex;
+        display: flex;
+        width: 100%;
+        height: 100%;
         pointer-events: auto;
       }
     }
@@ -123,20 +145,8 @@ export class RadialGlow extends LitElement {
           transparent 270deg
         );
 
-      -webkit-mask-image:
-        url(#complex-glow-mask),
-        conic-gradient(
-          from
-            calc(
-              var(--start-angle, 0deg) + var(--mask-angle) + var(--base-angle)
-            ),
-          transparent 0deg,
-          #000 90deg,
-          transparent 180deg
-        );
-
       mask-composite: intersect;
-      -webkit-mask-composite: source-in;
+
       pointer-events: none;
     }
 
@@ -184,17 +194,66 @@ export class RadialGlow extends LitElement {
   `;
 
   private resizeObserver: ResizeObserver | null = null;
+  private periodicTimeoutId: number | null = null;
+
+  private get resolvedMode(): "once" | "continuous" | "periodic" {
+    if (this.mode) return this.mode;
+    return this.continuous ? "continuous" : "once";
+  }
 
   override connectedCallback() {
     super.connectedCallback();
     this.resizeObserver = new ResizeObserver(() => {
       this.updateBorderRadius();
     });
+    this.addEventListener("animationend", this.handleAnimationEnd);
   }
 
   override disconnectedCallback() {
     super.disconnectedCallback();
     this.resizeObserver?.disconnect();
+    this.clearGlowTimeout();
+    this.removeEventListener("animationend", this.handleAnimationEnd);
+  }
+
+  override willUpdate(changedProperties: Map<PropertyKey, unknown>) {
+    super.willUpdate(changedProperties);
+    if (
+      changedProperties.has("mode") ||
+      changedProperties.has("continuous") ||
+      changedProperties.has("period")
+    ) {
+      this.setupGlowLoop();
+    }
+  }
+
+  private setupGlowLoop() {
+    this.clearGlowTimeout();
+    this.glowing = this.resolvedMode === "periodic";
+  }
+
+  private clearGlowTimeout() {
+    if (this.periodicTimeoutId !== null) {
+      window.clearTimeout(this.periodicTimeoutId);
+      this.periodicTimeoutId = null;
+    }
+  }
+
+  private handleAnimationEnd = (e: AnimationEvent) => {
+    if (
+      e.animationName === "opacity-spin" &&
+      this.resolvedMode === "periodic"
+    ) {
+      this.glowing = false;
+      this.scheduleNextGlow();
+    }
+  };
+
+  private scheduleNextGlow() {
+    this.clearGlowTimeout();
+    this.periodicTimeoutId = window.setTimeout(() => {
+      this.glowing = true;
+    }, this.period);
   }
 
   private handleSlotChange(e: Event) {
@@ -237,6 +296,16 @@ export class RadialGlow extends LitElement {
     } else {
       const val = Number.parseFloat(radiusStr);
       this.resolvedBorderRadius = Number.isNaN(val) ? 0 : val;
+    }
+
+    // The browser auto-clamps border-radius to half the element height,
+    // so the SVG mask must match the actual visual radius.
+    const rect = firstElement.getBoundingClientRect();
+    if (rect.height > 0) {
+      const maxRadius = rect.height / 2;
+      if (this.resolvedBorderRadius > maxRadius) {
+        this.resolvedBorderRadius = maxRadius;
+      }
     }
   }
 

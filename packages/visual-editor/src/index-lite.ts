@@ -16,7 +16,7 @@ import { MainBase } from "./main-base.js";
 import { classMap } from "lit/directives/class-map.js";
 import { StateEvent, StateEventDetailMap } from "./ui/events/events.js";
 import { LiteEditInputController } from "./ui/lite/input/editor-input-lite.js";
-import "./ui/lite/input/editor-input-lite-opie.js";
+import "./ui/elements/input/opie-input-lite.js";
 import "./ui/elements/graph-editing-chat/chat-panel.js";
 import "./ui/elements/graph-editing-chat/opie-avatar.js";
 
@@ -117,7 +117,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         }
 
         & bb-editor-input-lite,
-        & bb-editor-input-lite-opie {
+        & bb-opie-input-lite {
           flex: 0 0 auto;
         }
 
@@ -315,7 +315,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           }
 
           & bb-editor-input-lite,
-          & bb-editor-input-lite-opie {
+          & bb-opie-input-lite {
             max-width: 90%;
             width: 100%;
             margin: 0 auto;
@@ -648,10 +648,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       !isHydratingAgent && this.sca.env.flags.get("enableGraphEditorAgent");
 
     if (enableGraphEditorAgent && this.#viewType === "home") {
-      return html`<bb-editor-input-lite-opie
+      return html`<bb-opie-input-lite
         ?inert=${this.#isInert()}
         .editable=${editable}
-      ></bb-editor-input-lite-opie>`;
+      ></bb-opie-input-lite>`;
     }
 
     return html`<bb-editor-input-lite

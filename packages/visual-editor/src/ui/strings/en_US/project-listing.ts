@@ -72,6 +72,9 @@ export default {
   LABEL_WELCOME_MESSAGE_B: {
     str: "Build, edit and share mini-AI apps using natural language",
   },
+  LABEL_WELCOME_OPIE: {
+    str: "Tell Opie what you'd like to build",
+  },
   LABEL_WELCOME_CTA: {
     str: "Describe what you want to build",
   },

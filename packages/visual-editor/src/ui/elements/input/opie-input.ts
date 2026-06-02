@@ -7,29 +7,33 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { LitElement, css, html } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
+import { styleMap } from "lit/directives/style-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
 
-import "../../elements/input/expanding-textarea.js";
-import "../../elements/graph-editing-chat/opie-avatar.js";
+import "./expanding-textarea.js";
+import "../effects/radial-glow.js";
 import * as StringsHelper from "../../strings/helper.js";
 import * as Styles from "../../styles/styles.js";
+import { baseColors } from "../../styles/host/base-colors.js";
 import type { SCA } from "../../../sca/sca.js";
 import { scaContext } from "../../../sca/context/context.js";
-import { ExpandingTextarea } from "../../elements/input/expanding-textarea.js";
+import { ExpandingTextarea } from "./expanding-textarea.js";
 
 const Strings = StringsHelper.forSection("Editor");
+const DEFAULT_GLOW_PERIOD = 5_000;
+const MAX_GLOW_PERIOD = 100_000;
 
-@customElement("bb-editor-input-lite-opie")
-export class EditorInputLiteOpie extends SignalWatcher(LitElement) {
+@customElement("bb-opie-input")
+export class OpieInput extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
   static styles = [
     Styles.HostIcons.icons,
     Styles.HostBehavior.behavior,
-    Styles.HostColorsMaterial.baseColors,
+    baseColors,
     Styles.HostType.type,
     css`
       * {
@@ -54,23 +58,19 @@ export class EditorInputLiteOpie extends SignalWatcher(LitElement) {
         flex-direction: row;
         align-items: center;
         flex: 1;
-        border: 1px solid var(--sys-color--outline-variant);
-        border-radius: 100px;
-        background-color: var(--sys-color--body-background);
-        padding: 6px 16px 6px 6px;
+        border: 1px solid light-dark(var(--n-90), var(--n-30));
+        border-radius: 28px;
+        background-color: light-dark(var(--n-100), var(--n-10));
+        padding: 6px 16px;
         gap: var(--bb-grid-size);
         transition:
           border-color 0.15s ease,
           box-shadow 0.15s ease;
 
         &:focus-within {
-          border-color: var(--light-dark-n-70);
-          box-shadow: 0 0 0 1px var(--light-dark-n-70);
+          border-color: light-dark(var(--n-70), var(--n-50));
+          box-shadow: 0 0 0 1px light-dark(var(--n-70), var(--n-50));
         }
-      }
-
-      bb-opie-avatar {
-        flex-shrink: 0;
       }
 
       bb-expanding-textarea {
@@ -80,7 +80,7 @@ export class EditorInputLiteOpie extends SignalWatcher(LitElement) {
         --padding: 0;
         --border-color: transparent;
         --background-color: transparent;
-        color: var(--sys-color--on-surface);
+        color: light-dark(var(--n-10), var(--n-90));
 
         &[disabled] {
           opacity: 0.3;
@@ -92,8 +92,8 @@ export class EditorInputLiteOpie extends SignalWatcher(LitElement) {
         height: 48px;
         border: none;
         border-radius: 50%;
-        background-color: var(--light-dark-n-90);
-        color: var(--light-dark-n-40);
+        background-color: light-dark(var(--n-90), var(--n-20));
+        color: light-dark(var(--n-40), var(--n-70));
         display: flex;
         align-items: center;
         justify-content: center;
@@ -104,7 +104,7 @@ export class EditorInputLiteOpie extends SignalWatcher(LitElement) {
         flex-shrink: 0;
 
         &:hover {
-          color: var(--light-dark-n-10);
+          color: light-dark(var(--n-10), var(--n-95));
         }
 
         &[disabled] {
@@ -131,6 +131,11 @@ export class EditorInputLiteOpie extends SignalWatcher(LitElement) {
           rotate: 360deg;
         }
       }
+
+      radial-glow {
+        flex: 1;
+        display: flex;
+      }
     `,
   ];
 
@@ -142,6 +147,9 @@ export class EditorInputLiteOpie extends SignalWatcher(LitElement) {
 
   @property({ reflect: true, type: Boolean })
   accessor editable = false;
+
+  @state()
+  accessor hasContent = false;
 
   private descriptionInput = createRef<ExpandingTextarea>();
 
@@ -166,29 +174,45 @@ export class EditorInputLiteOpie extends SignalWatcher(LitElement) {
       round: true,
       rotate: this.isCreating,
     };
+
+    const glowPeriod =
+      this.focused || this.hasContent ? MAX_GLOW_PERIOD : DEFAULT_GLOW_PERIOD;
+
     return html`
       <div id="container">
-        <div id="input-pill">
-          <bb-opie-avatar
-            mode="hero"
-            .supportsHover=${false}
-            ?static=${this.isCreating}
-          ></bb-opie-avatar>
-          <bb-expanding-textarea
-            ${ref(this.descriptionInput)}
-            .disabled=${this.isCreating || !this.editable}
-            .classes=${"sans-flex w-400 md-body-large"}
-            .orientation=${"vertical"}
-            .value=${this.currentExampleIntent}
-            .placeholder=${this.isFresh
-              ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW_ALT")
-              : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
-            .showSubmitButton=${false}
-            @change=${this.submit}
-            @focus=${this.onInputFocus}
-            @blur=${this.onInputBlur}
-          ></bb-expanding-textarea>
-        </div>
+        <radial-glow
+          mode="periodic"
+          .period=${glowPeriod}
+          glow-size="18"
+          style=${styleMap({
+            "--start-angle": "0deg",
+            "--glow-duration": "3s",
+            "--mask-sweep": "360deg",
+            "--color-sweep": "360deg",
+            "--glow-colors": `var(--t-100) 0%,
+              var(--p-70) 30%,
+              var(--t-70) 40%,
+              var(--t-90) 50%,
+              var(--t-100) 55%`,
+          })}
+        >
+          <div id="input-pill">
+            <bb-expanding-textarea
+              ${ref(this.descriptionInput)}
+              .disabled=${this.isCreating || !this.editable}
+              .classes=${"sans-flex w-400 md-body-large"}
+              .orientation=${"vertical"}
+              .placeholder=${this.isFresh
+                ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW_ALT")
+                : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
+              .showSubmitButton=${false}
+              @input=${this.onInput}
+              @change=${this.submit}
+              @focus=${this.onInputFocus}
+              @blur=${this.onInputBlur}
+            ></bb-expanding-textarea>
+          </div>
+        </radial-glow>
         <button
           id="submit-button"
           ?disabled=${this.isCreating || !this.editable}
@@ -206,6 +230,28 @@ export class EditorInputLiteOpie extends SignalWatcher(LitElement) {
     await this.onInputChange();
   }
 
+  override updated(changedProperties: Map<PropertyKey, unknown>) {
+    super.updated(changedProperties);
+    // Seed the textarea when a suggestion chip is clicked, then clear the
+    // signal so it doesn't overwrite user edits on subsequent renders.
+    const intent = this.currentExampleIntent;
+    if (intent && this.descriptionInput.value) {
+      this.descriptionInput.value.value = intent;
+      this.hasContent = true;
+      this.sca.controller.global.flowgenInput.currentExampleIntent = "";
+    }
+  }
+
+  private onInput() {
+    const input = this.descriptionInput.value;
+    if (!input) {
+      return;
+    }
+
+    const description = input.value;
+    this.hasContent = description !== "";
+  }
+
   private async onInputChange() {
     const input = this.descriptionInput.value;
     if (!input) {
@@ -213,6 +259,7 @@ export class EditorInputLiteOpie extends SignalWatcher(LitElement) {
     }
 
     const description = input.value;
+    this.hasContent = description !== "";
     if (!description) return;
 
     const result = await this.sca.actions.opie.createNew(description);
@@ -240,6 +287,6 @@ export class EditorInputLiteOpie extends SignalWatcher(LitElement) {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "bb-editor-input-lite-opie": EditorInputLiteOpie;
+    "bb-opie-input": OpieInput;
   }
 }
