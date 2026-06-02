@@ -87,6 +87,7 @@ const testFlags: RuntimeFlags = {
   enableSessionsBackend: false,
   enableSingletonPrefixCache: false,
   enableAssetAccessConsent: false,
+  enableBackendGraphRunner: false,
 };
 
 suite("createEnvironment", () => {

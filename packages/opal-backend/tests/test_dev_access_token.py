@@ -19,7 +19,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from opal_backend.dev.main import app, _subscribers
+from opal_backend.dev.main import app, _event_bus
 
 
 @pytest.fixture
@@ -41,9 +41,9 @@ def _start_body(**extra):
 
 
 async def _close_subscribers(**kwargs):
-    """Mock start_session that closes subscribers so the SSE stream ends."""
+    """Mock start_session that closes event bus so the SSE stream ends."""
     session_id = kwargs.get("session_id", "")
-    await _subscribers.close(session_id)
+    await _event_bus.close(session_id)
 
 
 class TestAccessTokenExtraction:

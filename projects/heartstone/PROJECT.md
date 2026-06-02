@@ -666,7 +666,7 @@ POST /v1beta1/graphSessions/{id}:cancel
 |-----------|-----------|-------------|
 | `condense()` | `condense.ts` | `graph_condense.py` |
 | `createPlan()` | `create-plan.ts` | `graph_plan.py` |
-| Control flow | `control.ts` | `graph_control.py` |
+| Node lifecycle | `orchestrator.ts` | Replaced by `GraphSessionStore.complete_node()` |
 | Graph types | `@breadboard-ai/types` | `graph_types.py` |
 | Docs/Sheets/Slides save | `connector-save.ts` | `output_actions.py` |
 

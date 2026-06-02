@@ -97,6 +97,12 @@ export type RuntimeFlags = {
    * Show the asset access consent dialog when running a shared Opal.
    */
   enableAssetAccessConsent: boolean;
+
+  /**
+   * Route graph execution through the backend graph runner
+   * instead of in-process PlanRunner.
+   */
+  enableBackendGraphRunner: boolean;
 };
 
 /**
@@ -238,6 +244,12 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     title: "Asset Access Consent",
     description:
       "Show the asset access consent dialog when running a shared Opal.",
+    visibility: "experimental",
+  },
+  enableBackendGraphRunner: {
+    title: "Backend Graph Runner",
+    description:
+      "Route graph execution through the backend instead of in-process",
     visibility: "experimental",
   },
 };

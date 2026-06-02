@@ -24,4 +24,5 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   enableSessionsBackend: false,
   enableSingletonPrefixCache: false,
   enableAssetAccessConsent: false,
+  enableBackendGraphRunner: false,
 };

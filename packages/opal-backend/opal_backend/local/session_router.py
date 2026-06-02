@@ -23,9 +23,10 @@ from sse_starlette.sse import EventSourceResponse
 
 from ..backend_client import BackendClient
 from ..drive_operations_client import DriveOperationsClient
+from ..event_bus import EventBus
 from ..interaction_store import InteractionStore
 from ..sessions.api import (
-    Subscribers, cancel_session_task, new_session, register_task,
+    cancel_session_task, new_session, register_task,
     resume_session, start_session, update_context,
 )
 from ..sessions.store import SessionStatus, SessionStore
@@ -54,14 +55,14 @@ class SessionDeps:
 
 def create_session_router(
     store: SessionStore,
-    subscribers: Subscribers,
+    event_bus: EventBus,
     deps: SessionDeps | None = None,
 ) -> APIRouter:
     """Create a FastAPI router with all session endpoints.
 
     Args:
         store: SessionStore implementation (e.g. InMemorySessionStore).
-        subscribers: Subscriber queue manager for live SSE delivery.
+        event_bus: EventBus for live SSE event delivery.
         deps: Per-request dependency factories. If None, endpoints
               return stub responses (Phase 1 behavior).
     """
@@ -119,7 +120,7 @@ def create_session_router(
             start_session(
                 session_id=session_id,
                 store=store,
-                subscribers=subscribers,
+                event_bus=event_bus,
             ),
             name=f"session-{session_id}",
         )
@@ -164,12 +165,9 @@ def create_session_router(
                 deps is not None
                 and current_status in (SessionStatus.RUNNING, SessionStatus.SUSPENDED)
             ):
-                queue = subscribers.subscribe(session_id)
+                subscription = event_bus.subscribe(session_id)
                 try:
-                    while True:
-                        item = await queue.get()
-                        if item is None:
-                            break  # Session ended.
+                    async for item in subscription:
                         yield {
                             "event": "event",
                             "id": str(next_index),
@@ -177,7 +175,7 @@ def create_session_router(
                         }
                         next_index += 1
                 finally:
-                    subscribers.unsubscribe(session_id, queue)
+                    event_bus.unsubscribe(session_id, subscription)
 
             yield {"event": "done", "data": "{}"}
 
@@ -235,7 +233,7 @@ def create_session_router(
                 session_id=session_id,
                 response=body,
                 store=store,
-                subscribers=subscribers,
+                event_bus=event_bus,
             ),
             name=f"resume-{session_id}",
         )

@@ -34,6 +34,7 @@ import {
   onSaveShortcut,
 } from "./triggers.js";
 import { forSection } from "../../../ui/strings/helper.js";
+import { startBackendRun } from "../run/backend-run-action.js";
 
 const Strings = forSection("Global");
 
@@ -1019,6 +1020,12 @@ async function runBoard(): Promise<void> {
         }
       }
     }
+  }
+
+  // Backend graph runner: delegate to Heartstone backend.
+  if (services.graphRunService.enabled) {
+    await startBackendRun();
+    return;
   }
 
   controller.run.main.runner.start();

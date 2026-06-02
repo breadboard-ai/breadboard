@@ -149,6 +149,9 @@ function makeMockServices(
     embedHandler: {
       sendToEmbedder: mock.fn(),
     },
+    graphRunService: {
+      enabled: false,
+    },
   } as unknown as AppServices;
 }
 

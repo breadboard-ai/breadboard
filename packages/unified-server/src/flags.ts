@@ -84,6 +84,10 @@ export const ENABLE_ASSET_ACCESS_CONSENT = getBoolean(
   "ENABLE_ASSET_ACCESS_CONSENT"
 );
 
+export const ENABLE_BACKEND_GRAPH_RUNNER = getBoolean(
+  "ENABLE_BACKEND_GRAPH_RUNNER"
+);
+
 export const ENVIRONMENT_NAME = getString("ENVIRONMENT_NAME");
 
 export const FAKE_DRIVE_PORT = Number(process.env["FAKE_DRIVE_PORT"] || 3110);
