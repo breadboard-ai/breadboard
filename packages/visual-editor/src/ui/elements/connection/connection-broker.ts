@@ -21,6 +21,7 @@ export class ConnectionBroker extends HTMLElement {
     if (!window.opener) {
       console.error(`window.opener is not available, closing early.`);
       window.close();
+      return;
     }
 
     const shadow = this.shadowRoot!;
