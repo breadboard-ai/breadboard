@@ -205,14 +205,18 @@ class GraphRunner:
         # 3. Load node config.
         config = await self._store.get_node_config(session_id, node_id)
 
-        # 4. Build handler deps.
-        deps = self._build_handler_deps(session_id, node_id)
+        # 4. Load graph-level assets for template substitution.
+        plan = await self._store.get_plan(session_id)
+        assets = plan.assets if plan else {}
 
-        # 5. Determine node type and dispatch.
+        # 5. Build handler deps.
+        deps = self._build_handler_deps(session_id, node_id, assets)
+
+        # 6. Determine node type and dispatch.
         node_type = await self._get_node_type(session_id, node_id)
         outputs = await dispatch_handler(node_type, inputs, config, deps)
 
-        # 6. Complete node (save outputs, emit nodeEnd, schedule, check).
+        # 7. Complete node (save outputs, emit nodeEnd, schedule, check).
         await self._complete_node(session_id, node_id, outputs)
 
     async def _complete_node(
@@ -252,6 +256,7 @@ class GraphRunner:
 
     def _build_handler_deps(
         self, session_id: str, node_id: str,
+        assets: dict[str, Any] | None = None,
     ) -> NodeHandlerDeps:
         """Build handler dependencies for the current node."""
 
@@ -271,6 +276,7 @@ class GraphRunner:
             run_agent_fn=self._run_agent_fn,
             backend=self._backend_factory(token, origin) if self._backend_factory else None,
             interaction_store=self._interaction_store,
+            assets=assets,
         )
 
     async def _handle_suspend(

@@ -122,6 +122,7 @@ class GraphDescriptor:
     graphs: dict[str, GraphDescriptor] | None = None
     title: str | None = None
     description: str | None = None
+    assets: dict[str, Any] | None = None
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> GraphDescriptor:
@@ -138,6 +139,7 @@ class GraphDescriptor:
             graphs=graphs,
             title=d.get("title"),
             description=d.get("description"),
+            assets=d.get("assets"),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -152,6 +154,8 @@ class GraphDescriptor:
             d["title"] = self.title
         if self.description is not None:
             d["description"] = self.description
+        if self.assets is not None:
+            d["assets"] = self.assets
         return d
 
 
@@ -185,6 +189,7 @@ class GraphPlan:
     """
 
     stages: list[list[PlanNodeInfo]] = field(default_factory=list)
+    assets: dict[str, Any] = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
