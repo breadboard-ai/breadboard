@@ -18,11 +18,14 @@ Handler types by phase:
 from __future__ import annotations
 
 import json
+import logging
 import re
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, Callable, Coroutine
 
+from .backend_client import BackendClient
+from .conform_body import conform_body
 from .events import SUSPEND_TYPES, AgentEvent
 
 __all__ = [
@@ -35,6 +38,10 @@ __all__ = [
     "agent_handler",
 ]
 
+logger = logging.getLogger(__name__)
+
+# Default model — same as AGENT_MODEL in loop.py.
+DEFAULT_MODEL = "gemini-3-flash-preview"
 
 @dataclass
 class NodeSuspended(Exception):
@@ -138,6 +145,15 @@ def _get_mode(config: dict[str, Any]) -> str:
     return config.get("generation-mode", config.get("mode", "text"))
 
 
+def _get_model(config: dict[str, Any]) -> str:
+    """Read the Gemini model name from config.
+
+    Real Breadboard stores the model in ``model``; falls back to
+    ``DEFAULT_MODEL``.
+    """
+    return config.get("model", DEFAULT_MODEL)
+
+
 def _get_system_instruction(config: dict[str, Any]) -> str:
     """Extract system instruction text from config.
 
@@ -195,7 +211,7 @@ async def dispatch_handler(
             mode = _get_mode(config)
             if mode == "agent" and deps and deps.run_agent_fn:
                 return await agent_handler(inputs, config, deps)
-            return await text_gen_handler(inputs, config)
+            return await text_gen_handler(inputs, config, deps)
         case _:
             # Default passthrough for unknown types.
             return await passthrough_handler(inputs, config)
@@ -309,12 +325,77 @@ async def input_handler(
 async def text_gen_handler(
     inputs: dict[str, list[Any]],
     config: dict[str, Any],
+    deps: NodeHandlerDeps | None = None,
 ) -> dict[str, Any]:
-    """Stub text generation handler.
+    """Text generation handler.
 
-    Returns a mock response. Full implementation will call
-    ``BackendClient.stream_generate_content()``.
+    Builds a Gemini request body from inputs and config, resolves
+    data parts via ``conform_body()``, then streams the response
+    via ``BackendClient.stream_generate_content()``.
+
+    Falls back to a stub response if no backend is available
+    (e.g. in unit tests).
     """
+    # Build segments the same way as agent mode.
+    assets = deps.assets if deps else None
+    segments = _build_segments_from_inputs(inputs, config, assets)
+
+    # Assemble a minimal Gemini body.
+    contents: list[dict[str, Any]] = []
+    for seg in segments:
+        if seg.get("type") == "text" and seg.get("text"):
+            contents.append({
+                "role": "user",
+                "parts": [{"text": seg["text"]}],
+            })
+        elif seg.get("type") == "asset" and seg.get("content"):
+            contents.append(seg["content"])
+
+    if not contents:
+        return {
+            "context": [
+                {"role": "model", "parts": [{"text": ""}]},
+            ],
+        }
+
+    body: dict[str, Any] = {"contents": contents}
+
+    # System instruction from config.
+    system_instruction = _get_system_instruction(config)
+    if system_instruction:
+        body["systemInstruction"] = {
+            "parts": [{"text": system_instruction}],
+            "role": "user",
+        }
+
+    # Resolve storedData/fileData/json parts.
+    backend = deps.backend if deps else None
+    if backend:
+        try:
+            body = await conform_body(body, backend=backend)
+        except Exception as exc:
+            logger.error("text_gen_handler conform_body error: %s", exc)
+            # Continue with untransformed body — may fail at API level.
+
+        # Stream from Gemini.
+        model = _get_model(config)
+        result_text = ""
+        async for chunk in backend.stream_generate_content(model, body):
+            # Accumulate text from streaming chunks.
+            candidates = chunk.get("candidates", [])
+            for candidate in candidates:
+                content = candidate.get("content", {})
+                for part in content.get("parts", []):
+                    if "text" in part:
+                        result_text += part["text"]
+
+        return {
+            "context": [
+                {"role": "model", "parts": [{"text": result_text}]},
+            ],
+        }
+
+    # No backend — stub response (unit tests).
     return {
         "context": [
             {
