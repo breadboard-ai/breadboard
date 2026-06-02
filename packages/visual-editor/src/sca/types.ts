@@ -636,3 +636,10 @@ export type ChatEntry =
       kind: "thought-group";
       thoughts: ParsedThought[];
     };
+
+/**
+ * Result of the Opie.createNew action.
+ */
+export type CreateNewResult =
+  | { success: true; url: URL }
+  | { success: false; reason: string };

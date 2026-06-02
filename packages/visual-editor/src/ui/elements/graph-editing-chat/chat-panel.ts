@@ -500,7 +500,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
                         var(--n-100) 100%`,
                     })}
                   >
-                    <bb-opie-avatar small static></bb-opie-avatar>
+                    <bb-opie-avatar mode="small" static></bb-opie-avatar>
                   </radial-glow>
                 </div>
                 <div class="msg-bubble system">Thinking…</div>
@@ -611,7 +611,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
     return html`
       <div class="msg-row">
         <div class="avatar">
-          <bb-opie-avatar small static></bb-opie-avatar>
+          <bb-opie-avatar mode="small" static></bb-opie-avatar>
         </div>
         <div class="msg-bubble model">${markdown(text)}</div>
       </div>

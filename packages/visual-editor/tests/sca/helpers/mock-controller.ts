@@ -5,6 +5,7 @@
  */
 
 import { mock } from "node:test";
+import { Signal } from "signal-polyfill";
 import type { EditableGraph } from "@breadboard-ai/types";
 import { AppController } from "../../../src/sca/controller/controller.js";
 import { RunController } from "../../../src/sca/controller/subcontrollers/run/run-controller.js";
@@ -119,7 +120,16 @@ export function makeTestController(options: TestControllerOptions = {}) {
   const { editor } = options;
   const flowgenInput = makeMockFlowgenInput();
   const snackbars = makeMockSnackbarController();
-  const main = { blockingAction: false };
+  const loadStateSignal = new Signal.State("Home");
+  const main = {
+    get loadState() {
+      return loadStateSignal.get();
+    },
+    set loadState(val: string) {
+      loadStateSignal.set(val);
+    },
+    blockingAction: false,
+  };
   const runStop = mock.fn();
 
   const controller = {
@@ -146,11 +156,18 @@ export function makeTestController(options: TestControllerOptions = {}) {
     router: {
       updateFromCurrentUrl: () => {},
       init: () => {},
+      go: () => {},
     },
     editor: {
       graph: new MockGraphController(editor),
       selection: {
         selectionId: 0,
+        selection: {
+          nodes: new Set<string>(),
+          edges: new Set<string>(),
+          assets: new Set<string>(),
+          assetEdges: new Set<string>(),
+        },
       },
       sidebar: {
         section: null,
@@ -175,8 +192,22 @@ export function makeTestController(options: TestControllerOptions = {}) {
       theme: {
         status: "idle" as string,
       },
+      graphEditingAgent: {
+        open: false,
+        loopRunning: false,
+        entries: [] as unknown[],
+        addMessage(role: string, text: string) {
+          this.entries.push({ role, text });
+        },
+      },
       devtools: {
         isOpen: false,
+        opie: {
+          clearLog: () => {},
+          setSystemInstruction: () => {},
+          setFunctionDeclarations: () => {},
+          addObjective: () => {},
+        },
       },
     },
   } as unknown as AppController;

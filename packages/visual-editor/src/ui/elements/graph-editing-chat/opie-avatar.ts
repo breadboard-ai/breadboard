@@ -11,8 +11,8 @@ import { styleMap } from "lit/directives/style-map.js";
 
 @customElement("bb-opie-avatar")
 export class OpieAvatar extends SignalWatcher(LitElement) {
-  @property({ type: Boolean, reflect: true })
-  accessor small = false;
+  @property({ type: String, reflect: true })
+  accessor mode: "hero" | "normal" | "small" = "normal";
 
   @property({ type: Boolean, reflect: true })
   accessor selected = false;
@@ -165,28 +165,52 @@ export class OpieAvatar extends SignalWatcher(LitElement) {
       transition-delay: 0.03s;
     }
 
-    :host([small]) {
+    :host([mode="small"]) {
       width: var(--bb-grid-size-5);
       height: var(--bb-grid-size-5);
     }
 
-    :host([small]) .eyes {
+    :host([mode="small"]) .eyes {
       gap: 2px;
       margin-top: 5px;
     }
 
-    :host([small]) .eyes.left {
+    :host([mode="small"]) .eyes.left {
       transform: translateX(-1px);
     }
 
-    :host([small]) .eyes.right {
+    :host([mode="small"]) .eyes.right {
       transform: translateX(1px);
     }
 
-    :host([small]) .eye {
+    :host([mode="small"]) .eye {
       width: 2px;
       height: 5px;
       border-radius: 1px;
+    }
+
+    :host([mode="hero"]) {
+      width: var(--bb-grid-size-12);
+      height: var(--bb-grid-size-12);
+    }
+
+    :host([mode="hero"]) .eyes {
+      gap: 7px;
+      margin-top: 16px;
+    }
+
+    :host([mode="hero"]) .eyes.left {
+      transform: translateX(-3px);
+    }
+
+    :host([mode="hero"]) .eyes.right {
+      transform: translateX(3px);
+    }
+
+    :host([mode="hero"]) .eye {
+      width: 7px;
+      height: 14px;
+      border-radius: 3px;
     }
   `;
 
