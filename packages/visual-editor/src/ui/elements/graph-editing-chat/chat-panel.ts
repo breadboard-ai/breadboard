@@ -6,7 +6,7 @@
 
 import { consume } from "@lit/context";
 import { LitElement, html, css, nothing } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { scaContext } from "../../../sca/context/context.js";
@@ -43,6 +43,9 @@ class ChatPanel extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
+  @property({ type: String, reflect: true })
+  accessor mode: "floating" | "embedded" = "floating";
+
   readonly #inputRef = createRef<ExpandingTextarea>();
 
   #showAddAssetModal = false;
@@ -69,6 +72,30 @@ class ChatPanel extends SignalWatcher(LitElement) {
         width: 80svw;
         max-width: 430px;
         max-height: 480px;
+      }
+
+      :host([mode="embedded"]) {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        width: 100%;
+      }
+
+      :host([mode="embedded"]) .bubble {
+        width: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        height: 100%;
+        border-radius: 0;
+        background: transparent;
+        border-top: none;
+        box-shadow: none;
+        flex: 1;
+      }
+
+      :host([mode="embedded"]) .messages {
+        mask-image: none;
+        -webkit-mask-image: none;
       }
 
       /* ── Messages ── */
@@ -427,6 +454,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
   }
 
   render() {
+    const readOnly = this.sca.controller.editor.graph.readOnly;
     const agent = this.sca.controller.editor.graphEditingAgent;
     const inputAssets = this.sca.controller.editor.inputAssets;
     const inputDisabled = agent.processing;
@@ -533,7 +561,9 @@ class ChatPanel extends SignalWatcher(LitElement) {
             <bb-expanding-textarea
               ${ref(this.#inputRef)}
               .disabled=${inputDisabled}
-              .placeholder=${"Ask a question or make a change..."}
+              .placeholder=${readOnly
+                ? "Ask a question"
+                : "Ask a question or make a change..."}
               @change=${this.#onSend}
               @input=${() => this.requestUpdate()}
               ><span slot="submit" style="display:none"></span

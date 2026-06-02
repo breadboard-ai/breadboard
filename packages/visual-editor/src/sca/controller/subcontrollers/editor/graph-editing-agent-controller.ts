@@ -8,6 +8,7 @@ import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 import { parseThought } from "../../../../a2/agent/thought-parser.js";
 import type { ChatEntry } from "../../../types.js";
+import type { AppEnvironment } from "../../../environment/environment.js";
 
 export { GraphEditingAgentController };
 
@@ -29,6 +30,17 @@ const GREETINGS = [
  * directly by the component for simple UI toggles.
  */
 class GraphEditingAgentController extends RootController {
+  #env: AppEnvironment | undefined;
+
+  constructor(
+    controllerId: string,
+    persistenceId: string,
+    env?: AppEnvironment
+  ) {
+    super(controllerId, persistenceId);
+    this.#env = env;
+  }
+
   @field({ deep: true })
   private accessor _entries: ChatEntry[] = [];
 
@@ -94,7 +106,9 @@ class GraphEditingAgentController extends RootController {
   showGreeting() {
     if (this._entries.length > 0) return;
     const greeting = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
-    this.addMessage("model", greeting);
+    const productName = this.#env?.appName || "Opal";
+    const formatted = greeting.replaceAll("Opal", productName);
+    this.addMessage("model", formatted);
   }
 
   /**

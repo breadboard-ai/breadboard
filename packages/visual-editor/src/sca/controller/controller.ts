@@ -78,7 +78,8 @@ class Controller implements AppController {
       graphEditingAgent:
         new Editor.GraphEditingAgent.GraphEditingAgentController(
           "Editor_GraphEditingAgent",
-          "GraphEditingAgentController"
+          "GraphEditingAgentController",
+          env
         ),
       notebookLmPicker: new Editor.NotebookLmPicker.NotebookLmPickerController(
         "Editor_NotebookLmPicker",

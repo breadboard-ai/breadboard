@@ -21,10 +21,11 @@ export { buildGraphEditingFunctionGroups };
 function buildGraphEditingFunctionGroups(args: {
   sink: AgentEventSink;
   translator: EditingAgentPidginTranslator;
+  productName?: string;
 }): FunctionGroup[] {
-  const { translator } = args;
+  const { translator, productName } = args;
   return [
-    getGraphEditingFunctionGroup(args.sink, translator),
+    getGraphEditingFunctionGroup(args.sink, translator, productName),
     getChatFunctionGroup(args.sink, translator),
   ];
 }

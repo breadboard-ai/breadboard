@@ -323,26 +323,56 @@ suite("Graph editing functions suspend/resume", () => {
     assert.strictEqual(captured.length, 1);
     assert.ok(captured[0].requestId, "Should have a requestId");
     assert.ok(captured[0].transform, "Should have a transform");
-    assert.strictEqual(
-      captured[0].transform!.kind,
-      "updateGraphProperties"
-    );
+    assert.strictEqual(captured[0].transform!.kind, "updateGraphProperties");
     if (captured[0].transform!.kind === "updateGraphProperties") {
-      assert.strictEqual(
-        captured[0].transform!.title,
-        "Updated Title"
-      );
+      assert.strictEqual(captured[0].transform!.title, "Updated Title");
       assert.strictEqual(
         captured[0].transform!.description,
         "Updated Description"
       );
-      assert.strictEqual(
-        captured[0].transform!.themeIntent,
-        "sunset vibe"
-      );
+      assert.strictEqual(captured[0].transform!.themeIntent, "sunset vibe");
     }
 
     assert.strictEqual(result.success, true);
   });
-});
 
+  // ── instruction generation and product name replacements ──────────────────
+
+  test("getGraphEditingFunctionGroup instruction uses default product name (Opal)", () => {
+    const bridge = new LocalAgentEventBridge(new AgentEventConsumer());
+    const translator = new EditingAgentPidginTranslator();
+
+    const group = getGraphEditingFunctionGroup(bridge, translator);
+    const inst = group.instruction;
+    assert.ok(inst);
+
+    // It should contain the capitalized default product name: "Opal" and "Opals"
+    assert.ok(/\bOpal\b/.test(inst), "Should include 'Opal'");
+    assert.ok(/\bOpals\b/.test(inst), "Should include 'Opals'");
+    assert.ok(!/\bGem\b/.test(inst), "Should not include 'Gem'");
+    assert.ok(!/\bGems\b/.test(inst), "Should not include 'Gems'");
+
+    // It should not contain lowercase names
+    assert.ok(!/\bopal\b/.test(inst), "Should not include lowercase 'opal'");
+    assert.ok(!/\bopals\b/.test(inst), "Should not include lowercase 'opals'");
+  });
+
+  test("getGraphEditingFunctionGroup instruction uses custom product name (Gem)", () => {
+    const bridge = new LocalAgentEventBridge(new AgentEventConsumer());
+    const translator = new EditingAgentPidginTranslator();
+
+    const group = getGraphEditingFunctionGroup(bridge, translator, "Gem");
+    const inst = group.instruction;
+    assert.ok(inst);
+
+    // It should contain "Gem" and "Gems"
+    assert.ok(/\bGem\b/.test(inst), "Should include 'Gem'");
+    assert.ok(/\bGems\b/.test(inst), "Should include 'Gems'");
+    assert.ok(!/\bOpal\b/.test(inst), "Should not include 'Opal'");
+    assert.ok(!/\bOpals\b/.test(inst), "Should not include 'Opals'");
+
+    // It should not contain lowercase names
+    assert.ok(!/\bgem\b/.test(inst), "Should not include lowercase 'gem'");
+    assert.ok(!/\bgems\b/.test(inst), "Should not include lowercase 'gems'");
+  });
+});

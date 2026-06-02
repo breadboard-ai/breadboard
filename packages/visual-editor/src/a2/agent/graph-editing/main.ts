@@ -29,11 +29,13 @@ async function invokeGraphEditingAgent(
   moduleArgs: A2ModuleArgs,
   sink: AgentEventSink,
   translator: EditingAgentPidginTranslator,
-  hooks?: LoopHooks
+  hooks?: LoopHooks,
+  productName = "Opal"
 ): Promise<Outcome<AgentResult>> {
   const functionGroups = buildGraphEditingFunctionGroups({
     sink,
     translator,
+    productName,
   });
 
   // Read the current graph via suspend so the agent knows the state.
@@ -48,7 +50,7 @@ async function invokeGraphEditingAgent(
   try {
     const { controller } = bind;
     const canvas = controller?.editor?.canvas;
-    
+
     overview = graphOverviewYaml(
       graph,
       graph.nodes ?? [],
