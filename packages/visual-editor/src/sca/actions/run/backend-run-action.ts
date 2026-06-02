@@ -43,6 +43,7 @@ import {
 } from "../../utils/app-screen.js";
 import { toLLMContentArray } from "../../utils/common.js";
 import { makeAction } from "../binder.js";
+import type { AppController } from "../../controller/controller.js";
 import { Utils } from "../../utils.js";
 import {
   handleInputRequested,
@@ -50,7 +51,8 @@ import {
 
 const LABEL = "Backend Run";
 
-export { startBackendRun };
+export { startBackendRun, processEvent };
+export type { ProcessResult, NodeAgentBridge };
 
 export const bind = makeAction();
 
@@ -366,7 +368,7 @@ type ProcessResult = "continue" | "done" | "suspend";
  */
 function processEvent(
   event: GraphRunEvent,
-  controller: typeof bind.controller,
+  controller: AppController,
   bridges: Map<string, NodeAgentBridge>
 ): ProcessResult {
   switch (event.type) {
@@ -554,7 +556,7 @@ function createBridge(
   nodeId: string,
   consoleEntry: ConsoleEntry | undefined,
   appScreen: AppScreen | undefined,
-  controller: typeof bind.controller,
+  controller: AppController,
   bridges: Map<string, NodeAgentBridge>
 ): void {
   const consumer = new AgentEventConsumer();
