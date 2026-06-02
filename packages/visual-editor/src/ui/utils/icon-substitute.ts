@@ -12,6 +12,23 @@
 export function iconSubstitute(
   src: string | undefined | null
 ): string | undefined | null {
+  if (src && typeof src === "string" && src.startsWith("application/vnd.google-apps.")) {
+    switch (src) {
+      case "application/vnd.google-apps.spreadsheet":
+        return "sheets";
+      case "application/vnd.google-apps.document":
+        return "docs";
+      case "application/vnd.google-apps.presentation":
+        return "drive_presentation";
+      case "application/vnd.google-apps.drawing":
+        return "draw";
+      case "application/vnd.google-apps.folder":
+        return "folder";
+      default:
+        return "drive";
+    }
+  }
+
   switch (src) {
     case "content":
       return "text_fields";

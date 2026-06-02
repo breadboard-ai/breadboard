@@ -679,17 +679,15 @@ class ChatPanel extends SignalWatcher(LitElement) {
     agent.addMessage("user", displayText + assetSuffix);
     this.#scrollToBottom();
 
-    if (
-      !this.sca.actions.graphEditingAgent.resolveGraphEditingInput(
-        text || "(see attachments)",
-        assets
-      )
-    ) {
-      agent.processing = true;
-      this.sca.actions.graphEditingAgent.startGraphEditingAgent(
-        text || "(see attachments)",
-        assets
-      );
+    for (const asset of assets) {
+      await this.sca.actions.asset.addGraphAsset(asset);
+    }
+
+    if (text) {
+      if (!this.sca.actions.graphEditingAgent.resolveGraphEditingInput(text)) {
+        agent.processing = true;
+        this.sca.actions.graphEditingAgent.startGraphEditingAgent(text);
+      }
     }
   }
 

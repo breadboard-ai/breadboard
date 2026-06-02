@@ -84,6 +84,8 @@ function graphOverviewYaml(
       if (typeof visual.x === "number" && typeof visual.y === "number") {
         lines.push(`    x: ${Math.round(visual.x)}`);
         lines.push(`    y: ${Math.round(visual.y)}`);
+      } else {
+        lines.push(`    # Newly Added. TODO: Position this asset`);
       }
 
       if (canvas && typeof canvas.getAssetDimensions === "function") {
