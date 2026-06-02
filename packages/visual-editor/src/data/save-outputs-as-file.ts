@@ -32,6 +32,7 @@ const COMMON_FILE_EXTENSIONS: ReadonlyMap<string, string> = new Map([
   ["video/mp4", "mp4"],
   ["video/webm", "webm"],
   ["application/pdf", "pdf"],
+  ["image/webp", "webp"],
 ]);
 
 function extensionFromMimeType(mimeType: string): string {

@@ -18,6 +18,7 @@
 
 import type { AssetMetadata, LLMContent } from "@breadboard-ai/types";
 import { NOTEBOOKLM_MIMETYPE, toNotebookLmUrl } from "@breadboard-ai/utils";
+import { extensionFromMimeType } from "../../../data/save-outputs-as-file.js";
 
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
@@ -25,6 +26,32 @@ import type { NotebookPickedValue } from "../../controller/subcontrollers/editor
 import type { GraphAssetDescriptor } from "../../types.js";
 
 export { bind, addFromModal, addFromNotebookLm };
+
+function extensionFromFilename(title?: string): string | undefined {
+  if (!title || !title.includes(".")) {
+    return undefined;
+  }
+  const parts = title.split(".");
+  const ext = parts.pop();
+  if (ext && ext.length >= 1 && ext.length <= 4) {
+    return ext.toLowerCase();
+  }
+  return undefined;
+}
+
+function inferAssetExtension(metadata: AssetMetadata): string {
+  const extFromMime = extensionFromMimeType(metadata.subType || "");
+  if (extFromMime) {
+    return extFromMime;
+  }
+
+  const extFromFilename = extensionFromFilename(metadata.title);
+  if (extFromFilename) {
+    return extFromFilename;
+  }
+
+  return "";
+}
 
 const bind = makeAction();
 
@@ -53,27 +80,7 @@ const addFromModal = asAction(
       }
       const content = assetOrContent as LLMContent;
 
-      // Infer extension from subType or title
-      let ext = "webp";
-      const mime = (metadata.subType || "").toLowerCase();
-      if (mime.includes("png")) ext = "png";
-      else if (mime.includes("jpeg") || mime.includes("jpg")) ext = "jpg";
-      else if (mime.includes("pdf")) ext = "pdf";
-      else if (mime.includes("mp4")) ext = "mp4";
-      else if (mime.includes("webm")) ext = "webm";
-      else if (mime.includes("csv")) ext = "csv";
-      else if (mime.includes("html")) ext = "html";
-      else if (mime.includes("json")) ext = "json";
-      else if (mime.includes("text/plain") || mime.includes("text/"))
-        ext = "txt";
-
-      if (metadata.title && metadata.title.includes(".")) {
-        const parts = metadata.title.split(".");
-        const last = parts[parts.length - 1].toLowerCase();
-        if (last.length >= 1 && last.length <= 4) {
-          ext = last;
-        }
-      }
+      const ext = inferAssetExtension(metadata);
 
       descriptor = {
         metadata,

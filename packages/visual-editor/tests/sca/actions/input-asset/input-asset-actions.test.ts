@@ -94,6 +94,55 @@ suite("InputAsset Actions", () => {
       assert.ok(inputAssets.assets[0].path.endsWith(".pdf"));
     });
 
+    test("derives extension from title filename when subType is missing", async () => {
+      const inputAssets = makeInputAssetController();
+      bindWithController(inputAssets);
+
+      const asset: LLMContent = { role: "user", parts: [] };
+      const metadata: AssetMetadata = {
+        title: "script.py",
+        type: "file",
+      };
+
+      await InputAsset.addFromModal(asset, metadata);
+
+      assert.strictEqual(inputAssets.assets.length, 1);
+      assert.ok(inputAssets.assets[0].path.endsWith(".py"));
+    });
+
+    test("defaults to bin when both subType and title extension are missing", async () => {
+      const inputAssets = makeInputAssetController();
+      bindWithController(inputAssets);
+
+      const asset: LLMContent = { role: "user", parts: [] };
+      const metadata: AssetMetadata = {
+        title: "Mystery Asset",
+        type: "file",
+      };
+
+      await InputAsset.addFromModal(asset, metadata);
+
+      assert.strictEqual(inputAssets.assets.length, 1);
+      assert.ok(inputAssets.assets[0].path.endsWith(".bin"));
+    });
+
+    test("surfaces and maps image/webp assets as pristine .webp extensions", async () => {
+      const inputAssets = makeInputAssetController();
+      bindWithController(inputAssets);
+
+      const asset: LLMContent = { role: "user", parts: [] };
+      const metadata: AssetMetadata = {
+        title: "Screenshot",
+        type: "file",
+        subType: "image/webp",
+      };
+
+      await InputAsset.addFromModal(asset, metadata);
+
+      assert.strictEqual(inputAssets.assets.length, 1);
+      assert.ok(inputAssets.assets[0].path.endsWith(".webp"));
+    });
+
     test("derives correct file extension from subType fallback", async () => {
       const inputAssets = makeInputAssetController();
       bindWithController(inputAssets);
