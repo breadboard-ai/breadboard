@@ -198,7 +198,7 @@ function defineGraphEditingFunctions(
         requestId: crypto.randomUUID(),
         label: "Update theme",
         transform: {
-          kind: "updateGraphProperties",
+          kind: "updateTheme",
           title,
           description,
           themeIntent,

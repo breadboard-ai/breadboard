@@ -329,7 +329,6 @@ suite("Graph editing functions suspend/resume", () => {
         captured[0].transform!.description,
         "Updated Description"
       );
-      assert.strictEqual(captured[0].transform!.themeIntent, undefined);
     }
 
     assert.strictEqual(result.success, true);
@@ -386,8 +385,8 @@ suite("Graph editing functions suspend/resume", () => {
     assert.strictEqual(captured.length, 1);
     assert.ok(captured[0].requestId, "Should have a requestId");
     assert.ok(captured[0].transform, "Should have a transform");
-    assert.strictEqual(captured[0].transform!.kind, "updateGraphProperties");
-    if (captured[0].transform!.kind === "updateGraphProperties") {
+    assert.strictEqual(captured[0].transform!.kind, "updateTheme");
+    if (captured[0].transform!.kind === "updateTheme") {
       assert.strictEqual(
         captured[0].transform!.title,
         "My Great Opal",
