@@ -137,6 +137,7 @@ export function makeTestController(options: TestControllerOptions = {}) {
       debug: { enabled: true },
       snackbars,
       main,
+      onboarding: { appMode: "canvas" },
       toasts: {
         toast: mock.fn(),
         untoast: mock.fn(),
