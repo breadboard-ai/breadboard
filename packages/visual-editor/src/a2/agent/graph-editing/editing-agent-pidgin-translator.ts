@@ -191,6 +191,14 @@ class EditingAgentPidginTranslator {
     return this.#getOrCreateResultHandle(nodeId);
   }
 
+  /**
+   * Manually register a custom handle mapping to a nodeId.
+   */
+  registerHandle(handle: string, nodeId: string): void {
+    this.#resultHandles.set(nodeId, handle);
+    this.#resultReverse.set(handle, nodeId);
+  }
+
   // ---- Private helpers ----
 
   #getOrCreateResultHandle(nodePath: string): string {
