@@ -263,16 +263,19 @@ suite("Graph editing functions suspend/resume", () => {
     assert.ok(!result.error, "Should not have an error");
   });
 
-  test("upsert_agent_step returns error for nonexistent step_id", async () => {
+  test("upsert_agent_step silently falls back and creates step for nonexistent step_id", async () => {
     const consumer = new AgentEventConsumer();
     const bridge = new LocalAgentEventBridge(consumer);
     const translator = new EditingAgentPidginTranslator();
+
+    const captured: ApplyEditsPayload[] = [];
 
     consumer.on("readGraph", () => {
       return Promise.resolve({ graph: makeMockGraph() });
     });
 
-    consumer.on("applyEdits", () => {
+    consumer.on("applyEdits", (payload) => {
+      captured.push(payload);
       return Promise.resolve({ success: true });
     });
 
@@ -280,19 +283,21 @@ suite("Graph editing functions suspend/resume", () => {
     const handler = findHandler(group, "upsert_agent_step");
     const result = await handler(
       {
-        step_id: "nonexistent-handle",
-        title: "Some title",
-        prompt: "Some prompt",
+        step_id: "my-custom-new-step",
+        title: "Fallback Step",
+        prompt: "Fallback prompt text",
       },
       noop,
       null
     );
 
-    assert.ok(result.error, "Should return an error");
-    assert.ok(
-      result.error.includes("not found"),
-      `Error should mention not found, got: ${result.error}`
-    );
+    assert.ok(!result.error, "Should not return an error");
+    assert.strictEqual(result.step_id, "my-custom-new-step", "Should return the provided step_id");
+    assert.strictEqual(translator.getNodeId("my-custom-new-step"), "my-custom-new-step", "Should register the handle in translator");
+
+    assert.strictEqual(captured.length, 1);
+    assert.strictEqual(captured[0].edits![0].type, "addnode");
+    assert.strictEqual(captured[0].edits![0].node.id, "my-custom-new-step");
   });
 
   // ── graph_edit_properties ──────────────────────────────────────────────────
@@ -399,6 +404,80 @@ suite("Graph editing functions suspend/resume", () => {
       );
       assert.strictEqual(captured[0].transform!.themeIntent, "sunset vibe");
     }
+  });
+
+  // ── upsert_legacy_step ─────────────────────────────────────────────────────
+
+  test("upsert_legacy_step creates new step", async () => {
+    const consumer = new AgentEventConsumer();
+    const bridge = new LocalAgentEventBridge(consumer);
+    const translator = new EditingAgentPidginTranslator();
+
+    const captured: ApplyEditsPayload[] = [];
+
+    consumer.on("readGraph", () => {
+      return Promise.resolve({ graph: makeMockGraph() });
+    });
+
+    consumer.on("applyEdits", (payload) => {
+      captured.push(payload);
+      return Promise.resolve({ success: true });
+    });
+
+    const group = getGraphEditingFunctionGroup(bridge, translator);
+    const handler = findHandler(group, "upsert_legacy_step");
+    const result = await handler(
+      {
+        step_type: "user-input",
+        title: "Legacy Step",
+        prompt: "Hello world",
+      },
+      noop,
+      null
+    );
+
+    assert.ok(!result.error, "Should not return an error");
+    assert.ok(result.step_id, "Should return a step_id");
+    assert.strictEqual(captured.length, 1);
+    assert.strictEqual(captured[0].edits![0].type, "addnode");
+  });
+
+  test("upsert_legacy_step silently falls back and creates step for nonexistent step_id", async () => {
+    const consumer = new AgentEventConsumer();
+    const bridge = new LocalAgentEventBridge(consumer);
+    const translator = new EditingAgentPidginTranslator();
+
+    const captured: ApplyEditsPayload[] = [];
+
+    consumer.on("readGraph", () => {
+      return Promise.resolve({ graph: makeMockGraph() });
+    });
+
+    consumer.on("applyEdits", (payload) => {
+      captured.push(payload);
+      return Promise.resolve({ success: true });
+    });
+
+    const group = getGraphEditingFunctionGroup(bridge, translator);
+    const handler = findHandler(group, "upsert_legacy_step");
+    const result = await handler(
+      {
+        step_id: "my-custom-legacy-step",
+        step_type: "output",
+        title: "Fallback Legacy",
+        prompt: "Done",
+      },
+      noop,
+      null
+    );
+
+    assert.ok(!result.error, "Should not return an error");
+    assert.strictEqual(result.step_id, "my-custom-legacy-step", "Should return the provided step_id");
+    assert.strictEqual(translator.getNodeId("my-custom-legacy-step"), "my-custom-legacy-step", "Should register handle in translator");
+
+    assert.strictEqual(captured.length, 1);
+    assert.strictEqual(captured[0].edits![0].type, "addnode");
+    assert.strictEqual(captured[0].edits![0].node.id, "my-custom-legacy-step");
   });
 
   // ── instruction generation and product name replacements ──────────────────

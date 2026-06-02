@@ -708,29 +708,23 @@ function defineGraphEditingFunctions(
         );
 
         let stepId: string;
+        let isCreate = false;
 
         if (step_id) {
           const resolved = await resolveAndValidateNode(step_id, translator);
           if ("error" in resolved) {
-            return { error: resolved.error };
+            stepId = step_id;
+            isCreate = true;
+            translator.registerHandle(step_id, step_id);
+          } else {
+            stepId = resolved.resolvedId;
           }
-          const { resolvedId } = resolved;
-
-          stepId = resolvedId;
-          await applyUpdateNode(
-            stepId,
-            "",
-            {
-              config$prompt: promptContent as unknown as Record<
-                string,
-                unknown
-              >,
-            },
-            { title },
-            ports
-          );
         } else {
           stepId = globalThis.crypto.randomUUID();
+          isCreate = true;
+        }
+
+        if (isCreate) {
           const node: NodeDescriptor = {
             id: stepId,
             type: GENERATE_COMPONENT_URL,
@@ -760,6 +754,19 @@ function defineGraphEditingFunctions(
               ports
             );
           }
+        } else {
+          await applyUpdateNode(
+            stepId,
+            "",
+            {
+              config$prompt: promptContent as unknown as Record<
+                string,
+                unknown
+              >,
+            },
+            { title },
+            ports
+          );
         }
 
         return reLayoutAndReturnHandle(stepId, translator);
@@ -835,89 +842,71 @@ function defineGraphEditingFunctions(
         );
 
         let stepId: string;
+        let isCreate = false;
+        let inferredStepType: string;
 
         if (step_id) {
           const resolved = await resolveAndValidateNode(step_id, translator);
           if ("error" in resolved) {
-            return { error: resolved.error };
-          }
-          const { resolvedId, node } = resolved;
-
-          // Determine step type for configuration map lookup
-          let inferredStepType: string;
-          if (step_type) {
-            inferredStepType = step_type;
+            stepId = step_id;
+            isCreate = true;
+            translator.registerHandle(step_id, step_id);
+            inferredStepType = step_type || "text-3-flash";
           } else {
-            if (node.type === USER_INPUT_COMPONENT_URL) {
-              inferredStepType = "user-input";
-            } else if (node.type === OUTPUT_COMPONENT_URL) {
-              inferredStepType = "output";
-            } else if (node.type === GENERATE_COMPONENT_URL) {
-              const genMode =
-                node.configuration &&
-                typeof node.configuration === "object" &&
-                "generation-mode" in node.configuration
-                  ? (node.configuration["generation-mode"] as string)
-                  : undefined;
-              inferredStepType = genMode || "text-3-flash";
+            stepId = resolved.resolvedId;
+            const { node } = resolved;
+            if (step_type) {
+              inferredStepType = step_type;
             } else {
-              inferredStepType = "text-3-flash";
-            }
-          }
-
-          const spec = buildNodeSpec(
-            inferredStepType,
-            promptContent as unknown
-          );
-
-          const finalConfig = { ...spec.configuration };
-          const optionMap = LEGACY_OPTION_MAP[inferredStepType];
-          if (optionMap && options) {
-            for (const [optKey, optVal] of Object.entries(options)) {
-              const targetKey =
-                optionMap[optKey] || optionMap[optKey.toLowerCase()];
-              if (targetKey) {
-                if (targetKey === "p-render-mode") {
-                  finalConfig[targetKey] = translateRenderMode(optVal);
-                } else {
-                  finalConfig[targetKey] = optVal;
-                }
+              if (node.type === USER_INPUT_COMPONENT_URL) {
+                inferredStepType = "user-input";
+              } else if (node.type === OUTPUT_COMPONENT_URL) {
+                inferredStepType = "output";
+              } else if (node.type === GENERATE_COMPONENT_URL) {
+                const genMode =
+                  node.configuration &&
+                  typeof node.configuration === "object" &&
+                  "generation-mode" in node.configuration
+                    ? (node.configuration["generation-mode"] as string)
+                    : undefined;
+                inferredStepType = genMode || "text-3-flash";
               } else {
-                finalConfig[optKey] = optVal;
+                inferredStepType = "text-3-flash";
               }
             }
           }
-
-          stepId = resolvedId;
-          await applyUpdateNode(stepId, "", finalConfig, { title }, ports);
         } else {
+          stepId = globalThis.crypto.randomUUID();
+          isCreate = true;
           if (!step_type) {
             return {
               error: "step_type is required to create a new legacy step",
             };
           }
+          inferredStepType = step_type;
+        }
 
-          stepId = globalThis.crypto.randomUUID();
-          const spec = buildNodeSpec(step_type, promptContent as unknown);
+        const spec = buildNodeSpec(inferredStepType, promptContent as unknown);
 
-          const finalConfig = { ...spec.configuration };
-          const optionMap = LEGACY_OPTION_MAP[step_type];
-          if (optionMap && options) {
-            for (const [optKey, optVal] of Object.entries(options)) {
-              const targetKey =
-                optionMap[optKey] || optionMap[optKey.toLowerCase()];
-              if (targetKey) {
-                if (targetKey === "p-render-mode") {
-                  finalConfig[targetKey] = translateRenderMode(optVal);
-                } else {
-                  finalConfig[targetKey] = optVal;
-                }
+        const finalConfig = { ...spec.configuration };
+        const optionMap = LEGACY_OPTION_MAP[inferredStepType];
+        if (optionMap && options) {
+          for (const [optKey, optVal] of Object.entries(options)) {
+            const targetKey =
+              optionMap[optKey] || optionMap[optKey.toLowerCase()];
+            if (targetKey) {
+              if (targetKey === "p-render-mode") {
+                finalConfig[targetKey] = translateRenderMode(optVal);
               } else {
-                finalConfig[optKey] = optVal;
+                finalConfig[targetKey] = optVal;
               }
+            } else {
+              finalConfig[optKey] = optVal;
             }
           }
+        }
 
+        if (isCreate) {
           const node: NodeDescriptor = {
             id: stepId,
             type: spec.type,
@@ -933,6 +922,8 @@ function defineGraphEditingFunctions(
           if (ports.length > 0) {
             await applyUpdateNode(stepId, "", finalConfig, null, ports);
           }
+        } else {
+          await applyUpdateNode(stepId, "", finalConfig, { title }, ports);
         }
 
         return reLayoutAndReturnHandle(stepId, translator);
