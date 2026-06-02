@@ -13,7 +13,7 @@ import {
   resetGraphEditingAgent,
 } from "../../../../src/sca/actions/agent/graph-editing-agent-actions.js";
 import { GraphEditingAgentController } from "../../../../src/sca/controller/subcontrollers/editor/graph-editing-agent-controller.js";
-import type { ChatEntry } from "../../../../src/sca/types.js";
+import type { ChatEntry, GraphAssetDescriptor } from "../../../../src/sca/types.js";
 import { DevToolsController } from "../../../../src/sca/controller/subcontrollers/editor/devtools/devtools-controller.js";
 import { AgentService } from "../../../../src/a2/agent/agent-service.js";
 import type { WaitForInputPayload } from "../../../../src/a2/agent/agent-event.js";
@@ -196,15 +196,21 @@ suite("graph-editing-agent-actions", () => {
 
     const startRunSpy = mock.method(services.agentService, "startRun");
 
-    const mockAssets = [
+    const mockAssets: GraphAssetDescriptor[] = [
       {
-        role: "user",
-        parts: [
+        metadata: { title: "Test Asset", type: "file" },
+        path: "asset-123.webp",
+        data: [
           {
-            inlineData: {
-              mimeType: "image/png",
-              data: "base64data",
-            },
+            role: "user",
+            parts: [
+              {
+                inlineData: {
+                  mimeType: "image/png",
+                  data: "base64data",
+                },
+              },
+            ],
           },
         ],
       },
@@ -215,7 +221,7 @@ suite("graph-editing-agent-actions", () => {
     assert.strictEqual(startRunSpy.mock.callCount(), 1);
     const callArgs = startRunSpy.mock.calls[0].arguments[0];
     assert.strictEqual(callArgs.objective.parts.length, 2);
-    assert.deepStrictEqual(callArgs.objective.parts[1], mockAssets[0].parts[0]);
+    assert.deepStrictEqual(callArgs.objective.parts[1], mockAssets[0].data[0].parts[0]);
   });
 
   test("resolveGraphEditingInput with assets resolves with multimodal parts", async () => {
@@ -249,15 +255,21 @@ suite("graph-editing-agent-actions", () => {
       },
     });
 
-    const mockAssets = [
+    const mockAssets: GraphAssetDescriptor[] = [
       {
-        role: "user",
-        parts: [
+        metadata: { title: "Test Asset", type: "file" },
+        path: "asset-123.webp",
+        data: [
           {
-            inlineData: {
-              mimeType: "image/png",
-              data: "base64data",
-            },
+            role: "user",
+            parts: [
+              {
+                inlineData: {
+                  mimeType: "image/png",
+                  data: "base64data",
+                },
+              },
+            ],
           },
         ],
       },
@@ -268,7 +280,7 @@ suite("graph-editing-agent-actions", () => {
     const response = await resultPromise;
     assert.deepStrictEqual(response, {
       input: {
-        parts: [{ text: "User response" }, mockAssets[0].parts[0]],
+        parts: [{ text: "User response" }, mockAssets[0].data[0].parts[0]],
       },
     });
 

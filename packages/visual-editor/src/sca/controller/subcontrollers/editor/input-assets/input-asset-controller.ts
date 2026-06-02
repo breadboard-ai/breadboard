@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { LLMContent } from "@breadboard-ai/types";
+import type { GraphAssetDescriptor } from "../../../../types.js";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
 
@@ -26,12 +26,12 @@ export { InputAssetController };
  */
 class InputAssetController extends RootController {
   @field({ deep: false })
-  private accessor _assets: LLMContent[] = [];
+  private accessor _assets: GraphAssetDescriptor[] = [];
 
   /**
    * The current pending assets. Read-only view for UI rendering.
    */
-  get assets(): readonly LLMContent[] {
+  get assets(): readonly GraphAssetDescriptor[] {
     return this._assets;
   }
 
@@ -45,14 +45,14 @@ class InputAssetController extends RootController {
   /**
    * Add an asset to the pending collection.
    */
-  add(asset: LLMContent): void {
+  add(asset: GraphAssetDescriptor): void {
     this._assets = [...this._assets, asset];
   }
 
   /**
    * Remove a specific asset by reference identity.
    */
-  remove(asset: LLMContent): void {
+  remove(asset: GraphAssetDescriptor): void {
     this._assets = this._assets.filter((a) => a !== asset);
   }
 
@@ -60,7 +60,7 @@ class InputAssetController extends RootController {
    * Return all pending assets and clear the shelf.
    * Used at submit time to merge assets into the outgoing message.
    */
-  drain(): LLMContent[] {
+  drain(): GraphAssetDescriptor[] {
     const drained = [...this._assets];
     this._assets = [];
     return drained;
@@ -73,3 +73,4 @@ class InputAssetController extends RootController {
     this._assets = [];
   }
 }
+

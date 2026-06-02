@@ -10,7 +10,8 @@ import { customElement } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { scaContext } from "../../../sca/context/context.js";
 import type { SCA } from "../../../sca/sca.js";
-import type { LLMContent } from "@breadboard-ai/types";
+
+import type { GraphAssetDescriptor } from "../../../sca/types.js";
 import { icons } from "../../styles/icons.js";
 import {
   isInlineData,
@@ -139,67 +140,75 @@ class InputAssetShelf extends SignalWatcher(LitElement) {
     `;
   }
 
-  #renderThumb(asset: LLMContent) {
+  #renderThumb(asset: GraphAssetDescriptor) {
     const inputAssets = this.sca.controller.editor.inputAssets;
     let preview: ReturnType<typeof html> | typeof nothing = nothing;
     let icon = "attachment";
+    const title = asset.metadata?.title || "";
 
-    for (const part of asset.parts) {
-      if (isInlineData(part)) {
-        if (part.inlineData.mimeType.startsWith("image")) {
-          preview = html`<img
-            src="data:${part.inlineData.mimeType};base64,${part.inlineData
-              .data}"
-          />`;
-          break;
-        }
-        if (part.inlineData.mimeType.startsWith("audio")) {
-          icon = "mic";
-          break;
-        }
-        if (part.inlineData.mimeType.startsWith("video")) {
-          icon = "movie";
-          break;
-        }
-        if (part.inlineData.mimeType.includes("pdf")) {
-          icon = "drive_pdf";
-          break;
-        }
-        if (part.inlineData.mimeType.startsWith("text")) {
-          icon = "text_fields";
-          break;
-        }
-      } else if (isFileDataCapabilityPart(part)) {
-        if (part.fileData.mimeType === "video/mp4") {
-          let uri: string | null = part.fileData.fileUri;
-          if (isWatchUri(uri) || isShortsUri(uri)) {
-            uri = convertWatchOrShortsUriToEmbedUri(uri);
-          } else if (isShareUri(uri)) {
-            uri = convertShareUriToEmbedUri(uri);
+    for (const data of asset.data) {
+      for (const part of data.parts) {
+        if (isInlineData(part)) {
+          if (part.inlineData.mimeType.startsWith("image")) {
+            preview = html`<img
+              src="data:${part.inlineData.mimeType};base64,${part.inlineData
+                .data}"
+              title="${title}"
+            />`;
+            break;
           }
-          if (uri && isEmbedUri(uri)) {
-            const videoId = videoIdFromWatchOrShortsOrEmbedUri(uri);
-            if (videoId) {
-              preview = html`<img
-                src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg"
-              />`;
+          if (part.inlineData.mimeType.startsWith("audio")) {
+            icon = "mic";
+            break;
+          }
+          if (part.inlineData.mimeType.startsWith("video")) {
+            icon = "movie";
+            break;
+          }
+          if (part.inlineData.mimeType.includes("pdf")) {
+            icon = "drive_pdf";
+            break;
+          }
+          if (part.inlineData.mimeType.startsWith("text")) {
+            icon = "text_fields";
+            break;
+          }
+        } else if (isFileDataCapabilityPart(part)) {
+          if (part.fileData.mimeType === "video/mp4") {
+            let uri: string | null = part.fileData.fileUri;
+            if (isWatchUri(uri) || isShortsUri(uri)) {
+              uri = convertWatchOrShortsUriToEmbedUri(uri);
+            } else if (isShareUri(uri)) {
+              uri = convertShareUriToEmbedUri(uri);
             }
+            if (uri && isEmbedUri(uri)) {
+              const videoId = videoIdFromWatchOrShortsOrEmbedUri(uri);
+              if (videoId) {
+                preview = html`<img
+                  src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg"
+                  title="${title}"
+                />`;
+              }
+            }
+            icon = "smart_display";
+            break;
           }
-          icon = "smart_display";
+          icon = "insert_drive_file";
+        } else if (
+          isStoredData(part) &&
+          part.storedData.mimeType === NOTEBOOKLM_MIMETYPE
+        ) {
+          icon = "auto_stories";
           break;
         }
-        icon = "insert_drive_file";
-      } else if (
-        isStoredData(part) &&
-        part.storedData.mimeType === NOTEBOOKLM_MIMETYPE
-      ) {
-        icon = "auto_stories";
+      }
+      if (preview !== nothing) {
         break;
       }
     }
 
     return html`
-      <div class="thumb">
+      <div class="thumb" title="${title}">
         <div class="thumb-content">
           ${preview !== nothing
             ? preview
@@ -210,7 +219,7 @@ class InputAssetShelf extends SignalWatcher(LitElement) {
         <button
           class="remove"
           @click=${() => inputAssets.remove(asset)}
-          title="Remove"
+          title="Remove ${title}"
         >
           <span class="g-icon">close</span>
         </button>

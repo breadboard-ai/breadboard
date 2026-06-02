@@ -66,7 +66,7 @@ let pendingResolve: ((response: ChatResponse) => void) | null = null;
  */
 function startGraphEditingAgent(
   firstMessage: string,
-  assets?: LLMContent[]
+  assets?: GraphAssetDescriptor[]
 ): void {
   const { controller, services } = bind;
   const agent = controller.editor.graphEditingAgent;
@@ -82,7 +82,9 @@ function startGraphEditingAgent(
   };
 
   if (assets && assets.length > 0) {
-    objective.parts.push(...assets.flatMap((a) => a.parts));
+    objective.parts.push(
+      ...assets.flatMap((a) => a.data.flatMap((d) => d.parts))
+    );
   }
 
   const factory = services.sandbox as A2ModuleFactory;
@@ -259,6 +261,8 @@ function startGraphEditingAgent(
     });
 }
 
+import type { GraphAssetDescriptor } from "../../types.js";
+
 /**
  * Resolve the pending `waitForInput` suspend event with user text.
  * Constructs a `ChatResponse` and resolves the consumer handler's Promise.
@@ -266,7 +270,7 @@ function startGraphEditingAgent(
  */
 function resolveGraphEditingInput(
   text: string,
-  assets?: LLMContent[]
+  assets?: GraphAssetDescriptor[]
 ): boolean {
   if (!pendingResolve) return false;
   const resolve = pendingResolve;
@@ -278,7 +282,7 @@ function resolveGraphEditingInput(
 
   const parts: DataPart[] = [{ text }];
   if (assets && assets.length > 0) {
-    parts.push(...assets.flatMap((a) => a.parts));
+    parts.push(...assets.flatMap((a) => a.data.flatMap((d) => d.parts)));
   }
 
   resolve({ input: { parts } });
