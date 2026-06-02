@@ -9,6 +9,7 @@ import { type AppServices } from "../services/services.js";
 import type { AppEnvironment } from "../environment/environment.js";
 import * as Agent from "./agent/agent-actions.js";
 import * as GraphEditingAgent from "./agent/graph-editing-agent-actions.js";
+import * as Opie from "./agent/opie-actions.js";
 import * as Asset from "./asset/asset-actions.js";
 import * as Board from "./board/board-actions.js";
 import * as Flowgen from "./flowgen/flowgen-actions.js";
@@ -34,6 +35,7 @@ import { Utils } from "../utils.js";
 export interface AppActions {
   agent: typeof Agent;
   graphEditingAgent: typeof GraphEditingAgent;
+  opie: typeof Opie;
   asset: typeof Asset;
   board: typeof Board;
   flowgen: typeof Flowgen;
@@ -64,6 +66,7 @@ export function actions(
   if (!instance) {
     Agent.bind({ controller, services, env });
     GraphEditingAgent.bind({ controller, services, env });
+    Opie.bind({ controller, services, env });
     Asset.bind({ controller, services, env });
     Board.bind({ controller, services, env });
     Flowgen.bind({ controller, services, env });
@@ -85,6 +88,7 @@ export function actions(
     instance = {
       agent: Agent,
       graphEditingAgent: GraphEditingAgent,
+      opie: Opie,
       asset: Asset,
       board: Board,
       flowgen: Flowgen,
@@ -125,6 +129,7 @@ export function activateTriggers(): () => void {
   const allActions = [
     ...Object.values(Agent),
     ...Object.values(GraphEditingAgent),
+    ...Object.values(Opie),
     ...Object.values(Asset),
     ...Object.values(Board),
     ...Object.values(Flowgen),
@@ -232,6 +237,7 @@ export function cleanActions(): void {
 export {
   Agent,
   GraphEditingAgent,
+  Opie,
   Asset,
   Board,
   Flowgen,

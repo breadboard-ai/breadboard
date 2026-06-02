@@ -164,6 +164,7 @@ export interface TestServicesOptions {
   >;
   globalConfig?: Partial<GlobalConfig>;
   guestConfig?: Partial<GuestConfiguration>;
+  agentService?: Partial<AppServices["agentService"]>;
 }
 
 export function makeTestServices(options: TestServicesOptions = {}) {
@@ -175,6 +176,7 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     googleDriveBoardServer,
     globalConfig = {},
     guestConfig = {},
+    agentService,
   } = options;
 
   const actionTrackerMock = {
@@ -193,6 +195,7 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     },
     fetchWithCreds: mock.fn(async () => new Response("{}", { status: 200 })),
     googleDriveClient: googleDriveClient ?? {},
+    askUserToSignInIfNeeded: async () => "success",
     globalConfig,
     guestConfig,
     signinAdapter: signinAdapter ?? {},
@@ -211,10 +214,40 @@ export function makeTestServices(options: TestServicesOptions = {}) {
       registerRunner: () => {},
       unregisterRunner: () => {},
     },
+    agentService: agentService ?? {
+      startRun() {
+        const events = {
+          handle: async () => ({}),
+          on() {
+            return events;
+          },
+        };
+        return {
+          runId: "mock-run",
+          events,
+          sink: {
+            emit: () => {},
+            suspend: async (payload: unknown) => {
+              if (
+                payload &&
+                typeof payload === "object" &&
+                "readGraph" in payload
+              ) {
+                return { graph: { edges: [], nodes: [] } };
+              }
+              return {};
+            },
+          },
+        } as never;
+      },
+      endRun: () => {},
+    },
     // Mock loader for run actions
     loader: {} as unknown as AppServices["loader"],
     // Mock sandbox for run config
-    sandbox: (() => {}) as unknown as AppServices["sandbox"],
+    sandbox: {
+      createModuleArgs: () => ({}),
+    } as unknown as AppServices["sandbox"],
     // Event bus for event-triggered actions
     stateEventBus: new EventTarget(),
     // Flowgen mocks (optional)
