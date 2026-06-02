@@ -39,6 +39,7 @@ def create_graph_session_router(
     event_bus: EventBus,
     runner: GraphRunner,
     scheduler: TaskScheduler,
+    drive_client_factory: Any | None = None,
 ) -> APIRouter:
     """Create a FastAPI router with graph session endpoints.
 
@@ -47,6 +48,8 @@ def create_graph_session_router(
         event_bus: EventBus for live SSE event delivery.
         runner: GraphRunner for node task execution.
         scheduler: TaskScheduler for cancellation support.
+        drive_client_factory: Optional callable ``(access_token: str) -> DriveOperationsClient``.
+            Required when clients use ``graphId`` to load graphs from Drive.
     """
     router = APIRouter(prefix="/v1beta1/graphSessions")
 
@@ -55,18 +58,47 @@ def create_graph_session_router(
         """Start a new graph run.
 
         Body: {graph: GraphDescriptor, accessToken?: str}
+              OR {graphId: str, accessToken: str}
+
+        Optional:
+            mode: "interactive" (default) or "headless"
+            inputs: {nodeId: LLMContent, ...}  (headless pre-supplied inputs)
         """
         body = await request.json()
         graph_data = body.get("graph")
-        if not graph_data:
+        graph_id = body.get("graphId")
+
+        if not graph_data and not graph_id:
             return JSONResponse(
-                {"error": "Missing 'graph' in request body"},
+                {"error": "Missing 'graph' or 'graphId' in request body"},
                 status_code=400,
             )
 
         # Extract user's OAuth token (same pattern as session_router).
         access_token = body.get("accessToken", "")
         origin = request.headers.get("origin", "")
+
+        # Load graph from Drive if graphId is provided.
+        if graph_id:
+            if not access_token:
+                return JSONResponse(
+                    {"error": "'accessToken' is required when using 'graphId'"},
+                    status_code=400,
+                )
+            if drive_client_factory is None:
+                return JSONResponse(
+                    {"error": "Drive graph loading is not configured"},
+                    status_code=500,
+                )
+            try:
+                drive_client = drive_client_factory(access_token)
+                file_bytes = await drive_client.get_file_media(graph_id)
+                graph_data = json.loads(file_bytes)
+            except (ValueError, json.JSONDecodeError) as exc:
+                return JSONResponse(
+                    {"error": f"Failed to load graph from Drive: {exc}"},
+                    status_code=400,
+                )
 
         # Parse, condense (break cycles), and plan.
         graph = GraphDescriptor.from_dict(graph_data)
@@ -81,8 +113,13 @@ def create_graph_session_router(
 
         session_id = str(uuid.uuid4())
 
+        # Headless mode: pass pre-supplied inputs to the store.
+        mode = body.get("mode", "interactive")
+        inputs = body.get("inputs", {})
+        headless_inputs = inputs if mode == "headless" else None
+
         # Store the plan and kick off initial tasks.
-        await store.create(session_id, plan)
+        await store.create(session_id, plan, headless_inputs=headless_inputs)
         await runner.start_graph(
             session_id, access_token=access_token, origin=origin,
         )

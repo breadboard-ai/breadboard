@@ -1013,6 +1013,14 @@ async def consume_agent_events(
             if content:
                 result_content.append(content)
 
+        # Extract final outcomes from the complete event.
+        if event.type == "complete":
+            result = getattr(event, "result", None)
+            if result:
+                outcomes = getattr(result, "outcomes", None)
+                if outcomes:
+                    result_content.append(outcomes)
+
     if result_content:
         return {"context": result_content}
 

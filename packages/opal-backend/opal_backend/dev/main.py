@@ -123,6 +123,10 @@ _graph_session_router = create_graph_session_router(
     event_bus=_event_bus,
     runner=_graph_runner,
     scheduler=_graph_scheduler,
+    drive_client_factory=lambda token: HttpDriveOperationsClient(
+        httpx_client=httpx.AsyncClient(timeout=120.0),
+        access_token=token,
+    ),
 )
 
 

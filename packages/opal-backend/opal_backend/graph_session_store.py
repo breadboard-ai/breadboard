@@ -53,8 +53,16 @@ class GraphSessionStore(Protocol):
 
     async def create(
         self, session_id: str, plan: GraphPlan,
+        *,
+        headless_inputs: dict[str, Any] | None = None,
     ) -> None:
-        """Store plan with initial dependency counts."""
+        """Store plan with initial dependency counts.
+
+        Args:
+            headless_inputs: Optional mapping of node_id → LLMContent
+                for headless mode. When set, input nodes auto-resolve
+                using pre-supplied values instead of suspending.
+        """
         ...
 
     async def get_plan(
@@ -91,6 +99,28 @@ class GraphSessionStore(Protocol):
         self, session_id: str, node_id: str,
     ) -> dict[str, Any]:
         """Load node configuration from the stored plan."""
+        ...
+
+    # ── Headless Inputs ──
+
+    async def get_headless_input(
+        self, session_id: str, node_id: str,
+    ) -> Any | None:
+        """Look up a pre-supplied input for headless mode.
+
+        Returns the LLMContent value for the given node ID, or None
+        if no headless input was provided (or session is interactive).
+        """
+        ...
+
+    async def is_headless_session(
+        self, session_id: str,
+    ) -> bool:
+        """Return True if the session was created in headless mode.
+
+        A session is headless when ``headless_inputs`` was provided
+        to ``create()`` (even if the dict is empty).
+        """
         ...
 
     # ── Suspend / Resume ──
