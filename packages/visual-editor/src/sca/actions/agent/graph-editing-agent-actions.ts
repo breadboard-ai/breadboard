@@ -69,6 +69,8 @@ function startGraphEditingAgent(
   assets?: GraphAssetDescriptor[]
 ): void {
   const { controller, services } = bind;
+  const productName =
+    controller.global.onboarding.appMode === "lite" ? "Gem" : "Opal";
   const agent = controller.editor.graphEditingAgent;
   if (agent.loopRunning) return;
   agent.loopRunning = true;
@@ -108,6 +110,7 @@ function startGraphEditingAgent(
     const functionGroups = buildGraphEditingFunctionGroups({
       sink: handle.sink,
       translator,
+      productName,
     });
     const systemInstruction = functionGroups
       .map((g) => g.instruction)
@@ -240,7 +243,14 @@ function startGraphEditingAgent(
 
   const moduleArgs = factory.createModuleArgs(context);
 
-  invokeGraphEditingAgent(objective, moduleArgs, handle.sink, translator, hooks)
+  invokeGraphEditingAgent(
+    objective,
+    moduleArgs,
+    handle.sink,
+    translator,
+    hooks,
+    productName
+  )
     .then((result) => {
       agent.loopRunning = false;
       agent.processing = false;

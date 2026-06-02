@@ -5,7 +5,7 @@ graphs. Legacy graphs may contain legacy steps. They are discussed in the later
 section.
 
 The agent step contains a Gemini-powered autonomous agent that interprets its
-prompt as an objective and uses tools to fulfill it. When Opal runtime
+prompt as an objective and uses tools to fulfill it. When {{PRODUCT_NAME}} runtime
 encounters this step, it starts a new agent session, supplies the objective to
 it, and lets it do its magic.
 

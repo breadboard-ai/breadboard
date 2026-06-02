@@ -26,6 +26,9 @@ export class StepListView extends SignalWatcher(LitElement) {
   @property({ type: Boolean, reflect: true })
   accessor lite = false;
 
+  @property({ type: Boolean, reflect: true })
+  accessor collapsible = false;
+
   #presenter = new StepListPresenter();
 
   /** Get viewType from SCA state */
@@ -82,13 +85,60 @@ export class StepListView extends SignalWatcher(LitElement) {
         color: var(--sys-color--on-surface);
       }
 
-      section {
-        height: 100%;
+      :host([collapsible]) {
+        flex: none;
+      }
+
+      :host([collapsible]) > section {
+        display: block;
+        height: auto;
+      }
+
+      .collapsible-wrapper {
+        border-bottom: 1px solid var(--light-dark-n-95);
+        width: 100%;
+      }
+
+      .collapsible-wrapper > summary {
+        cursor: pointer;
+        user-select: none;
+        padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: var(--bb-grid-size-2);
+      }
+
+      .collapsible-wrapper > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .collapsible-wrapper > summary > .collapse-chevron {
+        font-size: 20px;
+        color: var(--light-dark-n-50);
+        transition: transform 0.15s ease;
+      }
+
+      .collapsible-wrapper[open] > summary > .collapse-chevron {
+        transform: rotate(180deg);
+      }
+
+      .collapsible-wrapper > .collapsible-content {
+        padding: 0 var(--bb-grid-size-2) var(--bb-grid-size-3);
+        max-height: 200px;
         display: flex;
         flex-direction: column;
-        align-items: start;
+      }
 
-        & > h1 {
+      section {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+
+        & > h1,
+        & .collapsible-wrapper > summary > h1 {
           color: var(--sys-color--on-surface);
           margin: 0;
         }
@@ -98,7 +148,7 @@ export class StepListView extends SignalWatcher(LitElement) {
           margin: 0 0 var(--bb-grid-size-2) 0;
         }
 
-        & > #list {
+        & #list {
           width: 100%;
           flex: 1 1 auto;
           overflow-x: hidden;
@@ -547,6 +597,18 @@ export class StepListView extends SignalWatcher(LitElement) {
   }
 
   render() {
+    if (this.collapsible) {
+      return html`<section>
+        <details class="collapsible-wrapper">
+          <summary>
+            <span class="collapse-chevron g-icon">keyboard_arrow_down</span>
+            ${this.#renderTitle()}
+          </summary>
+          <div class="collapsible-content">${this.#renderList()}</div>
+        </details>
+      </section>`;
+    }
+
     return html`<section>
       ${[this.#renderTitle(), this.#renderList()]}
     </section>`;

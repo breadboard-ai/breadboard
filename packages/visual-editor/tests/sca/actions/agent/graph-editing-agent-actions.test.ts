@@ -13,17 +13,28 @@ import {
   resetGraphEditingAgent,
 } from "../../../../src/sca/actions/agent/graph-editing-agent-actions.js";
 import { GraphEditingAgentController } from "../../../../src/sca/controller/subcontrollers/editor/graph-editing-agent-controller.js";
-import type { ChatEntry, GraphAssetDescriptor } from "../../../../src/sca/types.js";
+import type {
+  ChatEntry,
+  GraphAssetDescriptor,
+} from "../../../../src/sca/types.js";
+import type { ChatResponse } from "../../../../src/a2/agent/types.js";
 import { DevToolsController } from "../../../../src/sca/controller/subcontrollers/editor/devtools/devtools-controller.js";
-import { AgentService } from "../../../../src/a2/agent/agent-service.js";
+import {
+  AgentService,
+  type AgentRunHandle,
+  type AgentRunConfig,
+} from "../../../../src/a2/agent/agent-service.js";
+import type { LocalAgentRun } from "../../../../src/a2/agent/local-agent-run.js";
 import type { WaitForInputPayload } from "../../../../src/a2/agent/agent-event.js";
+import type { AppController } from "../../../../src/sca/controller/controller.js";
+import type { AppServices } from "../../../../src/sca/services/services.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import { createMockEnvironment } from "../../helpers/mock-environment.js";
 import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-async function makeControllerStub(id: string) {
+async function makeControllerStub(id: string): Promise<AppController> {
   const agent = new GraphEditingAgentController(
     id,
     "GraphEditingAgentController"
@@ -32,17 +43,18 @@ async function makeControllerStub(id: string) {
   await agent.isHydrated;
   await devtools.isHydrated;
   await devtools.opie.isHydrated;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { editor: { graphEditingAgent: agent, devtools } } as any;
+  return {
+    editor: { graphEditingAgent: agent, devtools },
+    global: { onboarding: { appMode: "canvas" } },
+  } as unknown as AppController;
 }
 
-function makeServicesStub() {
+function makeServicesStub(): AppServices {
   return {
     sandbox: { createModuleArgs: () => ({}) },
     fetchWithCreds: globalThis.fetch,
     agentService: new AgentService(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any;
+  } as unknown as AppServices;
 }
 
 suite("graph-editing-agent-actions", () => {
@@ -220,8 +232,15 @@ suite("graph-editing-agent-actions", () => {
 
     assert.strictEqual(startRunSpy.mock.callCount(), 1);
     const callArgs = startRunSpy.mock.calls[0].arguments[0];
-    assert.strictEqual(callArgs.objective.parts.length, 2);
-    assert.deepStrictEqual(callArgs.objective.parts[1], mockAssets[0].data[0].parts[0]);
+    if (callArgs && "objective" in callArgs) {
+      assert.strictEqual(callArgs.objective.parts.length, 2);
+      assert.deepStrictEqual(
+        callArgs.objective.parts[1],
+        mockAssets[0].data[0].parts[0]
+      );
+    } else {
+      assert.fail("Expected local run config with objective");
+    }
   });
 
   test("resolveGraphEditingInput with assets resolves with multimodal parts", async () => {
@@ -236,8 +255,8 @@ suite("graph-editing-agent-actions", () => {
     const originalStartRun = services.agentService.startRun.bind(
       services.agentService
     );
-    let activeHandle: any = null;
-    mock.method(services.agentService, "startRun", (args: any) => {
+    let activeHandle: AgentRunHandle | null = null;
+    mock.method(services.agentService, "startRun", (args: AgentRunConfig) => {
       const handle = originalStartRun(args);
       activeHandle = handle;
       return handle;
@@ -245,9 +264,7 @@ suite("graph-editing-agent-actions", () => {
 
     startGraphEditingAgent("Build something");
 
-    assert.ok(activeHandle !== null);
-
-    const resultPromise = activeHandle.events.handle({
+    const resultPromise = activeHandle!.events.handle({
       waitForInput: {
         requestId: "req-assets-1",
         prompt: { parts: [{ text: "Hello" }] },
@@ -284,7 +301,7 @@ suite("graph-editing-agent-actions", () => {
       },
     });
 
-    services.agentService.endRun(activeHandle.runId);
+    services.agentService.endRun(activeHandle!.runId);
   });
 
   // ── Consumer wiring ────────────────────────────────────────────────────────
@@ -306,7 +323,7 @@ suite("graph-editing-agent-actions", () => {
     const handle = services.agentService.startRun({
       kind: "graph-editing",
       objective: { parts: [{ text: "test" }] },
-    });
+    }) as LocalAgentRun;
     handle.events.on("thought", (event: { text: string }) => {
       agent.addThought(event.text);
     });
@@ -340,7 +357,7 @@ suite("graph-editing-agent-actions", () => {
     const handle = services.agentService.startRun({
       kind: "graph-editing",
       objective: { parts: [{ text: "test" }] },
-    });
+    }) as LocalAgentRun;
     handle.events.on(
       "functionCall",
       (event: { name: string; title?: string }) => {
@@ -411,10 +428,8 @@ suite("graph-editing-agent-actions", () => {
 
     // Wire the handler exactly as the action does
     handle.events.on("waitForInput", (payload: WaitForInputPayload) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const parts = payload.prompt.parts as any[];
-      const promptText = parts
-        .filter((p) => "text" in p)
+      const promptText = payload.prompt.parts
+        .filter((p): p is { text: string } => "text" in p)
         .map((p) => p.text)
         .join("\n");
       agent.addMessage("model", promptText);
@@ -475,18 +490,16 @@ suite("graph-editing-agent-actions", () => {
       objective: { parts: [{ text: "test" }] },
     });
 
-    let capturedResolve: ((v: unknown) => void) | null = null;
+    let capturedResolve: ((v: ChatResponse) => void) | null = null;
     handle.events.on("waitForInput", (payload: WaitForInputPayload) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const parts = payload.prompt.parts as any[];
-      const promptText = parts
-        .filter((p) => "text" in p)
+      const promptText = payload.prompt.parts
+        .filter((p): p is { text: string } => "text" in p)
         .map((p) => p.text)
         .join("\n");
       agent.addMessage("model", promptText);
       agent.waiting = true;
       agent.processing = false;
-      return new Promise<unknown>((resolve) => {
+      return new Promise<ChatResponse>((resolve) => {
         capturedResolve = resolve;
       });
     });
@@ -501,16 +514,7 @@ suite("graph-editing-agent-actions", () => {
     }) as Promise<unknown>;
 
     assert.strictEqual(agent.waiting, true);
-    assert.ok(
-      capturedResolve !== null,
-      "Should have captured the resolve callback"
-    );
-
-    // Resolve with a ChatResponse (same shape as resolveGraphEditingInput).
-    // Assign to a local to avoid TS never-narrowing after assert.ok.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const doResolve = capturedResolve as any;
-    doResolve({ input: { parts: [{ text: "user says hi" }] } });
+    capturedResolve!({ input: { parts: [{ text: "user says hi" }] } });
 
     const response = await resultPromise;
     assert.deepStrictEqual(response, {
@@ -533,7 +537,7 @@ suite("graph-editing-agent-actions", () => {
     const handle = services.agentService.startRun({
       kind: "graph-editing",
       objective: { parts: [{ text: "test" }] },
-    });
+    }) as LocalAgentRun;
 
     // Wire handler
     handle.events.on("waitForInput", () => {

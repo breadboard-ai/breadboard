@@ -17,6 +17,8 @@ import { classMap } from "lit/directives/class-map.js";
 import { StateEvent, StateEventDetailMap } from "./ui/events/events.js";
 import { LiteEditInputController } from "./ui/lite/input/editor-input-lite.js";
 import "./ui/lite/input/editor-input-lite-opie.js";
+import "./ui/elements/graph-editing-chat/chat-panel.js";
+import "./ui/elements/graph-editing-chat/opie-avatar.js";
 
 import { reactive } from "./sca/reactive.js";
 import { isHydrating } from "./sca/utils/helpers/helpers.js";
@@ -102,6 +104,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           & bb-prompt-view {
             flex: 0 0 auto;
             margin-bottom: var(--bb-grid-size-8);
+
+            &.minimized {
+              margin-bottom: 0;
+            }
           }
 
           & bb-step-list-view {
@@ -339,6 +345,39 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           height: 100%;
           width: 100%;
         }
+
+        & #controls.opie-mode {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+        }
+
+        & #controls.opie-mode > bb-step-list-view {
+          flex: none;
+        }
+
+        & .opie-chat-wrapper {
+          flex: 1;
+          min-height: 0;
+        }
+
+        & .opie-footer {
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          gap: var(--bb-grid-size-2);
+          padding: var(--bb-grid-size-2) var(--bb-grid-size-4)
+            var(--bb-grid-size-2) var(--bb-grid-size-3);
+          border-top: 1px solid var(--light-dark-n-95);
+
+          & bb-opie-avatar {
+            flex: 1 0 auto;
+          }
+
+          & #message {
+            margin-bottom: 0;
+          }
+        }
       }
 
       bb-app-controller {
@@ -565,7 +604,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     );
   }
 
-  #renderOriginalPrompt() {
+  #renderOriginalPrompt(minimized = false) {
     const prompt =
       this.sca.controller.editor.graph.graph?.metadata?.raw_intent ??
       this.sca.controller.editor.graph.graph?.metadata?.intent ??
@@ -574,6 +613,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
     return html`<bb-prompt-view
       .prompt=${prompt}
+      class=${classMap({ minimized })}
       ?inert=${this.#isInert()}
     ></bb-prompt-view>`;
   }
@@ -624,18 +664,39 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderMessage() {
-    const editable =
-      !this.sca.controller.editor.graph.readOnly || this.#viewType !== "editor";
-    return html`<div
-      ?disabled=${!editable}
-      id="message"
-      class="w-400 md-body-small sans-flex"
-    >
+    return html`<div id="message" class="w-400 md-body-small sans-flex">
       ${markdown(Strings.from("LABEL_DISCLAIMER_LITE"))}
     </div>`;
   }
 
   #renderControls() {
+    const isHydratingAgent = isHydrating(() =>
+      this.sca.env.flags.get("enableGraphEditorAgent")
+    );
+    const enableGraphEditorAgent =
+      !isHydratingAgent && this.sca.env.flags.get("enableGraphEditorAgent");
+
+    if (enableGraphEditorAgent) {
+      return html`<div id="controls" slot="slot-0" class="opie-mode">
+        ${[
+          this.#renderOriginalPrompt(true),
+          html`<bb-step-list-view
+            ?inert=${this.#isInert()}
+            lite
+            collapsible
+          ></bb-step-list-view>
+          <div class="opie-chat-wrapper">
+            <bb-chat-panel
+              mode="embedded"
+              ?inert=${this.#isInert()}
+            ></bb-chat-panel>
+          </div>
+          <div class="opie-footer">${this.#renderMessage()}</div>
+        </div>`,
+        ]}
+      </div>`;
+    }
+
     return html`<div id="controls" slot="slot-0">
       ${[
         this.#renderOriginalPrompt(),

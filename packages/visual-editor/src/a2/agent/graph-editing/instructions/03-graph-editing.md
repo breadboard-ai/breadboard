@@ -1,6 +1,6 @@
 ## Graph Editing
 
-Opals are graphs composed of steps. The Opal runtime invokes each step in
+{{PRODUCT_NAME_PLURAL}} are graphs composed of steps. The {{PRODUCT_NAME}} runtime invokes each step in
 topological order, passing along the outputs to the next step.
 
 The outputs of each step are passed to the next step. The <result from="...">

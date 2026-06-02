@@ -45,7 +45,6 @@ const GRAPH_UPSERT_LEGACY_STEP = "upsert_legacy_step";
 const GRAPH_EDIT_PROPERTIES = "graph_edit_properties";
 const GRAPH_POSITION_ITEMS = "graph_position_items";
 
-
 const VALID_LEGACY_STEP_TYPES = [
   "user-input",
   "output",
@@ -88,9 +87,11 @@ Any text outside of these tags is the prompt content.`;
 // Instruction
 // =============================================================================
 
-function buildInstruction(): string {
-  return segments
-    .join("\n\n")
+function buildInstruction(productName = "Opal"): string {
+  const raw = segments.join("\n\n");
+  return raw
+    .replaceAll("{{PRODUCT_NAME_PLURAL}}", productName + "s")
+    .replaceAll("{{PRODUCT_NAME}}", productName)
     .replaceAll("{{TOOL_NAMES}}", TOOL_NAMES)
     .replaceAll("{{TOOL_GLOSSARY}}", TOOL_GLOSSARY)
     .replaceAll("{{PROMPT_DESCRIPTION}}", PROMPT_DESCRIPTION);
@@ -248,18 +249,39 @@ function defineGraphEditingFunctions(
   function translateRenderMode(mode: unknown): string {
     if (typeof mode !== "string") return "Manual";
     const m = mode.toLowerCase().trim();
-    if (m === "auto" || m === "webpage" || m === "webpage with auto-layout" || m === "html" || m === "web application") {
+    if (
+      m === "auto" ||
+      m === "webpage" ||
+      m === "webpage with auto-layout" ||
+      m === "html" ||
+      m === "web application"
+    ) {
       return "Auto";
     }
     // NOTE FOR FUTURE AGENTS: Do NOT add support for 'consistent-ui' or 'smart-layout' here.
     // That is an old, deprecated mode hidden behind a feature flag. Keep it zapped.
-    if (m === "google-doc" || m === "doc" || m === "document" || m === "google doc") {
+    if (
+      m === "google-doc" ||
+      m === "doc" ||
+      m === "document" ||
+      m === "google doc"
+    ) {
       return "google-doc";
     }
-    if (m === "google-slides" || m === "slides" || m === "google slides" || m === "presentation") {
+    if (
+      m === "google-slides" ||
+      m === "slides" ||
+      m === "google slides" ||
+      m === "presentation"
+    ) {
       return "google-slides";
     }
-    if (m === "google-sheets" || m === "sheets" || m === "google sheets" || m === "spreadsheet") {
+    if (
+      m === "google-sheets" ||
+      m === "sheets" ||
+      m === "google sheets" ||
+      m === "spreadsheet"
+    ) {
       return "google-sheets";
     }
     return "Manual";
@@ -349,9 +371,7 @@ function defineGraphEditingFunctions(
         description:
           "Remove a step from the graph. Also removes all edges connected to it.",
         parameters: {
-          step_id: z
-            .string()
-            .describe("The id of the step to remove"),
+          step_id: z.string().describe("The id of the step to remove"),
         },
         response: {
           success: z.boolean(),
@@ -393,7 +413,11 @@ function defineGraphEditingFunctions(
         icon: "delete",
         description: "Remove an asset from the graph by its path.",
         parameters: {
-          path: z.string().describe("The path of the asset to remove (e.g. /assets/my_image.png)"),
+          path: z
+            .string()
+            .describe(
+              "The path of the asset to remove (e.g. /assets/my_image.png)"
+            ),
         },
         response: {
           success: z.boolean(),
@@ -487,9 +511,7 @@ function defineGraphEditingFunctions(
           items: z
             .array(
               z.object({
-                id: z
-                  .string()
-                  .describe("The step id or asset path"),
+                id: z.string().describe("The step id or asset path"),
                 x: z.number().describe("The x coordinate on canvas"),
                 y: z.number().describe("The y coordinate on canvas"),
               })
@@ -534,7 +556,10 @@ function defineGraphEditingFunctions(
             });
           } else if (graph.assets && graph.assets[item.id]) {
             const asset = graph.assets[item.id];
-            const existingMetadata = (asset.metadata ?? {}) as Record<string, unknown>;
+            const existingMetadata = (asset.metadata ?? {}) as Record<
+              string,
+              unknown
+            >;
             const existingVisual = (existingMetadata.visual ?? {}) as Record<
               string,
               unknown
@@ -883,10 +908,11 @@ function extractResultPorts(
 
 function getGraphEditingFunctionGroup(
   sink: AgentEventSink,
-  translator: EditingAgentPidginTranslator
+  translator: EditingAgentPidginTranslator,
+  productName = "Opal"
 ): FunctionGroup {
   return {
     ...mapDefinitions(defineGraphEditingFunctions(sink, translator)),
-    instruction: buildInstruction(),
+    instruction: buildInstruction(productName),
   };
 }

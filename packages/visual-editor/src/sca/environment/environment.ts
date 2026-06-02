@@ -48,6 +48,9 @@ interface AppEnvironment {
    */
   readonly flags: EnvironmentFlags;
 
+  /** The name of the application (e.g. 'Opal', 'Gem') */
+  readonly appName?: string;
+
   /** The origin URL of the host server (e.g. `https://opal.dev`). */
   readonly hostOrigin: URL;
   /** The environment name (e.g. "prod", "staging"), or undefined for local dev. */
@@ -91,6 +94,7 @@ function createEnvironment(
 
   return {
     flags: envFlags,
+    appName: config.appName || "Opal",
 
     // Deployment config
     hostOrigin: config.globalConfig.hostOrigin,
