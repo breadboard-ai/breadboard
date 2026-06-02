@@ -21,6 +21,7 @@ function makeRuntimeConfig(
 ): RuntimeConfig {
   return {
     globalConfig: {
+      appName: "Opal",
       hostOrigin: new URL("https://opal.example.com"),
       environmentName: "test",
       buildInfo: {
@@ -100,6 +101,7 @@ suite("createEnvironment", () => {
     const env = createEnvironment(config, testFlags);
     const keys = Object.keys(env).sort();
     assert.deepStrictEqual(keys, [
+      "appName",
       "buildInfo",
       "deploymentConfig",
       "domains",
