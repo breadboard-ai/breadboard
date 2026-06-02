@@ -246,10 +246,12 @@ class TestBuildSegmentsWithAssets:
             },
         }
         segments = _build_segments_from_inputs({}, config, TEXT_ASSET)
-        # Should have one text segment with the substituted prompt.
+        # Should have a text segment with the substituted prompt
+        # (plus the default system instruction segment).
         text_segments = [s for s in segments if s["type"] == "text"]
-        assert len(text_segments) == 1
-        assert "These are my notes." in text_segments[0]["text"]
+        prompt_segments = [s for s in text_segments if "my notes" in s["text"]]
+        assert len(prompt_segments) == 1
+        assert "These are my notes." in prompt_segments[0]["text"]
 
     def test_image_asset_produces_extra_segment(self):
         """Image assets produce both a text segment (empty sub) and an asset segment."""
@@ -261,9 +263,11 @@ class TestBuildSegmentsWithAssets:
             },
         }
         segments = _build_segments_from_inputs({}, config, IMAGE_ASSET)
+        # Prompt text segment + default SI segment.
         text_segments = [s for s in segments if s["type"] == "text"]
+        prompt_segments = [s for s in text_segments if "Describe" in s["text"]]
+        assert len(prompt_segments) == 1
         asset_segments = [s for s in segments if s["type"] == "asset"]
-        assert len(text_segments) == 1
         assert len(asset_segments) == 1
         assert asset_segments[0]["title"] == "Photo"
 

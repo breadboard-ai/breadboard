@@ -11,7 +11,9 @@ Only stdlib + typing — no external deps (synced to production).
 
 Handler types by phase:
 - ``passthrough_handler`` — returns inputs as outputs (output nodes)
-- ``text_gen_handler`` — stub for direct Gemini text generation
+- ``text_gen_handler`` — direct Gemini text generation
+- ``media_gen_handler`` — executeStep-based media generation
+  (image, audio, video, music)
 - ``agent_handler`` — full agent loop via ``run_agent()``
 """
 
@@ -27,6 +29,7 @@ from typing import Any, AsyncIterator, Callable, Coroutine
 from .backend_client import BackendClient
 from .conform_body import conform_body
 from .events import SUSPEND_TYPES, AgentEvent
+from .step_executor import execute_step, resolve_part_to_chunk, encode_base64
 
 __all__ = [
     "NodeSuspended",
@@ -34,6 +37,7 @@ __all__ = [
     "dispatch_handler",
     "passthrough_handler",
     "text_gen_handler",
+    "media_gen_handler",
     "input_handler",
     "agent_handler",
 ]
@@ -42,6 +46,15 @@ logger = logging.getLogger(__name__)
 
 # Default model — same as AGENT_MODEL in loop.py.
 DEFAULT_MODEL = "gemini-3-flash-preview"
+
+# Default system instruction for text generation — port of
+# defaultSystemInstruction() from system-instruction.ts.
+_DEFAULT_SYSTEM_INSTRUCTION = (
+    "You are working as part of an AI system, so no chit-chat "
+    "and no explaining what you're doing and why.\n"
+    'DO NOT start with "Okay", or "Alright" or any preambles. '
+    "Just the output, please."
+)
 
 @dataclass
 class NodeSuspended(Exception):
@@ -158,20 +171,38 @@ def _get_system_instruction(config: dict[str, Any]) -> str:
     """Extract system instruction text from config.
 
     Handles both:
-    - Simple string: ``{"systemInstruction": "Be helpful"}``
+    - Simple string: ``{"systemInstruction": "Do X"}``
     - LLMContent: ``{"b-system-instruction": {"parts": [{"text": "..."}]}}``
+
+    When no system instruction is present, falls back to the default
+    from ``system-instruction.ts#defaultSystemInstruction()``.
+
+    Always prepends the current date, matching
+    ``system-instruction.ts#createSystemInstruction()``.
     """
+    instruction = ""
+
     # Simple string format.
     simple = config.get("systemInstruction")
     if isinstance(simple, str):
-        return simple
+        instruction = simple
 
     # Real Breadboard LLMContent format.
-    llm_content = config.get("b-system-instruction")
-    if isinstance(llm_content, dict):
-        return _extract_text_from_content(llm_content)
+    if not instruction:
+        llm_content = config.get("b-system-instruction")
+        if isinstance(llm_content, dict):
+            instruction = _extract_text_from_content(llm_content)
 
-    return ""
+    # Default — port of defaultSystemInstruction() from system-instruction.ts.
+    if not instruction:
+        instruction = _DEFAULT_SYSTEM_INSTRUCTION
+
+    # Prepend date — port of createSystemInstruction() from
+    # system-instruction.ts.
+    from datetime import datetime
+    now = datetime.now()
+    date_str = now.strftime("%B %-d, %Y, %-I:%M %p")
+    return f"\nToday is {date_str}\n    \n{instruction}"
 
 
 def _get_prompt(config: dict[str, Any]) -> str:
@@ -211,6 +242,10 @@ async def dispatch_handler(
             mode = _get_mode(config)
             if mode == "agent" and deps and deps.run_agent_fn:
                 return await agent_handler(inputs, config, deps)
+            if mode in MEDIA_MODES:
+                return await media_gen_handler(
+                    inputs, config, deps, MEDIA_MODES[mode],
+                )
             return await text_gen_handler(inputs, config, deps)
         case _:
             # Default passthrough for unknown types.
@@ -404,6 +439,256 @@ async def text_gen_handler(
             }
         ],
     }
+
+
+# ---------------------------------------------------------------------------
+# Media generation modes
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class MediaModeConfig:
+    """Per-mode config for executeStep-based media generation.
+
+    Each media mode (image, audio, video, music) calls the same
+    backend executeStep API with different parameters.
+    """
+
+    model_api: str
+    step_name: str
+    output_key: str
+    prompt_input_key: str
+
+
+# Mode registry — maps mode ID to executeStep config.
+# Mirrors the ALL_MODES entries in generate/main.ts.
+MEDIA_MODES: dict[str, MediaModeConfig] = {
+    "image": MediaModeConfig(
+        model_api="ai_image_tool",
+        step_name="EditImage",
+        output_key="edited_image",
+        prompt_input_key="input_instruction",
+    ),
+    "image-pro": MediaModeConfig(
+        model_api="ai_image_tool",
+        step_name="EditImage",
+        output_key="edited_image",
+        prompt_input_key="input_instruction",
+    ),
+    "audio": MediaModeConfig(
+        model_api="tts",
+        step_name="GenerateAudio",
+        output_key="generated_speech",
+        prompt_input_key="text_to_speak",
+    ),
+    "video": MediaModeConfig(
+        model_api="generate_video",
+        step_name="GenerateVideo",
+        output_key="generated_video",
+        prompt_input_key="text_instruction",
+    ),
+    "music": MediaModeConfig(
+        model_api="generate_music",
+        step_name="GenerateMusic",
+        output_key="generated_music",
+        prompt_input_key="prompt",
+    ),
+}
+
+
+async def media_gen_handler(
+    inputs: dict[str, list[Any]],
+    config: dict[str, Any],
+    deps: NodeHandlerDeps | None,
+    mode_config: MediaModeConfig,
+) -> dict[str, Any]:
+    """Media generation handler (image, audio, video, music).
+
+    All media modes go through the One Platform ``/v1beta1/executeStep``
+    API with mode-specific ``planStep`` parameters.
+
+    Port of ``image-editor.ts``, ``audio-generator/main.ts``,
+    ``video-generator/main.ts``, and ``music-generator/main.ts`` —
+    all of which funnel into ``step-executor.ts``.
+    """
+    # Build the text prompt from template substitution + upstream context.
+    # Note: we use _build_segments_from_inputs for template substitution
+    # and context extraction, but SKIP system instruction segments.
+    # The TS media generators don't include system instruction — it's only
+    # for Gemini text/agent modes. Including it causes TTS failures
+    # ("Model tried to generate text, but it should only be used for TTS").
+    assets = deps.assets if deps else None
+    segments = _build_segments_from_inputs(inputs, config, assets)
+
+    # Filter: skip the first segment if it's the system instruction.
+    # _build_segments_from_inputs prepends system instruction as the first
+    # text segment when present in config.
+    system_instruction = _get_system_instruction(config)
+    prompt_parts = []
+    for seg in segments:
+        if seg.get("type") == "text" and seg.get("text"):
+            # Skip system instruction (exact match with first segment).
+            if seg["text"] == system_instruction:
+                system_instruction = None  # Only skip once.
+                continue
+            prompt_parts.append(seg["text"])
+    prompt = "\n\n".join(prompt_parts).strip()
+
+    if not prompt:
+        return {
+            "context": [
+                {"role": "model", "parts": [{"text": ""}]},
+            ],
+        }
+
+    # Build execution_inputs.
+    execution_inputs: dict[str, Any] = {
+        mode_config.prompt_input_key: {
+            "chunks": [{
+                "mimetype": "text/plain",
+                "data": encode_base64(prompt),
+            }],
+        },
+    }
+
+    input_parameters = [mode_config.prompt_input_key]
+
+    # Image/video modes: collect reference images from upstream context
+    # and asset segments for i2i/i2v support.
+    if mode_config.model_api in ("ai_image_tool", "generate_video"):
+        image_chunks = await _collect_reference_image_chunks(
+            inputs, segments, deps,
+        )
+        if image_chunks:
+            ref_key = (
+                "input_image"
+                if mode_config.model_api == "ai_image_tool"
+                else "reference_image"
+            )
+            execution_inputs[ref_key] = {"chunks": image_chunks}
+            input_parameters.append(ref_key)
+
+        # Aspect ratio (image and video).
+        aspect_ratio = config.get("p-aspect-ratio", "1:1")
+        execution_inputs["aspect_ratio_key"] = {
+            "chunks": [{
+                "mimetype": "text/plain",
+                "data": encode_base64(aspect_ratio),
+            }],
+        }
+
+    # Audio mode: voice selection.
+    if mode_config.model_api == "tts":
+        voice = config.get("voice", "en-US-female")
+        execution_inputs["voice_key"] = {
+            "chunks": [{
+                "mimetype": "text/plain",
+                "data": encode_base64(voice),
+            }],
+        }
+
+    # Build executeStep request body.
+    model_name = config.get("p-model-name", config.get("model", ""))
+    body: dict[str, Any] = {
+        "planStep": {
+            "stepName": mode_config.step_name,
+            "modelApi": mode_config.model_api,
+            "inputParameters": input_parameters,
+            "systemPrompt": "",
+            "output": mode_config.output_key,
+        },
+        "execution_inputs": execution_inputs,
+    }
+    if model_name:
+        body["planStep"]["options"] = {"modelName": model_name}
+
+    backend = deps.backend if deps else None
+    if not backend:
+        # No backend — stub response (unit tests).
+        return {
+            "context": [
+                {"role": "model", "parts": [{"text": "[generated media]"}]},
+            ],
+        }
+
+    result = await execute_step(body, backend=backend)
+    # result is {chunks: [LLMContent, ...], requestedModel?, executedModel?}
+    chunks = result.get("chunks", [])
+    if not chunks:
+        return {
+            "context": [
+                {"role": "model", "parts": [{"text": ""}]},
+            ],
+        }
+
+    return {"context": chunks}
+
+
+async def _collect_reference_image_chunks(
+    inputs: dict[str, list[Any]],
+    segments: list[dict[str, Any]],
+    deps: NodeHandlerDeps | None,
+) -> list[dict[str, Any]]:
+    """Collect reference image chunks for i2i/i2v modes.
+
+    Extracts inline image data and storedData references from upstream
+    context and asset segments. Mirrors ``extractMediaData`` +
+    ``driveFileToBlob`` + ``toGcsAwareChunk`` from image-utils.ts.
+    """
+    backend = deps.backend if deps else None
+    chunks: list[dict[str, Any]] = []
+
+    # Collect from upstream input context.
+    for values in inputs.values():
+        for value in values:
+            items = value if isinstance(value, list) else [value]
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                for part in item.get("parts", []):
+                    chunk = await _part_to_image_chunk(part, backend)
+                    if chunk:
+                        chunks.append(chunk)
+
+    # Collect from asset segments.
+    for seg in segments:
+        if seg.get("type") != "asset" or not seg.get("content"):
+            continue
+        content = seg["content"]
+        for part in content.get("parts", []):
+            chunk = await _part_to_image_chunk(part, backend)
+            if chunk:
+                chunks.append(chunk)
+
+    return chunks
+
+
+async def _part_to_image_chunk(
+    part: dict[str, Any],
+    backend: BackendClient | None,
+) -> dict[str, Any] | None:
+    """Convert a single LLMContent part to an executeStep image chunk.
+
+    Returns None for non-image parts (text, etc.).
+    """
+    if "inlineData" in part:
+        inline = part["inlineData"]
+        mime = inline.get("mimeType", "")
+        if mime.startswith("image/"):
+            return {
+                "mimetype": mime,
+                "data": inline.get("data", ""),
+            }
+        return None
+
+    if "storedData" in part and backend:
+        try:
+            return await resolve_part_to_chunk(part, backend=backend)
+        except Exception as exc:
+            logger.warning("Failed to resolve storedData for media: %s", exc)
+            return None
+
+    return None
 
 
 async def agent_handler(

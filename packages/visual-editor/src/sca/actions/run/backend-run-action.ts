@@ -41,7 +41,9 @@ import {
   createAppScreen,
   tickScreenProgress,
 } from "../../utils/app-screen.js";
+import { toLLMContentArray } from "../../utils/common.js";
 import { makeAction } from "../binder.js";
+import type { AppController } from "../../controller/controller.js";
 import { Utils } from "../../utils.js";
 import {
   handleInputRequested,
@@ -49,7 +51,8 @@ import {
 
 const LABEL = "Backend Run";
 
-export { startBackendRun };
+export { startBackendRun, processEvent };
+export type { ProcessResult, NodeAgentBridge };
 
 export const bind = makeAction();
 
@@ -365,7 +368,7 @@ type ProcessResult = "continue" | "done" | "suspend";
  */
 function processEvent(
   event: GraphRunEvent,
-  controller: typeof bind.controller,
+  controller: AppController,
   bridges: Map<string, NodeAgentBridge>
 ): ProcessResult {
   switch (event.type) {
@@ -404,9 +407,24 @@ function processEvent(
       const bridge = bridges.get(nodeId);
       const existing = controller.run.main.console.get(nodeId);
 
-      // Populate outputs from the captured agent outcomes.
-      if (existing && bridge?.outcomes) {
-        existing.output.set("context", bridge.outcomes);
+      // Populate outputs: agent-mode nodes have bridge.outcomes from
+      // agentEvent→complete; non-agent nodes (text gen, media gen) carry
+      // outputs directly on the nodeEnd event.
+      if (existing) {
+        if (bridge?.outcomes) {
+          existing.output.set("context", bridge.outcomes);
+        } else if (event.outputs) {
+          const inspectable = controller.editor.graph.get()?.graphs.get("");
+          const node = inspectable?.nodeById(nodeId);
+          const outputSchema = node?.currentDescribe()?.outputSchema ?? {};
+          const { products } = toLLMContentArray(
+            outputSchema as Schema,
+            event.outputs as OutputValues
+          );
+          for (const [name, product] of Object.entries(products)) {
+            existing.output.set(name, product as LLMContent);
+          }
+        }
       }
 
       if (existing) {
@@ -432,7 +450,44 @@ function processEvent(
           };
           screen.outputs.set(nodeId, output);
           screen.last = output;
+        } else if (event.outputs) {
+          const inspectable = controller.editor.graph.get()?.graphs.get("");
+          const node = inspectable?.nodeById(nodeId);
+          const outputSchema = node?.currentDescribe()?.outputSchema;
+          const output: AppScreenOutput = {
+            output: event.outputs as OutputValues,
+            schema: outputSchema,
+          };
+          screen.outputs.set(nodeId, output);
+          screen.last = output;
         }
+        screen.status = "complete";
+      }
+
+      // Clean up bridge.
+      bridges.delete(nodeId);
+      return "continue";
+    }
+
+    case "nodeError": {
+      const { nodeId, error } = event;
+      const existing = controller.run.main.console.get(nodeId);
+
+      if (existing) {
+        controller.run.main.setConsoleEntry(nodeId, {
+          ...existing,
+          status: { status: "failed", errorMessage: error },
+          error: { message: error },
+          completed: true,
+        });
+      }
+      controller.run.renderer.setNodeState(nodeId, {
+        status: "failed",
+        errorMessage: error,
+      });
+
+      const screen = controller.run.screen.screens.get(nodeId);
+      if (screen) {
         screen.status = "complete";
       }
 
@@ -501,7 +556,7 @@ function createBridge(
   nodeId: string,
   consoleEntry: ConsoleEntry | undefined,
   appScreen: AppScreen | undefined,
-  controller: typeof bind.controller,
+  controller: AppController,
   bridges: Map<string, NodeAgentBridge>
 ): void {
   const consumer = new AgentEventConsumer();
