@@ -316,5 +316,28 @@ describe("graphOverviewYaml", () => {
     ok(yaml.includes("x: 50"));
     ok(yaml.includes("y: 76"));
   });
+
+  it("includes YAML comment for unpositioned assets", () => {
+    const translator = new EditingAgentPidginTranslator();
+    const yaml = graphOverviewYaml(
+      {
+        title: "Test Graph",
+        assets: {
+          "/assets/doc.txt": {
+            metadata: {
+              title: "My Unpositioned Doc",
+              type: "file",
+            },
+            data: [],
+          },
+        },
+      },
+      [],
+      [],
+      translator
+    );
+
+    ok(yaml.includes("# Newly Added. TODO: Position this asset"));
+  });
 });
 
