@@ -6,7 +6,7 @@
 
 import assert from "node:assert";
 import { suite, test } from "node:test";
-import type { LLMContent } from "@breadboard-ai/types";
+import type { AssetMetadata, LLMContent } from "@breadboard-ai/types";
 import * as InputAsset from "../../../../src/sca/actions/input-asset/input-asset-actions.js";
 import { AppController } from "../../../../src/sca/controller/controller.js";
 import { AppServices } from "../../../../src/sca/services/services.js";
@@ -42,11 +42,77 @@ suite("InputAsset Actions", () => {
         parts: [{ inlineData: { data: "base64data", mimeType: "image/png" } }],
       };
 
-      await InputAsset.addFromModal(asset);
+      const metadata: AssetMetadata = {
+        title: "Image Attachment",
+        type: "file",
+        subType: "image/png",
+      };
+
+      await InputAsset.addFromModal(asset, metadata);
 
       assert.strictEqual(inputAssets.assets.length, 1);
       assert.strictEqual(inputAssets.assets[0].metadata?.title, "Image Attachment");
       assert.strictEqual(inputAssets.assets[0].data[0], asset);
+    });
+
+    test("throws an error when adding raw LLMContent without metadata", async () => {
+      const inputAssets = makeInputAssetController();
+      bindWithController(inputAssets);
+
+      const asset: LLMContent = {
+        role: "user",
+        parts: [{ text: "missing metadata" }],
+      };
+
+      await assert.rejects(
+        InputAsset.addFromModal(asset),
+        /Metadata is required when adding raw LLMContent assets/
+      );
+    });
+
+    test("adds an asset with explicit AssetMetadata", async () => {
+      const inputAssets = makeInputAssetController();
+      bindWithController(inputAssets);
+
+      const asset: LLMContent = {
+        role: "user",
+        parts: [{ inlineData: { data: "base64", mimeType: "application/pdf" } }],
+      };
+
+      const metadata: AssetMetadata = {
+        title: "Report.pdf",
+        type: "file",
+        subType: "application/pdf",
+      };
+
+      await InputAsset.addFromModal(asset, metadata);
+
+      assert.strictEqual(inputAssets.assets.length, 1);
+      assert.strictEqual(inputAssets.assets[0].metadata?.title, "Report.pdf");
+      assert.strictEqual(inputAssets.assets[0].metadata?.subType, "application/pdf");
+      assert.strictEqual(inputAssets.assets[0].metadata?.type, "file");
+      assert.ok(inputAssets.assets[0].path.endsWith(".pdf"));
+    });
+
+    test("derives correct file extension from subType fallback", async () => {
+      const inputAssets = makeInputAssetController();
+      bindWithController(inputAssets);
+
+      const asset: LLMContent = {
+        role: "user",
+        parts: [{ inlineData: { data: "csvdata", mimeType: "text/csv" } }],
+      };
+
+      const metadata: AssetMetadata = {
+        title: "data",
+        type: "file",
+        subType: "text/csv",
+      };
+
+      await InputAsset.addFromModal(asset, metadata);
+
+      assert.strictEqual(inputAssets.assets.length, 1);
+      assert.ok(inputAssets.assets[0].path.endsWith(".csv"));
     });
 
     test("adds multiple assets sequentially", async () => {
@@ -62,8 +128,11 @@ suite("InputAsset Actions", () => {
         parts: [{ inlineData: { data: "img", mimeType: "image/jpeg" } }],
       };
 
-      await InputAsset.addFromModal(a1);
-      await InputAsset.addFromModal(a2);
+      const m1: AssetMetadata = { title: "first", type: "file" };
+      const m2: AssetMetadata = { title: "img", type: "file", subType: "image/jpeg" };
+
+      await InputAsset.addFromModal(a1, m1);
+      await InputAsset.addFromModal(a2, m2);
 
       assert.strictEqual(inputAssets.assets.length, 2);
       assert.strictEqual(inputAssets.assets[0].data[0], a1);

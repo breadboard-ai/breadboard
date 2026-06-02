@@ -17,7 +17,7 @@ import {
   OverlayDismissedEvent,
 } from "../../../events/events.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
+import { AssetMetadata, LLMContent } from "@breadboard-ai/types";
 import { DrawableInput } from "../drawable/drawable.js";
 import { GoogleDriveFileId } from "../../google-drive/google-drive-file-id.js";
 import { WebcamVideoInput } from "../webcam/webcam-video.js";
@@ -207,8 +207,6 @@ export class AddAssetModal extends LitElement {
       "input,select,textarea,bb-drawable-input,bb-webcam-video-input,bb-google-drive-file-id"
     );
 
-    let canSubmit = true;
-    let item: LLMContent | null = null;
     for (const input of inputs) {
       const isPlatformInputField = !(
         input instanceof DrawableInput ||
@@ -217,10 +215,10 @@ export class AddAssetModal extends LitElement {
       );
       if (isPlatformInputField && !input.checkValidity()) {
         input.reportValidity();
-        canSubmit = false;
         continue;
       }
 
+      let item: LLMContent;
       switch (this.assetType) {
         case "youtube": {
           if (!isPlatformInputField) {
@@ -233,6 +231,13 @@ export class AddAssetModal extends LitElement {
               { fileData: { fileUri: input.value, mimeType: "video/mp4" } },
             ],
           };
+          const metadata: AssetMetadata = {
+            title: "YouTube Video",
+            type: "file",
+            subType: "video/mp4",
+          };
+
+          this.dispatchEvent(new AddAssetEvent(item, metadata));
           break;
         }
 
@@ -252,6 +257,13 @@ export class AddAssetModal extends LitElement {
               },
             ],
           };
+          const metadata: AssetMetadata = {
+            title: "Drawing",
+            type: "file",
+            subType: input.type,
+          };
+
+          this.dispatchEvent(new AddAssetEvent(item, metadata));
           break;
         }
 
@@ -272,6 +284,13 @@ export class AddAssetModal extends LitElement {
                 },
               ],
             };
+            const metadata: AssetMetadata = {
+              title: "Webcam Video",
+              type: "file",
+              subType: input.type,
+            };
+
+            this.dispatchEvent(new AddAssetEvent(item, metadata));
           } catch (err) {
             // The user hasn't recorded anything.
             console.warn(err);
@@ -296,6 +315,13 @@ export class AddAssetModal extends LitElement {
               },
             ],
           };
+          const metadata: AssetMetadata = {
+            title: input.metadata?.docName || input.docName || "Google Drive File",
+            type: "file",
+            subType: input.value.mimeType,
+          };
+
+          this.dispatchEvent(new AddAssetEvent(item, metadata));
           break;
         }
 
@@ -304,14 +330,14 @@ export class AddAssetModal extends LitElement {
             break;
           }
 
-          if (!input.files) {
+          if (!input.files || input.files.length === 0) {
             break;
           }
 
-          const fileData: Promise<InlineDataCapabilityPart>[] = [
-            ...input.files,
-          ].map((file) => {
-            return new Promise((resolve, reject) => {
+          for (const file of [...input.files]) {
+            const dataUrlPromise = new Promise<{
+              inlineData: { data: string; mimeType: string };
+            }>((resolve, reject) => {
               const fileReader = new FileReader();
               fileReader.onloadend = () => {
                 const premable = `data:${file.type};base64,`.length;
@@ -327,24 +353,26 @@ export class AddAssetModal extends LitElement {
               fileReader.onerror = () => reject();
               fileReader.readAsDataURL(file);
             });
-          });
 
-          const parts = await Promise.all(fileData);
-          item = {
-            role: "user",
-            parts,
-          };
+            const part = await dataUrlPromise;
+            const singleItem: LLMContent = {
+              role: "user",
+              parts: [part],
+            };
+
+            const metadata: AssetMetadata = {
+              title: file.name,
+              type: "file",
+              subType: file.type,
+            };
+
+            this.dispatchEvent(new AddAssetEvent(singleItem, metadata));
+          }
 
           break;
         }
       }
     }
-
-    if (!canSubmit || !item) {
-      return;
-    }
-
-    this.dispatchEvent(new AddAssetEvent(item));
   }
 
   protected updated(): void {

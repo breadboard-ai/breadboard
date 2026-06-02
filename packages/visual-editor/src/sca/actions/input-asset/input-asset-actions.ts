@@ -16,7 +16,7 @@
  * that requires Services or cross-controller coordination.
  */
 
-import type { LLMContent } from "@breadboard-ai/types";
+import type { AssetMetadata, LLMContent } from "@breadboard-ai/types";
 import { NOTEBOOKLM_MIMETYPE, toNotebookLmUrl } from "@breadboard-ai/utils";
 
 import { makeAction } from "../binder.js";
@@ -38,37 +38,46 @@ const bind = makeAction();
 const addFromModal = asAction(
   "InputAsset.addFromModal",
   { mode: ActionMode.Immediate },
-  async (assetOrContent: GraphAssetDescriptor | LLMContent): Promise<void> => {
+  async (
+    assetOrContent: GraphAssetDescriptor | LLMContent,
+    metadata?: AssetMetadata
+  ): Promise<void> => {
     const { controller } = bind;
 
     let descriptor: GraphAssetDescriptor;
     if ("data" in assetOrContent && "path" in assetOrContent) {
       descriptor = assetOrContent as GraphAssetDescriptor;
     } else {
+      if (!metadata) {
+        throw new Error("Metadata is required when adding raw LLMContent assets");
+      }
       const content = assetOrContent as LLMContent;
-      let title = "Attachment";
-      
-      // Attempt to infer a friendly title from the parts
-      for (const part of content.parts) {
-        if ("inlineData" in part && part.inlineData.mimeType) {
-          if (part.inlineData.mimeType.startsWith("image/")) title = "Image Attachment";
-          else if (part.inlineData.mimeType.startsWith("audio/")) title = "Audio Attachment";
-          else if (part.inlineData.mimeType.startsWith("video/")) title = "Video Attachment";
-          else if (part.inlineData.mimeType.includes("pdf")) title = "PDF Document";
-          else if (part.inlineData.mimeType.startsWith("text/")) title = "Text File";
-          break;
-        } else if ("storedData" in part) {
-          title = "Stored Attachment";
-          break;
+
+      // Infer extension from subType or title
+      let ext = "webp";
+      const mime = (metadata.subType || "").toLowerCase();
+      if (mime.includes("png")) ext = "png";
+      else if (mime.includes("jpeg") || mime.includes("jpg")) ext = "jpg";
+      else if (mime.includes("pdf")) ext = "pdf";
+      else if (mime.includes("mp4")) ext = "mp4";
+      else if (mime.includes("webm")) ext = "webm";
+      else if (mime.includes("csv")) ext = "csv";
+      else if (mime.includes("html")) ext = "html";
+      else if (mime.includes("json")) ext = "json";
+      else if (mime.includes("text/plain") || mime.includes("text/"))
+        ext = "txt";
+
+      if (metadata.title && metadata.title.includes(".")) {
+        const parts = metadata.title.split(".");
+        const last = parts[parts.length - 1].toLowerCase();
+        if (last.length >= 1 && last.length <= 4) {
+          ext = last;
         }
       }
 
       descriptor = {
-        metadata: {
-          title,
-          type: "file",
-        },
-        path: `asset-${globalThis.crypto.randomUUID().slice(0, 8)}.webp`,
+        metadata,
+        path: `asset-${globalThis.crypto.randomUUID().slice(0, 8)}.${ext}`,
         data: [content],
       };
     }

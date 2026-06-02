@@ -5,6 +5,7 @@
  */
 
 import type {
+  AssetMetadata,
   GraphIdentifier,
   GraphMetadata,
   InspectablePort,
@@ -1039,7 +1040,10 @@ export class AddAssetRequestEvent extends Event {
 export class AddAssetEvent extends Event {
   static eventName = "bbaddasset";
 
-  constructor(public readonly asset: LLMContent) {
+  constructor(
+    public readonly asset: LLMContent,
+    public readonly metadata?: AssetMetadata
+  ) {
     super(AddAssetEvent.eventName, { ...eventInit });
   }
 }
