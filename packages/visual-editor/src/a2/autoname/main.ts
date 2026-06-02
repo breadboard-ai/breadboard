@@ -5,7 +5,7 @@
  */
 
 import { GeminiPrompt } from "../a2/gemini-prompt.js";
-import { defaultSafetySettings } from "../a2/gemini.js";
+import { defaultSafetySettings, MODEL_ALIAS_TEXT_LITE } from "../a2/gemini.js";
 import { err, ok } from "../a2/utils.js";
 
 import type { AutonameMode, Arguments } from "./types.js";
@@ -54,7 +54,7 @@ async function invoke(
     return { context: cantAutoname() };
   }
   const naming = await new GeminiPrompt(moduleArgs, {
-    model: "gemini-2.5-flash-lite",
+    model: MODEL_ALIAS_TEXT_LITE,
     body: {
       contents: modeHandler.prompt(),
       safetySettings: defaultSafetySettings(),

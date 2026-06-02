@@ -18,6 +18,7 @@ import { renderConsistentUI } from "./render-consistent-ui.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { Params } from "./common.js";
 import { isLLMContent, isLLMContentArray } from "../../data/common.js";
+
 import {
   DocEditMode,
   DocOutputName,
@@ -33,8 +34,6 @@ import {
 export { invoke as default, describe };
 
 const MANUAL_MODE = "Manual layout";
-const FLASH_MODE = "Webpage with auto-layout by 2.5 Flash";
-const PRO_MODE = "Webpage with auto-layout by 2.5 Pro";
 
 const THROW_ERROR_MARKER = "throw_error ";
 
@@ -54,33 +53,6 @@ type Mode = {
   icon: string;
 };
 
-type Model = {
-  id: string;
-  title: string;
-  description: string;
-  modelName: string;
-};
-
-const MODELS: Model[] = [
-  {
-    id: "gemini-flash",
-    title: "Gemini 3.0 Flash",
-    description: "Best for coding simple, static displays",
-    modelName: "gemini-3-flash-preview",
-  },
-  {
-    id: "gemini-flash-lite",
-    title: "Gemini 3.1 Flash Lite",
-    description: "Best for simple speedy displays",
-    modelName: "gemini-3.1-flash-lite",
-  },
-  {
-    id: "gemini-pro",
-    title: "Gemini 3.1 Pro",
-    description: "Best for coding complex or interactive displays",
-    modelName: "gemini-3.1-pro-preview",
-  },
-];
 
 const MODES: Mode[] = [
   {
@@ -133,11 +105,6 @@ function getMode(modeId: string | undefined): Mode {
   return renderModeMap.get(modeId || "Manual") || MODES[0];
 }
 
-const modelMap = new Map(MODELS.map((model) => [model.id, model]));
-
-function getModel(modelType: string | undefined): Model {
-  return modelMap.get(modelType || "gemini-flash") || MODELS[0];
-}
 
 function defaultSystemInstruction(): LLMContent {
   return llm`You are a skilled web developer specializing in creating intuitive and visually appealing HTML web pages based on user instructions and data. Your task is to generate a valid HTML webpage that will be rendered in an iframe. The generated code must be valid and functional HTML with JavaScript and CSS embedded inline within <script> and <style> tags respectively. Return only the code, and open the HTML codeblock with the literal string '\`\`\`html'. Render content as a clean, well-structured webpage, paying careful attention to user instructions. Use a responsive or mobile-friendly layout whenever possible and minimize unnecessary padding or margins.`.asContent();
@@ -147,7 +114,6 @@ type InvokeInputs = {
   text?: LLMContent;
   "p-render-mode": string;
   "b-system-instruction"?: LLMContent;
-  "b-render-model-name": string;
   "b-doc-title"?: string;
   [DocOutputName.EditMode]?: DocEditMode;
   [DocOutputName.WriteMode]?: DocWriteMode;
@@ -324,7 +290,6 @@ async function invoke(
     text,
     "p-render-mode": renderMode,
     "b-system-instruction": systemInstruction,
-    "b-render-model-name": modelType,
     "b-doc-title": googleDocTitle,
     [DocOutputName.EditMode]: docEditMode,
     [DocOutputName.WriteMode]: docWriteMode,
@@ -336,7 +301,6 @@ async function invoke(
   }: InvokeInputs,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<InvokeOutputs>> {
-  let { modelName } = getModel(modelType);
   const { renderType } = getMode(renderMode);
 
   if (!text) {
@@ -350,14 +314,7 @@ async function invoke(
   }
 
   const context = mergeContent([substituting], "user");
-  // If the step uses one of the deprecated modes that encodes model, trust this.
-  if (renderMode == FLASH_MODE) {
-    modelName = "gemini-3.1-flash-lite";
-  } else if (renderMode == PRO_MODE) {
-    modelName = "gemini-2.5-pro";
-  }
   console.log("Rendering with mode: ", renderType);
-  console.log("Rendering with model: ", modelName);
   let out = context;
   switch (renderType) {
     case "Manual": {
@@ -381,8 +338,7 @@ async function invoke(
         moduleArgs,
         systemText,
         [context],
-        renderType,
-        modelName
+        renderType
       );
       if (!ok(webPage)) {
         console.warn(
@@ -459,13 +415,6 @@ function advancedSettings(
           behavior: ["llm-content", "config", "hint-advanced"],
           title: "System Instruction",
           description: "The system instruction used for auto-layout",
-        },
-        "b-render-model-name": {
-          type: "string",
-          enum: MODELS,
-          behavior: ["llm-content", "config", "hint-advanced"],
-          title: "Model",
-          description: "The model to use for auto-generating display code",
         },
       };
     case "GoogleDoc": {

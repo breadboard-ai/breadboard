@@ -13,6 +13,7 @@ import {
 } from "@breadboard-ai/types";
 import { isStoredData, ok } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { MODEL_ALIAS_TEXT_LITE } from "./gemini.js";
 import { A2UI_SCHEMA } from "./au2ui-schema.js";
 import { GeminiPrompt } from "./gemini-prompt.js";
 import { createReporter } from "../agent/progress-work-item.js";
@@ -177,7 +178,7 @@ async function renderConsistentUI(
   });
 
   const prompt = new GeminiPrompt(moduleArgs, {
-    model: "gemini-3.1-flash-lite",
+    model: MODEL_ALIAS_TEXT_LITE,
     body: {
       contents: [data],
       systemInstruction: createFullSystemInstruction(systemInstruction),

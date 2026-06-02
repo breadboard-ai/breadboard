@@ -16,8 +16,7 @@ async function callGenWebpage(
   moduleArgs: A2ModuleArgs,
   instruction: string,
   content: LLMContent[],
-  _renderMode: string,
-  modelName: string
+  _renderMode: string
 ): Promise<Outcome<LLMContent>> {
   // If the content already contains HTML inlineData, pass it through
   // without invoking webpage generation.
@@ -29,5 +28,5 @@ async function callGenWebpage(
     }
   }
 
-  return executeWebpageStream(moduleArgs, instruction, content, modelName);
+  return executeWebpageStream(moduleArgs, instruction, content);
 }

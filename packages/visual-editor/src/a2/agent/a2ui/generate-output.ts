@@ -10,6 +10,7 @@ import {
   GeminiSchema,
   generateContent,
   GenerationConfig,
+  MODEL_ALIAS_TEXT_FLASH,
 } from "../../a2/gemini.js";
 import { llm } from "../../a2/utils.js";
 import { A2ModuleArgs } from "../../runnable-module-factory.js";
@@ -57,7 +58,7 @@ ${commonInstruction}`.asContent();
   });
   if (!ok(body)) return body;
   const generating = await generateContent(
-    "gemini-flash-latest",
+    MODEL_ALIAS_TEXT_FLASH,
     body,
     moduleArgs
   );
@@ -97,7 +98,7 @@ ${commonInstruction}`.asContent();
   });
   if (!ok(body)) return body;
   const generating = await generateContent(
-    "gemini-flash-latest",
+    MODEL_ALIAS_TEXT_FLASH,
     body,
     moduleArgs
   );
