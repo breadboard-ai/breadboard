@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, css, html, type PropertyValues } from "lit";
+import { LitElement, css, html, nothing, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import * as Styles from "../../styles/styles.js";
@@ -54,6 +54,9 @@ export class ExpandingTextarea extends LitElement {
 
   @property({ reflect: true, type: Boolean })
   accessor isPopulated = false;
+
+  @property({ type: Boolean })
+  accessor showSubmitButton = true;
 
   #measure = createRef<HTMLElement>();
   #textarea = createRef<HTMLTextAreaElement>();
@@ -245,16 +248,18 @@ export class ExpandingTextarea extends LitElement {
           ></div>
         </div>
         <slot name="mic"></slot>
-        <button
-          ?disabled=${this.disabled}
-          id="submit"
-          aria-label="Submit"
-          @click=${this.#submit}
-        >
-          <slot name="submit">
-            <span class="g-icon">spark</span>
-          </slot>
-        </button>
+        ${this.showSubmitButton
+          ? html`<button
+              ?disabled=${this.disabled}
+              id="submit"
+              aria-label="Submit"
+              @click=${this.#submit}
+            >
+              <slot name="submit">
+                <span class="g-icon">spark</span>
+              </slot>
+            </button>`
+          : nothing}
       </div>
     `;
   }

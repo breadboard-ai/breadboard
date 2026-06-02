@@ -20,6 +20,9 @@ export class OpieAvatar extends SignalWatcher(LitElement) {
   @property({ type: Boolean, reflect: true })
   accessor inverted = false;
 
+  @property({ type: Boolean, reflect: true })
+  accessor supportsHover = true;
+
   @property({ type: Boolean, reflect: true, attribute: "static" })
   accessor isStatic = false;
 
@@ -75,7 +78,7 @@ export class OpieAvatar extends SignalWatcher(LitElement) {
         border-color 0.2s ease;
     }
 
-    :host(:hover)::after {
+    :host([supportsHover]:hover)::after {
       opacity: 1;
       border-color: var(--light-dark-n-50);
     }
@@ -195,8 +198,8 @@ export class OpieAvatar extends SignalWatcher(LitElement) {
     }
 
     :host([mode="hero"]) .eyes {
-      gap: 7px;
-      margin-top: 16px;
+      gap: 5px;
+      margin-top: 12px;
     }
 
     :host([mode="hero"]) .eyes.left {
@@ -208,8 +211,8 @@ export class OpieAvatar extends SignalWatcher(LitElement) {
     }
 
     :host([mode="hero"]) .eye {
-      width: 7px;
-      height: 14px;
+      width: 6px;
+      height: 12px;
       border-radius: 3px;
     }
   `;
