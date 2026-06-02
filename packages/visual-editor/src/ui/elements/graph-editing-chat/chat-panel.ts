@@ -730,7 +730,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
         this.#showAddAssetModal = false;
         this.#addAssetType = null;
         this.#allowedMimeTypes = null;
-        this.sca.actions.inputAsset.addFromModal(evt.asset);
+        this.sca.actions.inputAsset.addFromModal(evt.asset, evt.metadata);
         this.requestUpdate();
       }}
     ></bb-add-asset-modal>`;
