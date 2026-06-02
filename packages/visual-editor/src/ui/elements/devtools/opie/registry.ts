@@ -7,6 +7,7 @@ import { renderWaitForUserInput } from "./renderers/wait-for-user-input.js";
 import { renderGraphGetOverview } from "./renderers/graph-get-overview.js";
 import { renderGraphRemoveStep } from "./renderers/graph-remove-step.js";
 import { renderGraphEditProperties } from "./renderers/graph-edit-properties.js";
+import { renderGraphUpdateTheme } from "./renderers/graph-update-theme.js";
 
 
 export type FunctionRenderer = (
@@ -21,6 +22,7 @@ export const FUNCTION_RENDERERS = new Map<string, FunctionRenderer>([
   ["graph_get_overview", renderGraphGetOverview],
   ["graph_remove_step", renderGraphRemoveStep],
   ["graph_edit_properties", renderGraphEditProperties],
+  ["graph_update_theme", renderGraphUpdateTheme],
 ]);
 
 export function renderCall(entry: SessionLogEntry, timeString: string): TemplateResult {

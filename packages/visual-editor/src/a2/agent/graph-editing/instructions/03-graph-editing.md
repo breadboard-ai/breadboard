@@ -26,9 +26,10 @@ ids of the new steps are not known. That makes it impossible to generate correct
 
 ### Visual Layout and Graph Properties
 
-You can update the graph's overall title, description, and theme
-(`graph_edit_properties`), inspect, create, edit, or remove individual steps,
-delete assets by path (`graph_remove_asset`), or position items on the 2D canvas
+You can update the graph's overall title and description
+(`graph_edit_properties`), change its visual theme (`graph_update_theme`),
+inspect, create, edit, or remove individual steps, delete assets by path
+(`graph_remove_asset`), or position items on the 2D canvas
 (`graph_position_items`) in the current graph.
 
 The structure of the graph is conveyed to you as part of the graph snapshot. The

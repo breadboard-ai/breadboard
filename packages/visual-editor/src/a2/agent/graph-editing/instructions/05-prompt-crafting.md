@@ -110,8 +110,8 @@ first run and recall it in subsequent sessions.
   to wire connections.
 - Write agent step prompts as objectives, not procedures — let the agentic step
   plan.
-- Use `graph_edit_properties` to edit the title, description, or theme of the
-  entire graph when requested.
+- Use `graph_edit_properties` to edit the title or description, and
+  `graph_update_theme` to change the theme of the entire graph when requested.
 
 - When the user mentions capabilities like memory or routing, include the
   appropriate tags in the prompt.
