@@ -45,7 +45,8 @@ type GraphRunEvent = GraphRunEventBase &
   (
     | { type: "graphStart"; sessionId: string }
     | { type: "nodeStart"; nodeId: string }
-    | { type: "nodeEnd"; nodeId: string }
+    | { type: "nodeEnd"; nodeId: string; outputs?: Record<string, unknown> }
+    | { type: "nodeError"; nodeId: string; error: string }
     | {
         type: "agentEvent";
         nodeId: string;

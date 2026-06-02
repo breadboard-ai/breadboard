@@ -18,6 +18,34 @@ completion without races.
 
 ---
 
+## Porting Discipline
+
+Every handler or module ported from TypeScript to Python requires a **detailed
+trace of the TS source** before writing any Python code. The port must be
+faithful — not "inspired by". Specifically:
+
+1. **Read the full TS function**, not just the entry point. Trace through every
+   helper it calls, every default it applies, every fallback it uses.
+2. **Identify constants and defaults.** Model names, default system instructions,
+   fallback values, timeout durations — these are easy to miss and hard to catch
+   in testing.
+3. **Map the data flow end-to-end.** Inputs → template substitution → API call →
+   response parsing → output shape. Each stage can have mode-specific logic.
+4. **Check the describe function** too, not just invoke. The describe function
+   often defines schemas, defaults, and port mappings that affect runtime
+   behavior.
+5. **Write tests that verify TS-parity**, not just "does it work". If the TS
+   code applies a default system instruction when none is configured, the test
+   should assert that the Python code does too.
+
+> **Lesson learned:** The default system instruction
+> (`defaultSystemInstruction()` in `system-instruction.ts`) was missed during
+> the `text_gen_handler` port because only the config extraction was ported, not
+> the fallback logic in `createSystemInstruction()`. This required reading a
+> file two imports away from the handler entry point.
+
+---
+
 ## All Resolved Decisions
 
 | # | Decision | Resolution |

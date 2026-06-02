@@ -229,10 +229,10 @@ class GraphRunner:
         )
 
         await self._store.append_event(session_id, {
-            "type": "nodeEnd", "nodeId": node_id,
+            "type": "nodeEnd", "nodeId": node_id, "outputs": outputs,
         })
         await self._event_bus.publish(session_id, {
-            "type": "nodeEnd", "nodeId": node_id,
+            "type": "nodeEnd", "nodeId": node_id, "outputs": outputs,
         })
 
         for nid in newly_ready:
