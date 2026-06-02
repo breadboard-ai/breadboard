@@ -126,6 +126,23 @@ suite("InputAsset Actions", () => {
       assert.ok(inputAssets.assets[0].path.endsWith(".bin"));
     });
 
+    test("maps application/vnd.google-apps.document to .gdoc extension", async () => {
+      const inputAssets = makeInputAssetController();
+      bindWithController(inputAssets);
+
+      const asset: LLMContent = { role: "user", parts: [] };
+      const metadata: AssetMetadata = {
+        title: "Product PRD",
+        type: "file",
+        subType: "application/vnd.google-apps.document",
+      };
+
+      await InputAsset.addFromModal(asset, metadata);
+
+      assert.strictEqual(inputAssets.assets.length, 1);
+      assert.ok(inputAssets.assets[0].path.endsWith(".gdoc"));
+    });
+
     test("surfaces and maps image/webp assets as pristine .webp extensions", async () => {
       const inputAssets = makeInputAssetController();
       bindWithController(inputAssets);

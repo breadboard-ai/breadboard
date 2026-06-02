@@ -50,7 +50,7 @@ function inferAssetExtension(metadata: AssetMetadata): string {
     return extFromFilename;
   }
 
-  return "";
+  return "bin";
 }
 
 const bind = makeAction();
