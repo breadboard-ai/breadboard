@@ -18,9 +18,13 @@ export class ConnectionBroker extends HTMLElement {
   }
 
   async connectedCallback() {
+    // **IMPORTANT**: If the window.opener is not available then it means
+    // the popup was not opened during a legitimate sign in event, and we
+    // should close the window immediately.
     if (!window.opener) {
       console.error(`window.opener is not available, closing early.`);
       window.close();
+      return;
     }
 
     const shadow = this.shadowRoot!;
