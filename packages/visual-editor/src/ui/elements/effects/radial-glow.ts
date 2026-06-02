@@ -8,7 +8,7 @@ import { LitElement, html, css, svg } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { styleMap } from "lit/directives/style-map.js";
 
-if ("registerProperty" in CSS) {
+if (typeof CSS !== "undefined" && "registerProperty" in CSS) {
   CSS.registerProperty({
     name: "--base-angle",
     syntax: "<angle>",
