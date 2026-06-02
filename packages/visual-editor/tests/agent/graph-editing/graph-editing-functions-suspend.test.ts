@@ -314,7 +314,6 @@ suite("Graph editing functions suspend/resume", () => {
       {
         title: "Updated Title",
         description: "Updated Description",
-        theme_intent: "sunset vibe",
       },
       noop,
       null
@@ -330,10 +329,77 @@ suite("Graph editing functions suspend/resume", () => {
         captured[0].transform!.description,
         "Updated Description"
       );
-      assert.strictEqual(captured[0].transform!.themeIntent, "sunset vibe");
+      assert.strictEqual(captured[0].transform!.themeIntent, undefined);
     }
 
     assert.strictEqual(result.success, true);
+  });
+
+  // ── graph_update_theme ────────────────────────────────────────────────────
+
+  test("graph_update_theme fires and forgets — returns immediately, dispatches in background", async () => {
+    const consumer = new AgentEventConsumer();
+    const bridge = new LocalAgentEventBridge(consumer);
+    const translator = new EditingAgentPidginTranslator();
+
+    // applyUpdateTheme reads the graph to snapshot title/description.
+    consumer.on("readGraph", () =>
+      Promise.resolve({
+        graph: {
+          ...makeMockGraph(),
+          title: "My Great Opal",
+          description: "A wonderful creation",
+        },
+      })
+    );
+
+    const captured: ApplyEditsPayload[] = [];
+    consumer.on("applyEdits", (payload) => {
+      captured.push(payload);
+      return Promise.resolve({ success: true });
+    });
+
+    const group = getGraphEditingFunctionGroup(bridge, translator);
+    const handler = findHandler(group, "graph_update_theme");
+    const result = await handler(
+      {
+        theme_intent: "sunset vibe",
+      },
+      noop,
+      null
+    );
+
+    // The handler returns success immediately (fire-and-forget).
+    assert.strictEqual(result.success, true);
+    assert.ok(
+      typeof result.message === "string" && result.message.length > 0,
+      "Should return a status message"
+    );
+    // Title and description are included so devtools can show what was
+    // used to generate the theme.
+    assert.strictEqual(result.title, "My Great Opal");
+    assert.strictEqual(result.description, "A wonderful creation");
+
+    // Flush the microtask queue so the fire-and-forget promise settles.
+    await new Promise((r) => setTimeout(r, 0));
+
+    assert.strictEqual(captured.length, 1);
+    assert.ok(captured[0].requestId, "Should have a requestId");
+    assert.ok(captured[0].transform, "Should have a transform");
+    assert.strictEqual(captured[0].transform!.kind, "updateGraphProperties");
+    if (captured[0].transform!.kind === "updateGraphProperties") {
+      assert.strictEqual(
+        captured[0].transform!.title,
+        "My Great Opal",
+        "Should forward graph title to theme generator"
+      );
+      assert.strictEqual(
+        captured[0].transform!.description,
+        "A wonderful creation",
+        "Should forward graph description to theme generator"
+      );
+      assert.strictEqual(captured[0].transform!.themeIntent, "sunset vibe");
+    }
   });
 
   // ── instruction generation and product name replacements ──────────────────

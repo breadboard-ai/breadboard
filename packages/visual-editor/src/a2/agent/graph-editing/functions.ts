@@ -43,6 +43,7 @@ const GRAPH_REMOVE_ASSET = "graph_remove_asset";
 const GRAPH_UPSERT_AGENT_STEP = "upsert_agent_step";
 const GRAPH_UPSERT_LEGACY_STEP = "upsert_legacy_step";
 const GRAPH_EDIT_PROPERTIES = "graph_edit_properties";
+const GRAPH_UPDATE_THEME = "graph_update_theme";
 const GRAPH_POSITION_ITEMS = "graph_position_items";
 
 const VALID_LEGACY_STEP_TYPES = [
@@ -165,17 +166,37 @@ function defineGraphEditingFunctions(
   }
 
   /**
-   * Applies an updateGraphProperties transform via the suspend mechanism.
+   * Applies an updateGraphProperties transform (title/description) via suspend.
    */
   async function applyUpdateGraphProperties(
     title?: string,
-    description?: string,
-    themeIntent?: string
+    description?: string
   ): Promise<ApplyEditsResponse> {
     return sink.suspend<ApplyEditsResponse>({
       applyEdits: {
         requestId: crypto.randomUUID(),
         label: "Update graph properties",
+        transform: {
+          kind: "updateGraphProperties",
+          title,
+          description,
+        },
+      },
+    });
+  }
+
+  /**
+   * Applies an updateGraphProperties transform (theme) via suspend.
+   */
+  async function applyUpdateTheme(
+    title: string | undefined,
+    description: string | undefined,
+    themeIntent: string
+  ): Promise<ApplyEditsResponse> {
+    return sink.suspend<ApplyEditsResponse>({
+      applyEdits: {
+        requestId: crypto.randomUUID(),
+        label: "Update theme",
         transform: {
           kind: "updateGraphProperties",
           title,
@@ -455,19 +476,13 @@ function defineGraphEditingFunctions(
         title: "Updating graph metadata",
         icon: "edit",
         description:
-          "Edit the title, description, and theme of the graph. You can provide one, two, or all parameters.",
+          "Edit the title and/or description of the graph. Provide one or both parameters.",
         parameters: {
           title: z.string().optional().describe("The new title for the graph"),
           description: z
             .string()
             .optional()
             .describe("The new description for the graph"),
-          theme_intent: z
-            .string()
-            .optional()
-            .describe(
-              "A description of the theme/vibe to generate for the graph (e.g., 'sunset vibe', 'sleek dark mode')"
-            ),
         },
         response: {
           success: z.boolean(),
@@ -479,12 +494,8 @@ function defineGraphEditingFunctions(
             ),
         },
       },
-      async ({ title, description, theme_intent }) => {
-        const result = await applyUpdateGraphProperties(
-          title,
-          description,
-          theme_intent
-        );
+      async ({ title, description }) => {
+        const result = await applyUpdateGraphProperties(title, description);
 
         if (!result.success) {
           return {
@@ -494,6 +505,63 @@ function defineGraphEditingFunctions(
         }
 
         return { success: true };
+      }
+    ),
+
+    // =========================================================================
+    // graph_update_theme
+    // =========================================================================
+    defineFunction(
+      {
+        name: GRAPH_UPDATE_THEME,
+        title: "Updating theme",
+        icon: "palette",
+        description:
+          "Update the visual theme of the graph by describing the desired vibe. Fire-and-forget, completes asynchronously",
+        parameters: {
+          theme_intent: z
+            .string()
+            .describe(
+              "A description of the theme/vibe to generate for the graph (e.g., 'sunset vibe', 'sleek dark mode')"
+            ),
+        },
+        response: {
+          success: z.boolean(),
+          message: z
+            .string()
+            .optional()
+            .describe("A status message about the theme update"),
+          error: z
+            .string()
+            .optional()
+            .describe(
+              "If an error has occurred, will contain a description of the error"
+            ),
+        },
+      },
+      async ({ theme_intent }) => {
+        // Read the current graph to snapshot title/description — they are
+        // significant inputs for the splash-image generator.
+        const graph = await readGraph();
+        const title = graph.title;
+        const description = graph.description;
+
+        // Fire-and-forget: theme generation runs in the background so the
+        // agent can continue without waiting for it to complete.
+        applyUpdateTheme(title, description, theme_intent).catch(() => {
+          // Theme generation failures are silently swallowed here — the
+          // agent has already moved on. The consumer-side error handling
+          // (e.g., onThemeUpdated callback) is responsible for surfacing
+          // issues to the user.
+        });
+
+        return {
+          success: true,
+          title,
+          description,
+          message:
+            "Theme change initiated. It will take about 20–30 seconds to complete. Let the user know that the splash image and theme will come up in a bit",
+        };
       }
     ),
 
