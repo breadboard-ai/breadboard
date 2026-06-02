@@ -98,60 +98,78 @@ class GraphEditingManager {
 
 
         case "updateGraphProperties": {
-          const { title, description, themeIntent } = transform;
-          let metadata: GraphMetadata | undefined;
-
-          if (themeIntent && themeGenerator) {
-            const rawGraph = editor.raw();
-            const promptTitle = title ?? rawGraph.title ?? "Application";
-            const promptDesc = description ?? rawGraph.description ?? "";
-
-            const appThemeResult = await themeGenerator({
-              title: promptTitle,
-              description: promptDesc,
-              userInstruction: themeIntent,
-              signal: options?.signal,
-            });
-
-            const errPayload = appThemeResult as Record<string, unknown>;
-            if (
-              errPayload &&
-              typeof errPayload === "object" &&
-              "$error" in errPayload &&
-              typeof errPayload.$error === "string"
-            ) {
-              return {
-                success: false,
-                error: `Theme generation failed: ${errPayload.$error}`,
-              };
-            }
-
-            metadata = editor.raw().metadata ?? {};
-            metadata.visual ??= {};
-            metadata.visual.presentation ??= {};
-            metadata.visual.presentation.themes ??= {};
-
-            const id = globalThis.crypto.randomUUID();
-            const themes = metadata.visual.presentation.themes as Record<string, unknown>;
-            themes[id] = appThemeResult;
-            metadata.visual.presentation.theme = id;
-
-            if (options?.onThemeUpdated) {
-              options.onThemeUpdated(metadata);
-            }
-          }
-
+          const { title, description } = transform;
           const result = await editor.edit(
             [
               {
                 type: "changegraphmetadata",
                 title: title ?? undefined,
                 description: description ?? undefined,
-                metadata,
                 graphId: "",
               },
             ],
             "Updating graph properties"
+          );
+
+          if (!result.success) {
+            return { success: false, error: result.error };
+          }
+          return { success: true };
+        }
+
+        case "updateTheme": {
+          const { title, description, themeIntent } = transform;
+          if (!themeGenerator) {
+            return { success: false, error: "Theme generator not available" };
+          }
+
+          const rawGraph = editor.raw();
+          const promptTitle = title ?? rawGraph.title ?? "Application";
+          const promptDesc = description ?? rawGraph.description ?? "";
+
+          const appThemeResult = await themeGenerator({
+            title: promptTitle,
+            description: promptDesc,
+            userInstruction: themeIntent,
+            signal: options?.signal,
+          });
+
+          const errPayload = appThemeResult as Record<string, unknown>;
+          if (
+            errPayload &&
+            typeof errPayload === "object" &&
+            "$error" in errPayload &&
+            typeof errPayload.$error === "string"
+          ) {
+            return {
+              success: false,
+              error: `Theme generation failed: ${errPayload.$error}`,
+            };
+          }
+
+          const metadata = editor.raw().metadata ?? {};
+          metadata.visual ??= {};
+          metadata.visual.presentation ??= {};
+          metadata.visual.presentation.themes ??= {};
+
+          const id = globalThis.crypto.randomUUID();
+          const themes = metadata.visual.presentation.themes as Record<string, unknown>;
+          themes[id] = appThemeResult;
+          metadata.visual.presentation.theme = id;
+
+          if (options?.onThemeUpdated) {
+            options.onThemeUpdated(metadata);
+          }
+
+          const result = await editor.edit(
+            [
+              {
+                type: "changegraphmetadata",
+                metadata,
+                graphId: "",
+              },
+            ],
+            "Updating theme"
           );
 
           if (!result.success) {

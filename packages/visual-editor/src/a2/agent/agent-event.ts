@@ -158,13 +158,20 @@ type ApplyEditsPayload = {
  */
 type TransformDescriptor =
   | UpdateNodeDescriptor
-  | UpdateGraphPropertiesDescriptor;
+  | UpdateGraphPropertiesDescriptor
+  | UpdateThemeDescriptor;
 
 type UpdateGraphPropertiesDescriptor = {
   kind: "updateGraphProperties";
   title?: string;
   description?: string;
-  themeIntent?: string;
+};
+
+type UpdateThemeDescriptor = {
+  kind: "updateTheme";
+  themeIntent: string;
+  title?: string;
+  description?: string;
 };
 
 

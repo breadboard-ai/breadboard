@@ -69,4 +69,73 @@ describe("GraphEditingManager", () => {
     assert.strictEqual(editor.raw().edges?.length, 1);
     assert.strictEqual(editor.raw().edges?.[0].from, "node-1");
   });
+
+  it("executes updateGraphProperties transform successfully", async () => {
+    const graph: GraphDescriptor = {
+      title: "Old Title",
+      description: "Old Description",
+      nodes: [],
+      edges: [],
+    };
+
+    const editor = HeadlessGraphEditor.create(graph);
+    const manager = new GraphEditingManager(editor);
+
+    const result = await manager.applyEdits({
+      transform: {
+        kind: "updateGraphProperties",
+        title: "New Title",
+        description: "New Description",
+      },
+      label: "Update title and description",
+    });
+
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(editor.raw().title, "New Title");
+    assert.strictEqual(editor.raw().description, "New Description");
+  });
+
+  it("executes updateTheme transform successfully", async () => {
+    const graph: GraphDescriptor = {
+      title: "Opal",
+      description: "A cool app",
+      nodes: [],
+      edges: [],
+    };
+
+    const editor = HeadlessGraphEditor.create(graph);
+    const mockThemeResult = { success: true, value: { colors: ["red", "blue"] } };
+    const themeGenerator = async () => mockThemeResult;
+
+    let themeUpdatedCalled = false;
+    const manager = new GraphEditingManager(editor, themeGenerator);
+
+    const result = await manager.applyEdits(
+      {
+        transform: {
+          kind: "updateTheme",
+          themeIntent: "sunset vibe",
+          title: "Opal",
+          description: "A cool app",
+        },
+        label: "Update theme",
+      },
+      {
+        onThemeUpdated: (metadata) => {
+          themeUpdatedCalled = true;
+          assert.ok(metadata.visual?.presentation?.themes);
+        },
+      }
+    );
+
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(themeUpdatedCalled, true);
+
+    const metadata = editor.raw().metadata;
+    assert.ok(metadata?.visual?.presentation?.theme);
+    const activeThemeId = metadata.visual.presentation.theme;
+    const themes = metadata.visual.presentation.themes as Record<string, unknown>;
+    assert.deepStrictEqual(themes[activeThemeId], mockThemeResult);
+  });
 });
+
