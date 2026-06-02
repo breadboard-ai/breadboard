@@ -45,7 +45,8 @@ suite("InputAsset Actions", () => {
       await InputAsset.addFromModal(asset);
 
       assert.strictEqual(inputAssets.assets.length, 1);
-      assert.strictEqual(inputAssets.assets[0], asset);
+      assert.strictEqual(inputAssets.assets[0].metadata?.title, "Image Attachment");
+      assert.strictEqual(inputAssets.assets[0].data[0], asset);
     });
 
     test("adds multiple assets sequentially", async () => {
@@ -65,8 +66,8 @@ suite("InputAsset Actions", () => {
       await InputAsset.addFromModal(a2);
 
       assert.strictEqual(inputAssets.assets.length, 2);
-      assert.strictEqual(inputAssets.assets[0], a1);
-      assert.strictEqual(inputAssets.assets[1], a2);
+      assert.strictEqual(inputAssets.assets[0].data[0], a1);
+      assert.strictEqual(inputAssets.assets[1].data[0], a2);
     });
   });
 
@@ -91,9 +92,13 @@ suite("InputAsset Actions", () => {
 
       // First notebook
       const first = inputAssets.assets[0];
-      assert.strictEqual(first.role, "user");
-      assert.strictEqual(first.parts.length, 1);
-      const firstPart = first.parts[0];
+      assert.strictEqual(first.metadata?.title, "My Notebook");
+      assert.strictEqual(first.metadata?.type, "file");
+      assert.ok(first.path);
+      assert.strictEqual(first.data.length, 1);
+      assert.strictEqual(first.data[0].role, "user");
+      assert.strictEqual(first.data[0].parts.length, 1);
+      const firstPart = first.data[0].parts[0];
       assert.ok("storedData" in firstPart);
       assert.strictEqual(
         firstPart.storedData.handle,
@@ -103,7 +108,10 @@ suite("InputAsset Actions", () => {
 
       // Second notebook
       const second = inputAssets.assets[1];
-      const secondPart = second.parts[0];
+      assert.strictEqual(second.metadata?.title, "Other Notebook");
+      assert.strictEqual(second.metadata?.type, "file");
+      assert.ok(second.path);
+      const secondPart = second.data[0].parts[0];
       assert.ok("storedData" in secondPart);
       assert.strictEqual(
         secondPart.storedData.handle,

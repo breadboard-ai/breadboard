@@ -6,17 +6,29 @@
 
 import assert from "node:assert";
 import { suite, test } from "node:test";
-import type { LLMContent } from "@breadboard-ai/types";
+
 import { InputAssetController } from "../../../../../src/sca/controller/subcontrollers/editor/input-assets/input-asset-controller.js";
 
-function makeAsset(text: string): LLMContent {
-  return { role: "user", parts: [{ text }] };
+import type { GraphAssetDescriptor } from "../../../../../src/sca/types.js";
+
+function makeAsset(text: string): GraphAssetDescriptor {
+  return {
+    metadata: { title: text, type: "file" },
+    path: `asset-${globalThis.crypto.randomUUID().slice(0, 8)}.webp`,
+    data: [{ role: "user", parts: [{ text }] }],
+  };
 }
 
-function makeImageAsset(): LLMContent {
+function makeImageAsset(): GraphAssetDescriptor {
   return {
-    role: "user",
-    parts: [{ inlineData: { data: "iVBOR...", mimeType: "image/png" } }],
+    metadata: { title: "Image", type: "file" },
+    path: `asset-${globalThis.crypto.randomUUID().slice(0, 8)}.webp`,
+    data: [
+      {
+        role: "user",
+        parts: [{ inlineData: { data: "iVBOR...", mimeType: "image/png" } }],
+      },
+    ],
   };
 }
 
