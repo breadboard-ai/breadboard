@@ -1,7 +1,7 @@
 # Project Heartstone: Server-Side Graph Execution (v4)
 
-> Moving graph execution from the browser to the backend, enabling both
-> headed (interactive) and headless (scheduled/triggered) graph runs.
+> Moving graph execution from the browser to the backend, enabling both headed
+> (interactive) and headless (scheduled/triggered) graph runs.
 
 ## Status: Design Phase — v4 (Consolidated)
 
@@ -26,9 +26,9 @@ faithful — not "inspired by". Specifically:
 
 1. **Read the full TS function**, not just the entry point. Trace through every
    helper it calls, every default it applies, every fallback it uses.
-2. **Identify constants and defaults.** Model names, default system instructions,
-   fallback values, timeout durations — these are easy to miss and hard to catch
-   in testing.
+2. **Identify constants and defaults.** Model names, default system
+   instructions, fallback values, timeout durations — these are easy to miss and
+   hard to catch in testing.
 3. **Map the data flow end-to-end.** Inputs → template substitution → API call →
    response parsing → output shape. Each stage can have mode-specific logic.
 4. **Check the describe function** too, not just invoke. The describe function
@@ -48,28 +48,28 @@ faithful — not "inspired by". Specifically:
 
 ## All Resolved Decisions
 
-| # | Decision | Resolution |
-|---|----------|------------|
-| 1 | Graph loading | Option C — both inline graph and Drive file ID |
-| 2 | Disconnect behavior | Headed stays headed, headless stays headless |
-| 3 | Frontend presence | Mode set at start, never changes |
-| 4 | Intermediate storage | In-memory (injectable protocol) |
-| 5 | Asset outputs | Keep as LLMContent |
-| 6 | Condensation | Port `condense()` — backend condenses |
-| 7 | Go-over-list / deep-research | Ignore (legacy) |
-| 8 | Asset nodes | Handle explicitly |
-| 9 | Event source | New `GraphRunEventSource` (per-node dispatch) |
-| 10 | Suspension model | Sessions pattern — save state, end task, new task on resume |
-| 11 | Error propagation | Continue running non-dependent paths |
-| 12 | Rename `run()` | → `run_agent()` |
-| 13 | Concurrency model | **Task-per-node** with atomic dependency counter |
-| 14 | Orchestrator lifetime | **No long-lived orchestrator** — plan is in the database |
-| 15 | Non-agent text gen | **Direct Gemini call** — no agent loop |
-| 16 | HTML auto-layout | Reuse `BackendClient.stream_generate_content()` |
-| 17 | Output node porting | Incremental — manual first, then Docs/Sheets/Slides |
-| 18 | Endpoint prefix | `/v1beta1/graphSessions/` |
-| 19 | Abstraction boundary | Extract `EventBus` protocol from `Subscribers` |
-| 20 | Task dispatch | **`TaskScheduler` protocol** — injectable node task dispatch |
+| #   | Decision                     | Resolution                                                   |
+| --- | ---------------------------- | ------------------------------------------------------------ |
+| 1   | Graph loading                | Option C — both inline graph and Drive file ID               |
+| 2   | Disconnect behavior          | Headed stays headed, headless stays headless                 |
+| 3   | Frontend presence            | Mode set at start, never changes                             |
+| 4   | Intermediate storage         | In-memory (injectable protocol)                              |
+| 5   | Asset outputs                | Keep as LLMContent                                           |
+| 6   | Condensation                 | Port `condense()` — backend condenses                        |
+| 7   | Go-over-list / deep-research | Ignore (legacy)                                              |
+| 8   | Asset nodes                  | Handle explicitly                                            |
+| 9   | Event source                 | New `GraphRunEventSource` (per-node dispatch)                |
+| 10  | Suspension model             | Sessions pattern — save state, end task, new task on resume  |
+| 11  | Error propagation            | Continue running non-dependent paths                         |
+| 12  | Rename `run()`               | → `run_agent()`                                              |
+| 13  | Concurrency model            | **Task-per-node** with atomic dependency counter             |
+| 14  | Orchestrator lifetime        | **No long-lived orchestrator** — plan is in the database     |
+| 15  | Non-agent text gen           | **Direct Gemini call** — no agent loop                       |
+| 16  | HTML auto-layout             | Reuse `BackendClient.stream_generate_content()`              |
+| 17  | Output node porting          | Incremental — manual first, then Docs/Sheets/Slides          |
+| 18  | Endpoint prefix              | `/v1beta1/graphSessions/`                                    |
+| 19  | Abstraction boundary         | Extract `EventBus` protocol from `Subscribers`               |
+| 20  | Task dispatch                | **`TaskScheduler` protocol** — injectable node task dispatch |
 
 ---
 
@@ -125,17 +125,19 @@ for node_id in ready_nodes:
 ```
 
 `complete_node()` is the **single coordination point**. It atomically:
+
 1. Saves the node's outputs
 2. Decrements `pending_deps` for each downstream node
 3. Returns the list of nodes whose count just hit 0
 
-The atomic operation guarantees that even if A and B complete simultaneously
-(on different servers), only ONE of them sees C's count reach 0 and triggers it.
+The atomic operation guarantees that even if A and B complete simultaneously (on
+different servers), only ONE of them sees C's count reach 0 and triggers it.
 
-**In-memory (dev server):** asyncio is single-threaded, so no actual race.
-But the interface is the same.
+**In-memory (dev server):** asyncio is single-threaded, so no actual race. But
+the interface is the same.
 
-**Database (production):** Transaction or atomic decrement with RETURNING clause.
+**Database (production):** Transaction or atomic decrement with RETURNING
+clause.
 
 ### Lifecycle of a Graph Run
 
@@ -230,11 +232,10 @@ POST /graphSessions/s1:resume
   ...
 ```
 
-> [!NOTE]
-> The SSE stream stays open throughout — it's subscribed to the session's
-> EventBus. Events from all concurrent node tasks flow through it. When a
-> node suspends, only that node's task ends. Other nodes and the SSE stream
-> are unaffected.
+> [!NOTE] The SSE stream stays open throughout — it's subscribed to the
+> session's EventBus. Events from all concurrent node tasks flow through it.
+> When a node suspends, only that node's task ends. Other nodes and the SSE
+> stream are unaffected.
 
 ### Reconnection
 
@@ -244,6 +245,151 @@ POST /graphSessions/s1:resume
 GET /graphSessions/s1?after=N   →   Replay events after N from store
   ← [replayed events]               Reconstruct UI state
   ← [live events continue]          If tasks still running
+```
+
+### Worked Example: Haiku Graph (Interactive)
+
+Concrete sequence for an example 4-node graph:
+
+- **Input**: Enter Haiku Topic
+- **Generate (Agent)**: "Ask the user how many stanzas they'd like, then write a
+  haiku about the topic in {Haiku Topic}"
+- **Generate (Image)**: "Generate an image to go along with this poem {Haiku}"
+- **Output**: Webpage with auto-layout
+
+```mermaid
+sequenceDiagram
+    participant C as Client (Frontend)
+    participant R as RPC Router
+    participant ST as GraphSessionStore
+    participant GR as GraphRunner
+    participant S as TaskScheduler
+    participant NH as node_handlers
+    participant BC as BackendClient
+    participant E as EventBus → SSE
+
+    rect rgb(240, 248, 255)
+    Note over C,E: Phase 1 — Setup
+    C->>+R: POST /graphSessions/new<br/>{graph: {...}}
+    R->>ST: create(sessionId, plan)
+    R->>+GR: start_graph(sessionId)
+    GR->>ST: get_plan(sessionId)
+    GR->>ST: append_event(graphStart)
+    GR->>E: publish: graphStart
+    R-->>-C: {sessionId}
+    C->>+R: GET /graphSessions/{id}
+    R->>ST: get_events(after=-1)
+    R->>E: subscribe: replay + live
+    deactivate R
+    end
+
+    rect rgb(240, 255, 240)
+    Note over C,E: Phase 2 — Input Node (Haiku Topic)
+    GR->>S: schedule(Input)
+    S->>GR: run_node(Input)
+    GR->>ST: get_node_inputs(Input)
+    GR->>ST: get_node_config(Input)
+    GR->>+NH: input_handler()
+    NH-->>-GR: suspend (inputRequired)
+    GR->>ST: append_event(nodeStart)
+    GR->>E: publish: nodeStart(Input)
+    GR->>ST: suspend_node(Input,<br/>interactionId, state)
+    GR->>ST: append_event(inputRequired)
+    GR->>E: publish: inputRequired(Input,<br/>interactionId, schema)
+    deactivate GR
+    Note over GR: task ends
+    E-->>C: inputRequired event
+    Note over C: user types "green beans"
+    C->>+R: POST /graphSessions/{id}:resume<br/>{interactionId, response}
+    R->>ST: load_suspended_node(interactionId)
+    R->>+GR: resume_node(interactionId, response)
+    R-->>-C: {ok: true}
+    GR->>ST: complete_node(Input, outputs)
+    ST-->>GR: newly ready: [Agent]
+    GR->>ST: append_event(nodeEnd)
+    GR->>E: publish: nodeEnd(Input, context)
+    end
+
+    rect rgb(255, 248, 240)
+    Note over C,E: Phase 3 — Agent Node (Haiku)
+    GR->>S: schedule(Agent)
+    S->>GR: run_node(Agent)
+    GR->>ST: get_node_inputs(Agent)
+    GR->>ST: get_node_config(Agent)
+    GR->>+NH: agent_handler()
+    GR->>ST: append_event(nodeStart)
+    GR->>E: publish: nodeStart(Agent)
+    NH->>+BC: stream_generate_content<br/>(prompt + topic)
+    BC-->>NH: thought chunks (streamed)
+    NH->>E: publish: agentEvent(Agent, thought)
+    BC-->>-NH: functionCall:<br/>chat_request_user_input
+    NH-->>-GR: NodeSuspended(waitForInput)
+    GR->>ST: suspend_node(Agent,<br/>interactionId, state)
+    GR->>ST: append_event(inputRequired)
+    GR->>E: publish: inputRequired(Agent,<br/>interactionId, "How many stanzas?")
+    deactivate GR
+    Note over GR: task ends
+    E-->>C: inputRequired event
+    Note over C: user types "3 stanzas"
+    C->>+R: POST /graphSessions/{id}:resume<br/>{interactionId, response}
+    R->>ST: load_suspended_node(interactionId)
+    R->>+GR: resume_node(interactionId, response)
+    R-->>-C: {ok: true}
+    GR->>+NH: resume_agent(functionResponse)
+    NH->>+BC: stream_generate_content<br/>(with user response)
+    BC-->>NH: thought chunks (streamed)
+    NH->>E: publish: agentEvent(Agent, thought)
+    BC-->>-NH: functionCall:<br/>system_objective_fulfilled
+    NH-->>-GR: CompleteEvent(haiku text)
+    GR->>ST: complete_node(Agent, outputs)
+    ST-->>GR: newly ready: [Image]
+    GR->>ST: append_event(nodeEnd)
+    GR->>E: publish: nodeEnd(Agent, context)
+    end
+
+    rect rgb(255, 240, 245)
+    Note over C,E: Phase 4 — Image Node
+    GR->>S: schedule(Image)
+    S->>GR: run_node(Image)
+    GR->>ST: get_node_inputs(Image)
+    GR->>ST: get_node_config(Image)
+    GR->>+NH: media_gen_handler()
+    GR->>ST: append_event(nodeStart)
+    GR->>E: publish: nodeStart(Image)
+    NH->>+BC: execute_step(EditImage)
+    BC-->>-NH: generated image
+    NH-->>-GR: image result
+    GR->>ST: complete_node(Image, outputs)
+    ST-->>GR: newly ready: [Output]
+    Note over ST: pending_deps: 2→1→0
+    GR->>ST: append_event(nodeEnd)
+    GR->>E: publish: nodeEnd(Image, storedData)
+    end
+
+    rect rgb(245, 240, 255)
+    Note over C,E: Phase 5 — Output Node
+    GR->>S: schedule(Output)
+    S->>GR: run_node(Output)
+    GR->>ST: get_node_inputs(Output)
+    GR->>ST: get_node_config(Output)
+    GR->>+NH: output_handler()
+    GR->>ST: append_event(nodeStart)
+    GR->>E: publish: nodeStart(Output)
+    NH->>+BC: stream_generate_content<br/>(HTML auto-layout)
+    BC-->>-NH: HTML content
+    NH-->>-GR: html result
+    GR->>ST: complete_node(Output, outputs)
+    GR->>ST: is_graph_complete()
+    ST-->>GR: true
+    GR->>ST: get_graph_outputs()
+    GR->>ST: append_event(nodeEnd)
+    GR->>E: publish: nodeEnd(Output, html)
+    GR->>ST: append_event(graphComplete)
+    GR->>E: publish: graphComplete(all outputs)
+    deactivate GR
+    end
+
+    E-->>C: subscribe: SSE events stream<br/>(throughout)
 ```
 
 ---
@@ -288,8 +434,8 @@ class EventBus(Protocol):
 ### New: `TaskScheduler`
 
 The operation of starting a node task must be injectable. In the dev server,
-it's `asyncio.create_task()`. In production, it queues an RPC to ensure
-proper load balancing across server instances.
+it's `asyncio.create_task()`. In production, it queues an RPC to ensure proper
+load balancing across server instances.
 
 ```python
 # opal_backend/task_scheduler.py (synced)
@@ -368,9 +514,8 @@ class LocalTaskScheduler:
                         task.cancel()
 ```
 
-> [!IMPORTANT]
-> Extracting `EventBus` also fixes the existing agent sessions API for
-> multi-server deployments. This isn't Heartstone-specific — it's a
+> [!IMPORTANT] Extracting `EventBus` also fixes the existing agent sessions API
+> for multi-server deployments. This isn't Heartstone-specific — it's a
 > prerequisite that benefits both agent sessions and graph sessions.
 
 ### New: `GraphSessionStore`
@@ -510,15 +655,14 @@ class GraphSessionStore(Protocol):
 
 ### Existing (unchanged)
 
-| Protocol | Purpose | Used by Heartstone? |
-|----------|---------|---------------------|
-| `BackendClient` | Gemini + One Platform | Yes — generate nodes call it |
-| `InteractionStore` | Agent suspend/resume | Yes — internal to agent loop |
-| `SessionStore` | Agent session lifecycle | No — agent sessions only |
-| `DriveOperationsClient` | Drive file ops | Yes — graph loading, output saves |
+| Protocol                | Purpose                 | Used by Heartstone?               |
+| ----------------------- | ----------------------- | --------------------------------- |
+| `BackendClient`         | Gemini + One Platform   | Yes — generate nodes call it      |
+| `InteractionStore`      | Agent suspend/resume    | Yes — internal to agent loop      |
+| `SessionStore`          | Agent session lifecycle | No — agent sessions only          |
+| `DriveOperationsClient` | Drive file ops          | Yes — graph loading, output saves |
 
-> [!TIP]
-> `GraphSessionStore` is separate from `SessionStore`. Agent sessions and
+> [!TIP] `GraphSessionStore` is separate from `SessionStore`. Agent sessions and
 > graph sessions have different lifecycle models (agent sessions use the
 > existing `sessions/api.py`; graph sessions use task-per-node coordination).
 > They share `EventBus` for live event delivery.
@@ -527,17 +671,17 @@ class GraphSessionStore(Protocol):
 
 ## Node Type → Backend Handler
 
-| Node Type | Mode | Backend Handler |
-|-----------|------|----------------|
-| **ask-user** | — | Emit `inputRequired`, save state, end task |
-| **generate** | agent | `run_agent()` (full agent loop) |
-| **generate** | text-* | Direct `BackendClient.stream_generate_content()` |
-| **generate** | image | Direct call to image function |
-| **generate** | video/audio/music | Direct call to media function |
-| **asset** | — | Resolve `storedData`/`fileData` → LLMContent |
-| **render-outputs** | manual | Passthrough — return LLMContent |
-| **render-outputs** | HTML auto | `BackendClient.stream_generate_content()` |
-| **render-outputs** | Google Docs/Sheets/Slides | `DriveOperationsClient` (port) |
+| Node Type          | Mode                      | Backend Handler                                  |
+| ------------------ | ------------------------- | ------------------------------------------------ |
+| **ask-user**       | —                         | Emit `inputRequired`, save state, end task       |
+| **generate**       | agent                     | `run_agent()` (full agent loop)                  |
+| **generate**       | text-\*                   | Direct `BackendClient.stream_generate_content()` |
+| **generate**       | image                     | Direct call to image function                    |
+| **generate**       | video/audio/music         | Direct call to media function                    |
+| **asset**          | —                         | Resolve `storedData`/`fileData` → LLMContent     |
+| **render-outputs** | manual                    | Passthrough — return LLMContent                  |
+| **render-outputs** | HTML auto                 | `BackendClient.stream_generate_content()`        |
+| **render-outputs** | Google Docs/Sheets/Slides | `DriveOperationsClient` (port)                   |
 
 ### Agent Mode Generate Nodes
 
@@ -607,22 +751,23 @@ async def run_text_gen_node(session_id, node_id, inputs, config, ...):
   "graphId": "drive-file-id",
   "mode": "headless",
   "inputs": {
-    "input-node-abc": {"parts": [{"text": "Default value"}]},
-    "input-node-xyz": {"parts": [{"text": "Another default"}]}
+    "input-node-abc": { "parts": [{ "text": "Default value" }] },
+    "input-node-xyz": { "parts": [{ "text": "Another default" }] }
   },
   "agentContext": [
-    {"parts": [{"text": "Additional context for agent steps"}]}
+    { "parts": [{ "text": "Additional context for agent steps" }] }
   ]
 }
 ```
 
 **`inputs`** — keyed by input node ID. When an input node's task runs:
+
 - If `inputs[nodeId]` exists → use it as output, no suspension
 - If absent and not required → empty context
 - If absent and required → error
 
-**`agentContext`** — prepended to agent-mode generate node objectives.
-Useful for scheduled runs needing time-specific context.
+**`agentContext`** — prepended to agent-mode generate node objectives. Useful
+for scheduled runs needing time-specific context.
 
 ---
 
@@ -690,41 +835,41 @@ POST /v1beta1/graphSessions/{id}:cancel
 
 ### Port from TypeScript
 
-| Component | From (TS) | To (Python) |
-|-----------|-----------|-------------|
-| `condense()` | `condense.ts` | `graph_condense.py` |
-| `createPlan()` | `create-plan.ts` | `graph_plan.py` |
-| Node lifecycle | `orchestrator.ts` | Replaced by `GraphSessionStore.complete_node()` |
-| Graph types | `@breadboard-ai/types` | `graph_types.py` |
-| Docs/Sheets/Slides save | `connector-save.ts` | `output_actions.py` |
+| Component               | From (TS)              | To (Python)                                     |
+| ----------------------- | ---------------------- | ----------------------------------------------- |
+| `condense()`            | `condense.ts`          | `graph_condense.py`                             |
+| `createPlan()`          | `create-plan.ts`       | `graph_plan.py`                                 |
+| Node lifecycle          | `orchestrator.ts`      | Replaced by `GraphSessionStore.complete_node()` |
+| Graph types             | `@breadboard-ai/types` | `graph_types.py`                                |
+| Docs/Sheets/Slides save | `connector-save.ts`    | `output_actions.py`                             |
 
 ### New Backend Code
 
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| `event_bus.py` | `opal_backend/` (synced) | EventBus protocol |
-| `graph_session_store.py` | `opal_backend/` (synced) | GraphSessionStore protocol |
-| `graph_plan.py` | `opal_backend/` (synced) | condense + dependency graph |
-| `graph_types.py` | `opal_backend/` (synced) | GraphPlan, GraphRunEvent, etc. |
-| `graph_runner.py` | `opal_backend/` (synced) | Node task execution logic |
-| `node_handlers.py` | `opal_backend/` (synced) | Per-node-type handlers |
-| `output_actions.py` | `opal_backend/` (synced) | Drive save operations |
-| `event_bus_impl.py` | `opal_backend/local/` | InMemoryEventBus |
-| `graph_session_store_impl.py` | `opal_backend/local/` | InMemoryGraphSessionStore |
-| `graph_session_router.py` | `opal_backend/local/` | FastAPI endpoints |
+| Component                     | Location                 | Purpose                        |
+| ----------------------------- | ------------------------ | ------------------------------ |
+| `event_bus.py`                | `opal_backend/` (synced) | EventBus protocol              |
+| `graph_session_store.py`      | `opal_backend/` (synced) | GraphSessionStore protocol     |
+| `graph_plan.py`               | `opal_backend/` (synced) | condense + dependency graph    |
+| `graph_types.py`              | `opal_backend/` (synced) | GraphPlan, GraphRunEvent, etc. |
+| `graph_runner.py`             | `opal_backend/` (synced) | Node task execution logic      |
+| `node_handlers.py`            | `opal_backend/` (synced) | Per-node-type handlers         |
+| `output_actions.py`           | `opal_backend/` (synced) | Drive save operations          |
+| `event_bus_impl.py`           | `opal_backend/local/`    | InMemoryEventBus               |
+| `graph_session_store_impl.py` | `opal_backend/local/`    | InMemoryGraphSessionStore      |
+| `graph_session_router.py`     | `opal_backend/local/`    | FastAPI endpoints              |
 
 ### New Frontend Code
 
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| `GraphRunService` | `visual-editor/sca/services/` | Backend graph run management |
-| `GraphRunEventSource` | `visual-editor/` | SSE consumer for graph events |
+| Component             | Location                      | Purpose                       |
+| --------------------- | ----------------------------- | ----------------------------- |
+| `GraphRunService`     | `visual-editor/sca/services/` | Backend graph run management  |
+| `GraphRunEventSource` | `visual-editor/`              | SSE consumer for graph events |
 
 ### Rename
 
-| Current | New |
-|---------|-----|
-| `run()` in `run.py` | `run_agent()` |
+| Current                | New              |
+| ---------------------- | ---------------- |
+| `run()` in `run.py`    | `run_agent()`    |
 | `resume()` in `run.py` | `resume_agent()` |
 
 ---
@@ -733,73 +878,72 @@ POST /v1beta1/graphSessions/{id}:cancel
 
 ### Pre-Phase: EventBus Extraction
 
-Extract `Subscribers` → `EventBus` protocol. Create `InMemoryEventBus`.
-Refactor `sessions/api.py` and `session_router.py` to use `EventBus`.
+Extract `Subscribers` → `EventBus` protocol. Create `InMemoryEventBus`. Refactor
+`sessions/api.py` and `session_router.py` to use `EventBus`.
 
-🎯 **Objective:** Existing agent sessions work identically, but
-`Subscribers` is now injected via the `EventBus` protocol.
+🎯 **Objective:** Existing agent sessions work identically, but `Subscribers` is
+now injected via the `EventBus` protocol.
 
 ### Phase 1: Core Library — Graph Planning
 
-Port `condense()`, `createPlan()`, and dependency graph construction to
-Python. Define `GraphPlan`, `GraphRunEvent` types.
+Port `condense()`, `createPlan()`, and dependency graph construction to Python.
+Define `GraphPlan`, `GraphRunEvent` types.
 
 🎯 **Objective:** Unit test: given a `GraphDescriptor`, produce a correct
 dependency graph with `pending_deps` counts.
 
 ### Phase 2: GraphSessionStore + Node Task Runner
 
-Create `GraphSessionStore` protocol and `InMemoryGraphSessionStore`. Build
-the node task runner: load inputs → execute → save outputs → trigger
-downstream. Initially only single-shot text generation (direct Gemini call).
+Create `GraphSessionStore` protocol and `InMemoryGraphSessionStore`. Build the
+node task runner: load inputs → execute → save outputs → trigger downstream.
+Initially only single-shot text generation (direct Gemini call).
 
-🎯 **Objective:** Unit test: a two-node linear graph (text gen → output)
-runs via task-per-node, events emitted correctly.
+🎯 **Objective:** Unit test: a two-node linear graph (text gen → output) runs
+via task-per-node, events emitted correctly.
 
 ### Phase 3: GraphSession RPC + SSE
 
-Add `graph_session_router.py` with endpoints. Wire `EventBus` for live
-event delivery.
+Add `graph_session_router.py` with endpoints. Wire `EventBus` for live event
+delivery.
 
-🎯 **Objective:** `curl` starts a graph run, receives SSE events for each
-node.
+🎯 **Objective:** `curl` starts a graph run, receives SSE events for each node.
 
 ### Phase 4: Agent Mode Integration
 
-Wire generate nodes in agent mode to call `run_agent()`. Agent events
-wrapped with `nodeId`. Agent suspend/resume saves node state, ends task,
-new task on resume.
+Wire generate nodes in agent mode to call `run_agent()`. Agent events wrapped
+with `nodeId`. Agent suspend/resume saves node state, ends task, new task on
+resume.
 
-🎯 **Objective:** A graph with an Agent node runs via backend with agent
-events streaming, including waitForInput suspend/resume.
+🎯 **Objective:** A graph with an Agent node runs via backend with agent events
+streaming, including waitForInput suspend/resume.
 
 ### Phase 5: Input Node Suspend/Resume
 
-Input nodes emit `inputRequired` and end task. Resume endpoint loads
-state, provides input as node output, triggers downstream.
+Input nodes emit `inputRequired` and end task. Resume endpoint loads state,
+provides input as node output, triggers downstream.
 
 🎯 **Objective:** Input → Generate → Output works interactively via RPC.
 
 ### Phase 6: Concurrent Nodes
 
-Multiple ready nodes kick off as concurrent tasks. Atomic counter
-coordinates downstream triggers.
+Multiple ready nodes kick off as concurrent tasks. Atomic counter coordinates
+downstream triggers.
 
 🎯 **Objective:** A graph with two independent Generate nodes runs both
 concurrently, correct events, correct downstream triggering.
 
 ### Phase 7: Frontend Integration
 
-Add `enableBackendGraphRunner` flag, `GraphRunService`,
-`GraphRunEventSource`. Wire `prepare()` action.
+Add `enableBackendGraphRunner` flag, `GraphRunService`, `GraphRunEventSource`.
+Wire `prepare()` action.
 
-🎯 **Objective:** With flag on, "Run" button executes a simple graph on
-the backend with live UI updates.
+🎯 **Objective:** With flag on, "Run" button executes a simple graph on the
+backend with live UI updates.
 
 ### Phase 8: Asset Nodes + Media Generation
 
-Asset node resolution. Image, video, audio, music generation (direct
-calls to existing function handlers).
+Asset node resolution. Image, video, audio, music generation (direct calls to
+existing function handlers).
 
 🎯 **Objective:** Graph with asset → image gen → output runs end-to-end.
 
@@ -812,18 +956,17 @@ Docs/Sheets/Slides save (port from TS). Incremental.
 
 ### Phase 10: Drive Graph Loading + Headless Mode
 
-Load graphs from Drive by file ID. Support `mode: "headless"` with
-`inputs` defaults and `agentContext`.
+Load graphs from Drive by file ID. Support `mode: "headless"` with `inputs`
+defaults and `agentContext`.
 
-🎯 **Objective:** `POST {graphId, mode: "headless", inputs: {...}}` loads
-and runs a graph without frontend interaction.
+🎯 **Objective:** `POST {graphId, mode: "headless", inputs: {...}}` loads and
+runs a graph without frontend interaction.
 
 ### Phase 11: Reconnection + History
 
 Event replay on reconnect. Read-only history view for completed runs.
 
-🎯 **Objective:** Close/reopen browser — UI reconstructs from replayed
-events.
+🎯 **Objective:** Close/reopen browser — UI reconstructs from replayed events.
 
 ---
 
@@ -831,16 +974,16 @@ events.
 
 After Heartstone:
 
-| Protocol | Synced File | Abstracts | Dev Impl | Prod Impl |
-|----------|-------------|-----------|----------|-----------|
-| `BackendClient` | `backend_client.py` | Gemini + One Platform | HTTP | Direct RPC |
-| `InteractionStore` | `interaction_store.py` | Agent suspend/resume | In-memory | Database |
-| `SessionStore` | `sessions/store.py` | Agent session lifecycle | In-memory | Database |
-| `DriveOperationsClient` | `drive_operations_client.py` | Drive file ops | HTTP | Direct RPC |
-| `FileSystem` | `file_system_protocol.py` | Agent file system | Disk/Memory | Disk/Memory |
-| **`EventBus`** | **`event_bus.py`** | **Live event delivery** | **asyncio.Queue** | **Pub/Sub** |
-| **`GraphSessionStore`** | **`graph_session_store.py`** | **Graph execution state** | **In-memory dict** | **Database** |
-| **`TaskScheduler`** | **`task_scheduler.py`** | **Node task dispatch** | **asyncio.create_task** | **RPC queue** |
+| Protocol                | Synced File                  | Abstracts                 | Dev Impl                | Prod Impl     |
+| ----------------------- | ---------------------------- | ------------------------- | ----------------------- | ------------- |
+| `BackendClient`         | `backend_client.py`          | Gemini + One Platform     | HTTP                    | Direct RPC    |
+| `InteractionStore`      | `interaction_store.py`       | Agent suspend/resume      | In-memory               | Database      |
+| `SessionStore`          | `sessions/store.py`          | Agent session lifecycle   | In-memory               | Database      |
+| `DriveOperationsClient` | `drive_operations_client.py` | Drive file ops            | HTTP                    | Direct RPC    |
+| `FileSystem`            | `file_system_protocol.py`    | Agent file system         | Disk/Memory             | Disk/Memory   |
+| **`EventBus`**          | **`event_bus.py`**           | **Live event delivery**   | **asyncio.Queue**       | **Pub/Sub**   |
+| **`GraphSessionStore`** | **`graph_session_store.py`** | **Graph execution state** | **In-memory dict**      | **Database**  |
+| **`TaskScheduler`**     | **`task_scheduler.py`**      | **Node task dispatch**    | **asyncio.create_task** | **RPC queue** |
 
 All protocols in synced code. All implementations in `local/` (or google3).
 
@@ -848,19 +991,18 @@ All protocols in synced code. All implementations in `local/` (or google3).
 
 ## Resolved Questions (Final)
 
-1. **Production session routing:** Solved by the `EventBus` protocol. The
-   SSE stream subscribes to the session's event channel via `EventBus`.
-   The `EventBus` production implementation handles cross-server delivery
-   (pub/sub, change streams, etc.). The SSE connection doesn't need to hit
-   the same server as the node tasks.
+1. **Production session routing:** Solved by the `EventBus` protocol. The SSE
+   stream subscribes to the session's event channel via `EventBus`. The
+   `EventBus` production implementation handles cross-server delivery (pub/sub,
+   change streams, etc.). The SSE connection doesn't need to hit the same server
+   as the node tasks.
 
-2. **Graph run timeout:** Tabled for now. Timeouts and maximum turn limits
-   can be added later. **TODO:** Add configurable timeout per node and
-   per graph run.
+2. **Graph run timeout:** Tabled for now. Timeouts and maximum turn limits can
+   be added later. **TODO:** Add configurable timeout per node and per graph
+   run.
 
 3. **Graph versioning:** Plan snapshot stored in `GraphSessionStore` is
-   immutable. Edits to the graph during a run don't affect the running
-   plan.
+   immutable. Edits to the graph during a run don't affect the running plan.
 
 4. **Output node porting priority:** Manual → Webpage (HTML auto-layout) →
    Google Docs → Google Sheets → Google Slides.
