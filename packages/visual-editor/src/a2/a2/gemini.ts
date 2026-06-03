@@ -330,6 +330,96 @@ const MODEL_FALLBACKS: Record<string, readonly string[]> = {
 };
 
 const NO_RETRY_CODES: readonly number[] = [400, 429, 404, 403];
+const RETRY_DELAY_MS = 200;
+
+function isRetryableError(errorMessage?: string): boolean {
+  if (!errorMessage) return false;
+  try {
+    const parsed = JSON.parse(errorMessage);
+    if (parsed && typeof parsed === "object") {
+      const code = parsed.code;
+      if (typeof code === "string") {
+        const retryableCodes = ["INTERNAL", "UNAVAILABLE", "DEADLINE_EXCEEDED"];
+        if (retryableCodes.includes(code.toUpperCase())) {
+          return true;
+        }
+        const nonRetryableCodes = [
+          "INVALID_ARGUMENT",
+          "PERMISSION_DENIED",
+          "NOT_FOUND",
+          "RESOURCE_EXHAUSTED",
+        ];
+        if (nonRetryableCodes.includes(code.toUpperCase())) {
+          return false;
+        }
+      }
+    }
+  } catch {
+    // Ignore and check strings
+  }
+  const lowerMsg = errorMessage.toLowerCase();
+  if (
+    lowerMsg.includes("try again") ||
+    lowerMsg.includes("unexpected error") ||
+    lowerMsg.includes("timeout") ||
+    lowerMsg.includes("overloaded")
+  ) {
+    return true;
+  }
+  return false;
+}
+
+class RetrySession {
+  readonly maxAttempts: number;
+  readonly delayMs: number;
+  #attempt = 0;
+  #lastError: unknown = null;
+
+  constructor(opts: { maxAttempts: number; delayMs: number }) {
+    this.maxAttempts = opts.maxAttempts;
+    this.delayMs = opts.delayMs;
+  }
+
+  get attempt(): number {
+    return this.#attempt;
+  }
+
+  get lastError(): unknown {
+    return this.#lastError;
+  }
+
+  get isLastAttempt(): boolean {
+    return this.#attempt >= this.maxAttempts;
+  }
+
+  nextAttempt(): void {
+    this.#attempt++;
+  }
+
+  classifyStatus(status: number): { retryable: boolean } {
+    return {
+      retryable: !NO_RETRY_CODES.includes(status),
+    };
+  }
+
+  classifyError(errorMessage: string): { retryable: boolean; formatted: string } {
+    return {
+      retryable: isRetryableError(errorMessage),
+      formatted: maybeExtractError(errorMessage),
+    };
+  }
+
+  async handleRetryableFailure(error: unknown): Promise<boolean> {
+    this.#lastError = error;
+    if (this.#attempt < this.maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, this.delayMs));
+      return true;
+    }
+    return false;
+  }
+}
+
+
 
 const REASONS: Record<string, { $error: string; metadata?: ErrorMetadata }> = {
   MAX_TOKENS: {
@@ -403,25 +493,6 @@ function errFromFinishReason(
   return e;
 }
 
-/**
- * Using
- * `{"error":{"code":400,"message":"Invalid JSON paylo…'contents[0].parts[0]': Cannot find field."}]}]}
- * as template for this type.
- */
-type GeminiError = {
-  error: {
-    code: number;
-    details: {
-      type: string;
-      fieldViolations: {
-        description: string;
-        field: string;
-      }[];
-    }[];
-    message: string;
-    status: string;
-  };
-};
 
 function textToJson(content: LLMContent): LLMContent {
   if (!content.parts) return content;
@@ -510,9 +581,14 @@ async function callAPI(
     }
 
     const prefix = await resolvePrefix();
-    let $error: string = "Unknown error";
-    const maxRetries = retries;
-    while (retries) {
+    const retry = new RetrySession({
+      maxAttempts: retries,
+      delayMs: RETRY_DELAY_MS,
+    });
+    let $error = "Unknown error";
+
+    while (!moduleArgs.context.signal?.aborted) {
+      retry.nextAttempt();
       const result = await moduleArgs.fetchWithCreds(
         endpointURL(prefix, model),
         {
@@ -522,32 +598,19 @@ async function callAPI(
         }
       );
       const json = await result.json();
+      const status = result.status;
+      const errObject = json;
+
       if (!result.ok) {
-        // Fetch is a bit weird, because it returns various props
-        // along with the `$error`. Let's handle that here.
-        const errObject = json;
-        const status = result.status;
-        if (!status) {
-          if (errObject)
+        const formattedErr = maybeExtractError(errObject);
+        if (!status || !retry.classifyStatus(status).retryable) {
+          if (!status) {
             return reporter.addError(
-              err(errObject, {
-                origin: "server",
-                model,
-              })
+              err(formattedErr, { origin: "server", model })
             );
-          // This is not an error response, presume fatal error.
+          }
           return reporter.addError({
-            $error,
-            metadata: {
-              origin: "server",
-              model,
-            },
-          });
-        }
-        $error = maybeExtractError(errObject);
-        if (NO_RETRY_CODES.includes(status)) {
-          return reporter.addError({
-            $error,
+            $error: formattedErr,
             metadata: {
               origin: "server",
               kind: kindFromStatus(status),
@@ -555,71 +618,102 @@ async function callAPI(
             },
           });
         }
+
+        $error = formattedErr;
         reporter.addError(
           err(
-            `Got an error ${status} response, retrying (${maxRetries - retries + 1}/${maxRetries})`
+            `Got an error ${status} response, retrying (${retry.attempt}/${retry.maxAttempts})`
           )
         );
-      } else {
-        const outputs = json as GeminiAPIOutputs;
-        if (outputs.errorMessage) {
-          return reporter.addError(
-            err(outputs.errorMessage, { origin: "server", model })
+        if (await retry.handleRetryableFailure($error)) {
+          continue;
+        }
+        return reporter.addError({
+          $error,
+          metadata: {
+            origin: "server",
+            kind: kindFromStatus(status),
+            model,
+          },
+        });
+      }
+
+      const outputs = json as GeminiAPIOutputs;
+      if (outputs.errorMessage) {
+        const { retryable, formatted } = retry.classifyError(outputs.errorMessage);
+        if (retryable) {
+          reporter.addError(
+            err(
+              `Got a retryable error message response, retrying (${retry.attempt}/${retry.maxAttempts}): ${outputs.errorMessage}`
+            )
           );
-        }
-        const candidate = outputs?.candidates?.at(0);
-        if (!candidate) {
-          reporter.addJson("Model Response", outputs || result, "warning");
-          return reporter.addError(
-            err("Unable to get a good response from Gemini", {
-              origin: "server",
-              model,
-            })
-          );
-        }
-        if (
-          "content" in candidate &&
-          candidate.content &&
-          candidate.content.parts
-        ) {
-          if (body.generationConfig?.responseMimeType === "application/json") {
-            candidate.content = textToJson(candidate.content);
+          if (await retry.handleRetryableFailure(formatted)) {
+            continue;
           }
-          const links = candidate.groundingMetadata?.groundingChunks
-            ?.map((chunk) => {
-              if (chunk.web) return { ...chunk.web, iconUri: chunk.web.title };
-              if (chunk.maps) {
-                return { ...chunk.maps, iconUri: "maps.google.com" };
-              }
-              return null;
-            })
-            .filter((item) => item !== null);
-          if (links && links.length > 0) {
-            reporter.addLinks("Grounding metadata", links, "link");
-          }
-          reporter.addContent("Model Response", candidate.content, "download");
-          if (outputs.usageMetadata) {
-            accumulateUsageMetadata(moduleArgs, outputs.usageMetadata);
-          }
-          return outputs;
         }
-        reporter.addJson("Model response", outputs, "warning");
-        if (
-          candidate.finishReason &&
-          candidate.finishReason !== "STOP" &&
-          candidate.finishReason !== "MALFORMED_FUNCTION_CALL"
-        ) {
-          return reporter.addError(
-            errFromFinishReason(candidate.finishReason, model)
-          );
-        }
-        reporter.addError(
-          err(
-            `Did not get a useful response, retrying (${maxRetries - retries + 1}/${maxRetries})`
-          )
+        return reporter.addError(
+          err(formatted, { origin: "server", model })
         );
       }
-      retries--;
+
+      const candidate = outputs?.candidates?.at(0);
+      if (!candidate) {
+        reporter.addJson("Model Response", outputs || result, "warning");
+        return reporter.addError(
+          err("Unable to get a good response from Gemini", {
+            origin: "server",
+            model,
+          })
+        );
+      }
+
+      if (
+        "content" in candidate &&
+        candidate.content &&
+        candidate.content.parts
+      ) {
+        if (body.generationConfig?.responseMimeType === "application/json") {
+          candidate.content = textToJson(candidate.content);
+        }
+        const links = candidate.groundingMetadata?.groundingChunks
+          ?.map((chunk) => {
+            if (chunk.web) return { ...chunk.web, iconUri: chunk.web.title };
+            if (chunk.maps) {
+              return { ...chunk.maps, iconUri: "maps.google.com" };
+            }
+            return null;
+          })
+          .filter((item) => item !== null);
+        if (links && links.length > 0) {
+          reporter.addLinks("Grounding metadata", links, "link");
+        }
+        reporter.addContent("Model Response", candidate.content, "download");
+        if (outputs.usageMetadata) {
+          accumulateUsageMetadata(moduleArgs, outputs.usageMetadata);
+        }
+        return outputs;
+      }
+
+      reporter.addJson("Model response", outputs, "warning");
+      if (
+        candidate.finishReason &&
+        candidate.finishReason !== "STOP" &&
+        candidate.finishReason !== "MALFORMED_FUNCTION_CALL"
+      ) {
+        return reporter.addError(
+          errFromFinishReason(candidate.finishReason, model)
+        );
+      }
+
+      $error = "Did not get a useful response";
+      reporter.addError(
+        err(
+          `Did not get a useful response, retrying (${retry.attempt}/${retry.maxAttempts})`
+        )
+      );
+      if (await retry.handleRetryableFailure($error)) {
+        continue;
+      }
     }
     return reporter.addError({
       $error,
@@ -634,8 +728,17 @@ async function callAPI(
 
 function maybeExtractError(e: string): string {
   try {
-    const parsed = JSON.parse(e) as GeminiError;
-    return parsed.error.message;
+    const parsed = JSON.parse(e) as Record<string, unknown>;
+    if (parsed.error && typeof parsed.error === "object") {
+      const errorObj = parsed.error as Record<string, unknown>;
+      if (typeof errorObj.message === "string") {
+        return errorObj.message;
+      }
+    }
+    if (typeof parsed.message === "string") {
+      return parsed.message;
+    }
+    return e;
   } catch {
     return e;
   }
@@ -801,7 +904,14 @@ async function streamGenerateContent(
 ): Promise<Outcome<AsyncIterable<GeminiAPIOutputs>>> {
   const { fetchWithCreds, context } = moduleArgs;
   const prefix = await resolvePrefix();
-  for (let attempt = 0; attempt < STREAM_MAX_RETRIES; attempt++) {
+
+  const retry = new RetrySession({
+    maxAttempts: STREAM_MAX_RETRIES,
+    delayMs: STREAM_RETRY_DELAY_MS,
+  });
+
+  while (!context.signal?.aborted) {
+    retry.nextAttempt();
     try {
       const result = await fetchWithCreds(streamEndpointURL(prefix, model), {
         method: "POST",
@@ -811,11 +921,24 @@ async function streamGenerateContent(
 
       if (!result.ok) {
         const errObject = await result.text();
-        return err(maybeExtractError(errObject), { origin: "server", model });
+        const status = result.status;
+        const { retryable } = retry.classifyStatus(status);
+        const formattedErr = maybeExtractError(errObject);
+        if (!retryable) {
+          return err(formattedErr, { origin: "server", model });
+        }
+        if (await retry.handleRetryableFailure(formattedErr)) {
+          continue;
+        }
+        return err(formattedErr, { origin: "server", model });
       }
 
       if (!result.body) {
-        return err(`No stream returned`, { origin: "server", model });
+        const errorMsg = "No stream returned";
+        if (await retry.handleRetryableFailure(errorMsg)) {
+          continue;
+        }
+        return err(errorMsg, { origin: "server", model });
       }
 
       // Create an async iterator from the stream
@@ -827,11 +950,8 @@ async function streamGenerateContent(
       const firstResult = await streamIterator.next();
 
       if (firstResult.done) {
-        // Empty stream - retry
-        if (attempt < STREAM_MAX_RETRIES - 1) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, STREAM_RETRY_DELAY_MS)
-          );
+        const errorMsg = "Empty stream response";
+        if (await retry.handleRetryableFailure(errorMsg)) {
           continue;
         }
         // Exhausted retries, return empty iterator
@@ -842,7 +962,13 @@ async function streamGenerateContent(
 
       // Check for errorMessage in the first chunk (Opal backend proxy error).
       if (firstChunk.errorMessage) {
-        return err(firstChunk.errorMessage, { origin: "server", model });
+        const { retryable, formatted } = retry.classifyError(firstChunk.errorMessage);
+        if (retryable) {
+          if (await retry.handleRetryableFailure(formatted)) {
+            continue;
+          }
+        }
+        return err(formatted, { origin: "server", model });
       }
 
       // If first chunk has meaningful content, stream in real-time
@@ -863,10 +989,24 @@ async function streamGenerateContent(
       // which closes it and silently discards remaining chunks.
       const bufferedChunks: GeminiAPIOutputs[] = [firstChunk];
       let nextResult = await streamIterator.next();
+      let streamFailedWithFatalError: Outcome<AsyncIterable<GeminiAPIOutputs>> | null = null;
       while (!nextResult.done) {
-        bufferedChunks.push(nextResult.value);
+        const chunk = nextResult.value;
+        if (chunk.errorMessage) {
+          const { retryable, formatted } = retry.classifyError(chunk.errorMessage);
+          if (!retryable || retry.isLastAttempt) {
+            streamFailedWithFatalError = err(formatted, {
+              origin: "server",
+              model,
+            });
+            break;
+          }
+          // Break so we fall through to the retry logic below
+          break;
+        }
+        bufferedChunks.push(chunk);
         // Check each chunk as it arrives - if we find content, switch to streaming
-        if (hasChunkContent(nextResult.value)) {
+        if (hasChunkContent(chunk)) {
           // Found content! Return an iterator that yields buffered + remaining
           return (async function* () {
             for (const buffered of bufferedChunks) {
@@ -882,12 +1022,14 @@ async function streamGenerateContent(
         nextResult = await streamIterator.next();
       }
 
+      if (streamFailedWithFatalError) {
+        return streamFailedWithFatalError;
+      }
+
       // All chunks were empty - check if we should retry
       if (!hasStreamContent(bufferedChunks)) {
-        if (attempt < STREAM_MAX_RETRIES - 1) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, STREAM_RETRY_DELAY_MS)
-          );
+        const errorMsg = "Stream ended with no content";
+        if (await retry.handleRetryableFailure(errorMsg)) {
           continue;
         }
       }
@@ -899,7 +1041,11 @@ async function streamGenerateContent(
         }
       })();
     } catch (e) {
-      return err(formatAgentError(e), { ...classifyCaughtError(e), model });
+      const formattedErr = formatAgentError(e);
+      if (await retry.handleRetryableFailure(formattedErr)) {
+        continue;
+      }
+      return err(formattedErr, { ...classifyCaughtError(e), model });
     }
   }
 
