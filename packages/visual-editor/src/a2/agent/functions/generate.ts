@@ -3,10 +3,10 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
   ConsentType,
   ErrorMetadata,
+  RuntimeFlags,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
@@ -37,7 +37,9 @@ import { FunctionGroup, Generators } from "../types.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 import { createReporter } from "../progress-work-item.js";
 import type { AgentEventSink } from "../agent-event-sink.js";
+import { generateWebpage } from "../../a2/html-generator.js";
 import { decodeErrorData } from "../../../sca/utils/decode-error.js";
+import { resolveInstruction } from "./shared.js";
 
 import {
   declarations,
@@ -49,6 +51,7 @@ import {
   type GenerateSpeechFromTextParams,
   type GenerateMusicFromTextParams,
   type GenerateAndExecuteCodeParams,
+  type GenerateHtmlParams,
 } from "./generated/generate.js";
 
 export { getGenerateFunctionGroup, GENERATE_TEXT_FUNCTION };
@@ -75,6 +78,7 @@ export type GenerateFunctionArgs = {
   taskTreeManager: TaskTreeManager;
   generators: Generators;
   sink: AgentEventSink;
+  runtimeFlags?: Readonly<RuntimeFlags>;
 };
 
 function getGenerateFunctionGroup(args: GenerateFunctionArgs): FunctionGroup {
@@ -85,9 +89,16 @@ function getGenerateFunctionGroup(args: GenerateFunctionArgs): FunctionGroup {
     taskTreeManager,
     generators,
     sink,
+    runtimeFlags,
   } = args;
 
-  return assembleFunctionGroup(declarations, metadata, instruction, {
+  const effectiveDeclarations = runtimeFlags?.enableGenerateHtml
+    ? declarations
+    : declarations.filter((d) => d.name !== "generate_html");
+
+  const effectiveInstruction = resolveInstruction(instruction, runtimeFlags);
+
+  return assembleFunctionGroup(effectiveDeclarations, metadata, effectiveInstruction, {
     generate_images: async (
       {
         prompt,
@@ -458,6 +469,49 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
         console.warn(`More than one part generated`, results);
       }
       return { result: toText({ parts: textParts }) };
+    },
+
+    generate_html: async (
+      {
+        prompt,
+        file_name,
+        task_id,
+        status_update,
+      }: GenerateHtmlParams,
+      statusUpdater
+    ) => {
+      taskTreeManager.setInProgress(task_id, status_update);
+      statusUpdater(status_update || "Generating HTML", {
+        expectedDurationInSec: 40,
+      });
+
+      const translated = await translator.fromPidginString(prompt);
+      if (!ok(translated)) return { error: translated.$error };
+
+      const webPage = await generateWebpage(
+        moduleArgs,
+        toText(defaultSystemInstruction()),
+        [translated]
+      );
+
+      statusUpdater(null);
+
+      if (!ok(webPage)) {
+        return { error: webPage.$error };
+      }
+
+      // Add HTML content to agent file system
+      const part = webPage.parts.at(0);
+      if (!part || !("inlineData" in part)) {
+        return { error: "No HTML content was generated" };
+      }
+
+      const htmlFile = fileSystem.add(part, file_name);
+      if (!ok(htmlFile)) {
+        return { error: htmlFile.$error };
+      }
+
+      return { html: htmlFile };
     },
   });
 }

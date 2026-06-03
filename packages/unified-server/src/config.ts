@@ -83,6 +83,7 @@ export async function createClientConfig(opts: {
       enableAssetAccessConsent: flags.ENABLE_ASSET_ACCESS_CONSENT,
       enableBackendGraphRunner: flags.ENABLE_BACKEND_GRAPH_RUNNER,
       enableAgentWorkbench: flags.ENABLE_AGENT_WORKBENCH,
+      enableGenerateHtml: flags.ENABLE_GENERATE_HTML,
     },
   };
 }

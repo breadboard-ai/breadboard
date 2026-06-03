@@ -91,6 +91,7 @@ const testFlags: RuntimeFlags = {
   enableAssetAccessConsent: false,
   enableBackendGraphRunner: false,
   enableAgentWorkbench: false,
+  enableGenerateHtml: false,
 };
 
 suite("createEnvironment", () => {

@@ -109,6 +109,10 @@ export type RuntimeFlags = {
    * conversation / configuration / run-log view.
    */
   enableAgentWorkbench: boolean;
+  /**
+   * Enable Agentic HTML Generation function
+   */
+  enableGenerateHtml: boolean;
 };
 
 /**
@@ -263,4 +267,10 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     description: "Enables the Agent Workbench layout for single-agent Opals",
     visibility: "experimental",
   },
+  enableGenerateHtml: {
+    title: "Agentic HTML Generation",
+    description: "Enable the generate_html function for the agent",
+    visibility: "experimental",
+  },
 };
+

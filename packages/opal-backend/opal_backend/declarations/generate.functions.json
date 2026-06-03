@@ -350,5 +350,50 @@
       },
       "additionalProperties": false
     }
+  },
+  {
+    "name": "generate_html",
+    "description": "Generates a complete, beautiful HTML document based on a prompt and optional references to existing files (e.g. text files, images). Returns the generated document as a file path.",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "description": "Detailed prompt describing the HTML document to generate. You can refer to other files (e.g. text content, images, etc.) using <file src=\"/mnt/filename.ext\" /> tag in the prompt."
+        },
+        "file_name": {
+          "type": "string",
+          "description": "Optional name for the generated HTML file (without extension). Use snake_case for naming. The system will automatically add the '.html' extension."
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called."
+        }
+      },
+      "required": [
+        "prompt",
+        "status_update"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "description": "If an error has occurred, will contain a description of the error"
+        },
+        "html": {
+          "type": "string",
+          "description": "Generated HTML document, specified as a file path (e.g., /mnt/file.html)"
+        }
+      },
+      "additionalProperties": false
+    }
   }
 ]
