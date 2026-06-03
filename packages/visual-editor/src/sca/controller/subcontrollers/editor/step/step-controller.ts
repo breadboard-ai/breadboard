@@ -19,6 +19,13 @@ export { StepController };
  */
 class StepController extends RootController {
   /**
+   * Tracks whether the entity editor (step editor) currently has focus.
+   * Updated by the EntityEditor component on focusin/focusout.
+   */
+  @field()
+  accessor focused: boolean = false;
+
+  /**
    * The current pending edit (transformed values, ready to apply).
    * Set by entity-editor when form values change.
    * Note: No deep: true - we replace the whole object, and deep proxies

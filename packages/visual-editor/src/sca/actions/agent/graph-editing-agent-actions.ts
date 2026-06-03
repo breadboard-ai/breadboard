@@ -217,6 +217,9 @@ function startGraphEditingAgent(
       },
       onThemeUpdated: () => {
         controller.editor.theme.updateHash(controller.editor.graph.graph);
+        if (!controller.editor.step.focused) {
+          controller.editor.sidebar.section = "preview";
+        }
       },
     });
 

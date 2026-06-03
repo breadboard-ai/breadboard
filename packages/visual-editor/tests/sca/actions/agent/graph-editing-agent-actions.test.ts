@@ -31,6 +31,7 @@ import type { AppServices } from "../../../../src/sca/services/services.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import { createMockEnvironment } from "../../helpers/mock-environment.js";
 import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
+import { GraphEditingManager } from "../../../../src/a2/agent/graph-editing/graph-editing-manager.js";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -595,5 +596,155 @@ suite("graph-editing-agent-actions", () => {
     assert.strictEqual(agent.loopRunning, false, "loopRunning should be false");
     assert.strictEqual(agent.processing, false, "processing should be false");
     assert.strictEqual(agent.waiting, false, "waiting should be false");
+  });
+
+  test("applyEdits updateTheme switches sidebar to preview when step is not focused", async () => {
+    const controller = await makeControllerStub("GEA_act_13");
+    const editorStub = controller.editor as unknown as {
+      sidebar: { section: string };
+      step: { focused: boolean };
+      theme: { updateHash: (graph: unknown) => void };
+      graph: {
+        editor: { raw: () => { edges: unknown[]; nodes: unknown[] } };
+        graph: { edges: unknown[]; nodes: unknown[] };
+      };
+    };
+    editorStub.sidebar = { section: "editor" };
+    editorStub.step = { focused: false };
+    editorStub.theme = { updateHash() {} };
+    editorStub.graph = {
+      editor: {
+        raw: () => ({ edges: [], nodes: [] }),
+      },
+      graph: { edges: [], nodes: [] },
+    };
+
+    const services = makeServicesStub();
+    bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    // Mock GraphEditingManager.applyEdits to simulate a successful theme update
+    mock.method(
+      GraphEditingManager.prototype,
+      "applyEdits",
+      async (_payload: unknown, options: unknown) => {
+        const opts = options as
+          | { onThemeUpdated?: (metadata: unknown) => void }
+          | undefined;
+        if (opts?.onThemeUpdated) {
+          opts.onThemeUpdated({});
+        }
+        return { success: true };
+      }
+    );
+
+    const originalStartRun = services.agentService.startRun.bind(
+      services.agentService
+    );
+    let activeHandle: AgentRunHandle | null = null;
+    mock.method(services.agentService, "startRun", (args: AgentRunConfig) => {
+      const handle = originalStartRun(args);
+      activeHandle = handle;
+      return handle;
+    });
+
+    startGraphEditingAgent("Build something");
+
+    await activeHandle!.events.handle({
+      applyEdits: {
+        requestId: "req-theme-1",
+        label: "Update theme",
+        transform: {
+          kind: "updateTheme",
+          themeIntent: "sunset vibe",
+        },
+      },
+    });
+
+    assert.strictEqual(
+      controller.editor.sidebar.section,
+      "preview",
+      "Sidebar should switch to preview when theme is updated and step is not focused"
+    );
+
+    services.agentService.endRun(activeHandle!.runId);
+  });
+
+  test("applyEdits updateTheme does not switch sidebar to preview when step is focused", async () => {
+    const controller = await makeControllerStub("GEA_act_14");
+    const editorStub = controller.editor as unknown as {
+      sidebar: { section: string };
+      step: { focused: boolean };
+      theme: { updateHash: (graph: unknown) => void };
+      graph: {
+        editor: { raw: () => { edges: unknown[]; nodes: unknown[] } };
+        graph: { edges: unknown[]; nodes: unknown[] };
+      };
+    };
+    editorStub.sidebar = { section: "editor" };
+    editorStub.step = { focused: true };
+    editorStub.theme = { updateHash() {} };
+    editorStub.graph = {
+      editor: {
+        raw: () => ({ edges: [], nodes: [] }),
+      },
+      graph: { edges: [], nodes: [] },
+    };
+
+    const services = makeServicesStub();
+    bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    // Mock GraphEditingManager.applyEdits to simulate a successful theme update
+    mock.method(
+      GraphEditingManager.prototype,
+      "applyEdits",
+      async (_payload: unknown, options: unknown) => {
+        const opts = options as
+          | { onThemeUpdated?: (metadata: unknown) => void }
+          | undefined;
+        if (opts?.onThemeUpdated) {
+          opts.onThemeUpdated({});
+        }
+        return { success: true };
+      }
+    );
+
+    const originalStartRun = services.agentService.startRun.bind(
+      services.agentService
+    );
+    let activeHandle: AgentRunHandle | null = null;
+    mock.method(services.agentService, "startRun", (args: AgentRunConfig) => {
+      const handle = originalStartRun(args);
+      activeHandle = handle;
+      return handle;
+    });
+
+    startGraphEditingAgent("Build something");
+
+    await activeHandle!.events.handle({
+      applyEdits: {
+        requestId: "req-theme-2",
+        label: "Update theme",
+        transform: {
+          kind: "updateTheme",
+          themeIntent: "sunset vibe",
+        },
+      },
+    });
+
+    assert.strictEqual(
+      controller.editor.sidebar.section,
+      "editor",
+      "Sidebar should NOT switch to preview when theme is updated and step is focused"
+    );
+
+    services.agentService.endRun(activeHandle!.runId);
   });
 });
