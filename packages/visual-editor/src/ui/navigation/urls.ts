@@ -35,6 +35,7 @@ const MISSING_SCOPES = "missing-scopes";
 const AUTO_SIGN_IN = "auto-sign-in";
 const RESOURCE_KEY = "resourcekey";
 export const OAUTH_REDIRECT = "oauth_redirect";
+const HL = "hl";
 const DEV_PREFIX = "dev-";
 
 /**
@@ -173,6 +174,9 @@ export function makeUrl(
       `unhandled page ${JSON.stringify(page)} from ${JSON.stringify(init)}`
     );
   }
+  if (init.hl) {
+    url.searchParams.set(HL, init.hl);
+  }
   if (init.dev) {
     for (const [key, val] of Object.entries(
       init.dev as Record<string, string>
@@ -200,6 +204,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
   }
   let dev: BaseUrlInit["dev"];
   const oauthRedirect = url.searchParams.get(OAUTH_REDIRECT);
+  const hl = url.searchParams.get(HL);
   for (const [key, val] of url.searchParams) {
     if (key.startsWith(DEV_PREFIX)) {
       dev ??= {};
@@ -250,6 +255,9 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     if (dev) {
       landing.dev = dev;
     }
+    if (hl) {
+      landing.hl = hl;
+    }
     return landing;
   } else if (pathname.startsWith("/open/")) {
     const open: OpenUrlInit = {
@@ -291,6 +299,9 @@ export function parseUrl(url: string | URL): MakeUrlInit {
       if (oauthRedirect) {
         home.oauthRedirect = oauthRedirect;
       }
+      if (hl) {
+        home.hl = hl;
+      }
       return home;
     }
     const mode =
@@ -324,6 +335,9 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     }
     if (oauthRedirect) {
       graph.oauthRedirect = oauthRedirect;
+    }
+    if (hl) {
+      graph.hl = hl;
     }
     return graph;
   }

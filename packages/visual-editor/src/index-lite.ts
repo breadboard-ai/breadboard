@@ -27,7 +27,7 @@ import { blankBoard } from "./ui/utils/blank-board.js";
 import { repeat } from "lit/directives/repeat.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 
-import { markdown } from "./ui/directives/markdown.js";
+import { msg } from "@lit/localize";
 import { type SharePanel } from "./ui/elements/elements.js";
 import { deriveLiteViewType } from "./sca/utils/lite-view-type.js";
 import {
@@ -665,7 +665,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderMessage() {
     return html`<div id="message" class="w-400 md-body-small sans-flex">
-      ${markdown(Strings.from("LABEL_DISCLAIMER_LITE"))}
+      ${msg(html`This Gem is powered by Google Labs, not Gemini Apps. It can
+        make mistakes, so double-check it.
+        <a href="https://support.google.com/gemini?p=ai_apps">Learn more</a>`)}
     </div>`;
   }
 

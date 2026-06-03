@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<localizationbundle locale="fr">
+  <messages>
+    <msg name="hbeb436a6f6a2a826">Ce Gem est fourni par Google Labs, et non par Gemini Apps. Il peut
+        faire des erreurs, veuillez donc vérifier les résultats.
+        <ph name="0">&lt;a href="https://support.google.com/gemini?p=ai_apps"&gt;</ph>En savoir plus<ph name="1">&lt;/a&gt;</ph></msg>
+    <msg name="s718207f6b5b1ed0b">Je souhaite recevoir des e-mails concernant les mises à jour des modèles, les offres, les conseils utiles et les actualités d'Opal</msg>
+    <msg name="s018656f690df2a0e">Je souhaite être invité(e) à participer à de futures études de recherche d'Opal</msg>
+  </messages>
+</localizationbundle>

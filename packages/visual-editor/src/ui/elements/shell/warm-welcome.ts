@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LitElement, html, css } from "lit";
+import { msg } from "@lit/localize";
 import { customElement, state, property } from "lit/decorators.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
@@ -96,7 +97,7 @@ export class VEWarmWelcomeModal extends LitElement {
           @change=${({ target }: { target: MdCheckbox }) =>
             (this.emailUpdates = target.checked)}
         ></md-checkbox>
-        ${Strings.from("LABEL_EMAIL_UPDATES")}
+        ${msg("I’d like to receive emails for model updates, offers, useful tips and news about Opal")}
       </label>
       <label class="md-body-large">
         <md-checkbox
@@ -104,7 +105,7 @@ export class VEWarmWelcomeModal extends LitElement {
           @change=${({ target }: { target: MdCheckbox }) =>
             (this.userResearch = target.checked)}
         ></md-checkbox>
-        ${Strings.from("LABEL_EMAIL_RESEARCH")}
+        ${msg("I’m interested in being invited to future research studies from Opal")}
       </label>
     </bb-modal> `;
   }

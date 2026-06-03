@@ -15,6 +15,7 @@ import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/navigation/urls.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "./ui/config/client-deployment-configuration.js";
 import { connectToOpalShellHost } from "./ui/utils/opal-shell-guest.js";
 import { Utils } from "./sca/utils.js";
+import { setLocale } from "./localization/config.js";
 
 export { bootstrap };
 
@@ -68,6 +69,9 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
 
   const guestConfiguration = await shellHost.getConfiguration();
   const parsedUrl = parseUrl(window.location.href);
+  if (parsedUrl.hl) {
+    await setLocale(parsedUrl.hl);
+  }
   const { lite, page, colorScheme } = parsedUrl;
   if (
     // Signed-out users can access public graphs.

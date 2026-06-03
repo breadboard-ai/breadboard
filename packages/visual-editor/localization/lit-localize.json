@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/lit/lit/main/packages/localize-tools/config.schema.json",
+  "sourceLocale": "en",
+  "targetLocales": ["fr", "de"],
+  "tsConfig": "../tsconfig.json",
+  "output": {
+    "mode": "runtime",
+    "outputDir": "../src/generated/localization",
+    "language": "ts",
+    "localeCodesModule": "src/generated/localization/locale-codes.ts"
+  },
+  "interchange": {
+    "format": "xlb",
+    "outputFile": "messages.xmb",
+    "translationsGlob": "*.xlb"
+  }
+}
