@@ -293,3 +293,115 @@ class TestStatus:
     async def test_missing_session_status(self):
         store = InMemoryGraphSessionStore()
         assert await store.get_status("missing") is None
+
+
+class TestListSessions:
+    @pytest.mark.asyncio
+    async def test_list_sessions_by_graph_id(self):
+        store = InMemoryGraphSessionStore()
+        await store.create("s1", _linear_plan(), graph_id="g1")
+        await store.create("s2", _linear_plan(), graph_id="g1")
+        await store.create("s3", _linear_plan(), graph_id="g2")
+
+        g1_sessions = await store.list_sessions("g1")
+        assert len(g1_sessions) == 2
+        ids = {s.session_id for s in g1_sessions}
+        assert ids == {"s1", "s2"}
+
+        g2_sessions = await store.list_sessions("g2")
+        assert len(g2_sessions) == 1
+        assert g2_sessions[0].session_id == "s3"
+
+    @pytest.mark.asyncio
+    async def test_list_sessions_empty(self):
+        store = InMemoryGraphSessionStore()
+        sessions = await store.list_sessions("nonexistent")
+        assert sessions == []
+
+    @pytest.mark.asyncio
+    async def test_list_sessions_includes_status(self):
+        store = InMemoryGraphSessionStore()
+        await store.create("s1", _linear_plan(), graph_id="g1")
+        await store.set_status("s1", "completed")
+
+        sessions = await store.list_sessions("g1")
+        assert sessions[0].status == "completed"
+
+    @pytest.mark.asyncio
+    async def test_list_sessions_sorted_newest_first(self):
+        store = InMemoryGraphSessionStore()
+        await store.create("s1", _linear_plan(), graph_id="g1")
+        await store.create("s2", _linear_plan(), graph_id="g1")
+
+        sessions = await store.list_sessions("g1")
+        # s2 created after s1, should be first.
+        assert sessions[0].session_id == "s2"
+        assert sessions[1].session_id == "s1"
+        assert sessions[0].created_at >= sessions[1].created_at
+
+
+class TestDeleteSession:
+    @pytest.mark.asyncio
+    async def test_delete_existing_session(self):
+        store = InMemoryGraphSessionStore()
+        await store.create("s1", _linear_plan(), graph_id="g1")
+
+        result = await store.delete_session("s1")
+        assert result is True
+        assert await store.get_status("s1") is None
+
+    @pytest.mark.asyncio
+    async def test_delete_missing_session(self):
+        store = InMemoryGraphSessionStore()
+        result = await store.delete_session("nonexistent")
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_delete_removes_from_graph_index(self):
+        store = InMemoryGraphSessionStore()
+        await store.create("s1", _linear_plan(), graph_id="g1")
+        await store.create("s2", _linear_plan(), graph_id="g1")
+
+        await store.delete_session("s1")
+
+        sessions = await store.list_sessions("g1")
+        assert len(sessions) == 1
+        assert sessions[0].session_id == "s2"
+
+    @pytest.mark.asyncio
+    async def test_delete_all_cleans_graph_index(self):
+        store = InMemoryGraphSessionStore()
+        await store.create("s1", _linear_plan(), graph_id="g1")
+
+        await store.delete_session("s1")
+
+        sessions = await store.list_sessions("g1")
+        assert sessions == []
+
+
+class TestGraphIdTracking:
+    @pytest.mark.asyncio
+    async def test_graph_id_stored(self):
+        store = InMemoryGraphSessionStore()
+        await store.create("s1", _linear_plan(), graph_id="my-graph")
+
+        sessions = await store.list_sessions("my-graph")
+        assert sessions[0].graph_id == "my-graph"
+
+    @pytest.mark.asyncio
+    async def test_default_graph_id_is_empty(self):
+        store = InMemoryGraphSessionStore()
+        await store.create("s1", _linear_plan())
+
+        sessions = await store.list_sessions("")
+        assert len(sessions) == 1
+        assert sessions[0].graph_id == ""
+
+    @pytest.mark.asyncio
+    async def test_created_at_is_set(self):
+        store = InMemoryGraphSessionStore()
+        await store.create("s1", _linear_plan())
+
+        sessions = await store.list_sessions("")
+        assert sessions[0].created_at > 0
+

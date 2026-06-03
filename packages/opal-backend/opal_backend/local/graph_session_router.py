@@ -6,10 +6,13 @@
 Parallel to ``session_router.py`` for agent sessions. This module
 provides the HTTP endpoints for graph execution:
 
-    POST /v1beta1/graphSessions/new    → start a graph run
-    GET  /v1beta1/graphSessions/{id}   → SSE stream (replay + live)
-    GET  /v1beta1/graphSessions/{id}/status → lightweight status
-    POST /v1beta1/graphSessions/{id}:cancel → cancel running tasks
+    POST   /v1beta1/graphSessions/new         → start a graph run
+    GET    /v1beta1/graphSessions              → SSE monitor (session list + status)
+    GET    /v1beta1/graphSessions/{id}         → SSE stream (replay + live)
+    GET    /v1beta1/graphSessions/{id}/status  → lightweight status
+    POST   /v1beta1/graphSessions/{id}:cancel  → cancel running tasks
+    POST   /v1beta1/graphSessions/{id}:resume  → resume suspended node
+    DELETE /v1beta1/graphSessions/{id}         → delete session
 """
 
 from __future__ import annotations
@@ -26,7 +29,7 @@ from ..event_bus import EventBus
 from ..graph_condense import condense
 from ..graph_plan import create_plan
 from ..graph_runner import GraphRunner
-from ..graph_session_store import GraphSessionStore
+from ..graph_session_store import GraphSessionStore, SessionSummary
 from ..graph_types import GraphDescriptor
 from ..task_scheduler import TaskScheduler
 
@@ -66,7 +69,7 @@ def create_graph_session_router(
         """
         body = await request.json()
         graph_data = body.get("graph")
-        graph_id = body.get("graphId")
+        graph_id = body.get("graphId", "")
 
         if not graph_data and not graph_id:
             return JSONResponse(
@@ -78,8 +81,8 @@ def create_graph_session_router(
         access_token = body.get("accessToken", "")
         origin = request.headers.get("origin", "")
 
-        # Load graph from Drive if graphId is provided.
-        if graph_id:
+        # Load graph from Drive if graphId is provided without inline graph.
+        if graph_id and not graph_data:
             if not access_token:
                 return JSONResponse(
                     {"error": "'accessToken' is required when using 'graphId'"},
@@ -119,12 +122,57 @@ def create_graph_session_router(
         headless_inputs = inputs if mode == "headless" else None
 
         # Store the plan and kick off initial tasks.
-        await store.create(session_id, plan, headless_inputs=headless_inputs)
+        await store.create(
+            session_id, plan,
+            graph_id=graph_id, headless_inputs=headless_inputs,
+        )
         await runner.start_graph(
             session_id, access_token=access_token, origin=origin,
         )
 
         return JSONResponse({"sessionId": session_id})
+
+    @router.get("/")
+    async def monitor_graph_sessions(
+        request: Request, graphId: str = "",
+    ) -> EventSourceResponse:
+        """SSE: initial session list + live status updates.
+
+        Provides:
+        - Initial snapshot of all sessions for the given graph
+        - Live status change events (sessionStatusChange, sessionCreated,
+          sessionDeleted)
+
+        Lightweight — no event replay, no output data.
+        """
+        async def event_generator():
+            # Initial snapshot: one sessionStatus event per existing session.
+            sessions = await store.list_sessions(graphId)
+            for s in sessions:
+                yield {
+                    "event": "sessionStatus",
+                    "data": json.dumps({
+                        "sessionId": s.session_id,
+                        "status": s.status,
+                        "createdAt": s.created_at,
+                    }),
+                }
+
+            # Live updates: same shape, same event name.
+            channel = f"graph:{graphId}"
+            subscription = event_bus.subscribe(channel)
+            try:
+                async for item in subscription:
+                    if await request.is_disconnected():
+                        break
+                    yield {"event": "sessionStatus", "data": json.dumps(item)}
+            finally:
+                event_bus.unsubscribe(channel, subscription)
+
+        return EventSourceResponse(
+            content=event_generator(),
+            media_type="text/event-stream",
+        )
 
     @router.get("/{session_id}")
     async def stream_graph_events(
@@ -159,6 +207,17 @@ def create_graph_session_router(
                     "data": json.dumps({**event, "index": idx}),
                 }
             next_index += len(events)
+
+            # Emit a replay-complete marker so clients know stored
+            # events are done and live events follow.
+            yield {
+                "event": "event",
+                "id": str(next_index),
+                "data": json.dumps(
+                    {"type": "replayComplete", "index": next_index},
+                ),
+            }
+            next_index += 1
 
             # Phase 2: subscribe for live events if still running.
             current_status = await store.get_status(session_id)
@@ -250,5 +309,25 @@ def create_graph_session_router(
         return JSONResponse({
             "sessionId": session_id, "status": "running",
         })
+
+    @router.delete("/{session_id}")
+    async def delete_graph_session(session_id: str) -> JSONResponse:
+        """Delete a graph session and all its stored state."""
+        status = await store.get_status(session_id)
+        if status is None:
+            return JSONResponse(
+                {"error": "Graph session not found"}, status_code=404,
+            )
+        # Cancel if still running.
+        if status in ("running", "suspended"):
+            await scheduler.cancel(session_id)
+            await event_bus.close(session_id)
+
+        deleted = await store.delete_session(session_id)
+        if not deleted:
+            return JSONResponse(
+                {"error": "Graph session not found"}, status_code=404,
+            )
+        return JSONResponse({"ok": True})
 
     return router

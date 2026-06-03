@@ -816,7 +816,7 @@ POST /v1beta1/graphSessions/new
   → {sessionId}
 
 GET /v1beta1/graphSessions/{id}?after=-1
-  → SSE stream (replay + live)
+  → SSE stream (replay + replayComplete marker + live)
 
 POST /v1beta1/graphSessions/{id}:resume
   {interactionId, response, accessToken?}
@@ -827,6 +827,12 @@ GET /v1beta1/graphSessions/{id}/status
 
 POST /v1beta1/graphSessions/{id}:cancel
   → {sessionId, status: "cancelled"}
+
+GET /v1beta1/graphSessions?graphId=X
+  → SSE stream (initial session list + live status changes)
+
+DELETE /v1beta1/graphSessions/{id}
+  → {ok: true}
 ```
 
 ---
@@ -860,10 +866,13 @@ POST /v1beta1/graphSessions/{id}:cancel
 
 ### New Frontend Code
 
-| Component             | Location                      | Purpose                       |
-| --------------------- | ----------------------------- | ----------------------------- |
-| `GraphRunService`     | `visual-editor/sca/services/` | Backend graph run management  |
-| `GraphRunEventSource` | `visual-editor/`              | SSE consumer for graph events |
+| Component                | Location                                | Purpose                                      |
+| ------------------------ | --------------------------------------- | -------------------------------------------- |
+| `GraphRunService`        | `visual-editor/sca/services/`           | Backend graph run management                 |
+| `GraphRunEventSource`    | `visual-editor/`                        | SSE consumer for graph events                |
+| `SessionListController`  | `visual-editor/sca/controller/devtools` | Session list mirror + connected session      |
+| `session-actions.ts`     | `visual-editor/sca/actions/run`         | Connect/disconnect/delete/monitor actions    |
+| `sessions-panel.ts`      | `visual-editor/ui/elements/devtools`    | Devtools "Sessions" tab UI                   |
 
 ### Rename
 
@@ -962,11 +971,60 @@ defaults and `agentContext`.
 🎯 **Objective:** `POST {graphId, mode: "headless", inputs: {...}}` loads and
 runs a graph without frontend interaction.
 
-### Phase 11: Reconnection + History
+### Phase 11: Session Management + Reconnection
 
-Event replay on reconnect. Read-only history view for completed runs.
+Add a "Sessions" tab to `bb-devtools` (behind `enableBackendGraphRunner` flag)
+showing per-graph session history. Allow connecting, disconnecting, and
+reconnecting the UI to running or completed sessions. Refactor
+`backend-run-action` to support soft disconnect (switch session) vs. hard
+cancel (restart).
 
-🎯 **Objective:** Close/reopen browser — UI reconstructs from replayed events.
+🎯 **Objective:** Start a graph run, disconnect (switch to another session or
+just disconnect), then reconnect — UI reconstructs from replayed events and
+picks up live events if the session is still running. Suspended sessions
+allow providing input on reconnect.
+
+#### Decisions
+
+| #   | Decision                          | Resolution                                                                |
+| --- | --------------------------------- | ------------------------------------------------------------------------- |
+| 1   | Session list source of truth      | Server (`GraphSessionStore`), not frontend. Lightweight monitor SSE.      |
+| 2   | Session scoping                   | Per-graph, indexed by caller-provided `graphId` (typically Drive file ID) |
+| 3   | Replay→live boundary              | Explicit `replayComplete` marker event emitted by server                  |
+| 4   | Suspended session reconnect       | Allow — show input UI after replay                                        |
+| 5   | Cancel vs. disconnect             | Two-tier: Restart = `POST :cancel`. Switch session = soft disconnect.     |
+| 6   | Session cleanup                   | `DELETE /v1beta1/graphSessions/{id}` endpoint + trash icon in UI          |
+| 7   | Tab naming                        | "Sessions" (devtools view)                                                |
+
+#### Sub-phases
+
+**11a — Backend: Session monitor + delete.**
+`GraphSessionStore` extended with `graph_id` tracking, `list_sessions()`,
+`delete_session()`. `InMemoryGraphSessionStore` publishes status changes to a
+graph-level `EventBus` channel (`graph:{graphId}`). New `GET /` monitor SSE
+endpoint streams initial session list + status updates. New `DELETE /{id}`
+endpoint. `replayComplete` marker added to per-session SSE stream.
+
+**11b — Frontend: Refactor `backend-run-action`.**
+Extract `consumeSessionEvents()` with two modes:
+- **Live** — same as current loop: incremental node states, input handling.
+- **Replay** — accumulate node states silently, populate console from event
+  history, skip interactive handlers. At `replayComplete`, apply cumulative
+  state and switch to live mode. Special case: if session is suspended,
+  show input UI after replay.
+
+Introduce soft disconnect mechanism (separate `disconnectController` that
+stops the SSE reader without canceling the backend session).
+
+**11c — Frontend: Session list controller + devtools tab.**
+`SessionListController` under `editor.devtools.sessions` — thin reactive
+mirror of the monitor stream. Sessions panel UI in devtools with status
+icons, timestamps, connect/disconnect/delete.
+
+**11d — Frontend: Session actions + monitor lifecycle.**
+`session-actions.ts`: `connectSession()` (replay + live), `disconnectSession()`
+(soft), `deleteSession()`. Monitor action subscribes to the session list SSE
+when the graph changes.
 
 ---
 
