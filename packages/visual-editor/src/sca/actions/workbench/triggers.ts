@@ -8,11 +8,11 @@ import { signalTrigger, type SignalTrigger } from "../../coordination.js";
 import { type ActionBind } from "../binder.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 
-function isSingleAgentGraph(graph: GraphDescriptor | null): boolean {
+export function isSingleAgentGraph(graph: GraphDescriptor | null): boolean {
   if (!graph) return false;
   const nodes = graph.nodes;
   if (!nodes || nodes.length !== 1) return false;
-  return nodes[0].type === "agent";
+  return nodes[0].configuration?.["generation-mode"] === "agent";
 }
 
 export enum WorkbenchEligibility {

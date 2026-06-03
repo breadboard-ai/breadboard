@@ -6,17 +6,12 @@
 
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
-import { onWorkbenchEligibilityChange } from "./triggers.js";
-import type { GraphDescriptor } from "@breadboard-ai/types";
+import {
+  onWorkbenchEligibilityChange,
+  isSingleAgentGraph,
+} from "./triggers.js";
 
 export const bind = makeAction();
-
-function isSingleAgentGraph(graph: GraphDescriptor | null): boolean {
-  if (!graph) return false;
-  const nodes = graph.nodes;
-  if (!nodes || nodes.length !== 1) return false;
-  return nodes[0].type === "agent";
-}
 
 export const updateWorkbenchEligibility = asAction(
   "Workbench.updateEligibility",

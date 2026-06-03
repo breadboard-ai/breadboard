@@ -35,7 +35,13 @@ suite("Workbench Actions", () => {
 
       const singleAgentGraph: GraphDescriptor = {
         title: "Single Agent",
-        nodes: [{ id: "agent-node", type: "agent" }],
+        nodes: [
+          {
+            id: "agent-node",
+            type: "embed://a2/generate.bgl.json#module:main",
+            configuration: { "generation-mode": "agent" },
+          },
+        ],
         edges: [],
       };
 
@@ -74,7 +80,13 @@ suite("Workbench Actions", () => {
 
       const singleAgentGraph: GraphDescriptor = {
         title: "Single Agent",
-        nodes: [{ id: "agent-node", type: "agent" }],
+        nodes: [
+          {
+            id: "agent-node",
+            type: "embed://a2/generate.bgl.json#module:main",
+            configuration: { "generation-mode": "agent" },
+          },
+        ],
         edges: [],
       };
 
@@ -118,7 +130,11 @@ suite("Workbench Actions", () => {
       const multiNodeGraph: GraphDescriptor = {
         title: "Multi Node",
         nodes: [
-          { id: "agent-node", type: "agent" },
+          {
+            id: "agent-node",
+            type: "embed://a2/generate.bgl.json#module:main",
+            configuration: { "generation-mode": "agent" },
+          },
           { id: "input-node", type: "input" },
         ],
         edges: [],
@@ -227,7 +243,13 @@ suite("Workbench Triggers", () => {
     test("returns trigger condition value 1 when eligible", async () => {
       const singleAgentGraph: GraphDescriptor = {
         title: "Single Agent",
-        nodes: [{ id: "agent-node", type: "agent" }],
+        nodes: [
+          {
+            id: "agent-node",
+            type: "embed://a2/generate.bgl.json#module:main",
+            configuration: { "generation-mode": "agent" },
+          },
+        ],
         edges: [],
       };
 
@@ -262,7 +284,11 @@ suite("Workbench Triggers", () => {
       const multiNodeGraph: GraphDescriptor = {
         title: "Multi Node",
         nodes: [
-          { id: "agent-node", type: "agent" },
+          {
+            id: "agent-node",
+            type: "embed://a2/generate.bgl.json#module:main",
+            configuration: { "generation-mode": "agent" },
+          },
           { id: "input-node", type: "input" },
         ],
         edges: [],

@@ -203,17 +203,17 @@ views a symmetrical doorway to the other.
 
 #### packages/types
 
-- [ ] `flags.ts` — add `enableAgentWorkbench` to `RuntimeFlags` and
+- [x] `flags.ts` — add `enableAgentWorkbench` to `RuntimeFlags` and
       `RUNTIME_FLAG_META` (visibility: `"experimental"`).
 
 #### packages/unified-server
 
-- [ ] `config.ts` — map `ENABLE_AGENT_WORKBENCH` env variable to the flag.
-- [ ] `flags.ts` — add the flag default.
+- [x] `config.ts` — map `ENABLE_AGENT_WORKBENCH` env variable to the flag.
+- [x] `flags.ts` — add the flag default.
 
 #### packages/visual-editor — SCA
 
-- [ ] `WorkbenchController` — new controller in
+- [x] `WorkbenchController` — new controller in
       `controller/subcontrollers/editor/workbench/`. Fields:
   - `eligible: boolean` — derived from flag + graph shape (single agent node).
     When false, the workbench is unavailable and the toggle is hidden.
@@ -221,9 +221,9 @@ views a symmetrical doorway to the other.
     choice. Defaults to `"workbench"` when eligible. Ignored when not eligible.
   - `splits: [number, number, number]` (persisted, session — three `fr` values,
     e.g. `[1, 2, 1]` for the default 1:2:1 ratio).
-- [ ] `controller.ts` — add `workbench` to `editor` subcontrollers.
-- [ ] `editor.ts` — re-export `WorkbenchController`.
-- [ ] Workbench eligibility trigger — a trigger that watches the flag signal and
+- [x] `controller.ts` — add `workbench` to `editor` subcontrollers.
+- [x] `editor.ts` — re-export `WorkbenchController`.
+- [x] Workbench eligibility trigger — a trigger that watches the flag signal and
       `editor.graph.graph` to set `workbench.eligible` when the flag is on and
       the graph has a single agent node.
 
@@ -235,33 +235,33 @@ composition level (~L173). When `workbench.eligible && workbench.view ===
 `#renderCanvasController()`. This is the same level that already switches
 between canvas, app, and welcome views.
 
-- [ ] `bb-agent-workbench` — new element in
+- [x] `bb-agent-workbench` — new element in
       `ui/elements/agent-workbench/agent-workbench.ts`. Renders the three-column
       CSS grid. Left and center columns render placeholders. Right column
       renders the run log (see below). A floating control stack in the bottom
       corner with: undo/redo (grayed out), graph view button.
-- [ ] `agent-workbench.styles.ts` — grid layout, column sizing.
-- [ ] **Tri-splitter** — new `ui-tri-splitter` element (or equivalent). Two drag
+- [x] `agent-workbench.styles.ts` — grid layout, column sizing.
+- [x] **Tri-splitter** — new `ui-tri-splitter` element (or equivalent). Two drag
       handles, three slots. Per-column minimum widths. Same pointer-capture +
       `fr` unit pattern as `ui-splitter`, but with two degrees of freedom. The
       `WorkbenchController` owns the split state (not `SplitterController`,
       which remains for the classic layout).
-- [ ] `bb-run-log-column` — new element for the right column:
+- [x] `bb-run-log-column` — new element for the right column:
   - Column header: agent title, Run / Stop buttons, progress indicator.
   - Run list: reads from `AgentContext.getAllRuns()`, renders each as a
     collapsible entry (status badge, timestamp, summary).
   - Active run body: delegates live console output to existing `bb-console-view`
     or its internal rendering.
-- [ ] `index.ts` — conditional rendering in `mainPanel`: when workbench is
+- [x] `index.ts` — conditional rendering in `mainPanel`: when workbench is
       active, render `bb-agent-workbench` instead of `bb-canvas-controller`.
-- [ ] Graph view floating control stack — extend the existing canvas control
+- [x] Graph view floating control stack — extend the existing canvas control
       stack (fit-to-screen, zoom, undo/redo) with a workbench button, grayed
       out when ineligible.
-- [ ] Theme controls — remove the Theme button from the sidebar controls in
+- [x] Theme controls — remove the Theme button from the sidebar controls in
       `bb-canvas-controller` when workbench-eligible. Relocate to the app tab
       (accessible from the header's Editor/App toggle → App view). The theme
       designer overlay continues to render as an overlay.
-- [ ] Preview removal — the Preview sidebar tab is hidden when the workbench
+- [x] Preview removal — the Preview sidebar tab is hidden when the workbench
       flag is on and the graph is eligible. Preview functionality moves to the
       App view (already accessible via the header toggle).
 
@@ -274,7 +274,7 @@ between canvas, app, and welcome views.
 
 #### Tests
 
-- [ ] `workbench-controller.test.ts` — `eligible` is false when flag is off;
+- [x] `workbench-controller.test.ts` — `eligible` is false when flag is off;
       `eligible` is true when flag is on and graph is single-agent; `eligible`
       is false when flag is on but graph is multi-node. `view` defaults to
       `"workbench"` when eligible; persists across reloads.
