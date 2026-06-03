@@ -24,6 +24,7 @@ import {
   startSessionMonitor,
   stopSessionMonitor,
 } from "../../../../sca/actions/session/session-actions.js";
+import { connectToSession } from "../../../../sca/actions/run/backend-run-action.js";
 import { icons } from "../../../styles/icons.js";
 
 @customElement("bb-devtools-sessions-panel")
@@ -291,8 +292,7 @@ export class DevToolsSessionsPanel extends SignalWatcher(LitElement) {
       sessionHistory.connectionAbortController?.abort();
       sessionHistory.connectionAbortController = null;
     } else {
-      // TODO(Phase 11d): connectToSession action.
-      sessionHistory.activeSessionId = sessionId;
+      connectToSession(sessionId);
     }
   }
 
