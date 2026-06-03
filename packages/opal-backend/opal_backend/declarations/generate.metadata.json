@@ -28,5 +28,10 @@
     "name": "generate_and_execute_code",
     "icon": "code",
     "title": "Generating and Executing Code"
+  },
+  {
+    "name": "generate_html",
+    "icon": "web",
+    "title": "Generating HTML"
   }
 ]

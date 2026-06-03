@@ -330,6 +330,7 @@ function createTestArgs(
     taskTreeManager: overrides.taskTreeManager ?? createMockTaskTreeManager(),
     generators: overrides.generators ?? createMockGenerators(),
     sink: overrides.sink ?? createMockSink(),
+    runtimeFlags: overrides.runtimeFlags,
   };
 }
 

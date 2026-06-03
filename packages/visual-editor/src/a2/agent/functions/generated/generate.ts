@@ -92,6 +92,18 @@ export type GenerateAndExecuteCodeResponse = {
   result?: string;
 };
 
+export type GenerateHtmlParams = {
+  prompt: string;
+  file_name?: string;
+  task_id?: string;
+  status_update: string;
+};
+
+export type GenerateHtmlResponse = {
+  error?: string;
+  html?: string;
+};
+
 export const declarations: FunctionDeclaration[] = [
   {
     "name": "generate_images",
@@ -444,6 +456,51 @@ export const declarations: FunctionDeclaration[] = [
       },
       "additionalProperties": false
     }
+  },
+  {
+    "name": "generate_html",
+    "description": "Generates a complete, beautiful HTML document based on a prompt and optional references to existing files (e.g. text files, images). Returns the generated document as a file path.",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "description": "Detailed prompt describing the HTML document to generate. You can refer to other files (e.g. text content, images, etc.) using <file src=\"/mnt/filename.ext\" /> tag in the prompt."
+        },
+        "file_name": {
+          "type": "string",
+          "description": "Optional name for the generated HTML file (without extension). Use snake_case for naming. The system will automatically add the '.html' extension."
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called."
+        }
+      },
+      "required": [
+        "prompt",
+        "status_update"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "description": "If an error has occurred, will contain a description of the error"
+        },
+        "html": {
+          "type": "string",
+          "description": "Generated HTML document, specified as a file path (e.g., /mnt/file.html)"
+        }
+      },
+      "additionalProperties": false
+    }
   }
 ];
 
@@ -471,7 +528,11 @@ export const metadata: Record<string, { icon?: string; title?: string }> = {
   "generate_and_execute_code": {
     "icon": "code",
     "title": "Generating and Executing Code"
+  },
+  "generate_html": {
+    "icon": "web",
+    "title": "Generating HTML"
   }
 };
 
-export const instruction: string = "## When to call \"generate_text\" function\n\nWhen evaluating the objective, make sure to determine whether calling \"generate_text\" function is warranted. The key tradeoff here is latency: because it's an additional model call, the \"generate_text\" will take longer to finish.\n\nYour job is to fulfill the objective as efficiently as possible, so weigh the need to invoke \"generate_text\" carefully.\n\nHere is the rules of thumb:\n\n- For shorter responses like a chat conversation, just do the text generation yourself. You are an LLM and you can do it without calling \"generate_text\" function.\n- For longer responses like generating a chapter of a book or analyzing a large and complex set of files, use \"generate_text\" function.\n\n\n### How to write a good prompt for the code generator\n\nThe \"generate_and_execute_code\" function is a self-contained code generator with a sandboxed code execution environment. Think of it as a sub-agent that both generates the code and executes it, then provides the result. This sub-agent takes a natural language prompt to do its job.\n\nA good code generator prompt will include the following components:\n\n1. Preference for the Python library to use. For example \"Use the reportlab library to generate PDF\"\n\n2. What to consume as input. Focus on the \"what\", rather than the \"how\". When binary files are passed as input, use the key words \"use provided file\". Do NOT refer to file paths, see below.\n\n3. The high-level approach to solving the problem with code. If applicable, specify algorithms or techniques to use.\n\n4. What to deliver as output. Again, do not worry about the \"how\", instead specify the \"what\". For text files, use the key word \"return\" in the prompt. For binary files, use the key word word \"save\". For example, \"Return the resulting number\" or \"Save the PDF file\" or \"Save all four resulting images\". Do NOT ask to name the files, see below.\n\nThe code generator prompt may include references to files and it may output references to files. However, theses references are translated at the boundary of the sandboxed code execution environment into actual files and file handles that will be different from what you specify. The Python code execution environment has no access to your file system.\n\nBecause of this translation layer, DO NOT mention file system paths or file references in the prompt outside of the <file> tag.\n\nFor example, if you need to include  an existing file at \"/mnt/text3.md\" into the prompt, you can reference it as <file src=\"/mnt/text3.md\" />. If you do not use <file> tags, the code generator will not be able to access the file.\n\nFor output, do not ask the code generator to name the files. It will assign its own file names names to save in the sandbox, and these will be picked up at the sandbox boundary and translated into <file> tags for you.";
+export const instruction: string = "## When to call \"generate_text\" function\n\nWhen evaluating the objective, make sure to determine whether calling \"generate_text\" function is warranted. The key tradeoff here is latency: because it's an additional model call, the \"generate_text\" will take longer to finish.\n\nYour job is to fulfill the objective as efficiently as possible, so weigh the need to invoke \"generate_text\" carefully.\n\nHere is the rules of thumb:\n\n- For shorter responses like a chat conversation, just do the text generation yourself. You are an LLM and you can do it without calling \"generate_text\" function.\n- For longer responses like generating a chapter of a book or analyzing a large and complex set of files, use \"generate_text\" function.\n\n\n### How to write a good prompt for the code generator\n\nThe \"generate_and_execute_code\" function is a self-contained code generator with a sandboxed code execution environment. Think of it as a sub-agent that both generates the code and executes it, then provides the result. This sub-agent takes a natural language prompt to do its job.\n\nA good code generator prompt will include the following components:\n\n1. Preference for the Python library to use. For example \"Use the reportlab library to generate PDF\"\n\n2. What to consume as input. Focus on the \"what\", rather than the \"how\". When binary files are passed as input, use the key words \"use provided file\". Do NOT refer to file paths, see below.\n\n3. The high-level approach to solving the problem with code. If applicable, specify algorithms or techniques to use.\n\n4. What to deliver as output. Again, do not worry about the \"how\", instead specify the \"what\". For text files, use the key word \"return\" in the prompt. For binary files, use the key word word \"save\". For example, \"Return the resulting number\" or \"Save the PDF file\" or \"Save all four resulting images\". Do NOT ask to name the files, see below.\n\nThe code generator prompt may include references to files and it may output references to files. However, theses references are translated at the boundary of the sandboxed code execution environment into actual files and file handles that will be different from what you specify. The Python code execution environment has no access to your file system.\n\nBecause of this translation layer, DO NOT mention file system paths or file references in the prompt outside of the <file> tag.\n\nFor example, if you need to include  an existing file at \"/mnt/text3.md\" into the prompt, you can reference it as <file src=\"/mnt/text3.md\" />. If you do not use <file> tags, the code generator will not be able to access the file.\n\nFor output, do not ask the code generator to name the files. It will assign its own file names names to save in the sandbox, and these will be picked up at the sandbox boundary and translated into <file> tags for you.\n<!-- if enableGenerateHtml -->\n## When to call \"generate_html\" function\n\nUse the \"generate_html\" function when you need to generate a complete, rich, formatted HTML document or webpage (such as a dashboard, a newsletter, a styled report, or an interactive page). Avoid using \"generate_text\" to write raw HTML code; instead, use \"generate_html\" to let the specialized HTML generator create a high-quality visual document.\n<!-- endif -->";

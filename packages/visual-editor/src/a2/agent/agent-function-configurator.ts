@@ -28,6 +28,7 @@ function createAgentConfigurator(
   sink: AgentEventSink
 ): FunctionGroupConfigurator {
   return async (deps, flags) => {
+    const runtimeFlags = await moduleArgs.context.flags?.flags();
     const groups = [];
     const taskTreeManager = new TaskTreeManager(deps.fileSystem);
 
@@ -49,6 +50,7 @@ function createAgentConfigurator(
         taskTreeManager,
         generators,
         sink,
+        runtimeFlags,
       })
     );
 
@@ -64,7 +66,6 @@ function createAgentConfigurator(
       );
     }
 
-    const runtimeFlags = await moduleArgs.context.flags?.flags();
     if (flags.useNotebookLM && runtimeFlags?.enableNotebookLm) {
       groups.push(
         getNotebookLMFunctionGroup({
