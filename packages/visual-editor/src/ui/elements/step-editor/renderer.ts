@@ -1566,6 +1566,10 @@ export class Renderer extends SignalWatcher(LitElement) {
               );
             }}
             @bbdragconnectorstart=${(evt: DragConnectorStartEvent) => {
+              if (this.#gc.readOnly) {
+                return;
+              }
+
               this.dragConnector.offset = new DOMPoint(
                 this.#boundsForInteraction.x,
                 this.#boundsForInteraction.y

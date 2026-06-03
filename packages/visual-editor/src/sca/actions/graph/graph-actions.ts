@@ -61,10 +61,10 @@ export const bind = makeAction();
 async function editInternal(spec: EditSpec[], label: string) {
   const { controller } = bind;
 
-  // TODO: Get the editor instance from the graphStore service. Note that the
-  // edit event fired by the editor instance here will be picked up and routed
-  // through the Runtime so that main-base picks it up and triggers an autosave.
-  const { editor } = controller.editor.graph;
+  const { editor, readOnly } = controller.editor.graph;
+  if (readOnly) {
+    return;
+  }
   if (!editor) {
     throw new Error("No active graph to edit");
   }
@@ -80,10 +80,10 @@ async function editInternal(spec: EditSpec[], label: string) {
 async function applyInternal(transform: EditTransform) {
   const { controller } = bind;
 
-  // TODO: Get the editor instance from the graphStore service. Note that the
-  // edit event fired by the editor instance here will be picked up and routed
-  // through the Runtime so that main-base picks it up and triggers an autosave.
-  const { editor } = controller.editor.graph;
+  const { editor, readOnly } = controller.editor.graph;
+  if (readOnly) {
+    return;
+  }
   if (!editor) {
     throw new Error("No active graph to transform");
   }
@@ -108,7 +108,9 @@ export const undo = asAction(
   { mode: ActionMode.Immediate },
   async (): Promise<void> => {
     const { controller } = bind;
-    const history = controller.editor.graph.editor?.history();
+    const { editor, readOnly } = controller.editor.graph;
+    if (readOnly || !editor) return;
+    const history = editor.history();
     if (!history || !history.canUndo()) return;
     await history.undo();
   }
@@ -122,7 +124,9 @@ export const redo = asAction(
   { mode: ActionMode.Immediate },
   async (): Promise<void> => {
     const { controller } = bind;
-    const history = controller.editor.graph.editor?.history();
+    const { editor, readOnly } = controller.editor.graph;
+    if (readOnly || !editor) return;
+    const history = editor.history();
     if (!history || !history.canRedo()) return;
     await history.redo();
   }

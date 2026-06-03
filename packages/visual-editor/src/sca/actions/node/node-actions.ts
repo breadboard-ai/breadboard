@@ -322,8 +322,8 @@ export const onNodeAdd = asAction(
   },
   async (evt?: StateEvent<"node.add">): Promise<void> => {
     const { controller } = bind;
-    const { editor } = controller.editor.graph;
-    if (!editor) return;
+    const { editor, readOnly } = controller.editor.graph;
+    if (readOnly || !editor) return;
 
     const detail = evt!.detail;
     await withUIBlocking(controller, async () => {
@@ -356,8 +356,8 @@ export const onMoveSelection = asAction(
   },
   async (evt?: StateEvent<"node.moveselection">): Promise<void> => {
     const { controller } = bind;
-    const { editor } = controller.editor.graph;
-    if (!editor) return;
+    const { editor, readOnly } = controller.editor.graph;
+    if (readOnly || !editor) return;
 
     const detail = evt!.detail;
     await withUIBlocking(controller, async () => {
@@ -419,8 +419,8 @@ export const onChangeEdge = asAction(
   },
   async (evt?: StateEvent<"node.changeedge">): Promise<void> => {
     const { controller } = bind;
-    const { editor } = controller.editor.graph;
-    if (!editor) return;
+    const { editor, readOnly } = controller.editor.graph;
+    if (readOnly || !editor) return;
 
     const detail = evt!.detail;
     await withUIBlocking(controller, async () => {
@@ -459,8 +459,8 @@ export const onChangeEdgeAttachmentPoint = asAction(
   },
   async (evt?: StateEvent<"node.changeedgeattachmentpoint">): Promise<void> => {
     const { controller } = bind;
-    const { editor } = controller.editor.graph;
-    if (!editor) return;
+    const { editor, readOnly } = controller.editor.graph;
+    if (readOnly || !editor) return;
 
     const detail = evt!.detail;
     await withUIBlocking(controller, async () => {
@@ -810,7 +810,9 @@ export const onUndoKeyboard = asAction(
   },
   async (): Promise<void> => {
     const { controller } = bind;
-    const history = controller.editor.graph.editor?.history();
+    const { editor, readOnly } = controller.editor.graph;
+    if (readOnly || !editor) return;
+    const history = editor.history();
     if (!history || !history.canUndo()) return;
     await history.undo();
   }
@@ -834,7 +836,9 @@ export const onRedoKeyboard = asAction(
   },
   async (): Promise<void> => {
     const { controller } = bind;
-    const history = controller.editor.graph.editor?.history();
+    const { editor, readOnly } = controller.editor.graph;
+    if (readOnly || !editor) return;
+    const history = editor.history();
     if (!history || !history.canRedo()) return;
     await history.redo();
   }

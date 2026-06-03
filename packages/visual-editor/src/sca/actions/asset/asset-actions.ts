@@ -94,9 +94,9 @@ export const update = asAction(
   ): Promise<Outcome<void>> => {
     const { controller, services } = bind;
     const graphController = controller.editor.graph;
-    const editor = graphController.editor;
+    const { editor, readOnly } = graphController;
 
-    if (!editor) {
+    if (readOnly || !editor) {
       return err("No editor available to apply asset update");
     }
 
@@ -167,9 +167,9 @@ export const addGraphAsset = asAction(
   async (asset: GraphAssetDescriptor): Promise<Outcome<void>> => {
     const { controller, services } = bind;
     const graphController = controller.editor.graph;
-    const editor = graphController.editor;
+    const { editor, readOnly } = graphController;
 
-    if (!editor) {
+    if (readOnly || !editor) {
       return err("No editor available");
     }
 
@@ -206,9 +206,9 @@ export const removeGraphAsset = asAction(
   { mode: ActionMode.Immediate },
   async (path: AssetPath): Promise<Outcome<void>> => {
     const { controller } = bind;
-    const editor = controller.editor.graph.editor;
+    const { editor, readOnly } = controller.editor.graph;
 
-    if (!editor) {
+    if (readOnly || !editor) {
       return err("No editor available");
     }
 
@@ -245,8 +245,8 @@ export const onChangeAssetEdge = asAction(
   },
   async (evt?: StateEvent<"asset.changeedge">): Promise<void> => {
     const { controller } = bind;
-    const { editor } = controller.editor.graph;
-    if (!editor) return;
+    const { editor, readOnly } = controller.editor.graph;
+    if (readOnly || !editor) return;
 
     const detail = evt!.detail;
     await withUIBlocking(controller, async () => {
@@ -284,8 +284,8 @@ export const onAddAssets = asAction(
   },
   async (evt?: StateEvent<"asset.add">): Promise<void> => {
     const { controller, services } = bind;
-    const { editor } = controller.editor.graph;
-    if (!editor) return;
+    const { editor, readOnly } = controller.editor.graph;
+    if (readOnly || !editor) return;
 
     const detail = evt!.detail;
 

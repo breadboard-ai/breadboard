@@ -187,6 +187,41 @@ suite("Asset Actions", () => {
       );
     });
 
+    test("returns error when readOnly is true", async () => {
+      const { editor } = makeTestGraphStoreWithEditor();
+      const { services } = makeTestServices();
+
+      const graphAssets = new Map<AssetPath, GraphAsset>();
+      graphAssets.set("test.txt", {
+        path: "test.txt",
+        data: [],
+        metadata: { title: "Test", type: "content" },
+      });
+
+      Asset.bind({
+        services: services as AppServices,
+        controller: {
+          editor: {
+            graph: {
+              editor,
+              readOnly: true,
+              graphAssets,
+            },
+          },
+        } as unknown as AppController,
+        env: createMockEnvironment(defaultRuntimeFlags),
+      });
+
+      const result = await Asset.update("test.txt", "New Title");
+
+      assert.ok(result !== undefined, "Should return error result");
+      assert.ok("$error" in result!, "Result should have $error");
+      assert.ok(
+        result!.$error.includes("No editor available"),
+        "Error should mention no editor available"
+      );
+    });
+
     test("returns error when asset has no metadata", async () => {
       const { editor } = makeTestGraphStoreWithEditor();
       const { services } = makeTestServices();
