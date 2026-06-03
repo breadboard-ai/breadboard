@@ -53,6 +53,7 @@ function makeRuntimeConfig(
         enableOpalBackend: false,
         enableSessionsBackend: false,
         enableSingletonPrefixCache: false,
+        enableAgentWorkbench: false,
       },
     },
     shellHost: {
@@ -89,6 +90,7 @@ const testFlags: RuntimeFlags = {
   enableSingletonPrefixCache: false,
   enableAssetAccessConsent: false,
   enableBackendGraphRunner: false,
+  enableAgentWorkbench: false,
 };
 
 suite("createEnvironment", () => {

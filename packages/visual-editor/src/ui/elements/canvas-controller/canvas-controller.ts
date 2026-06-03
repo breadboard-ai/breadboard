@@ -122,12 +122,16 @@ export class CanvasController extends SignalWatcher(LitElement) {
     // If the user opens an unowned graph then we default them back to the app
     // view irrespective of whatever sidenav item they had selected prior.
     const mainGraphId = this.sca.controller.editor.graph.mainGraphId;
+    const eligible = this.sca.controller.editor.workbench.eligible;
     if (
       mainGraphId !== this.#prevMainGraphId &&
       mainGraphId &&
       this.sca.controller.editor.graph.readOnly
     ) {
-      this.sideNavItem = "preview";
+      this.sideNavItem = eligible ? "console" : "preview";
+    }
+    if (eligible && this.sideNavItem === "preview") {
+      this.sideNavItem = "console";
     }
     this.#prevMainGraphId = mainGraphId;
 
@@ -383,15 +387,17 @@ export class CanvasController extends SignalWatcher(LitElement) {
             })}
           >
             <div id="side-nav-controls-left">
-              <button
-                class="sans-flex w-500 round"
-                ?disabled=${this.sideNavItem === "preview"}
-                @click=${() => {
-                  this.sideNavItem = "preview";
-                }}
-              >
-                ${Strings.from("LABEL_SECTION_PREVIEW")}
-              </button>
+              ${!this.sca.controller.editor.workbench.eligible
+                ? html`<button
+                    class="sans-flex w-500 round"
+                    ?disabled=${this.sideNavItem === "preview"}
+                    @click=${() => {
+                      this.sideNavItem = "preview";
+                    }}
+                  >
+                    ${Strings.from("LABEL_SECTION_PREVIEW")}
+                  </button>`
+                : nothing}
               <button
                 class=${classMap({
                   "sans-flex": true,
@@ -420,20 +426,22 @@ export class CanvasController extends SignalWatcher(LitElement) {
               >
                 Step
               </button>
-              <button
-                class=${classMap({
-                  "sans-flex": true,
-                  "w-500": true,
-                  round: true,
-                  invisible: gc.readOnly,
-                })}
-                @click=${() => {
-                  this.sideNavItem = "preview";
-                  this.showThemeDesigner = true;
-                }}
-              >
-                Theme
-              </button>
+              ${!this.sca.controller.editor.workbench.eligible
+                ? html`<button
+                    class=${classMap({
+                      "sans-flex": true,
+                      "w-500": true,
+                      round: true,
+                      invisible: gc.readOnly,
+                    })}
+                    @click=${() => {
+                      this.sideNavItem = "preview";
+                      this.showThemeDesigner = true;
+                    }}
+                  >
+                    Theme
+                  </button>`
+                : nothing}
             </div>
           </div>
           <div id="side-nav-content">${sideNavItem}</div>

@@ -82,6 +82,7 @@ export async function createClientConfig(opts: {
       enableSingletonPrefixCache: flags.ENABLE_SINGLETON_PREFIX_CACHE,
       enableAssetAccessConsent: flags.ENABLE_ASSET_ACCESS_CONSENT,
       enableBackendGraphRunner: flags.ENABLE_BACKEND_GRAPH_RUNNER,
+      enableAgentWorkbench: flags.ENABLE_AGENT_WORKBENCH,
     },
   };
 }

@@ -994,6 +994,24 @@ export class EditorControls extends SignalWatcher(LitElement) {
       >
         <span class="g-icon filled round">redo</span>
       </button>
+
+      <button
+        id="workbench-toggle"
+        ?disabled=${!this.sca.controller.editor.workbench.eligible}
+        @pointerover=${(evt: PointerEvent) => {
+          this.dispatchEvent(
+            new ShowTooltipEvent("Agent Workbench", evt.clientX, evt.clientY)
+          );
+        }}
+        @pointerout=${() => {
+          this.dispatchEvent(new HideTooltipEvent());
+        }}
+        @click=${() => {
+          this.sca.actions.workbench.setWorkbenchView("workbench");
+        }}
+      >
+        <span class="g-icon filled round">build</span>
+      </button>
     </div>`;
 
     let componentPicker: HTMLTemplateResult | symbol = nothing;

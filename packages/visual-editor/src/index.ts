@@ -157,11 +157,13 @@ class Main extends MainBase {
   render() {
     const renderValues = this.getRenderValues();
 
-    const isHydratingDevTools = Utils.Helpers.isHydrating(
-      () => this.sca.env.flags.get("enableDevTools")
-    ) || Utils.Helpers.isHydrating(
-      () => this.sca.controller.editor.devtools.isOpen
-    );
+    const isHydratingDevTools =
+      Utils.Helpers.isHydrating(() =>
+        this.sca.env.flags.get("enableDevTools")
+      ) ||
+      Utils.Helpers.isHydrating(
+        () => this.sca.controller.editor.devtools.isOpen
+      );
 
     const enableDevTools = isHydratingDevTools
       ? false
@@ -170,12 +172,18 @@ class Main extends MainBase {
       ? false
       : this.sca.controller.editor.devtools.isOpen;
 
+    const workbenchActive =
+      this.sca.controller.editor.workbench.eligible &&
+      this.sca.controller.editor.workbench.view === "workbench";
+
     const mainPanel = html`
       ${this.sca.controller.global.main.show.has("TOS") ||
       this.sca.controller.global.main.show.has("MissingShare")
         ? nothing
         : [
-            this.#renderCanvasController(renderValues),
+            workbenchActive
+              ? this.#renderAgentWorkbench(renderValues)
+              : this.#renderCanvasController(renderValues),
             this.#renderAppController(renderValues),
             this.#renderWelcomePanel(),
             this.sca.controller.global.statusUpdates.showStatusUpdateChip
@@ -193,16 +201,16 @@ class Main extends MainBase {
           .split=${[0.67, 0.33]}
           class="devtools-split"
         >
-          <div slot="slot-0">
-            ${mainPanel}
-          </div>
+          <div slot="slot-0">${mainPanel}</div>
           <bb-devtools slot="slot-1"></bb-devtools>
         </bb-splitter>
       `;
     } else {
       body = html`
         ${mainPanel}
-        ${enableDevTools && !devToolsOpen ? this.#renderFloatingDevToolsButton() : nothing}
+        ${enableDevTools && !devToolsOpen
+          ? this.#renderFloatingDevToolsButton()
+          : nothing}
       `;
     }
 
@@ -382,6 +390,15 @@ class Main extends MainBase {
         this.sca.services.embedHandler?.sendToEmbedder(message);
       }}
     ></bb-canvas-controller>`;
+  }
+
+  #renderAgentWorkbench(renderValues: RenderValues) {
+    if (this.sca.controller.global.main.mode !== "canvas") {
+      return nothing;
+    }
+    return html`<bb-agent-workbench
+      ?inert=${renderValues.showingOverlay}
+    ></bb-agent-workbench>`;
   }
 
   #renderBoardEditModal() {

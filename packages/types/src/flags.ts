@@ -103,6 +103,12 @@ export type RuntimeFlags = {
    * instead of in-process PlanRunner.
    */
   enableBackendGraphRunner: boolean;
+  /**
+   * Enables the Agent Workbench layout for single-agent Opals.
+   * Replaces the graph canvas + sidebar with a three-column
+   * conversation / configuration / run-log view.
+   */
+  enableAgentWorkbench: boolean;
 };
 
 /**
@@ -250,6 +256,11 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     title: "Backend Graph Runner",
     description:
       "Route graph execution through the backend instead of in-process",
+    visibility: "experimental",
+  },
+  enableAgentWorkbench: {
+    title: "Agent Workbench",
+    description: "Enables the Agent Workbench layout for single-agent Opals",
     visibility: "experimental",
   },
 };
