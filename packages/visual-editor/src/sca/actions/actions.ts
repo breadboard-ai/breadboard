@@ -22,6 +22,7 @@ import * as NotebookLmPicker from "./notebooklm/notebooklm-picker-actions.js";
 import * as Router from "./router/router-actions.js";
 import * as Run from "./run/run-actions.js";
 import * as BackendRun from "./run/backend-run-action.js";
+import * as Session from "./session/session-actions.js";
 import * as ScreenSize from "./screen-size/screen-size-actions.js";
 import * as Share from "./share/share-actions.js";
 import * as Shell from "./shell/shell-actions.js";
@@ -79,6 +80,7 @@ export function actions(
     Router.bind({ controller, services, env });
     Run.bind({ controller, services, env });
     BackendRun.bind({ controller, services, env });
+    Session.bind({ controller, services, env });
     ScreenSize.bind({ controller, services, env });
     Share.bind({ controller, services, env });
     Shell.bind({ controller, services, env });

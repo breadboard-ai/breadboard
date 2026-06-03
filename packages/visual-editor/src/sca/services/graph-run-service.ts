@@ -26,7 +26,7 @@
 import { iteratorFromStream } from "@breadboard-ai/utils";
 
 export { GraphRunService };
-export type { GraphRunEvent, GraphRunSession };
+export type { GraphRunEvent, GraphRunSession, SessionStatusEvent };
 
 // ---------------------------------------------------------------------------
 // Event types emitted by the Heartstone backend SSE stream
@@ -69,7 +69,16 @@ type GraphRunEvent = GraphRunEventBase &
         outputs: Record<string, Record<string, unknown>>;
       }
     | { type: "graphError"; sessionId: string; error: string }
+    | { type: "graphCancelled"; sessionId: string }
+    | { type: "replayComplete" }
   );
+
+/** Event shape emitted by the session monitor SSE stream. */
+interface SessionStatusEvent {
+  sessionId: string;
+  status: string;
+  createdAt: number;
+}
 
 /**
  * Handle for a running graph session. Separates session lifecycle
@@ -137,13 +146,14 @@ class GraphRunService {
    */
   async createSession(
     graph: Record<string, unknown>,
+    graphId: string,
     signal?: AbortSignal
   ): Promise<GraphRunSession> {
     const createUrl = `${this.#baseUrl}/v1beta1/graphSessions/new`;
     const createResp = await this.#fetchFn(createUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ graph }),
+      body: JSON.stringify({ graph, graphId }),
       signal,
     });
 
@@ -233,4 +243,127 @@ class GraphRunService {
       },
     };
   }
+
+  /**
+   * Connect to an existing session (for reconnection/replay).
+   *
+   * Returns the same GraphRunSession handle as createSession, but
+   * without creating a new session on the backend. The stream starts
+   * from index 0 (full replay) or from a cursor position.
+   */
+  connectSession(sessionId: string): GraphRunSession {
+    const fetchFn = this.#fetchFn;
+    const baseUrl = this.#baseUrl;
+    let cursor = -1;
+
+    return {
+      sessionId,
+
+      openStream(signal?: AbortSignal): AsyncIterable<GraphRunEvent> {
+        const streamUrl =
+          `${baseUrl}/v1beta1/graphSessions/${sessionId}?after=${cursor}`;
+        return {
+          [Symbol.asyncIterator]() {
+            let started = false;
+            let iterator: AsyncIterator<GraphRunEvent> | null = null;
+
+            return {
+              async next(): Promise<IteratorResult<GraphRunEvent>> {
+                if (!started) {
+                  started = true;
+                  const resp = await fetchFn(streamUrl, { signal });
+                  if (!resp.ok) {
+                    throw new Error(
+                      `Graph SSE stream failed: ${resp.status} ${resp.statusText}`
+                    );
+                  }
+                  if (!resp.body) {
+                    throw new Error("Graph SSE response has no body");
+                  }
+                  const iterable =
+                    iteratorFromStream<GraphRunEvent>(resp.body);
+                  iterator = iterable[Symbol.asyncIterator]();
+                }
+                const result = await iterator!.next();
+                if (!result.done && typeof result.value.index === "number") {
+                  cursor = Math.max(cursor, result.value.index);
+                }
+                return result;
+              },
+            };
+          },
+        };
+      },
+
+      async resume(
+        interactionId: string,
+        response: unknown
+      ): Promise<void> {
+        const url = `${baseUrl}/v1beta1/graphSessions/${sessionId}:resume`;
+        const resp = await fetchFn(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ interactionId, response }),
+        });
+        if (!resp.ok) {
+          throw new Error(
+            `Resume failed: ${resp.status} ${resp.statusText}`
+          );
+        }
+      },
+
+      async cancel(): Promise<void> {
+        const url = `${baseUrl}/v1beta1/graphSessions/${sessionId}:cancel`;
+        try {
+          await fetchFn(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          });
+        } catch {
+          // Best-effort.
+        }
+      },
+    };
+  }
+
+  /**
+   * Open a monitor SSE stream for a graph's session list.
+   *
+   * Yields `sessionStatus` events — one per existing session initially,
+   * then live updates as sessions are created, change status, or are
+   * deleted (status: "deleted").
+   */
+  async *monitorSessions(
+    graphId: string,
+    signal?: AbortSignal
+  ): AsyncIterable<SessionStatusEvent> {
+    const url =
+      `${this.#baseUrl}/v1beta1/graphSessions?graphId=${encodeURIComponent(graphId)}`;
+    const resp = await this.#fetchFn(url, { signal });
+    if (!resp.ok) {
+      throw new Error(
+        `Session monitor failed: ${resp.status} ${resp.statusText}`
+      );
+    }
+    if (!resp.body) {
+      throw new Error("Session monitor response has no body");
+    }
+    const iterable = iteratorFromStream<SessionStatusEvent>(resp.body);
+    yield* iterable;
+  }
+
+  /** Delete a session on the backend. */
+  async deleteSession(sessionId: string): Promise<void> {
+    const url =
+      `${this.#baseUrl}/v1beta1/graphSessions/${sessionId}`;
+    const resp = await this.#fetchFn(url, {
+      method: "DELETE",
+    });
+    if (!resp.ok) {
+      throw new Error(
+        `Delete session failed: ${resp.status} ${resp.statusText}`
+      );
+    }
+  }
 }
+

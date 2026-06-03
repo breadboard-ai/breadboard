@@ -164,8 +164,20 @@ async function startBackendRun(): Promise<void> {
   const bridges = new Map<string, NodeEventBridge>();
 
   try {
+    // Extract the Drive file ID from the graph URL for session scoping.
+    const graphUrl = controller.editor.graph.url;
+    const graphId = graphUrl?.startsWith("drive:/")
+      ? graphUrl.replace("drive:/", "")
+      : "";
+    if (!graphId) {
+      throw new Error(
+        "Backend graph runner requires a Drive-backed Opal (no graphId)"
+      );
+    }
+
     const session = await graphRunService.createSession(
       graph,
+      graphId,
       abortController.signal
     );
     Utils.Logging.getLogger(controller).log(
@@ -361,7 +373,7 @@ async function startBackendRun(): Promise<void> {
 // Event processing
 // ---------------------------------------------------------------------------
 
-type ProcessResult = "continue" | "done" | "suspend";
+type ProcessResult = "continue" | "done" | "suspend" | "replayComplete";
 
 /**
  * Maps a single Heartstone SSE event to controller state updates.
@@ -539,6 +551,20 @@ function processEvent(
         message: event.error,
       });
       return "done";
+    }
+
+    case "graphCancelled": {
+      Utils.Logging.getLogger(controller).log(
+        Utils.Logging.Formatter.verbose(
+          `Graph cancelled: ${event.sessionId}`
+        ),
+        LABEL
+      );
+      return "done";
+    }
+
+    case "replayComplete": {
+      return "replayComplete";
     }
 
     default:
