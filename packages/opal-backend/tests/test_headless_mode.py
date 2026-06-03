@@ -132,7 +132,7 @@ class TestHeadlessInputStorage:
         headless_inputs = {
             "inp": {"role": "user", "parts": [{"text": "Hello"}]},
         }
-        await store.create("s1", plan, headless_inputs=headless_inputs)
+        await store.create("s1", plan, "g1", headless_inputs=headless_inputs)
 
         result = await store.get_headless_input("s1", "inp")
         assert result == {"role": "user", "parts": [{"text": "Hello"}]}
@@ -141,7 +141,7 @@ class TestHeadlessInputStorage:
     async def test_get_headless_input_missing_node(self):
         store = InMemoryGraphSessionStore()
         plan = _input_gen_output_plan()
-        await store.create("s1", plan, headless_inputs={"other": "x"})
+        await store.create("s1", plan, "g1", headless_inputs={"other": "x"})
 
         result = await store.get_headless_input("s1", "inp")
         assert result is None
@@ -151,7 +151,7 @@ class TestHeadlessInputStorage:
         """Interactive session (no headless_inputs) returns None."""
         store = InMemoryGraphSessionStore()
         plan = _input_gen_output_plan()
-        await store.create("s1", plan)
+        await store.create("s1", plan, "g1")
 
         result = await store.get_headless_input("s1", "inp")
         assert result is None
@@ -166,7 +166,7 @@ class TestHeadlessInputStorage:
     async def test_is_headless_session_true(self):
         store = InMemoryGraphSessionStore()
         plan = _input_gen_output_plan()
-        await store.create("s1", plan, headless_inputs={})
+        await store.create("s1", plan, "g1", headless_inputs={})
 
         assert await store.is_headless_session("s1") is True
 
@@ -174,7 +174,7 @@ class TestHeadlessInputStorage:
     async def test_is_headless_session_false(self):
         store = InMemoryGraphSessionStore()
         plan = _input_gen_output_plan()
-        await store.create("s1", plan)
+        await store.create("s1", plan, "g1")
 
         assert await store.is_headless_session("s1") is False
 
@@ -203,7 +203,7 @@ class TestHeadlessAutoResolve:
         headless_inputs = {
             "inp": {"role": "user", "parts": [{"text": "Hello headless"}]},
         }
-        await store.create("s1", plan, headless_inputs=headless_inputs)
+        await store.create("s1", plan, "g1", headless_inputs=headless_inputs)
 
         subscriber = bus.subscribe("s1")
         await runner.start_graph("s1")
@@ -237,7 +237,7 @@ class TestHeadlessAutoResolve:
             "inp1": {"role": "user", "parts": [{"text": "First"}]},
             "inp2": {"role": "user", "parts": [{"text": "Second"}]},
         }
-        await store.create("s1", plan, headless_inputs=headless_inputs)
+        await store.create("s1", plan, "g1", headless_inputs=headless_inputs)
 
         subscriber = bus.subscribe("s1")
         await runner.start_graph("s1")
@@ -273,7 +273,7 @@ class TestHeadlessRequiredInputError:
             input_config={"p-required": True},
         )
         # Headless mode, but no input for "inp".
-        await store.create("s1", plan, headless_inputs={})
+        await store.create("s1", plan, "g1", headless_inputs={})
 
         subscriber = bus.subscribe("s1")
         await runner.start_graph("s1")
@@ -318,7 +318,7 @@ class TestHeadlessOptionalInputSkip:
             input_config={"p-required": False},
         )
         # Headless mode, no input for "inp".
-        await store.create("s1", plan, headless_inputs={})
+        await store.create("s1", plan, "g1", headless_inputs={})
 
         subscriber = bus.subscribe("s1")
         await runner.start_graph("s1")
@@ -344,7 +344,7 @@ class TestHeadlessOptionalInputSkip:
         runner = _make_runner(store, bus)
 
         plan = _input_gen_output_plan()  # No config → p-required defaults False.
-        await store.create("s1", plan, headless_inputs={})
+        await store.create("s1", plan, "g1", headless_inputs={})
 
         subscriber = bus.subscribe("s1")
         await runner.start_graph("s1")
@@ -376,7 +376,7 @@ class TestHeadlessMixedInputs:
         headless_inputs = {
             "inp1": {"role": "user", "parts": [{"text": "Supplied"}]},
         }
-        await store.create("s1", plan, headless_inputs=headless_inputs)
+        await store.create("s1", plan, "g1", headless_inputs=headless_inputs)
 
         subscriber = bus.subscribe("s1")
         await runner.start_graph("s1")
@@ -405,7 +405,7 @@ class TestInteractiveModeUnchanged:
 
         plan = _input_gen_output_plan()
         # Interactive mode: no headless_inputs.
-        await store.create("s1", plan)
+        await store.create("s1", plan, "g1")
 
         subscriber = bus.subscribe("s1")
         await runner.start_graph("s1")
@@ -478,7 +478,7 @@ class TestAgentNodeInHeadlessMode:
         runner._scheduler = scheduler
 
         plan = _agent_node_plan()
-        await store.create("s1", plan, headless_inputs={})
+        await store.create("s1", plan, "g1", headless_inputs={})
 
         subscriber = bus.subscribe("s1")
         await runner.start_graph("s1")
@@ -537,7 +537,7 @@ class TestAgentNodeInHeadlessMode:
                 "parts": [{"text": "Write about bananas"}],
             },
         }
-        await store.create("s1", plan, headless_inputs=headless_inputs)
+        await store.create("s1", plan, "g1", headless_inputs=headless_inputs)
 
         subscriber = bus.subscribe("s1")
         await runner.start_graph("s1")
@@ -576,7 +576,7 @@ class TestAgentNodeInHeadlessMode:
 
         plan = _agent_node_plan()
         # Interactive mode — no headless_inputs.
-        await store.create("s1", plan)
+        await store.create("s1", plan, "g1")
 
         subscriber = bus.subscribe("s1")
         await runner.start_graph("s1")

@@ -123,8 +123,8 @@ def create_graph_session_router(
 
         # Store the plan and kick off initial tasks.
         await store.create(
-            session_id, plan,
-            graph_id=graph_id, headless_inputs=headless_inputs,
+            session_id, plan, graph_id,
+            headless_inputs=headless_inputs,
         )
         await runner.start_graph(
             session_id, access_token=access_token, origin=origin,
@@ -132,7 +132,7 @@ def create_graph_session_router(
 
         return JSONResponse({"sessionId": session_id})
 
-    @router.get("/")
+    @router.get("")
     async def monitor_graph_sessions(
         request: Request, graphId: str = "",
     ) -> EventSourceResponse:
@@ -296,6 +296,18 @@ def create_graph_session_router(
             )
 
         response = body.get("response", {})
+
+        # Refresh the access token so continued execution uses
+        # a valid credential (the original token from session
+        # creation may have expired during the suspend).
+        access_token = body.get("accessToken", "")
+        if not access_token:
+            auth_header = request.headers.get("authorization", "")
+            if auth_header.startswith("Bearer "):
+                access_token = auth_header[len("Bearer "):]
+        if access_token:
+            origin = request.headers.get("origin", "")
+            runner.update_auth(session_id, access_token, origin)
 
         try:
             await runner.resume_node(

@@ -63,9 +63,8 @@ class InMemoryGraphSessionStore:
     # ── Plan Storage ──
 
     async def create(
-        self, session_id: str, plan: GraphPlan,
+        self, session_id: str, plan: GraphPlan, graph_id: str,
         *,
-        graph_id: str = "",
         headless_inputs: dict[str, Any] | None = None,
     ) -> None:
         """Store plan with initial dependency counts."""
@@ -232,6 +231,19 @@ class InMemoryGraphSessionStore:
             ns.status in ("completed", "skipped", "failed")
             for ns in state.nodes.values()
         )
+
+    async def get_failed_errors(
+        self, session_id: str,
+    ) -> list[str]:
+        """Return error messages from all failed nodes."""
+        state = self._sessions.get(session_id)
+        if not state:
+            return []
+        return [
+            ns.error
+            for ns in state.nodes.values()
+            if ns.status == "failed" and ns.error
+        ]
 
     async def get_graph_outputs(
         self, session_id: str,

@@ -32,13 +32,21 @@ export class DevToolsSessionsPanel extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
-  connectedCallback(): void {
-    super.connectedCallback();
-    // Start the session monitor if not already running.
+  override updated(): void {
+    // React to graph URL changes. SignalWatcher tracks graph.url
+    // (read in render), so this fires when the URL becomes available
+    // after Drive file loading.
     const sessionHistory =
       this.sca.controller.editor.devtools.sessionHistory;
-    if (!sessionHistory.monitorAbortController) {
+    const graphUrl = this.sca.controller.editor.graph.url;
+    const graphId = graphUrl?.startsWith("drive:/")
+      ? graphUrl.replace("drive:/", "")
+      : "";
+
+    if (graphId && !sessionHistory.monitorAbortController) {
       startSessionMonitor();
+    } else if (!graphId && sessionHistory.monitorAbortController) {
+      stopSessionMonitor();
     }
   }
 
@@ -216,6 +224,10 @@ export class DevToolsSessionsPanel extends SignalWatcher(LitElement) {
     const sessions = sessionHistory.sessions;
     const activeId = sessionHistory.activeSessionId;
 
+    // Read graph.url so SignalWatcher tracks it — updated() reacts
+    // when the URL becomes available after Drive file loading.
+    this.sca.controller.editor.graph.url;
+
     if (sessions.size === 0) {
       return html`
         <div class="empty-state">
@@ -243,7 +255,7 @@ export class DevToolsSessionsPanel extends SignalWatcher(LitElement) {
   #renderSession(session: SessionEntry, activeId: string | null) {
     const isActive = session.sessionId === activeId;
     const shortId = session.sessionId.slice(0, 8);
-    const time = new Date(session.createdAt * 1000).toLocaleTimeString();
+    const time = new Date(session.createdAt * 1000).toLocaleString();
 
     return html`
       <div
@@ -291,6 +303,12 @@ export class DevToolsSessionsPanel extends SignalWatcher(LitElement) {
       sessionHistory.activeSessionId = null;
       sessionHistory.connectionAbortController?.abort();
       sessionHistory.connectionAbortController = null;
+
+      // Reset run state so side-nav / console clear.
+      const controller = this.sca.controller;
+      controller.run.main.reset();
+      controller.run.renderer.reset();
+      controller.run.screen.reset();
     } else {
       connectToSession(sessionId);
     }

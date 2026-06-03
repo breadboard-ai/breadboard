@@ -53,7 +53,7 @@ class TestCreateAndGetPlan:
     async def test_create_stores_plan(self):
         store = InMemoryGraphSessionStore()
         plan = _linear_plan()
-        await store.create("s1", plan)
+        await store.create("s1", plan, "g1")
         result = await store.get_plan("s1")
         assert result is plan
 
@@ -65,7 +65,7 @@ class TestCreateAndGetPlan:
     @pytest.mark.asyncio
     async def test_initial_node_status(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
         # Entry node "a" should be ready (no upstream).
         state = store._sessions["s1"]
         assert state.nodes["a"].status == "ready"
@@ -79,7 +79,7 @@ class TestCompleteNode:
     @pytest.mark.asyncio
     async def test_complete_returns_newly_ready(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
 
         newly_ready = await store.complete_node(
             "s1", "a", {"data": "hello"},
@@ -89,7 +89,7 @@ class TestCompleteNode:
     @pytest.mark.asyncio
     async def test_complete_chain(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
 
         await store.complete_node("s1", "a", {"data": "hello"})
         newly_ready = await store.complete_node(
@@ -100,7 +100,7 @@ class TestCompleteNode:
     @pytest.mark.asyncio
     async def test_diamond_both_deps_needed(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _diamond_plan())
+        await store.create("s1", _diamond_plan(), "g1")
 
         # Complete start → left and right become ready.
         newly = await store.complete_node("s1", "start", {"data": "x"})
@@ -119,7 +119,7 @@ class TestGetNodeInputs:
     @pytest.mark.asyncio
     async def test_gathers_upstream_outputs(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
 
         await store.complete_node("s1", "a", {"data": "hello"})
         inputs = await store.get_node_inputs("s1", "b")
@@ -128,7 +128,7 @@ class TestGetNodeInputs:
     @pytest.mark.asyncio
     async def test_diamond_gathers_from_both_upstreams(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _diamond_plan())
+        await store.create("s1", _diamond_plan(), "g1")
 
         await store.complete_node("s1", "start", {"data": "x"})
         await store.complete_node("s1", "left", {"r1": "left_val"})
@@ -154,7 +154,7 @@ class TestGetNodeConfig:
             ),
         ]])
         store = InMemoryGraphSessionStore()
-        await store.create("s1", plan)
+        await store.create("s1", plan, "g1")
 
         config = await store.get_node_config("s1", "gen")
         assert config == {"model": "gemini-3"}
@@ -168,7 +168,7 @@ class TestGetNodeConfig:
             ),
         ]])
         store = InMemoryGraphSessionStore()
-        await store.create("s1", plan)
+        await store.create("s1", plan, "g1")
         assert await store.get_node_config("s1", "n") == {}
 
 
@@ -176,7 +176,7 @@ class TestSuspendResume:
     @pytest.mark.asyncio
     async def test_suspend_and_load(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
 
         state = SuspendedNodeState(
             node_id="b", interaction_id="int-1",
@@ -200,13 +200,13 @@ class TestGraphLifecycle:
     @pytest.mark.asyncio
     async def test_is_graph_complete_false_initially(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
         assert not await store.is_graph_complete("s1")
 
     @pytest.mark.asyncio
     async def test_is_graph_complete_true_when_all_done(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
         await store.complete_node("s1", "a", {})
         await store.complete_node("s1", "b", {})
         await store.complete_node("s1", "c", {})
@@ -215,7 +215,7 @@ class TestGraphLifecycle:
     @pytest.mark.asyncio
     async def test_get_graph_outputs(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
         await store.complete_node("s1", "a", {"data": "x"})
         await store.complete_node("s1", "b", {"context": "y"})
 
@@ -228,7 +228,7 @@ class TestMarkNodeFailed:
     @pytest.mark.asyncio
     async def test_marks_node_failed(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
         await store.complete_node("s1", "a", {"data": "x"})
 
         await store.mark_node_failed("s1", "b", "some error")
@@ -239,7 +239,7 @@ class TestMarkNodeFailed:
     @pytest.mark.asyncio
     async def test_skips_dependents(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
         await store.complete_node("s1", "a", {"data": "x"})
 
         await store.mark_node_failed("s1", "b", "error")
@@ -251,7 +251,7 @@ class TestEventLog:
     @pytest.mark.asyncio
     async def test_append_and_get_events(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
 
         idx0 = await store.append_event("s1", {"type": "graphStart"})
         idx1 = await store.append_event("s1", {"type": "nodeStart", "nodeId": "a"})
@@ -265,7 +265,7 @@ class TestEventLog:
     @pytest.mark.asyncio
     async def test_get_events_after_index(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
         await store.append_event("s1", {"type": "a"})
         await store.append_event("s1", {"type": "b"})
         await store.append_event("s1", {"type": "c"})
@@ -279,13 +279,13 @@ class TestStatus:
     @pytest.mark.asyncio
     async def test_default_status(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
         assert await store.get_status("s1") == "running"
 
     @pytest.mark.asyncio
     async def test_set_status(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
         await store.set_status("s1", "completed")
         assert await store.get_status("s1") == "completed"
 
@@ -389,19 +389,19 @@ class TestGraphIdTracking:
         assert sessions[0].graph_id == "my-graph"
 
     @pytest.mark.asyncio
-    async def test_default_graph_id_is_empty(self):
+    async def test_graph_id_stored_from_create(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
 
-        sessions = await store.list_sessions("")
+        sessions = await store.list_sessions("g1")
         assert len(sessions) == 1
-        assert sessions[0].graph_id == ""
+        assert sessions[0].graph_id == "g1"
 
     @pytest.mark.asyncio
     async def test_created_at_is_set(self):
         store = InMemoryGraphSessionStore()
-        await store.create("s1", _linear_plan())
+        await store.create("s1", _linear_plan(), "g1")
 
-        sessions = await store.list_sessions("")
+        sessions = await store.list_sessions("g1")
         assert sessions[0].created_at > 0
 

@@ -205,4 +205,11 @@ export function stopRun(controller: AppController): void {
   run.renderer.reset();
   run.main.setStatus(STATUS.STOPPED);
   run.main.bumpStopVersion();
+
+  // Disconnect any active devtools session — the run is over, so
+  // the connection is stale.
+  const sessionHistory = controller.editor.devtools.sessionHistory;
+  sessionHistory.activeSessionId = null;
+  sessionHistory.connectionAbortController?.abort();
+  sessionHistory.connectionAbortController = null;
 }

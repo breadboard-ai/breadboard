@@ -5,15 +5,19 @@
  */
 
 import assert from "node:assert";
-import { beforeEach, suite, test } from "node:test";
-import { setDOM } from "../../../fake-dom.js";
+import { afterEach, beforeEach, mock, suite, test } from "node:test";
+import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import { makeTestController } from "../../helpers/mock-controller.js";
 import {
   processEvent,
+  handleSuspend,
   type NodeEventBridge,
+  type EventMode,
 } from "../../../../src/sca/actions/run/backend-run-action.js";
-import type { GraphRunEvent } from "../../../../src/sca/services/graph-run-service.js";
+import type { GraphRunEvent, GraphRunSession } from "../../../../src/sca/services/graph-run-service.js";
 import type { AppController } from "../../../../src/sca/controller/controller.js";
+import { RunController } from "../../../../src/sca/controller/subcontrollers/run/run-controller.js";
+import { STATUS } from "../../../../src/sca/types.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -80,9 +84,10 @@ function makeControllerWithGraph() {
 function dispatch(
   event: GraphRunEvent,
   controller: AppController,
-  bridges: Map<string, NodeEventBridge>
+  bridges: Map<string, NodeEventBridge>,
+  mode: EventMode = "live"
 ) {
-  return processEvent(event, controller, bridges);
+  return processEvent(event, controller, bridges, mode);
 }
 
 // ---------------------------------------------------------------------------
@@ -405,7 +410,7 @@ suite("processEvent", () => {
   // --- inputRequired -------------------------------------------------------
 
   suite("inputRequired", () => {
-    test("returns suspend", () => {
+    test("returns suspend in live mode", () => {
       const result = dispatch(
         {
           type: "inputRequired",
@@ -418,6 +423,62 @@ suite("processEvent", () => {
       );
 
       assert.strictEqual(result, "suspend");
+    });
+
+    test("returns continue and sets paused/waiting state in replay mode", () => {
+      const result = dispatch(
+        {
+          type: "inputRequired",
+          nodeId: "n1",
+          interactionId: "int-1",
+          index: 0,
+        },
+        controller,
+        bridges,
+        "replay"
+      );
+
+      assert.strictEqual(result, "continue");
+
+      // Node should show as "waiting" (not spinning as "working").
+      const nodeState = controller.run.renderer.nodes.get("n1");
+      assert.ok(nodeState);
+      assert.strictEqual(nodeState.status, "waiting");
+    });
+  });
+
+  // --- graphCancelled ------------------------------------------------------
+
+  suite("graphCancelled", () => {
+    test("returns done", () => {
+      const result = dispatch(
+        {
+          type: "graphCancelled",
+          sessionId: "sess-1",
+          index: 0,
+        },
+        controller,
+        bridges
+      );
+
+      assert.strictEqual(result, "done");
+    });
+  });
+
+  // --- replayComplete ------------------------------------------------------
+
+  suite("replayComplete", () => {
+    test("returns replayComplete", () => {
+      const result = dispatch(
+        {
+          type: "replayComplete",
+          index: 0,
+        },
+        controller,
+        bridges
+      );
+
+      assert.strictEqual(result, "replayComplete");
     });
   });
 
@@ -434,5 +495,331 @@ suite("processEvent", () => {
 
       assert.strictEqual(result, "continue");
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// handleSuspend
+// ---------------------------------------------------------------------------
+
+/** Creates a mock GraphRunSession with a spied `resume`. */
+function makeMockSession(): GraphRunSession & { resumeCalls: unknown[][] } {
+  const calls: unknown[][] = [];
+  return {
+    sessionId: "test-session",
+    resumeCalls: calls,
+    async resume(interactionId: string, response: unknown) {
+      calls.push([interactionId, response]);
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    openStream(): any {
+      return {
+        [Symbol.asyncIterator]: () => ({
+          next: async () => ({ done: true, value: undefined }),
+        }),
+      };
+    },
+    async cancel() {},
+  };
+}
+
+suite("handleSuspend", () => {
+  let controller: AppController;
+  let addNode: (id: string, title?: string, outputSchema?: object) => void;
+  let bridges: Map<string, NodeEventBridge>;
+
+  beforeEach(() => {
+    setDOM();
+    const ctx = makeControllerWithGraph();
+    controller = ctx.controller;
+    addNode = ctx.addNode;
+    bridges = new Map();
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
+    unsetDOM();
+  });
+
+  /** Dispatch nodeStart to create a console entry for the node. */
+  function setupNode(nodeId: string, title = nodeId) {
+    addNode(nodeId, title);
+    processEvent(
+      { type: "nodeStart", nodeId, index: 0 },
+      controller,
+      bridges,
+      "live"
+    );
+  }
+
+  // --- early returns -------------------------------------------------------
+
+  test("returns false when suspendEvent is undefined", async () => {
+    setupNode("n1");
+
+    const session = makeMockSession();
+    const result = await handleSuspend(
+      {
+        type: "inputRequired",
+        nodeId: "n1",
+        interactionId: "int-1",
+        index: 1,
+        // No suspendEvent.
+      },
+      controller,
+      session,
+      new AbortController()
+    );
+
+    assert.strictEqual(result, false);
+    assert.strictEqual(session.resumeCalls.length, 0);
+  });
+
+  test("returns false when no console entry exists for nodeId", async () => {
+    // Don't call setupNode — no entry.
+    const session = makeMockSession();
+    const result = await handleSuspend(
+      {
+        type: "inputRequired",
+        nodeId: "unknown-node",
+        interactionId: "int-1",
+        suspendEvent: { inputNode: { schema: { properties: {} } } },
+        index: 1,
+      },
+      controller,
+      session,
+      new AbortController()
+    );
+
+    assert.strictEqual(result, false);
+    assert.strictEqual(session.resumeCalls.length, 0);
+  });
+
+  test("returns false for unrecognized suspendEvent type", async () => {
+    setupNode("n1");
+
+    const session = makeMockSession();
+    const result = await handleSuspend(
+      {
+        type: "inputRequired",
+        nodeId: "n1",
+        interactionId: "int-1",
+        suspendEvent: { unknownType: { data: 123 } },
+        index: 1,
+      },
+      controller,
+      session,
+      new AbortController()
+    );
+
+    assert.strictEqual(result, false);
+    assert.strictEqual(session.resumeCalls.length, 0);
+  });
+
+  // --- inputNode -----------------------------------------------------------
+
+  test("inputNode: calls requestInput and resumes session with user input", async () => {
+    setupNode("n1", "Topic Input");
+
+    const session = makeMockSession();
+    const abortController = new AbortController();
+
+    const suspendPromise = handleSuspend(
+      {
+        type: "inputRequired",
+        nodeId: "n1",
+        interactionId: "int-abc",
+        suspendEvent: {
+          inputNode: {
+            schema: {
+              type: "object",
+              properties: {
+                request: {
+                  type: "object",
+                  title: "Enter topic",
+                  behavior: ["transient", "llm-content"],
+                },
+              },
+            },
+          },
+        },
+        index: 1,
+      },
+      controller,
+      session,
+      abortController
+    );
+
+    // Status should transition to PAUSED while waiting.
+    const runCtrl = controller.run.main as RunController;
+    assert.strictEqual(runCtrl.status, STATUS.PAUSED);
+
+    // Simulate user providing input.
+    runCtrl.resolveInputForNode("n1", { request: "peanuts" });
+
+    const result = await suspendPromise;
+
+    assert.strictEqual(result, true);
+    assert.strictEqual(runCtrl.status, STATUS.RUNNING);
+    assert.strictEqual(session.resumeCalls.length, 1);
+    assert.strictEqual(session.resumeCalls[0][0], "int-abc");
+    assert.deepStrictEqual(session.resumeCalls[0][1], { request: "peanuts" });
+  });
+
+  test("inputNode: uses default schema when inputNode has no schema", async () => {
+    setupNode("n1", "Bare Input");
+
+    const session = makeMockSession();
+    const abortController = new AbortController();
+
+    const suspendPromise = handleSuspend(
+      {
+        type: "inputRequired",
+        nodeId: "n1",
+        interactionId: "int-def",
+        suspendEvent: { inputNode: {} },
+        index: 1,
+      },
+      controller,
+      session,
+      abortController
+    );
+
+    // Should still be paused — requestInput was called with default schema.
+    const runCtrl = controller.run.main as RunController;
+    assert.strictEqual(runCtrl.status, STATUS.PAUSED);
+
+    // Resolve with some default input.
+    runCtrl.resolveInputForNode("n1", { request: "default value" });
+
+    const result = await suspendPromise;
+    assert.strictEqual(result, true);
+    assert.strictEqual(session.resumeCalls.length, 1);
+  });
+
+  // --- waitForInput --------------------------------------------------------
+
+  test("waitForInput: calls requestInput with agent schema and resumes", async () => {
+    setupNode("n1", "Agent Node");
+
+    const session = makeMockSession();
+    const abortController = new AbortController();
+
+    const suspendPromise = handleSuspend(
+      {
+        type: "inputRequired",
+        nodeId: "n1",
+        interactionId: "int-wait",
+        suspendEvent: {
+          waitForInput: {
+            requestId: "req-1",
+            prompt: { role: "model", parts: [{ text: "What topic?" }] },
+            inputType: "text",
+            interactionId: "int-wait",
+          },
+        },
+        index: 1,
+      },
+      controller,
+      session,
+      abortController
+    );
+
+    const runCtrl = controller.run.main as RunController;
+    assert.strictEqual(runCtrl.status, STATUS.PAUSED);
+
+    // Resolve input.
+    runCtrl.resolveInputForNode("n1", {
+      input: { parts: [{ text: "haiku about cats" }], role: "user" },
+    });
+
+    const result = await suspendPromise;
+    assert.strictEqual(result, true);
+    assert.strictEqual(runCtrl.status, STATUS.RUNNING);
+    assert.strictEqual(session.resumeCalls.length, 1);
+    assert.strictEqual(session.resumeCalls[0][0], "int-wait");
+  });
+
+  test("waitForInput: includes hint-required behavior when skipLabel is falsy", async () => {
+    setupNode("n1", "Agent Node");
+
+    const runCtrl = controller.run.main as RunController;
+
+    // Capture the schema passed to requestInputForNode via callback.
+    let capturedSchema: Record<string, unknown> | null = null;
+    runCtrl.onInputRequested = (_id, schema) => {
+      capturedSchema = schema as Record<string, unknown>;
+    };
+
+    const session = makeMockSession();
+    handleSuspend(
+      {
+        type: "inputRequired",
+        nodeId: "n1",
+        interactionId: "int-hint",
+        suspendEvent: {
+          waitForInput: {
+            requestId: "req-2",
+            prompt: { role: "model", parts: [{ text: "Prompt" }] },
+            inputType: "edit_note",
+            // skipLabel is undefined → should include hint-required
+            interactionId: "int-hint",
+          },
+        },
+        index: 1,
+      },
+      controller,
+      session,
+      new AbortController()
+    );
+
+    assert.ok(capturedSchema, "onInputRequested should have been called");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const inputProp = (capturedSchema as any).properties?.input;
+    assert.ok(inputProp, "schema should have input property");
+    const behaviors = inputProp.behavior as string[];
+    assert.ok(
+      behaviors.includes("hint-required"),
+      "should include hint-required when skipLabel is falsy"
+    );
+
+    // Resolve to avoid dangling promise.
+    runCtrl.resolveInputForNode("n1", { input: {} });
+  });
+
+  // --- abort ---------------------------------------------------------------
+
+  test("rejects when aborted before user provides input", async () => {
+    setupNode("n1");
+
+    const session = makeMockSession();
+    const abortController = new AbortController();
+
+    const suspendPromise = handleSuspend(
+      {
+        type: "inputRequired",
+        nodeId: "n1",
+        interactionId: "int-abort",
+        suspendEvent: {
+          inputNode: {
+            schema: { properties: { request: { type: "string" } } },
+          },
+        },
+        index: 1,
+      },
+      controller,
+      session,
+      abortController
+    );
+
+    // Abort before user provides input.
+    abortController.abort();
+
+    await assert.rejects(suspendPromise);
+    assert.strictEqual(
+      session.resumeCalls.length,
+      0,
+      "should not resume when aborted"
+    );
   });
 });

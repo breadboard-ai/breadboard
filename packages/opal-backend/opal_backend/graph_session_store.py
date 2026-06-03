@@ -70,15 +70,14 @@ class GraphSessionStore(Protocol):
     # ── Plan Storage ──
 
     async def create(
-        self, session_id: str, plan: GraphPlan,
+        self, session_id: str, plan: GraphPlan, graph_id: str,
         *,
-        graph_id: str = "",
         headless_inputs: dict[str, Any] | None = None,
     ) -> None:
         """Store plan with initial dependency counts.
 
         Args:
-            graph_id: Optional graph identifier for session indexing.
+            graph_id: Graph identifier for session indexing.
             headless_inputs: Optional mapping of node_id → LLMContent
                 for headless mode. When set, input nodes auto-resolve
                 using pre-supplied values instead of suspending.
@@ -165,6 +164,12 @@ class GraphSessionStore(Protocol):
         self, session_id: str,
     ) -> bool:
         """True when all nodes are completed (or skipped)."""
+        ...
+
+    async def get_failed_errors(
+        self, session_id: str,
+    ) -> list[str]:
+        """Return error messages from all failed nodes (empty if none)."""
         ...
 
     async def get_graph_outputs(
