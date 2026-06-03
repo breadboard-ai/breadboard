@@ -33,6 +33,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   enableSingletonPrefixCache: false,
   enableAssetAccessConsent: false,
   enableBackendGraphRunner: false,
+  enableAgentWorkbench: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(

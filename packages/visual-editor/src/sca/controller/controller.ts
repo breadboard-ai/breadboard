@@ -97,6 +97,10 @@ class Controller implements AppController {
         "Editor_InputAssets",
         "InputAssetController"
       ),
+      workbench: new Editor.Workbench.WorkbenchController(
+        "Editor_Workbench",
+        "WorkbenchController"
+      ),
     };
 
     this.home = {
@@ -270,6 +274,7 @@ export interface AppController extends DebuggableAppController {
     devtools: Editor.DevTools.DevToolsController;
     canvas: Editor.Canvas.CanvasController;
     inputAssets: Editor.InputAssets.InputAssetController;
+    workbench: Editor.Workbench.WorkbenchController;
   };
   home: {
     recent: Home.RecentBoardsController;

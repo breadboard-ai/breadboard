@@ -28,6 +28,7 @@ import * as Shell from "./shell/shell-actions.js";
 import * as Sidebar from "./sidebar/sidebar-actions.js";
 import * as Step from "./step/step-actions.js";
 import * as Theme from "./theme/theme-actions.js";
+import * as Workbench from "./workbench/workbench-actions.js";
 import type { ActionWithTriggers } from "../coordination.js";
 import { Utils } from "../utils.js";
 
@@ -53,6 +54,7 @@ export interface AppActions {
   sidebar: typeof Sidebar;
   step: typeof Step;
   theme: typeof Theme;
+  workbench: typeof Workbench;
 }
 
 let instance: AppActions | null = null;
@@ -85,6 +87,7 @@ export function actions(
     Sidebar.bind({ controller, services, env });
     Step.bind({ controller, services, env });
     Theme.bind({ controller, services, env });
+    Workbench.bind({ controller, services, env });
     instance = {
       agent: Agent,
       graphEditingAgent: GraphEditingAgent,
@@ -106,6 +109,7 @@ export function actions(
       sidebar: Sidebar,
       step: Step,
       theme: Theme,
+      workbench: Workbench,
     } satisfies AppActions;
   }
   return instance;
@@ -147,6 +151,7 @@ export function activateTriggers(): () => void {
     ...Object.values(Sidebar),
     ...Object.values(Step),
     ...Object.values(Theme),
+    ...Object.values(Workbench),
   ];
 
   // Filter to actions with triggers and extract metadata
@@ -255,4 +260,5 @@ export {
   Sidebar,
   Step,
   Theme,
+  Workbench,
 };

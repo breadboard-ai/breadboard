@@ -38,6 +38,8 @@ export const DEV_BACKEND_MODE = getBoolean("DEV_BACKEND_MODE");
 
 export const DOMAIN_CONFIG = getDomainConfig("DOMAIN_CONFIG");
 
+export const ENABLE_AGENT_WORKBENCH = getBoolean("ENABLE_AGENT_WORKBENCH");
+
 export const ENABLE_BACKEND_CLIENT = getBoolean("ENABLE_BACKEND_CLIENT");
 
 export const ENABLE_CONSISTENT_UI = getBoolean("ENABLE_CONSISTENT_UI");
