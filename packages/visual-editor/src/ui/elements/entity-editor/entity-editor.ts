@@ -842,12 +842,29 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener("pointerdown", this.#onPointerDownBound);
+    this.addEventListener("focusin", this.#updateFocusState);
+    this.addEventListener("focusout", this.#updateFocusState);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener("pointerdown", this.#onPointerDownBound);
+    this.removeEventListener("focusin", this.#updateFocusState);
+    this.removeEventListener("focusout", this.#updateFocusState);
+    if (this.sca) {
+      this.sca.controller.editor.step.focused = false;
+    }
   }
+
+  #updateFocusState = () => {
+    requestAnimationFrame(() => {
+      if (!this.sca) return;
+      const isFocused =
+        this.shadowRoot?.activeElement !== null ||
+        document.activeElement === this;
+      this.sca.controller.editor.step.focused = isFocused;
+    });
+  };
 
   #onPointerDown() {
     this.#hideFastAccess();
