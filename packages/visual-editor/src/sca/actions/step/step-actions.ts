@@ -54,9 +54,15 @@ export const applyPendingNodeEdit = asAction(
   },
   async (): Promise<void> => {
     const { controller } = bind;
+    const { readOnly } = controller.editor.graph;
 
     const pendingEdit = controller.editor.step.pendingEdit;
     if (!pendingEdit) {
+      return;
+    }
+
+    if (readOnly) {
+      controller.editor.step.clearPendingEdit();
       return;
     }
 
@@ -119,11 +125,17 @@ export const applyPendingAssetEdit = asAction(
   },
   async (): Promise<void> => {
     const { controller, services } = bind;
+    const { readOnly } = controller.editor.graph;
     const LABEL = "Step.applyPendingAssetEdit";
     const logger = Utils.Logging.getLogger(controller);
 
     const pendingAssetEdit = controller.editor.step.pendingAssetEdit;
     if (!pendingAssetEdit) {
+      return;
+    }
+
+    if (readOnly) {
+      controller.editor.step.clearPendingAssetEdit();
       return;
     }
 
@@ -245,6 +257,19 @@ export const applyPendingEditsForNodeAction = asAction(
   },
   async (): Promise<void> => {
     const { controller } = bind;
+    const { readOnly } = controller.editor.graph;
+
+    if (readOnly) {
+      const pendingEdit = controller.editor.step.pendingEdit;
+      if (pendingEdit) {
+        controller.editor.step.clearPendingEdit();
+      }
+      const pendingAssetEdit = controller.editor.step.pendingAssetEdit;
+      if (pendingAssetEdit) {
+        controller.editor.step.clearPendingAssetEdit();
+      }
+      return;
+    }
 
     // Apply pending node edit
     const pendingEdit = controller.editor.step.pendingEdit;

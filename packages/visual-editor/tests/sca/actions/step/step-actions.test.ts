@@ -210,6 +210,53 @@ suite("Step Actions", () => {
 
       assert.ok(true, "Should complete without doing anything");
     });
+
+    test("clears pending edit and returns early when readOnly is true", async () => {
+      let clearCalled = false;
+      let applyCalled = false;
+
+      stepActions.bind({
+        services: {} as never,
+        controller: {
+          editor: {
+            step: {
+              pendingEdit: {
+                nodeId: "node-123",
+                graphId: "graph-456",
+                graphVersion: 5,
+                values: { key: "value" },
+              },
+              clearPendingEdit: () => {
+                clearCalled = true;
+              },
+            },
+            graph: {
+              version: 5,
+              readOnly: true,
+              editor: {
+                apply: async () => {
+                  applyCalled = true;
+                  return { success: true };
+                },
+              },
+            },
+          },
+          global: {
+            toasts: {
+              toast: () => {
+                assert.fail("Toast should not be called when readOnly");
+              },
+            },
+          },
+        } as never,
+        env: createMockEnvironment(defaultRuntimeFlags),
+      });
+
+      await stepActions.applyPendingNodeEdit();
+
+      assert.strictEqual(clearCalled, true, "Pending edit should be cleared");
+      assert.strictEqual(applyCalled, false, "Editor apply should not be called when readOnly");
+    });
   });
 
   suite("applyPendingAssetEdit", () => {
@@ -714,6 +761,53 @@ suite("Step Actions", () => {
 
       assert.strictEqual(clearCalled, true, "Pending edit should be cleared");
     });
+
+    test("clears pending asset edit and returns early when readOnly is true", async () => {
+      let clearCalled = false;
+      let applyCalled = false;
+
+      stepActions.bind({
+        services: {} as never,
+        controller: {
+          editor: {
+            step: {
+              pendingAssetEdit: {
+                assetPath: "test/asset.txt",
+                graphVersion: 5,
+                title: "My Asset",
+                dataPart: null,
+              },
+              clearPendingAssetEdit: () => {
+                clearCalled = true;
+              },
+            },
+            graph: {
+              version: 5,
+              readOnly: true,
+              editor: {
+                apply: async () => {
+                  applyCalled = true;
+                  return { success: true };
+                },
+              },
+            },
+          },
+          global: {
+            toasts: {
+              toast: () => {
+                assert.fail("Toast should not be called when readOnly");
+              },
+            },
+          },
+        } as never,
+        env: createMockEnvironment(defaultRuntimeFlags),
+      });
+
+      await stepActions.applyPendingAssetEdit();
+
+      assert.strictEqual(clearCalled, true, "Pending asset edit should be cleared");
+      assert.strictEqual(applyCalled, false, "Editor apply should not be called when readOnly");
+    });
   });
 
   suite("applyPendingNodeEdit (no-editor guard)", () => {
@@ -1153,6 +1247,64 @@ suite("Step Actions", () => {
         2,
         "Should call apply twice: UpdateAssetData + UpdateAssetWithRefs"
       );
+    });
+
+    test("clears pending edits and returns early when readOnly is true", async () => {
+      let clearEditCalled = false;
+      let clearAssetEditCalled = false;
+      let applyCalled = false;
+
+      stepActions.bind({
+        services: {} as never,
+        controller: {
+          editor: {
+            step: {
+              pendingEdit: {
+                nodeId: "node-123",
+                graphId: "graph-456",
+                graphVersion: 5,
+                values: { key: "value" },
+              },
+              pendingAssetEdit: {
+                assetPath: "test/asset.txt",
+                graphVersion: 5,
+                title: "My Asset",
+                dataPart: null,
+              },
+              clearPendingEdit: () => {
+                clearEditCalled = true;
+              },
+              clearPendingAssetEdit: () => {
+                clearAssetEditCalled = true;
+              },
+            },
+            graph: {
+              version: 5,
+              readOnly: true,
+              editor: {
+                apply: async () => {
+                  applyCalled = true;
+                  return { success: true };
+                },
+              },
+            },
+          },
+          global: {
+            toasts: {
+              toast: () => {
+                assert.fail("Toast should not be called when readOnly");
+              },
+            },
+          },
+        } as never,
+        env: createMockEnvironment(defaultRuntimeFlags),
+      });
+
+      await stepActions.applyPendingEditsForNodeAction();
+
+      assert.strictEqual(clearEditCalled, true, "Pending node edit should be cleared");
+      assert.strictEqual(clearAssetEditCalled, true, "Pending asset edit should be cleared");
+      assert.strictEqual(applyCalled, false, "Editor apply should not be called when readOnly");
     });
   });
 

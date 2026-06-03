@@ -711,6 +711,54 @@ suite("Graph Actions", () => {
         );
       });
     });
+
+    suite("when readOnly is true", () => {
+      beforeEach(() => {
+        const graphStore = makeTestGraphStore();
+        testGraph = graphWithTwoNodes();
+        loadGraphIntoStore(graphStore, testGraph);
+        const editor = editGraphStore(graphStore);
+        if (!editor) assert.fail("Unable to edit graph");
+
+        graphActions.bind({
+          services: { graphStore } as unknown as AppServices,
+          controller: {
+            editor: {
+              graph: {
+                editor,
+                readOnly: true,
+                inspect: (graphId: string) => editor.inspect(graphId),
+                lastNodeConfigChange: null,
+                pendingGraphReplacement: null,
+                clearPendingGraphReplacement: () => {},
+              },
+              theme: { updateHash() {} },
+            },
+          } as unknown as AppController,
+          env: createMockEnvironment(defaultRuntimeFlags),
+        });
+      });
+
+      test("does not update title & description", async () => {
+        await graphActions.updateBoardTitleAndDescription(
+          "New Title",
+          "New Description"
+        );
+        assert.strictEqual(testGraph.title, undefined);
+        assert.strictEqual(testGraph.description, undefined);
+      });
+
+      test("does not change edge", async () => {
+        assert.strictEqual(testGraph.edges.length, 0);
+        await graphActions.changeEdge("add", {
+          from: "foo",
+          to: "bar",
+          in: "*",
+          out: "*",
+        });
+        assert.strictEqual(testGraph.edges.length, 0);
+      });
+    });
   });
 });
 
