@@ -11,14 +11,18 @@ import { consume } from "@lit/context";
 import { type SCA } from "../../../sca/sca.js";
 import { scaContext } from "../../../sca/context/context.js";
 
+import * as Styles from "../../styles/styles.js";
+
 @customElement("ui-tri-splitter")
 export class UITriSplitter extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
   static styles = [
+    Styles.HostColorsBase.baseColors,
     css`
       :host {
+        box-sizing: border-box;
         display: grid;
         grid-auto-rows: minmax(0, 1fr);
         overflow: auto;
@@ -28,11 +32,16 @@ export class UITriSplitter extends SignalWatcher(LitElement) {
         contain: strict;
       }
 
+      * {
+        box-sizing: border-box;
+      }
+
       section {
         display: grid;
         grid-template-columns: var(--left) var(--center) var(--right);
         width: 100%;
         height: 100%;
+        background: var(--light-dark-n-98);
 
         & #left,
         & #center,
@@ -43,11 +52,18 @@ export class UITriSplitter extends SignalWatcher(LitElement) {
         }
 
         & #left {
-          border-right: 1px solid light-dark(var(--n-90), var(--n-70));
+          padding: var(--bb-grid-size-4) var(--bb-grid-size-2)
+            var(--bb-grid-size-4) var(--bb-grid-size-4);
+        }
+
+        & #center {
+          padding: var(--bb-grid-size-4) var(--bb-grid-size-2)
+            var(--bb-grid-size-4) var(--bb-grid-size-2);
         }
 
         & #right {
-          border-left: 1px solid light-dark(var(--n-90), var(--n-70));
+          padding: var(--bb-grid-size-4) var(--bb-grid-size-4)
+            var(--bb-grid-size-4) var(--bb-grid-size-2);
         }
       }
 

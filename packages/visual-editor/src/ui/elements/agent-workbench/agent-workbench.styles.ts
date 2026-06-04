@@ -21,6 +21,7 @@ export const styles = [
       width: 100%;
       height: 100%;
       position: relative;
+      background: var(--light-dark-n-98);
     }
 
     ui-tri-splitter {
@@ -63,10 +64,12 @@ export const styles = [
       flex-direction: column;
       height: 100%;
       width: 100%;
-      background: light-dark(var(--n-100), var(--n-15));
-      padding: var(--bb-grid-size-4);
-      gap: var(--bb-grid-size-4);
-      overflow-y: auto;
+      background: var(--light-dark-n-100);
+      border: 1px solid var(--light-dark-n-90);
+      border-radius: var(--bb-grid-size-3);
+      padding: 0;
+      gap: 0;
+      overflow: hidden;
     }
 
     #workbench-controls {

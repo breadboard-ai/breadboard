@@ -37,31 +37,52 @@ export class RunLogColumn extends SignalWatcher(LitElement) {
         display: flex;
         flex-direction: column;
         height: 100%;
-        background: light-dark(var(--n-98), var(--n-15));
+        background: var(--light-dark-n-100);
+        border: 1px solid var(--light-dark-n-90);
+        border-radius: var(--bb-grid-size-3);
+        overflow: hidden;
       }
 
       header {
         display: flex;
-        flex-direction: column;
-        padding: var(--bb-grid-size-4);
-        border-bottom: 1px solid light-dark(var(--n-90), var(--n-70));
-        background: light-dark(var(--n-98), var(--n-20));
-        gap: var(--bb-grid-size-3);
+        align-items: center;
+        height: 48px;
+        padding: 0 var(--bb-grid-size-4);
+        border-bottom: 1px solid var(--light-dark-n-90);
+        background: var(--light-dark-n-100);
+        position: relative;
+        flex-shrink: 0;
       }
 
       #agent-info {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        width: 100%;
 
-        & h2 {
-          margin: 0;
-          font: 600 var(--bb-title-medium) / var(--bb-title-line-height-medium)
-            var(--bb-font-family);
-          color: light-dark(var(--n-10), var(--n-90));
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+        & .panel-title {
+          display: flex;
+          align-items: center;
+          gap: var(--bb-grid-size-2);
+
+          & h2 {
+            margin: 0;
+            font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
+              var(--bb-font-family);
+            color: var(--light-dark-n-20);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          & .g-icon {
+            font-size: 20px;
+            color: var(--light-dark-n-40);
+          }
+        }
+
+        & .btn.primary {
+          padding-left: var(--bb-grid-size-2);
         }
       }
 
@@ -75,8 +96,9 @@ export class RunLogColumn extends SignalWatcher(LitElement) {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: var(--bb-grid-size);
-        padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
+        flex-shrink: 0;
+        gap: var(--bb-grid-size-2);
+        padding: 0 var(--bb-grid-size-4);
         border-radius: var(--bb-grid-size-10);
         border: 1px solid light-dark(var(--n-85), var(--n-40));
         background: light-dark(var(--n-100), var(--n-25));
@@ -87,6 +109,7 @@ export class RunLogColumn extends SignalWatcher(LitElement) {
         transition:
           background-color 0.2s,
           border-color 0.2s;
+        height: 28px;
 
         &:hover:not([disabled]) {
           background: light-dark(var(--n-95), var(--n-30));
@@ -116,7 +139,9 @@ export class RunLogColumn extends SignalWatcher(LitElement) {
         height: 4px;
         background: light-dark(var(--n-90), var(--n-30));
         border-radius: 2px;
-        position: relative;
+        position: absolute;
+        bottom: 0;
+        left: 0;
         overflow: hidden;
 
         &::after {
@@ -153,15 +178,13 @@ export class RunLogColumn extends SignalWatcher(LitElement) {
             display: none;
           }
 
-          &::after {
-            content: "expand_more";
-            font-family: "Google Material Icons";
+          & .g-icon {
             font-size: 16px;
             transition: transform 0.2s;
           }
         }
 
-        &[open] summary::after {
+        &[open] summary .g-icon {
           transform: rotate(180deg);
         }
       }
@@ -285,6 +308,10 @@ export class RunLogColumn extends SignalWatcher(LitElement) {
     return html`
       <header>
         <div id="agent-info">
+          <div class="panel-title">
+            <span class="g-icon filled round">history</span>
+            <h2>Runs</h2>
+          </div>
           <div id="controls">
             ${isRunning
               ? html`
@@ -294,7 +321,7 @@ export class RunLogColumn extends SignalWatcher(LitElement) {
                 `
               : html`
                   <button class="btn primary" @click=${this.#onRunClick}>
-                    <span class="g-icon">play_arrow</span> Run
+                    <span class="g-icon filled">play_arrow</span> Run
                   </button>
                 `}
           </div>
@@ -315,7 +342,10 @@ export class RunLogColumn extends SignalWatcher(LitElement) {
                 this.historyExpanded = (e.target as HTMLDetailsElement).open;
               }}
             >
-              <summary>Run History (${allRuns.length})</summary>
+              <summary>
+                Run History (${allRuns.length})
+                <span class="g-icon">keyboard_arrow_down</span>
+              </summary>
               <div id="history-list">
                 ${allRuns.map((run) => {
                   const turnCount = run.contents.filter(
