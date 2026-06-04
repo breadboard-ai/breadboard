@@ -228,6 +228,215 @@ suite("Workbench Actions", () => {
       assert.deepEqual(splitsSet, [1, 3, 1]);
     });
   });
+
+  suite("applyObjective", () => {
+    test("updates agent node config$prompt with new objective text while preserving existing tools", async () => {
+      const singleAgentGraph: GraphDescriptor = {
+        title: "Single Agent",
+        nodes: [
+          {
+            id: "agent-node",
+            type: "embed://a2/generate.bgl.json#module:main",
+            configuration: {
+              "generation-mode": "agent",
+              config$prompt: {
+                role: "user",
+                parts: [
+                  {
+                    text: `Old objective.\n{{\"type\":\"tool\",\"path\":\"tool-1\",\"title\":\"Tool 1\"}}`,
+                  },
+                ],
+              },
+            },
+          },
+        ],
+        edges: [],
+      };
+
+      const env = createMockEnvironment(defaultRuntimeFlags);
+      await env.isHydrated;
+
+      let appliedTransform:
+        | { id: string; configuration: Record<string, unknown> }
+        | undefined;
+      let configChange: { configuration: Record<string, unknown> } | undefined;
+
+      workbenchActions.bind({
+        services: {} as never,
+        controller: {
+          editor: {
+            graph: {
+              get graph() {
+                return singleAgentGraph;
+              },
+              editor: {
+                apply: async (transform: unknown) => {
+                  appliedTransform = transform as {
+                    id: string;
+                    configuration: Record<string, unknown>;
+                  };
+                },
+              },
+              set lastNodeConfigChange(val: unknown) {
+                configChange = val as {
+                  configuration: Record<string, unknown>;
+                };
+              },
+            },
+          },
+        } as never,
+        env,
+      });
+
+      await workbenchActions.applyObjective("New objective.");
+
+      assert.ok(appliedTransform, "Should have applied a transform");
+      assert.strictEqual(appliedTransform.id, "agent-node");
+      assert.deepEqual(appliedTransform.configuration.config$prompt, {
+        role: "user",
+        parts: [
+          {
+            text: `New objective.\n{{\"type\":\"tool\",\"path\":\"tool-1\",\"title\":\"Tool 1\"}}`,
+          },
+        ],
+      });
+      assert.ok(configChange, "Should have set config change");
+      assert.deepEqual(configChange.configuration.config$prompt, {
+        role: "user",
+        parts: [
+          {
+            text: `New objective.\n{{\"type\":\"tool\",\"path\":\"tool-1\",\"title\":\"Tool 1\"}}`,
+          },
+        ],
+      });
+    });
+  });
+
+  suite("toggleTool", () => {
+    test("enables a tool by appending its placeholder to the prompt", async () => {
+      const singleAgentGraph: GraphDescriptor = {
+        title: "Single Agent",
+        nodes: [
+          {
+            id: "agent-node",
+            type: "embed://a2/generate.bgl.json#module:main",
+            configuration: {
+              "generation-mode": "agent",
+              config$prompt: {
+                role: "user",
+                parts: [{ text: "Solve the objective." }],
+              },
+            },
+          },
+        ],
+        edges: [],
+      };
+
+      const env = createMockEnvironment(defaultRuntimeFlags);
+      await env.isHydrated;
+
+      let appliedTransform:
+        | { id: string; configuration: Record<string, unknown> }
+        | undefined;
+
+      workbenchActions.bind({
+        services: {} as never,
+        controller: {
+          editor: {
+            graph: {
+              get graph() {
+                return singleAgentGraph;
+              },
+              editor: {
+                apply: async (transform: unknown) => {
+                  appliedTransform = transform as {
+                    id: string;
+                    configuration: Record<string, unknown>;
+                  };
+                },
+              },
+              set lastNodeConfigChange(_val: unknown) {},
+            },
+          },
+        } as never,
+        env,
+      });
+
+      await workbenchActions.toggleTool("tool-1", "Tool 1", true);
+
+      assert.ok(appliedTransform, "Should have applied a transform");
+      assert.deepEqual(appliedTransform.configuration.config$prompt, {
+        role: "user",
+        parts: [
+          {
+            text: `Solve the objective.\n{{\"type\":\"tool\",\"path\":\"tool-1\",\"title\":\"Tool 1\"}}`,
+          },
+        ],
+      });
+    });
+
+    test("disables a tool by removing its placeholder from the prompt", async () => {
+      const singleAgentGraph: GraphDescriptor = {
+        title: "Single Agent",
+        nodes: [
+          {
+            id: "agent-node",
+            type: "embed://a2/generate.bgl.json#module:main",
+            configuration: {
+              "generation-mode": "agent",
+              config$prompt: {
+                role: "user",
+                parts: [
+                  {
+                    text: `Solve the objective.\n{{\"type\":\"tool\",\"path\":\"tool-1\",\"title\":\"Tool 1\"}}`,
+                  },
+                ],
+              },
+            },
+          },
+        ],
+        edges: [],
+      };
+
+      const env = createMockEnvironment(defaultRuntimeFlags);
+      await env.isHydrated;
+
+      let appliedTransform:
+        | { id: string; configuration: Record<string, unknown> }
+        | undefined;
+
+      workbenchActions.bind({
+        services: {} as never,
+        controller: {
+          editor: {
+            graph: {
+              get graph() {
+                return singleAgentGraph;
+              },
+              editor: {
+                apply: async (transform: unknown) => {
+                  appliedTransform = transform as {
+                    id: string;
+                    configuration: Record<string, unknown>;
+                  };
+                },
+              },
+              set lastNodeConfigChange(_val: unknown) {},
+            },
+          },
+        } as never,
+        env,
+      });
+
+      await workbenchActions.toggleTool("tool-1", "Tool 1", false);
+
+      assert.ok(appliedTransform, "Should have applied a transform");
+      assert.deepEqual(appliedTransform.configuration.config$prompt, {
+        role: "user",
+        parts: [{ text: "Solve the objective." }],
+      });
+    });
+  });
 });
 
 suite("Workbench Triggers", () => {

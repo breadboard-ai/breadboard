@@ -301,6 +301,72 @@ describe("EditorSelection", () => {
     it("returns null when there is no selection", () => {
       assert.equal(sel.getRange(), null);
     });
+
+    it("uses shadowRoot.getSelection when supported", (t) => {
+      const mockRange = new Range();
+      const mockSelection = {
+        rangeCount: 1,
+        getRangeAt: () => mockRange,
+      };
+
+      const shadowRoot = editor.getRootNode() as ShadowRoot & {
+        getSelection: () => Selection | null;
+      };
+      shadowRoot.getSelection = () => mockSelection as unknown as Selection;
+      t.mock.method(
+        shadowRoot,
+        "getSelection",
+        () => mockSelection as unknown as Selection
+      );
+
+      const range = sel.getRange();
+      assert.equal(range, mockRange);
+    });
+
+    it("falls back to document.getSelection and getComposedRanges when shadowRoot.getSelection is not supported", (t) => {
+      const shadowRoot = editor.getRootNode() as ShadowRoot & {
+        getSelection?: () => Selection | null;
+      };
+      delete shadowRoot.getSelection;
+
+      const mockRange = new Range();
+      const mockSelection = {
+        rangeCount: 1,
+        getRangeAt: () => null,
+        getComposedRanges: t.mock.fn((sr) => {
+          assert.equal(sr, shadowRoot);
+          return [mockRange];
+        }),
+      };
+
+      t.mock.method(document, "getSelection", () => mockSelection);
+
+      const range = sel.getRange();
+      assert.ok(range instanceof Range);
+      assert.equal(range.startContainer, mockRange.startContainer);
+      assert.equal(range.startOffset, mockRange.startOffset);
+    });
+
+    it("falls back to document.getSelection().getRangeAt(0) when getComposedRanges is not supported", (t) => {
+      const shadowRoot = editor.getRootNode() as ShadowRoot & {
+        getSelection?: () => Selection | null;
+      };
+      delete shadowRoot.getSelection;
+
+      const mockRange = new Range();
+      const mockSelection = {
+        rangeCount: 1,
+        getRangeAt: t.mock.fn((index) => {
+          assert.equal(index, 0);
+          return mockRange;
+        }),
+      };
+
+      t.mock.method(document, "getSelection", () => mockSelection);
+
+      const range = sel.getRange();
+      assert.equal(range, mockRange);
+    });
   });
 
   describe("getSelection", () => {

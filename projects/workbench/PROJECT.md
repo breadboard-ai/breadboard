@@ -300,7 +300,7 @@ Run the agent. The tool is not available.
 
 #### packages/visual-editor — UI
 
-- [ ] `bb-objective-editor` — new element in
+- [x] `bb-objective-editor` — new element in
       `ui/elements/agent-workbench/objective-editor/`. A contenteditable surface
       that renders the agent node's system prompt with inlined assets.
   - Reads from the agent node's configuration via the graph store.
@@ -308,10 +308,10 @@ Run the agent. The tool is not available.
   - Asset rendering: each asset (image, file, etc.) is rendered as an inline
     block element within the contenteditable. Think decorations or embedded
     views, not separate file pickers.
-- [ ] `bb-tool-shelf` — new element for toggling tools and skills. A compact
+- [x] `bb-tool-shelf` — new element for toggling tools and skills. A compact
       list of available tools with toggle switches. Reads from the agent node's
       tool configuration.
-- [ ] `bb-agent-workbench` — mount `bb-objective-editor` and `bb-tool-shelf` in
+- [x] `bb-agent-workbench` — mount `bb-objective-editor` and `bb-tool-shelf` in
       the center column, replacing the Phase 1 placeholder.
 
 > [!IMPORTANT] The objective editor is the most design-sensitive surface in the

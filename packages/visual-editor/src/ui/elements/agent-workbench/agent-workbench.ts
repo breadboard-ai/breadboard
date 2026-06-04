@@ -14,6 +14,8 @@ import { ShowTooltipEvent, HideTooltipEvent } from "../../events/events.js";
 import { styles } from "./agent-workbench.styles.js";
 
 import "./run-log-column.js";
+import "./objective-editor/objective-editor.js";
+import "./tool-shelf/tool-shelf.js";
 
 @customElement("bb-agent-workbench")
 export class AgentWorkbench extends SignalWatcher(LitElement) {
@@ -37,12 +39,9 @@ export class AgentWorkbench extends SignalWatcher(LitElement) {
           <h2>Opie Conversation</h2>
           <p>This column will contain the contextual conversation history.</p>
         </div>
-        <div slot="s1" class="column-placeholder">
-          <span class="g-icon">settings</span>
-          <h2>Agent Configuration</h2>
-          <p>
-            This column will contain the objective editor, tools, and skills.
-          </p>
+        <div slot="s1" class="agent-config-column">
+          <bb-objective-editor></bb-objective-editor>
+          <bb-tool-shelf></bb-tool-shelf>
         </div>
         <bb-run-log-column slot="s2"></bb-run-log-column>
       </ui-tri-splitter>

@@ -71,6 +71,8 @@ export { UITriSplitter } from "./splitter/ui-tri-splitter.js";
 export { AgentWorkbench } from "./agent-workbench/agent-workbench.js";
 export { RunLogColumn } from "./agent-workbench/run-log-column.js";
 export { RunView } from "./agent-workbench/run-view.js";
+export { ObjectiveEditor } from "./agent-workbench/objective-editor/objective-editor.js";
+export { ToolShelf } from "./agent-workbench/tool-shelf/tool-shelf.js";
 export { Toast } from "./toast/toast.js";
 export { Tooltip } from "./tooltip/tooltip.js";
 export { OnboardingTooltip } from "./tooltip/onboarding-tooltip.js";
