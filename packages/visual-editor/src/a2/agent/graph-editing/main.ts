@@ -52,7 +52,7 @@ async function invokeGraphEditingAgent(
       graph.nodes ?? [],
       graph.edges ?? [],
       translator,
-      canvas
+      canvas ?? null
     );
 
     const selectedNodes = controller?.editor?.selection?.selection?.nodes;
@@ -65,7 +65,8 @@ async function invokeGraphEditingAgent(
       graph,
       graph.nodes ?? [],
       graph.edges ?? [],
-      translator
+      translator,
+      null
     );
   }
 

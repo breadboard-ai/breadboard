@@ -30,6 +30,7 @@ import {
   LEGACY_OPTION_MAP,
 } from "./constants.js";
 import type { ApplyEditsResponse } from "./types.js";
+import { bind } from "../../../sca/actions/graph/graph-actions.js";
 import { readGraph } from "./read-graph.js";
 
 export { getGraphEditingFunctionGroup };
@@ -417,11 +418,13 @@ function defineGraphEditingFunctions(
       },
       async () => {
         const graph = await readGraph(sink);
+        const { controller } = bind;
         const overview = graphOverviewYaml(
           graph,
           graph.nodes ?? [],
           graph.edges ?? [],
-          translator
+          translator,
+          controller.editor.canvas
         );
         return { overview };
       }

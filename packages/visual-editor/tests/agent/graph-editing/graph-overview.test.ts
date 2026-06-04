@@ -9,6 +9,7 @@ import { ok } from "node:assert";
 import { graphOverviewYaml } from "../../../src/a2/agent/graph-editing/graph-overview.js";
 import { EditingAgentPidginTranslator } from "../../../src/a2/agent/graph-editing/editing-agent-pidgin-translator.js";
 import type { NodeDescriptor, Edge } from "@breadboard-ai/types";
+import type { CanvasController } from "../../../src/sca/controller/subcontrollers/editor/canvas/canvas-controller.js";
 
 const GENERATE_COMPONENT_URL = "embed://a2/generate.bgl.json#module:main";
 const USER_INPUT_COMPONENT_URL =
@@ -67,7 +68,8 @@ describe("graphOverviewYaml", () => {
       { title: "Test Graph", description: "This is a test description" },
       nodes,
       edges,
-      translator
+      translator,
+      null
     );
 
     ok(yaml.includes("options:"));
@@ -107,7 +109,8 @@ describe("graphOverviewYaml", () => {
       },
       [],
       [],
-      translator
+      translator,
+      null
     );
     ok(yaml.includes("splashImage: present"));
   });
@@ -132,7 +135,8 @@ describe("graphOverviewYaml", () => {
       },
       [],
       [],
-      translator
+      translator,
+      null
     );
     ok(yaml.includes("splashImage: default"));
   });
@@ -179,7 +183,8 @@ describe("graphOverviewYaml", () => {
       },
       [],
       [],
-      translator
+      translator,
+      null
     );
 
     ok(yaml.includes("assets:"));
@@ -220,7 +225,8 @@ describe("graphOverviewYaml", () => {
       },
       [],
       [],
-      translator
+      translator,
+      null
     );
     ok(yaml.includes("type: application/pdf"));
   });
@@ -267,7 +273,8 @@ describe("graphOverviewYaml", () => {
       },
       [],
       [],
-      translator
+      translator,
+      null
     );
 
     ok(yaml.includes("type: YouTube video"));
@@ -308,7 +315,8 @@ describe("graphOverviewYaml", () => {
       },
       nodes,
       [],
-      translator
+      translator,
+      null
     );
 
     ok(yaml.includes("x: 100"));
@@ -334,7 +342,8 @@ describe("graphOverviewYaml", () => {
       },
       [],
       [],
-      translator
+      translator,
+      null
     );
 
     ok(yaml.includes("# Newly Added. TODO: Position this asset"));
@@ -358,10 +367,72 @@ describe("graphOverviewYaml", () => {
       },
       nodes,
       [],
-      translator
+      translator,
+      null
     );
 
     ok(yaml.includes("# Newly Added. TODO: Position this step"));
+  });
+
+  it("includes viewport, step dimensions, and asset dimensions when canvas is provided", () => {
+    const translator = new EditingAgentPidginTranslator();
+    const nodes: NodeDescriptor[] = [
+      {
+        id: "step-1",
+        type: GENERATE_COMPONENT_URL,
+        metadata: {
+          title: "Positioned Step",
+          visual: { x: 100, y: 150 },
+        },
+      },
+    ];
+
+    const mockCanvas = {
+      viewport: { left: 10, top: 20, width: 800, height: 600 },
+      getStepDimensions: (id: string) => {
+        if (id === "step-1") return { width: 120.4, height: 80.6 };
+        return null;
+      },
+      getAssetDimensions: (path: string) => {
+        if (path === "/assets/img.png") return { width: 200, height: 150 };
+        return null;
+      },
+    } as unknown as CanvasController;
+
+    const yaml = graphOverviewYaml(
+      {
+        title: "Test Graph",
+        assets: {
+          "/assets/img.png": {
+            metadata: {
+              title: "My Image",
+              type: "file",
+              visual: { x: 50, y: 50 },
+            },
+            data: [],
+          },
+        },
+      },
+      nodes,
+      [],
+      translator,
+      mockCanvas
+    );
+
+    // Viewport assertions
+    ok(yaml.includes("viewport:"));
+    ok(yaml.includes("left: 10"));
+    ok(yaml.includes("top: 20"));
+    ok(yaml.includes("width: 800"));
+    ok(yaml.includes("height: 600"));
+
+    // Step dimensions assertions
+    ok(yaml.includes("width: 120"));
+    ok(yaml.includes("height: 81"));
+
+    // Asset dimensions assertions
+    ok(yaml.includes("width: 200"));
+    ok(yaml.includes("height: 150"));
   });
 });
 
