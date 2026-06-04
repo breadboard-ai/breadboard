@@ -478,7 +478,8 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
         task_id,
         status_update,
       }: GenerateHtmlParams,
-      statusUpdater
+      statusUpdater,
+      reporter
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       statusUpdater(status_update || "Generating HTML", {
@@ -491,7 +492,8 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
       const webPage = await generateWebpage(
         moduleArgs,
         toText(defaultSystemInstruction()),
-        [translated]
+        [translated],
+        reporter
       );
 
       statusUpdater(null);

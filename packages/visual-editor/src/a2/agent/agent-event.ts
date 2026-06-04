@@ -229,6 +229,13 @@ type SubagentAddJsonPayload = {
   icon?: string;
 };
 
+type SubagentAddContentPayload = {
+  callId: string;
+  title: string;
+  content: LLMContent;
+  icon?: string;
+};
+
 type SubagentErrorPayload = {
   callId: string;
   error: { $error: string; metadata?: ErrorMetadata };
@@ -277,6 +284,7 @@ type AgentEventMap = {
   error: ErrorPayload;
   finish: FinishPayload;
   subagentAddJson: SubagentAddJsonPayload;
+  subagentAddContent: SubagentAddContentPayload;
   subagentError: SubagentErrorPayload;
   subagentFinish: SubagentFinishPayload;
   usageMetadata: UsageMetadataPayload;

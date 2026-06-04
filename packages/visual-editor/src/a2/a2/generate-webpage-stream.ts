@@ -15,6 +15,7 @@ import { iteratorFromStream } from "@breadboard-ai/utils";
 import {
   getCurrentStepState,
   createReporter,
+  type ProgressReporter,
 } from "../agent/progress-work-item.js";
 import {
   encodeBase64,
@@ -185,17 +186,24 @@ function parseStoredDataUrl(handle: string): string {
 async function executeWebpageStream(
   moduleArgs: A2ModuleArgs,
   instruction: string,
-  content: LLMContent[]
+  content: LLMContent[],
+  reporter?: ProgressReporter | null
 ): Promise<Outcome<LLMContent>> {
-  const reporter = createReporter(moduleArgs, {
-    title: `Generating webpage`,
-    icon: "web",
-  });
+  const hasReporter = !!reporter;
+  const effectiveReporter =
+    reporter ??
+    createReporter(moduleArgs, {
+      title: `Generating webpage`,
+      icon: "web",
+    });
 
   const { appScreen } = getCurrentStepState(moduleArgs);
 
   try {
-    reporter.addJson("Preparing request", {}, "upload");
+    const lastInput = content.at(-1);
+    if (lastInput) {
+      effectiveReporter.addContent("Context", lastInput, "upload");
+    }
 
     if (appScreen) appScreen.progress = "Generating HTML";
 
@@ -217,13 +225,13 @@ async function executeWebpageStream(
 
     if (!response.ok) {
       const errorText = await response.text();
-      return reporter.addError(
+      return effectiveReporter.addError(
         err(`Streaming request failed: ${response.status} ${errorText}`)
       );
     }
 
     if (!response.body) {
-      return reporter.addError(err("No response body from streaming API"));
+      return effectiveReporter.addError(err("No response body from streaming API"));
     }
 
     // Process the SSE stream
@@ -245,29 +253,31 @@ async function executeWebpageStream(
             setScreenDuration(appScreen, -1);
           }
 
-          reporter.addText(`Thinking (${thoughtCount})`, text, "spark");
+          effectiveReporter.addJson(`Thinking (${thoughtCount})`, { thought: text }, "spark");
         } else if (chunkType === "html") {
           htmlResult = text;
-          reporter.addText("Generated HTML", "HTML output ready", "download");
+          effectiveReporter.addJson("Generated HTML", { status: "HTML output ready" }, "download");
         } else if (chunkType === "error") {
-          return reporter.addError(err(parseStreamError(text)));
+          return effectiveReporter.addError(err(parseStreamError(text)));
         }
       }
     }
 
     if (!htmlResult) {
-      return reporter.addError(err("No HTML content received from stream"));
+      return effectiveReporter.addError(err("No HTML content received from stream"));
     }
 
     // Return HTML as inlineData with text/html mimeType to match legacy behavior
     return toLLMContentInline("text/html", encodeBase64(htmlResult), "model");
   } catch (e) {
-    return reporter.addError(err(formatAgentError(e), classifyCaughtError(e)));
+    return effectiveReporter.addError(err(formatAgentError(e), classifyCaughtError(e)));
   } finally {
     if (appScreen) {
       appScreen.progress = undefined;
       setScreenDuration(appScreen, -1);
     }
-    reporter.finish();
+    if (!hasReporter) {
+      effectiveReporter.finish();
+    }
   }
 }

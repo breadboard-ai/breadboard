@@ -9,6 +9,7 @@ import type { Outcome, LLMContent, DataPart } from "@breadboard-ai/types";
 import type {
   Generators,
   MappedDefinitions,
+  ProgressReporter,
 } from "../../../src/a2/agent/types.js";
 import type { GenerateFunctionArgs } from "../../../src/a2/agent/functions/generate.js";
 import type { AgentFileSystem } from "../../../src/a2/agent/file-system.js";
@@ -345,7 +346,8 @@ function getHandler(
   name: string
 ): (
   params: Record<string, unknown>,
-  statusUpdater: StatusUpdateCallback
+  statusUpdater: StatusUpdateCallback,
+  reporter?: ProgressReporter | null
 ) => Promise<Outcome<Record<string, unknown>>> {
   const def = group.definitions.find(([n]) => n === name);
   if (!def) {
@@ -353,6 +355,7 @@ function getHandler(
   }
   return def[1].handler as (
     params: Record<string, unknown>,
-    statusUpdater: StatusUpdateCallback
+    statusUpdater: StatusUpdateCallback,
+    reporter?: ProgressReporter | null
   ) => Promise<Outcome<Record<string, unknown>>>;
 }
