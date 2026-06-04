@@ -253,14 +253,11 @@ class ChatPanel extends SignalWatcher(LitElement) {
       .thought-group-header .chevron {
         margin-right: var(--bb-grid-size);
         opacity: 0.6;
+        transition: transform 0.15s ease;
       }
 
-      .thought-group-header .chevron::before {
-        content: "keyboard_arrow_up";
-      }
-
-      .thought-group[open] > .thought-group-header .chevron::before {
-        content: "keyboard_arrow_down";
+      .thought-group[open] > .thought-group-header .chevron {
+        transform: rotate(90deg);
       }
 
       .thought-group-header:hover {
@@ -268,7 +265,9 @@ class ChatPanel extends SignalWatcher(LitElement) {
       }
 
       .thought-group-body {
-        padding: var(--bb-grid-size) 0 var(--bb-grid-size) var(--bb-grid-size-6);
+        padding: var(--bb-grid-size) 0 var(--bb-grid-size) var(--bb-grid-size-4);
+        margin-left: 8px;
+        border-left: 1px solid var(--light-dark-n-90);
         display: flex;
         flex-direction: column;
         gap: var(--bb-grid-size);
@@ -483,11 +482,10 @@ class ChatPanel extends SignalWatcher(LitElement) {
     return html`
       <div class="bubble">
         <div class="messages">
-          ${agent.entries.map((entry) =>
-            entry.kind === "thought-group" && !agent.loopRunning
-              ? nothing
-              : this.#renderEntry(entry)
-          )}
+          ${agent.entries.map((entry, index) => {
+            const isLast = index === agent.entries.length - 1;
+            return this.#renderEntry(entry, isLast);
+          })}
           ${(() => {
             const lastEntry = agent.entries[agent.entries.length - 1];
             const hasUser = agent.entries.some(
@@ -603,7 +601,9 @@ class ChatPanel extends SignalWatcher(LitElement) {
     `;
   }
 
-  #renderEntry(entry: ChatEntry) {
+  #renderEntry(entry: ChatEntry, isLast: boolean) {
+    const agent = this.sca.controller.editor.graphEditingAgent;
+
     if (entry.kind === "message") {
       if (entry.role === "user") {
         return this.#renderUserMessage(entry.text);
@@ -612,6 +612,9 @@ class ChatPanel extends SignalWatcher(LitElement) {
         return this.#renderModelMessage(entry.text);
       }
       // system message
+      if (!agent.loopRunning || !isLast) {
+        return nothing;
+      }
       return html`<div class="msg-bubble system">${entry.text}</div>`;
     }
 
@@ -620,25 +623,25 @@ class ChatPanel extends SignalWatcher(LitElement) {
     const latest = thoughts[thoughts.length - 1];
     const title = latest.title ?? latest.body;
 
-    return html`
-      <details class="thought-group">
-        <summary class="thought-group-header">
-          <span class="chevron g-icon"></span>${title}
-        </summary>
-        <div class="thought-group-body">
-          ${thoughts.map(
-            (t) => html`
-              <div class="thought-item">
-                ${t.title
-                  ? html`<span class="thought-item-title">${t.title}:</span>
-                      ${markdown(t.body)}`
-                  : markdown(t.body)}
-              </div>
-            `
-          )}
-        </div>
-      </details>
+    const body = html`
+      <summary class="thought-group-header">
+        <span class="chevron g-icon">keyboard_arrow_right</span>${title}
+      </summary>
+      <div class="thought-group-body">
+        ${thoughts.map(
+          (t) => html`
+            <div class="thought-item">
+              ${t.title
+                ? html`<span class="thought-item-title">${t.title}:</span>
+                    ${markdown(t.body)}`
+                : markdown(t.body)}
+            </div>
+          `
+        )}
+      </div>
     `;
+
+    return html` <details class="thought-group">${body}</details> `;
   }
 
   #renderUserMessage(text: string) {
