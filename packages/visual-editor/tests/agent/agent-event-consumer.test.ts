@@ -40,6 +40,18 @@ suite("AgentEventConsumer", () => {
     assert.strictEqual(result, undefined);
   });
 
+  test("accumulates history of all events handled", () => {
+    const consumer = new AgentEventConsumer();
+
+    consumer.handle({ thought: { text: "hello" } });
+    consumer.handle({ thought: { text: "world" } });
+
+    assert.deepStrictEqual(consumer.history, [
+      { thought: { text: "hello" } },
+      { thought: { text: "world" } },
+    ]);
+  });
+
   test("on() is chainable", () => {
     const consumer = new AgentEventConsumer();
     const thoughts: string[] = [];
