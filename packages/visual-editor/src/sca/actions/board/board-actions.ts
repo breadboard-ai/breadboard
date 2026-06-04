@@ -545,6 +545,7 @@ export const load = asAction(
     controller.run.screen.reset();
     controller.run.renderer.reset();
     controller.editor.share.reset();
+    controller.editor.selection.deselectAll();
 
     // 10. Update board controller state
     if (versionInfo?.isNewer) {
@@ -581,6 +582,9 @@ export const close = asAction(
 
     // Reset the graph controller state
     controller.editor.graph.resetAll();
+
+    // Clear selection state
+    controller.editor.selection.deselectAll();
 
     // Return to home state
     controller.global.main.loadState = "Home";
@@ -950,7 +954,11 @@ async function runBoard(): Promise<void> {
   // Check batch consent for all Drive assets in the graph before running.
   // This shows a single modal listing all Drive files instead of one per asset.
   // Gated behind the enableAssetAccessConsent flag.
-  if (gc.readOnly && gc.graph && bind.env.flags.get("enableAssetAccessConsent")) {
+  if (
+    gc.readOnly &&
+    gc.graph &&
+    bind.env.flags.get("enableAssetAccessConsent")
+  ) {
     const driveAssets = findGoogleDriveAssetsInGraph(gc.graph, {
       omitSplashImages: true,
     });
@@ -983,14 +991,13 @@ async function runBoard(): Promise<void> {
             let fileName = asset.fileId.id;
             let iconLink = "";
             try {
-              const meta =
-                await services.googleDriveClient.getFileMetadata(
-                  {
-                    id: asset.fileId.id,
-                    resourceKey: asset.fileId.resourceKey,
-                  },
-                  { fields: ["name", "iconLink"] }
-                );
+              const meta = await services.googleDriveClient.getFileMetadata(
+                {
+                  id: asset.fileId.id,
+                  resourceKey: asset.fileId.resourceKey,
+                },
+                { fields: ["name", "iconLink"] }
+              );
               if (meta?.name) fileName = meta.name;
               if (meta?.iconLink) iconLink = meta.iconLink;
             } catch {
@@ -1006,8 +1013,7 @@ async function runBoard(): Promise<void> {
           })
         );
 
-        const allowed =
-          await consentCtrl.requestBatchConsent(assetInfos);
+        const allowed = await consentCtrl.requestBatchConsent(assetInfos);
 
         if (!allowed) {
           logger.log(
