@@ -33,6 +33,12 @@ class AgentEventConsumer {
     (payload: AgentEventMap[AgentEventType]) => void | Promise<unknown>
   >();
 
+  readonly #history: AgentEvent[] = [];
+
+  get history(): ReadonlyArray<AgentEvent> {
+    return this.#history;
+  }
+
   /**
    * Register a handler for a specific event type.
    * Suspend-event handlers (waitForInput, waitForChoice) must return
@@ -63,6 +69,7 @@ class AgentEventConsumer {
    * Returns a Promise for suspend events, undefined otherwise.
    */
   handle(event: AgentEvent): void | Promise<unknown> {
+    this.#history.push(event);
     const type = eventType(event);
     const payload = eventPayload(event);
     const handler = this.#handlers.get(type);
