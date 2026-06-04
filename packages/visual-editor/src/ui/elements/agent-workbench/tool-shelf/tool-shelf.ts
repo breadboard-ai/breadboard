@@ -36,24 +36,24 @@ export class ToolShelf extends SignalWatcher(LitElement) {
       :host {
         display: block;
         width: 100%;
-        background: light-dark(var(--n-100), var(--n-0));
+        background: transparent;
       }
 
       .tool-shelf-wrapper {
         display: flex;
         flex-direction: column;
         width: 100%;
-        border-radius: var(--bb-grid-size-3);
-        border: 1px solid light-dark(var(--n-90), var(--n-30));
-        background: light-dark(var(--n-100), var(--n-10));
+        background: transparent;
         overflow: hidden;
       }
 
       .section-header {
         display: flex;
         align-items: center;
-        padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
-        background: light-dark(var(--n-98), var(--n-15));
+        height: 48px;
+        padding: 0 var(--bb-grid-size-4);
+        background: var(--light-dark-n-100);
+        border-top: 1px solid var(--light-dark-n-90);
         cursor: pointer;
         user-select: none;
         transition: background-color 0.15s ease;
@@ -63,7 +63,7 @@ export class ToolShelf extends SignalWatcher(LitElement) {
           flex: 1;
           font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
-          color: light-dark(var(--n-20), var(--n-80));
+          color: var(--light-dark-n-20);
         }
 
         & .g-icon {
@@ -84,7 +84,7 @@ export class ToolShelf extends SignalWatcher(LitElement) {
       }
 
       :host([expanded]) .section-header {
-        border-bottom: 1px solid light-dark(var(--n-95), var(--n-20));
+        border-bottom: 1px solid var(--light-dark-n-90);
       }
 
       :host([expanded]) .chevron {

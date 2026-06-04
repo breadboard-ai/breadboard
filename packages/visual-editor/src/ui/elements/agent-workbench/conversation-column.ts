@@ -13,6 +13,8 @@ import { type SCA } from "../../../sca/sca.js";
 
 import "../graph-editing-chat/chat-panel.js";
 
+import * as Styles from "../../styles/styles.js";
+
 export { ConversationColumn };
 
 /**
@@ -32,20 +34,55 @@ class ConversationColumn extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
-  static styles = css`
-    :host {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      height: 100%;
-      background: light-dark(var(--n-98), var(--n-15));
-    }
+  static styles = [
+    Styles.HostColorsBase.baseColors,
+    Styles.HostIcons.icons,
+    css`
+      :host {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        background: var(--light-dark-n-100);
+        border: 1px solid var(--light-dark-n-90);
+        border-radius: var(--bb-grid-size-3);
+        overflow: hidden;
+        box-sizing: border-box;
+      }
 
-    bb-chat-panel {
-      flex: 1;
-      min-height: 0;
-    }
-  `;
+      * {
+        box-sizing: border-box;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        height: 48px;
+        padding: 0 var(--bb-grid-size-4);
+        background: var(--light-dark-n-100);
+        border-bottom: 1px solid var(--light-dark-n-90);
+        flex-shrink: 0;
+
+        & h2 {
+          margin: 0;
+          font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
+            var(--bb-font-family);
+          color: var(--light-dark-n-20);
+        }
+
+        & .g-icon {
+          margin-right: var(--bb-grid-size-2);
+          font-size: 20px;
+          color: var(--light-dark-n-40);
+        }
+      }
+
+      bb-chat-panel {
+        flex: 1;
+        min-height: 0;
+      }
+    `,
+  ];
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -57,10 +94,16 @@ class ConversationColumn extends SignalWatcher(LitElement) {
   }
 
   render() {
-    return html`<bb-chat-panel
-      mode="embedded"
-      .showSelectionStrip=${false}
-    ></bb-chat-panel>`;
+    return html`
+      <header>
+        <span class="g-icon filled round">forum</span>
+        <h2>Chat</h2>
+      </header>
+      <bb-chat-panel
+        mode="embedded"
+        .showSelectionStrip=${false}
+      ></bb-chat-panel>
+    `;
   }
 }
 

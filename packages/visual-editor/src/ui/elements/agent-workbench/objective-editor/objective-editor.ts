@@ -38,7 +38,7 @@ export class ObjectiveEditor extends SignalWatcher(LitElement) {
         width: 100%;
         flex: 1;
         min-height: 0;
-        background: light-dark(var(--n-100), var(--n-0));
+        background: transparent;
       }
 
       .objective-editor-wrapper {
@@ -46,32 +46,23 @@ export class ObjectiveEditor extends SignalWatcher(LitElement) {
         flex-direction: column;
         height: 100%;
         width: 100%;
-        border-radius: var(--bb-grid-size-3);
-        border: 1px solid light-dark(var(--n-90), var(--n-30));
-        background: light-dark(var(--n-100), var(--n-10));
+        background: transparent;
         overflow: hidden;
-        transition:
-          box-shadow 0.2s cubic-bezier(0, 0, 0.3, 1),
-          border-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-      }
-
-      .objective-editor-wrapper:focus-within {
-        border-color: var(--light-dark-n-40);
-        box-shadow: var(--bb-elevation-3);
       }
 
       .section-header {
         display: flex;
         align-items: center;
-        padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
-        border-bottom: 1px solid light-dark(var(--n-95), var(--n-20));
-        background: light-dark(var(--n-98), var(--n-15));
+        height: 48px;
+        padding: 0 var(--bb-grid-size-4);
+        border-bottom: 1px solid var(--light-dark-n-90);
+        background: var(--light-dark-n-100);
 
         & h2 {
           margin: 0;
           font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
-          color: light-dark(var(--n-20), var(--n-80));
+          color: var(--light-dark-n-20);
         }
 
         & .g-icon {
