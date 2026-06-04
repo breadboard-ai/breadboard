@@ -129,6 +129,20 @@ suite("Graph editing functions suspend/resume", () => {
     const bridge = new LocalAgentEventBridge(consumer);
     const translator = new EditingAgentPidginTranslator();
 
+    consumer.on("readGraph", () => {
+      return Promise.resolve({
+        graph: {
+          ...makeMockGraph(),
+          assets: {
+            "image.png": {
+              metadata: { title: "image.png", type: "file" },
+              data: [],
+            },
+          },
+        },
+      });
+    });
+
     const captured: ApplyEditsPayload[] = [];
     consumer.on("applyEdits", (payload) => {
       captured.push(payload);
@@ -137,7 +151,7 @@ suite("Graph editing functions suspend/resume", () => {
 
     const group = getGraphEditingFunctionGroup(bridge, translator);
     const handler = findHandler(group, "graph_remove_asset");
-    const result = await handler({ path: "/assets/image.png" }, noop, null);
+    const result = await handler({ asset_id: "/assets/image.png" }, noop, null);
 
     assert.strictEqual(captured.length, 1);
     assert.ok(captured[0].requestId, "Should have a requestId");
@@ -145,10 +159,32 @@ suite("Graph editing functions suspend/resume", () => {
     assert.strictEqual(captured[0].edits!.length, 1);
     assert.deepStrictEqual(captured[0].edits![0], {
       type: "removeasset",
-      path: "/assets/image.png",
+      path: "image.png",
     });
 
     assert.strictEqual(result.success, true);
+  });
+
+  test("graph_remove_asset returns error when asset does not exist", async () => {
+    const consumer = new AgentEventConsumer();
+    const bridge = new LocalAgentEventBridge(consumer);
+    const translator = new EditingAgentPidginTranslator();
+
+    consumer.on("readGraph", () => {
+      return Promise.resolve({
+        graph: {
+          ...makeMockGraph(),
+          assets: {},
+        },
+      });
+    });
+
+    const group = getGraphEditingFunctionGroup(bridge, translator);
+    const handler = findHandler(group, "graph_remove_asset");
+    const result = await handler({ asset_id: "nonexistent.png" }, noop, null);
+
+    assert.strictEqual(result.success, false);
+    assert.match(result.error ?? "", /Asset "nonexistent\.png" not found/);
   });
 
   test("graph_remove_step returns error on failure", async () => {
@@ -478,6 +514,131 @@ suite("Graph editing functions suspend/resume", () => {
     assert.strictEqual(captured.length, 1);
     assert.strictEqual(captured[0].edits![0].type, "addnode");
     assert.strictEqual(captured[0].edits![0].node.id, "my-custom-legacy-step");
+  });
+
+  // ── graph_position_items ──────────────────────────────────────────────────
+
+  test("graph_position_items positions node step via applyEdits changemetadata", async () => {
+    const consumer = new AgentEventConsumer();
+    const bridge = new LocalAgentEventBridge(consumer);
+    const translator = new EditingAgentPidginTranslator();
+
+    // Pre-register a handle for step-a so translator can resolve it
+    translator.getOrCreateHandle("step-a");
+
+    consumer.on("readGraph", () => {
+      return Promise.resolve({ graph: makeMockGraph() });
+    });
+
+    const captured: ApplyEditsPayload[] = [];
+    consumer.on("applyEdits", (payload) => {
+      captured.push(payload);
+      return Promise.resolve({ success: true });
+    });
+
+    const group = getGraphEditingFunctionGroup(bridge, translator);
+    const handler = findHandler(group, "graph_position_items");
+
+    const handle = translator.getOrCreateHandle("step-a");
+    const result = await handler(
+      {
+        items: [{ id: handle, x: 100, y: 200 }],
+      },
+      noop,
+      null
+    );
+
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(captured.length, 1);
+    assert.strictEqual(captured[0].edits!.length, 1);
+    assert.deepStrictEqual(captured[0].edits![0], {
+      type: "changemetadata",
+      id: "step-a",
+      graphId: "",
+      metadata: {
+        title: "Step Alpha",
+        visual: { x: 100, y: 200 },
+      },
+    });
+  });
+
+  test("graph_position_items positions asset via applyEdits changeassetmetadata", async () => {
+    const consumer = new AgentEventConsumer();
+    const bridge = new LocalAgentEventBridge(consumer);
+    const translator = new EditingAgentPidginTranslator();
+
+    consumer.on("readGraph", () => {
+      return Promise.resolve({
+        graph: {
+          ...makeMockGraph(),
+          assets: {
+            "image.png": {
+              metadata: { title: "image.png", type: "file" },
+              data: [],
+            },
+          },
+        },
+      });
+    });
+
+    const captured: ApplyEditsPayload[] = [];
+    consumer.on("applyEdits", (payload) => {
+      captured.push(payload);
+      return Promise.resolve({ success: true });
+    });
+
+    const group = getGraphEditingFunctionGroup(bridge, translator);
+    const handler = findHandler(group, "graph_position_items");
+
+    const result = await handler(
+      {
+        items: [{ id: "/assets/image.png", x: 300, y: 400 }],
+      },
+      noop,
+      null
+    );
+
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(captured.length, 1);
+    assert.strictEqual(captured[0].edits!.length, 1);
+    assert.deepStrictEqual(captured[0].edits![0], {
+      type: "changeassetmetadata",
+      path: "image.png",
+      metadata: {
+        title: "image.png",
+        type: "file",
+        visual: { x: 300, y: 400 },
+      },
+    });
+  });
+
+  test("graph_position_items returns error for nonexistent items", async () => {
+    const consumer = new AgentEventConsumer();
+    const bridge = new LocalAgentEventBridge(consumer);
+    const translator = new EditingAgentPidginTranslator();
+
+    consumer.on("readGraph", () => {
+      return Promise.resolve({
+        graph: {
+          ...makeMockGraph(),
+          assets: {},
+        },
+      });
+    });
+
+    const group = getGraphEditingFunctionGroup(bridge, translator);
+    const handler = findHandler(group, "graph_position_items");
+
+    const result = await handler(
+      {
+        items: [{ id: "nonexistent", x: 10, y: 20 }],
+      },
+      noop,
+      null
+    );
+
+    assert.strictEqual(result.success, false);
+    assert.match(result.error ?? "", /Item "nonexistent" not found/);
   });
 
   // ── instruction generation and product name replacements ──────────────────

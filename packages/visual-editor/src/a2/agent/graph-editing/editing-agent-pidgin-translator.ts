@@ -94,7 +94,9 @@ class EditingAgentPidginTranslator {
   fromPidgin(
     content: string,
     resolveNodeTitle?: (nodeId: string) => string | undefined,
-    resolveAssetTitle?: (assetPath: string) => string | undefined
+    resolveAsset?: (
+      assetRef: string
+    ) => { path: string; title: string } | undefined
   ): LLMContent {
     const segments = content.split(SPLIT_REGEX);
     const textParts: string[] = [];
@@ -117,8 +119,24 @@ class EditingAgentPidginTranslator {
       const fileMatch = segment.match(FILE_PARSE_REGEX);
       if (fileMatch) {
         const path = fileMatch[1];
-        const title = resolveAssetTitle?.(path) ?? path;
-        textParts.push(Template.part({ type: "asset", path, title }));
+        if (resolveAsset) {
+          const resolved = resolveAsset(path);
+          if (resolved) {
+            textParts.push(
+              Template.part({
+                type: "asset",
+                path: resolved.path,
+                title: resolved.title,
+              })
+            );
+          } else {
+            throw new Error(
+              `Asset reference "${path}" is invalid. No asset with this ID or title exists in the graph.`
+            );
+          }
+        } else {
+          textParts.push(Template.part({ type: "asset", path, title: path }));
+        }
         continue;
       }
 
