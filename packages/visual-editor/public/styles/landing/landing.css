@@ -1104,3 +1104,19 @@ footer {
     opacity: 1;
   }
 }
+
+#links ul li button.glue-cookie-notification-bar-control {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--n-0);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+#links ul li button.glue-cookie-notification-bar-control:hover {
+  text-decoration: underline;
+}
+

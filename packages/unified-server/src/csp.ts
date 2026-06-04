@@ -113,7 +113,9 @@ export const MAIN_APP_CSP = {
     "'self'",
     "data:",
     "https://*.google.com",
+    "https://*.googleapis.com", // Needed for cookiebar consent logging
     "https://*.google-analytics.com",
+    "https://www.gstatic.com", // Cookie notification bar config
   ],
   ["frame-src"]: [
     "'self'",
