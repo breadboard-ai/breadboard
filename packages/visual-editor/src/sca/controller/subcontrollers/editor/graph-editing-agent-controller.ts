@@ -8,6 +8,7 @@ import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 import { parseThought } from "../../../../a2/agent/thought-parser.js";
 import type { ChatEntry } from "../../../types.js";
+import type { AgentEvent } from "../../../../a2/agent/agent-event.js";
 import type { AppEnvironment } from "../../../environment/environment.js";
 
 export { GraphEditingAgentController };
@@ -31,6 +32,8 @@ const GREETINGS = [
  */
 class GraphEditingAgentController extends RootController {
   #env: AppEnvironment | undefined;
+
+  #history: ReadonlyArray<AgentEvent> = [];
 
   constructor(
     controllerId: string,
@@ -70,9 +73,17 @@ class GraphEditingAgentController extends RootController {
     return this._entries;
   }
 
+  get history(): ReadonlyArray<AgentEvent> {
+    return this.#history;
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // MUTATIONS
   // ═══════════════════════════════════════════════════════════════════════════
+
+  setHistory(history: ReadonlyArray<AgentEvent>) {
+    this.#history = history;
+  }
 
   addMessage(role: "user" | "model" | "system", text: string) {
     if (role === "user") {
@@ -118,5 +129,6 @@ class GraphEditingAgentController extends RootController {
     this.loopRunning = false;
     this.feedbackReaction = "none";
     this.autoFocus = false;
+    this.#history = [];
   }
 }
