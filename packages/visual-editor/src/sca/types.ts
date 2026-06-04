@@ -145,6 +145,7 @@ export interface BaseUrlInit {
     forceSurveySelection?: "true";
   };
   oauthRedirect?: string;
+  hl?: string;
   lite?: boolean;
   colorScheme?: "light" | "dark";
   guestPrefixed: boolean;

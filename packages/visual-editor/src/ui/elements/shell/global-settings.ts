@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LitElement, html, css, nothing } from "lit";
+import { msg } from "@lit/localize";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { baseColors } from "../../styles/host/base-colors.js";
@@ -189,7 +190,7 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
                         ["OPAL_MARKETING_UPDATES", target.checked],
                       ])}
                   ></md-checkbox>
-                  ${Strings.from("LABEL_EMAIL_UPDATES")}
+                  ${msg("I’d like to receive emails for model updates, offers, useful tips and news about Opal")}
                 </label>
                 <label
                   class=${classMap({
@@ -206,7 +207,7 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
                         ["OPAL_USER_RESEARCH", target.checked],
                       ])}
                   ></md-checkbox>
-                  ${Strings.from("LABEL_EMAIL_RESEARCH")}
+                  ${msg("I’m interested in being invited to future research studies from Opal")}
                 </label>`,
       },
       [TabId.INTEGRATIONS]: {

@@ -146,12 +146,7 @@ export default {
   LABEL_SHARE: {
     str: "A Breadboard mini-app has been shared with you",
   },
-  LABEL_EMAIL_UPDATES: {
-    str: "I’d like to receive emails for model updates, offers, useful tips and news about Opal",
-  },
-  LABEL_EMAIL_RESEARCH: {
-    str: "I’m interested in being invited to future research studies from Opal",
-  },
+
   LABEL_SETTINGS_GENERAL: {
     str: "General",
   },

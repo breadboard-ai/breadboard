@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<localizationbundle locale="en">
+  <messages>
+    <msg name="hbeb436a6f6a2a826">This Gem is powered by Google Labs, not Gemini Apps. It can
+        make mistakes, so double-check it.
+        <ph name="0">&lt;a href="https://support.google.com/gemini?p=ai_apps"&gt;</ph>Learn more<ph name="1">&lt;/a&gt;</ph></msg>
+    <msg name="s718207f6b5b1ed0b">I’d like to receive emails for model updates, offers, useful tips and news about Opal</msg>
+    <msg name="s018656f690df2a0e">I’m interested in being invited to future research studies from Opal</msg>
+  </messages>
+</localizationbundle>

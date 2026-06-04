@@ -31,7 +31,9 @@
     "lint": "wireit",
     "export-functions": "wireit",
     "import-declarations": "wireit",
-    "build:opie-instructions": "wireit"
+    "build:opie-instructions": "wireit",
+    "localize:extract": "wireit",
+    "localize:build": "wireit"
   },
   "wireit": {
     "build": {
@@ -269,6 +271,29 @@
       "output": [
         "src/a2/agent/graph-editing/instructions/generated.ts"
       ]
+    },
+    "localize:extract": {
+      "command": "lit-localize extract --config localization/lit-localize.json",
+      "files": [
+        "src/**/*.ts",
+        "!src/generated/localization/",
+        "localization/lit-localize.json"
+      ],
+      "output": [
+        "localization/messages.xmb"
+      ]
+    },
+    "localize:build": {
+      "command": "lit-localize build --config localization/lit-localize.json",
+      "files": [
+        "src/**/*.ts",
+        "!src/generated/localization/",
+        "localization/*.xlb",
+        "localization/lit-localize.json"
+      ],
+      "output": [
+        "src/generated/localization/"
+      ]
     }
   },
   "repository": {
@@ -291,6 +316,8 @@
   "devDependencies": {
     "@cfworker/json-schema": "^4.1.1",
     "@google-labs/tsconfig": "^0.0.2",
+    "@lit/localize": "^0.12.2",
+    "@lit/localize-tools": "^0.8.2",
     "@tweakpane/core": "^2.0.5",
     "@types/flubber": "^0.4.0",
     "@types/gapi": "^0.0.47",
