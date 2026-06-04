@@ -49,9 +49,9 @@ describe("getGenerateFunctionGroup", () => {
       deepStrictEqual(functionNames.length, 6);
     });
 
-    it("returns seven functions (including generate_html) when enableGenerateHtml is enabled", () => {
+    it("returns seven functions (including generate_html) when enableGraphEditorAgent is enabled", () => {
       const runtimeFlags = {
-        enableGenerateHtml: true,
+        enableGraphEditorAgent: true,
       } as unknown as RuntimeFlags;
 
       const args = createTestArgs({
@@ -92,7 +92,7 @@ describe("getGenerateFunctionGroup", () => {
       );
     });
 
-    it("excludes generate_html instruction by default or when enableGenerateHtml is disabled", () => {
+    it("excludes generate_html instruction by default or when enableGraphEditorAgent is disabled", () => {
       const args = createTestArgs();
       const group = getGenerateFunctionGroup(args);
 
@@ -103,9 +103,9 @@ describe("getGenerateFunctionGroup", () => {
       );
     });
 
-    it("includes generate_html instruction when enableGenerateHtml is enabled", () => {
+    it("includes generate_html instruction when enableGraphEditorAgent is enabled", () => {
       const runtimeFlags = {
-        enableGenerateHtml: true,
+        enableGraphEditorAgent: true,
       } as unknown as RuntimeFlags;
 
       const args = createTestArgs({ runtimeFlags });

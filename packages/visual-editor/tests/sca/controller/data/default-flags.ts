@@ -26,5 +26,4 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   enableAssetAccessConsent: false,
   enableBackendGraphRunner: false,
   enableAgentWorkbench: false,
-  enableGenerateHtml: false,
 };
