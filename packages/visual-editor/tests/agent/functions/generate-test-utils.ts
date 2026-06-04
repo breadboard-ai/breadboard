@@ -191,6 +191,7 @@ function createMockGenerators(overrides: Partial<Generators> = {}): Generators {
 function createMockFileSystem(
   overrides: Partial<{
     add: AgentFileSystem["add"];
+    get: AgentFileSystem["get"];
     getMany: AgentFileSystem["getMany"];
   }> = {}
 ): AgentFileSystem {
@@ -202,6 +203,9 @@ function createMockFileSystem(
         fileCounter++;
         return `/mnt/${name ?? `file${fileCounter}`}`;
       }),
+    get:
+      overrides.get ??
+      mock.fn(async () => []),
     getMany:
       overrides.getMany ??
       mock.fn(async (paths: string[]) => {
@@ -209,7 +213,6 @@ function createMockFileSystem(
           inlineData: { mimeType: "image/png", data: "mock" },
         }));
       }),
-    get: mock.fn(),
     files: {},
   } as unknown as AgentFileSystem;
 }

@@ -16,7 +16,7 @@ import { readFlags } from "./settings.js";
 import { renderConsistentUI } from "./render-consistent-ui.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { Params } from "./common.js";
-import { isLLMContent, isLLMContentArray } from "../../data/common.js";
+import { isInlineData, isLLMContent, isLLMContentArray } from "../../data/common.js";
 
 import {
   DocEditMode,
@@ -238,6 +238,19 @@ async function invoke(
       return { context: [out] };
     }
     case "HTML": {
+      // If the content already contains HTML inlineData, pass it through
+      // without invoking webpage generation.
+      let hasHtml = false;
+      for (const part of context.parts) {
+        if (isInlineData(part) && part.inlineData.mimeType === "text/html") {
+          hasHtml = true;
+          break;
+        }
+      }
+      if (hasHtml) {
+        return { context: [context] };
+      }
+
       const webPage = await generateWebpage(
         moduleArgs,
         systemText,

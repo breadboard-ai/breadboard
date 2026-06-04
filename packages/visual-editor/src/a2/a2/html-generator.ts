@@ -11,8 +11,6 @@
 import { GraphDescriptor, LLMContent, Outcome } from "@breadboard-ai/types";
 import { executeWebpageStream } from "./generate-webpage-stream.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { isInlineData } from "../../data/common.js";
-
 export { callGenWebpage, generateWebpage };
 
 type ThemeColors = {
@@ -130,15 +128,5 @@ async function callGenWebpage(
   content: LLMContent[],
   _renderMode: string
 ): Promise<Outcome<LLMContent>> {
-  // If the content already contains HTML inlineData, pass it through
-  // without invoking webpage generation.
-  for (const item of content) {
-    for (const part of item.parts) {
-      if (isInlineData(part) && part.inlineData.mimeType === "text/html") {
-        return { role: "model", parts: [part] };
-      }
-    }
-  }
-
   return executeWebpageStream(moduleArgs, instruction, content);
 }
