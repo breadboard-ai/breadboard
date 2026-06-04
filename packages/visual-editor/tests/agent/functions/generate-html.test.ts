@@ -335,7 +335,7 @@ describe("generate_html", () => {
     // Verify reporter was called with input content
     deepStrictEqual(reporterAddContentCalls, [
       {
-        title: "Request Input Context",
+        title: "Context",
         content: {
           parts: [{ text: "Generate a simple page" }],
           role: "user",
