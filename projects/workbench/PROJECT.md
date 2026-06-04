@@ -165,8 +165,8 @@ When `enableAgentWorkbench` is on and the loaded Opal is a single-agent graph,
 the editor renders a three-column layout instead of the graph canvas + sidebar.
 The right column shows the console/run log (not a placeholder). Theme controls
 are relocated out of the sidebar. The Preview tab is gone. A **toggle** lets the
-user switch between the workbench and the legacy graph view; it is only available
-when the graph meets the criteria (single agent node + flag on).
+user switch between the workbench and the legacy graph view; it is only
+available when the graph meets the criteria (single agent node + flag on).
 
 **Observable proof:** Enable the flag. Open a single-agent Opal. The workbench
 appears by default with three columns: "Conversation" (left, placeholder for
@@ -230,10 +230,10 @@ views a symmetrical doorway to the other.
 #### packages/visual-editor — UI
 
 **Routing.** The decision point is `bb-main` (`index.ts`), at the `mainPanel`
-composition level (~L173). When `workbench.eligible && workbench.view ===
-"workbench"`, render `#renderAgentWorkbench()` instead of
-`#renderCanvasController()`. This is the same level that already switches
-between canvas, app, and welcome views.
+composition level (~L173). When
+`workbench.eligible && workbench.view === "workbench"`, render
+`#renderAgentWorkbench()` instead of `#renderCanvasController()`. This is the
+same level that already switches between canvas, app, and welcome views.
 
 - [x] `bb-agent-workbench` — new element in
       `ui/elements/agent-workbench/agent-workbench.ts`. Renders the three-column
@@ -255,8 +255,8 @@ between canvas, app, and welcome views.
 - [x] `index.ts` — conditional rendering in `mainPanel`: when workbench is
       active, render `bb-agent-workbench` instead of `bb-canvas-controller`.
 - [x] Graph view floating control stack — extend the existing canvas control
-      stack (fit-to-screen, zoom, undo/redo) with a workbench button, grayed
-      out when ineligible.
+      stack (fit-to-screen, zoom, undo/redo) with a workbench button, grayed out
+      when ineligible.
 - [x] Theme controls — remove the Theme button from the sidebar controls in
       `bb-canvas-controller` when workbench-eligible. Relocate to the app tab
       (accessible from the header's Editor/App toggle → App view). The theme
@@ -269,8 +269,8 @@ between canvas, app, and welcome views.
 > `Map<string, RunState>` (with status, contents, files, objective, and
 > resumability per run). `RunController` only represents the _active_ run's
 > console entries. The run log column bridges this gap — it reads the run list
-> from `AgentContext` and delegates the active run's live output to the
-> existing console rendering.
+> from `AgentContext` and delegates the active run's live output to the existing
+> console rendering.
 
 #### Tests
 
@@ -364,7 +364,52 @@ column. Scrolling works naturally. Thoughts/thinking indicators appear inline.
 
 ---
 
-## Phase 4 — Column Interactions & Polish
+## Phase 4 — Rich Text Editor Overhaul (Model-driven LLMContent[] & Inline Asset Blocks)
+
+### 🎯 Objective
+
+The prompt editor is model-driven, representing the document internally as an
+array of `LLMContent` (or `DataPart` blocks) rather than using legacy `{JSON}`
+template strings. No chips are rendered for assets; they are shown as premium
+block-level inline elements (images, drawing canvases, file attachment cards)
+within a single cohesive document editor. Backwards compatibility is fully
+maintained by translating the underlying template string format to/from
+`LLMContent[]` in memory when reading/writing.
+
+**Observable proof:** Enable the workbench. Type in the objective editor. Insert
+a drawing or file asset using the `@` menu or plus button. The asset renders as
+an interactive block card inline in the prompt text. Drag-and-drop or select and
+delete it. View the underlying graph configuration — the asset is stored as a
+`{JSON}` placeholder in the prompt string. Run the agent — the prompt and assets
+are resolved and sent correctly to Gemini. Open a legacy project with template
+placeholders; it compiles, runs, and renders successfully.
+
+### Changes
+
+#### packages/visual-editor — SCA & Model
+
+- [ ] Re-model the text editor's internal state to align with `LLMContent[]`
+      structure.
+- [x] Add bidirectional translation utilities to parse legacy `{JSON}` prompt
+      strings to/from the in-memory `LLMContent[]` structure.
+- [x] Update the step-edit actions to read `config$prompt`, convert to
+      `LLMContent[]` for the editor, and serialize it back to the template
+      string when writing.
+
+#### packages/visual-editor — UI
+
+- [ ] `bb-objective-editor` / `bb-text-editor-remix` — render text parts as
+      editable paragraphs and data parts as full-width block-level
+      `contenteditable="false"` cards.
+- [ ] Add caret-capture and navigation logic for block-level assets (treating
+      them as atomic blocks during backspace, select, and arrow navigation).
+- [ ] Implement the `@` menu trigger that opens an asset shelf/picker for
+      inserting drawings, uploads, etc.
+- [ ] Connect asset insertion to the graph assets store.
+
+---
+
+## Phase 5 — Column Interactions & Polish
 
 ### 🎯 Objective
 
@@ -376,7 +421,8 @@ screen behavior). Transitions between workbench and classic mode are smooth.
 **Observable proof:** Drag the left column handle to resize it. Reload the page.
 The column width is preserved. Resize the browser to a narrow width. The columns
 collapse into tabs. Resize back. The columns restore. Switch between workbench
-and classic mode via the toggle. The transition is immediate with no layout jank.
+and classic mode via the toggle. The transition is immediate with no layout
+jank.
 
 ### Changes
 
@@ -394,7 +440,7 @@ and classic mode via the toggle. The transition is immediate with no layout jank
 
 ---
 
-## Phase 5 — Contextualized History (Future)
+## Phase 6 — Contextualized History (Future)
 
 ### 🎯 Objective
 
@@ -427,7 +473,7 @@ current tip.
 
 ---
 
-## Phase 6 — Annotation System (Future)
+## Phase 7 — Annotation System (Future)
 
 ### 🎯 Objective
 
@@ -517,9 +563,9 @@ Read these files before starting work on any phase:
 
 ### Routing
 
-| File                                              | What to learn                                                                                                                                                 |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/visual-editor/src/index.ts`             | `bb-main` — the top-level element. `mainPanel` (~L173) composes canvas controller, app controller, and welcome panel. The workbench routing decision is here. |
+| File                                  | What to learn                                                                                                                                                 |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/visual-editor/src/index.ts` | `bb-main` — the top-level element. `mainPanel` (~L173) composes canvas controller, app controller, and welcome panel. The workbench routing decision is here. |
 
 ### SCA controllers
 
@@ -533,9 +579,9 @@ Read these files before starting work on any phase:
 
 ### Agent context (multi-run tracking)
 
-| File                                                                       | What to learn                                                                                                     |
-| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `packages/visual-editor/src/a2/agent/agent-context.ts`                     | `AgentContext` — tracks multiple runs in `Map<string, RunState>`. Has `createRun`, `getAllRuns`, `clearAllRuns`.   |
+| File                                                   | What to learn                                                                                                    |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `packages/visual-editor/src/a2/agent/agent-context.ts` | `AgentContext` — tracks multiple runs in `Map<string, RunState>`. Has `createRun`, `getAllRuns`, `clearAllRuns`. |
 
 ### Opie chat
 

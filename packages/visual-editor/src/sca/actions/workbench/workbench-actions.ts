@@ -16,9 +16,10 @@ import {
   buildPrompt,
   extractPromptText,
   extractInPorts,
+  blocksToPrompt,
 } from "./prompt-utils.js";
 import { UpdateNode } from "../../../ui/transforms/index.js";
-import type { NodeDescriptor } from "@breadboard-ai/types";
+import type { NodeDescriptor, LLMContent } from "@breadboard-ai/types";
 
 export const bind = makeAction();
 
@@ -141,7 +142,7 @@ export const resizeColumns = asAction(
 export const applyObjective = asAction(
   "Workbench.applyObjective",
   { mode: ActionMode.Immediate },
-  async (objectiveText: string): Promise<void> => {
+  async (blocks: LLMContent[]): Promise<void> => {
     const agentNode = getAgentNode();
     if (!agentNode) return;
 
@@ -149,7 +150,9 @@ export const applyObjective = asAction(
       agentNode.configuration?.["config$prompt"]
     );
     const { tools } = parsePrompt(rawPrompt);
-    const newPrompt = buildPrompt(objectiveText, tools);
+    const serialized = blocksToPrompt(blocks);
+    const newObjectiveText = extractPromptText(serialized);
+    const newPrompt = buildPrompt(newObjectiveText, tools);
 
     await applyPromptToGraph(agentNode, newPrompt);
   }

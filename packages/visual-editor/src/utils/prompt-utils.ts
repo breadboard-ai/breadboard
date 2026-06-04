@@ -20,7 +20,10 @@ export {
   buildPrompt,
   extractPromptText,
   extractInPorts,
+  promptToBlocks,
+  blocksToPrompt,
   type ParsedPrompt,
+  type PromptBlock,
 };
 
 import {
@@ -126,4 +129,194 @@ function extractInPorts(promptText: string): InPort[] {
     }
   }
   return ins;
+}
+
+type PromptBlock = LLMContent & {
+  originalPart?: TemplatePart;
+};
+
+/**
+ * Converts a serialized template prompt (LLMContent) into an array of LLMContent blocks,
+ * where text segments and asset placeholders become distinct blocks.
+ * Preserves other placeholders (tools, inputs) via an originalPart property for round-tripping.
+ */
+function promptToBlocks(promptVal: unknown): LLMContent[] {
+  if (!promptVal || typeof promptVal !== "object") return [];
+  const content = promptVal as Partial<LLMContent>;
+  const parts = content.parts;
+  if (!Array.isArray(parts) || parts.length === 0) return [];
+
+  // If it's a single text part, parse legacy JSON placeholders.
+  if (parts.length === 1 && "text" in parts[0]) {
+    const text = parts[0].text;
+    if (!text) return [];
+
+    const blocks: LLMContent[] = [];
+    const matches = text.matchAll(PLACEHOLDER_REGEX);
+    let start = 0;
+
+    for (const match of matches) {
+      const json = match.groups?.json;
+      const end = match.index;
+      if (end !== undefined && end > start) {
+        const textPiece = text.slice(start, end);
+        blocks.push({
+          role: "user",
+          parts: [{ text: textPiece }],
+        });
+      }
+      if (json) {
+        try {
+          const parsed = JSON.parse(json);
+          if (isTemplatePart(parsed)) {
+            if (parsed.type === "asset") {
+              const block: PromptBlock = {
+                role: "user",
+                parts: [
+                  {
+                    storedData: {
+                      handle: parsed.path,
+                      mimeType: parsed.mimeType || "application/octet-stream",
+                    },
+                  },
+                ],
+              };
+              block.originalPart = parsed;
+              blocks.push(block);
+            } else {
+              // Preserve other placeholders (like tool/in/param) as originalPart so they roundtrip.
+              const block: PromptBlock = {
+                role: "user",
+                parts: [
+                  {
+                    text: "",
+                  },
+                ],
+              };
+              block.originalPart = parsed;
+              blocks.push(block);
+            }
+          }
+        } catch {
+          // If JSON parse fails, treat it as plain text.
+          const textPiece = text.slice(end!, end! + match[0].length);
+          blocks.push({
+            role: "user",
+            parts: [{ text: textPiece }],
+          });
+        }
+      }
+      start = (end ?? 0) + match[0].length;
+    }
+
+    if (start < text.length) {
+      const textPiece = text.slice(start);
+      blocks.push({
+        role: "user",
+        parts: [{ text: textPiece }],
+      });
+    }
+
+    return mergeBlocks(blocks);
+  }
+
+  // Multi-part content: convert each part to its own block.
+  return parts.map((part) => {
+    return {
+      role: "user",
+      parts: [part],
+    };
+  });
+}
+
+/**
+ * Merges consecutive text blocks that are not decorated with originalPart.
+ */
+function mergeBlocks(blocks: LLMContent[]): LLMContent[] {
+  const merged: LLMContent[] = [];
+  for (const block of blocks) {
+    if (!block.parts || block.parts.length === 0) continue;
+    const last = merged.at(-1);
+    const lastPart = last?.parts?.[0];
+    const currentPart = block.parts[0];
+
+    const decoratedBlock = block as { originalPart?: TemplatePart };
+    const decoratedLast = last as { originalPart?: TemplatePart } | undefined;
+
+    if (
+      last &&
+      lastPart &&
+      "text" in lastPart &&
+      !decoratedLast?.originalPart &&
+      "text" in currentPart &&
+      !decoratedBlock.originalPart
+    ) {
+      lastPart.text += currentPart.text;
+    } else {
+      // Clone the block to prevent modifying the original structure
+      const clone: PromptBlock = { ...block };
+      if (decoratedBlock.originalPart) {
+        clone.originalPart = decoratedBlock.originalPart;
+      }
+      merged.push(clone);
+    }
+  }
+  return merged;
+}
+
+/**
+ * Converts an array of LLMContent blocks back into a single LLMContent prompt
+ * with serialized JSON placeholders for backward compatibility.
+ */
+function blocksToPrompt(blocks: LLMContent[]): LLMContent {
+  let promptText = "";
+
+  for (const block of blocks) {
+    if (!block.parts || block.parts.length === 0) continue;
+    const part = block.parts[0];
+
+    const decoratedBlock = block as { originalPart?: TemplatePart };
+    if (decoratedBlock.originalPart) {
+      promptText += Template.part(decoratedBlock.originalPart);
+      continue;
+    }
+
+    if ("text" in part) {
+      promptText += part.text;
+    } else if ("storedData" in part) {
+      const path = part.storedData.handle;
+      const mimeType = part.storedData.mimeType;
+      const title = path.split("/").pop() || "asset";
+      promptText += Template.part({
+        type: "asset",
+        path,
+        title,
+        mimeType,
+      });
+    } else if ("fileData" in part) {
+      const path = part.fileData.fileUri;
+      const mimeType = part.fileData.mimeType;
+      const title = path.split("/").pop() || "asset";
+      promptText += Template.part({
+        type: "asset",
+        path,
+        title,
+        mimeType,
+      });
+    } else if ("inlineData" in part) {
+      const mimeType = part.inlineData.mimeType;
+      const title = part.inlineData.title || "asset";
+      promptText += Template.part({
+        type: "asset",
+        path: title,
+        title,
+        mimeType,
+      });
+    }
+  }
+
+  return {
+    role: "user",
+    parts: [{ text: promptText }],
+  };
 }
