@@ -12,8 +12,10 @@ import {
   createTestArgs,
   createMockStatusUpdater,
   getHandler,
+  createMockFileSystem,
 } from "./generate-test-utils.js";
 import { RuntimeFlags, RuntimeFlagManager } from "@breadboard-ai/types";
+import { PidginTranslator } from "../../../src/a2/agent/pidgin-translator.js";
 
 // Helper to create chunk encoder for SSE streams
 function sseChunk(data: unknown): Uint8Array {
@@ -197,5 +199,73 @@ describe("generate_html", () => {
     );
 
     deepStrictEqual(result, { error: "Backend failed to compile HTML" });
+  });
+
+  it("does not bypass generateWebpage when referencing an existing HTML file in the prompt", async () => {
+    const fetchWithCreds = makeMockFetch([
+      {
+        parts: [
+          {
+            text: "<html><body>Updated Button Page</body></html>",
+            partMetadata: { chunk_type: "html" },
+          },
+        ],
+      },
+    ]);
+
+    const runtimeFlags = {
+      enableGenerateHtml: true,
+    } as unknown as RuntimeFlags;
+
+    const fileSystem = createMockFileSystem({
+      get: mock.fn(async (path: string) => {
+        if (path === "/mnt/button.html") {
+          return [
+            {
+              inlineData: {
+                mimeType: "text/html",
+                data: btoa("<html><body>Original Button</body></html>"),
+              },
+            },
+          ];
+        }
+        return [];
+      }),
+    });
+
+    const moduleArgs = {
+      fetchWithCreds: fetchWithCreds as unknown as typeof globalThis.fetch,
+      context: {
+        currentGraph: { url: "drive:/test-stub", title: "Test Stub" },
+        flags: {
+          flags: async () => runtimeFlags,
+        } as unknown as RuntimeFlagManager,
+      },
+    } as unknown as A2ModuleArgs;
+
+    const translator = new PidginTranslator(moduleArgs, fileSystem);
+
+    const args = createTestArgs({
+      runtimeFlags,
+      fileSystem,
+      moduleArgs,
+      translator,
+    });
+
+    const group = getGenerateFunctionGroup(args);
+    const handler = getHandler(group, "generate_html");
+
+    const result = await handler(
+      {
+        prompt: "Make background red in <file src=\"/mnt/button.html\" />",
+        status_update: "Updating webpage",
+        file_name: "updated.html",
+      },
+      createMockStatusUpdater()
+    );
+
+    // Verify fetch WAS called (generation not bypassed)
+    assertOk(fetchWithCreds.mock.calls.length > 0);
+    deepStrictEqual(result, { html: "/mnt/updated.html" });
   });
 });
