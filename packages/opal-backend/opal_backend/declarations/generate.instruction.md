@@ -31,7 +31,7 @@ Because of this translation layer, DO NOT mention file system paths or file refe
 For example, if you need to include  an existing file at "/mnt/text3.md" into the prompt, you can reference it as <file src="/mnt/text3.md" />. If you do not use <file> tags, the code generator will not be able to access the file.
 
 For output, do not ask the code generator to name the files. It will assign its own file names names to save in the sandbox, and these will be picked up at the sandbox boundary and translated into <file> tags for you.
-<!-- if enableGenerateHtml -->
+<!-- if enableGraphEditorAgent -->
 ## When to call "generate_html" function
 
 Use the "generate_html" function when you need to generate a complete, rich, formatted HTML document or webpage (such as a dashboard, a newsletter, a styled report, or an interactive page). Avoid using "generate_text" to write raw HTML code; instead, use "generate_html" to let the specialized HTML generator create a high-quality visual document.

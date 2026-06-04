@@ -92,7 +92,7 @@ function getGenerateFunctionGroup(args: GenerateFunctionArgs): FunctionGroup {
     runtimeFlags,
   } = args;
 
-  const effectiveDeclarations = runtimeFlags?.enableGenerateHtml
+  const effectiveDeclarations = runtimeFlags?.enableGraphEditorAgent
     ? declarations
     : declarations.filter((d) => d.name !== "generate_html");
 

@@ -52,7 +52,7 @@ describe("generate_html", () => {
     ]);
 
     const runtimeFlags = {
-      enableGenerateHtml: true,
+      enableGraphEditorAgent: true,
     } as unknown as RuntimeFlags;
 
     const args = createTestArgs({
@@ -105,7 +105,7 @@ describe("generate_html", () => {
     ]);
 
     const runtimeFlags = {
-      enableGenerateHtml: true,
+      enableGraphEditorAgent: true,
     } as unknown as RuntimeFlags;
 
     const args = createTestArgs({
@@ -172,7 +172,7 @@ describe("generate_html", () => {
     ]);
 
     const runtimeFlags = {
-      enableGenerateHtml: true,
+      enableGraphEditorAgent: true,
     } as unknown as RuntimeFlags;
 
     const args = createTestArgs({
@@ -215,7 +215,7 @@ describe("generate_html", () => {
     ]);
 
     const runtimeFlags = {
-      enableGenerateHtml: true,
+      enableGraphEditorAgent: true,
     } as unknown as RuntimeFlags;
 
     const fileSystem = createMockFileSystem({
@@ -287,7 +287,7 @@ describe("generate_html", () => {
     ]);
 
     const runtimeFlags = {
-      enableGenerateHtml: true,
+      enableGraphEditorAgent: true,
     } as unknown as RuntimeFlags;
 
     const args = createTestArgs({

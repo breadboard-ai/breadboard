@@ -34,7 +34,6 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   enableAssetAccessConsent: false,
   enableBackendGraphRunner: false,
   enableAgentWorkbench: false,
-  enableGenerateHtml: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(
