@@ -273,6 +273,16 @@ function buildHooksFromSink(sink: AgentEventSink): LoopHooks {
             },
           });
         },
+        addContent(contentTitle, content, contentIcon?) {
+          sink.emit({
+            subagentAddContent: {
+              callId,
+              title: contentTitle,
+              content,
+              icon: contentIcon,
+            },
+          });
+        },
         addError(error) {
           sink.emit({ subagentError: { callId, error } });
           return error;

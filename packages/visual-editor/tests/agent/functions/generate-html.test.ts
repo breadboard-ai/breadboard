@@ -8,13 +8,14 @@ import { describe, it, mock } from "node:test";
 import { deepStrictEqual, ok as assertOk } from "node:assert";
 import { getGenerateFunctionGroup } from "../../../src/a2/agent/functions/generate.js";
 import type { A2ModuleArgs } from "../../../src/a2/runnable-module-factory.js";
+import type { ProgressReporter } from "../../../src/a2/agent/progress-work-item.js";
 import {
   createTestArgs,
   createMockStatusUpdater,
   getHandler,
   createMockFileSystem,
 } from "./generate-test-utils.js";
-import { RuntimeFlags, RuntimeFlagManager } from "@breadboard-ai/types";
+import { RuntimeFlags, RuntimeFlagManager, LLMContent } from "@breadboard-ai/types";
 import { PidginTranslator } from "../../../src/a2/agent/pidgin-translator.js";
 
 // Helper to create chunk encoder for SSE streams
@@ -267,5 +268,89 @@ describe("generate_html", () => {
     // Verify fetch WAS called (generation not bypassed)
     assertOk(fetchWithCreds.mock.calls.length > 0);
     deepStrictEqual(result, { html: "/mnt/updated.html" });
+  });
+
+  it("reports progress to the passed reporter", async () => {
+    const fetchWithCreds = makeMockFetch([
+      {
+        parts: [
+          {
+            text: "doing first thing",
+            partMetadata: { chunk_type: "thought" },
+          },
+          {
+            text: "<html><body>Done</body></html>",
+            partMetadata: { chunk_type: "html" },
+          },
+        ],
+      },
+    ]);
+
+    const runtimeFlags = {
+      enableGenerateHtml: true,
+    } as unknown as RuntimeFlags;
+
+    const args = createTestArgs({
+      runtimeFlags,
+      moduleArgs: {
+        fetchWithCreds: fetchWithCreds as unknown as typeof globalThis.fetch,
+        context: {
+          currentGraph: { url: "drive:/test-stub", title: "Test Stub" },
+          flags: {
+            flags: async () => runtimeFlags,
+          } as unknown as RuntimeFlagManager,
+        },
+      } as unknown as A2ModuleArgs,
+    });
+
+    const group = getGenerateFunctionGroup(args);
+    const handler = getHandler(group, "generate_html");
+
+    const reporterAddJsonCalls: Array<{ title: string; data: unknown; icon?: string }> = [];
+    const reporterAddContentCalls: Array<{ title: string; content: LLMContent; icon?: string }> = [];
+    const finishMock = mock.fn();
+    const mockReporter: ProgressReporter = {
+      addJson: mock.fn((title: string, data: unknown, icon?: string) => {
+        reporterAddJsonCalls.push({ title, data, icon });
+      }),
+      addContent: mock.fn((title: string, content: LLMContent, icon?: string) => {
+        reporterAddContentCalls.push({ title, content, icon });
+      }),
+      addError: mock.fn((error) => error),
+      finish: finishMock,
+    };
+
+    const result = await handler(
+      {
+        prompt: "Generate a simple page",
+        status_update: "Designing webpage",
+        file_name: "index.html",
+      },
+      createMockStatusUpdater(),
+      mockReporter
+    );
+
+    deepStrictEqual(result, { html: "/mnt/index.html" });
+
+    // Verify reporter was called with input content
+    deepStrictEqual(reporterAddContentCalls, [
+      {
+        title: "Request Input Context",
+        content: {
+          parts: [{ text: "Generate a simple page" }],
+          role: "user",
+        },
+        icon: "upload",
+      },
+    ]);
+
+    // Verify reporter was called for thoughts and generated html
+    deepStrictEqual(reporterAddJsonCalls, [
+      { title: "Thinking (1)", data: { thought: "doing first thing" }, icon: "spark" },
+      { title: "Generated HTML", data: { status: "HTML output ready" }, icon: "download" },
+    ]);
+
+    // Verify finish was NOT called since the reporter was passed from the caller
+    deepStrictEqual(finishMock.mock.calls.length, 0);
   });
 });

@@ -111,6 +111,11 @@ function registerProgressHandlers(
         .get(event.callId)
         ?.addJson(event.title, event.data, event.icon);
     })
+    .on("subagentAddContent", (event) => {
+      reporterMap
+        .get(event.callId)
+        ?.addContent(event.title, event.content, event.icon);
+    })
     .on("subagentError", (event) => {
       reporterMap.get(event.callId)?.addError(event.error);
     })

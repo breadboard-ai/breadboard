@@ -11,6 +11,7 @@
 import { GraphDescriptor, LLMContent, Outcome } from "@breadboard-ai/types";
 import { executeWebpageStream } from "./generate-webpage-stream.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { type ProgressReporter } from "../agent/progress-work-item.js";
 export { callGenWebpage, generateWebpage };
 
 type ThemeColors = {
@@ -106,7 +107,8 @@ function getPalettePrompt(colors: PaletteColors): string {
 async function generateWebpage(
   moduleArgs: A2ModuleArgs,
   systemText: string,
-  content: LLMContent[]
+  content: LLMContent[],
+  reporter?: ProgressReporter | null
 ): Promise<Outcome<LLMContent>> {
   const graph = moduleArgs.context.currentGraph;
   const palette = getPaletteColors(graph);
@@ -116,7 +118,7 @@ async function generateWebpage(
     const themeColors = getThemeColors(graph);
     systemText += themeColorsPrompt(themeColors);
   }
-  return callGenWebpage(moduleArgs, systemText, content, "HTML");
+  return callGenWebpage(moduleArgs, systemText, content, "HTML", reporter);
 }
 
 /**
@@ -126,7 +128,8 @@ async function callGenWebpage(
   moduleArgs: A2ModuleArgs,
   instruction: string,
   content: LLMContent[],
-  _renderMode: string
+  _renderMode: string,
+  reporter?: ProgressReporter | null
 ): Promise<Outcome<LLMContent>> {
-  return executeWebpageStream(moduleArgs, instruction, content);
+  return executeWebpageStream(moduleArgs, instruction, content, reporter);
 }

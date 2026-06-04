@@ -7,6 +7,7 @@
 import {
   ConsoleUpdate,
   JsonSerializable,
+  LLMContent,
   WorkItem,
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
@@ -73,6 +74,19 @@ class ConsoleWorkItem implements WorkItem, ProgressReporter {
       title,
       icon: icon ?? "data_object",
       body: { parts: [{ json: data as JsonSerializable }] },
+    });
+  }
+
+  /**
+   * Add LLMContent to this work item.
+   * Part of ProgressReporter interface.
+   */
+  addContent(title: string, content: LLMContent, icon?: string) {
+    this.addProduct({
+      type: "text",
+      title,
+      icon: icon ?? "info",
+      body: content,
     });
   }
 

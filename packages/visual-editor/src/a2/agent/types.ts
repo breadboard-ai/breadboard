@@ -41,6 +41,7 @@ import type { Params } from "../a2/common.js";
  */
 export type ProgressReporter = {
   addJson(title: string, data: unknown, icon?: string): void;
+  addContent(title: string, content: LLMContent, icon?: string): void;
   addError(error: { $error: string; metadata?: ErrorMetadata }): {
     $error: string;
     metadata?: ErrorMetadata;
