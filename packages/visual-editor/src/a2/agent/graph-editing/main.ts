@@ -13,7 +13,7 @@ import { graphOverviewYaml, describeSelection } from "./graph-overview.js";
 import { bind } from "../../../sca/actions/graph/graph-actions.js";
 import type { LoopHooks } from "../types.js";
 import type { AgentEventSink } from "../agent-event-sink.js";
-import type { ReadGraphResponse } from "./types.js";
+import { readGraph } from "./read-graph.js";
 
 export { invokeGraphEditingAgent };
 
@@ -39,11 +39,7 @@ async function invokeGraphEditingAgent(
   });
 
   // Read the current graph via suspend so the agent knows the state.
-  const { graph } = await sink.suspend<ReadGraphResponse>({
-    readGraph: {
-      requestId: crypto.randomUUID(),
-    },
-  });
+  const graph = await readGraph(sink);
 
   let overview = "";
   let selectionInfo = "";

@@ -18,27 +18,9 @@ import {
   diffSnapshots,
   type GraphSnapshot,
 } from "./graph-diff.js";
-import type { ReadGraphResponse } from "./types.js";
+import { readGraph } from "./read-graph.js";
 
 export { getChatFunctionGroup };
-
-/**
- * Read the current graph data via the suspend mechanism.
- * Returns null if the graph descriptor has no nodes.
- */
-async function readGraphData(sink: AgentEventSink) {
-  const { graph } = await sink.suspend<ReadGraphResponse>({
-    readGraph: {
-      requestId: crypto.randomUUID(),
-    },
-  });
-  return {
-    title: graph.title,
-    description: graph.description,
-    nodes: graph.nodes ?? [],
-    edges: graph.edges ?? [],
-  };
-}
 
 /**
  * A chat function group for the persistent graph editing agent.
@@ -93,11 +75,11 @@ function getChatFunctionGroup(
       },
       async ({ message }) => {
         // Snapshot the graph before blocking on user input.
-        const beforeData = await readGraphData(sink);
+        const beforeData = await readGraph(sink);
         if (beforeData) {
           lastSnapshot = takeSnapshot(
-            beforeData.nodes,
-            beforeData.edges,
+            beforeData.nodes ?? [],
+            beforeData.edges ?? [],
             translator
           );
         }
@@ -120,23 +102,23 @@ function getChatFunctionGroup(
         const extraParts = response.input.parts.filter((p) => !("text" in p));
 
         // After user responds, check whether they edited the graph.
-        const afterData = await readGraphData(sink);
+        const afterData = await readGraph(sink);
         let graph_changes: string | undefined;
 
         // Always include the current graph overview.
         const overview = afterData
           ? graphOverviewYaml(
               afterData,
-              afterData.nodes,
-              afterData.edges,
+              afterData.nodes ?? [],
+              afterData.edges ?? [],
               translator
             )
           : "(no graph available)";
 
         if (lastSnapshot && afterData) {
           const currentSnapshot = takeSnapshot(
-            afterData.nodes,
-            afterData.edges,
+            afterData.nodes ?? [],
+            afterData.edges ?? [],
             translator
           );
           const diff = diffSnapshots(lastSnapshot, currentSnapshot);
