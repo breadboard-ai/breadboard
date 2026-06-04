@@ -41,6 +41,9 @@ function makeMockController(options: {
     controller: {
       editor: {
         graph: options,
+        selection: {
+          deselectAll: () => {},
+        },
       },
       global: {
         debug: {
@@ -586,6 +589,7 @@ suite("Board Actions", () => {
       let clearRunnerCalled = false;
       let screenResetCalled = false;
       let rendererResetCalled = false;
+      let deselectAllCalled = false;
 
       const mockController = {
         editor: {
@@ -596,6 +600,11 @@ suite("Board Actions", () => {
             url: null,
             readOnly: false,
             editor: null,
+          },
+          selection: {
+            deselectAll: () => {
+              deselectAllCalled = true;
+            },
           },
         },
         run: {
@@ -654,6 +663,11 @@ suite("Board Actions", () => {
         rendererResetCalled,
         true,
         "Should call run.renderer.reset"
+      );
+      assert.strictEqual(
+        deselectAllCalled,
+        true,
+        "Should call selection.deselectAll"
       );
     });
   });

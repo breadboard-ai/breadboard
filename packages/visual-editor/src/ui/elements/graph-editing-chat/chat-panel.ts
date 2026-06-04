@@ -20,6 +20,9 @@ import type { ExpandingTextarea } from "../input/expanding-textarea.js";
 import "./opie-avatar.js";
 import "../effects/radial-glow.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { classMap } from "lit/directives/class-map.js";
+import { getStepIcon } from "../../utils/get-step-icon.js";
+import type { InspectableNode } from "@breadboard-ai/types";
 import type {
   AddAssetRequestEvent,
   AddAssetEvent,
@@ -55,6 +58,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     Styles.HostType.type,
+    Styles.HostColorsBase.baseColors,
     css`
       :host {
         display: block;
@@ -371,11 +375,27 @@ class ChatPanel extends SignalWatcher(LitElement) {
         align-items: center;
         gap: var(--bb-grid-size);
         background: var(--light-dark-p-90);
-        color: var(--light-dark-n-10);
+        color: light-dark(var(--n-0), var(--n-10));
         border-radius: var(--bb-grid-size-3);
         padding: 2px var(--bb-grid-size) 2px var(--bb-grid-size-2);
         font-size: 12px;
         font-weight: 500;
+      }
+
+      .selection-chip.generate {
+        background: var(--ui-generate);
+      }
+
+      .selection-chip.get-input {
+        background: var(--ui-get-input);
+      }
+
+      .selection-chip.display {
+        background: var(--ui-display);
+      }
+
+      .selection-chip.default {
+        background: var(--light-dark-n-70);
       }
 
       .selection-chip button {
@@ -660,8 +680,14 @@ class ChatPanel extends SignalWatcher(LitElement) {
     const chips = [...selectedNodes].map((nodeId) => {
       const node = inspector.nodeById(nodeId);
       const title = node?.metadata()?.title ?? "(untitled)";
+      const colorClass = node ? getNodeColorClass(node) : "default";
       return html`
-        <span class="selection-chip">
+        <span
+          class=${classMap({
+            "selection-chip": true,
+            [colorClass]: true,
+          })}
+        >
           ${title}
           <button
             @click=${() => {
@@ -763,4 +789,76 @@ class ChatPanel extends SignalWatcher(LitElement) {
       }}
     ></bb-add-asset-modal>`;
   }
+}
+
+function getNodeColorClass(node: InspectableNode): string {
+  const ports = node.currentPorts();
+  const metadata = node.type().currentMetadata();
+  const icon = getStepIcon(metadata.icon, ports) || null;
+  const legacyNodeType = node.type().type();
+
+  const classes = new Set<string>();
+  if (metadata.tags) {
+    for (const tag of metadata.tags) {
+      classes.add(tag);
+    }
+  }
+
+  let nodeIcon = icon;
+  if (!URL.canParse(legacyNodeType)) {
+    if (!nodeIcon) {
+      nodeIcon = legacyNodeType;
+    }
+    if (legacyNodeType.startsWith("#module")) {
+      classes.add("module");
+    } else {
+      classes.add(legacyNodeType);
+    }
+  }
+
+  if (
+    classes.has("generative") ||
+    classes.has("module") ||
+    [
+      "spark",
+      "photo_spark",
+      "audio_magic_eraser",
+      "text_analysis",
+      "button_magic",
+      "generative-image-edit",
+      "generative-code",
+      "videocam_auto",
+      "generative-search",
+      "generative",
+      "select_all",
+      "laps",
+    ].includes(nodeIcon || "")
+  ) {
+    return "generate";
+  }
+
+  if (
+    [
+      "output",
+      "docs",
+      "drive_presentation",
+      "sheets",
+      "code",
+      "web",
+      "responsive_layout",
+    ].includes(nodeIcon || "")
+  ) {
+    return "display";
+  }
+
+  if (
+    classes.has("input") ||
+    classes.has("output") ||
+    classes.has("core") ||
+    ["input", "ask-user", "chat_mirror"].includes(nodeIcon || "")
+  ) {
+    return "get-input";
+  }
+
+  return "default";
 }
