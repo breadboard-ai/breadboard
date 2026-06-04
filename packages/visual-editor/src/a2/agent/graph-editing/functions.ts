@@ -5,6 +5,7 @@
  */
 
 import type {
+  Asset,
   AssetMetadata,
   AssetType,
   EditSpec,
@@ -79,7 +80,7 @@ optional markup tags to express connections and tool usage:
 STEP_ID must be a valid ID from the most recent snapshot of the graph.
 - <tool name="TOOL_NAME" /> — attach a tool to the step. Available tools:
 ${TOOL_NAMES}
-- <file src="PATH" /> — reference a file asset.
+- <file src="ASSET_ID" /> — reference a file asset.
 - <a href="URL">TITLE</a> — add a route (navigation link).
 
 Any text outside of these tags is the prompt content.`;
@@ -213,7 +214,9 @@ function defineGraphEditingFunctions(
    */
   async function titleResolvers(): Promise<{
     nodeResolver: (nodeId: string) => string | undefined;
-    assetResolver: (assetPath: string) => string | undefined;
+    assetResolver: (
+      assetRef: string
+    ) => { path: string; title: string } | undefined;
   }> {
     const graph = await readGraph();
     return {
@@ -221,9 +224,30 @@ function defineGraphEditingFunctions(
         const node = graph.nodes?.find((n) => n.id === nodeId);
         return node?.metadata?.title;
       },
-      assetResolver: (assetPath: string) => {
-        const asset = graph.assets?.[assetPath];
-        return asset?.metadata?.title;
+      assetResolver: (assetRef: string) => {
+        if (!graph.assets) return undefined;
+        const cleanRef = assetRef.replace(/^\/?assets\//, "");
+        if (graph.assets[cleanRef]) {
+          return {
+            path: cleanRef,
+            title: graph.assets[cleanRef].metadata?.title ?? cleanRef,
+          };
+        }
+        for (const [key, asset] of Object.entries(graph.assets)) {
+          if (asset.metadata?.title === cleanRef) {
+            return { path: key, title: cleanRef };
+          }
+          const title = asset.metadata?.title;
+          if (title && !cleanRef.includes(".")) {
+            const dotIndex = title.lastIndexOf(".");
+            const baseName =
+              dotIndex !== -1 ? title.substring(0, dotIndex) : title;
+            if (baseName === cleanRef) {
+              return { path: key, title };
+            }
+          }
+        }
+        return undefined;
       },
     };
   }
@@ -243,6 +267,41 @@ function defineGraphEditingFunctions(
     );
     const ports = extractResultPorts(prompt, translator);
     return { promptContent, ports };
+  }
+
+  /**
+   * Resolves a path or title of an asset to its canonical ID/key in graph.assets,
+   * and checks that the asset exists.
+   */
+  async function resolveAndValidateAsset(
+    assetRef: string
+  ): Promise<{ error: string } | { resolvedId: string; asset: Asset }> {
+    const graph = await readGraph();
+    if (!graph.assets) {
+      return { error: `No assets in graph to resolve "${assetRef}"` };
+    }
+
+    const cleanRef = assetRef.replace(/^\/?assets\//, "");
+
+    if (graph.assets[cleanRef]) {
+      return { resolvedId: cleanRef, asset: graph.assets[cleanRef] };
+    }
+
+    for (const [key, asset] of Object.entries(graph.assets)) {
+      if (asset.metadata?.title === cleanRef) {
+        return { resolvedId: key, asset };
+      }
+      const title = asset.metadata?.title;
+      if (title && !cleanRef.includes(".")) {
+        const dotIndex = title.lastIndexOf(".");
+        const baseName = dotIndex !== -1 ? title.substring(0, dotIndex) : title;
+        if (baseName === cleanRef) {
+          return { resolvedId: key, asset };
+        }
+      }
+    }
+
+    return { error: `Asset "${assetRef}" not found in graph assets` };
   }
 
   /**
@@ -432,12 +491,12 @@ function defineGraphEditingFunctions(
         name: GRAPH_REMOVE_ASSET,
         title: "Removing asset",
         icon: "delete",
-        description: "Remove an asset from the graph by its path.",
+        description: "Remove an asset from the graph by its ID.",
         parameters: {
-          path: z
+          asset_id: z
             .string()
             .describe(
-              "The path of the asset to remove (e.g. /assets/my_image.png)"
+              "The ID of the asset to remove (e.g. 'asset-XYZ.png' or 'my_image.png')"
             ),
         },
         response: {
@@ -450,16 +509,23 @@ function defineGraphEditingFunctions(
             ),
         },
       },
-      async ({ path }) => {
+      async ({ asset_id }) => {
+        const resolved = await resolveAndValidateAsset(asset_id);
+        if ("error" in resolved) {
+          return {
+            success: false,
+            error: resolved.error,
+          };
+        }
         const result = await applyEdits(
-          [{ type: "removeasset", path }],
-          `Remove asset: ${path}`
+          [{ type: "removeasset", path: resolved.resolvedId }],
+          `Remove asset: ${resolved.resolvedId}`
         );
 
         if (!result.success) {
           return {
             success: false,
-            error: `Failed to remove asset "${path}"`,
+            error: `Failed to remove asset "${asset_id}"`,
           };
         }
 
@@ -579,7 +645,7 @@ function defineGraphEditingFunctions(
           items: z
             .array(
               z.object({
-                id: z.string().describe("The step id or asset path"),
+                id: z.string().describe("The step id or asset id"),
                 x: z.number().describe("The x coordinate on canvas"),
                 y: z.number().describe("The y coordinate on canvas"),
               })
@@ -622,32 +688,35 @@ function defineGraphEditingFunctions(
               graphId: "",
               metadata,
             });
-          } else if (graph.assets && graph.assets[item.id]) {
-            const asset = graph.assets[item.id];
-            const existingMetadata = (asset.metadata ?? {}) as Record<
-              string,
-              unknown
-            >;
-            const existingVisual = (existingMetadata.visual ?? {}) as Record<
-              string,
-              unknown
-            >;
-            const metadata: AssetMetadata = {
-              title: (existingMetadata.title as string) ?? "",
-              type: (existingMetadata.type as AssetType) ?? "file",
-              ...existingMetadata,
-              visual: { ...existingVisual, x: item.x, y: item.y },
-            };
-            edits.push({
-              type: "changeassetmetadata",
-              path: item.id,
-              metadata,
-            });
           } else {
-            return {
-              success: false,
-              error: `Item "${item.id}" not found in graph steps or assets`,
-            };
+            const assetRes = await resolveAndValidateAsset(item.id);
+            if (!("error" in assetRes)) {
+              const asset = assetRes.asset;
+              const existingMetadata = (asset.metadata ?? {}) as Record<
+                string,
+                unknown
+              >;
+              const existingVisual = (existingMetadata.visual ?? {}) as Record<
+                string,
+                unknown
+              >;
+              const metadata: AssetMetadata = {
+                title: (existingMetadata.title as string) ?? "",
+                type: (existingMetadata.type as AssetType) ?? "file",
+                ...existingMetadata,
+                visual: { ...existingVisual, x: item.x, y: item.y },
+              };
+              edits.push({
+                type: "changeassetmetadata",
+                path: assetRes.resolvedId,
+                metadata,
+              });
+            } else {
+              return {
+                success: false,
+                error: `Item "${item.id}" not found in graph steps or assets`,
+              };
+            }
           }
         }
 
@@ -702,10 +771,18 @@ function defineGraphEditingFunctions(
         },
       },
       async ({ step_id, title, prompt }) => {
-        const { promptContent, ports } = await resolvePromptAndPorts(
-          prompt,
-          translator
-        );
+        let promptContent;
+        let ports;
+        try {
+          const resolved = await resolvePromptAndPorts(prompt, translator);
+          promptContent = resolved.promptContent;
+          ports = resolved.ports;
+        } catch (e) {
+          const error = e instanceof Error ? e.message : String(e);
+          return {
+            error: error || "Failed to resolve prompt",
+          };
+        }
 
         let stepId: string;
         let isCreate = false;
@@ -836,10 +913,18 @@ function defineGraphEditingFunctions(
         },
       },
       async ({ step_id, step_type, title, prompt, options }) => {
-        const { promptContent, ports } = await resolvePromptAndPorts(
-          prompt,
-          translator
-        );
+        let promptContent;
+        let ports;
+        try {
+          const resolved = await resolvePromptAndPorts(prompt, translator);
+          promptContent = resolved.promptContent;
+          ports = resolved.ports;
+        } catch (e) {
+          const error = e instanceof Error ? e.message : String(e);
+          return {
+            error: error || "Failed to resolve prompt",
+          };
+        }
 
         let stepId: string;
         let isCreate = false;

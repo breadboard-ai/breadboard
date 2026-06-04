@@ -6,7 +6,7 @@
 
 import { describe, it } from "node:test";
 import { EditingAgentPidginTranslator } from "../../../src/a2/agent/graph-editing/editing-agent-pidgin-translator.js";
-import { deepStrictEqual, strictEqual } from "node:assert";
+import assert, { deepStrictEqual, strictEqual } from "node:assert";
 import { Template } from "../../../src/a2/a2/template.js";
 import {
   ROUTE_TOOL_PATH,
@@ -168,20 +168,22 @@ describe("EditingAgentPidginTranslator", () => {
       });
     });
 
-    it("resolves asset title using resolveAssetTitle resolver", () => {
+    it("resolves asset using resolveAsset resolver", () => {
       const translator = new EditingAgentPidginTranslator();
       const result = translator.fromPidgin(
         'Check <file src="/assets/logo.png" />',
         undefined,
         (assetPath) => {
-          if (assetPath === "/assets/logo.png") return "Brand Logo";
+          if (assetPath === "/assets/logo.png") {
+            return { path: "asset-123.png", title: "Brand Logo" };
+          }
           return undefined;
         }
       );
 
       const expectedText = `Check ${Template.part({
         type: "asset",
-        path: "/assets/logo.png",
+        path: "asset-123.png",
         title: "Brand Logo",
       })}`;
 
@@ -189,6 +191,17 @@ describe("EditingAgentPidginTranslator", () => {
         parts: [{ text: expectedText }],
         role: "user",
       });
+    });
+
+    it("throws an error when asset resolution fails", () => {
+      const translator = new EditingAgentPidginTranslator();
+      assert.throws(() => {
+        translator.fromPidgin(
+          'Check <file src="/assets/nonexistent.png" />',
+          undefined,
+          () => undefined
+        );
+      }, /Asset reference "\/assets\/nonexistent\.png" is invalid/);
     });
 
     it("reconstructs file asset placeholders", () => {
