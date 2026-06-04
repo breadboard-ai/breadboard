@@ -49,7 +49,6 @@ import { DATA_TYPE } from "./constants.js";
 import { CreateNewAssetsEvent, NodeAddEvent } from "./events/events.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
-import "../../elements/graph-editing-chat/graph-editing-chat.js";
 
 @customElement("bb-editor-controls")
 export class EditorControls extends SignalWatcher(LitElement) {
@@ -294,21 +293,6 @@ export class EditorControls extends SignalWatcher(LitElement) {
             }
           }
         }
-      }
-
-      #shelf {
-        position: absolute;
-        bottom: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        box-sizing: border-box;
-      }
-
-      bb-flowgen-editor-input {
-        flex: 1;
-        margin: var(--bb-grid-size-7) var(--bb-grid-size-3);
       }
 
       #component-picker {
@@ -851,24 +835,6 @@ export class EditorControls extends SignalWatcher(LitElement) {
       <div id="items">${items}</div>
     </div>`;
 
-    const shelf = html`<div id="shelf">
-      ${this.sca.env.flags.get("enableGraphEditorAgent")
-        ? html`<bb-graph-editing-chat
-            @pointerdown=${(evt: PointerEvent) => {
-              evt.stopPropagation();
-            }}
-          ></bb-graph-editing-chat>`
-        : html`<bb-flowgen-editor-input
-            @pointerdown=${(evt: PointerEvent) => {
-              // <bb-renderer> listens for pointerdown and retains focus so that
-              // after selection updates the user can do things like delete nodes
-              // with the keyboard. The corresponding effect makes it impossible to
-              // interact with this element so we catch the event here first.
-              evt.stopPropagation();
-            }}
-          ></bb-flowgen-editor-input>`}
-    </div>`;
-
     const graphControls = html`<div id="graph-controls">
       <button
         id="zoom-to-fit"
@@ -1087,6 +1053,6 @@ export class EditorControls extends SignalWatcher(LitElement) {
       </div>`;
     }
 
-    return [topShelf, shelf, graphControls, componentPicker];
+    return [topShelf, graphControls, componentPicker];
   }
 }
