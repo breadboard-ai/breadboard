@@ -15,6 +15,7 @@ import * as Styles from "../../../styles/styles.js";
 import {
   extractPromptText,
   parsePrompt,
+  promptToBlocks,
 } from "../../../../utils/prompt-utils.js";
 
 @customElement("bb-objective-editor")
@@ -114,13 +115,21 @@ export class ObjectiveEditor extends SignalWatcher(LitElement) {
 
   #onBlur(evt: FocusEvent & { target: HTMLInputElement }) {
     this.#focused = false;
-    this.sca.actions.workbench.applyObjective(evt.target.value);
+    const blocks = promptToBlocks({
+      role: "user",
+      parts: [{ text: evt.target.value }],
+    });
+    this.sca.actions.workbench.applyObjective(blocks);
   }
 
   #onKeyDown(evt: KeyboardEvent & { target: HTMLInputElement }) {
     if (isCtrlCommand(evt) && evt.key === "Enter") {
       evt.preventDefault();
-      this.sca.actions.workbench.applyObjective(evt.target.value);
+      const blocks = promptToBlocks({
+        role: "user",
+        parts: [{ text: evt.target.value }],
+      });
+      this.sca.actions.workbench.applyObjective(blocks);
     }
   }
 

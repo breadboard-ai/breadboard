@@ -18,7 +18,7 @@ import type { AppServices } from "../../../../src/sca/services/services.js";
 import { createMockEnvironment } from "../../helpers/mock-environment.js";
 import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
-import type { GraphDescriptor } from "@breadboard-ai/types";
+import type { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
 
 suite("Workbench Actions", () => {
   beforeEach(() => {
@@ -244,7 +244,7 @@ suite("Workbench Actions", () => {
                 role: "user",
                 parts: [
                   {
-                    text: `Old objective.\n{{\"type\":\"tool\",\"path\":\"tool-1\",\"title\":\"Tool 1\"}}`,
+                    text: `Old objective.\n{{"type":"tool","path":"tool-1","title":"Tool 1"}}`,
                   },
                 ],
               },
@@ -289,7 +289,10 @@ suite("Workbench Actions", () => {
         env,
       });
 
-      await workbenchActions.applyObjective("New objective.");
+      const blocks: LLMContent[] = [
+        { role: "user", parts: [{ text: "New objective." }] },
+      ];
+      await workbenchActions.applyObjective(blocks);
 
       assert.ok(appliedTransform, "Should have applied a transform");
       assert.strictEqual(appliedTransform.id, "agent-node");
@@ -297,7 +300,7 @@ suite("Workbench Actions", () => {
         role: "user",
         parts: [
           {
-            text: `New objective.\n{{\"type\":\"tool\",\"path\":\"tool-1\",\"title\":\"Tool 1\"}}`,
+            text: `New objective.\n{{"type":"tool","path":"tool-1","title":"Tool 1"}}`,
           },
         ],
       });
@@ -306,7 +309,7 @@ suite("Workbench Actions", () => {
         role: "user",
         parts: [
           {
-            text: `New objective.\n{{\"type\":\"tool\",\"path\":\"tool-1\",\"title\":\"Tool 1\"}}`,
+            text: `New objective.\n{{"type":"tool","path":"tool-1","title":"Tool 1"}}`,
           },
         ],
       });
@@ -370,7 +373,7 @@ suite("Workbench Actions", () => {
         role: "user",
         parts: [
           {
-            text: `Solve the objective.\n{{\"type\":\"tool\",\"path\":\"tool-1\",\"title\":\"Tool 1\"}}`,
+            text: `Solve the objective.\n{{"type":"tool","path":"tool-1","title":"Tool 1"}}`,
           },
         ],
       });
@@ -389,7 +392,7 @@ suite("Workbench Actions", () => {
                 role: "user",
                 parts: [
                   {
-                    text: `Solve the objective.\n{{\"type\":\"tool\",\"path\":\"tool-1\",\"title\":\"Tool 1\"}}`,
+                    text: `Solve the objective.\n{{"type":"tool","path":"tool-1","title":"Tool 1"}}`,
                   },
                 ],
               },

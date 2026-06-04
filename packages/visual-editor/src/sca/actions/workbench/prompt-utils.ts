@@ -12,5 +12,7 @@ export {
   buildPrompt,
   extractPromptText,
   extractInPorts,
+  promptToBlocks,
+  blocksToPrompt,
   type ParsedPrompt,
 } from "../../../utils/prompt-utils.js";
