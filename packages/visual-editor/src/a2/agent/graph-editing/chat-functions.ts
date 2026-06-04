@@ -105,13 +105,16 @@ function getChatFunctionGroup(
         const afterData = await readGraph(sink);
         let graph_changes: string | undefined;
 
+        const { controller } = bind;
+
         // Always include the current graph overview.
         const overview = afterData
           ? graphOverviewYaml(
               afterData,
               afterData.nodes ?? [],
               afterData.edges ?? [],
-              translator
+              translator,
+              controller.editor.canvas
             )
           : "(no graph available)";
 
@@ -129,7 +132,6 @@ function getChatFunctionGroup(
         }
 
         // Include selection state.
-        const { controller } = bind;
         const selectedNodes = controller.editor.selection.selection.nodes;
         const selectionText = afterData
           ? describeSelection(selectedNodes, afterData.nodes, translator)

@@ -40,7 +40,7 @@ function graphOverviewYaml(
   nodes: NodeDescriptor[],
   edges: Edge[],
   translator: EditingAgentPidginTranslator,
-  canvas?: CanvasController
+  canvas: CanvasController | null
 ): string {
   // Register all nodes with the translator to get stable pidgin handles.
   const handleMap = new Map<string, string>();

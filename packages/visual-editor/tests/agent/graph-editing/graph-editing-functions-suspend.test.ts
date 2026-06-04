@@ -5,7 +5,7 @@
  */
 
 import assert from "node:assert";
-import { suite, test } from "node:test";
+import { suite, test, beforeEach, afterEach } from "node:test";
 import {
   AgentEventConsumer,
   LocalAgentEventBridge,
@@ -18,6 +18,8 @@ import type {
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { EditingAgentPidginTranslator } from "../../../src/a2/agent/graph-editing/editing-agent-pidgin-translator.js";
 import type { FunctionDefinition } from "../../../src/a2/agent/function-definition.js";
+import { setDOM, unsetDOM } from "../../fake-dom.js";
+import { bind } from "../../../src/sca/actions/graph/graph-actions.js";
 
 /**
  * A minimal mock graph for testing.
@@ -62,7 +64,32 @@ function findHandler(
 
 const noop = () => {};
 
+function createMockBindDeps() {
+  return {
+    controller: {
+      editor: {
+        selection: { selection: { nodes: [] } },
+        canvas: {
+          viewport: { left: 0, top: 0, width: 0, height: 0 },
+          getStepDimensions: () => null,
+          getAssetDimensions: () => null,
+        },
+      },
+    },
+    services: {},
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any;
+}
+
 suite("Graph editing functions suspend/resume", () => {
+  beforeEach(() => {
+    setDOM();
+    bind(createMockBindDeps());
+  });
+  afterEach(() => {
+    unsetDOM();
+  });
+
   // ── graph_get_overview ────────────────────────────────────────────────────
 
   test("graph_get_overview emits readGraph and returns overview", async () => {

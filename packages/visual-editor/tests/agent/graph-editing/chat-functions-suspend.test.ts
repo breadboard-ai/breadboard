@@ -63,6 +63,11 @@ function createMockBindDeps() {
     controller: {
       editor: {
         selection: { selection: { nodes: [] } },
+        canvas: {
+          viewport: { left: 0, top: 0, width: 0, height: 0 },
+          getStepDimensions: () => null,
+          getAssetDimensions: () => null,
+        },
       },
     },
     services: {},
