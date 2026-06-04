@@ -196,6 +196,7 @@ suite("GraphEditingAgentController", () => {
     assert.strictEqual(ctrl.waiting, false);
     assert.strictEqual(ctrl.processing, false);
     assert.strictEqual(ctrl.loopRunning, false);
+    assert.strictEqual(ctrl.autoFocus, false);
   });
 
   test("boolean flags are settable", async () => {
@@ -209,12 +210,14 @@ suite("GraphEditingAgentController", () => {
     ctrl.waiting = true;
     ctrl.processing = true;
     ctrl.loopRunning = true;
+    ctrl.autoFocus = true;
     await ctrl.isSettled;
 
     assert.strictEqual(ctrl.open, true);
     assert.strictEqual(ctrl.waiting, true);
     assert.strictEqual(ctrl.processing, true);
     assert.strictEqual(ctrl.loopRunning, true);
+    assert.strictEqual(ctrl.autoFocus, true);
   });
 
   // ── currentFlow ───────────────────────────────────────────────────────────
@@ -258,6 +261,7 @@ suite("GraphEditingAgentController", () => {
     ctrl.processing = true;
     ctrl.loopRunning = true;
     ctrl.currentFlow = "flow-xyz";
+    ctrl.autoFocus = true;
     await ctrl.isSettled;
 
     ctrl.reset();
@@ -269,5 +273,6 @@ suite("GraphEditingAgentController", () => {
     assert.strictEqual(ctrl.processing, false);
     assert.strictEqual(ctrl.loopRunning, false);
     assert.strictEqual(ctrl.currentFlow, null);
+    assert.strictEqual(ctrl.autoFocus, false);
   });
 });

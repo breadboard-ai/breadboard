@@ -466,6 +466,12 @@ class ChatPanel extends SignalWatcher(LitElement) {
 
   override updated() {
     this.#scrollToBottom();
+
+    const agent = this.sca.controller.editor.graphEditingAgent;
+    if (agent.autoFocus) {
+      agent.autoFocus = false;
+      this.focus();
+    }
   }
 
   get inputRef() {
@@ -475,6 +481,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
   render() {
     const readOnly = this.sca.controller.editor.graph.readOnly;
     const agent = this.sca.controller.editor.graphEditingAgent;
+    void agent.autoFocus;
     const inputAssets = this.sca.controller.editor.inputAssets;
     const inputDisabled = agent.processing;
     const hasInput = !!this.#inputRef.value?.value;
