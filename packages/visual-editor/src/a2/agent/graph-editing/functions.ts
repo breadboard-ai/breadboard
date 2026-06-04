@@ -9,7 +9,6 @@ import type {
   AssetMetadata,
   AssetType,
   EditSpec,
-  GraphDescriptor,
   NodeConfiguration,
   NodeDescriptor,
   NodeMetadata,
@@ -30,7 +29,8 @@ import {
   OUTPUT_COMPONENT_URL,
   LEGACY_OPTION_MAP,
 } from "./constants.js";
-import type { ApplyEditsResponse, ReadGraphResponse } from "./types.js";
+import type { ApplyEditsResponse } from "./types.js";
+import { readGraph } from "./read-graph.js";
 
 export { getGraphEditingFunctionGroup };
 
@@ -107,19 +107,6 @@ function defineGraphEditingFunctions(
   sink: AgentEventSink,
   translator: EditingAgentPidginTranslator
 ) {
-  /**
-   * Reads the current graph via the suspend mechanism.
-   */
-  async function readGraph(): Promise<GraphDescriptor> {
-    return sink
-      .suspend<ReadGraphResponse>({
-        readGraph: {
-          requestId: crypto.randomUUID(),
-        },
-      })
-      .then((r) => r.graph);
-  }
-
   /**
    * Applies edits via the suspend mechanism, waiting for confirmation.
    */
@@ -218,7 +205,7 @@ function defineGraphEditingFunctions(
       assetRef: string
     ) => { path: string; title: string } | undefined;
   }> {
-    const graph = await readGraph();
+    const graph = await readGraph(sink);
     return {
       nodeResolver: (nodeId: string) => {
         const node = graph.nodes?.find((n) => n.id === nodeId);
@@ -276,7 +263,7 @@ function defineGraphEditingFunctions(
   async function resolveAndValidateAsset(
     assetRef: string
   ): Promise<{ error: string } | { resolvedId: string; asset: Asset }> {
-    const graph = await readGraph();
+    const graph = await readGraph(sink);
     if (!graph.assets) {
       return { error: `No assets in graph to resolve "${assetRef}"` };
     }
@@ -312,7 +299,7 @@ function defineGraphEditingFunctions(
     translator: EditingAgentPidginTranslator
   ): Promise<{ error: string } | { resolvedId: string; node: NodeDescriptor }> {
     const resolvedId = translator.getNodeId(step_id) ?? step_id;
-    const graph = await readGraph();
+    const graph = await readGraph(sink);
     const node = graph.nodes?.find((n) => n.id === resolvedId);
     if (!node) {
       return { error: `Step "${step_id}" not found` };
@@ -429,7 +416,7 @@ function defineGraphEditingFunctions(
         },
       },
       async () => {
-        const graph = await readGraph();
+        const graph = await readGraph(sink);
         const overview = graphOverviewYaml(
           graph,
           graph.nodes ?? [],
@@ -608,7 +595,7 @@ function defineGraphEditingFunctions(
       async ({ theme_intent }) => {
         // Read the current graph to snapshot title/description — they are
         // significant inputs for the splash-image generator.
-        const graph = await readGraph();
+        const graph = await readGraph(sink);
         const title = graph.title;
         const description = graph.description;
 
@@ -663,7 +650,7 @@ function defineGraphEditingFunctions(
         },
       },
       async ({ items }) => {
-        const graph = await readGraph();
+        const graph = await readGraph(sink);
         const edits: EditSpec[] = [];
 
         for (const item of items) {
