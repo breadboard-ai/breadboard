@@ -11,8 +11,10 @@ import {
   startGraphEditingAgent,
   resolveGraphEditingInput,
   resetGraphEditingAgent,
+  setOpieReaction,
 } from "../../../../src/sca/actions/agent/graph-editing-agent-actions.js";
 import { GraphEditingAgentController } from "../../../../src/sca/controller/subcontrollers/editor/graph-editing-agent-controller.js";
+import { FeedbackController } from "../../../../src/sca/controller/subcontrollers/global/feedback-controller.js";
 import type {
   ChatEntry,
   GraphAssetDescriptor,
@@ -748,5 +750,78 @@ suite("graph-editing-agent-actions", () => {
     );
 
     services.agentService.endRun(activeHandle!.runId);
+  });
+
+  // ── setOpieReaction ────────────────────────────────────────────────────────
+
+  test("setOpieReaction sets feedback reaction and triggers feedback submission", async () => {
+    const controller = await makeControllerStub("GEA_act_set_opie");
+    controller.global.feedback = {
+      open: mock.fn(),
+    } as unknown as FeedbackController;
+    const services = makeServicesStub();
+    bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    const agent = controller.editor.graphEditingAgent;
+
+    // Start a dummy run to populate agent history
+    const runConfig = {
+      kind: "graph-editing",
+      objective: { parts: [{ text: "test prompt" }] },
+    };
+    const handle = services.agentService.startRun(runConfig);
+    agent.setHistory(handle.events.history);
+
+    // Add some events to eventConsumer
+    handle.events.handle({ start: { objective: { parts: [{ text: "test prompt" }] } } });
+    handle.events.handle({ thought: { text: "Thinking about test prompt..." } });
+
+    // Spy on setTimeout to capture the callback
+    const setTimeoutCalls: { callback: () => void; delay: number }[] = [];
+    mock.method(globalThis, "setTimeout", (callback: () => void, delay: number) => {
+      setTimeoutCalls.push({ callback, delay });
+      return 123 as unknown as ReturnType<typeof setTimeout>;
+    });
+    mock.method(globalThis, "clearTimeout", () => {});
+
+    await setOpieReaction("up");
+
+    assert.strictEqual(agent.feedbackReaction, "up");
+    assert.strictEqual(setTimeoutCalls.length, 1);
+    assert.strictEqual(setTimeoutCalls[0].delay, 3000);
+
+    // Call the callback to trigger feedback.open
+    setTimeoutCalls[0].callback();
+
+    const openMock = controller.global.feedback.open as unknown as {
+      mock: {
+        callCount(): number;
+        calls: Array<{
+          arguments: [
+            {
+              bucketSuffix: string;
+              flow: string;
+              description: string;
+              productData: {
+                reaction: string;
+                conversation: string;
+              };
+            },
+          ];
+        }>;
+      };
+    };
+    assert.strictEqual(openMock.mock.callCount(), 1);
+    const args = openMock.mock.calls[0].arguments[0];
+    assert.strictEqual(args.bucketSuffix, "opie");
+    assert.strictEqual(args.flow, "submit");
+    assert.strictEqual(args.description, "User sentiment: up");
+    assert.ok(args.productData.conversation.includes("START OBJECTIVE:\ntest prompt"));
+    assert.ok(args.productData.conversation.includes("THOUGHT:\nThinking about test prompt..."));
+    assert.strictEqual(args.productData.reaction, "up");
   });
 });

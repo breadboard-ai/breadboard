@@ -200,6 +200,13 @@ export function makeTestController(options: TestControllerOptions = {}) {
         addMessage(role: string, text: string) {
           this.entries.push({ role, text });
         },
+        _history: [] as unknown[],
+        get history() {
+          return this._history;
+        },
+        setHistory(history: unknown[]) {
+          this._history = history;
+        },
       },
       devtools: {
         isOpen: false,
