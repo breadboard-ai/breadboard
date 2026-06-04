@@ -58,6 +58,17 @@ export const styles = [
       }
     }
 
+    .agent-config-column {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      background: light-dark(var(--n-100), var(--n-15));
+      padding: var(--bb-grid-size-4);
+      gap: var(--bb-grid-size-4);
+      overflow-y: auto;
+    }
+
     #workbench-controls {
       position: absolute;
       display: flex;

@@ -227,8 +227,37 @@ class EditorSelection {
    * Convenience wrapper around `getSelection().getRangeAt(0)`.
    */
   getRange(): Range | null {
-    const selection = this.getSelection();
+    if ("getSelection" in this.#shadowRoot) {
+      const selection = (
+        this.#shadowRoot as ShadowRoot & {
+          getSelection: () => Selection | null;
+        }
+      ).getSelection();
+      if (selection && selection.rangeCount > 0) {
+        return selection.getRangeAt(0);
+      }
+    }
+
+    const selection = document.getSelection();
     if (!selection) return null;
+
+    const composedSelection = selection as Selection & {
+      getComposedRanges?: (shadowRoot: ShadowRoot) => StaticRange[];
+    };
+
+    if (typeof composedSelection.getComposedRanges === "function") {
+      const ranges = composedSelection.getComposedRanges(this.#shadowRoot);
+      if (ranges && ranges.length > 0) {
+        const r = ranges[0];
+        if (r) {
+          const range = new Range();
+          range.setStart(r.startContainer, r.startOffset);
+          range.setEnd(r.endContainer, r.endOffset);
+          return range;
+        }
+      }
+    }
+
     return selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
   }
 
