@@ -81,6 +81,8 @@ import { icons } from "../../styles/icons.js";
 import { getBoardUrlFromCurrentWindow } from "../../navigation/board-id.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
 
+import "../graph-editing-chat/opie-avatar.js";
+
 const Strings = StringsHelper.forSection("Editor");
 
 // A type that is like a port (and fits InspectablePort), but could also be
@@ -796,11 +798,42 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             }
           }
 
-          bb-flowgen-in-step-button {
+          bb-flowgen-in-step-button,
+          #describe-with-opie {
             z-index: 1;
             position: absolute;
             bottom: calc(var(--bb-grid-size-11) * -1);
             right: var(--bb-grid-size-6);
+          }
+
+          #describe-with-opie {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: var(--bb-grid-size-9);
+            height: var(--bb-grid-size-9);
+            border: none;
+            background: light-dark(
+              var(--ui-custom-o-10),
+              var(--ui-custom-o-30)
+            );
+            border-radius: 50%;
+            transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+            cursor: pointer;
+            padding: 0;
+
+            & > bb-opie-avatar {
+              pointer-events: none;
+            }
+
+            & .g-icon {
+              color: var(--light-dark-n-20);
+            }
+
+            &:hover,
+            &:focus {
+              background: var(--ui-custom-o-20);
+            }
           }
         }
       }
@@ -1530,22 +1563,50 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
           ${extendedInfoOutput}
           ${this.#graph
-            ? html`<bb-flowgen-in-step-button
-                monochrome
-                popoverPosition="below"
-                .label=${Strings.from("COMMAND_DESCRIBE_EDIT_STEP")}
-                .currentGraph=${this.#graph.raw() satisfies GraphDescriptor}
-                .constraint=${{
-                  kind: "EDIT_STEP_CONFIG",
-                  stepId: nodeId,
-                } satisfies FlowGenConstraint}
-                @bbgraphreplace=${() => {
-                  this.sca?.services.actionTracker?.editStep("flowgen");
-                  // Ignore all edits to this point so that we don't issue
-                  // a submit and stomp the new values.
-                  this.#edited = false;
-                }}
-              ></bb-flowgen-in-step-button>`
+            ? this.sca.env.flags.get("enableGraphEditorAgent")
+              ? html`<button
+                  id="describe-with-opie"
+                  @click=${() => {
+                    const agent = this.sca.controller.editor.graphEditingAgent;
+                    agent.open = true;
+                    agent.showGreeting();
+                    agent.autoFocus = true;
+                  }}
+                  @pointerover=${(evt: PointerEvent) => {
+                    this.dispatchEvent(
+                      new ShowTooltipEvent(
+                        Strings.from("COMMAND_DESCRIBE_EDIT_STEP"),
+                        evt.clientX,
+                        evt.clientY
+                      )
+                    );
+                  }}
+                  @pointerout=${() => {
+                    this.dispatchEvent(new HideTooltipEvent());
+                  }}
+                >
+                  <bb-opie-avatar
+                    mode="small"
+                    .supportsHover=${false}
+                    static
+                  ></bb-opie-avatar>
+                </button>`
+              : html`<bb-flowgen-in-step-button
+                  monochrome
+                  popoverPosition="below"
+                  .label=${Strings.from("COMMAND_DESCRIBE_EDIT_STEP")}
+                  .currentGraph=${this.#graph.raw() satisfies GraphDescriptor}
+                  .constraint=${{
+                    kind: "EDIT_STEP_CONFIG",
+                    stepId: nodeId,
+                  } satisfies FlowGenConstraint}
+                  @bbgraphreplace=${() => {
+                    this.sca?.services.actionTracker?.editStep("flowgen");
+                    // Ignore all edits to this point so that we don't issue
+                    // a submit and stomp the new values.
+                    this.#edited = false;
+                  }}
+                ></bb-flowgen-in-step-button>`
             : nothing}`;
       }
 
@@ -2017,8 +2078,6 @@ function extractModelId(ports: InspectableNodePorts): string | null {
 function isGenerativeNode(node: InspectableNode): boolean {
   return node.descriptor.type === "embed://a2/generate.bgl.json#module:main";
 }
-
-
 
 // Returns true if LLM text part of node contains tools/assets or is absent.
 function containsToolsOrAssets(ports: InspectableNodePorts): boolean {

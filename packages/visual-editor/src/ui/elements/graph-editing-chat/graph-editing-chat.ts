@@ -224,10 +224,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
 
         agent.open = true;
         agent.showGreeting();
-        // Re-focus after Lit update completes
-        this.updateComplete.then(() => {
-          this.#panelRef.value?.focus();
-        });
+        agent.autoFocus = true;
       }}
     ></bb-opie-avatar>`;
 

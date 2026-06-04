@@ -66,6 +66,9 @@ class GraphEditingAgentController extends RootController {
   @field()
   accessor currentFlow: string | null = null;
 
+  @field()
+  accessor autoFocus = false;
+
   // ═══════════════════════════════════════════════════════════════════════════
   // ACCESSORS
   // ═══════════════════════════════════════════════════════════════════════════
@@ -122,5 +125,6 @@ class GraphEditingAgentController extends RootController {
     this.loopRunning = false;
     this.currentFlow = null;
     this.feedbackReaction = "none";
+    this.autoFocus = false;
   }
 }
