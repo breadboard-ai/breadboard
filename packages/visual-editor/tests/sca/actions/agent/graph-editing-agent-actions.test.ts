@@ -45,7 +45,11 @@ async function makeControllerStub(id: string): Promise<AppController> {
   await devtools.isHydrated;
   await devtools.opie.isHydrated;
   return {
-    editor: { graphEditingAgent: agent, devtools },
+    editor: {
+      graphEditingAgent: agent,
+      devtools,
+      workbench: { eligible: false, view: "classic" },
+    },
     global: { onboarding: { appMode: "canvas" } },
   } as unknown as AppController;
 }
@@ -98,7 +102,6 @@ suite("graph-editing-agent-actions", () => {
     agent.loopRunning = true;
     agent.waiting = true;
     agent.processing = true;
-    agent.currentFlow = "flow-1";
     agent.addMessage("user", "Hello");
     const devtools = controller.editor.devtools;
     const opie = devtools.opie;
@@ -119,7 +122,6 @@ suite("graph-editing-agent-actions", () => {
     assert.strictEqual(agent.loopRunning, false);
     assert.strictEqual(agent.waiting, false);
     assert.strictEqual(agent.processing, false);
-    assert.strictEqual(agent.currentFlow, null);
 
     assert.deepStrictEqual(opie.entries, []);
     assert.strictEqual(opie.systemInstruction, "");

@@ -220,30 +220,6 @@ suite("GraphEditingAgentController", () => {
     assert.strictEqual(ctrl.autoFocus, true);
   });
 
-  // ── currentFlow ───────────────────────────────────────────────────────────
-
-  test("currentFlow defaults to null", async () => {
-    const ctrl = new GraphEditingAgentController(
-      "GEA_ctrl_12",
-      "GraphEditingAgentController"
-    );
-    await ctrl.isHydrated;
-
-    assert.strictEqual(ctrl.currentFlow, null);
-  });
-
-  test("currentFlow is settable", async () => {
-    const ctrl = new GraphEditingAgentController(
-      "GEA_ctrl_13",
-      "GraphEditingAgentController"
-    );
-    await ctrl.isHydrated;
-
-    ctrl.currentFlow = "flow-123";
-    await ctrl.isSettled;
-    assert.strictEqual(ctrl.currentFlow, "flow-123");
-  });
-
   // ── reset ─────────────────────────────────────────────────────────────────
 
   test("reset clears all state", async () => {
@@ -260,7 +236,6 @@ suite("GraphEditingAgentController", () => {
     ctrl.waiting = true;
     ctrl.processing = true;
     ctrl.loopRunning = true;
-    ctrl.currentFlow = "flow-xyz";
     ctrl.autoFocus = true;
     await ctrl.isSettled;
 
@@ -272,7 +247,6 @@ suite("GraphEditingAgentController", () => {
     assert.strictEqual(ctrl.waiting, false);
     assert.strictEqual(ctrl.processing, false);
     assert.strictEqual(ctrl.loopRunning, false);
-    assert.strictEqual(ctrl.currentFlow, null);
     assert.strictEqual(ctrl.autoFocus, false);
   });
 });

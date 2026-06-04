@@ -69,6 +69,7 @@ export { Snackbar } from "./toast/snackbar.js";
 export { UISplitter } from "./splitter/ui-splitter.js";
 export { UITriSplitter } from "./splitter/ui-tri-splitter.js";
 export { AgentWorkbench } from "./agent-workbench/agent-workbench.js";
+export { ConversationColumn } from "./agent-workbench/conversation-column.js";
 export { RunLogColumn } from "./agent-workbench/run-log-column.js";
 export { RunView } from "./agent-workbench/run-view.js";
 export { ObjectiveEditor } from "./agent-workbench/objective-editor/objective-editor.js";

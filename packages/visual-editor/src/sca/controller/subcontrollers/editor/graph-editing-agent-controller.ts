@@ -59,13 +59,6 @@ class GraphEditingAgentController extends RootController {
   @field()
   accessor loopRunning = false;
 
-  /**
-   * The flow ID that the current loop was started for.
-   * Used to detect graph changes and restart the loop.
-   */
-  @field()
-  accessor currentFlow: string | null = null;
-
   @field()
   accessor autoFocus = false;
 
@@ -123,7 +116,6 @@ class GraphEditingAgentController extends RootController {
     this.waiting = false;
     this.processing = false;
     this.loopRunning = false;
-    this.currentFlow = null;
     this.feedbackReaction = "none";
     this.autoFocus = false;
   }

@@ -49,6 +49,9 @@ class ChatPanel extends SignalWatcher(LitElement) {
   @property({ type: String, reflect: true })
   accessor mode: "floating" | "embedded" = "floating";
 
+  @property({ type: Boolean })
+  accessor showSelectionStrip = true;
+
   readonly #inputRef = createRef<ExpandingTextarea>();
 
   #showAddAssetModal = false;
@@ -95,11 +98,36 @@ class ChatPanel extends SignalWatcher(LitElement) {
         border-top: none;
         box-shadow: none;
         flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
       }
 
       :host([mode="embedded"]) .messages {
         mask-image: none;
         -webkit-mask-image: none;
+        min-height: 0;
+        flex: 1;
+        padding-bottom: var(--bb-grid-size-4);
+      }
+
+      /* Spacer pushes content to the bottom when the conversation
+         is short. Compresses to zero when it overflows, allowing
+         normal scrolling. */
+      :host([mode="embedded"]) .messages::before {
+        content: "";
+        flex: 1;
+      }
+
+      :host([mode="embedded"]) .input-area {
+        background: light-dark(var(--n-98), var(--n-15));
+        border-top: 1px solid light-dark(var(--n-90), var(--n-70));
+        flex-shrink: 0;
+      }
+
+      :host([mode="embedded"]) bb-expanding-textarea {
+        background: var(--light-dark-n-100);
+        scrollbar-width: none;
       }
 
       /* ── Messages ── */
@@ -111,8 +139,6 @@ class ChatPanel extends SignalWatcher(LitElement) {
         display: flex;
         flex-direction: column;
         gap: var(--bb-grid-size-3);
-        margin-right: 4px;
-        margin-top: 8px;
         scrollbar-width: thin;
         scrollbar-color: var(--light-dark-n-60) transparent;
         mask-image: linear-gradient(transparent 0%, black 12px, black 100%);
@@ -290,7 +316,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
         display: flex;
         flex-direction: column;
         gap: 0;
-        border-top: 1px solid var(--light-dark-n-95);
+        border-top: 1px solid light-dark(var(--n-90), var(--n-70));
       }
 
       .input-row {
@@ -561,7 +587,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
             : nothing}
         </div>
 
-        ${this.#renderSelectionStrip()}
+        ${this.showSelectionStrip ? this.#renderSelectionStrip() : nothing}
 
         <div class="input-area">
           ${this.#renderAssetShelf()}

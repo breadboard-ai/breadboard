@@ -339,20 +339,20 @@ column. Scrolling works naturally. Thoughts/thinking indicators appear inline.
 
 #### packages/visual-editor — UI
 
-- [ ] `bb-conversation-column` — new element wrapping the existing Opie chat
+- [x] `bb-conversation-column` — new element wrapping the existing Opie chat
       rendering. Extracts the chat log rendering from `bb-chat-panel` and mounts
       it as a full-height column with:
   - Conversation history (scrollable).
   - Input area at the bottom.
   - Opie avatar and greeting.
-- [ ] `bb-agent-workbench` — mount `bb-conversation-column` in the left column
+- [x] `bb-agent-workbench` — mount `bb-conversation-column` in the left column
       slot.
-- [ ] `bb-canvas-controller` / `bb-graph-editing-chat` — skip rendering the
+- [x] `bb-canvas-controller` / `bb-graph-editing-chat` — skip rendering the
       floating chat panel when workbench mode is active.
 
 #### packages/visual-editor — SCA
 
-- [ ] `GraphEditingAgentController` — the `open` field becomes irrelevant in
+- [x] `GraphEditingAgentController` — the `open` field becomes irrelevant in
       workbench mode (the conversation is always visible). The controller
       continues to own chat entries and processing state.
 
