@@ -49,7 +49,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     icons,
     css`
       :host {
-        position: fixed;
+        position: absolute;
         bottom: var(--bb-grid-size-7);
         left: var(--bb-grid-size-4);
         z-index: 9999;

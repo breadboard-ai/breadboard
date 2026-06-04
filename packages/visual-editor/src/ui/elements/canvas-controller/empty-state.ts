@@ -195,7 +195,7 @@ export class EmptyState extends SignalWatcher(LitElement) {
     return [
       this.renderBottomPlaceholder(),
       html` <div id="agent-variant" class="message edu-sa-beginner">
-        ... or chat with the agent<img src="/images/arrow-up.png" />
+        ... or chat with Opie<img src="/images/arrow-up.png" />
       </div>`,
     ];
   }

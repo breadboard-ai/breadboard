@@ -176,6 +176,29 @@ export class CanvasController extends SignalWatcher(LitElement) {
     const graphContentState = gc.graphContentState;
     const graphIsEmpty = graphContentState !== "loaded";
 
+    const isAgentHydrating = Utils.Helpers.isHydrating(() =>
+      this.sca.env.flags.get("enableGraphEditorAgent")
+    );
+    const enableAgent =
+      !isAgentHydrating && this.sca.env.flags.get("enableGraphEditorAgent");
+
+    let inputElement: HTMLTemplateResult | typeof nothing = nothing;
+    if (!gc.readOnly && !isAgentHydrating) {
+      if (enableAgent) {
+        inputElement = html`<bb-graph-editing-chat
+          @pointerdown=${(evt: PointerEvent) => {
+            evt.stopPropagation();
+          }}
+        ></bb-graph-editing-chat>`;
+      } else {
+        inputElement = html`<bb-flowgen-editor-input
+          @pointerdown=${(evt: PointerEvent) => {
+            evt.stopPropagation();
+          }}
+        ></bb-flowgen-editor-input>`;
+      }
+    }
+
     const runState = this.runState;
 
     const graphEditor = guard([runState, this.#runStateEffect], () => {
@@ -372,7 +395,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           <bb-edit-history-overlay .history=${gc.editor?.history() ?? null}>
           </bb-edit-history-overlay>
           ${graphIsEmpty ? this.#maybeRenderEmptyState() : nothing}
-          ${graphEditor} ${themeEditor}
+          ${graphEditor} ${themeEditor} ${inputElement}
         </div>
         <div
           id="side-nav"
@@ -458,24 +481,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
     const showStepListView = !graphIsEmpty || isGenerating;
     const prompt =
       gc.graph?.metadata?.raw_intent ?? gc.graph?.metadata?.intent ?? null;
-    const isAgentHydrating = Utils.Helpers.isHydrating(() =>
-      this.sca.env.flags.get("enableGraphEditorAgent")
-    );
-    const enableAgent =
-      !isAgentHydrating && this.sca.env.flags.get("enableGraphEditorAgent");
-
-    let narrowInput: HTMLTemplateResult | typeof nothing = nothing;
-    if (!gc.readOnly && !isAgentHydrating) {
-      if (enableAgent) {
-        narrowInput = html`<bb-graph-editing-chat
-          @pointerdown=${(evt: PointerEvent) => {
-            evt.stopPropagation();
-          }}
-        ></bb-graph-editing-chat>`;
-      } else {
-        narrowInput = html`<bb-flowgen-editor-input></bb-flowgen-editor-input>`;
-      }
-    }
 
     const narrowScreenContent = !graph
       ? nothing
@@ -484,7 +489,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
             ? html`<bb-prompt-view .prompt=${prompt}></bb-prompt-view>
                 <bb-step-list-view></bb-step-list-view>`
             : html`<bb-empty-state narrow></bb-empty-state>`}
-          ${narrowInput}
+          ${inputElement}
         </section>`;
 
     const screenSize = this.sca.controller.global.screenSize.size;

@@ -277,12 +277,29 @@ export const styles = [
       background: var(--light-dark-p-98);
     }
 
-    #side-nav,
+    #side-nav {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
     #graph-container {
       width: 100%;
       height: 100%;
       overflow: hidden;
       position: relative;
+
+      & bb-flowgen-editor-input {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - var(--bb-grid-size-6));
+        max-width: 540px;
+        z-index: 101; /* Must sit above empty-state (z-index 100) */
+        margin-bottom: var(--bb-grid-size-7);
+      }
     }
 
     #side-nav {
