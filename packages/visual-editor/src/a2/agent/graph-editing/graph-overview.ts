@@ -57,8 +57,7 @@ function graphOverviewYaml(
   const presentation = graph.metadata?.visual?.presentation;
   const themeId = presentation?.theme;
   const themes = presentation?.themes;
-  const currentTheme =
-    themeId && themes ? themes[themeId] : undefined;
+  const currentTheme = themeId && themes ? themes[themeId] : undefined;
 
   const isCustom =
     !!currentTheme?.splashScreen && !currentTheme?.isDefaultTheme;
@@ -109,6 +108,8 @@ function graphOverviewYaml(
     if (typeof visual.x === "number" && typeof visual.y === "number") {
       lines.push(`    x: ${Math.round(visual.x)}`);
       lines.push(`    y: ${Math.round(visual.y)}`);
+    } else {
+      lines.push(`    # Newly Added. TODO: Position this step`);
     }
 
     if (canvas && typeof canvas.getStepDimensions === "function") {
@@ -122,9 +123,7 @@ function graphOverviewYaml(
 
     // Convert prompt back to pidgin for readability
     const prompt =
-      config?.["config$prompt"] ||
-      config?.["description"] ||
-      config?.["text"];
+      config?.["config$prompt"] || config?.["description"] || config?.["text"];
 
     if (prompt && typeof prompt === "object") {
       const pidgin = translator.toPidgin(prompt as LLMContent);
@@ -146,9 +145,7 @@ function graphOverviewYaml(
       inferredStepType = "output";
     } else if (node.type === GENERATE_COMPONENT_URL) {
       const genMode =
-        config &&
-        typeof config === "object" &&
-        "generation-mode" in config
+        config && typeof config === "object" && "generation-mode" in config
           ? (config["generation-mode"] as string)
           : undefined;
       inferredStepType = genMode || "text-3-flash";
@@ -236,8 +233,7 @@ function inferAssetFriendlyType(asset: Asset): string {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data = asset.data as any[];
   const part = data?.[0]?.parts?.[0];
-  const mimeType =
-    part?.storedData?.mimeType || part?.inlineData?.mimeType;
+  const mimeType = part?.storedData?.mimeType || part?.inlineData?.mimeType;
   const handle = part?.storedData?.handle;
 
   if (mimeType) {

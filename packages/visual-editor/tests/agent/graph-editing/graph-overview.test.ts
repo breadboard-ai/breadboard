@@ -339,5 +339,29 @@ describe("graphOverviewYaml", () => {
 
     ok(yaml.includes("# Newly Added. TODO: Position this asset"));
   });
+
+  it("includes YAML comment for unpositioned steps", () => {
+    const translator = new EditingAgentPidginTranslator();
+    const nodes: NodeDescriptor[] = [
+      {
+        id: "step-1",
+        type: GENERATE_COMPONENT_URL,
+        metadata: {
+          title: "My Unpositioned Step",
+        },
+      },
+    ];
+
+    const yaml = graphOverviewYaml(
+      {
+        title: "Test Graph",
+      },
+      nodes,
+      [],
+      translator
+    );
+
+    ok(yaml.includes("# Newly Added. TODO: Position this step"));
+  });
 });
 
