@@ -208,12 +208,6 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       return nothing;
     }
 
-    // If the graph changed, reset the loop
-    if (agent.currentFlow !== parsedUrl.flow) {
-      this.sca.actions.graphEditingAgent.resetGraphEditingAgent();
-      agent.currentFlow = parsedUrl.flow ?? null;
-    }
-
     const opie = html`<bb-opie-avatar
       ?highlighted=${agent.open}
       @click=${() => {

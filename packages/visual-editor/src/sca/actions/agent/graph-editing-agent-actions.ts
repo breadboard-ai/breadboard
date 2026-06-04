@@ -304,6 +304,10 @@ function resolveGraphEditingInput(
 
 /**
  * Abort the current loop and reset all state.
+ *
+ * When the workbench is active the conversation column is always
+ * visible, so we immediately show a greeting after reset to avoid
+ * an empty column.
  */
 export const resetGraphEditingAgent = asAction(
   "GraphEditingAgent.reset",
@@ -318,6 +322,13 @@ export const resetGraphEditingAgent = asAction(
     const { controller } = bind;
     controller.editor.graphEditingAgent.reset();
     controller.editor.devtools?.opie?.clearLog();
+
+    // In workbench mode the conversation is always visible — greet
+    // immediately so the column is never empty after a graph change.
+    const wb = controller.editor.workbench;
+    if (wb.eligible && wb.view === "workbench") {
+      controller.editor.graphEditingAgent.showGreeting();
+    }
   }
 );
 

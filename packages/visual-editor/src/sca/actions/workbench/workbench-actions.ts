@@ -9,6 +9,7 @@ import { asAction, ActionMode } from "../../coordination.js";
 import {
   onWorkbenchEligibilityChange,
   isSingleAgentGraph,
+  onWorkbenchActivation,
 } from "./triggers.js";
 import {
   parsePrompt,
@@ -89,6 +90,22 @@ export const updateWorkbenchEligibility = asAction(
     const flag = env.flags.get("enableAgentWorkbench");
     const graph = controller.editor.graph.graph;
     controller.editor.workbench.eligible = flag && isSingleAgentGraph(graph);
+  }
+);
+
+export const selectAgentNodeOnActivation = asAction(
+  "Workbench.selectAgentNodeOnActivation",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onWorkbenchActivation(bind),
+    runOnActivate: true,
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    const agentNode = getAgentNode();
+    if (agentNode) {
+      controller.editor.selection.selectNodes([agentNode.id]);
+    }
   }
 );
 

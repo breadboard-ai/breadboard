@@ -16,6 +16,7 @@ import { styles } from "./agent-workbench.styles.js";
 import "./run-log-column.js";
 import "./objective-editor/objective-editor.js";
 import "./tool-shelf/tool-shelf.js";
+import "./conversation-column.js";
 
 @customElement("bb-agent-workbench")
 export class AgentWorkbench extends SignalWatcher(LitElement) {
@@ -34,11 +35,7 @@ export class AgentWorkbench extends SignalWatcher(LitElement) {
 
     return html`
       <ui-tri-splitter>
-        <div slot="s0" class="column-placeholder">
-          <span class="g-icon">chat</span>
-          <h2>Opie Conversation</h2>
-          <p>This column will contain the contextual conversation history.</p>
-        </div>
+        <bb-conversation-column slot="s0"></bb-conversation-column>
         <div slot="s1" class="agent-config-column">
           <bb-objective-editor></bb-objective-editor>
           <bb-tool-shelf></bb-tool-shelf>

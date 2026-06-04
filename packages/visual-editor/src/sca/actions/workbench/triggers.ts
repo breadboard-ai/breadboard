@@ -31,3 +31,21 @@ export function onWorkbenchEligibilityChange(bind: ActionBind): SignalTrigger {
       : WorkbenchEligibility.INELIGIBLE;
   });
 }
+
+export function onWorkbenchActivation(bind: ActionBind): SignalTrigger {
+  let previousActive = false;
+
+  return signalTrigger("Workbench Activation", () => {
+    const { controller } = bind;
+    const active =
+      controller.editor.workbench.eligible &&
+      controller.editor.workbench.view === "workbench";
+
+    if (active === previousActive) {
+      return false;
+    }
+
+    previousActive = active;
+    return active;
+  });
+}
