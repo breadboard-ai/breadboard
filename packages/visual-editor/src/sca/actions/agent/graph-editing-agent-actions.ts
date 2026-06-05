@@ -35,6 +35,8 @@ import {
   GraphEditingManager,
   GraphThemeGenerator,
 } from "../../../a2/agent/graph-editing/graph-editing-manager.js";
+import type { GraphAssetDescriptor } from "../../types.js";
+import { processInputText } from "./graph-editing-input-processor.js";
 
 
 export { bind, startGraphEditingAgent, resolveGraphEditingInput };
@@ -64,21 +66,32 @@ let pendingResolve: ((response: ChatResponse) => void) | null = null;
  * `GraphEditingAgentController`, and invokes the agent loop with
  * sink-based hooks.
  */
-function startGraphEditingAgent(
+async function startGraphEditingAgent(
   firstMessage: string,
   assets?: GraphAssetDescriptor[]
-): void {
+): Promise<void> {
   const { controller, services } = bind;
   const productName =
     controller.global.onboarding.appMode === "lite" ? "Gem" : "Opal";
   const agent = controller.editor.graphEditingAgent;
   if (agent.loopRunning) return;
+
+  // Process any Google Drive or YouTube URLs in the message first
+  const processed = await processInputText(firstMessage, { controller, services });
+  if (processed.error) {
+    agent.addMessage("user", firstMessage);
+    agent.addMessage("model", processed.error);
+    agent.processing = false;
+    agent.waiting = true;
+    return;
+  }
+
   agent.loopRunning = true;
 
   const objective: LLMContent = {
     parts: [
       {
-        text: `You are a graph editing assistant. The user's request is:\n\n${firstMessage}`,
+        text: `You are a graph editing assistant. The user's request is:\n\n${processed.processedText}`,
       },
     ],
   };
@@ -277,26 +290,35 @@ function startGraphEditingAgent(
     });
 }
 
-import type { GraphAssetDescriptor } from "../../types.js";
-
 /**
  * Resolve the pending `waitForInput` suspend event with user text.
  * Constructs a `ChatResponse` and resolves the consumer handler's Promise.
  * Returns true if there was a pending resolve (agent was waiting).
  */
-function resolveGraphEditingInput(
+async function resolveGraphEditingInput(
   text: string,
   assets?: GraphAssetDescriptor[]
-): boolean {
+): Promise<boolean> {
   if (!pendingResolve) return false;
+  const { controller, services } = bind;
+  const agent = controller.editor.graphEditingAgent;
+
+  // Process any Google Drive or YouTube URLs in the message message first
+  const processed = await processInputText(text, { controller, services });
+  if (processed.error) {
+    agent.addMessage("user", text);
+    agent.addMessage("model", processed.error);
+    agent.processing = false;
+    agent.waiting = true;
+    return true; // We handled the input, even though we rejected it
+  }
+
   const resolve = pendingResolve;
   pendingResolve = null;
-  const { controller } = bind;
-  const agent = controller.editor.graphEditingAgent;
   agent.waiting = false;
   agent.processing = true;
 
-  const parts: DataPart[] = [{ text }];
+  const parts: DataPart[] = [{ text: processed.processedText }];
   if (assets && assets.length > 0) {
     parts.push(...assets.flatMap((a) => a.data.flatMap((d) => d.parts)));
   }
