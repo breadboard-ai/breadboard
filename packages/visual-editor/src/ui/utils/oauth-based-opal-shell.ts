@@ -963,5 +963,10 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       ".glue-cookie-notification-bar-control"
     );
     control?.click();
+    // The cookie bar applies focus asynchronously after rendering. Defer the
+    // blur so it runs after the bar has finished setting up its UI.
+    requestAnimationFrame(() => {
+      (document.activeElement as HTMLElement | null)?.blur();
+    });
   };
 }
