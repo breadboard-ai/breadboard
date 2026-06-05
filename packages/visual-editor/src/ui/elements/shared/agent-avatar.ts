@@ -38,6 +38,9 @@ export class AgentAvatar extends SignalWatcher(LitElement) {
   @property({ type: Number })
   accessor count = 0;
 
+  @property({ type: Boolean, reflect: true })
+  accessor thinking = false;
+
   @state()
   accessor lookDirection: "left" | "center" | "right" = "center";
 
@@ -45,6 +48,20 @@ export class AgentAvatar extends SignalWatcher(LitElement) {
   accessor blinking = false;
 
   #blinkTimeout: ReturnType<typeof setTimeout> | undefined;
+  #thinkingTimeout: ReturnType<typeof setTimeout> | undefined;
+
+  constructor() {
+    super();
+    this.addEventListener("click", () => {
+      if (!this.supportsHover && !this.isStatic) {
+        this.thinking = true;
+        clearTimeout(this.#thinkingTimeout);
+        this.#thinkingTimeout = setTimeout(() => {
+          this.thinking = false;
+        }, 3000);
+      }
+    });
+  }
 
   static styles = css`
     :host {
@@ -55,6 +72,11 @@ export class AgentAvatar extends SignalWatcher(LitElement) {
       height: var(--bb-grid-size-10);
       box-sizing: border-box;
       position: relative;
+
+      --eyes-drift-x-neg: -2px;
+      --eyes-drift-x-pos: 2px;
+      --eyes-thinking-x: 2px;
+      --eyes-thinking-y: -3px;
     }
 
     :host([supportsHover]) {
@@ -117,16 +139,30 @@ export class AgentAvatar extends SignalWatcher(LitElement) {
       display: flex;
       gap: 5px;
       margin-top: 11px;
-      transition: transform 0.1s ease-in-out;
+      transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
       z-index: 2; /* Above background! */
+      transform: translate(
+        var(--eyes-translate-x, 0px),
+        var(--eyes-translate-y, 0px)
+      );
     }
 
     .eyes.left {
-      transform: translateX(-2px);
+      --eyes-translate-x: var(--eyes-drift-x-neg);
     }
 
     .eyes.right {
-      transform: translateX(2px);
+      --eyes-translate-x: var(--eyes-drift-x-pos);
+    }
+
+    .eyes.thinking {
+      --eyes-translate-y: var(--eyes-thinking-y);
+      --eye-scale-y: 0.3;
+      transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .eyes.thinking .eye {
+      transition-duration: 0.5s;
     }
 
     .eye {
@@ -134,8 +170,9 @@ export class AgentAvatar extends SignalWatcher(LitElement) {
       height: 10px;
       background: var(--light-dark-n-100);
       border-radius: 2px;
-      transition: transform 0.1s ease-in-out;
+      transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
       transform-origin: center;
+      transform: scaleY(var(--eye-scale-y, 1));
     }
 
     .bubble {
@@ -164,7 +201,8 @@ export class AgentAvatar extends SignalWatcher(LitElement) {
     }
 
     .eye.blink {
-      transform: scaleY(0);
+      --eye-scale-y: 0;
+      transition-duration: 0.08s;
     }
 
     .eye:nth-child(2) {
@@ -174,19 +212,15 @@ export class AgentAvatar extends SignalWatcher(LitElement) {
     :host([mode="small"]) {
       width: var(--bb-grid-size-5);
       height: var(--bb-grid-size-5);
+      --eyes-drift-x-neg: -1px;
+      --eyes-drift-x-pos: 1px;
+      --eyes-thinking-x: 1px;
+      --eyes-thinking-y: -1.5px;
     }
 
     :host([mode="small"]) .eyes {
       gap: 2px;
       margin-top: 5px;
-    }
-
-    :host([mode="small"]) .eyes.left {
-      transform: translateX(-1px);
-    }
-
-    :host([mode="small"]) .eyes.right {
-      transform: translateX(1px);
     }
 
     :host([mode="small"]) .eye {
@@ -198,19 +232,15 @@ export class AgentAvatar extends SignalWatcher(LitElement) {
     :host([mode="large"]) {
       width: var(--bb-grid-size-12);
       height: var(--bb-grid-size-12);
+      --eyes-drift-x-neg: -3px;
+      --eyes-drift-x-pos: 3px;
+      --eyes-thinking-x: 3px;
+      --eyes-thinking-y: -4px;
     }
 
     :host([mode="large"]) .eyes {
       gap: 5px;
       margin-top: 12px;
-    }
-
-    :host([mode="large"]) .eyes.left {
-      transform: translateX(-3px);
-    }
-
-    :host([mode="large"]) .eyes.right {
-      transform: translateX(3px);
     }
 
     :host([mode="large"]) .eye {
@@ -222,19 +252,15 @@ export class AgentAvatar extends SignalWatcher(LitElement) {
     :host([mode="hero"]) {
       width: var(--bb-grid-size-16);
       height: var(--bb-grid-size-16);
+      --eyes-drift-x-neg: -4px;
+      --eyes-drift-x-pos: 4px;
+      --eyes-thinking-x: 4px;
+      --eyes-thinking-y: -5px;
     }
 
     :host([mode="hero"]) .eyes {
       gap: 6px;
       margin-top: 16px;
-    }
-
-    :host([mode="hero"]) .eyes.left {
-      transform: translateX(-4px);
-    }
-
-    :host([mode="hero"]) .eyes.right {
-      transform: translateX(4px);
     }
 
     :host([mode="hero"]) .eye {
@@ -254,6 +280,7 @@ export class AgentAvatar extends SignalWatcher(LitElement) {
   disconnectedCallback() {
     super.disconnectedCallback();
     clearTimeout(this.#blinkTimeout);
+    clearTimeout(this.#thinkingTimeout);
   }
 
   #scheduleBlink() {
@@ -291,7 +318,13 @@ export class AgentAvatar extends SignalWatcher(LitElement) {
       <div class="clipper">
         <div class="bg" style=${bgStyle}></div>
       </div>
-      <div class="${classMap({ eyes: true, [this.lookDirection]: true })}">
+      <div
+        class="${classMap({
+          eyes: true,
+          [this.lookDirection]: true,
+          thinking: this.thinking,
+        })}"
+      >
         <div
           class="${classMap({ eye: true, blink: this.blinking })}"
           style=${eyeStyle}
