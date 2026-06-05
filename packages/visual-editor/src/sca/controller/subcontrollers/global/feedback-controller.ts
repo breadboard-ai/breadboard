@@ -10,6 +10,13 @@ import { createTrustedFeedbackURL } from "../../../../ui/trusted-types/feedback-
 import { field } from "../../decorators/field.js";
 import type { TrustedScriptURL } from "trusted-types/lib/index.js";
 import { Utils } from "../../../utils.js";
+import type { LLMContent } from "@breadboard-ai/types";
+import {
+  eventType,
+  eventPayload,
+  type AgentEvent,
+  type Payload,
+} from "../../../../a2/agent/agent-event.js";
 
 type UserFeedbackApi = {
   startFeedback(
@@ -134,6 +141,7 @@ export class FeedbackController extends RootController {
     options: {
       bucketSuffix?: string;
       productData?: Record<string, string>;
+      agentEvents?: Array<ReadonlyArray<AgentEvent>>;
     } & (
       | { flow?: undefined; description?: never }
       | { flow: "submit"; description: string }
@@ -142,7 +150,20 @@ export class FeedbackController extends RootController {
     const LABEL = "Feedback.open";
     const logger = Utils.Logging.getLogger();
 
-    const { bucketSuffix, productData, flow } = options;
+    const { bucketSuffix, productData, flow, agentEvents } = options;
+
+    const finalProductData = { ...productData };
+    if (agentEvents && agentEvents.length > 0) {
+      const formattedConversations = agentEvents
+        .map((events, index) => {
+          const formatted = formatAgentEventHistory(events, 20);
+          return agentEvents.length > 1
+            ? `=== Agent Session #${index + 1} ===\n${formatted}`
+            : formatted;
+        })
+        .join("\n\n");
+      finalProductData.conversation = formattedConversations;
+    }
     const description = "description" in options ? options.description : undefined;
 
     if (this.status !== "closed") {
@@ -155,7 +176,7 @@ export class FeedbackController extends RootController {
       {
         timestamp: Date.now(),
         bucketSuffix,
-        productData,
+        productData: finalProductData,
         flow,
         description,
         status: "pending",
@@ -284,7 +305,7 @@ export class FeedbackController extends RootController {
     }
 
     try {
-      api.startFeedback(config, productData);
+      api.startFeedback(config, finalProductData);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       updateEntryStatus("error", `Error starting feedback: ${msg}`);
@@ -305,4 +326,78 @@ export class FeedbackController extends RootController {
       this.entries = newEntries;
     }
   }
+}
+
+function formatLLMContent(content: LLMContent): string {
+  if (!content || !content.parts) return "";
+  return content.parts
+    .map((part) => {
+      if ("text" in part) {
+        return part.text;
+      }
+      return "";
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
+function formatAgentEventHistory(
+  events: ReadonlyArray<AgentEvent>,
+  n = 20
+): string {
+  const lastN = events.slice(-n);
+  return lastN
+    .map((event) => {
+      const type = eventType(event);
+      const payload = eventPayload(event);
+
+      switch (type) {
+        case "start": {
+          const p = payload as Payload<"start">;
+          return `START OBJECTIVE:\n${formatLLMContent(p.objective)}`;
+        }
+        case "thought": {
+          const p = payload as Payload<"thought">;
+          return `THOUGHT:\n${p.text}`;
+        }
+        case "functionCall": {
+          const p = payload as Payload<"functionCall">;
+          return `CALL TOOL: ${p.name}\nArgs: ${JSON.stringify(p.args)}`;
+        }
+        case "functionResult": {
+          const p = payload as Payload<"functionResult">;
+          return `TOOL RESULT: ${formatLLMContent(p.content)}`;
+        }
+        case "content": {
+          const p = payload as Payload<"content">;
+          return `MODEL:\n${formatLLMContent(p.content)}`;
+        }
+        case "waitForInput": {
+          const p = payload as Payload<"waitForInput">;
+          return `WAIT FOR INPUT:\n${formatLLMContent(p.prompt)}`;
+        }
+        case "waitForChoice": {
+          const p = payload as Payload<"waitForChoice">;
+          const choicesStr = p.choices
+            .map((c) => formatLLMContent(c.content))
+            .join(" | ");
+          return `WAIT FOR CHOICE:\n${formatLLMContent(p.prompt)}\nChoices: ${choicesStr}`;
+        }
+        case "applyEdits": {
+          const p = payload as Payload<"applyEdits">;
+          return `APPLY EDITS: ${p.label}`;
+        }
+        case "error": {
+          const p = payload as Payload<"error">;
+          return `ERROR: ${p.message}`;
+        }
+        case "complete": {
+          const p = payload as Payload<"complete">;
+          return `COMPLETE:\n${JSON.stringify(p.result)}`;
+        }
+        default:
+          return `${type.toUpperCase()} EVENT`;
+      }
+    })
+    .join("\n---\n");
 }
