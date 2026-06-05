@@ -16,7 +16,7 @@ import type {
 } from "@breadboard-ai/types";
 import z from "zod";
 import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
-import { segments } from "./instructions/generated.js";
+import { commonSegments, builderSegments } from "./instructions/generated.js";
 import { A2_TOOLS } from "../../a2-registry.js";
 import type { AgentEventSink } from "../agent-event-sink.js";
 import { defineFunction, mapDefinitions } from "../function-definition.js";
@@ -91,7 +91,7 @@ Any text outside of these tags is the prompt content.`;
 // =============================================================================
 
 function buildInstruction(productName = "Opal"): string {
-  const raw = segments.join("\n\n");
+  const raw = [...commonSegments, ...builderSegments].join("\n\n");
   return raw
     .replaceAll("{{PRODUCT_NAME_PLURAL}}", productName + "s")
     .replaceAll("{{PRODUCT_NAME}}", productName)

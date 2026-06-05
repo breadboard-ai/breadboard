@@ -10,6 +10,7 @@ import type { FunctionGroup, ChatResponse } from "../types.js";
 import type { DataPart } from "@breadboard-ai/types";
 
 import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
+import { commonSegments, guideSegments } from "./instructions/generated.js";
 import type { AgentEventSink } from "../agent-event-sink.js";
 import { bind } from "../../../sca/actions/graph/graph-actions.js";
 import { graphOverviewYaml, describeSelection } from "./graph-overview.js";
@@ -35,7 +36,9 @@ export { getChatFunctionGroup };
  */
 function getChatFunctionGroup(
   sink: AgentEventSink,
-  translator: EditingAgentPidginTranslator
+  translator: EditingAgentPidginTranslator,
+  isReadOnly = false,
+  productName = "Opal"
 ): FunctionGroup {
   let lastSnapshot: GraphSnapshot | null = null;
 
@@ -154,9 +157,7 @@ function getChatFunctionGroup(
     ),
   ];
 
-  return {
-    ...mapDefinitions(functions),
-    instruction: `## Conversation Flow
+  let flowInstruction = `## Conversation Flow
 
 After completing each user request, always call "wait_for_user_input" to receive the next instruction. Use the message parameter to tell the user what you did. Never stop without calling it — the conversation is ongoing.
 
@@ -164,6 +165,18 @@ The response always includes "current_graph" with the latest graph overview. Use
 
 When "selected_steps" is present, it lists the steps the user has selected on the canvas. Use the selection as implicit context — for example, if the user says "edit this step" or "delete it", they likely mean the selected step. When no selection is present, ask the user to clarify which step they mean.
 
-When the response includes "graph_changes", the user manually edited the graph while you were waiting. Acknowledge those changes naturally — for example, "I see you added a new step" or "Looks like you changed the title of the Research step." Then address their message.`,
+When the response includes "graph_changes", the user manually edited the graph while you were waiting. Acknowledge those changes naturally — for example, "I see you added a new step" or "Looks like you changed the title of the Research step." Then address their message.`;
+
+  if (isReadOnly) {
+    const raw = [...commonSegments, ...guideSegments].join("\n\n");
+    const guideInstruction = raw
+      .replaceAll("{{PRODUCT_NAME_PLURAL}}", productName + "s")
+      .replaceAll("{{PRODUCT_NAME}}", productName);
+    flowInstruction = `${guideInstruction}\n\n${flowInstruction}`;
+  }
+
+  return {
+    ...mapDefinitions(functions),
+    instruction: flowInstruction,
   };
 }

@@ -54,6 +54,7 @@ async function makeControllerStub(id: string): Promise<AppController> {
       graphEditingAgent: agent,
       devtools,
       workbench: { eligible: false, view: "classic" },
+      graph: { readOnly: false, url: "http://example.com" },
     },
     global: { onboarding: { appMode: "canvas" } },
   } as unknown as AppController;

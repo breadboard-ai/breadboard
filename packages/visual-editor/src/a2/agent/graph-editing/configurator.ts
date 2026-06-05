@@ -22,10 +22,16 @@ function buildGraphEditingFunctionGroups(args: {
   sink: AgentEventSink;
   translator: EditingAgentPidginTranslator;
   productName?: string;
+  isReadOnly?: boolean;
 }): FunctionGroup[] {
-  const { translator, productName } = args;
+  const { translator, productName, isReadOnly } = args;
+  if (isReadOnly) {
+    return [
+      getChatFunctionGroup(args.sink, translator, isReadOnly, productName),
+    ];
+  }
   return [
     getGraphEditingFunctionGroup(args.sink, translator, productName),
-    getChatFunctionGroup(args.sink, translator),
+    getChatFunctionGroup(args.sink, translator, isReadOnly, productName),
   ];
 }
