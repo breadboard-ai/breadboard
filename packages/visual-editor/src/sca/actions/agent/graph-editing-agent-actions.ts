@@ -35,12 +35,7 @@ import {
   GraphEditingManager,
   GraphThemeGenerator,
 } from "../../../a2/agent/graph-editing/graph-editing-manager.js";
-import {
-  eventType,
-  eventPayload,
-  type AgentEvent,
-  type Payload,
-} from "../../../a2/agent/agent-event.js";
+
 
 export { bind, startGraphEditingAgent, resolveGraphEditingInput };
 
@@ -340,80 +335,6 @@ export const resetGraphEditingAgent = asAction(
 
 let feedbackTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-function formatLLMContent(content: LLMContent): string {
-  if (!content || !content.parts) return "";
-  return content.parts
-    .map((part) => {
-      if ("text" in part) {
-        return part.text;
-      }
-      return "";
-    })
-    .filter(Boolean)
-    .join("\n");
-}
-
-function formatAgentEventHistory(
-  events: ReadonlyArray<AgentEvent>,
-  n = 20
-): string {
-  const lastN = events.slice(-n);
-  return lastN
-    .map((event) => {
-      const type = eventType(event);
-      const payload = eventPayload(event);
-
-      switch (type) {
-        case "start": {
-          const p = payload as Payload<"start">;
-          return `START OBJECTIVE:\n${formatLLMContent(p.objective)}`;
-        }
-        case "thought": {
-          const p = payload as Payload<"thought">;
-          return `THOUGHT:\n${p.text}`;
-        }
-        case "functionCall": {
-          const p = payload as Payload<"functionCall">;
-          return `CALL TOOL: ${p.name}\nArgs: ${JSON.stringify(p.args)}`;
-        }
-        case "functionResult": {
-          const p = payload as Payload<"functionResult">;
-          return `TOOL RESULT: ${formatLLMContent(p.content)}`;
-        }
-        case "content": {
-          const p = payload as Payload<"content">;
-          return `MODEL:\n${formatLLMContent(p.content)}`;
-        }
-        case "waitForInput": {
-          const p = payload as Payload<"waitForInput">;
-          return `WAIT FOR INPUT:\n${formatLLMContent(p.prompt)}`;
-        }
-        case "waitForChoice": {
-          const p = payload as Payload<"waitForChoice">;
-          const choicesStr = p.choices
-            .map((c) => formatLLMContent(c.content))
-            .join(" | ");
-          return `WAIT FOR CHOICE:\n${formatLLMContent(p.prompt)}\nChoices: ${choicesStr}`;
-        }
-        case "applyEdits": {
-          const p = payload as Payload<"applyEdits">;
-          return `APPLY EDITS: ${p.label}`;
-        }
-        case "error": {
-          const p = payload as Payload<"error">;
-          return `ERROR: ${p.message}`;
-        }
-        case "complete": {
-          const p = payload as Payload<"complete">;
-          return `COMPLETE:\n${JSON.stringify(p.result)}`;
-        }
-        default:
-          return `${type.toUpperCase()} EVENT`;
-      }
-    })
-    .join("\n---\n");
-}
-
 export const setOpieReaction = asAction(
   "GraphEditingAgent.setOpieReaction",
   {
@@ -435,14 +356,13 @@ export const setOpieReaction = asAction(
     if (newReaction !== "none") {
       feedbackTimeoutId = setTimeout(() => {
         const events = agent.history;
-        const conversation = formatAgentEventHistory(events, 20);
         const productData = {
           reaction: newReaction,
-          conversation,
         };
         controller.global.feedback.open({
           bucketSuffix: "opie",
           productData,
+          agentEvents: [events],
           flow: "submit",
           description: `User sentiment: ${newReaction}`,
         });

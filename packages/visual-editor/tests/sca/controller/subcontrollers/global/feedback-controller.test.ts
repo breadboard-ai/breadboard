@@ -17,6 +17,7 @@ import {
 import { FeedbackController } from "../../../../../src/sca/controller/subcontrollers/global/feedback-controller.js";
 import type { AppEnvironment } from "../../../../../src/sca/environment/environment.js";
 import { setDOM, unsetDOM } from "../../../../fake-dom.js";
+import { type AgentEvent } from "../../../../../src/a2/agent/agent-event.js";
 
 type UserFeedbackConfig = {
   productId: string;
@@ -48,6 +49,7 @@ suite("FeedbackController", () => {
   let mockEnv: AppEnvironment;
   let windowWithUserFeedback: WindowWithUserFeedbackApi;
   let providedConfig: UserFeedbackConfig;
+  let providedProductData: Record<string, string> | undefined;
 
   before(() => {
     setDOM();
@@ -83,10 +85,16 @@ suite("FeedbackController", () => {
     await controller.isHydrated;
 
     const mockApi = {
-      startFeedback: mock.fn((config: UserFeedbackConfig) => {
-        if (config.onLoadCallback) config.onLoadCallback();
-        providedConfig = config;
-      }),
+      startFeedback: mock.fn(
+        (
+          config: UserFeedbackConfig,
+          productData?: Record<string, string>
+        ) => {
+          if (config.onLoadCallback) config.onLoadCallback();
+          providedConfig = config;
+          providedProductData = productData;
+        }
+      ),
     };
     windowWithUserFeedback.userfeedback = { api: mockApi };
 
@@ -104,6 +112,7 @@ suite("FeedbackController", () => {
   afterEach(() => {
     mock.reset();
     windowWithUserFeedback.userfeedback = undefined;
+    providedProductData = undefined;
   });
 
   test("Initial status is closed", () => {
@@ -223,5 +232,37 @@ suite("FeedbackController", () => {
     const lastEntry = controller.entries[controller.entries.length - 1];
     assert.strictEqual(lastEntry.status, "error");
     assert.match(lastEntry.errorMessage || "", /Headless feedback submission requires a valid 'description'/);
+  });
+
+  test("open() with agentEvents formats and sends conversation in productData", async () => {
+    const events: AgentEvent[] = [
+      { start: { objective: { parts: [{ text: "Solve world hunger" }] } } },
+      { thought: { text: "Thinking of a recipe..." } },
+    ];
+    await controller.open({
+      agentEvents: [events],
+    });
+
+    assert.ok(providedProductData);
+    assert.strictEqual(providedProductData.conversation.includes("START OBJECTIVE:\nSolve world hunger"), true);
+    assert.strictEqual(providedProductData.conversation.includes("THOUGHT:\nThinking of a recipe..."), true);
+  });
+
+  test("open() with multiple agentEvents arrays formats and separates them in productData", async () => {
+    const session1: AgentEvent[] = [
+      { start: { objective: { parts: [{ text: "Session 1 objective" }] } } },
+    ];
+    const session2: AgentEvent[] = [
+      { start: { objective: { parts: [{ text: "Session 2 objective" }] } } },
+    ];
+    await controller.open({
+      agentEvents: [session1, session2],
+    });
+
+    assert.ok(providedProductData);
+    assert.strictEqual(providedProductData.conversation.includes("=== Agent Session #1 ==="), true);
+    assert.strictEqual(providedProductData.conversation.includes("START OBJECTIVE:\nSession 1 objective"), true);
+    assert.strictEqual(providedProductData.conversation.includes("=== Agent Session #2 ==="), true);
+    assert.strictEqual(providedProductData.conversation.includes("START OBJECTIVE:\nSession 2 objective"), true);
   });
 });

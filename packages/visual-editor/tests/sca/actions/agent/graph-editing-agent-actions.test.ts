@@ -27,7 +27,10 @@ import {
   type AgentRunConfig,
 } from "../../../../src/a2/agent/agent-service.js";
 import type { LocalAgentRun } from "../../../../src/a2/agent/local-agent-run.js";
-import type { WaitForInputPayload } from "../../../../src/a2/agent/agent-event.js";
+import {
+  type AgentEvent,
+  type WaitForInputPayload,
+} from "../../../../src/a2/agent/agent-event.js";
 import type { AppController } from "../../../../src/sca/controller/controller.js";
 import type { AppServices } from "../../../../src/sca/services/services.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
@@ -806,9 +809,9 @@ suite("graph-editing-agent-actions", () => {
               bucketSuffix: string;
               flow: string;
               description: string;
+              agentEvents: Array<ReadonlyArray<AgentEvent>>;
               productData: {
                 reaction: string;
-                conversation: string;
               };
             },
           ];
@@ -820,8 +823,8 @@ suite("graph-editing-agent-actions", () => {
     assert.strictEqual(args.bucketSuffix, "opie");
     assert.strictEqual(args.flow, "submit");
     assert.strictEqual(args.description, "User sentiment: up");
-    assert.ok(args.productData.conversation.includes("START OBJECTIVE:\ntest prompt"));
-    assert.ok(args.productData.conversation.includes("THOUGHT:\nThinking about test prompt..."));
     assert.strictEqual(args.productData.reaction, "up");
+    assert.strictEqual(args.agentEvents.length, 1);
+    assert.strictEqual(args.agentEvents[0].length, 2);
   });
 });
