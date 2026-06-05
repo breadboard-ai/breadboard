@@ -12,7 +12,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
 
 import "./expanding-textarea.js";
-import "../graph-editing-chat/opie-avatar.js";
+import "../shared/agent-avatar.js";
 import * as StringsHelper from "../../strings/helper.js";
 import * as Styles from "../../styles/styles.js";
 import type { SCA } from "../../../sca/sca.js";
@@ -69,7 +69,7 @@ export class OpieInputLite extends SignalWatcher(LitElement) {
         }
       }
 
-      bb-opie-avatar {
+      bb-agent-avatar {
         flex-shrink: 0;
       }
 
@@ -170,11 +170,11 @@ export class OpieInputLite extends SignalWatcher(LitElement) {
     return html`
       <div id="container">
         <div id="input-pill">
-          <bb-opie-avatar
+          <bb-agent-avatar
             mode="large"
             .supportsHover=${false}
             ?static=${this.isCreating}
-          ></bb-opie-avatar>
+          ></bb-agent-avatar>
           <bb-expanding-textarea
             ${ref(this.descriptionInput)}
             .disabled=${this.isCreating || !this.editable}

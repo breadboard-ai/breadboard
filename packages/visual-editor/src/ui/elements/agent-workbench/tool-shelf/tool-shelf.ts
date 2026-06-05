@@ -21,8 +21,6 @@ export class ToolShelf extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
-  #expanded = false;
-
   static styles = [
     Styles.HostType.type,
     Styles.HostIcons.icons,
@@ -50,13 +48,8 @@ export class ToolShelf extends SignalWatcher(LitElement) {
       .section-header {
         display: flex;
         align-items: center;
-        height: 48px;
-        padding: 0 var(--bb-grid-size-4);
-        background: var(--light-dark-n-100);
-        border-top: 1px solid var(--light-dark-n-90);
-        cursor: pointer;
+        margin-bottom: var(--bb-grid-size-7);
         user-select: none;
-        transition: background-color 0.15s ease;
 
         & h2 {
           margin: 0;
@@ -65,52 +58,19 @@ export class ToolShelf extends SignalWatcher(LitElement) {
             var(--bb-font-family);
           color: var(--light-dark-n-20);
         }
-
-        & .g-icon {
-          margin-right: var(--bb-grid-size-2);
-          font-size: 20px;
-          color: var(--light-dark-n-40);
-        }
-
-        & .chevron {
-          margin-right: 0;
-          margin-left: auto;
-          transition: transform 0.2s cubic-bezier(0, 0, 0.3, 1);
-        }
-
-        &:hover {
-          background: light-dark(var(--n-95), var(--n-20));
-        }
-      }
-
-      :host([expanded]) .section-header {
-        border-bottom: 1px solid var(--light-dark-n-90);
-      }
-
-      :host([expanded]) .chevron {
-        transform: rotate(180deg);
       }
 
       .tools-list {
-        display: none;
+        display: flex;
         flex-direction: column;
         padding: var(--bb-grid-size) 0;
-      }
-
-      :host([expanded]) .tools-list {
-        display: flex;
       }
 
       .tool-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
-        transition: background-color 0.15s ease;
-      }
-
-      .tool-row:hover {
-        background: light-dark(var(--n-98), var(--n-15));
+        padding: var(--bb-grid-size-2) 0;
       }
 
       .tool-info-wrapper {
@@ -128,7 +88,7 @@ export class ToolShelf extends SignalWatcher(LitElement) {
         height: 40px;
         border-radius: var(--bb-grid-size-2);
         background: var(--light-dark-n-95);
-        margin-right: var(--bb-grid-size-3);
+        margin-right: var(--bb-grid-size-5);
         flex-shrink: 0;
 
         & .g-icon {
@@ -204,8 +164,8 @@ export class ToolShelf extends SignalWatcher(LitElement) {
       .switch {
         position: relative;
         display: inline-block;
-        width: 40px;
-        height: 24px;
+        width: 52px;
+        height: 32px;
         flex-shrink: 0;
       }
 
@@ -222,9 +182,9 @@ export class ToolShelf extends SignalWatcher(LitElement) {
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: light-dark(var(--n-80), var(--n-40));
-        transition: 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-        border-radius: 24px;
+        background-color: light-dark(#f1f3f4, var(--n-20));
+        transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 16px;
       }
 
       .slider:before {
@@ -232,24 +192,27 @@ export class ToolShelf extends SignalWatcher(LitElement) {
         content: "";
         height: 16px;
         width: 16px;
-        left: 4px;
-        bottom: 4px;
-        background-color: white;
-        transition: 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+        left: 8px;
+        top: 8px;
+        background-color: light-dark(#bdc1c6, var(--n-50));
+        transition:
+          transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+          background-color 0.15s ease;
         border-radius: 50%;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        transform-origin: center;
       }
 
       input:checked + .slider {
-        background-color: var(--ui-custom-o-100);
+        background-color: light-dark(#137333, #34a853);
       }
 
       input:focus + .slider {
-        box-shadow: 0 0 1px var(--ui-custom-o-100);
+        box-shadow: 0 0 1px light-dark(#137333, #34a853);
       }
 
       input:checked + .slider:before {
-        transform: translateX(16px);
+        transform: translateX(20px) scale(1.5);
+        background-color: white;
       }
     `,
   ];
@@ -260,11 +223,6 @@ export class ToolShelf extends SignalWatcher(LitElement) {
       tool.title ?? "Tool",
       enabled
     );
-  }
-
-  #onToggleExpanded() {
-    this.#expanded = !this.#expanded;
-    this.toggleAttribute("expanded", this.#expanded);
   }
 
   render() {
@@ -336,10 +294,8 @@ export class ToolShelf extends SignalWatcher(LitElement) {
 
     return html`
       <div class="tool-shelf-wrapper">
-        <div class="section-header" @click=${this.#onToggleExpanded}>
-          <span class="g-icon filled round">home_repair_service</span>
+        <div class="section-header">
           <h2>Tools & Skills</h2>
-          <span class="g-icon chevron">keyboard_arrow_down</span>
         </div>
         <div class="tools-list">
           ${allTools.map(({ tool, categoryClass }) => {

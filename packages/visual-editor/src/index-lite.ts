@@ -18,7 +18,7 @@ import { StateEvent, StateEventDetailMap } from "./ui/events/events.js";
 import { LiteEditInputController } from "./ui/lite/input/editor-input-lite.js";
 import "./ui/elements/input/opie-input-lite.js";
 import "./ui/elements/graph-editing-chat/chat-panel.js";
-import "./ui/elements/graph-editing-chat/opie-avatar.js";
+import "./ui/elements/shared/agent-avatar.js";
 
 import { reactive } from "./sca/reactive.js";
 import { isHydrating } from "./sca/utils/helpers/helpers.js";
@@ -370,7 +370,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             var(--bb-grid-size-2) var(--bb-grid-size-3);
           border-top: 1px solid var(--light-dark-n-95);
 
-          & bb-opie-avatar {
+          & bb-agent-avatar {
             flex: 1 0 auto;
           }
 

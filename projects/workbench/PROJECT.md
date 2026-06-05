@@ -459,7 +459,7 @@ drop position.
 
 #### packages/visual-editor — UI
 
-- [ ] `bb-objective-editor` → refactor into `bb-agent-config-column`:
+- [x] `bb-objective-editor` → refactor into `bb-agent-config-column`:
   - **Agent name heading** — an editable `input` or `contenteditable` element
     at the top, styled to match the mock (Google Sans Flex, 32px, weight 400,
     line-height 40px). Reads from the graph's agent node title. Writes via
@@ -469,17 +469,37 @@ drop position.
     No "Role" section — that will be LLM-generated in the future.
   - **40px gap** between each section (`gap: 40px` on the column flex
     container).
-- [ ] `bb-asset-shelf` — new element, same pattern as `bb-tool-shelf`:
+- [x] `bb-asset-shelf` — new element, same pattern as `bb-tool-shelf`:
   - Reads the graph assets store to list all assets referenced in the prompt.
   - Each row: asset icon (type-derived), asset name, type badge, remove button.
   - "Add asset" row at the bottom — opens the existing asset picker modal.
   - **Drag source**: each asset row is draggable. On drag start, the editor
     receives the asset identifier and inserts a chiclet at the drop position.
   - Expanded by default (no collapsed state initially).
-- [ ] `bb-tool-shelf` — change default state to expanded (currently collapsed).
-- [ ] `bb-agent-workbench` — update the right column to render
+- [x] `bb-tool-shelf` — change default state to expanded (currently collapsed).
+- [x] `bb-agent-workbench` — update the right column to render
       `bb-agent-config-column` instead of the separate `bb-objective-editor` +
       `bb-tool-shelf` composition.
+
+---
+
+## Phase 4D — Advanced Asset Previews & Editing
+
+### 🎯 Objective
+
+The Asset Shelf is upgraded to show all assets on the board (sorted with "In use" at the top), with advanced visual miniatures/previews replacing flat icons. Clicking an asset row opens the asset editor in a modal, allowing the user to view full previews, edit details, or change URLs (e.g. YouTube video URLs).
+
+**Observable proof:** Open the workbench. The Asset Shelf lists all assets. The ones currently referenced in the instructions editor have a green "In use" status pill. The left icons are dynamic: images and drawings show a mini image, YouTube videos show their actual video poster frame, audio shows a play/pause toggle, and PDFs/Text show high-contrast icons. Click on a YouTube video row — a modal opens pre-filled with the current URL. Change the URL and save — the asset is updated in the BGL and the thumbnail immediately refreshes.
+
+### Changes
+
+#### packages/visual-editor — UI
+
+- [x] All Assets listing & "In use" status pills — list all board assets, sort in-use first, and add a status-style green pill for referenced assets.
+- [x] Chiclet-aligned styling — use official `var(--ui-asset-secondary)` backgrounds and `var(--light-dark-n-10)` text/icon colors.
+- [x] Advanced Miniature Previews — render inline base64/Drive proxy images for images/drawings, and YouTube poster frame thumbnails for videos.
+- [ ] Asset Editing & Detail View — clicking an asset row opens `<bb-add-asset-modal>` in edit mode (by passing a new `editingAsset` prop), mapping the asset's type to pre-populate the corresponding input fields (e.g. YouTube URL).
+- [ ] SCA Asset Update integration — saving the modal dispatches the `Asset.update` action to update the graph.
 
 #### packages/visual-editor — SCA
 

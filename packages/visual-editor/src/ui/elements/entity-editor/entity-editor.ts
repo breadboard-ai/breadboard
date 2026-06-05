@@ -81,7 +81,7 @@ import { icons } from "../../styles/icons.js";
 import { getBoardUrlFromCurrentWindow } from "../../navigation/board-id.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
 
-import "../graph-editing-chat/opie-avatar.js";
+import "../shared/agent-avatar.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -822,7 +822,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             cursor: pointer;
             padding: 0;
 
-            & > bb-opie-avatar {
+            & > bb-agent-avatar {
               pointer-events: none;
             }
 
@@ -1585,11 +1585,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
                     this.dispatchEvent(new HideTooltipEvent());
                   }}
                 >
-                  <bb-opie-avatar
+                  <bb-agent-avatar
                     mode="small"
                     .supportsHover=${false}
                     static
-                  ></bb-opie-avatar>
+                  ></bb-agent-avatar>
                 </button>`
               : html`<bb-flowgen-in-step-button
                   monochrome

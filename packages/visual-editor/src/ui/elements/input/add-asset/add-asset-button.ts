@@ -108,15 +108,15 @@ export class AddAssetButton extends LitElement {
         gap: var(--bb-grid-size-2);
         font: 500 var(--bb-label-medium) / var(--bb-label-line-height-medium)
           var(--bb-font-family);
-        background: var(--light-dark-n-95);
-        color: var(--light-dark-n-30);
+        background: var(--background-color, var(--light-dark-n-95));
+        color: var(--text-color, var(--light-dark-n-30));
         opacity: 1;
-        border: 1px solid var(--light-dark-n-90);
+        border: var(--button-border, 1px solid var(--light-dark-n-90));
       }
 
       :host([label]:not([variant="seamless"])) #add-asset:hover {
-        background: var(--light-dark-n-90);
-        color: var(--light-dark-n-10);
+        background: var(--background-hover-color, var(--light-dark-n-90));
+        color: var(--text-hover-color, var(--light-dark-n-10));
       }
 
       :host([label]:not([variant="seamless"])) #add-asset .g-icon {

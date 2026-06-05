@@ -9,8 +9,8 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 
-@customElement("bb-opie-avatar")
-export class OpieAvatar extends SignalWatcher(LitElement) {
+@customElement("bb-agent-avatar")
+export class AgentAvatar extends SignalWatcher(LitElement) {
   @property({ type: String, reflect: true })
   accessor mode: "hero" | "large" | "normal" | "small" = "normal";
 
@@ -30,10 +30,10 @@ export class OpieAvatar extends SignalWatcher(LitElement) {
   accessor highlighted = false;
 
   @property({ type: String })
-  accessor bgColor = "var(--light-dark-n-0)";
+  accessor bgColor = "var(--avatar-bg, var(--light-dark-n-0))";
 
   @property({ type: String })
-  accessor fgColor = "var(--light-dark-n-50)";
+  accessor fgColor = "var(--avatar-fg, var(--light-dark-n-50))";
 
   @property({ type: Number })
   accessor count = 0;

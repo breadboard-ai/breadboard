@@ -25,7 +25,7 @@ import { ok } from "@breadboard-ai/utils";
 import { UserNote, NoteLocation } from "../types.js";
 import "./notes-container.js";
 import { A2_TOOLS } from "../../../../src/a2/a2-registry.js";
-import "../../../../src/ui/elements/graph-editing-chat/opie-avatar.js";
+import "../../../../src/ui/elements/shared/agent-avatar.js";
 import "../../../../src/ui/elements/json-tree/json-tree.js";
 import { parseThought } from "../../../../src/a2/agent/thought-parser.js";
 import {
@@ -104,7 +104,6 @@ class BGLViewer extends LitElement {
   @property()
   accessor notes: UserNote[] = [];
 
-
   @provide({ context: scaContext })
   accessor sca: any = {
     controller: {
@@ -112,7 +111,9 @@ class BGLViewer extends LitElement {
         graph: {
           getMetadataForNode: (id: string, _gId: string) => {
             const node = this.graph?.nodes.find((n: any) => n.id === id);
-            const a2Component = node ? A2_COMPONENT_MAP.get(node.type) : undefined;
+            const a2Component = node
+              ? A2_COMPONENT_MAP.get(node.type)
+              : undefined;
             return ok({
               icon: node?.metadata?.icon || a2Component?.icon || "hub",
               tags: node?.metadata?.tags || [],
@@ -125,7 +126,9 @@ class BGLViewer extends LitElement {
             }),
           getTitleForNode: (id: string, _gId: string) => {
             const node = this.graph?.nodes.find((n: any) => n.id === id);
-            const a2Component = node ? A2_COMPONENT_MAP.get(node.type) : undefined;
+            const a2Component = node
+              ? A2_COMPONENT_MAP.get(node.type)
+              : undefined;
             return ok(node?.metadata?.title || a2Component?.title || id);
           },
           tools: new Map(A2_TOOLS),
@@ -512,13 +515,19 @@ class BGLViewer extends LitElement {
       return;
     }
 
-    const graphDescriptor = JSON.parse(JSON.stringify(this.graph)) as GraphDescriptor;
+    const graphDescriptor = JSON.parse(
+      JSON.stringify(this.graph)
+    ) as GraphDescriptor;
     const graphNodes = graphDescriptor.nodes || [];
     const graphEdges = graphDescriptor.edges || [];
 
     const allNodesAtZero = graphNodes.every((node) => {
       const visual = (node.metadata?.visual || {}) as any;
-      return typeof visual.x !== "number" || typeof visual.y !== "number" || (visual.x === 0 && visual.y === 0);
+      return (
+        typeof visual.x !== "number" ||
+        typeof visual.y !== "number" ||
+        (visual.x === 0 && visual.y === 0)
+      );
     });
 
     if (allNodesAtZero && graphNodes.length > 0) {
@@ -561,9 +570,9 @@ class BGLViewer extends LitElement {
             a2Tool?.icon ||
             undefined;
           const tags =
-            nodeDescriptor.metadata?.tags ||
-            (a2Component as any)?.category ? [ (a2Component as any).category ] :
-            [];
+            nodeDescriptor.metadata?.tags || (a2Component as any)?.category
+              ? [(a2Component as any).category]
+              : [];
 
           return {
             currentMetadata: () => ({
@@ -587,17 +596,24 @@ class BGLViewer extends LitElement {
           }) as any,
         currentPorts: () => {
           const config = nodeDescriptor.configuration || {};
-          const synthesizedPorts = Object.entries(config).map(([key, value]) => {
-            return {
-              name: key,
-              title: key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()),
-              value: value,
-              schema: {
-                type: typeof value === "object" && value !== null ? "object" : "string",
-                behavior: ["hint-preview", "llm-content"],
-              },
-            };
-          });
+          const synthesizedPorts = Object.entries(config).map(
+            ([key, value]) => {
+              return {
+                name: key,
+                title: key
+                  .replace(/([A-Z])/g, " $1")
+                  .replace(/^./, (str) => str.toUpperCase()),
+                value: value,
+                schema: {
+                  type:
+                    typeof value === "object" && value !== null
+                      ? "object"
+                      : "string",
+                  behavior: ["hint-preview", "llm-content"],
+                },
+              };
+            }
+          );
 
           return {
             inputs: { ports: synthesizedPorts },
@@ -736,13 +752,22 @@ class BGLViewer extends LitElement {
       if (loc.type !== location.type) return false;
 
       if (loc.type === "node-config" && location.type === "node-config") {
-        return loc.nodeId === location.nodeId && loc.fieldName === location.fieldName;
+        return (
+          loc.nodeId === location.nodeId && loc.fieldName === location.fieldName
+        );
       }
       if (loc.type === "rater" && location.type === "rater") {
-        return loc.dimension === location.dimension && loc.fieldName === location.fieldName;
+        return (
+          loc.dimension === location.dimension &&
+          loc.fieldName === location.fieldName
+        );
       }
       if (loc.type === "transcript" && location.type === "transcript") {
-        return loc.turn === location.turn && loc.eventIndex === location.eventIndex && loc.fieldName === location.fieldName;
+        return (
+          loc.turn === location.turn &&
+          loc.eventIndex === location.eventIndex &&
+          loc.fieldName === location.fieldName
+        );
       }
       return false;
     });
@@ -772,11 +797,23 @@ class BGLViewer extends LitElement {
           </div>
           ${Object.entries(config).map(([key, value]) => {
             let isLLMContent = false;
-            let formattedValue: any = typeof value === "string" ? value : JSON.stringify(value, null, 2);
-            if ((key === "config$prompt" || key === "description" || key === "text") && typeof value === "object" && value !== null && "parts" in (value as any)) {
+            let formattedValue: any =
+              typeof value === "string"
+                ? value
+                : JSON.stringify(value, null, 2);
+            if (
+              (key === "config$prompt" ||
+                key === "description" ||
+                key === "text") &&
+              typeof value === "object" &&
+              value !== null &&
+              "parts" in (value as any)
+            ) {
               isLLMContent = true;
               const parts = (value as any).parts || [];
-              const textParts = parts.filter((p: any) => typeof p.text === "string").map((p: any) => p.text);
+              const textParts = parts
+                .filter((p: any) => typeof p.text === "string")
+                .map((p: any) => p.text);
               if (textParts.length > 0) {
                 formattedValue = textParts.join("\n\n");
               }
@@ -801,11 +838,17 @@ class BGLViewer extends LitElement {
                     icon = "spark";
                   }
                 } else if (part.type === "in") {
-                  const sourceNode = this.graph?.nodes.find((n: any) => n.id === part.path);
+                  const sourceNode = this.graph?.nodes.find(
+                    (n: any) => n.id === part.path
+                  );
                   if (sourceNode) {
                     const a2Component = A2_COMPONENT_MAP.get(sourceNode.type);
-                    icon = sourceNode.metadata?.icon || a2Component?.icon || "arrow_forward";
-                    title = sourceNode.metadata?.title || a2Component?.title || title;
+                    icon =
+                      sourceNode.metadata?.icon ||
+                      a2Component?.icon ||
+                      "arrow_forward";
+                    title =
+                      sourceNode.metadata?.title || a2Component?.title || title;
                   } else {
                     icon = "arrow_forward";
                   }
@@ -819,10 +862,10 @@ class BGLViewer extends LitElement {
 
                 const classes = {
                   "chip-chiclet": true,
-                  "invalid": !!part.invalid,
-                  "tool": part.type === "tool",
-                  "asset": part.type === "asset",
-                  "in": part.type === "in",
+                  invalid: !!part.invalid,
+                  tool: part.type === "tool",
+                  asset: part.type === "asset",
+                  in: part.type === "in",
                 };
 
                 return html`<span class=${classMap(classes)} title=${part.path}>
@@ -839,9 +882,20 @@ class BGLViewer extends LitElement {
             };
 
             return html`<div class="config-item">
-              <h3>${key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}</h3>
-              <pre>${isLLMContent && typeof formattedValue === "string" ? renderChiclets(formattedValue) : formattedValue}</pre>
-              <ui-notes-container .location=${location} .notes=${this.#getNotesForLocation(location)}></ui-notes-container>
+              <h3>
+                ${key
+                  .replace(/([A-Z])/g, " $1")
+                  .replace(/^./, (str) => str.toUpperCase())}
+              </h3>
+              <pre>
+${isLLMContent && typeof formattedValue === "string"
+                  ? renderChiclets(formattedValue)
+                  : formattedValue}</pre
+              >
+              <ui-notes-container
+                .location=${location}
+                .notes=${this.#getNotesForLocation(location)}
+              ></ui-notes-container>
             </div>`;
           })}
         </div>
@@ -877,31 +931,78 @@ class BGLViewer extends LitElement {
             const overallJudgement = (raterObj as any)?.overall_judgement;
             if (!overallJudgement) return nothing;
 
-            const isPass = overallJudgement === 'PASS';
-            const isPartial = overallJudgement === 'PARTIAL';
-            const isFail = overallJudgement === 'FAIL';
-            const color = isPass ? '#34a853' : (isPartial ? '#fbbc04' : (isFail ? '#ea4335' : 'var(--light-dark-n-60)'));
-            const bgColor = isPass ? 'oklch(from #34a853 l c h / 0.12)' : (isPartial ? 'oklch(from #fbbc04 l c h / 0.12)' : (isFail ? 'oklch(from #ea4335 l c h / 0.12)' : 'var(--elevated-background-light)'));
-            const borderColor = isPass ? '#34a853' : (isPartial ? '#fbbc04' : (isFail ? '#ea4335' : 'var(--border-color)'));
-            const icon = isPass ? 'check_circle' : (isPartial ? 'warning' : (isFail ? 'cancel' : 'info'));
-            
+            const isPass = overallJudgement === "PASS";
+            const isPartial = overallJudgement === "PARTIAL";
+            const isFail = overallJudgement === "FAIL";
+            const color = isPass
+              ? "#34a853"
+              : isPartial
+                ? "#fbbc04"
+                : isFail
+                  ? "#ea4335"
+                  : "var(--light-dark-n-60)";
+            const bgColor = isPass
+              ? "oklch(from #34a853 l c h / 0.12)"
+              : isPartial
+                ? "oklch(from #fbbc04 l c h / 0.12)"
+                : isFail
+                  ? "oklch(from #ea4335 l c h / 0.12)"
+                  : "var(--elevated-background-light)";
+            const borderColor = isPass
+              ? "#34a853"
+              : isPartial
+                ? "#fbbc04"
+                : isFail
+                  ? "#ea4335"
+                  : "var(--border-color)";
+            const icon = isPass
+              ? "check_circle"
+              : isPartial
+                ? "warning"
+                : isFail
+                  ? "cancel"
+                  : "info";
+
             const location: NoteLocation = {
               type: "rater",
               fieldName: "overall_judgement",
             };
 
-            return html`<div style="background: ${bgColor}; border: 1px solid oklch(from ${borderColor} l c h / 0.4); border-radius: var(--bb-grid-size-3); padding: var(--bb-grid-size-4); margin-bottom: var(--bb-grid-size-5); display: flex; flex-direction: column; gap: var(--bb-grid-size-3);">
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: var(--bb-grid-size-3);">
-                  <span class="g-icon filled round" style="color: ${color}; font-size: 28px;">${icon}</span>
+            return html`<div
+              style="background: ${bgColor}; border: 1px solid oklch(from ${borderColor} l c h / 0.4); border-radius: var(--bb-grid-size-3); padding: var(--bb-grid-size-4); margin-bottom: var(--bb-grid-size-5); display: flex; flex-direction: column; gap: var(--bb-grid-size-3);"
+            >
+              <div
+                style="display: flex; align-items: center; justify-content: space-between;"
+              >
+                <div
+                  style="display: flex; align-items: center; gap: var(--bb-grid-size-3);"
+                >
+                  <span
+                    class="g-icon filled round"
+                    style="color: ${color}; font-size: 28px;"
+                    >${icon}</span
+                  >
                   <div>
-                    <h3 style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--light-dark-n-40); letter-spacing: 0.5px; margin: 0 0 4px 0;">Overall Judgement</h3>
-                    <div style="font-size: 22px; font-weight: 700; color: var(--light-dark-n-0);">${overallJudgement}</div>
+                    <h3
+                      style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--light-dark-n-40); letter-spacing: 0.5px; margin: 0 0 4px 0;"
+                    >
+                      Overall Judgement
+                    </h3>
+                    <div
+                      style="font-size: 22px; font-weight: 700; color: var(--light-dark-n-0);"
+                    >
+                      ${overallJudgement}
+                    </div>
                   </div>
                 </div>
                 ${(() => {
-                  const humanReactionNote = Array.isArray(this.notes) 
-                    ? this.notes.find((n) => n.location.type === "rater" && n.location.fieldName === "overall_judgement" && n.reaction)
+                  const humanReactionNote = Array.isArray(this.notes)
+                    ? this.notes.find(
+                        (n) =>
+                          n.location.type === "rater" &&
+                          n.location.fieldName === "overall_judgement" &&
+                          n.reaction
+                      )
                     : null;
                   const humanReaction = humanReactionNote?.reaction;
                   if (!humanReaction) return nothing;
@@ -911,63 +1012,101 @@ class BGLViewer extends LitElement {
                   const hText = isGood ? "Human Agrees" : "Marked AI Wrong";
                   const hIcon = isGood ? "thumb_up" : "thumb_down";
 
-                  return html`<div style="display: flex; align-items: center; gap: var(--bb-grid-size-2); font-size: 12px; font-weight: 600; background: var(--light-dark-n-100); padding: var(--bb-grid-size-2) var(--bb-grid-size-3); border-radius: 20px; border: 1px solid var(--border-color); color: ${hColor}; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    <span class="g-icon filled round" style="font-size: 14px; color: ${hColor};">${hIcon}</span>
+                  return html`<div
+                    style="display: flex; align-items: center; gap: var(--bb-grid-size-2); font-size: 12px; font-weight: 600; background: var(--light-dark-n-100); padding: var(--bb-grid-size-2) var(--bb-grid-size-3); border-radius: 20px; border: 1px solid var(--border-color); color: ${hColor}; box-shadow: 0 1px 3px rgba(0,0,0,0.05);"
+                  >
+                    <span
+                      class="g-icon filled round"
+                      style="font-size: 14px; color: ${hColor};"
+                      >${hIcon}</span
+                    >
                     <span>${hText}</span>
                   </div>`;
                 })()}
               </div>
-              <ui-notes-container .location=${location} .notes=${this.#getNotesForLocation(location)}></ui-notes-container>
+              <ui-notes-container
+                .location=${location}
+                .notes=${this.#getNotesForLocation(location)}
+              ></ui-notes-container>
             </div>`;
           })()}
-          ${(this.rater as any)?.disconnects_diagnosis ? this.#renderDisconnectsDiagnosis((this.rater as any).disconnects_diagnosis) : nothing}
-          ${Object.entries(this.rater || {}).filter(([k]) => k !== "overall_judgement" && k !== "disconnects_diagnosis").map(([key, value]) => {
+          ${(this.rater as any)?.disconnects_diagnosis
+            ? this.#renderDisconnectsDiagnosis(
+                (this.rater as any).disconnects_diagnosis
+              )
+            : nothing}
+          ${Object.entries(this.rater || {})
+            .filter(
+              ([k]) =>
+                k !== "overall_judgement" && k !== "disconnects_diagnosis"
+            )
+            .map(([key, value]) => {
+              if (
+                key === "dimensions" &&
+                typeof value === "object" &&
+                value !== null
+              ) {
+                return html`<div class="config-item">
+                  <h3>Dimensions</h3>
+                  <table class="dimensions-table">
+                    <thead>
+                      <tr>
+                        <th>Category</th>
+                        <th>Score</th>
+                        <th>Rationale</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${Object.entries(value).map(
+                        ([dimKey, dimVal]: [string, any]) => {
+                          const category = dimKey
+                            .replace(/_/g, " ")
+                            .replace(/^./, (str) => str.toUpperCase());
+                          const score = dimVal?.score ?? "-";
+                          const rationale = dimVal?.rationale ?? "";
+                          const location: NoteLocation = {
+                            type: "rater",
+                            dimension: dimKey,
+                          };
+                          return html`<tr>
+                            <td><strong>${category}</strong></td>
+                            <td class="score-cell">${score}/5</td>
+                            <td>
+                              <div>${rationale}</div>
+                              <ui-notes-container
+                                .location=${location}
+                                .notes=${this.#getNotesForLocation(location)}
+                              ></ui-notes-container>
+                            </td>
+                          </tr>`;
+                        }
+                      )}
+                    </tbody>
+                  </table>
+                </div>`;
+              }
 
-            if (key === "dimensions" && typeof value === "object" && value !== null) {
+              const formattedValue =
+                typeof value === "object"
+                  ? JSON.stringify(value, null, 2)
+                  : String(value);
+              const location: NoteLocation = {
+                type: "rater",
+                fieldName: key,
+              };
               return html`<div class="config-item">
-                <h3>Dimensions</h3>
-                <table class="dimensions-table">
-                  <thead>
-                    <tr>
-                      <th>Category</th>
-                      <th>Score</th>
-                      <th>Rationale</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${Object.entries(value).map(([dimKey, dimVal]: [string, any]) => {
-                      const category = dimKey.replace(/_/g, " ").replace(/^./, (str) => str.toUpperCase());
-                      const score = dimVal?.score ?? "-";
-                      const rationale = dimVal?.rationale ?? "";
-                      const location: NoteLocation = {
-                        type: "rater",
-                        dimension: dimKey,
-                      };
-                      return html`<tr>
-                        <td><strong>${category}</strong></td>
-                        <td class="score-cell">${score}/5</td>
-                        <td>
-                          <div>${rationale}</div>
-                          <ui-notes-container .location=${location} .notes=${this.#getNotesForLocation(location)}></ui-notes-container>
-                        </td>
-                      </tr>`;
-                    })}
-                  </tbody>
-                </table>
+                <h3>
+                  ${key
+                    .replace(/_/g, " ")
+                    .replace(/^./, (str) => str.toUpperCase())}
+                </h3>
+                <pre>${formattedValue}</pre>
+                <ui-notes-container
+                  .location=${location}
+                  .notes=${this.#getNotesForLocation(location)}
+                ></ui-notes-container>
               </div>`;
-            }
-
-            const formattedValue = typeof value === "object" ? JSON.stringify(value, null, 2) : String(value);
-            const location: NoteLocation = {
-              type: "rater",
-              fieldName: key,
-            };
-            return html`<div class="config-item">
-              <h3>${key.replace(/_/g, " ").replace(/^./, (str) => str.toUpperCase())}</h3>
-              <pre>${formattedValue}</pre>
-              <ui-notes-container .location=${location} .notes=${this.#getNotesForLocation(location)}></ui-notes-container>
-            </div>`;
-          })}
+            })}
         </div>
       </form>
     </dialog>`;
@@ -980,9 +1119,15 @@ class BGLViewer extends LitElement {
     const misunderstoodUser = diagnosis.we_misunderstood_the_user;
     const misunderstoodOurselves = diagnosis.we_misunderstood_ourselves;
 
-    const renderBanner = (title: string, severity: number, explanation: string, detected: boolean, locationKey: string) => {
-      const icon = detected ? 'warning' : 'check_circle';
-      const className = detected ? 'detected' : 'cleared';
+    const renderBanner = (
+      title: string,
+      severity: number,
+      explanation: string,
+      detected: boolean,
+      locationKey: string
+    ) => {
+      const icon = detected ? "warning" : "check_circle";
+      const className = detected ? "detected" : "cleared";
       const location: NoteLocation = {
         type: "rater",
         fieldName: locationKey,
@@ -990,9 +1135,12 @@ class BGLViewer extends LitElement {
 
       let displayExplanation = explanation;
       if (!detected) {
-        displayExplanation = explanation.replace(/^(?:None\.|No issues detected\.)\s*/i, "");
+        displayExplanation = explanation.replace(
+          /^(?:None\.|No issues detected\.)\s*/i,
+          ""
+        );
         if (!displayExplanation) {
-           displayExplanation = "No issues detected.";
+          displayExplanation = "No issues detected.";
         }
       }
 
@@ -1000,11 +1148,16 @@ class BGLViewer extends LitElement {
         <span class="g-icon filled round">${icon}</span>
         <div style="flex-grow: 1;">
           <h4>
-            <span>${title}</span> 
-            ${detected && severity > 0 ? html`<span class="severity">Severity: ${severity}/5</span>` : nothing}
+            <span>${title}</span>
+            ${detected && severity > 0
+              ? html`<span class="severity">Severity: ${severity}/5</span>`
+              : nothing}
           </h4>
           <p>${displayExplanation}</p>
-          <ui-notes-container .location=${location} .notes=${this.#getNotesForLocation(location)}></ui-notes-container>
+          <ui-notes-container
+            .location=${location}
+            .notes=${this.#getNotesForLocation(location)}
+          ></ui-notes-container>
         </div>
       </div>`;
     };
@@ -1012,9 +1165,27 @@ class BGLViewer extends LitElement {
     return html`<div class="config-item">
       <h3>Root Cause Diagnosis</h3>
       <div style="margin-top: var(--bb-grid-size-4);">
-        ${renderBanner("Disconnect 1: 'We can't build that'", cantBuild.severity, cantBuild.explanation, cantBuild.detected, "we_cant_build_that")}
-        ${renderBanner("Disconnect 2: 'We misunderstood the user'", misunderstoodUser.severity, misunderstoodUser.explanation, misunderstoodUser.detected, "we_misunderstood_the_user")}
-        ${renderBanner("Disconnect 3: 'We misunderstood ourselves'", misunderstoodOurselves.severity, misunderstoodOurselves.explanation, misunderstoodOurselves.detected, "we_misunderstood_ourselves")}
+        ${renderBanner(
+          "Disconnect 1: 'We can't build that'",
+          cantBuild.severity,
+          cantBuild.explanation,
+          cantBuild.detected,
+          "we_cant_build_that"
+        )}
+        ${renderBanner(
+          "Disconnect 2: 'We misunderstood the user'",
+          misunderstoodUser.severity,
+          misunderstoodUser.explanation,
+          misunderstoodUser.detected,
+          "we_misunderstood_the_user"
+        )}
+        ${renderBanner(
+          "Disconnect 3: 'We misunderstood ourselves'",
+          misunderstoodOurselves.severity,
+          misunderstoodOurselves.explanation,
+          misunderstoodOurselves.detected,
+          "we_misunderstood_ourselves"
+        )}
       </div>
     </div>`;
   }
@@ -1039,65 +1210,149 @@ class BGLViewer extends LitElement {
             <span class="g-icon filled round">close</span>
           </button>
         </div>
-        <div id="dialog-body" style="padding: var(--bb-grid-size-4); display: flex; flex-direction: column; gap: var(--bb-grid-size-4);">
+        <div
+          id="dialog-body"
+          style="padding: var(--bb-grid-size-4); display: flex; flex-direction: column; gap: var(--bb-grid-size-4);"
+        >
           ${this.transcript.map((turn: any) => {
-            const eventsHtml = (turn.events || []).map((evt: any, eventIndex: number) => {
-              const location: NoteLocation = {
-                type: "transcript",
-                turn: turn.turn,
-                eventIndex,
-              };
+            const eventsHtml = (turn.events || []).map(
+              (evt: any, eventIndex: number) => {
+                const location: NoteLocation = {
+                  type: "transcript",
+                  turn: turn.turn,
+                  eventIndex,
+                };
 
-              if (evt.type === "objective") {
-                return html`<div class="config-item" style="background: var(--light-dark-n-95); padding: var(--bb-grid-size-3); border-radius: var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);">
-                  <h4 style="margin: 0 0 var(--bb-grid-size-2) 0; color: var(--primary);">Objective</h4>
-                  <pre style="white-space: pre-wrap; font-family: monospace; margin: 0; font-size: 12px; color: var(--light-dark-n-20);">${evt.text}</pre>
-                  <ui-notes-container .location=${location} .notes=${this.#getNotesForLocation(location)}></ui-notes-container>
-                </div>`;
+                if (evt.type === "objective") {
+                  return html`<div
+                    class="config-item"
+                    style="background: var(--light-dark-n-95); padding: var(--bb-grid-size-3); border-radius: var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);"
+                  >
+                    <h4
+                      style="margin: 0 0 var(--bb-grid-size-2) 0; color: var(--primary);"
+                    >
+                      Objective
+                    </h4>
+                    <pre
+                      style="white-space: pre-wrap; font-family: monospace; margin: 0; font-size: 12px; color: var(--light-dark-n-20);"
+                    >
+${evt.text}</pre
+                    >
+                    <ui-notes-container
+                      .location=${location}
+                      .notes=${this.#getNotesForLocation(location)}
+                    ></ui-notes-container>
+                  </div>`;
+                }
+                if (evt.type === "thought") {
+                  const parsed = parseThought(evt.text);
+                  return html`<div
+                    style="border-left: 3px solid var(--primary); padding-left: var(--bb-grid-size-3); margin-bottom: var(--bb-grid-size-2);"
+                  >
+                    <h4
+                      style="margin: 0 0 var(--bb-grid-size-1) 0; color: var(--light-dark-n-40);"
+                    >
+                      ${parsed.title || "Thoughts"}
+                    </h4>
+                    <div
+                      style="font-style: italic; font-size: 13px; color: var(--light-dark-n-40); white-space: pre-wrap;"
+                    >
+                      ${parsed.body}
+                    </div>
+                    <ui-notes-container
+                      .location=${location}
+                      .notes=${this.#getNotesForLocation(location)}
+                    ></ui-notes-container>
+                  </div>`;
+                }
+                if (evt.type === "functionCall") {
+                  return html`<div
+                    style="background: var(--elevated-background-light); border: 1px solid var(--border-color); border-radius: var(--bb-grid-size-2); padding: var(--bb-grid-size-3); display: flex; flex-direction: column; gap: var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);"
+                  >
+                    <div
+                      style="display: flex; align-items: center; gap: var(--bb-grid-size-2);"
+                    >
+                      <strong
+                        style="font-size: 13px; color: var(--light-dark-n-10);"
+                        >${evt.name}</strong
+                      >
+                      <span
+                        style="background: oklch(from var(--primary) l c h / 0.15); color: var(--primary); font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; border: 1px solid oklch(from var(--primary) l c h / 0.25);"
+                        >call</span
+                      >
+                    </div>
+                    <bb-json-tree
+                      .json=${evt.args as any}
+                      autoExpand
+                    ></bb-json-tree>
+                    <ui-notes-container
+                      .location=${location}
+                      .notes=${this.#getNotesForLocation(location)}
+                    ></ui-notes-container>
+                  </div>`;
+                }
+                if (evt.type === "functionResponse") {
+                  const responseData =
+                    evt.parts && evt.parts.length > 0
+                      ? ((evt.parts[0] as any)?.functionResponse?.response ??
+                        evt.parts)
+                      : {};
+                  const functionName =
+                    evt.parts && evt.parts.length > 0
+                      ? ((evt.parts[0] as any)?.functionResponse?.name ??
+                        "response")
+                      : "response";
+                  return html`<div
+                    style="background: var(--elevated-background-light); border: 1px solid var(--border-color); border-radius: var(--bb-grid-size-2); padding: var(--bb-grid-size-3); display: flex; flex-direction: column; gap: var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);"
+                  >
+                    <div
+                      style="display: flex; align-items: center; gap: var(--bb-grid-size-2);"
+                    >
+                      <strong
+                        style="font-size: 13px; color: var(--light-dark-n-10);"
+                        >${functionName}</strong
+                      >
+                      <span
+                        style="background: oklch(0.75 0.12 150 / 0.15); color: oklch(0.75 0.12 150); font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; border: 1px solid oklch(0.75 0.12 150 / 0.25);"
+                        >response</span
+                      >
+                    </div>
+                    <bb-json-tree .json=${responseData as any}></bb-json-tree>
+                    <ui-notes-container
+                      .location=${location}
+                      .notes=${this.#getNotesForLocation(location)}
+                    ></ui-notes-container>
+                  </div>`;
+                }
+                if (evt.type === "usageMetadata") {
+                  const meta = evt.metadata || {};
+                  return html`<div
+                    class="config-item"
+                    style="font-size: 11px; color: var(--light-dark-n-50); margin-top: var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);"
+                  >
+                    <span
+                      >Tokens: Prompt: ${meta.promptTokenCount ?? "-"} | Cached:
+                      ${meta.cachedContentTokenCount ?? "-"} | Output:
+                      ${meta.candidatesTokenCount ?? "-"} | Total:
+                      ${meta.totalTokenCount ?? "-"}</span
+                    >
+                  </div>`;
+                }
+                return nothing;
               }
-              if (evt.type === "thought") {
-                const parsed = parseThought(evt.text);
-                return html`<div style="border-left: 3px solid var(--primary); padding-left: var(--bb-grid-size-3); margin-bottom: var(--bb-grid-size-2);">
-                  <h4 style="margin: 0 0 var(--bb-grid-size-1) 0; color: var(--light-dark-n-40);">${parsed.title || "Thoughts"}</h4>
-                  <div style="font-style: italic; font-size: 13px; color: var(--light-dark-n-40); white-space: pre-wrap;">${parsed.body}</div>
-                  <ui-notes-container .location=${location} .notes=${this.#getNotesForLocation(location)}></ui-notes-container>
-                </div>`;
-              }
-              if (evt.type === "functionCall") {
-                return html`<div style="background: var(--elevated-background-light); border: 1px solid var(--border-color); border-radius: var(--bb-grid-size-2); padding: var(--bb-grid-size-3); display: flex; flex-direction: column; gap: var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);">
-                  <div style="display: flex; align-items: center; gap: var(--bb-grid-size-2);">
-                    <strong style="font-size: 13px; color: var(--light-dark-n-10);">${evt.name}</strong>
-                    <span style="background: oklch(from var(--primary) l c h / 0.15); color: var(--primary); font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; border: 1px solid oklch(from var(--primary) l c h / 0.25);">call</span>
-                  </div>
-                  <bb-json-tree .json=${evt.args as any} autoExpand></bb-json-tree>
-                  <ui-notes-container .location=${location} .notes=${this.#getNotesForLocation(location)}></ui-notes-container>
-                </div>`;
-              }
-              if (evt.type === "functionResponse") {
-                const responseData = evt.parts && evt.parts.length > 0 ? (evt.parts[0] as any)?.functionResponse?.response ?? evt.parts : {};
-                const functionName = evt.parts && evt.parts.length > 0 ? (evt.parts[0] as any)?.functionResponse?.name ?? "response" : "response";
-                return html`<div style="background: var(--elevated-background-light); border: 1px solid var(--border-color); border-radius: var(--bb-grid-size-2); padding: var(--bb-grid-size-3); display: flex; flex-direction: column; gap: var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);">
-                  <div style="display: flex; align-items: center; gap: var(--bb-grid-size-2);">
-                    <strong style="font-size: 13px; color: var(--light-dark-n-10);">${functionName}</strong>
-                    <span style="background: oklch(0.75 0.12 150 / 0.15); color: oklch(0.75 0.12 150); font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; border: 1px solid oklch(0.75 0.12 150 / 0.25);">response</span>
-                  </div>
-                  <bb-json-tree .json=${responseData as any}></bb-json-tree>
-                  <ui-notes-container .location=${location} .notes=${this.#getNotesForLocation(location)}></ui-notes-container>
-                </div>`;
-              }
-              if (evt.type === "usageMetadata") {
-                const meta = evt.metadata || {};
-                return html`<div class="config-item" style="font-size: 11px; color: var(--light-dark-n-50); margin-top: var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);">
-                  <span>Tokens: Prompt: ${meta.promptTokenCount ?? '-'} | Cached: ${meta.cachedContentTokenCount ?? '-'} | Output: ${meta.candidatesTokenCount ?? '-'} | Total: ${meta.totalTokenCount ?? '-'}</span>
-                </div>`;
-              }
-              return nothing;
-            });
+            );
 
-            return html`<div class="turn-record" style="padding-bottom: var(--bb-grid-size-4); display: flex; flex-direction: column;">
-              <div style="display: flex; align-items: center; gap: var(--bb-grid-size-3); margin-bottom: var(--bb-grid-size-4); font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--light-dark-n-60); letter-spacing: 0.5px;">
+            return html`<div
+              class="turn-record"
+              style="padding-bottom: var(--bb-grid-size-4); display: flex; flex-direction: column;"
+            >
+              <div
+                style="display: flex; align-items: center; gap: var(--bb-grid-size-3); margin-bottom: var(--bb-grid-size-4); font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--light-dark-n-60); letter-spacing: 0.5px;"
+              >
                 <span>Turn ${turn.turn}</span>
-                <div style="flex-grow: 1; height: 1px; background: var(--light-dark-n-80);"></div>
+                <div
+                  style="flex-grow: 1; height: 1px; background: var(--light-dark-n-80);"
+                ></div>
               </div>
               ${eventsHtml}
             </div>`;
@@ -1114,17 +1369,20 @@ class BGLViewer extends LitElement {
     });
   }
 
-
-
   #getSectionTitle(location: NoteLocation): string {
     if (location.type === "node-config") {
       const node = this.graph?.nodes.find((n: any) => n.id === location.nodeId);
       const a2Component = node ? A2_COMPONENT_MAP.get(node.type) : undefined;
-      const title = node?.metadata?.title || a2Component?.title || location.nodeId;
+      const title =
+        node?.metadata?.title || a2Component?.title || location.nodeId;
       return `Node: ${title}`;
     }
     if (location.type === "rater") {
-      const category = location.dimension ? location.dimension.replace(/_/g, " ").replace(/^./, (str) => str.toUpperCase()) : "General";
+      const category = location.dimension
+        ? location.dimension
+            .replace(/_/g, " ")
+            .replace(/^./, (str) => str.toUpperCase())
+        : "General";
       return `Eval: ${category}`;
     }
     if (location.type === "transcript") {
@@ -1138,7 +1396,11 @@ class BGLViewer extends LitElement {
       return location.fieldName;
     }
     if (location.type === "rater") {
-      return location.fieldName ? location.fieldName.replace(/_/g, " ").replace(/^./, (str) => str.toUpperCase()) : "";
+      return location.fieldName
+        ? location.fieldName
+            .replace(/_/g, " ")
+            .replace(/^./, (str) => str.toUpperCase())
+        : "";
     }
     if (location.type === "transcript") {
       return `Event ${location.eventIndex + 1}`;
@@ -1157,7 +1419,10 @@ class BGLViewer extends LitElement {
               <span class="g-icon filled round">close</span>
             </button>
           </div>
-          <div id="dialog-body" style="padding: var(--bb-grid-size-4); color: var(--light-dark-n-40);">
+          <div
+            id="dialog-body"
+            style="padding: var(--bb-grid-size-4); color: var(--light-dark-n-40);"
+          >
             No comments added yet for this evaluation.
           </div>
         </form>
@@ -1181,27 +1446,53 @@ class BGLViewer extends LitElement {
             <span class="g-icon filled round">close</span>
           </button>
         </div>
-        <div id="dialog-body" style="padding: var(--bb-grid-size-4); display: flex; flex-direction: column; gap: var(--bb-grid-size-4);">
+        <div
+          id="dialog-body"
+          style="padding: var(--bb-grid-size-4); display: flex; flex-direction: column; gap: var(--bb-grid-size-4);"
+        >
           ${Array.from(groups.entries()).map(([section, notes]) => {
             return html`<div class="section-group">
-              <h3 style="font-size: 14px; font-weight: 600; color: var(--primary); margin: 0 0 var(--bb-grid-size-3) 0; border-bottom: 1px solid var(--border-color); padding-bottom: var(--bb-grid-size-2);">
+              <h3
+                style="font-size: 14px; font-weight: 600; color: var(--primary); margin: 0 0 var(--bb-grid-size-3) 0; border-bottom: 1px solid var(--border-color); padding-bottom: var(--bb-grid-size-2);"
+              >
                 ${section}
               </h3>
-              <div style="display: flex; flex-direction: column; gap: var(--bb-grid-size-2); padding: var(--bb-grid-size) var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);">
+              <div
+                style="display: flex; flex-direction: column; gap: var(--bb-grid-size-2); padding: var(--bb-grid-size) var(--bb-grid-size-2); margin-bottom: var(--bb-grid-size-2);"
+              >
                 ${notes.map((note) => {
                   const fieldRef = this.#getFieldReference(note.location);
-                  return html`<div style="background: #fef08a; border: 1px solid #facc15; border-bottom-right-radius: 12px 4px; border-radius: 4px; padding: var(--bb-grid-size-3); font-size: 13px; color: #1e293b; box-shadow: 1px 3px 6px oklch(0 0 0 / 0.08), 0 1px 2px oklch(0 0 0 / 0.04); margin: 2px 4px 8px 4px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-bottom: var(--bb-grid-size-2); font-weight: 500; border-bottom: 1px dashed oklch(from #facc15 l c h / 0.5); padding-bottom: var(--bb-grid-size);">
-                      <span style="font-weight: 600; color: #475569;">${fieldRef}</span>
+                  return html`<div
+                    style="background: #fef08a; border: 1px solid #facc15; border-bottom-right-radius: 12px 4px; border-radius: 4px; padding: var(--bb-grid-size-3); font-size: 13px; color: #1e293b; box-shadow: 1px 3px 6px oklch(0 0 0 / 0.08), 0 1px 2px oklch(0 0 0 / 0.04); margin: 2px 4px 8px 4px;"
+                  >
+                    <div
+                      style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-bottom: var(--bb-grid-size-2); font-weight: 500; border-bottom: 1px dashed oklch(from #facc15 l c h / 0.5); padding-bottom: var(--bb-grid-size);"
+                    >
+                      <span style="font-weight: 600; color: #475569;"
+                        >${fieldRef}</span
+                      >
                       <span>${new Date(note.timestamp).toLocaleString()}</span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: var(--bb-grid-size-2);">
-                      ${note.reaction ? html`<span 
-                        class="g-icon round" 
-                        style="color: ${note.reaction === 'good' ? '#34a853' : '#ea4335'}; font-size: 16px; flex-shrink: 0;"
-                        title=${note.reaction === 'good' ? 'Marked as Good' : 'Marked as Bad'}
-                      >${note.reaction === 'good' ? 'thumb_up' : 'thumb_down'}</span>` : nothing}
-                      <div style="white-space: pre-wrap; line-height: 1.5;">${note.text}</div>
+                    <div
+                      style="display: flex; align-items: center; gap: var(--bb-grid-size-2);"
+                    >
+                      ${note.reaction
+                        ? html`<span
+                            class="g-icon round"
+                            style="color: ${note.reaction === "good"
+                              ? "#34a853"
+                              : "#ea4335"}; font-size: 16px; flex-shrink: 0;"
+                            title=${note.reaction === "good"
+                              ? "Marked as Good"
+                              : "Marked as Bad"}
+                            >${note.reaction === "good"
+                              ? "thumb_up"
+                              : "thumb_down"}</span
+                          >`
+                        : nothing}
+                      <div style="white-space: pre-wrap; line-height: 1.5;">
+                        ${note.text}
+                      </div>
                     </div>
                   </div>`;
                 })}
@@ -1212,7 +1503,6 @@ class BGLViewer extends LitElement {
       </form>
     </dialog>`;
   }
-
 
   render() {
     if (!this.#graphComponent) {
@@ -1226,43 +1516,63 @@ class BGLViewer extends LitElement {
     const title = this.graph?.title || "Untitled Topology";
     const description = this.graph?.description || "";
 
-    const judgement = ((this.rater as any)?.overall_judgement || ((this.rater as any)?.error ? 'FAIL' : 'UNKNOWN')) as string;
+    const judgement = ((this.rater as any)?.overall_judgement ||
+      ((this.rater as any)?.error ? "FAIL" : "UNKNOWN")) as string;
     const statusClass = judgement.toLowerCase();
 
-    return html`
-      <div id="bgl-header">
+    return html` <div id="bgl-header">
         <div style="max-width: calc(100% - 220px);">
           <h1>${title}</h1>
           ${description ? html`<p>${description}</p>` : nothing}
         </div>
-        ${this.rater ? html`<div id="rater-indicator" style="pointer-events: auto;">
-          <div class="status-row">
-            <div class="status-dot ${statusClass}"></div>
-            <span>Eval: ${judgement}</span>
-          </div>
-          ${(() => {
-            const humanReactionNote = Array.isArray(this.notes)
-              ? this.notes.find((n) => n.location.type === "rater" && n.location.fieldName === "overall_judgement" && n.reaction)
-              : null;
-            const humanReaction = humanReactionNote?.reaction;
-            if (!humanReaction) return nothing;
+        ${this.rater
+          ? html`<div id="rater-indicator" style="pointer-events: auto;">
+              <div class="status-row">
+                <div class="status-dot ${statusClass}"></div>
+                <span>Eval: ${judgement}</span>
+              </div>
+              ${(() => {
+                const humanReactionNote = Array.isArray(this.notes)
+                  ? this.notes.find(
+                      (n) =>
+                        n.location.type === "rater" &&
+                        n.location.fieldName === "overall_judgement" &&
+                        n.reaction
+                    )
+                  : null;
+                const humanReaction = humanReactionNote?.reaction;
+                if (!humanReaction) return nothing;
 
-            const isGood = humanReaction === "good";
-            const color = isGood ? "#34a853" : "#ea4335";
-            const text = isGood ? "Human Agrees" : "Marked AI Wrong";
-            const icon = isGood ? "thumb_up" : "thumb_down";
+                const isGood = humanReaction === "good";
+                const color = isGood ? "#34a853" : "#ea4335";
+                const text = isGood ? "Human Agrees" : "Marked AI Wrong";
+                const icon = isGood ? "thumb_up" : "thumb_down";
 
-            return html`<div style="display: flex; align-items: center; gap: var(--bb-grid-size-2); font-size: 11px; font-weight: 600; color: ${color}; margin-top: calc(-1 * var(--bb-grid-size)); margin-bottom: var(--bb-grid-size-2);">
-              <span class="g-icon filled round" style="font-size: 14px; color: ${color};">${icon}</span>
-              <span>${text}</span>
-            </div>`;
-          })()}
-          <button @click=${() => this.#showRaterModal()}>Rating Details</button>
-          <button 
-            style="margin-top: var(--bb-grid-size); ${(this.notes || []).length > 0 ? '' : 'opacity: 0.5;'}" 
-            @click=${() => this.#showAllNotesModal()}
-          >All Comments (${(this.notes || []).length})</button>
-        </div>` : nothing}
+                return html`<div
+                  style="display: flex; align-items: center; gap: var(--bb-grid-size-2); font-size: 11px; font-weight: 600; color: ${color}; margin-top: calc(-1 * var(--bb-grid-size)); margin-bottom: var(--bb-grid-size-2);"
+                >
+                  <span
+                    class="g-icon filled round"
+                    style="font-size: 14px; color: ${color};"
+                    >${icon}</span
+                  >
+                  <span>${text}</span>
+                </div>`;
+              })()}
+              <button @click=${() => this.#showRaterModal()}>
+                Rating Details
+              </button>
+              <button
+                style="margin-top: var(--bb-grid-size); ${(this.notes || [])
+                  .length > 0
+                  ? ""
+                  : "opacity: 0.5;"}"
+                @click=${() => this.#showAllNotesModal()}
+              >
+                All Comments (${(this.notes || []).length})
+              </button>
+            </div>`
+          : nothing}
       </div>
       <div
         id="container"
@@ -1274,7 +1584,9 @@ class BGLViewer extends LitElement {
 
           if (graphNode) {
             const nodeId = graphNode.nodeId;
-            const nodeDescriptor = this.graph?.nodes.find((n) => n.id === nodeId);
+            const nodeDescriptor = this.graph?.nodes.find(
+              (n) => n.id === nodeId
+            );
             if (nodeDescriptor) {
               this.#showModal(nodeDescriptor);
             }
@@ -1282,14 +1594,14 @@ class BGLViewer extends LitElement {
         }}
       >
         ${this.#graphComponent}
-        ${this.transcript && this.transcript.length > 0 ? html`<bb-opie-avatar 
-          style="position: absolute; left: var(--bb-grid-size-5); bottom: var(--bb-grid-size-5); z-index: 100;"
-          @click=${() => this.#showTranscriptModal()}
-        ></bb-opie-avatar>` : nothing}
+        ${this.transcript && this.transcript.length > 0
+          ? html`<bb-agent-avatar
+              style="position: absolute; left: var(--bb-grid-size-5); bottom: var(--bb-grid-size-5); z-index: 100;"
+              @click=${() => this.#showTranscriptModal()}
+            ></bb-agent-avatar>`
+          : nothing}
       </div>
-      ${this.#renderModal()}
-      ${this.#renderRaterModal()}
-      ${this.#renderTranscriptModal()}
-      ${this.#renderAllNotesModal()}`;
+      ${this.#renderModal()} ${this.#renderRaterModal()}
+      ${this.#renderTranscriptModal()} ${this.#renderAllNotesModal()}`;
   }
 }
