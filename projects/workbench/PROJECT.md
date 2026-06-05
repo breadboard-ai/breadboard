@@ -549,33 +549,33 @@ gallery.
 
 #### packages/visual-editor — Shell
 
-- [ ] `index.ts` `#renderHeader()` — when `workbenchActive` is true, skip
+- [x] `index.ts` `#renderHeader()` — when `workbenchActive` is true, skip
       rendering `bb-ve-header` entirely (return `nothing`). Reclaim the grid
       row: set `grid-template-rows` to `auto` (or `0 auto`) so the content
       area fills the viewport.
-- [ ] `index.styles.ts` — add a `:host([workbench])` (or equivalent class /
+- [x] `index.styles.ts` — add a `:host([workbench])` (or equivalent class /
       attribute) rule that collapses the header row to `0`.
 
 #### packages/visual-editor — Workbench UI
 
-- [ ] `bb-agent-workbench` — render a new header bar at the top of the
-      workbench layout (above the splitter). Structure:
-      - **Left**: `keyboard_arrow_left` icon + "Go back" text. Dispatches
-        `CloseEvent` (same handler as `bb-ve-header`'s back arrow).
-      - **Center-left**: `bb-publish-button`, save status label (Saved /
+- [x] `bb-conversation-column` — render a header row at the top of the
+      conversation column with the `keyboard_arrow_left` icon + "Go back"
+      text. Dispatches `CloseEvent` (same handler as `bb-ve-header`'s back
+      arrow). Uses the hover-slide transition (`translate: -3px 0` on
+      hover).
+- [x] `bb-agent-config-column` — render a header row at the top of the
+      agent config column. Structure:
+      - **Left cluster**: `bb-publish-button`, save status label (Saved /
         Saving… / Unable to save), "Draft" status badge, "EXPERIMENT MODE"
         badge (with override count click-through).
-      - **Right**: Share button (`ShareRequestedEvent`), three-dot
+      - **Right cluster**: Share button (`ShareRequestedEvent`), three-dot
         `bb-item-select` overflow menu (delete, duplicate, history, copy
         board contents), settings cog `bb-item-select` (feedback,
         documentation, discord, global settings, demo video), user avatar
         with account switcher.
-- [ ] Styles — the header bar should be a single flex row, `height: 56px`,
-      matching the standard header height. Background:
-      `light-dark(var(--n-100), var(--n-15))`, bottom border:
-      `1px solid var(--light-dark-n-90)`. "Go back" uses the hover-slide
-      transition from the existing back button (`translate: -3px 0` on
-      hover).
+- [x] Styles — both column headers are a single flex row, `height: 56px`,
+      with a bottom border of `1px solid var(--light-dark-n-90)`. The
+      config column content area scrolls independently below the header.
 
 ---
 

@@ -234,6 +234,9 @@ class Main extends MainBase {
      */
     return html`<div
       id="container"
+      class=${classMap({
+        "workbench-active": workbenchActive,
+      })}
       @bbevent=${async (
         evt: BreadboardUI.Events.StateEvent<
           keyof BreadboardUI.Events.StateEventDetailMap
@@ -393,12 +396,47 @@ class Main extends MainBase {
     ></bb-canvas-controller>`;
   }
 
+  async #onCloseBoard() {
+    const gc = this.sca.controller.editor.graph;
+    if (!gc.graph) {
+      return;
+    }
+    this.sca.services.embedHandler?.sendToEmbedder({
+      type: "back_clicked",
+    });
+
+    // Clear board state immediately so the header updates in the same
+    // rendering frame. The reactive URL handler in main-base.ts also
+    // handles this, but it runs inside a Signal.Computed microtask where
+    // signal writes may not propagate to downstream watchers synchronously.
+    this.sca.actions.board.close();
+
+    const homepage: MakeUrlInit = {
+      page: "home",
+      dev: parsedUrl.dev,
+      guestPrefixed: true,
+    };
+    if ((await this.sca.services.signinAdapter.state) === "signedin") {
+      this.sca.controller.router.go(homepage);
+    } else {
+      // router.go() can't navigate to the landing page — it's a separate
+      // HTML entrypoint, so use navigateAway() for a full page load.
+      this.sca.controller.router.navigateAway({
+        page: "landing",
+        dev: parsedUrl.dev,
+        redirect: homepage,
+        guestPrefixed: true,
+      });
+    }
+  }
+
   #renderAgentWorkbench(renderValues: RenderValues) {
     if (this.sca.controller.global.main.mode !== "canvas") {
       return nothing;
     }
     return html`<bb-agent-workbench
       ?inert=${renderValues.showingOverlay}
+      @bbclose=${this.#onCloseBoard}
     ></bb-agent-workbench>`;
   }
 
@@ -618,6 +656,13 @@ class Main extends MainBase {
   }
 
   #renderHeader(renderValues: RenderValues) {
+    const workbenchActive =
+      this.sca.controller.editor.workbench.eligible &&
+      this.sca.controller.editor.workbench.view === "workbench";
+    if (workbenchActive) {
+      return nothing;
+    }
+
     const gc = this.sca.controller.editor.graph;
     return html`<bb-ve-header
       ?inert=${renderValues.showingOverlay ||
@@ -650,38 +695,7 @@ class Main extends MainBase {
           guestPrefixed: true,
         });
       }}
-      @bbclose=${async () => {
-        if (!gc.graph) {
-          return;
-        }
-        this.sca.services.embedHandler?.sendToEmbedder({
-          type: "back_clicked",
-        });
-
-        // Clear board state immediately so the header updates in the same
-        // rendering frame. The reactive URL handler in main-base.ts also
-        // handles this, but it runs inside a Signal.Computed microtask where
-        // signal writes may not propagate to downstream watchers synchronously.
-        this.sca.actions.board.close();
-
-        const homepage: MakeUrlInit = {
-          page: "home",
-          dev: parsedUrl.dev,
-          guestPrefixed: true,
-        };
-        if ((await this.sca.services.signinAdapter.state) === "signedin") {
-          this.sca.controller.router.go(homepage);
-        } else {
-          // router.go() can't navigate to the landing page — it's a separate
-          // HTML entrypoint, so use navigateAway() for a full page load.
-          this.sca.controller.router.navigateAway({
-            page: "landing",
-            dev: parsedUrl.dev,
-            redirect: homepage,
-            guestPrefixed: true,
-          });
-        }
-      }}
+      @bbclose=${this.#onCloseBoard}
       @bbsubscribercreditrefresh=${async () => {
         try {
           this.sca.controller.global.main.subscriptionCredits = -1;
