@@ -19,6 +19,8 @@ import * as Styles from "../../../styles/styles.js";
 import { extractPromptText } from "../../../../utils/prompt-utils.js";
 import "../../input/add-asset/add-asset-button.js";
 import "../../input/add-asset/add-asset-modal.js";
+import { AddAssetEvent, AddAssetRequestEvent } from "../../../events/events.js";
+import type { AssetMetadata } from "@breadboard-ai/types";
 
 @customElement("bb-agent-asset-shelf")
 export class AgentAssetShelf extends SignalWatcher(LitElement) {
@@ -308,7 +310,7 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
             .showGDrive=${true}
             .showNotebookLm=${false}
             .label=${"Add asset"}
-            @bbaddassetrequest=${(evt: any) => {
+            @bbaddassetrequest=${(evt: AddAssetRequestEvent) => {
               this._showAddAssetModal = true;
               this._addAssetType = evt.assetType;
               this._allowedMimeTypes = evt.allowedMimeTypes;
@@ -368,22 +370,24 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
               this._allowedMimeTypes = null;
               this.requestUpdate();
             }}
-            @bbaddasset=${async (evt: any) => {
+            @bbaddasset=${async (evt: AddAssetEvent) => {
               this._showAddAssetModal = false;
               this._addAssetType = null;
               this._allowedMimeTypes = null;
 
-              const content = evt.value;
+              const content = evt.asset;
               const metadata = evt.metadata;
 
               // Generate a unique path using the extension inferred from metadata
-              const inferAssetExtension = (meta: any): string => {
-                if (meta.subType) {
+              const inferAssetExtension = (meta?: AssetMetadata): string => {
+                if (meta?.subType) {
                   const parts = meta.subType.split("/");
                   return parts[parts.length - 1];
                 }
-                if (meta.title && meta.title.includes(".")) {
-                  return meta.title.split(".").pop().toLowerCase();
+                if (meta?.title && meta.title.includes(".")) {
+                  return (
+                    meta.title.split(".").pop()?.toLowerCase() ?? "Untitled"
+                  );
                 }
                 return "bin";
               };
