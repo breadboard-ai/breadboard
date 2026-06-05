@@ -45,7 +45,6 @@ import {
 import { icons } from "../../styles/icons.js";
 import { EntityEditor } from "../elements.js";
 import { consume } from "@lit/context";
-import { SharePanel } from "../share-panel/share-panel.js";
 
 import { effects } from "../../styles/host/effects.js";
 import { GraphTheme } from "@breadboard-ai/types";
@@ -98,7 +97,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
   accessor showAssetOrganizer = false;
 
   #entityEditorRef: Ref<EntityEditor> = createRef();
-  #sharePanelRef: Ref<SharePanel> = createRef();
   #lastKnownNlEditValue = "";
   #prevMainGraphId: MainGraphIdentifier | null = null;
   #prevGraph: GraphDescriptor | null = null;
@@ -332,9 +330,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
               this.showThemeDesigner = true;
               this.#themeOptions = evt.themeOptions;
             }}
-            @bbsharerequested=${() => {
-              this.openSharePanel();
-            }}
           ></bb-app-controller>`;
         }
       )}`,
@@ -501,7 +496,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
           : html`<section id="content" class="welcome">
               ${graphEditor}
             </section>`,
-      html`<bb-share-panel ${ref(this.#sharePanelRef)}></bb-share-panel>`,
     ];
   }
 
@@ -520,9 +514,5 @@ export class CanvasController extends SignalWatcher(LitElement) {
     }
 
     return html`<bb-empty-state></bb-empty-state>`;
-  }
-
-  openSharePanel() {
-    this.#sharePanelRef?.value?.open();
   }
 }

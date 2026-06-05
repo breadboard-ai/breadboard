@@ -13,6 +13,9 @@ import { scaContext } from "../../../sca/context/context.js";
 import type { SCA } from "../../../sca/sca.js";
 import type { ChatEntry } from "../../../sca/types.js";
 import { markdown } from "../../directives/markdown.js";
+import * as StringsHelper from "../../strings/helper.js";
+
+const GlobalStrings = StringsHelper.forSection("Global");
 import { icons } from "../../styles/icons.js";
 import * as Styles from "../../styles/styles.js";
 import "../input/expanding-textarea.js";
@@ -428,10 +431,20 @@ class ChatPanel extends SignalWatcher(LitElement) {
         border: 1px solid var(--light-dark-n-90);
         border-radius: 24px;
         padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
-        margin: 0 var(--bb-grid-size-6) var(--bb-grid-size-5)
-          var(--bb-grid-size-6); /* Matches side padding (24px) and bottom padding (20px) */
+        margin: 0 var(--bb-grid-size-6) var(--bb-grid-size-2)
+          var(--bb-grid-size-6); /* Matches side padding (24px) and bottom padding (8px) */
         box-shadow: 0 8px 40px 0 rgba(0, 0, 0, 0.1);
         flex-shrink: 0;
+      }
+
+      #disclaimer {
+        font: 400 11px / 1.4 var(--bb-font-family);
+        color: var(--light-dark-n-50);
+        text-align: center;
+        margin-bottom: var(--bb-grid-size-4);
+        margin-top: 0;
+        user-select: none;
+        pointer-events: none;
       }
 
       bb-expanding-textarea {
@@ -723,6 +736,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
 
         ${this.showSelectionStrip ? this.#renderSelectionStrip() : nothing}
         ${this.#renderInputArea()}
+        <div id="disclaimer">${GlobalStrings.from("LABEL_DISCLAIMER")}</div>
       </div>
       ${this.#renderAddAssetModal()}
     `;

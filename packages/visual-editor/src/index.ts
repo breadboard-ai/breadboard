@@ -7,7 +7,8 @@
 import { html, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { ref } from "lit/directives/ref.js";
+import { ref, createRef } from "lit/directives/ref.js";
+import { SharePanel } from "./ui/elements/share-panel/share-panel.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { MainBase, RenderValues } from "./main-base.js";
 import { IterateOnPromptMessage } from "./ui/embed/embed.js";
@@ -33,6 +34,8 @@ export { Main };
 
 @customElement("bb-main")
 class Main extends MainBase {
+  readonly #sharePanelRef = createRef<SharePanel>();
+
   override async doPostInitWork() {
     await Promise.all([
       this.sca.controller.global.performMigrations(),
@@ -237,6 +240,9 @@ class Main extends MainBase {
       class=${classMap({
         "workbench-active": workbenchActive,
       })}
+      @bbsharerequested=${() => {
+        this.#sharePanelRef.value?.open();
+      }}
       @bbevent=${async (
         evt: BreadboardUI.Events.StateEvent<
           keyof BreadboardUI.Events.StateEventDetailMap
@@ -304,6 +310,7 @@ class Main extends MainBase {
         this.#renderFeedbackPanel(),
         this.renderConsentRequests(),
         this.#maybeRenderDebugPanel(),
+        html`<bb-share-panel ${ref(this.#sharePanelRef)}></bb-share-panel>`,
       ]}
     </div>`;
   }
@@ -707,13 +714,6 @@ class Main extends MainBase {
           console.warn(err);
         }
       }}
-      @bbsharerequested=${() => {
-        if (!this.canvasControllerRef.value) {
-          return;
-        }
-
-        this.canvasControllerRef.value.openSharePanel();
-      }}
       @change=${async (evt: Event) => {
         const [select] = evt.composedPath();
         if (!(select instanceof BreadboardUI.Elements.ItemSelect)) {
@@ -811,7 +811,7 @@ class Main extends MainBase {
           }
 
           case "share": {
-            this.canvasControllerRef.value?.openSharePanel();
+            this.#sharePanelRef.value?.open();
             break;
           }
 
