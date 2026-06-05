@@ -955,4 +955,13 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   trackProperties = async (payload: Record<string, string | undefined>) => {
     this.actionEventSender?.setProperties(payload);
   };
+
+  showCookieSettings = async (): Promise<void> => {
+    // Trigger the cookie notification bar's built-in control. The bar script
+    // binds click handlers to elements with this class in the host document.
+    const control = document.querySelector<HTMLElement>(
+      ".glue-cookie-notification-bar-control"
+    );
+    control?.click();
+  };
 }

@@ -26,6 +26,15 @@
     sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals allow-storage-access-by-user-activation allow-downloads allow-top-navigation"
     allow="clipboard-read; clipboard-write; microphone; camera"
   ></iframe>
+  <!-- Hidden control for the cookie notification bar. The bar script binds
+       click handlers to this class. Triggered programmatically via
+       showCookieSettings() when the guest iframe's "Manage cookies" link
+       is clicked. -->
+  <button
+    hidden
+    aria-hidden="true"
+    class="glue-cookie-notification-bar-control"
+  ></button>
   <template>
     <script type="application/json">
       {{config}}

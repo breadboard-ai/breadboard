@@ -371,6 +371,9 @@ class EvalRun implements EvalHarnessRuntimeArgs {
       setOneGoogleBarVisible: function (_visible: boolean): void {
         // No-op in eval harness.
       },
+      showCookieSettings: async function (): Promise<void> {
+        // No-op in eval harness.
+      },
     } satisfies OpalShellHostProtocol,
   };
 }
