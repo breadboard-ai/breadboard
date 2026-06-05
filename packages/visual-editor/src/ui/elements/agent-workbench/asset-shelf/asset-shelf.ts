@@ -1,0 +1,417 @@
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { LitElement, html, css, nothing } from "lit";
+import { customElement, state } from "lit/decorators.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
+import { scaContext } from "../../../../sca/context/context.js";
+import { type SCA } from "../../../../sca/sca.js";
+import { Template } from "@breadboard-ai/utils";
+import type {
+  GraphAsset,
+  GraphAssetDescriptor,
+} from "../../../../sca/types.js";
+import * as Styles from "../../../styles/styles.js";
+import { extractPromptText } from "../../../../utils/prompt-utils.js";
+import "../../input/add-asset/add-asset-button.js";
+import "../../input/add-asset/add-asset-modal.js";
+import { AddAssetEvent, AddAssetRequestEvent } from "../../../events/events.js";
+import type { AssetMetadata } from "@breadboard-ai/types";
+
+@customElement("bb-agent-asset-shelf")
+export class AgentAssetShelf extends SignalWatcher(LitElement) {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
+  @state()
+  private accessor _showAddAssetModal = false;
+
+  @state()
+  private accessor _addAssetType: string | null = null;
+
+  @state()
+  private accessor _allowedMimeTypes: string | null = null;
+
+  static styles = [
+    Styles.HostType.type,
+    Styles.HostIcons.icons,
+    Styles.HostColorsBase.baseColors,
+    Styles.HostColorScheme.match,
+    css`
+      * {
+        box-sizing: border-box;
+      }
+
+      :host {
+        display: block;
+        width: 100%;
+        background: transparent;
+      }
+
+      .asset-shelf-wrapper {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        background: transparent;
+        overflow: hidden;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: var(--bb-grid-size-7);
+        user-select: none;
+
+        & h2 {
+          margin: 0;
+          flex: 1;
+          font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
+            var(--bb-font-family);
+          color: var(--light-dark-n-20);
+        }
+
+        & bb-add-asset-button {
+          --background-color: var(--sys-color--primary);
+          --text-color: var(--sys-color--on-primary);
+          --background-hover-color: var(--sys-color--primary);
+          --text-hover-color: var(--sys-color--on-primary);
+          --button-border: none;
+          transition: opacity 0.15s ease;
+
+          &:hover {
+            opacity: 0.9;
+          }
+        }
+      }
+
+      .assets-list {
+        display: flex;
+        flex-direction: column;
+        padding: var(--bb-grid-size) 0;
+      }
+
+      .asset-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--bb-grid-size-2) 0;
+        cursor: grab;
+      }
+
+      .asset-row:active {
+        cursor: grabbing;
+      }
+
+      .asset-info-wrapper {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        flex: 1;
+      }
+
+      .asset-icon-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--bb-grid-size-2);
+        background: var(--ui-asset-secondary, var(--light-dark-n-95));
+        margin-right: var(--bb-grid-size-5);
+        flex-shrink: 0;
+
+        & .g-icon {
+          font-size: 20px;
+          color: var(--light-dark-n-10, var(--n-10));
+        }
+      }
+
+      .asset-details {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        flex: 1;
+        padding-right: var(--bb-grid-size-4);
+      }
+
+      .asset-title {
+        font: 500 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        color: light-dark(var(--n-10), var(--n-90));
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .asset-meta {
+        display: flex;
+        align-items: center;
+        gap: var(--bb-grid-size-2);
+      }
+
+      .asset-badge {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--light-dark-n-40);
+        background: var(--light-dark-n-95);
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--light-dark-n-90);
+        letter-spacing: 0.5px;
+      }
+
+      .in-use-pill {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: light-dark(#137333, #81c995);
+        background: light-dark(#e6f4ea, #1c3d27);
+        padding: 2px 8px;
+        border-radius: 10px;
+        letter-spacing: 0.5px;
+      }
+
+      .remove-button {
+        background: transparent;
+        border: none;
+        color: var(--light-dark-n-40);
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          background-color 0.15s ease,
+          color 0.15s ease;
+        flex-shrink: 0;
+
+        &:hover {
+          background: light-dark(var(--n-90), var(--n-30));
+          color: var(--light-dark-n-10);
+        }
+
+        & .g-icon {
+          font-size: 18px;
+        }
+      }
+    `,
+  ];
+
+  #onDragStart(evt: DragEvent, asset: GraphAsset) {
+    if (!evt.dataTransfer) return;
+
+    const mimeType = asset.metadata?.subType || "application/octet-stream";
+    const title = asset.metadata?.title || "Asset";
+
+    evt.dataTransfer.setData(
+      "text/plain",
+      JSON.stringify({
+        type: "asset",
+        path: asset.path,
+        title,
+        mimeType,
+      })
+    );
+    evt.dataTransfer.effectAllowed = "copy";
+  }
+
+  #onRemoveAsset(path: string) {
+    this.sca.actions.asset.removeGraphAsset(path);
+  }
+
+  #getAssetIcon(mimeType?: string): string {
+    if (!mimeType) return "draft";
+    if (mimeType.startsWith("image/")) return "image";
+    if (mimeType.startsWith("audio/")) return "audio_file";
+    if (mimeType.startsWith("video/")) return "video_file";
+    if (mimeType === "application/pdf") return "picture_as_pdf";
+    if (mimeType.startsWith("text/")) return "description";
+    return "attachment";
+  }
+
+  #getAssetBadgeLabel(mimeType?: string): string {
+    if (!mimeType) return "FILE";
+    if (mimeType.startsWith("image/")) return "IMAGE";
+    if (mimeType.startsWith("audio/")) return "AUDIO";
+    if (mimeType.startsWith("video/")) return "VIDEO";
+    if (mimeType === "application/pdf") return "PDF";
+    if (mimeType.startsWith("text/")) return "TEXT";
+    const parts = mimeType.split("/");
+    return parts[parts.length - 1].toUpperCase();
+  }
+
+  render() {
+    const graphController = this.sca?.controller?.editor?.graph;
+    if (!graphController) return nothing;
+
+    // Subscribe to graph version changes
+    void graphController.version;
+
+    const graph = graphController.graph;
+    const agentNode = graph.nodes?.find(
+      (n) => n.configuration?.["generation-mode"] === "agent"
+    );
+    if (!agentNode) return nothing;
+
+    const config = agentNode.configuration ?? {};
+    const promptText = extractPromptText(config["config$prompt"]);
+
+    // Find referenced asset placeholders in the prompt
+    const template = new Template(promptText);
+    const referencedAssetPaths = new Set(
+      template.placeholders.filter((p) => p.type === "asset").map((p) => p.path)
+    );
+
+    // Gather all assets from the graph store and referenced paths
+    const allAssetsMap = new Map<string, GraphAsset>(
+      graphController.graphAssets
+    );
+
+    for (const path of referencedAssetPaths) {
+      if (!allAssetsMap.has(path)) {
+        allAssetsMap.set(path, {
+          path,
+          data: [],
+          metadata: {
+            title: path.split("/").pop() || "Asset",
+            type: "file",
+          },
+        });
+      }
+    }
+
+    const allAssets = Array.from(allAssetsMap.values());
+
+    // Sort: In-use assets first, then alphabetically by title
+    allAssets.sort((a, b) => {
+      const aInUse = referencedAssetPaths.has(a.path);
+      const bInUse = referencedAssetPaths.has(b.path);
+      if (aInUse && !bInUse) return -1;
+      if (!aInUse && bInUse) return 1;
+
+      const aTitle = a.metadata?.title || a.path;
+      const bTitle = b.metadata?.title || b.path;
+      return aTitle.localeCompare(bTitle);
+    });
+
+    return html`
+      <div class="asset-shelf-wrapper">
+        <div class="section-header">
+          <h2>Assets available</h2>
+          <bb-add-asset-button
+            .showGDrive=${true}
+            .showNotebookLm=${false}
+            .label=${"Add asset"}
+            @bbaddassetrequest=${(evt: AddAssetRequestEvent) => {
+              this._showAddAssetModal = true;
+              this._addAssetType = evt.assetType;
+              this._allowedMimeTypes = evt.allowedMimeTypes;
+              this.requestUpdate();
+            }}
+          ></bb-add-asset-button>
+        </div>
+        <div class="assets-list">
+          ${allAssets.map((asset) => {
+            const mimeType = asset.metadata?.subType || undefined;
+            const icon = this.#getAssetIcon(mimeType);
+            const badgeLabel = this.#getAssetBadgeLabel(mimeType);
+            const isInUse = referencedAssetPaths.has(asset.path);
+
+            return html`
+              <div
+                class="asset-row"
+                draggable="true"
+                @dragstart=${(evt: DragEvent) => this.#onDragStart(evt, asset)}
+              >
+                <div class="asset-info-wrapper">
+                  <div class="asset-icon-container">
+                    <span class="g-icon round filled">${icon}</span>
+                  </div>
+                  <div class="asset-details">
+                    <div class="asset-title">
+                      ${asset.metadata?.title || asset.path}
+                    </div>
+                    <div class="asset-meta">
+                      <span class="asset-badge">${badgeLabel}</span>
+                      ${isInUse
+                        ? html`<span class="in-use-pill">In use</span>`
+                        : nothing}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  class="remove-button"
+                  @click=${() => this.#onRemoveAsset(asset.path)}
+                  title="Remove asset"
+                >
+                  <span class="g-icon">close</span>
+                </button>
+              </div>
+            `;
+          })}
+        </div>
+      </div>
+
+      ${this._showAddAssetModal
+        ? html`<bb-add-asset-modal
+            .assetType=${this._addAssetType}
+            .allowedMimeTypes=${this._allowedMimeTypes}
+            @bboverlaydismissed=${() => {
+              this._showAddAssetModal = false;
+              this._addAssetType = null;
+              this._allowedMimeTypes = null;
+              this.requestUpdate();
+            }}
+            @bbaddasset=${async (evt: AddAssetEvent) => {
+              this._showAddAssetModal = false;
+              this._addAssetType = null;
+              this._allowedMimeTypes = null;
+
+              const content = evt.asset;
+              const metadata = evt.metadata;
+
+              // Generate a unique path using the extension inferred from metadata
+              const inferAssetExtension = (meta?: AssetMetadata): string => {
+                if (meta?.subType) {
+                  const parts = meta.subType.split("/");
+                  return parts[parts.length - 1];
+                }
+                if (meta?.title && meta.title.includes(".")) {
+                  return (
+                    meta.title.split(".").pop()?.toLowerCase() ?? "Untitled"
+                  );
+                }
+                return "bin";
+              };
+
+              const ext = inferAssetExtension(metadata);
+              const path = `asset-${globalThis.crypto.randomUUID().slice(0, 8)}.${ext}`;
+
+              const assetDescriptor: GraphAssetDescriptor = {
+                metadata,
+                path,
+                data: [content],
+              };
+
+              await this.sca.actions.asset.addGraphAsset(assetDescriptor);
+              this.requestUpdate();
+            }}
+          ></bb-add-asset-modal>`
+        : nothing}
+    `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "bb-agent-asset-shelf": AgentAssetShelf;
+  }
+}

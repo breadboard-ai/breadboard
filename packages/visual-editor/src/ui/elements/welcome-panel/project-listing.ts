@@ -24,7 +24,7 @@ import { type SCA } from "../../../sca/sca.js";
 import { chipStyles } from "../../styles/chip.js";
 import { isHydrating } from "../../../sca/utils/helpers/helpers.js";
 import "../input/opie-input.js";
-import "../graph-editing-chat/opie-avatar.js";
+import "../shared/agent-avatar.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -429,7 +429,10 @@ export class ProjectListing extends SignalWatcher(LitElement) {
     if (enableGraphEditorAgent) {
       return html`
         <section id="hero" class="opie">
-          <bb-opie-avatar mode="hero" .supportsHover=${false}></bb-opie-avatar>
+          <bb-agent-avatar
+            mode="hero"
+            .supportsHover=${false}
+          ></bb-agent-avatar>
 
           <h1 class="sans-flex w-500 round md-headline-large">
             ${Strings.from("LABEL_WELCOME_OPIE")}

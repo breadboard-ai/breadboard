@@ -17,7 +17,7 @@ import { icons } from "../../styles/icons.js";
 import * as Styles from "../../styles/styles.js";
 import "../input/expanding-textarea.js";
 import type { ExpandingTextarea } from "../input/expanding-textarea.js";
-import "./opie-avatar.js";
+import "../shared/agent-avatar.js";
 import "../effects/radial-glow.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -713,7 +713,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
                         var(--n-100) 100%`,
                     })}
                   >
-                    <bb-opie-avatar mode="small" static></bb-opie-avatar>
+                    <bb-agent-avatar mode="small" static></bb-agent-avatar>
                   </radial-glow>
                 </div>
                 <div class="msg-bubble system">Thinking…</div>
@@ -891,7 +891,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
     return html`
       <div class="msg-row">
         <div class="avatar">
-          <bb-opie-avatar mode="small" static></bb-opie-avatar>
+          <bb-agent-avatar mode="small" static></bb-agent-avatar>
         </div>
         <div class="msg-bubble model">
           <details class="thought-group">${body}</details>
@@ -920,7 +920,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
     return html`
       <div class="msg-row">
         <div class="avatar">
-          <bb-opie-avatar mode="small" static></bb-opie-avatar>
+          <bb-agent-avatar mode="small" static></bb-agent-avatar>
         </div>
         <div class="msg-bubble model">${markdown(text)}</div>
       </div>
@@ -999,7 +999,8 @@ class ChatPanel extends SignalWatcher(LitElement) {
     }
 
     if (text) {
-      const resolved = await this.sca.actions.graphEditingAgent.resolveGraphEditingInput(text);
+      const resolved =
+        await this.sca.actions.graphEditingAgent.resolveGraphEditingInput(text);
       if (!resolved) {
         agent.processing = true;
         await this.sca.actions.graphEditingAgent.startGraphEditingAgent(text);

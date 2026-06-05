@@ -99,7 +99,7 @@ function buildPrompt(objectiveText: string, tools: TemplatePart[]): string {
  * Extracts the raw text from a `config$prompt` LLMContent value.
  *
  * This replaces the duplicated `getPromptText` helpers that existed in
- * both `objective-editor.ts` and `tool-shelf.ts`.
+ * both `agent-config-column.ts` and `tool-shelf.ts`.
  */
 function extractPromptText(promptVal: unknown): string {
   if (!promptVal || typeof promptVal !== "object") return "";

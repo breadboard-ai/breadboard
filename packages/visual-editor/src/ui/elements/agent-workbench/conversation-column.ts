@@ -12,7 +12,7 @@ import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 
 import "../graph-editing-chat/chat-panel.js";
-import "../graph-editing-chat/opie-avatar.js";
+import "../shared/agent-avatar.js";
 
 import * as Styles from "../../styles/styles.js";
 

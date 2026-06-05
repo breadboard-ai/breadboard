@@ -14,7 +14,7 @@ import type { SCA } from "../../../sca/sca.js";
 import { icons } from "../../styles/icons.js";
 import { styleMap } from "lit/directives/style-map.js";
 
-import "./opie-avatar.js";
+import "../shared/agent-avatar.js";
 import "./chat-panel.js";
 import "../effects/radial-glow.js";
 import type { ChatPanel } from "./chat-panel.js";
@@ -193,7 +193,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
         margin-left: 14px;
       }
 
-      #opie-row bb-opie-avatar {
+      #opie-row bb-agent-avatar {
         flex-shrink: 0;
       }
     `,
@@ -208,7 +208,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       return nothing;
     }
 
-    const opie = html`<bb-opie-avatar
+    const opie = html`<bb-agent-avatar
       ?highlighted=${agent.open}
       @click=${() => {
         agent.open = !agent.open;
@@ -220,7 +220,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
         agent.showGreeting();
         agent.autoFocus = true;
       }}
-    ></bb-opie-avatar>`;
+    ></bb-agent-avatar>`;
 
     return html`
       <div id="chat-container">

@@ -151,10 +151,14 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       :host {
         display: block;
         background: light-dark(var(--n-100), var(--n-15));
-        font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
-          var(--bb-font-family);
-        color: var(--light-dark-n-10);
-        line-height: var(--bb-grid-size-6);
+        font: var(
+          --text-editor-font,
+          normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+            var(--bb-font-family)
+        );
+        color: var(--text-editor-color, var(--light-dark-n-10));
+        font-feature-settings: var(--text-editor-font-feature-settings, normal);
+        line-height: var(--text-editor-line-height, var(--bb-grid-size-6));
         position: relative;
       }
 
@@ -167,7 +171,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
         height: var(--text-editor-height, auto);
         width: 100%;
         min-height: max(var(--bb-grid-size-10), 100%);
-        line-height: var(--bb-grid-size-6);
+        line-height: var(--text-editor-line-height, var(--bb-grid-size-6));
         overflow-y: scroll;
         overflow-x: hidden;
         padding: var(--text-editor-padding-top, var(--bb-grid-size-2))
@@ -180,10 +184,13 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       /* Absolutely positioned placeholder that shows when the editor is empty.
          pointer-events: none ensures clicks pass through to the editor. */
       #placeholder {
-        font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
-          var(--bb-font-family);
-        color: var(--light-dark-n-50);
-        line-height: var(--bb-grid-size-6);
+        font: var(
+          --text-editor-font,
+          normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+            var(--bb-font-family)
+        );
+        color: var(--text-editor-placeholder-color, var(--light-dark-n-50));
+        line-height: var(--text-editor-line-height, var(--bb-grid-size-6));
         position: absolute;
         top: var(--text-editor-padding-top, var(--bb-grid-size-2));
         left: var(--text-editor-padding-left, var(--bb-grid-size-2));
@@ -722,6 +729,8 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
         @keydown=${this.#onKeyDown}
         @keyup=${this.#onKeyUp}
         @selectionchange=${this.#checkChicletSelections}
+        @dragover=${this.#onDragOver}
+        @drop=${this.#onDrop}
         >${this.#renderSegments.map((segment, index) => {
           if (segment.kind === "text") {
             return segment.text;
@@ -1585,6 +1594,52 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     this.#fastAccessTarget = part;
     if (this.#fastAccessRef.value && this.#fastAccessTarget !== null) {
       this.#fastAccessRef.value.updateFilter("");
+    }
+  }
+
+  #onDragOver(evt: DragEvent): void {
+    evt.preventDefault();
+    if (evt.dataTransfer) {
+      evt.dataTransfer.dropEffect = "copy";
+    }
+  }
+
+  #onDrop(evt: DragEvent): void {
+    evt.preventDefault();
+    const dataStr = evt.dataTransfer?.getData("text/plain");
+    if (!dataStr) return;
+
+    try {
+      const data = JSON.parse(dataStr);
+      if (data && data.type === "asset") {
+        const x = evt.clientX;
+        const y = evt.clientY;
+        const pos = caretPositionFromPoint(x, y, this.shadowRoot!);
+        if (pos) {
+          // Set selection to the drop position
+          const range = document.createRange();
+          range.setStart(pos.node, pos.offset);
+          range.collapse(true);
+
+          // Clear current selection and set the new range
+          const sel = this.#selection.getSelection();
+          if (sel) {
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+
+          // Now add the item!
+          const part: TemplatePart = {
+            path: data.path,
+            title: data.title,
+            type: "asset",
+            mimeType: data.mimeType,
+          };
+          this.addItem(part);
+        }
+      }
+    } catch (e) {
+      console.error("Error handling drop", e);
     }
   }
 }

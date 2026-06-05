@@ -15,8 +15,7 @@ import { ShowTooltipEvent, HideTooltipEvent } from "../../events/events.js";
 import { styles } from "./agent-workbench.styles.js";
 
 import "./run-log-column.js";
-import "./objective-editor/objective-editor.js";
-import "./tool-shelf/tool-shelf.js";
+import "./agent-config-column.js";
 import "./conversation-column.js";
 
 export { AgentWorkbench };
@@ -45,10 +44,7 @@ class AgentWorkbench extends SignalWatcher(LitElement) {
     return html`
       <bb-workbench-splitter>
         <bb-conversation-column slot="s0"></bb-conversation-column>
-        <div slot="s1" class="agent-config-column">
-          <bb-objective-editor></bb-objective-editor>
-          <bb-tool-shelf></bb-tool-shelf>
-        </div>
+        <bb-agent-config-column slot="s1"></bb-agent-config-column>
       </bb-workbench-splitter>
 
       <div
