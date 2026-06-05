@@ -19,6 +19,90 @@ import {
 import * as comlink from "comlink";
 import { Utils } from "../sca/utils.js";
 
+declare global {
+  interface Window {
+    glueCookieNotificationBarLoaded?: (event: CustomEvent) => void;
+    glue?: {
+      CookieNotificationBar?: {
+        instance?: {
+          status: string;
+          listen: (
+            event: string,
+            callback: (event: CustomEvent) => void
+          ) => void;
+        };
+        status: {
+          ACCEPTED: string;
+          REJECTED: string;
+          UNKNOWN: string;
+        };
+      };
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Cookie consent detection — must happen at module scope (synchronously) so
+// we don't miss the glueCookieNotificationBarLoaded callback fired by the
+// cookie bar script that loads before this module.
+// ---------------------------------------------------------------------------
+
+/** Resolves when cookie consent is granted (or when no cookie bar is present). */
+const cookieConsentGranted = createCookieConsentPromise();
+
+function createCookieConsentPromise(): Promise<void> {
+  const cookieBar = window.glue?.CookieNotificationBar;
+
+  // Helper: watch a cookie bar for ACCEPTED status.
+  const watchForConsent = (
+    cnb: NonNullable<typeof window.glue>["CookieNotificationBar"]
+  ): Promise<void> => {
+    if (!cnb?.instance) return Promise.resolve();
+    const ACCEPTED = cnb.status.ACCEPTED;
+
+    // Already accepted — resolve immediately.
+    if (cnb.instance.status === ACCEPTED) {
+      return Promise.resolve();
+    }
+
+    // Wait for a status change to ACCEPTED.
+    return new Promise<void>((resolve) => {
+      cnb.instance!.listen("statuschange", (event: CustomEvent) => {
+        if (event.detail.status === ACCEPTED) {
+          resolve();
+        }
+      });
+    });
+  };
+
+  // Case 1: Cookie bar already has an instance.
+  if (cookieBar?.instance) {
+    return watchForConsent(cookieBar);
+  }
+
+  // Case 2: Cookie bar script is on the page but hasn't initialized yet.
+  // Register the global loaded callback synchronously so we catch it.
+  if (document.querySelector('script[src*="cookienotificationbar"]')) {
+    return new Promise<void>((resolve) => {
+      window.glueCookieNotificationBarLoaded = () => {
+        const cnb = window.glue?.CookieNotificationBar;
+        if (cnb) {
+          watchForConsent(cnb).then(resolve);
+        } else {
+          resolve();
+        }
+      };
+    });
+  }
+
+  // Case 3: No cookie bar present (e.g. local dev) — consent not required.
+  return Promise.resolve();
+}
+
+// ---------------------------------------------------------------------------
+// Shell initialization
+// ---------------------------------------------------------------------------
+
 initializeOpalShellGuest();
 
 async function initializeOpalShellGuest() {
@@ -55,7 +139,12 @@ async function initializeOpalShellGuest() {
       await import("../../fake/fake-mode-opal-shell.js");
     shellHost = new FakeModeOpalShell();
   } else {
-    shellHost = new OAuthBasedOpalShell();
+    const oauthShell = new OAuthBasedOpalShell();
+    shellHost = oauthShell;
+
+    // Enable analytics once cookie consent is granted. The consent promise
+    // was set up at module scope so it's already listening.
+    cookieConsentGranted.then(() => oauthShell.enableAnalytics());
   }
 
   const boxedState: {

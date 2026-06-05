@@ -935,14 +935,24 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     });
   };
 
-  private readonly actionEventSender = new GTagEventSender(
-    CLIENT_DEPLOYMENT_CONFIG.MEASUREMENT_ID
-  );
+  private actionEventSender: GTagEventSender | undefined;
+
+  /**
+   * Enable analytics tracking. Called by the shell host after cookie consent
+   * has been granted.
+   */
+  enableAnalytics(): void {
+    if (this.actionEventSender) return;
+    this.actionEventSender = new GTagEventSender(
+      CLIENT_DEPLOYMENT_CONFIG.MEASUREMENT_ID
+    );
+  }
+
   trackAction = async (action: string, payload: Record<string, string>) => {
-    this.actionEventSender.sendEvent(action, payload);
+    this.actionEventSender?.sendEvent(action, payload);
   };
 
   trackProperties = async (payload: Record<string, string | undefined>) => {
-    this.actionEventSender.setProperties(payload);
+    this.actionEventSender?.setProperties(payload);
   };
 }

@@ -15,6 +15,10 @@
     content="{{origin}}/images/share-card-{{bucket}}.png"
   />
   <link rel="stylesheet" href="/styles/shell.css" />
+  <link
+    rel="stylesheet"
+    href="https://www.gstatic.com/glue/cookienotificationbar/cookienotificationbar.min.css"
+  />
 </head>
 <body>
   <iframe
@@ -27,5 +31,10 @@
       {{config}}
     </script>
   </template>
+  <script
+    src="https://www.gstatic.com/glue/cookienotificationbar/cookienotificationbar.min.js"
+    data-glue-cookie-notification-bar-category="2A"
+    data-glue-cookie-notification-bar-site-id="Opal"
+  ></script>
   <script src="/src/shell/opal-shell-host.ts" type="module"></script>
 </body>

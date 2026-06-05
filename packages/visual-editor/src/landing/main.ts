@@ -11,35 +11,11 @@ import type {
 } from "../sca/types.js";
 import type { LanguagePack } from "../ui/types/types.js";
 import { createActionTracker } from "../ui/utils/action-tracker.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
-import { GTagEventSender } from "../ui/utils/gtag-event-sender.js";
 import { connectToOpalShellHost } from "../ui/utils/opal-shell-guest.js";
 import { SigninAdapter } from "../ui/utils/signin-adapter.js";
 import { makeUrl, parseUrl } from "../ui/navigation/urls.js";
 import "./carousel.js";
 import * as Shell from "./shell.js";
-
-declare global {
-  interface Window {
-    glueCookieNotificationBarLoaded?: (event: CustomEvent) => void;
-    glue?: {
-      CookieNotificationBar?: {
-        instance?: {
-          status: string;
-          listen: (
-            event: string,
-            callback: (event: CustomEvent) => void
-          ) => void;
-        };
-        status: {
-          ACCEPTED: string;
-          REJECTED: string;
-          UNKNOWN: string;
-        };
-      };
-    };
-  }
-}
 
 const parsedUrl = parseUrl(window.location.href) as LandingUrlInit;
 if (parsedUrl.page !== "landing") {
@@ -119,46 +95,6 @@ async function init() {
 
   const actionTracker = createActionTracker(shellHost);
 
-  // Initialize analytics only after cookie consent is granted.
-  // Uses the cookie notification bar instance API.
-  const initAnalytics = () => {
-    new GTagEventSender(CLIENT_DEPLOYMENT_CONFIG.MEASUREMENT_ID);
-    actionTracker.load("landing");
-  };
-
-  const cookieBar = window.glue?.CookieNotificationBar;
-  
-  const handleCookieBarEvent = (currentCookieBar: NonNullable<typeof window.glue>["CookieNotificationBar"]) => {
-    if (!currentCookieBar?.instance) return;
-    const ACCEPTED = currentCookieBar.status.ACCEPTED;
-    if (currentCookieBar.instance.status === ACCEPTED) {
-      // Returning visitor who already consented, or non-eligible region.
-      initAnalytics();
-    } else {
-      // First-time visitor: wait for consent via the cookie bar UI.
-      currentCookieBar.instance.listen("statuschange", (event: CustomEvent) => {
-        if (event.detail.status === ACCEPTED) {
-          initAnalytics();
-        }
-      });
-    }
-  };
-
-  if (cookieBar?.instance) {
-    handleCookieBarEvent(cookieBar);
-  } else if (document.querySelector('script[src*="cookienotificationbar"]')) {
-    // Script is on the page but not initialized yet.
-    // Register the global loaded callback.
-    window.glueCookieNotificationBarLoaded = () => {
-      const currentCnb = window.glue?.CookieNotificationBar;
-      if (currentCnb) {
-        handleCookieBarEvent(currentCnb);
-      }
-    };
-  } else {
-    // Cookie bar not loaded or not present (e.g. local dev) — initialize analytics directly.
-    initAnalytics();
-  }
 
   embedHandler?.sendToEmbedder({
     type: "home_loaded",
