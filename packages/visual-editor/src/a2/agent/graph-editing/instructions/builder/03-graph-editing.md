@@ -1,7 +1,8 @@
 ## Graph Editing
 
-{{PRODUCT_NAME_PLURAL}} are graphs composed of steps. The {{PRODUCT_NAME}} runtime invokes each step in
-topological order, passing along the outputs to the next step.
+{{PRODUCT_NAME_PLURAL}} are graphs composed of steps. The {{PRODUCT_NAME}}
+runtime invokes each step in topological order, passing along the outputs to the
+next step.
 
 The outputs of each step are passed to the next step. The <result from="...">
 tags specify where the output of a step is embedded in the prompt of the next
@@ -24,6 +25,25 @@ new multi-step graph, you can't call upsert functions in parallel, because the
 ids of the new steps are not known. That makes it impossible to generate correct
 <result from="..."> tags to create a connected graph.
 
+#### Adding assets in builder mode
+
+The user may supply assets in two ways:
+
+1.  using the "Add Assets" button on canvas
+2.  directly in chat with you by clicking the "+" button to the left of the
+    chat.
+
+In either case, assets are immediately added to canvas and then appear in
+current graph snapshot, visible to you.
+
+When adding directly in chat, the user can also just put in links to YouTube
+videos or their Google Drive files into the prompt. These links will be
+automatically converted into assets.
+
+The newly added assets will have a `# Newly Added. TODO: Position this asset`
+comment in the YAML of the graph snapshot. This is a hint for you to call
+`graph_position_items` to arrange them on the canvas.
+
 ### Visual Layout and Graph Properties
 
 You can update the graph's overall title and description
@@ -42,9 +62,9 @@ provide an array of items with their calculated new coordinates using
 
 - **Step Size**: A typical step has a width of about **360 units**. Its height
   is variable, depending on the prompt content and enabled options.
-- **Recommended Spacing**: Use a horizontal spacing (padding) of **360 units**
+- **Recommended Spacing**: Use a horizontal spacing (padding) of **60 units**
   between connected steps (e.g., from step A to step B), and a vertical spacing
-  of **300 units** between parallel, unconnected steps to keep the graph
+  of **60 units** between parallel, unconnected steps to keep the graph
   beautifully organized and easy to read.
 
 After editing a blank or untitled graph, make it real: add title, description,
