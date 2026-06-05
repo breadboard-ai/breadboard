@@ -32,10 +32,14 @@ async function invokeGraphEditingAgent(
   hooks?: LoopHooks,
   productName = "Opal"
 ): Promise<Outcome<AgentResult>> {
+  const { controller } = bind;
+  const isReadOnly = controller?.editor?.graph?.readOnly ?? false;
+
   const functionGroups = buildGraphEditingFunctionGroups({
     sink,
     translator,
     productName,
+    isReadOnly,
   });
 
   // Read the current graph via suspend so the agent knows the state.

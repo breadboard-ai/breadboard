@@ -675,9 +675,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     );
     const enableGraphEditorAgent =
       !isHydratingAgent && this.sca.env.flags.get("enableGraphEditorAgent");
-    const isReadOnly = this.sca.controller.editor.graph.readOnly;
-
-    if (enableGraphEditorAgent && !isReadOnly) {
+    if (enableGraphEditorAgent) {
       return html`<div id="controls" slot="slot-0" class="opie-mode">
         ${[
           this.#renderOriginalPrompt(true),

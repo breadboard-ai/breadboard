@@ -264,7 +264,7 @@
       "command": "tsx scripts/build-opie-instructions.ts",
       "files": [
         "scripts/build-opie-instructions.ts",
-        "src/a2/agent/graph-editing/instructions/*.md"
+        "src/a2/agent/graph-editing/instructions/**/*.md"
       ],
       "output": [
         "src/a2/agent/graph-editing/instructions/generated.ts"

@@ -183,14 +183,14 @@ export class CanvasController extends SignalWatcher(LitElement) {
       !isAgentHydrating && this.sca.env.flags.get("enableGraphEditorAgent");
 
     let inputElement: HTMLTemplateResult | typeof nothing = nothing;
-    if (!gc.readOnly && !isAgentHydrating) {
+    if (!isAgentHydrating) {
       if (enableAgent) {
         inputElement = html`<bb-graph-editing-chat
           @pointerdown=${(evt: PointerEvent) => {
             evt.stopPropagation();
           }}
         ></bb-graph-editing-chat>`;
-      } else {
+      } else if (!gc.readOnly) {
         inputElement = html`<bb-flowgen-editor-input
           @pointerdown=${(evt: PointerEvent) => {
             evt.stopPropagation();

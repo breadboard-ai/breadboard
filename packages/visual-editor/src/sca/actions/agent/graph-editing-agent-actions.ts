@@ -108,10 +108,12 @@ function startGraphEditingAgent(
 
   if (devtools) {
     devtools.clearLog();
+    const isReadOnly = controller.editor.graph.readOnly;
     const functionGroups = buildGraphEditingFunctionGroups({
       sink: handle.sink,
       translator,
       productName,
+      isReadOnly,
     });
     const systemInstruction = functionGroups
       .map((g) => g.instruction)
