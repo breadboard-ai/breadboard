@@ -49,7 +49,7 @@ suite("WorkbenchController", () => {
     await ctrl.isHydrated;
 
     assert.ok(ctrl.splitter);
-    assert.strictEqual(ctrl.splitter.split, 0.5);
+    assert.strictEqual(ctrl.splitter.split, 0.3);
     assert.strictEqual(ctrl.splitter.minLeftPixelWidth, 350);
     assert.strictEqual(ctrl.splitter.minRightPixelWidth, 350);
   });

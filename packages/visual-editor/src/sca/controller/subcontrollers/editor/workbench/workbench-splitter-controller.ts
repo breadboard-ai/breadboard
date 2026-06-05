@@ -12,7 +12,7 @@ export class WorkbenchSplitterController extends RootController {
   readonly max = 0.8;
 
   @field({ persist: "session" })
-  private accessor _split = 0.5;
+  private accessor _split = 0.3;
 
   @field()
   private accessor _minRightPixelWidth = 350;

@@ -160,7 +160,7 @@ export class ToolShelf extends SignalWatcher(LitElement) {
         text-overflow: ellipsis;
       }
 
-      /* Premium Toggle Switch */
+      /* Toggle Switch */
       .switch {
         position: relative;
         display: inline-block;
