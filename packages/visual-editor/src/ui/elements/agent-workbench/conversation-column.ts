@@ -12,6 +12,7 @@ import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 
 import "../graph-editing-chat/chat-panel.js";
+import "../graph-editing-chat/opie-avatar.js";
 
 import * as Styles from "../../styles/styles.js";
 
@@ -44,37 +45,12 @@ class ConversationColumn extends SignalWatcher(LitElement) {
         width: 100%;
         height: 100%;
         background: var(--light-dark-n-100);
-        border: 1px solid var(--light-dark-n-90);
-        border-radius: var(--bb-grid-size-3);
         overflow: hidden;
         box-sizing: border-box;
       }
 
       * {
         box-sizing: border-box;
-      }
-
-      header {
-        display: flex;
-        align-items: center;
-        height: 48px;
-        padding: 0 var(--bb-grid-size-4);
-        background: var(--light-dark-n-100);
-        border-bottom: 1px solid var(--light-dark-n-90);
-        flex-shrink: 0;
-
-        & h2 {
-          margin: 0;
-          font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
-            var(--bb-font-family);
-          color: var(--light-dark-n-20);
-        }
-
-        & .g-icon {
-          margin-right: var(--bb-grid-size-2);
-          font-size: 20px;
-          color: var(--light-dark-n-40);
-        }
       }
 
       bb-chat-panel {
@@ -95,10 +71,6 @@ class ConversationColumn extends SignalWatcher(LitElement) {
 
   render() {
     return html`
-      <header>
-        <span class="g-icon filled round">forum</span>
-        <h2>Chat</h2>
-      </header>
       <bb-chat-panel
         mode="embedded"
         .showSelectionStrip=${false}

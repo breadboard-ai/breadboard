@@ -37,9 +37,9 @@ export class RunLogColumn extends SignalWatcher(LitElement) {
         display: flex;
         flex-direction: column;
         height: 100%;
-        background: var(--light-dark-n-100);
-        border: 1px solid var(--light-dark-n-90);
-        border-radius: var(--bb-grid-size-3);
+        background: transparent;
+        border: none;
+        border-radius: 0;
         overflow: hidden;
       }
 
@@ -78,6 +78,32 @@ export class RunLogColumn extends SignalWatcher(LitElement) {
           & .g-icon {
             font-size: 20px;
             color: var(--light-dark-n-40);
+          }
+
+          & .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--light-dark-n-40);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            width: var(--bb-grid-size-7);
+            height: var(--bb-grid-size-7);
+            border-radius: 50%;
+            transition:
+              background-color 0.15s ease,
+              color 0.15s ease;
+
+            &:hover {
+              background: var(--light-dark-n-95);
+              color: var(--light-dark-n-10);
+            }
+
+            & .g-icon {
+              font-size: 20px;
+            }
           }
         }
 
@@ -294,6 +320,12 @@ export class RunLogColumn extends SignalWatcher(LitElement) {
     });
   }
 
+  #onClose() {
+    this.dispatchEvent(
+      new CustomEvent("close", { bubbles: true, composed: true })
+    );
+  }
+
   render() {
     if (!this.sca.controller) return nothing;
 
@@ -309,6 +341,13 @@ export class RunLogColumn extends SignalWatcher(LitElement) {
       <header>
         <div id="agent-info">
           <div class="panel-title">
+            <button
+              class="close-btn"
+              @click=${this.#onClose}
+              title="Close Runs"
+            >
+              <span class="g-icon">close</span>
+            </button>
             <span class="g-icon filled round">history</span>
             <h2>Runs</h2>
           </div>

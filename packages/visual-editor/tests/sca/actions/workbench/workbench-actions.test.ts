@@ -203,9 +203,9 @@ suite("Workbench Actions", () => {
     });
   });
 
-  suite("resizeColumns", () => {
-    test("sets splits correctly", async () => {
-      let splitsSet: [number, number, number] | undefined;
+  suite("toggleRunsPanel", () => {
+    test("toggles runsOpen from false to true", async () => {
+      let runsOpenVal = false;
 
       const env = createMockEnvironment(defaultRuntimeFlags);
       await env.isHydrated;
@@ -215,8 +215,11 @@ suite("Workbench Actions", () => {
         controller: {
           editor: {
             workbench: {
-              set splits(val: [number, number, number]) {
-                splitsSet = val;
+              get runsOpen() {
+                return runsOpenVal;
+              },
+              set runsOpen(val: boolean) {
+                runsOpenVal = val;
               },
             },
           },
@@ -224,9 +227,37 @@ suite("Workbench Actions", () => {
         env,
       });
 
-      await workbenchActions.resizeColumns([1, 3, 1]);
+      await workbenchActions.toggleRunsPanel();
 
-      assert.deepEqual(splitsSet, [1, 3, 1]);
+      assert.strictEqual(runsOpenVal, true);
+    });
+
+    test("sets runsOpen to explicit value", async () => {
+      let runsOpenVal = true;
+
+      const env = createMockEnvironment(defaultRuntimeFlags);
+      await env.isHydrated;
+
+      workbenchActions.bind({
+        services: {} as never,
+        controller: {
+          editor: {
+            workbench: {
+              get runsOpen() {
+                return runsOpenVal;
+              },
+              set runsOpen(val: boolean) {
+                runsOpenVal = val;
+              },
+            },
+          },
+        } as never,
+        env,
+      });
+
+      await workbenchActions.toggleRunsPanel(false);
+
+      assert.strictEqual(runsOpenVal, false);
     });
   });
 

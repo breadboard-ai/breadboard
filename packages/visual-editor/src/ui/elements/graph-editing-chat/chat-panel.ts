@@ -6,7 +6,7 @@
 
 import { consume } from "@lit/context";
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { scaContext } from "../../../sca/context/context.js";
@@ -23,12 +23,14 @@ import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { getStepIcon } from "../../utils/get-step-icon.js";
 import type { InspectableNode } from "@breadboard-ai/types";
-import type {
+import {
   AddAssetRequestEvent,
   AddAssetEvent,
+  UtteranceEvent,
 } from "../../events/events.js";
 import "../input/add-asset/add-asset-button.js";
 import "../input/add-asset/add-asset-modal.js";
+import "../input/speech-to-text/speech-to-text.js";
 import "./input-asset-shelf.js";
 
 export { ChatPanel };
@@ -57,6 +59,9 @@ class ChatPanel extends SignalWatcher(LitElement) {
   #showAddAssetModal = false;
   #addAssetType: string | null = null;
   #allowedMimeTypes: string | null = null;
+
+  @state()
+  accessor speechToTextActive = false;
 
   static styles = [
     icons,
@@ -108,7 +113,9 @@ class ChatPanel extends SignalWatcher(LitElement) {
         -webkit-mask-image: none;
         min-height: 0;
         flex: 1;
-        padding-bottom: var(--bb-grid-size-4);
+        padding-bottom: var(
+          --bb-grid-size-5
+        ); /* bb-grid-size-5 at the bottom */
       }
 
       /* Spacer pushes content to the bottom when the conversation
@@ -120,8 +127,8 @@ class ChatPanel extends SignalWatcher(LitElement) {
       }
 
       :host([mode="embedded"]) .input-area {
-        background: light-dark(var(--n-98), var(--n-15));
-        border-top: 1px solid light-dark(var(--n-90), var(--n-70));
+        background: var(--light-dark-n-100);
+        border-top: 1px solid var(--light-dark-n-95);
         flex-shrink: 0;
       }
 
@@ -135,10 +142,11 @@ class ChatPanel extends SignalWatcher(LitElement) {
       .messages {
         flex: 1;
         overflow-y: auto;
-        padding: var(--bb-grid-size-4);
+        padding: var(--bb-grid-size-4) var(--bb-grid-size-6)
+          var(--bb-grid-size-4) var(--bb-grid-size-6); /* bb-grid-size-6 on the sides */
         display: flex;
         flex-direction: column;
-        gap: var(--bb-grid-size-3);
+        gap: var(--bb-grid-size-5); /* Increased spacing between message rows */
         scrollbar-width: thin;
         scrollbar-color: var(--light-dark-n-60) transparent;
         mask-image: linear-gradient(transparent 0%, black 12px, black 100%);
@@ -200,21 +208,33 @@ class ChatPanel extends SignalWatcher(LitElement) {
       }
 
       .msg-bubble {
+        font-family: var(--bb-font-family-flex, "Google Sans Flex", sans-serif);
         font-size: 14px;
-        line-height: 1.5;
+        line-height: 20px;
+        font-weight: 400;
+        font-feature-settings: "ss02" on;
+        color: light-dark(rgba(0, 0, 0, 0.8), rgba(255, 255, 255, 0.9));
         padding-top: 4px;
         max-width: 80%;
       }
 
       .msg-bubble.user {
-        background: var(--light-dark-p-90);
-        color: var(--light-dark-n-10);
-        padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-        border-radius: 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        align-self: stretch;
+
+        border-radius: 20px;
+        border: none;
+        background: var(--n-95, #f1f3f4);
+        box-shadow: none;
+        padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
+        color: light-dark(#8f8f8f, var(--n-50));
       }
 
       .msg-bubble.model {
-        color: var(--light-dark-n-10);
+        /* inherits everything from .msg-bubble */
       }
 
       .msg-bubble.model p {
@@ -321,16 +341,16 @@ class ChatPanel extends SignalWatcher(LitElement) {
 
       .input-row {
         display: flex;
-        align-items: center;
-        gap: var(--bb-grid-size-2);
-        padding: var(--bb-grid-size-3) var(--bb-grid-size-3);
+        align-items: flex-end;
+        gap: var(--bb-grid-size-3);
+        padding: var(--bb-grid-size-4) var(--bb-grid-size-4);
       }
       bb-expanding-textarea {
         flex: 1;
         background: var(--light-dark-n-98);
         border: 1px solid var(--light-dark-n-90);
-        border-radius: var(--bb-grid-size-7);
-        padding: var(--bb-grid-size) var(--bb-grid-size-3);
+        border-radius: 16px; /* Softer border-radius */
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-4); /* More padding */
         --min-lines: 1;
         --max-lines: 4;
         font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
@@ -345,6 +365,29 @@ class ChatPanel extends SignalWatcher(LitElement) {
         &::part(textarea)::placeholder {
           color: var(--light-dark-n-50);
         }
+      }
+
+      .mic-button {
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+        color: var(--light-dark-n-40);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        transition:
+          background-color 0.15s ease,
+          color 0.15s ease;
+      }
+
+      .mic-button:hover {
+        background: var(--light-dark-n-95);
+        color: var(--light-dark-n-10);
       }
 
       .send-button {
@@ -374,6 +417,101 @@ class ChatPanel extends SignalWatcher(LitElement) {
 
       .send-button.active:hover {
         background: var(--light-dark-n-0);
+      }
+
+      /* ── Unified Input Card (Mock-aligned) ── */
+
+      .unified-input-card {
+        display: flex;
+        flex-direction: column;
+        background: var(--light-dark-n-100);
+        border: 1px solid var(--light-dark-n-90);
+        border-radius: 24px;
+        padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
+        margin: 0 var(--bb-grid-size-6) var(--bb-grid-size-5)
+          var(--bb-grid-size-6); /* Matches side padding (24px) and bottom padding (20px) */
+        box-shadow: 0 8px 40px 0 rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+      }
+
+      bb-expanding-textarea {
+        --border-color: transparent;
+        --background-color: transparent;
+        --padding: 0;
+        --border-radius: 0;
+        width: 100%;
+      }
+
+      bb-expanding-textarea::part(textarea) {
+        color: light-dark(rgba(0, 0, 0, 0.8), rgba(255, 255, 255, 0.9));
+      }
+
+      bb-expanding-textarea::part(textarea)::placeholder {
+        color: light-dark(#8f8f8f, var(--n-50));
+      }
+
+      .unified-input-card bb-expanding-textarea {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        width: 100%;
+        --min-lines: 1;
+        --max-lines: 6;
+
+        &:focus-within {
+          border: none !important;
+          outline: none !important;
+        }
+
+        &::part(textarea) {
+          background: transparent !important;
+          border: none !important;
+          padding: 0 !important;
+          outline: none !important;
+        }
+      }
+
+      .unified-input-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-top: var(--bb-grid-size-3);
+        padding-top: var(--bb-grid-size-2);
+        border-top: 1px dashed var(--light-dark-n-95);
+      }
+
+      .mic-card-button,
+      .send-card-button {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+        color: var(--light-dark-n-40);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        transition:
+          background-color 0.15s ease,
+          color 0.15s ease;
+      }
+
+      .mic-card-button:hover {
+        background: var(--light-dark-n-95);
+        color: var(--light-dark-n-10);
+      }
+
+      .send-card-button.active {
+        color: var(--light-dark-p-40);
+      }
+
+      .send-card-button.active:hover {
+        background: var(--light-dark-n-95);
+        color: var(--light-dark-n-10);
       }
 
       /* ── Selection indicator ── */
@@ -505,12 +643,8 @@ class ChatPanel extends SignalWatcher(LitElement) {
   }
 
   render() {
-    const readOnly = this.sca.controller.editor.graph.readOnly;
     const agent = this.sca.controller.editor.graphEditingAgent;
     void agent.autoFocus;
-    const inputAssets = this.sca.controller.editor.inputAssets;
-    const inputDisabled = agent.processing;
-    const hasInput = !!this.#inputRef.value?.value;
 
     return html`
       <div class="bubble">
@@ -588,14 +722,42 @@ class ChatPanel extends SignalWatcher(LitElement) {
         </div>
 
         ${this.showSelectionStrip ? this.#renderSelectionStrip() : nothing}
+        ${this.#renderInputArea()}
+      </div>
+      ${this.#renderAddAssetModal()}
+    `;
+  }
 
-        <div class="input-area">
+  #renderInputArea() {
+    const readOnly = this.sca.controller.editor.graph.readOnly;
+    const agent = this.sca.controller.editor.graphEditingAgent;
+    const inputAssets = this.sca.controller.editor.inputAssets;
+    const inputDisabled = agent.processing;
+    const hasInput = !!this.#inputRef.value?.value;
+
+    if (this.mode === "embedded") {
+      return html`
+        <div class="unified-input-card">
+          <bb-expanding-textarea
+            ${ref(this.#inputRef)}
+            .disabled=${inputDisabled}
+            .classes=${"sans-flex w-400 md-body-medium"}
+            .placeholder=${readOnly
+              ? "Ask a question"
+              : "Ask a question or request a change..."}
+            @change=${this.#onSend}
+            @input=${() => this.requestUpdate()}
+            ><span slot="submit" style="display:none"></span
+          ></bb-expanding-textarea>
           ${this.#renderAssetShelf()}
-          <div class="input-row">
+
+          <div class="unified-input-footer">
             <bb-add-asset-button
               .anchor=${"above"}
               .showGDrive=${true}
               .showNotebookLm=${!!this.sca.env.flags.get("enableNotebookLm")}
+              .label=${"Attach"}
+              .variant=${"seamless"}
               @bbaddassetrequest=${(evt: AddAssetRequestEvent) => {
                 if (evt.assetType === "notebooklm") {
                   this.sca.actions.notebookLmPicker.open((notebooks) => {
@@ -609,28 +771,79 @@ class ChatPanel extends SignalWatcher(LitElement) {
                 this.requestUpdate();
               }}
             ></bb-add-asset-button>
-            <bb-expanding-textarea
-              ${ref(this.#inputRef)}
-              .disabled=${inputDisabled}
-              .placeholder=${readOnly
-                ? "Ask a question"
-                : "Ask a question or make a change..."}
-              @change=${this.#onSend}
-              @input=${() => this.requestUpdate()}
-              ><span slot="submit" style="display:none"></span
-            ></bb-expanding-textarea>
-            <button
-              class="send-button ${hasInput || inputAssets.populated
-                ? "active"
-                : ""}"
-              @click=${() => this.#onSend()}
-            >
-              <span class="g-icon">send</span>
-            </button>
+
+            ${(hasInput || inputAssets.populated) && !this.speechToTextActive
+              ? html`<button
+                  class="send-card-button active"
+                  @click=${() => this.#onSend()}
+                  title="Send message"
+                >
+                  <span class="g-icon">send</span>
+                </button>`
+              : html`<bb-speech-to-text
+                  .variant=${"seamless"}
+                  .disabled=${inputDisabled}
+                  @start=${() => {
+                    this.speechToTextActive = true;
+                  }}
+                  @end=${() => {
+                    this.speechToTextActive = false;
+                  }}
+                  @bbutterance=${(evt: UtteranceEvent) => {
+                    const textarea = this.#inputRef.value;
+                    if (!textarea) return;
+                    textarea.value = evt.parts
+                      .map((part) => part.transcript)
+                      .join("");
+                    this.requestUpdate();
+                  }}
+                ></bb-speech-to-text>`}
           </div>
         </div>
+      `;
+    }
+
+    return html`
+      <div class="input-area">
+        ${this.#renderAssetShelf()}
+        <div class="input-row">
+          <bb-add-asset-button
+            .anchor=${"above"}
+            .showGDrive=${true}
+            .showNotebookLm=${!!this.sca.env.flags.get("enableNotebookLm")}
+            @bbaddassetrequest=${(evt: AddAssetRequestEvent) => {
+              if (evt.assetType === "notebooklm") {
+                this.sca.actions.notebookLmPicker.open((notebooks) => {
+                  this.sca.actions.inputAsset.addFromNotebookLm(notebooks);
+                });
+                return;
+              }
+              this.#showAddAssetModal = true;
+              this.#addAssetType = evt.assetType;
+              this.#allowedMimeTypes = evt.allowedMimeTypes;
+              this.requestUpdate();
+            }}
+          ></bb-add-asset-button>
+          <bb-expanding-textarea
+            ${ref(this.#inputRef)}
+            .disabled=${inputDisabled}
+            .placeholder=${readOnly
+              ? "Ask a question"
+              : "Ask a question or request a change..."}
+            @change=${this.#onSend}
+            @input=${() => this.requestUpdate()}
+            ><span slot="submit" style="display:none"></span
+          ></bb-expanding-textarea>
+          <button
+            class="send-button ${hasInput || inputAssets.populated
+              ? "active"
+              : ""}"
+            @click=${() => this.#onSend()}
+          >
+            <span class="g-icon">send</span>
+          </button>
+        </div>
       </div>
-      ${this.#renderAddAssetModal()}
     `;
   }
 
@@ -674,7 +887,17 @@ class ChatPanel extends SignalWatcher(LitElement) {
       </div>
     `;
 
-    return html` <details class="thought-group">${body}</details> `;
+    // Wrap thought groups in Opie avatar row to match premium mock
+    return html`
+      <div class="msg-row">
+        <div class="avatar">
+          <bb-opie-avatar mode="small" static></bb-opie-avatar>
+        </div>
+        <div class="msg-bubble model">
+          <details class="thought-group">${body}</details>
+        </div>
+      </div>
+    `;
   }
 
   #renderUserMessage(text: string) {

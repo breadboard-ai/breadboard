@@ -24,39 +24,9 @@ export const styles = [
       background: var(--light-dark-n-98);
     }
 
-    ui-tri-splitter {
+    bb-workbench-splitter {
       width: 100%;
       height: 100%;
-    }
-
-    .column-placeholder {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-      background: light-dark(var(--n-98), var(--n-20));
-      color: light-dark(var(--n-40), var(--n-80));
-      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-      padding: var(--bb-grid-size-8);
-      text-align: center;
-      overflow: auto;
-
-      &[slot="s0"] {
-        background: light-dark(var(--n-98), var(--n-15));
-      }
-
-      &[slot="s1"] {
-        background: light-dark(var(--n-100), var(--n-0));
-      }
-
-      & .g-icon {
-        font-size: 48px;
-        margin-bottom: var(--bb-grid-size-4);
-        color: light-dark(var(--n-70), var(--n-50));
-      }
     }
 
     .agent-config-column {
@@ -65,12 +35,55 @@ export const styles = [
       height: 100%;
       width: 100%;
       background: var(--light-dark-n-100);
-      border: 1px solid var(--light-dark-n-90);
-      border-radius: var(--bb-grid-size-3);
       padding: 0;
       gap: 0;
       overflow: hidden;
     }
+
+    /* ── Floaty Runs Panel ── */
+
+    .runs-panel-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 60;
+      pointer-events: none; /* Let clicks pass through to the underlying UI! */
+      display: flex;
+      justify-content: flex-end;
+      padding: var(--bb-grid-size-4);
+    }
+
+    .runs-panel {
+      pointer-events: auto; /* Capture clicks inside the runs panel */
+      width: 420px;
+      max-width: 50%;
+      height: 100%;
+      background: light-dark(var(--n-100), var(--n-15));
+      border-radius: var(--bb-grid-size-4);
+      border: 1px solid var(--light-dark-n-90);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.12),
+        0 2px 8px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateX(calc(100% + var(--bb-grid-size-4)));
+      opacity: 0;
+      transition:
+        transform 0.3s cubic-bezier(0.2, 0, 0, 1),
+        opacity 0.2s ease;
+    }
+
+    .runs-panel-overlay.open .runs-panel {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    .runs-panel bb-run-log-column {
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ── Control stack ── */
 
     #workbench-controls {
       position: absolute;
@@ -128,6 +141,11 @@ export const styles = [
           &:focus {
             background-color: light-dark(var(--n-90), var(--n-30));
           }
+        }
+
+        &.active {
+          background-color: light-dark(var(--p-90), var(--p-30));
+          color: light-dark(var(--p-40), var(--p-80));
         }
       }
     }

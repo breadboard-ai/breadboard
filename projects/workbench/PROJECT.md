@@ -7,46 +7,48 @@ canvas with a collapsible sidebar — was built for multi-node graphs. It's the
 wrong shape for this collaborative, single-agent workflow.
 
 This project replaces the graph-centric editor with an **Agent Workbench**: a
-three-column layout purpose-built for authoring, collaborating on, and running a
+two-column layout purpose-built for authoring, collaborating on, and running a
 single agent.
 
 ```
-┌────────────────────┬─────────────────────────┬────────────────────┐
-│                    │                         │                    │
-│   Opie             │   Agent Configuration   │   Run Log          │
-│   Conversation     │                         │                    │
-│                    │   ┌───────────────────┐ │   ┌────────────┐   │
-│   Contextualized   │   │                   │ │   │ Run 3      │   │
-│   history of all   │   │   Objective       │ │   │ ████████░░ │   │
-│   changes, user    │   │   Editor          │ │   │            │   │
-│   messages, and    │   │                   │ │   ├────────────┤   │
-│   Opie responses   │   │  (contenteditable │ │   │ Run 2 ✓    │   │
-│                    │   │    with inlined   │ │   │            │   │
-│                    │   │    assets)        │ │   ├────────────┤   │
-│                    │   │                   │ │   │ Run 1 ✓    │   │
-│                    │   └───────────────────┘ │   │            │   │
-│                    │                         │   └────────────┘   │
-│                    │   ┌───────────────────┐ │                    │
-│                    │   │ Tools & Skills    │ │   ▶ Run  ■ Stop    │
-│                    │   │ Advanced Options  │ │                    │
-│                    │   └───────────────────┘ │                    │
-│                    │                         │                    │
-└────────────────────┴─────────────────────────┴────────────────────┘
+┌──────────────────────┬───────────────────────────────────┐
+│                      │                                   │
+│   Opie               │   AI Daily Digest                 │
+│   Conversation       │   (editable agent name, 32px)     │
+│                      │                                   │
+│   Premium chat       │   ┌─────────────────────────────┐ │
+│   with Attach,       │   │                             │ │
+│   voice, and         │   │   Instructions              │ │
+│   spacious           │   │   (text editor with         │ │
+│   message            │   │    chiclet assets)          │ │
+│   rendering.         │   │                             │ │
+│                      │   └─────────────────────────────┘ │
+│                      │                                   │
+│                      │   ┌─────────────────────────────┐ │
+│                      │   │ Asset Shelf                 │ │
+│                      │   │ (drag to editor → chiclet)  │ │
+│                      │   └─────────────────────────────┘ │
+│                      │                                   │
+│   Ask a question     │   ┌─────────────────────────────┐ │
+│   or request a       │   │ Tools & Skills     [toggles]│ │
+│   change...          │   └─────────────────────────────┘ │
+│   Attach         🎤  │                                   │
+│                      │                        [▶ Runs]  │
+└──────────────────────┴───────────────────────────────────┘
 ```
 
-**Left column** — a full-height contextualized conversation with Opie. Not just
-chat: this contains the complete interleaved history of user messages, Opie
-responses, and every mutation to the agent's configuration. The user can
-traverse this history and restore any prior version.
+**Left column** — a full-height conversation with Opie. Polished, spacious chat
+with an "Attach" button and mic affordance. Future phases will upgrade this to a
+contextualized history that interleaves chat with configuration changes and
+version traversal.
 
-**Center column** — the agent's configuration. Dominated by the objective editor
-— a rich contenteditable surface where the agent's system prompt lives alongside
-inlined assets (think iframes, images, data). Below it: tool/skill toggles and
-advanced options.
+**Right column** — the agent's configuration. A scrollable form with the agent's
+name as a prominent editable heading, the instructions editor (using
+`bb-text-editor-remix` with chiclet support for assets), an asset shelf for
+managing and drag-dropping assets into the editor, and tool/skill toggles.
 
-**Right column** — the run log. The full history of running the agent, with
-controls for run, stop, and (eventually) resume. Effectively today's console,
-promoted to a first-class panel.
+**Run log** — accessible via a slide-out panel toggled by a "Runs" button. Not a
+permanent column. Contains the run history and live console output.
 
 ## Direction of Travel
 
@@ -56,10 +58,10 @@ to build now; others depend on pending backend work.
 **Things we control and can build now:**
 
 - The `enableAgentWorkbench` flag and the routing/layout switch.
-- The three-column layout shell.
-- Migrating the console/run log to the right column.
-- The objective editor surface (evolving the existing step/prompt editor).
-- Tool and skill configuration UI beneath the objective.
+- The two-column layout shell.
+- The agent configuration column (name, instructions, assets, tools).
+- Opie chat polish and input redesign.
+- The run log as a slide-out panel.
 - Theme controls relocated to app-level chrome.
 
 **Things that depend on future infrastructure:**
@@ -97,23 +99,14 @@ on the graph renderer, toggled by `GraphEditingAgentController.open`.
 
 ### Target Layout
 
-The workbench replaces the splitter with a three-column CSS grid:
+The workbench uses the existing `ui-splitter` for a two-column layout:
+conversation (left) and configuration (right). The run log slides out as an
+overlay panel when toggled.
 
-```
-grid-template-columns: var(--col-left) var(--col-center) var(--col-right);
-```
-
-Each column is a distinct element (not tabbed side-nav slots). Column widths are
-adjustable via two independent drag handles. Default ratio is **1:2:1** (or more
-precisely 1:flex:1 — left and right are fixed-width panels, center takes
-remaining space).
-
-The current `ui-splitter` is a two-slot design: one split ratio, one drag
-handle, one `SplitterController` with binary clamping. It doesn't generalize to
-three columns. We need a new **tri-splitter** element (or a generalized N-column
-splitter) with two handles and per-column min-width constraints. The pattern is
-the same — pointer capture, `fr` units, session-persisted ratios — but the
-geometry is fundamentally different (two degrees of freedom, not one).
+The existing `ui-splitter` is a two-slot design with one split ratio, one drag
+handle, and `SplitterController` with binary clamping — exactly what we need.
+The `WorkbenchController` owns the split ratio (a single number, session-
+persisted) and the `runsOpen` toggle for the slide-out panel.
 
 ### SCA Impact
 
@@ -131,7 +124,7 @@ controllers. Key changes:
 
 New additions:
 
-- `editor.workbench.WorkbenchController` — column visibility, drag state,
+- `editor.workbench.WorkbenchController` — split ratio, runs panel toggle,
   workbench mode detection.
 - Eventually: `editor.workbench.HistoryController` — version traversal for the
   left column (deferred until backend arrives).
@@ -141,8 +134,8 @@ New additions:
 ```typescript
 /**
  * Enables the Agent Workbench layout for single-agent Opals.
- * Replaces the graph canvas + sidebar with a three-column
- * conversation / configuration / run-log view.
+ * Replaces the graph canvas + sidebar with a two-column
+ * conversation / configuration view.
  */
 enableAgentWorkbench: boolean;
 ```
@@ -162,7 +155,7 @@ Added to:
 ### 🎯 Objective
 
 When `enableAgentWorkbench` is on and the loaded Opal is a single-agent graph,
-the editor renders a three-column layout instead of the graph canvas + sidebar.
+the editor renders a two-column layout instead of the graph canvas + sidebar.
 The right column shows the console/run log (not a placeholder). Theme controls
 are relocated out of the sidebar. The Preview tab is gone. A **toggle** lets the
 user switch between the workbench and the legacy graph view; it is only
@@ -364,79 +357,165 @@ column. Scrolling works naturally. Thoughts/thinking indicators appear inline.
 
 ---
 
-## Phase 4 — Rich Text Editor Overhaul (Model-driven LLMContent[] & Inline Asset Blocks)
+## Phase 4A — Layout Pivot (Two-Column)
 
 ### 🎯 Objective
 
-The prompt editor is model-driven, representing the document internally as an
-array of `LLMContent` (or `DataPart` blocks) rather than using legacy `{JSON}`
-template strings. No chips are rendered for assets; they are shown as premium
-block-level inline elements (images, drawing canvases, file attachment cards)
-within a single cohesive document editor. Backwards compatibility is fully
-maintained by translating the underlying template string format to/from
-`LLMContent[]` in memory when reading/writing.
+The workbench switches from a three-column layout to a **two-column** layout
+matching the UX mocks: Opie conversation on the left, agent configuration on the
+right. The tri-splitter is replaced by the existing `ui-splitter`. The run log
+column is removed from the permanent layout and made accessible via a slide-out
+panel toggled by a button.
 
-**Observable proof:** Enable the workbench. Type in the objective editor. Insert
-a drawing or file asset using the `@` menu or plus button. The asset renders as
-an interactive block card inline in the prompt text. Drag-and-drop or select and
-delete it. View the underlying graph configuration — the asset is stored as a
-`{JSON}` placeholder in the prompt string. Run the agent — the prompt and assets
-are resolved and sent correctly to Gemini. Open a legacy project with template
-placeholders; it compiles, runs, and renders successfully.
+**Observable proof:** Enable the workbench. The layout shows two columns:
+conversation (left) and configuration (right), with a single drag handle between
+them. The drag handle resizes the columns; the ratio persists across reloads.
+Click the "Runs" toggle button — a slide-out panel appears over the right edge
+showing the run log. Close it. The two-column layout is restored. The existing
+header (`bb-ve-header`) continues to render above — back button, title, Editor /
+App toggle, save status, share, publish, settings, and user avatar all function
+as before.
 
 ### Changes
 
-#### packages/visual-editor — SCA & Model
+#### packages/visual-editor — SCA
 
-- [ ] Re-model the text editor's internal state to align with `LLMContent[]`
-      structure.
-- [x] Add bidirectional translation utilities to parse legacy `{JSON}` prompt
-      strings to/from the in-memory `LLMContent[]` structure.
-- [x] Update the step-edit actions to read `config$prompt`, convert to
-      `LLMContent[]` for the editor, and serialize it back to the template
-      string when writing.
+- [x] Reuse the existing `SplitterController` pattern — `ui-splitter` already
+      owns its own `SplitterController` instance with session-persisted ratio
+      and pixel-width clamping. No split state needed on `WorkbenchController`.
+- [x] `WorkbenchController` — add `runsOpen: boolean` (session-persisted) for
+      the floaty runs panel.
 
 #### packages/visual-editor — UI
 
-- [ ] `bb-objective-editor` / `bb-text-editor-remix` — render text parts as
-      editable paragraphs and data parts as full-width block-level
-      `contenteditable="false"` cards.
-- [ ] Add caret-capture and navigation logic for block-level assets (treating
-      them as atomic blocks during backspace, select, and arrow navigation).
-- [ ] Implement the `@` menu trigger that opens an asset shelf/picker for
-      inserting drawings, uploads, etc.
-- [ ] Connect asset insertion to the graph assets store.
+- [x] `bb-agent-workbench` — replace `ui-tri-splitter` with `ui-splitter`.
+      Left slot: `bb-conversation-column`. Right slot: agent config column.
+      Remove `bb-run-log-column` from the grid.
+- [x] Floaty runs panel — positioned absolutely over the right edge, rounded
+      corners, slide-in animation. `bb-run-log-column` rendered inside when
+      open. Toggle button in the workbench control stack.
+- [x] Remove `ui-tri-splitter` file and barrel export.
 
 ---
 
-## Phase 5 — Column Interactions & Polish
+## Phase 4B — Opie Chat Polish
 
 ### 🎯 Objective
 
-The three columns interact fluidly. Columns are resizable via drag handles.
-Column widths persist across sessions. The layout is responsive — on narrow
-screens, columns collapse into a tabbed view (similar to the current narrow
-screen behavior). Transitions between workbench and classic mode are smooth.
+The Opie conversation column looks premium — matching the mocks' clean,
+spacious aesthetic. The input area is redesigned with an "Attach" label-button
+and mic affordance. The message rendering is polished with better spacing,
+typography, and visual rhythm.
 
-**Observable proof:** Drag the left column handle to resize it. Reload the page.
-The column width is preserved. Resize the browser to a narrow width. The columns
-collapse into tabs. Resize back. The columns restore. Switch between workbench
-and classic mode via the toggle. The transition is immediate with no layout
-jank.
+**Observable proof:** Open the workbench. The conversation column has a clean
+input area at the bottom: a text field with "Ask a question or request a
+change..." placeholder, an Attach button on the left, and a mic icon on the
+right. User messages render as right-aligned bubbles; Opie responses render with
+the Opie avatar and clean typography. The overall feel is spacious and premium.
 
 ### Changes
 
 #### packages/visual-editor — UI
 
-- [ ] `bb-agent-workbench` — drag handles between columns. Resize logic using
-      pointer events (consistent with existing `ui-splitter` patterns).
+- [x] `bb-chat-panel` (embedded mode) — restyle the input area:
+  - Replace the `bb-add-asset-button` icon with an "Attach" label-style button.
+  - Add a mic icon button on the right side of the input row (non-functional for
+    now — placeholder for future voice input).
+  - Update the expanding textarea styling: softer border radius, more padding,
+    lighter background.
+- [x] `bb-chat-panel` — message rendering polish:
+  - Increase spacing between message rows.
+  - Refine user bubble styling (the mocks show a subtle, light-grey rounded
+    bubble, not the current purple-tinted one).
+  - Improve model message typography and spacing.
+- [x] `bb-conversation-column` — update the header to feature the Opie avatar
+      and "Opie" label for a premium companion feel.
+
+---
+
+## Phase 4C — Configuration Column Redesign
+
+### 🎯 Objective
+
+The right column is a structured agent configuration form matching the UX mocks.
+From top to bottom: **agent name** (prominent, editable heading), **instructions
+editor** (the existing `bb-text-editor-remix` with chiclet support for assets),
+**asset shelf** (showing assets in use, with add/remove), and **tool shelf**
+(default expanded). A 40px gap separates each section. The asset shelf supports
+drag-and-drop: the user can drag an asset from the shelf into the editor to
+place a chiclet.
+
+**Observable proof:** Open a single-agent Opal in the workbench. The right
+column shows the agent's name as a large editable heading (Google Sans Flex,
+32px, 400 weight, 40px line-height). Below it, the instructions text editor with
+the prompt text and any existing asset chiclets. Below that, the asset shelf
+showing all assets currently referenced in the prompt — each with an icon, name,
+type badge, and remove button. An "Add asset" row at the bottom opens the asset
+picker. Below the asset shelf, the tool shelf with toggle switches, expanded by
+default. Drag an asset from the shelf — a chiclet appears in the editor at the
+drop position.
+
+### Changes
+
+#### packages/visual-editor — UI
+
+- [ ] `bb-objective-editor` → refactor into `bb-agent-config-column`:
+  - **Agent name heading** — an editable `input` or `contenteditable` element
+    at the top, styled to match the mock (Google Sans Flex, 32px, weight 400,
+    line-height 40px). Reads from the graph's agent node title. Writes via
+    `StateEvent` with `eventType: "board.rename"`.
+  - **Instructions section** — mounts `bb-text-editor-remix` with chiclet
+    support. Reads/writes via the existing prompt parse/serialize pipeline.
+    No "Role" section — that will be LLM-generated in the future.
+  - **40px gap** between each section (`gap: 40px` on the column flex
+    container).
+- [ ] `bb-asset-shelf` — new element, same pattern as `bb-tool-shelf`:
+  - Reads the graph assets store to list all assets referenced in the prompt.
+  - Each row: asset icon (type-derived), asset name, type badge, remove button.
+  - "Add asset" row at the bottom — opens the existing asset picker modal.
+  - **Drag source**: each asset row is draggable. On drag start, the editor
+    receives the asset identifier and inserts a chiclet at the drop position.
+  - Expanded by default (no collapsed state initially).
+- [ ] `bb-tool-shelf` — change default state to expanded (currently collapsed).
+- [ ] `bb-agent-workbench` — update the right column to render
+      `bb-agent-config-column` instead of the separate `bb-objective-editor` +
+      `bb-tool-shelf` composition.
+
+#### packages/visual-editor — SCA
+
+- [x] Prompt parse/serialize utilities — already built. The bidirectional
+      `{JSON}` ↔ `LLMContent[]` translation continues to be used.
+- [x] Step-edit actions — already read `config$prompt` and convert to/from
+      `LLMContent[]`.
+
+---
+
+## Phase 5 — Polish & Responsive Layout
+
+### 🎯 Objective
+
+The two-column layout is polished and responsive. Column widths persist across
+sessions. On narrow screens, the columns collapse into a tabbed view.
+Transitions between workbench and classic mode are smooth. Empty states are
+clear and helpful.
+
+**Observable proof:** Drag the column handle to resize. Reload — the width is
+preserved. Resize the browser to a narrow width — the columns collapse into
+tabs. Resize back — the columns restore. Switch between workbench and classic
+mode via the toggle — the transition is immediate with no layout jank. Open a
+new, empty agent — each section shows an appropriate empty state.
+
+### Changes
+
+#### packages/visual-editor — UI
+
 - [ ] Column width persistence — read/write from `WorkbenchController`'s
-      persisted `splits` field.
+      persisted split ratio.
 - [ ] Narrow screen adaptation — media query or `ScreenSizeController`-driven
       switch to tabbed view.
 - [ ] Transition polish — ensure no layout shift when switching modes.
-- [ ] Empty states — each column shows an appropriate empty state when there's
-      no content (no conversation yet, no objective, no runs).
+- [ ] Empty states — conversation column (greeting), config column (placeholder
+      prompt), run panel (invite to run).
 
 ---
 
@@ -503,18 +582,27 @@ Opie on its next run, giving it targeted feedback.
 - **Graph editor removal.** The graph canvas is hidden in workbench mode, not
   deleted. Multi-node graphs continue to use the classic editor. Full removal is
   a future decision, not this project.
-- **Backend versioning.** The version traversal and restore infrastructure (left
-  column, Phase 5) is being built. This project builds the UI shell and
-  integration points, not the backend.
+- **Backend versioning.** The version traversal and restore infrastructure is
+  being built by others. This project builds the UI shell and integration
+  points, not the backend.
 - **New Opie capabilities.** This project changes where Opie's conversation
   renders, not what Opie can do. Opie's editing capabilities, tool use, and
   response generation are unchanged.
-- **Mobile-first layout.** The three-column layout is designed for desktop.
-  Narrow screens get a tabbed fallback (Phase 4), but native mobile UX is out of
-  scope.
+- **Mobile-first layout.** The two-column layout is designed for desktop. Narrow
+  screens get a tabbed fallback (Phase 5), but native mobile UX is out of scope.
 - **Published/shared view changes.** The workbench is for authors editing their
   own agents. Published and shared views continue to use the app template
   (`app-basic`) unchanged.
+- **Version bar / preview / launch.** The mocks show a version selector, preview
+  mode, and launch button in the config column header. These are deferred —
+  versioning depends on backend infrastructure; preview maps to the existing App
+  view; launch maps to the existing App view. The current header bar
+  (`bb-ve-header`) with its Editor/App toggle, share, publish, and settings
+  continues to serve these functions.
+- **Role section.** The mocks show a "Role" section above Instructions. This
+  will be LLM-generated in the future and is not part of this project.
+- **Agent card in chat.** The mocks show an inline agent card in the
+  conversation. This requires Opie capabilities that don't exist yet.
 
 ## File Map
 
@@ -537,7 +625,7 @@ packages/visual-editor/src/
     triggers.ts                          ← [NEW] flag + graph shape trigger
 
   ui/elements/agent-workbench/
-    agent-workbench.ts                   ← [NEW] three-column grid shell
+    agent-workbench.ts                   ← two-column shell (was three-column, pivoted in Phase 4A)
     agent-workbench.styles.ts            ← [NEW] grid layout, columns
     objective-editor/
       objective-editor.ts               ← [NEW] contenteditable prompt surface

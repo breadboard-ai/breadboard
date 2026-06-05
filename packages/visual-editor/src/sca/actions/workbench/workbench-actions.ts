@@ -123,12 +123,13 @@ export const setWorkbenchView = asAction(
   }
 );
 
-export const resizeColumns = asAction(
-  "Workbench.resizeColumns",
+export const toggleRunsPanel = asAction(
+  "Workbench.toggleRunsPanel",
   { mode: ActionMode.Immediate },
-  async (splits: [number, number, number]): Promise<void> => {
+  async (open?: boolean): Promise<void> => {
     const { controller } = bind;
-    controller.editor.workbench.splits = splits;
+    controller.editor.workbench.runsOpen =
+      open ?? !controller.editor.workbench.runsOpen;
   }
 );
 

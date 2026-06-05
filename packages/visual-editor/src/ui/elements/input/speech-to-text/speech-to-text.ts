@@ -40,6 +40,9 @@ export class SpeechToText extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor active = false;
 
+  @property({ reflect: true })
+  accessor variant: "default" | "seamless" = "default";
+
   static styles = [
     icons,
     css`
@@ -167,6 +170,28 @@ export class SpeechToText extends LitElement {
           rotate: 360deg;
         }
       }
+
+      :host([variant="seamless"]) {
+        width: 32px;
+        height: 32px;
+      }
+
+      :host([variant="seamless"]) button {
+        width: 32px;
+        height: 32px;
+        background: transparent;
+        border: none;
+        color: var(--light-dark-n-40);
+
+        & .g-icon {
+          font-size: 20px;
+        }
+      }
+
+      :host([variant="seamless"]) button:not([disabled]):hover {
+        background: var(--light-dark-n-95);
+        color: var(--light-dark-n-10);
+      }
     `,
   ];
 
@@ -218,6 +243,15 @@ export class SpeechToText extends LitElement {
 
         this.dispatchEvent(new UtteranceEvent(this.#parts));
       });
+
+      this.#recognition.addEventListener("end", () => {
+        if (this.active) {
+          this.active = false;
+          this.dispatchEvent(
+            new CustomEvent("end", { bubbles: true, composed: true })
+          );
+        }
+      });
     }
   }
 
@@ -239,6 +273,9 @@ export class SpeechToText extends LitElement {
     this.#recognition.start();
     this.active = true;
     this.#activeStartTime = window.performance.now();
+    this.dispatchEvent(
+      new CustomEvent("start", { bubbles: true, composed: true })
+    );
   }
 
   #stopTranscription() {
@@ -248,6 +285,9 @@ export class SpeechToText extends LitElement {
 
     this.#recognition.stop();
     this.active = false;
+    this.dispatchEvent(
+      new CustomEvent("end", { bubbles: true, composed: true })
+    );
   }
 
   render() {

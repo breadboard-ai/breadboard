@@ -26,6 +26,12 @@ export class AddAssetButton extends LitElement {
   @property()
   accessor showNotebookLm = false;
 
+  @property({ reflect: true })
+  accessor label: string | null = null;
+
+  @property({ reflect: true })
+  accessor variant: "default" | "seamless" = "default";
+
   @property()
   accessor supportedActions = {
     upload: true,
@@ -51,6 +57,11 @@ export class AddAssetButton extends LitElement {
         position: relative;
         width: var(--button-size, 40px);
         height: var(--button-size, 40px);
+      }
+
+      :host([label]:not([variant="seamless"])) {
+        width: auto;
+        height: auto;
       }
 
       #add-asset {
@@ -85,6 +96,60 @@ export class AddAssetButton extends LitElement {
             opacity: 1;
           }
         }
+      }
+
+      :host([label]:not([variant="seamless"])) #add-asset {
+        width: auto;
+        height: 36px;
+        padding: 0 var(--bb-grid-size-4);
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        gap: var(--bb-grid-size-2);
+        font: 500 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        background: var(--light-dark-n-95);
+        color: var(--light-dark-n-30);
+        opacity: 1;
+        border: 1px solid var(--light-dark-n-90);
+      }
+
+      :host([label]:not([variant="seamless"])) #add-asset:hover {
+        background: var(--light-dark-n-90);
+        color: var(--light-dark-n-10);
+      }
+
+      :host([label]:not([variant="seamless"])) #add-asset .g-icon {
+        font-size: 18px;
+      }
+
+      :host([variant="seamless"]) {
+        width: auto;
+        height: auto;
+      }
+
+      :host([variant="seamless"]) #add-asset {
+        background: transparent;
+        border: none;
+        padding: 0;
+        width: auto;
+        height: auto;
+        color: var(--light-dark-n-30);
+      }
+
+      :host([variant="seamless"]) #add-asset:hover {
+        background: transparent;
+        color: var(--light-dark-n-10);
+      }
+
+      :host([variant="seamless"]) #add-asset .g-icon {
+        font-family: "Google Symbols";
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        display: inline-block;
+        margin-right: var(--bb-grid-size-2);
+        color: inherit;
       }
     `,
   ];
@@ -165,7 +230,10 @@ export class AddAssetButton extends LitElement {
       }}
       id="add-asset"
     >
-      <span class="g-icon">add_circle</span>
+      ${this.label
+        ? html`<span class="g-icon filled heavy">attach_file</span
+            ><span class="label-text">${this.label}</span>`
+        : html`<span class="g-icon">add_circle</span>`}
     </button>`;
   }
 }
