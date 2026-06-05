@@ -67,7 +67,7 @@ export { SharePanel } from "./share-panel/share-panel.js";
 export { Snackbar } from "./toast/snackbar.js";
 // @deprecated for UISplitter export { Splitter } from "./splitter/splitter.js";
 export { UISplitter } from "./splitter/ui-splitter.js";
-export { UITriSplitter } from "./splitter/ui-tri-splitter.js";
+export { WorkbenchSplitter } from "./splitter/workbench-splitter.js";
 export { AgentWorkbench } from "./agent-workbench/agent-workbench.js";
 export { ConversationColumn } from "./agent-workbench/conversation-column.js";
 export { RunLogColumn } from "./agent-workbench/run-log-column.js";
