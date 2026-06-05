@@ -38,6 +38,7 @@ import {
   onNodeConfigChange,
   onNodeAction as onNodeActionTrigger,
   onCopyShortcut,
+  onGraphVersionChange,
 } from "./triggers.js";
 import { GraphUtils } from "../../../utils/graph-utils.js";
 import { ClipboardReader } from "../../../utils/clipboard-reader.js";
@@ -875,3 +876,27 @@ export const onNodeAction = asAction(
     controller.run.main.setNodeActionRequest({ nodeId, actionContext: mapped });
   }
 );
+
+/**
+ * Reconciles the selection with the current graph state.
+ *
+ * Removes any selected nodes, edges, assets, or asset edges that no longer
+ * exist in the graph.
+ *
+ * **Triggers:**
+ * - `onGraphVersionChange`: Fires when the graph version changes.
+ */
+export const syncSelection = asAction(
+  "Node.syncSelection",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onGraphVersionChange(bind),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    const graphController = controller.editor.graph;
+    const graph = graphController.inspect("");
+    controller.editor.selection.reconcile(graph);
+  }
+);
+

@@ -68,3 +68,14 @@ export function onCopyShortcut(): KeyboardTrigger {
     return isFocusedOnGraphRenderer(evt);
   });
 }
+
+/**
+ * Creates a trigger that fires when the graph version changes.
+ * Used to reconcile/prune the selection.
+ */
+export function onGraphVersionChange(bind: ActionBind): SignalTrigger {
+  return signalTrigger("Graph Version Change (Selection)", () => {
+    const { controller } = bind;
+    return controller.editor.graph.version + 1;
+  });
+}

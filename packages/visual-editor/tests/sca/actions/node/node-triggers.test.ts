@@ -9,6 +9,7 @@ import assert from "node:assert";
 import {
   onNodeConfigChange,
   onCopyShortcut,
+  onGraphVersionChange,
 } from "../../../../src/sca/actions/node/triggers.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 
@@ -196,6 +197,41 @@ suite("Node Triggers", () => {
       );
 
       getSelectionSpy.mock.restore();
+    });
+  });
+
+  suite("onGraphVersionChange", () => {
+    test("returns version + 1 when version is set", () => {
+      const mockBind = {
+        controller: {
+          editor: {
+            graph: {
+              version: 5,
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onGraphVersionChange(mockBind as never);
+      const result = trigger.condition();
+
+      assert.strictEqual(
+        result,
+        6,
+        "Should return version + 1"
+      );
+    });
+
+    test("has correct trigger name", () => {
+      const mockBind = {
+        controller: { editor: { graph: { version: 0 } } },
+        services: {},
+      };
+
+      const trigger = onGraphVersionChange(mockBind as never);
+
+      assert.strictEqual(trigger.name, "Graph Version Change (Selection)");
     });
   });
 });

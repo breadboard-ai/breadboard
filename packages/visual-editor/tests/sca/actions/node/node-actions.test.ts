@@ -2127,3 +2127,39 @@ suite("onNodeAction", () => {
     );
   });
 });
+
+suite("syncSelection", () => {
+  beforeEach(() => {
+    coordination.reset();
+  });
+
+  test("calls reconcile on selection controller with inspectable graph", async () => {
+    const reconcileCalled = { value: false, graph: null as unknown };
+    const mockGraph = { type: "inspectable-graph" };
+    const controller = {
+      editor: {
+        graph: {
+          inspect: (graphId: string) => {
+            assert.strictEqual(graphId, "");
+            return mockGraph;
+          },
+        },
+        selection: {
+          reconcile: (graph: unknown) => {
+            reconcileCalled.value = true;
+            reconcileCalled.graph = graph;
+          },
+        },
+      },
+    } as unknown as AppController;
+
+    const services = {} as unknown as AppServices;
+
+    NodeActionsModule.bind({ controller, services, env });
+
+    await NodeActionsModule.syncSelection();
+
+    assert.ok(reconcileCalled.value, "reconcile should have been called");
+    assert.strictEqual(reconcileCalled.graph, mockGraph, "reconcile should be called with inspectable graph");
+  });
+});
