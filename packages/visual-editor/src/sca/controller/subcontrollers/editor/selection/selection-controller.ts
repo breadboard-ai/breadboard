@@ -165,4 +165,55 @@ export class SelectionController extends RootController {
       }
     }
   }
+
+  reconcile(graph: InspectableGraph) {
+    let changed = false;
+
+    // Prune nodes
+    const existingNodes = new Set(graph.nodes().map((n) => n.descriptor.id));
+    for (const nodeId of [...this._selection.nodes]) {
+      if (!existingNodes.has(nodeId)) {
+        this._selection.nodes.delete(nodeId);
+        changed = true;
+      }
+    }
+
+    // Prune edges
+    const existingEdges = new Set(
+      graph.edges().map((e) => toEdgeIdentifier(e.raw()))
+    );
+    for (const edgeId of [...this._selection.edges]) {
+      if (!existingEdges.has(edgeId)) {
+        this._selection.edges.delete(edgeId);
+        changed = true;
+      }
+    }
+
+    // Prune assets
+    const existingAssets = new Set(graph.assets().keys());
+    for (const assetId of [...this._selection.assets]) {
+      if (!existingAssets.has(assetId)) {
+        this._selection.assets.delete(assetId);
+        changed = true;
+      }
+    }
+
+    // Prune asset edges
+    const assetEdgesResult = graph.assetEdges();
+    const existingAssetEdges = new Set(
+      ok(assetEdgesResult)
+        ? assetEdgesResult.map((ae) => toAssetEdgeIdentifier(ae))
+        : []
+    );
+    for (const assetEdgeId of [...this._selection.assetEdges]) {
+      if (!existingAssetEdges.has(assetEdgeId)) {
+        this._selection.assetEdges.delete(assetEdgeId);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      this._selectionId++;
+    }
+  }
 }

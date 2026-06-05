@@ -278,4 +278,64 @@ suite("SelectionController", () => {
       assetEdges: new Set(),
     });
   });
+
+  test("reconcile prunes non-existent elements", async () => {
+    const store = new SelectionController(
+      "Selection_11",
+      "SelectionController"
+    );
+    await store.isHydrated;
+
+    const graphStore = makeTestGraphStore();
+
+    loadGraphIntoStore(graphStore, testGraph);
+    const inspectableGraph = graphStore.get()?.graphs.get("");
+    if (!inspectableGraph) assert.fail("Unable to inspect graph");
+
+    store.selectAll(inspectableGraph);
+    await store.isSettled;
+
+    assert.deepStrictEqual(unwrap(store.selection), full);
+
+    // Create a modified graph with some elements removed
+    const modifiedGraph: GraphDescriptor & Required<Pick<GraphDescriptor, "assets">> = {
+      nodes: [
+        {
+          id: "a",
+          type: "type",
+          configuration: {
+            config$prompt: {
+              parts: [
+                {
+                  text: '{{"type": "asset", "path": "asset-a", "title": "Asset"}} ',
+                },
+              ],
+              role: "user",
+            },
+          },
+        },
+      ],
+      edges: [
+        { from: "a", to: "a", out: "a", in: "a" },
+      ],
+      assets: {
+        "asset-a": { data: "" },
+      },
+    };
+
+    const graphStore2 = makeTestGraphStore();
+    loadGraphIntoStore(graphStore2, modifiedGraph);
+    const inspectableGraph2 = graphStore2.get()?.graphs.get("");
+    if (!inspectableGraph2) assert.fail("Unable to inspect graph");
+
+    store.reconcile(inspectableGraph2);
+    await store.isSettled;
+
+    assert.deepStrictEqual(unwrap(store.selection), {
+      nodes: new Set(["a"]),
+      edges: new Set([edge0]),
+      assets: new Set(["asset-a"]),
+      assetEdges: new Set([assetEdge0]),
+    });
+  });
 });
