@@ -2139,6 +2139,7 @@ suite("syncSelection", () => {
     const controller = {
       editor: {
         graph: {
+          editor: {},
           inspect: (graphId: string) => {
             assert.strictEqual(graphId, "");
             return mockGraph;
@@ -2160,6 +2161,10 @@ suite("syncSelection", () => {
     await NodeActionsModule.syncSelection();
 
     assert.ok(reconcileCalled.value, "reconcile should have been called");
-    assert.strictEqual(reconcileCalled.graph, mockGraph, "reconcile should be called with inspectable graph");
+    assert.strictEqual(
+      reconcileCalled.graph,
+      mockGraph,
+      "reconcile should be called with inspectable graph"
+    );
   });
 });
