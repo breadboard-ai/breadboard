@@ -17,6 +17,7 @@ import { makeUrl, parseUrl } from "./ui/navigation/urls.js";
 
 import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { MakeUrlInit } from "./sca/types.js";
+import { type AgentEvent } from "./a2/agent/agent-event.js";
 import { repeat } from "lit/directives/repeat.js";
 import { Utils } from "./sca/utils.js";
 import "./ui/elements/splitter/splitter.js";
@@ -739,7 +740,15 @@ class Main extends MainBase {
           }
 
           case "feedback": {
-            this.sca.controller.global.feedback.open();
+            const agentEvents: Array<ReadonlyArray<AgentEvent>> = [
+              ...this.sca.services.agentContext.getAllRunsAsEvents(),
+            ];
+            const graphEditingHistory =
+              this.sca.controller.editor.graphEditingAgent.history;
+            if (graphEditingHistory.length > 0) {
+              agentEvents.push(graphEditingHistory);
+            }
+            this.sca.controller.global.feedback.open({ agentEvents });
             break;
           }
 

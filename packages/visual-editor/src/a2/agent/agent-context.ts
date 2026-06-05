@@ -6,6 +6,7 @@
 
 import type { LLMContent } from "@breadboard-ai/types";
 import { MemoryManager, RunState } from "./types.js";
+import type { AgentEvent } from "./agent-event.js";
 import {
   SheetManager,
   SheetManagerConfig,
@@ -57,6 +58,13 @@ class AgentContext {
    */
   getAllRuns(): RunState[] {
     return [...this.#runs.values()];
+  }
+
+  /**
+   * Gets all registered runs as arrays of AgentEvent.
+   */
+  getAllRunsAsEvents(): AgentEvent[][] {
+    return this.getAllRuns().map((run) => getEventsFromRunState(run));
   }
 
   /**
@@ -153,4 +161,87 @@ class AgentContext {
 
     return result;
   }
+}
+
+/**
+ * Reconstructs the high-fidelity AgentEvent history from a RunState.
+ */
+function getEventsFromRunState(run: RunState): AgentEvent[] {
+  const events: AgentEvent[] = [];
+
+  // 1. Objective/Start
+  if (run.objective) {
+    events.push({
+      start: { objective: run.objective },
+    });
+  }
+
+  // 2. Turns
+  for (const content of run.contents) {
+    if (content.role === "model") {
+      // Extract structural parts first (thoughts and tool calls)
+      for (const part of content.parts ?? []) {
+        if ("thought" in part && part.thought && "text" in part) {
+          events.push({
+            thought: { text: part.text },
+          });
+        } else if ("functionCall" in part && part.functionCall) {
+          events.push({
+            functionCall: {
+              callId: part.functionCall.name,
+              name: part.functionCall.name,
+              args: part.functionCall.args as Record<string, unknown>,
+            },
+          });
+        }
+      }
+
+      // Add the overall model response content
+      events.push({
+        content: { content },
+      });
+    } else if (content.role === "user") {
+      let isFunctionResult = false;
+
+      // Extract tool results
+      for (const part of content.parts ?? []) {
+        if ("functionResponse" in part && part.functionResponse) {
+          events.push({
+            functionResult: {
+              callId: part.functionResponse.name,
+              content: content,
+            },
+          });
+          isFunctionResult = true;
+        }
+      }
+
+      // If it's a direct user message rather than a tool result
+      if (!isFunctionResult) {
+        events.push({
+          content: { content },
+        });
+      }
+    }
+  }
+
+  // 3. Final Outcome
+  if (run.status === "completed") {
+    const lastModelContent = run.contents.filter((c) => c.role === "model").at(-1);
+    events.push({
+      complete: {
+        result: {
+          success: true,
+          href: "",
+          outcomes: lastModelContent ?? { parts: [] },
+        },
+      },
+    });
+  } else if (run.status === "failed") {
+    events.push({
+      error: { message: run.error ?? "Run failed" },
+    });
+  }
+
+  return events;
 }
