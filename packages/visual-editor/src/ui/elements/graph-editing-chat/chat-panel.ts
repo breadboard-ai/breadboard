@@ -142,8 +142,8 @@ class ChatPanel extends SignalWatcher(LitElement) {
       .messages {
         flex: 1;
         overflow-y: auto;
-        padding: var(--bb-grid-size-4) var(--bb-grid-size-6)
-          var(--bb-grid-size-4) var(--bb-grid-size-6); /* bb-grid-size-6 on the sides */
+        padding: var(--chat-messages-padding-top, var(--bb-grid-size-4))
+          var(--bb-grid-size-6) var(--bb-grid-size-4) var(--bb-grid-size-6); /* bb-grid-size-6 on the sides */
         display: flex;
         flex-direction: column;
         gap: var(--bb-grid-size-5); /* Increased spacing between message rows */
@@ -230,7 +230,7 @@ class ChatPanel extends SignalWatcher(LitElement) {
         background: var(--n-95, #f1f3f4);
         box-shadow: none;
         padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
-        color: light-dark(#8f8f8f, var(--n-50));
+        color: light-dark(var(--n-30), var(--n-50));
       }
 
       .msg-bubble.model {

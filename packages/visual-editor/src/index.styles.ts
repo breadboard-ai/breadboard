@@ -30,6 +30,10 @@ export const styles = [
       grid-template-rows: var(--header-height) auto;
     }
 
+    #container.workbench-active {
+      grid-template-rows: auto;
+    }
+
     bb-ve-header {
       z-index: 150;
       display: block;
@@ -96,6 +100,10 @@ export const styles = [
 
       #container {
         grid-template-rows: var(--header-height) auto;
+      }
+
+      #container.workbench-active {
+        grid-template-rows: auto;
       }
 
       bb-ve-header {
@@ -602,6 +610,10 @@ export const styles = [
       display: flex;
       flex-direction: column;
       position: relative;
+    }
+
+    .workbench-active #content {
+      max-height: 100svh;
     }
 
     iframe {
