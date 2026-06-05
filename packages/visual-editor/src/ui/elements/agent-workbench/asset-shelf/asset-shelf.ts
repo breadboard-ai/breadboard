@@ -17,10 +17,24 @@ import type {
 } from "../../../../sca/types.js";
 import * as Styles from "../../../styles/styles.js";
 import { extractPromptText } from "../../../../utils/prompt-utils.js";
+import { until } from "lit/directives/until.js";
+import { resolveImage } from "../../../media/image.js";
+import { NOTEBOOKLM_MIMETYPE } from "@breadboard-ai/utils";
+import { notebookLmIcon } from "../../../styles/svg-icons.js";
 import "../../input/add-asset/add-asset-button.js";
 import "../../input/add-asset/add-asset-modal.js";
-import { AddAssetEvent, AddAssetRequestEvent } from "../../../events/events.js";
+import {
+  AddAssetEvent,
+  AddAssetRequestEvent,
+  ShowTooltipEvent,
+  HideTooltipEvent,
+} from "../../../events/events.js";
 import type { AssetMetadata } from "@breadboard-ai/types";
+import {
+  videoIdFromWatchOrShortsOrEmbedUri,
+  isShareUri,
+  convertShareUriToEmbedUri,
+} from "../../../../utils/media/youtube.js";
 
 @customElement("bb-agent-asset-shelf")
 export class AgentAssetShelf extends SignalWatcher(LitElement) {
@@ -35,6 +49,14 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
 
   @state()
   private accessor _allowedMimeTypes: string | null = null;
+
+  @state()
+  private accessor _editingAsset: GraphAsset | null = null;
+
+  @state()
+  private accessor _playingAudioPath: string | null = null;
+
+  private _activeAudio: HTMLAudioElement | null = null;
 
   static styles = [
     Styles.HostType.type,
@@ -57,7 +79,6 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
         flex-direction: column;
         width: 100%;
         background: transparent;
-        overflow: hidden;
       }
 
       .section-header {
@@ -99,11 +120,62 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
         align-items: center;
         justify-content: space-between;
         padding: var(--bb-grid-size-2) 0;
-        cursor: grab;
+        position: relative;
       }
 
-      .asset-row:active {
-        cursor: grabbing;
+      .drag-handle {
+        cursor: grab;
+        color: var(--light-dark-n-60);
+        user-select: none;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 40px;
+        margin-left: -20px;
+        margin-right: 4px;
+        opacity: 0;
+        transition:
+          opacity 0.15s ease,
+          color 0.15s ease;
+
+        &:hover {
+          color: var(--light-dark-n-10);
+        }
+
+        &:active {
+          cursor: grabbing;
+        }
+      }
+
+      .asset-row:hover .drag-handle {
+        opacity: 1;
+      }
+
+      .audio-toggle-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: var(--light-dark-n-90);
+        color: var(--light-dark-n-10);
+        border-radius: var(--bb-grid-size-2);
+        cursor: pointer;
+        transition:
+          background-color 0.15s ease,
+          color 0.15s ease;
+
+        &:hover {
+          background: var(--sys-color--primary);
+          color: var(--sys-color--on-primary);
+        }
+
+        & .g-icon {
+          font-size: 20px;
+        }
       }
 
       .asset-info-wrapper {
@@ -111,6 +183,15 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
         align-items: center;
         min-width: 0;
         flex: 1;
+        cursor: pointer;
+        border-radius: var(--bb-grid-size-2);
+        transition: background-color 0.15s ease;
+        padding: var(--bb-grid-size);
+        margin-left: calc(-1 * var(--bb-grid-size));
+
+        &:hover {
+          background: var(--light-dark-n-98);
+        }
       }
 
       .asset-icon-container {
@@ -123,6 +204,7 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
         background: var(--ui-asset-secondary, var(--light-dark-n-95));
         margin-right: var(--bb-grid-size-5);
         flex-shrink: 0;
+        outline: 1px solid var(--light-dark-n-90);
 
         & .g-icon {
           font-size: 20px;
@@ -227,6 +309,246 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
     this.sca.actions.asset.removeGraphAsset(path);
   }
 
+  #onEditAsset(asset: GraphAsset) {
+    const type = this.#getAssetType(asset);
+    if (!type) return;
+
+    this._showAddAssetModal = true;
+    this._editingAsset = asset;
+    this._addAssetType = type;
+    this.requestUpdate();
+  }
+
+  #getAssetType(asset: GraphAsset): string | null {
+    const firstPart = asset.data[0]?.parts[0];
+    if (!firstPart) return "upload";
+
+    if ("fileData" in firstPart && firstPart.fileData) {
+      const uri = firstPart.fileData.fileUri;
+      if (uri.includes("youtube.com") || uri.includes("youtu.be")) {
+        return "youtube";
+      }
+      return "upload";
+    }
+
+    if ("storedData" in firstPart && firstPart.storedData) {
+      if (firstPart.storedData.handle.startsWith("drive:/")) {
+        return "gdrive";
+      }
+      return "upload";
+    }
+
+    if ("inlineData" in firstPart && firstPart.inlineData) {
+      if (asset.metadata?.title === "Drawing") {
+        return "drawable";
+      }
+      if (asset.metadata?.title === "Webcam Video") {
+        return "webcam-video";
+      }
+      return "upload";
+    }
+
+    return "upload";
+  }
+
+  #onToggleAudio(evt: Event, asset: GraphAsset) {
+    evt.stopPropagation();
+
+    if (this._playingAudioPath === asset.path) {
+      if (this._activeAudio) {
+        this._activeAudio.pause();
+      }
+      this._playingAudioPath = null;
+    } else {
+      if (this._activeAudio) {
+        this._activeAudio.pause();
+      }
+
+      const firstPart = asset.data[0]?.parts[0];
+      if (firstPart && "inlineData" in firstPart && firstPart.inlineData) {
+        const dataUrl = `data:${firstPart.inlineData.mimeType};base64,${firstPart.inlineData.data}`;
+        this._activeAudio = new Audio(dataUrl);
+        this._activeAudio.play();
+        this._playingAudioPath = asset.path;
+
+        this._activeAudio.onended = () => {
+          this._playingAudioPath = null;
+          this.requestUpdate();
+        };
+      }
+    }
+    this.requestUpdate();
+  }
+
+  #inferMimeType(asset: GraphAsset): string | undefined {
+    if (asset.metadata?.subType) {
+      return asset.metadata.subType;
+    }
+
+    const firstPart = asset.data[0]?.parts[0];
+    if (firstPart) {
+      if ("storedData" in firstPart && firstPart.storedData?.mimeType) {
+        return firstPart.storedData.mimeType;
+      }
+      if ("inlineData" in firstPart && firstPart.inlineData?.mimeType) {
+        return firstPart.inlineData.mimeType;
+      }
+      if ("fileData" in firstPart && firstPart.fileData?.mimeType) {
+        return firstPart.fileData.mimeType;
+      }
+    }
+
+    const path = asset.path.toLowerCase();
+    if (path.endsWith(".png")) return "image/png";
+    if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg";
+    if (path.endsWith(".gif")) return "image/gif";
+    if (path.endsWith(".webp")) return "image/webp";
+    if (path.endsWith(".svg")) return "image/svg+xml";
+
+    if (path.endsWith(".mp3")) return "audio/mp3";
+    if (path.endsWith(".wav")) return "audio/wav";
+    if (path.endsWith(".m4a")) return "audio/m4a";
+    if (path.endsWith(".ogg")) return "audio/ogg";
+
+    if (path.endsWith(".mp4")) return "video/mp4";
+    if (path.endsWith(".webm")) return "video/webm";
+    if (path.endsWith(".mov")) return "video/quicktime";
+
+    if (path.endsWith(".pdf")) return "application/pdf";
+
+    if (path.endsWith(".txt")) return "text/plain";
+    if (path.endsWith(".json")) return "application/json";
+    if (path.endsWith(".csv")) return "text/csv";
+    if (path.endsWith(".md")) return "text/markdown";
+
+    return undefined;
+  }
+
+  #renderAssetIcon(asset: GraphAsset) {
+    const mimeType = this.#inferMimeType(asset) || "";
+    const firstPart = asset.data[0]?.parts[0];
+
+    if (mimeType === NOTEBOOKLM_MIMETYPE) {
+      return html`<div
+        style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 4px;"
+      >
+        ${notebookLmIcon}
+      </div>`;
+    }
+
+    if (mimeType.startsWith("image/") && firstPart) {
+      if ("inlineData" in firstPart && firstPart.inlineData) {
+        const dataUrl = `data:${firstPart.inlineData.mimeType};base64,${firstPart.inlineData.data}`;
+        return html`<img
+          src=${dataUrl}
+          style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;"
+        />`;
+      }
+      if ("fileData" in firstPart && firstPart.fileData) {
+        return html`<img
+          src=${firstPart.fileData.fileUri}
+          style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;"
+        />`;
+      }
+      if ("storedData" in firstPart && firstPart.storedData) {
+        const handle = firstPart.storedData.handle;
+        if (
+          handle.startsWith("drive:/") &&
+          this.sca.services.googleDriveClient
+        ) {
+          const resolvedSrc = resolveImage(
+            this.sca.services.googleDriveClient,
+            handle
+          );
+          return html`${until(
+            resolvedSrc.then(
+              (src) =>
+                html`<img
+                  src=${src || ""}
+                  style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;"
+                />`
+            ),
+            html`<div
+              style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"
+            >
+              <span
+                class="g-icon filled"
+                style="font-size: 16px; color: var(--light-dark-n-40);"
+                >progress_activity</span
+              >
+            </div>`
+          )}`;
+        }
+
+        return html`<img
+          src=${handle}
+          style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;"
+        />`;
+      }
+    }
+
+    if (mimeType.startsWith("audio/")) {
+      const isPlaying = this._playingAudioPath === asset.path;
+      const audioIcon = isPlaying ? "pause" : "play_arrow";
+      return html`<button
+        class="audio-toggle-button"
+        @click=${(evt: Event) => this.#onToggleAudio(evt, asset)}
+        @pointerover=${(evt: PointerEvent) => {
+          this.dispatchEvent(
+            new ShowTooltipEvent(
+              isPlaying ? "Pause audio" : "Play audio",
+              evt.clientX,
+              evt.clientY
+            )
+          );
+        }}
+        @pointerout=${() => {
+          this.dispatchEvent(new HideTooltipEvent());
+        }}
+      >
+        <span class="g-icon filled">${audioIcon}</span>
+      </button>`;
+    }
+
+    if (
+      mimeType.startsWith("video/") ||
+      mimeType === "video/mp4" ||
+      mimeType === "youtube"
+    ) {
+      let videoId: string | null = null;
+      if (firstPart && "fileData" in firstPart && firstPart.fileData) {
+        const uri = firstPart.fileData.fileUri;
+        if (isShareUri(uri)) {
+          const embedUri = convertShareUriToEmbedUri(uri);
+          if (embedUri) {
+            videoId = videoIdFromWatchOrShortsOrEmbedUri(embedUri);
+          }
+        } else {
+          videoId = videoIdFromWatchOrShortsOrEmbedUri(uri);
+        }
+      }
+
+      if (videoId) {
+        return html`<img
+          src="https://img.youtube.com/vi/${videoId}/default.jpg"
+          style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;"
+        />`;
+      }
+
+      if (
+        firstPart &&
+        "inlineData" in firstPart &&
+        firstPart.inlineData &&
+        firstPart.inlineData.mimeType.startsWith("video/")
+      ) {
+        return html`<span class="g-icon round filled">video_file</span>`;
+      }
+    }
+
+    const icon = this.#getAssetIcon(mimeType);
+    return html`<span class="g-icon round filled">${icon}</span>`;
+  }
+
   #getAssetIcon(mimeType?: string): string {
     if (!mimeType) return "draft";
     if (mimeType.startsWith("image/")) return "image";
@@ -305,7 +627,7 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
     return html`
       <div class="asset-shelf-wrapper">
         <div class="section-header">
-          <h2>Assets available</h2>
+          <h2>Assets</h2>
           <bb-add-asset-button
             .showGDrive=${true}
             .showNotebookLm=${false}
@@ -320,20 +642,37 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
         </div>
         <div class="assets-list">
           ${allAssets.map((asset) => {
-            const mimeType = asset.metadata?.subType || undefined;
-            const icon = this.#getAssetIcon(mimeType);
+            const mimeType = this.#inferMimeType(asset);
             const badgeLabel = this.#getAssetBadgeLabel(mimeType);
             const isInUse = referencedAssetPaths.has(asset.path);
 
             return html`
-              <div
-                class="asset-row"
-                draggable="true"
-                @dragstart=${(evt: DragEvent) => this.#onDragStart(evt, asset)}
-              >
-                <div class="asset-info-wrapper">
+              <div class="asset-row">
+                <span
+                  class="drag-handle g-icon"
+                  draggable="true"
+                  @dragstart=${(evt: DragEvent) =>
+                    this.#onDragStart(evt, asset)}
+                  @pointerover=${(evt: PointerEvent) => {
+                    this.dispatchEvent(
+                      new ShowTooltipEvent(
+                        "Drag to add to agent instructions",
+                        evt.clientX,
+                        evt.clientY
+                      )
+                    );
+                  }}
+                  @pointerout=${() => {
+                    this.dispatchEvent(new HideTooltipEvent());
+                  }}
+                  >drag_indicator</span
+                >
+                <div
+                  class="asset-info-wrapper"
+                  @click=${() => this.#onEditAsset(asset)}
+                >
                   <div class="asset-icon-container">
-                    <span class="g-icon round filled">${icon}</span>
+                    ${this.#renderAssetIcon(asset)}
                   </div>
                   <div class="asset-details">
                     <div class="asset-title">
@@ -350,7 +689,18 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
                 <button
                   class="remove-button"
                   @click=${() => this.#onRemoveAsset(asset.path)}
-                  title="Remove asset"
+                  @pointerover=${(evt: PointerEvent) => {
+                    this.dispatchEvent(
+                      new ShowTooltipEvent(
+                        "Remove asset",
+                        evt.clientX,
+                        evt.clientY
+                      )
+                    );
+                  }}
+                  @pointerout=${() => {
+                    this.dispatchEvent(new HideTooltipEvent());
+                  }}
                 >
                   <span class="g-icon">close</span>
                 </button>
@@ -364,10 +714,12 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
         ? html`<bb-add-asset-modal
             .assetType=${this._addAssetType}
             .allowedMimeTypes=${this._allowedMimeTypes}
+            .editingAsset=${this._editingAsset}
             @bboverlaydismissed=${() => {
               this._showAddAssetModal = false;
               this._addAssetType = null;
               this._allowedMimeTypes = null;
+              this._editingAsset = null;
               this.requestUpdate();
             }}
             @bbaddasset=${async (evt: AddAssetEvent) => {
@@ -377,6 +729,21 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
 
               const content = evt.asset;
               const metadata = evt.metadata;
+
+              if (this._editingAsset) {
+                const path = this._editingAsset.path;
+                this._editingAsset = null;
+                const result = await this.sca.actions.asset.update(
+                  path,
+                  metadata?.title || "Asset",
+                  [content]
+                );
+                if (result && "$error" in result) {
+                  console.error(result.$error);
+                }
+                this.requestUpdate();
+                return;
+              }
 
               // Generate a unique path using the extension inferred from metadata
               const inferAssetExtension = (meta?: AssetMetadata): string => {

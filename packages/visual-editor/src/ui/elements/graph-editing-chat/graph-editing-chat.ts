@@ -27,7 +27,11 @@ if ("registerProperty" in CSS) {
     ["--blob-blur", "<length>", "100px"],
   ];
   for (const [name, syntax, initialValue] of props) {
-    CSS.registerProperty({ name, syntax, inherits: true, initialValue });
+    try {
+      CSS.registerProperty({ name, syntax, inherits: true, initialValue });
+    } catch {
+      // Ignore if already registered
+    }
   }
 }
 

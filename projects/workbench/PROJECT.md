@@ -388,9 +388,9 @@ as before.
 
 #### packages/visual-editor — UI
 
-- [x] `bb-agent-workbench` — replace `ui-tri-splitter` with `ui-splitter`.
-      Left slot: `bb-conversation-column`. Right slot: agent config column.
-      Remove `bb-run-log-column` from the grid.
+- [x] `bb-agent-workbench` — replace `ui-tri-splitter` with `ui-splitter`. Left
+      slot: `bb-conversation-column`. Right slot: agent config column. Remove
+      `bb-run-log-column` from the grid.
 - [x] Floaty runs panel — positioned absolutely over the right edge, rounded
       corners, slide-in animation. `bb-run-log-column` rendered inside when
       open. Toggle button in the workbench control stack.
@@ -402,10 +402,10 @@ as before.
 
 ### 🎯 Objective
 
-The Opie conversation column looks premium — matching the mocks' clean,
-spacious aesthetic. The input area is redesigned with an "Attach" label-button
-and mic affordance. The message rendering is polished with better spacing,
-typography, and visual rhythm.
+The Opie conversation column looks premium — matching the mocks' clean, spacious
+aesthetic. The input area is redesigned with an "Attach" label-button and mic
+affordance. The message rendering is polished with better spacing, typography,
+and visual rhythm.
 
 **Observable proof:** Open the workbench. The conversation column has a clean
 input area at the bottom: a text field with "Ask a question or request a
@@ -460,13 +460,13 @@ drop position.
 #### packages/visual-editor — UI
 
 - [x] `bb-objective-editor` → refactor into `bb-agent-config-column`:
-  - **Agent name heading** — an editable `input` or `contenteditable` element
-    at the top, styled to match the mock (Google Sans Flex, 32px, weight 400,
+  - **Agent name heading** — an editable `input` or `contenteditable` element at
+    the top, styled to match the mock (Google Sans Flex, 32px, weight 400,
     line-height 40px). Reads from the graph's agent node title. Writes via
     `StateEvent` with `eventType: "board.rename"`.
   - **Instructions section** — mounts `bb-text-editor-remix` with chiclet
-    support. Reads/writes via the existing prompt parse/serialize pipeline.
-    No "Role" section — that will be LLM-generated in the future.
+    support. Reads/writes via the existing prompt parse/serialize pipeline. No
+    "Role" section — that will be LLM-generated in the future.
   - **40px gap** between each section (`gap: 40px` on the column flex
     container).
 - [x] `bb-asset-shelf` — new element, same pattern as `bb-tool-shelf`:
@@ -487,19 +487,35 @@ drop position.
 
 ### 🎯 Objective
 
-The Asset Shelf is upgraded to show all assets on the board (sorted with "In use" at the top), with advanced visual miniatures/previews replacing flat icons. Clicking an asset row opens the asset editor in a modal, allowing the user to view full previews, edit details, or change URLs (e.g. YouTube video URLs).
+The Asset Shelf is upgraded to show all assets on the board (sorted with "In
+use" at the top), with advanced visual miniatures/previews replacing flat icons.
+Clicking an asset row opens the asset editor in a modal, allowing the user to
+view full previews, edit details, or change URLs (e.g. YouTube video URLs).
 
-**Observable proof:** Open the workbench. The Asset Shelf lists all assets. The ones currently referenced in the instructions editor have a green "In use" status pill. The left icons are dynamic: images and drawings show a mini image, YouTube videos show their actual video poster frame, audio shows a play/pause toggle, and PDFs/Text show high-contrast icons. Click on a YouTube video row — a modal opens pre-filled with the current URL. Change the URL and save — the asset is updated in the BGL and the thumbnail immediately refreshes.
+**Observable proof:** Open the workbench. The Asset Shelf lists all assets. The
+ones currently referenced in the instructions editor have a green "In use"
+status pill. The left icons are dynamic: images and drawings show a mini image,
+YouTube videos show their actual video poster frame, audio shows a play/pause
+toggle, and PDFs/Text show high-contrast icons. Click on a YouTube video row — a
+modal opens pre-filled with the current URL. Change the URL and save — the asset
+is updated in the BGL and the thumbnail immediately refreshes.
 
 ### Changes
 
 #### packages/visual-editor — UI
 
-- [x] All Assets listing & "In use" status pills — list all board assets, sort in-use first, and add a status-style green pill for referenced assets.
-- [x] Chiclet-aligned styling — use official `var(--ui-asset-secondary)` backgrounds and `var(--light-dark-n-10)` text/icon colors.
-- [x] Advanced Miniature Previews — render inline base64/Drive proxy images for images/drawings, and YouTube poster frame thumbnails for videos.
-- [ ] Asset Editing & Detail View — clicking an asset row opens `<bb-add-asset-modal>` in edit mode (by passing a new `editingAsset` prop), mapping the asset's type to pre-populate the corresponding input fields (e.g. YouTube URL).
-- [ ] SCA Asset Update integration — saving the modal dispatches the `Asset.update` action to update the graph.
+- [x] All Assets listing & "In use" status pills — list all board assets, sort
+      in-use first, and add a status-style green pill for referenced assets.
+- [x] Chiclet-aligned styling — use official `var(--ui-asset-secondary)`
+      backgrounds and `var(--light-dark-n-10)` text/icon colors.
+- [x] Advanced Miniature Previews — render inline base64/Drive proxy images for
+      images/drawings, and YouTube poster frame thumbnails for videos.
+- [x] Asset Editing & Detail View — clicking an asset row opens
+      `<bb-add-asset-modal>` in edit mode (by passing a new `editingAsset`
+      prop), mapping the asset's type to pre-populate the corresponding input
+      fields (e.g. YouTube URL).
+- [x] SCA Asset Update integration — saving the modal dispatches the
+      `Asset.update` action to update the graph.
 
 #### packages/visual-editor — SCA
 
@@ -507,6 +523,59 @@ The Asset Shelf is upgraded to show all assets on the board (sorted with "In use
       `{JSON}` ↔ `LLMContent[]` translation continues to be used.
 - [x] Step-edit actions — already read `config$prompt` and convert to/from
       `LLMContent[]`.
+
+---
+
+### Phase 4E — Workbench Header Bar
+
+### 🎯 Objective
+
+The workbench has its own lightweight header bar, replacing the shared
+`bb-ve-header` chrome. The current header is hidden when in workbench mode. The
+workbench header contains: a "Go back" link (left), publish button + save
+status / draft / experiment badges (center-left), and share / three-dot menu /
+cog / user avatar (right).
+
+**Observable proof:** Open an agent in workbench mode. The standard
+`bb-ve-header` is gone. The workbench header shows a `keyboard_arrow_left`
+"Go back" link on the left that navigates home (same behavior as the header's
+back arrow). The publish button sits where Version 1 would be. Save status,
+"Draft", and "EXPERIMENT MODE" badges sit next to Publish. Share, three-dot
+overflow menu, settings cog, and user avatar sit on the right. Clicking
+"Go back" dispatches a `CloseEvent`, closing the board and returning to the
+gallery.
+
+### Changes
+
+#### packages/visual-editor — Shell
+
+- [ ] `index.ts` `#renderHeader()` — when `workbenchActive` is true, skip
+      rendering `bb-ve-header` entirely (return `nothing`). Reclaim the grid
+      row: set `grid-template-rows` to `auto` (or `0 auto`) so the content
+      area fills the viewport.
+- [ ] `index.styles.ts` — add a `:host([workbench])` (or equivalent class /
+      attribute) rule that collapses the header row to `0`.
+
+#### packages/visual-editor — Workbench UI
+
+- [ ] `bb-agent-workbench` — render a new header bar at the top of the
+      workbench layout (above the splitter). Structure:
+      - **Left**: `keyboard_arrow_left` icon + "Go back" text. Dispatches
+        `CloseEvent` (same handler as `bb-ve-header`'s back arrow).
+      - **Center-left**: `bb-publish-button`, save status label (Saved /
+        Saving… / Unable to save), "Draft" status badge, "EXPERIMENT MODE"
+        badge (with override count click-through).
+      - **Right**: Share button (`ShareRequestedEvent`), three-dot
+        `bb-item-select` overflow menu (delete, duplicate, history, copy
+        board contents), settings cog `bb-item-select` (feedback,
+        documentation, discord, global settings, demo video), user avatar
+        with account switcher.
+- [ ] Styles — the header bar should be a single flex row, `height: 56px`,
+      matching the standard header height. Background:
+      `light-dark(var(--n-100), var(--n-15))`, bottom border:
+      `1px solid var(--light-dark-n-90)`. "Go back" uses the hover-slide
+      transition from the existing back button (`translate: -3px 0` on
+      hover).
 
 ---
 

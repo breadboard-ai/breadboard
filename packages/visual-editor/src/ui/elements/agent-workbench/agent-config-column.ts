@@ -137,22 +137,27 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
     this.#focused = true;
   }
 
-  #onBlur(evt: FocusEvent & { target: HTMLInputElement }) {
+  #onBlur(evt: FocusEvent & { currentTarget: HTMLInputElement }) {
     this.#focused = false;
     const blocks = promptToBlocks({
       role: "user",
-      parts: [{ text: evt.target.value }],
+      parts: [{ text: evt.currentTarget.value }],
     });
     this.sca.actions.workbench.applyObjective(blocks);
   }
 
-  #onKeyDown(evt: KeyboardEvent & { target: HTMLInputElement }) {
+  #onKeyDown(evt: KeyboardEvent & { currentTarget: HTMLInputElement }) {
     if (isCtrlCommand(evt) && evt.key === "Enter") {
       evt.preventDefault();
       const blocks = promptToBlocks({
         role: "user",
-        parts: [{ text: evt.target.value }],
+        parts: [{ text: evt.currentTarget.value }],
       });
+      // Mirror the blur handler: release ownership before the graph
+      // update so the re-render passes the real objectiveText (not
+      // `nothing`, which Lit resolves to `undefined` and wipes the
+      // editor model).
+      this.#focused = false;
       this.sca.actions.workbench.applyObjective(blocks);
     }
   }

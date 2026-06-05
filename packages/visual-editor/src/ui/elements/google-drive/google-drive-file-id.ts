@@ -131,6 +131,9 @@ export class GoogleDriveFileId extends SignalWatcher(LitElement) {
   @property()
   accessor autoTrigger = false;
 
+  @property({ type: Boolean })
+  accessor allowCreate = true;
+
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
@@ -172,9 +175,11 @@ export class GoogleDriveFileId extends SignalWatcher(LitElement) {
             disabled
             .value=${this.value.preview || ""}
           />`
-        : html`<button @click=${this.#onCreateNewDoc}>
-            Create New Document
-          </button>`}
+        : this.allowCreate
+          ? html`<button @click=${this.#onCreateNewDoc}>
+              Create New Document
+            </button>`
+          : nothing}
     `;
   }
 

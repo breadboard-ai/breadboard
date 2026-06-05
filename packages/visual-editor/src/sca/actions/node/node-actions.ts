@@ -895,8 +895,10 @@ export const syncSelection = asAction(
   async (): Promise<void> => {
     const { controller } = bind;
     const graphController = controller.editor.graph;
+    if (!graphController.editor) {
+      return;
+    }
     const graph = graphController.inspect("");
     controller.editor.selection.reconcile(graph);
   }
 );
-
