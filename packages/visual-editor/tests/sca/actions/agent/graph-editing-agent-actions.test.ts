@@ -40,7 +40,14 @@ import { GraphEditingManager } from "../../../../src/a2/agent/graph-editing/grap
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-async function makeControllerStub(id: string): Promise<AppController> {
+async function makeControllerStub(
+  id: string,
+  options?: {
+    editorEdit?: (
+      edits: unknown[]
+    ) => Promise<{ success: boolean; error?: string }>;
+  }
+): Promise<AppController> {
   const agent = new GraphEditingAgentController(
     id,
     "GraphEditingAgentController"
@@ -54,7 +61,12 @@ async function makeControllerStub(id: string): Promise<AppController> {
       graphEditingAgent: agent,
       devtools,
       workbench: { eligible: false, view: "classic" },
-      graph: { readOnly: false, url: "http://example.com" },
+      graph: {
+        readOnly: false,
+        url: "http://example.com",
+        graph: { edges: [], nodes: [], assets: {} },
+        editor: options?.editorEdit ? { edit: options.editorEdit } : undefined,
+      },
     },
     global: { onboarding: { appMode: "canvas" } },
   } as unknown as AppController;
@@ -65,6 +77,13 @@ function makeServicesStub(): AppServices {
     sandbox: { createModuleArgs: () => ({}) },
     fetchWithCreds: globalThis.fetch,
     agentService: new AgentService(),
+    googleDriveClient: {
+      isReadable: async (_fileId: unknown) => true,
+      getFileMetadata: async (_fileId: unknown) => ({ name: "Test Drive File", mimeType: "application/vnd.google-apps.document" }),
+    },
+    googleDriveBoardServer: {
+      dataPartTransformer: () => ({})
+    }
   } as unknown as AppServices;
 }
 
@@ -88,7 +107,7 @@ suite("graph-editing-agent-actions", () => {
       env: createMockEnvironment(defaultRuntimeFlags),
     });
 
-    const result = resolveGraphEditingInput("hello");
+    const result = await resolveGraphEditingInput("hello");
     assert.strictEqual(result, false);
   });
 
@@ -165,7 +184,7 @@ suite("graph-editing-agent-actions", () => {
     // the test should fail. We verify indirectly via the agentService.
     const startRunSpy = mock.method(services.agentService, "startRun");
 
-    startGraphEditingAgent("test");
+    await startGraphEditingAgent("test");
 
     assert.strictEqual(
       startRunSpy.mock.callCount(),
@@ -183,7 +202,7 @@ suite("graph-editing-agent-actions", () => {
       env: createMockEnvironment(defaultRuntimeFlags),
     });
 
-    startGraphEditingAgent("Build something");
+    await startGraphEditingAgent("Build something");
 
     assert.strictEqual(controller.editor.graphEditingAgent.loopRunning, true);
   });
@@ -199,7 +218,7 @@ suite("graph-editing-agent-actions", () => {
 
     const startRunSpy = mock.method(services.agentService, "startRun");
 
-    startGraphEditingAgent("Build something");
+    await startGraphEditingAgent("Build something");
 
     assert.strictEqual(startRunSpy.mock.callCount(), 1);
     const callArgs = startRunSpy.mock.calls[0].arguments[0];
@@ -237,7 +256,7 @@ suite("graph-editing-agent-actions", () => {
       },
     ];
 
-    startGraphEditingAgent("Hello", mockAssets);
+    await startGraphEditingAgent("Hello", mockAssets);
 
     assert.strictEqual(startRunSpy.mock.callCount(), 1);
     const callArgs = startRunSpy.mock.calls[0].arguments[0];
@@ -271,7 +290,7 @@ suite("graph-editing-agent-actions", () => {
       return handle;
     });
 
-    startGraphEditingAgent("Build something");
+    await startGraphEditingAgent("Build something");
 
     const resultPromise = activeHandle!.events.handle({
       waitForInput: {
@@ -301,7 +320,7 @@ suite("graph-editing-agent-actions", () => {
       },
     ];
 
-    resolveGraphEditingInput("User response", mockAssets);
+    await resolveGraphEditingInput("User response", mockAssets);
 
     const response = await resultPromise;
     assert.deepStrictEqual(response, {
@@ -595,7 +614,7 @@ suite("graph-editing-agent-actions", () => {
     agent.waiting = true;
     await agent.isSettled;
 
-    startGraphEditingAgent("Build something");
+    await startGraphEditingAgent("Build something");
 
     // Wait for the background promise of invokeGraphEditingAgent to reject
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -659,7 +678,7 @@ suite("graph-editing-agent-actions", () => {
       return handle;
     });
 
-    startGraphEditingAgent("Build something");
+    await startGraphEditingAgent("Build something");
 
     await activeHandle!.events.handle({
       applyEdits: {
@@ -734,7 +753,7 @@ suite("graph-editing-agent-actions", () => {
       return handle;
     });
 
-    startGraphEditingAgent("Build something");
+    await startGraphEditingAgent("Build something");
 
     await activeHandle!.events.handle({
       applyEdits: {
@@ -827,5 +846,162 @@ suite("graph-editing-agent-actions", () => {
     assert.strictEqual(args.productData.reaction, "up");
     assert.strictEqual(args.agentEvents.length, 1);
     assert.strictEqual(args.agentEvents[0].length, 2);
+  });
+
+  // ── URL Pre-processing (Google Drive & YouTube) ───────────────────────────
+
+  test("startGraphEditingAgent pre-processes Google Drive URLs and adds them as assets", async () => {
+    let addedAsset: {
+      type: string;
+      path: string;
+      data: unknown;
+      metadata: { title?: string; type?: string; subType?: string };
+    } | null = null;
+
+    const controller = await makeControllerStub("GEA_act_drive_success", {
+      editorEdit: async (edits: unknown[]) => {
+        const edit = edits[0] as {
+          type: string;
+          path: string;
+          data: unknown;
+          metadata: { title?: string; type?: string; subType?: string };
+        };
+        if (edit?.type === "addasset") {
+          addedAsset = edit;
+        }
+        return { success: true };
+      },
+    });
+    const services = makeServicesStub();
+
+    bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    const startRunSpy = mock.method(services.agentService, "startRun");
+
+    await startGraphEditingAgent(
+      "Please summarize this: https://docs.google.com/document/d/11bJ4QFsA5AjJm3HM7/edit"
+    );
+
+    // Should have added the asset
+    assert.ok(addedAsset);
+    const asset = addedAsset as unknown as {
+      type: string;
+      path: string;
+      data: unknown;
+      metadata: { title?: string; type?: string; subType?: string };
+    };
+    assert.strictEqual(asset.metadata.title, "Test Drive File");
+    assert.strictEqual(asset.metadata.type, "file");
+    assert.strictEqual(asset.metadata.subType, "application/vnd.google-apps.document");
+    assert.ok(asset.path.startsWith("asset-"));
+
+    // Should have started the run with replaced text
+    assert.strictEqual(startRunSpy.mock.callCount(), 1);
+    const runObjective = (startRunSpy.mock.calls[0].arguments[0] as { objective: { parts: { text: string }[] } }).objective;
+    const expectedText = `You are a graph editing assistant. The user's request is:\n\nPlease summarize this: <file src="${asset.path}" />`;
+    assert.strictEqual(runObjective.parts[0].text, expectedText);
+  });
+
+  test("startGraphEditingAgent pre-processes YouTube URLs and adds them as assets", async () => {
+    let addedAsset: {
+      type: string;
+      path: string;
+      data: unknown;
+      metadata: { title?: string; type?: string; subType?: string };
+    } | null = null;
+
+    const controller = await makeControllerStub("GEA_act_yt_success", {
+      editorEdit: async (edits: unknown[]) => {
+        const edit = edits[0] as {
+          type: string;
+          path: string;
+          data: unknown;
+          metadata: { title?: string; type?: string; subType?: string };
+        };
+        if (edit?.type === "addasset") {
+          addedAsset = edit;
+        }
+        return { success: true };
+      },
+    });
+    const services = makeServicesStub();
+
+    bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    const startRunSpy = mock.method(services.agentService, "startRun");
+
+    await startGraphEditingAgent(
+      "Check this video: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    );
+
+    // Should have added the asset
+    assert.ok(addedAsset);
+    const asset = addedAsset as unknown as {
+      type: string;
+      path: string;
+      data: unknown;
+      metadata: { title?: string; type?: string; subType?: string };
+    };
+    assert.strictEqual(asset.metadata.title, "YouTube Video");
+    assert.strictEqual(asset.metadata.subType, "youtube");
+
+    // Should have started the run with replaced text
+    assert.strictEqual(startRunSpy.mock.callCount(), 1);
+    const runObjective = (startRunSpy.mock.calls[0].arguments[0] as { objective: { parts: { text: string }[] } }).objective;
+    const expectedText = `You are a graph editing assistant. The user's request is:\n\nCheck this video: <file src="${asset.path}" />`;
+    assert.strictEqual(runObjective.parts[0].text, expectedText);
+  });
+
+  test("startGraphEditingAgent gently rejects unreadable Google Drive links", async () => {
+    const controller = await makeControllerStub("GEA_act_drive_fail");
+    const services = makeServicesStub();
+
+    // Mock isReadable to return false
+    services.googleDriveClient.isReadable = async (_fileId: unknown) => false;
+
+    bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    const startRunSpy = mock.method(services.agentService, "startRun");
+    const agent = controller.editor.graphEditingAgent;
+
+    await startGraphEditingAgent(
+      "Summarize this private file: https://docs.google.com/document/d/private-id/edit"
+    );
+
+    // Should NOT have started the run
+    assert.strictEqual(startRunSpy.mock.callCount(), 0);
+
+    // Should have added user message and model error message to history
+    assert.strictEqual(agent.entries.length, 2);
+    const entry0 = agent.entries[0];
+    const entry1 = agent.entries[1];
+    
+    if (entry0.kind === "message" && entry1.kind === "message") {
+      assert.strictEqual(entry0.role, "user");
+      assert.strictEqual(
+        entry0.text,
+        "Summarize this private file: https://docs.google.com/document/d/private-id/edit"
+      );
+      assert.strictEqual(entry1.role, "model");
+      assert.ok(entry1.text.includes("I can't seem to access the Google Drive file"));
+    } else {
+      assert.fail("Entries are not messages");
+    }
+    
+    // UI should be unlocked
+    assert.strictEqual(agent.processing, false);
+    assert.strictEqual(agent.waiting, true);
   });
 });

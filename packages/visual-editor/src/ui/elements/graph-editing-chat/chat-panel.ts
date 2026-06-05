@@ -776,9 +776,10 @@ class ChatPanel extends SignalWatcher(LitElement) {
     }
 
     if (text) {
-      if (!this.sca.actions.graphEditingAgent.resolveGraphEditingInput(text)) {
+      const resolved = await this.sca.actions.graphEditingAgent.resolveGraphEditingInput(text);
+      if (!resolved) {
         agent.processing = true;
-        this.sca.actions.graphEditingAgent.startGraphEditingAgent(text);
+        await this.sca.actions.graphEditingAgent.startGraphEditingAgent(text);
       }
     }
   }
