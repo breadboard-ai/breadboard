@@ -193,7 +193,7 @@ function getNotebookLMFunctionGroup(
             state: source.state,
             user_raw_source: source.userRawSource
               ? {
-                  blob_source_content: source.userRawSource?.storedData?.handle
+                  blobstore_content: source.userRawSource?.storedData?.handle
                     ? { blob_id: source.userRawSource.storedData.handle.split("/").at(-1)! }
                     : undefined,
                   serving_url: source.userRawSource?.servingUrl,

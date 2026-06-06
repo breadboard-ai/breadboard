@@ -171,7 +171,7 @@
               "type": "object",
               "description": "Details and contents of the raw source document.",
               "properties": {
-                "blob_source_content": {
+                "blobstore_content": {
                   "type": "object",
                   "description": "GCS blob details for the source document.",
                   "properties": {

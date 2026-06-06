@@ -54,7 +54,7 @@ export type NotebooklmGetSourceResponse = {
     original_mime_type?: string;
     user_drive_source_status?: string;
     user_raw_source?: {
-      blob_source_content?: {
+      blobstore_content?: {
         blob_id: string;
       };
       serving_url?: string;
@@ -251,7 +251,7 @@ export const declarations: FunctionDeclaration[] = [
               "type": "object",
               "description": "Details and contents of the raw source document.",
               "properties": {
-                "blob_source_content": {
+                "blobstore_content": {
                   "type": "object",
                   "description": "GCS blob details for the source document.",
                   "properties": {
