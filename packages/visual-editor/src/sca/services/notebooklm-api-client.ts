@@ -102,14 +102,29 @@ export interface TextContent {
 }
 
 // eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
+export interface StoredData {
+  handle?: string;
+  mimeType?: string;
+}
+
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
+export interface UserRawSource {
+  storedData?: StoredData;
+  servingUrl?: string;
+  downloadUrl?: string;
+}
+
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface Source {
   name: string;
   displayName?: string;
   createTime?: string;
   state?: SourceState;
+  userRawSource?: UserRawSource;
   webContent?: WebContent;
   blobstoreContent?: BlobstoreContent;
   textContent?: TextContent;
+  originalMimeType?: string;
 }
 
 // =============================================================================
@@ -253,6 +268,13 @@ export interface GetNotebookRequest {
   name: string;
   provenance?: Provenance;
   notebookExpansion?: NotebookExpansion;
+}
+
+/** Request for GetSource RPC. */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
+export interface GetSourceRequest {
+  name: string;
+  provenance?: Provenance;
 }
 
 /** Request for RetrieveRelevantChunks RPC. */
@@ -423,6 +445,45 @@ export class NotebookLmApiClient {
     }
 
     return (await response.json()) as Notebook;
+  }
+
+  /**
+   * Gets details of a specific Source resource.
+   * @param request - The request containing the source name (e.g. "notebooks/{notebook_id}/sources/{source_id}")
+   */
+  async getSource(request: GetSourceRequest): Promise<Source> {
+    // name format: "notebooks/{notebook_id}/sources/{source_id}"
+    const url = this.#backendApiBaseUrl
+      ? new URL(`v1beta1/${request.name}`, this.#backendApiBaseUrl)
+      : new URL(`v1/${request.name}`, this.#apiBaseUrl);
+
+    let response: Response;
+
+    if (this.#backendApiBaseUrl) {
+      response = await this.#fetchWithCreds(url, {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+        },
+      });
+    } else {
+      // Add provenance as query params with dot notation
+      this.#appendProvenanceParams(url, request.provenance);
+
+      response = await this.#fetchWithCreds(url, {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+        },
+      });
+    }
+
+    if (!response.ok) {
+      throw new Error(`Failed to get source: ${response.statusText}`);
+    }
+
+    const json = await response.json();
+    return json as Source;
   }
 
   /**
