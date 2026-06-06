@@ -26,6 +26,7 @@ import {
   instruction,
   type NotebooklmRetrieveRelevantChunksParams,
   type NotebooklmGenerateAnswerParams,
+  type NotebooklmGetSourceParams,
 } from "./generated/notebooklm.js";
 
 export { getNotebookLMFunctionGroup };
@@ -121,8 +122,10 @@ function getNotebookLMFunctionGroup(
         const chunks = response.sourceContexts.flatMap(
           (sourceContext: SourceContext) =>
             sourceContext.chunks.map((chunk) => {
-              const { textContent, mediaPaths, errors } =
-                processContentPieces(chunk.content?.pieces ?? [], fileSystem);
+              const { textContent, mediaPaths, errors } = processContentPieces(
+                chunk.content?.pieces ?? [],
+                fileSystem
+              );
               allErrors.push(...errors);
               return {
                 source_name: sourceContext.sourceName,
@@ -166,6 +169,43 @@ function getNotebookLMFunctionGroup(
       } catch (error) {
         return err(
           `Failed to generate answer from notebook: ${(error as Error).message}`
+        );
+      }
+    },
+
+    notebooklm_get_source: async ({
+      notebook_id,
+      source_id,
+      task_id,
+      status_update,
+    }: NotebooklmGetSourceParams) => {
+      taskTreeManager.setInProgress(task_id, status_update);
+
+      try {
+        const source = await notebookLmApiClient.getSource({
+          name: `notebooks/${notebook_id}/sources/${source_id}`,
+        });
+
+        return {
+          source: {
+            name: source.name,
+            display_name: source.displayName,
+            state: source.state,
+            user_raw_source: source.userRawSource
+              ? {
+                  blobstore_content: source.userRawSource?.storedData?.handle
+                    ? { blob_id: source.userRawSource.storedData.handle.split("/").at(-1)! }
+                    : undefined,
+                  serving_url: source.userRawSource?.servingUrl,
+                  download_url: source.userRawSource?.downloadUrl,
+                }
+              : undefined,
+            original_mime_type: source.originalMimeType,
+          },
+        };
+      } catch (error) {
+        return err(
+          `Failed to get source from notebook: ${(error as Error).message}`
         );
       }
     },
