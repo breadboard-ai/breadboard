@@ -703,7 +703,7 @@ All 23 endpoints fall into 4 trigger categories for manual verification:
 | --------- | ------------------------------------ | -------------- | ---------- | ------------------------------------------ | ------ |
 | 1         | app-catalyst.ts simple POSTs         | 6              | —          | 🟡 Partial (3/7, 1 with flag tests)        | ✅     |
 | 2         | app-catalyst.ts SSE streams          | 3              | —          | 🔴 None                                    | ⬜     |
-| 3.0       | A2ModuleArgs plumbing                | 0 (structural) | —          | N/A                                        | ⬜     |
+| 3.0       | A2ModuleArgs plumbing                | 0 (structural) | —          | N/A                                        | ✅     |
 | 3a        | A2 simple POSTs                      | 3              | 3.0        | 🔴 None (step-executor helper-only)        | ⬜     |
 | 3b        | MCP proxy-backed-client              | 2              | —          | 🔴 None                                    | ⬜     |
 | 3c        | NotebookLM api-client                | 1              | —          | 🔴 None (fake only)                        | ⬜     |

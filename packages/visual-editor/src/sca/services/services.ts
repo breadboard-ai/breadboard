@@ -165,6 +165,7 @@ export function services(
       agentService,
       notebookLmApiClient,
       googleDriveClient,
+      backendClient: config.shellHost.getOpalBackendClient(),
     });
     const googleDriveBoardServer = createGoogleDriveBoardServer(
       signinAdapter,
