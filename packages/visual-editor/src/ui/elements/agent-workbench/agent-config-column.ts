@@ -19,6 +19,7 @@ import {
   ShareRequestedEvent,
   SignOutEvent,
   OverflowMenuActionEvent,
+  HeaderActionEvent,
 } from "../../events/events.js";
 import * as Styles from "../../styles/styles.js";
 import { styleMap } from "lit/directives/style-map.js";
@@ -37,6 +38,7 @@ import {
 import { discordIcon } from "../../styles/svg-icons.js";
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("Global");
+import { ItemSelect } from "../input/item-select/item-select.js";
 
 import "../shared/agent-avatar.js";
 import "../input/text-editor/text-editor-remix.js";
@@ -587,11 +589,6 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
           icon: "file_copy",
         },
         {
-          id: "history",
-          title: Strings.from("COMMAND_SHOW_VERSION_HISTORY"),
-          icon: "history",
-        },
-        {
           id: "copy-board-contents",
           title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),
           icon: "content_copy",
@@ -608,6 +605,10 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
       .freezeValue=${0}
       .transparent=${true}
       .values=${options}
+      @change=${(evt: Event) => {
+        const select = evt.target as ItemSelect;
+        this.dispatchEvent(new HeaderActionEvent(select.value));
+      }}
     ></bb-item-select>`;
   }
 
@@ -652,6 +653,10 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
       .freezeValue=${0}
       .transparent=${true}
       .values=${settingsOptions}
+      @change=${(evt: Event) => {
+        const select = evt.target as ItemSelect;
+        this.dispatchEvent(new HeaderActionEvent(select.value));
+      }}
     ></bb-item-select>`;
   }
 
