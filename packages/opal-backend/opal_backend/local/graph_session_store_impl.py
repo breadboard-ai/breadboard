@@ -9,11 +9,13 @@ no concurrency hazards (asyncio cooperative multitasking = no races).
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from ..event_bus import EventBus
 from ..graph_types import GraphPlan
-from ..graph_session_store import SuspendedNodeState
+from ..graph_session_store import SessionSummary, SuspendedNodeState
 
 __all__ = ["InMemoryGraphSessionStore"]
 
@@ -41,6 +43,9 @@ class _SessionState:
     interaction_index: dict[str, str] = field(default_factory=dict)
     # Headless mode: node_id → pre-supplied LLMContent value.
     headless_inputs: dict[str, Any] | None = None
+    # Session management.
+    graph_id: str = ""
+    created_at: float = 0.0
 
 
 class InMemoryGraphSessionStore:
@@ -50,18 +55,23 @@ class InMemoryGraphSessionStore:
     at worst. No external dependencies.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, event_bus: EventBus | None = None) -> None:
         self._sessions: dict[str, _SessionState] = {}
+        self._graph_index: dict[str, list[str]] = {}
+        self._event_bus = event_bus
 
     # ── Plan Storage ──
 
     async def create(
-        self, session_id: str, plan: GraphPlan,
+        self, session_id: str, plan: GraphPlan, graph_id: str,
         *,
         headless_inputs: dict[str, Any] | None = None,
     ) -> None:
         """Store plan with initial dependency counts."""
-        state = _SessionState(plan=plan, headless_inputs=headless_inputs)
+        state = _SessionState(
+            plan=plan, headless_inputs=headless_inputs,
+            graph_id=graph_id, created_at=time.time(),
+        )
 
         # Compute per-node pending dep counts from plan stages.
         for stage in plan.stages:
@@ -75,6 +85,17 @@ class InMemoryGraphSessionStore:
                 state.nodes[info.node.id] = ns
 
         self._sessions[session_id] = state
+        self._graph_index.setdefault(graph_id, []).append(session_id)
+
+        if self._event_bus:
+            await self._event_bus.publish(
+                f"graph:{graph_id}",
+                {
+                    "sessionId": session_id,
+                    "status": state.status,
+                    "createdAt": state.created_at,
+                },
+            )
 
     async def get_plan(
         self, session_id: str,
@@ -211,6 +232,19 @@ class InMemoryGraphSessionStore:
             for ns in state.nodes.values()
         )
 
+    async def get_failed_errors(
+        self, session_id: str,
+    ) -> list[str]:
+        """Return error messages from all failed nodes."""
+        state = self._sessions.get(session_id)
+        if not state:
+            return []
+        return [
+            ns.error
+            for ns in state.nodes.values()
+            if ns.status == "failed" and ns.error
+        ]
+
     async def get_graph_outputs(
         self, session_id: str,
     ) -> dict[str, Any]:
@@ -320,3 +354,60 @@ class InMemoryGraphSessionStore:
         state = self._sessions.get(session_id)
         if state:
             state.status = status
+            if self._event_bus:
+                await self._event_bus.publish(
+                    f"graph:{state.graph_id}",
+                    {
+                        "sessionId": session_id,
+                        "status": status,
+                        "createdAt": state.created_at,
+                    },
+                )
+
+    # ── Session Management ──
+
+    async def list_sessions(
+        self, graph_id: str,
+    ) -> list[SessionSummary]:
+        """Return all sessions for a graph, sorted by creation time descending."""
+        session_ids = self._graph_index.get(graph_id, [])
+        summaries = []
+        for sid in session_ids:
+            state = self._sessions.get(sid)
+            if state:
+                summaries.append(SessionSummary(
+                    session_id=sid,
+                    graph_id=state.graph_id,
+                    status=state.status,
+                    created_at=state.created_at,
+                ))
+        # Sort by creation time descending (newest first).
+        summaries.sort(key=lambda s: s.created_at, reverse=True)
+        return summaries
+
+    async def delete_session(
+        self, session_id: str,
+    ) -> bool:
+        """Delete a session and its stored state. Returns True if found."""
+        state = self._sessions.pop(session_id, None)
+        if state is None:
+            return False
+
+        # Remove from graph index.
+        ids = self._graph_index.get(state.graph_id, [])
+        if session_id in ids:
+            ids.remove(session_id)
+            if not ids:
+                del self._graph_index[state.graph_id]
+
+        if self._event_bus:
+            await self._event_bus.publish(
+                f"graph:{state.graph_id}",
+                {
+                    "sessionId": session_id,
+                    "status": "deleted",
+                    "createdAt": state.created_at,
+                },
+            )
+
+        return True

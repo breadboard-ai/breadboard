@@ -82,7 +82,7 @@ class TestAgentEventsStreaming:
         runner._scheduler = scheduler
 
         plan = _agent_plan()
-        await store.create("s1", plan)
+        await store.create("s1", plan, "g1")
 
         events: list[dict] = []
         subscriber = bus.subscribe("s1")
@@ -120,7 +120,7 @@ class TestAgentEventsStreaming:
         runner._scheduler = scheduler
 
         plan = _agent_plan()
-        await store.create("s1", plan)
+        await store.create("s1", plan, "g1")
 
         subscriber = bus.subscribe("s1")
         await runner.start_graph("s1")
@@ -160,7 +160,7 @@ class TestAgentSuspendResume:
         runner._scheduler = scheduler
 
         plan = _agent_plan()
-        await store.create("s1", plan)
+        await store.create("s1", plan, "g1")
 
         events: list[dict] = []
         subscriber = bus.subscribe("s1")
@@ -202,7 +202,7 @@ class TestAgentSuspendResume:
         runner._scheduler = scheduler
 
         plan = _agent_plan()
-        await store.create("s1", plan)
+        await store.create("s1", plan, "g1")
 
         # Start and wait for suspend.
         subscriber = bus.subscribe("s1")
@@ -248,7 +248,7 @@ class TestAgentError:
         runner._scheduler = scheduler
 
         plan = _agent_plan()
-        await store.create("s1", plan)
+        await store.create("s1", plan, "g1")
 
         events: list[dict] = []
         subscriber = bus.subscribe("s1")

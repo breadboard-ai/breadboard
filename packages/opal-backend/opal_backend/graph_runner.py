@@ -132,6 +132,18 @@ class GraphRunner:
         except Exception as exc:
             await self._handle_node_error(session_id, node_id, exc)
 
+    def update_auth(
+        self, session_id: str,
+        access_token: str, origin: str,
+    ) -> None:
+        """Refresh the stored OAuth token for a session.
+
+        Called by the resume endpoint to inject a fresh token before
+        re-running nodes — the original token from session creation
+        may have expired.
+        """
+        self._session_auth[session_id] = (access_token, origin)
+
     async def resume_node(
         self, session_id: str, interaction_id: str,
         response: dict[str, Any],
@@ -456,22 +468,36 @@ class GraphRunner:
     async def _check_graph_complete(
         self, session_id: str,
     ) -> None:
-        """Emit graphComplete if all nodes are done."""
-        if await self._store.is_graph_complete(session_id):
+        """Emit graphComplete or graphError if all nodes are done."""
+        if not await self._store.is_graph_complete(session_id):
+            return
+
+        # Check whether any node failed.
+        failed_errors = await self._store.get_failed_errors(session_id)
+
+        if failed_errors:
+            error_msg = "; ".join(failed_errors)
+            await self._store.set_status(session_id, "failed")
+            event = {
+                "type": "graphError",
+                "sessionId": session_id,
+                "error": error_msg,
+            }
+            await self._store.append_event(session_id, event)
+            await self._event_bus.publish(session_id, event)
+        else:
             outputs = await self._store.get_graph_outputs(session_id)
             await self._store.set_status(session_id, "completed")
-            await self._store.append_event(session_id, {
+            event = {
                 "type": "graphComplete",
                 "sessionId": session_id,
                 "outputs": outputs,
-            })
-            await self._event_bus.publish(session_id, {
-                "type": "graphComplete",
-                "sessionId": session_id,
-                "outputs": outputs,
-            })
-            # Close the event bus for this session.
-            await self._event_bus.close(session_id)
+            }
+            await self._store.append_event(session_id, event)
+            await self._event_bus.publish(session_id, event)
+
+        # Close the event bus for this session.
+        await self._event_bus.close(session_id)
 
     async def _emit_node_error(
         self, session_id: str, node_id: str, error: str,

@@ -106,7 +106,7 @@ _session_router = create_session_router(
 )
 
 # Graph session infrastructure (Heartstone).
-_graph_session_store = InMemoryGraphSessionStore()
+_graph_session_store = InMemoryGraphSessionStore(event_bus=_event_bus)
 _graph_runner = GraphRunner(
     store=_graph_session_store,
     event_bus=_event_bus,

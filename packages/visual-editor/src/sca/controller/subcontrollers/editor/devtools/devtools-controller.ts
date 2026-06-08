@@ -7,6 +7,7 @@
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
 import { OpieController } from "./opie-controller.js";
+import { SessionHistoryController } from "./session-history-controller.js";
 
 export class DevToolsController extends RootController {
   @field({ persist: "session" })
@@ -16,6 +17,7 @@ export class DevToolsController extends RootController {
   accessor activeTab = "opie";
 
   public readonly opie: OpieController;
+  public readonly sessionHistory: SessionHistoryController;
 
   constructor(controllerId: string, persistenceId: string) {
     super(controllerId, persistenceId);
@@ -23,5 +25,10 @@ export class DevToolsController extends RootController {
       `${controllerId}_Opie`,
       `${persistenceId}_Opie`
     );
+    this.sessionHistory = new SessionHistoryController(
+      `${controllerId}_SessionHistory`,
+      `${persistenceId}_SessionHistory`
+    );
   }
 }
+
