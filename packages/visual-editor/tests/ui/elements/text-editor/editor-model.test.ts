@@ -276,8 +276,41 @@ describe("EditorModel", () => {
       it("appends when offset is past the end", () => {
         const model = EditorModel.fromRawValue("Hi");
         model.insertChicletAtOffset(999, makePart());
-        assert.equal(model.length, 2);
+        // Text-boundary invariant: [text, chiclet, text("")]
+        assert.equal(model.length, 3);
+        assert.ok(isText(model.segmentAt(0)!));
         assert.ok(isChiclet(model.segmentAt(1)!));
+        assert.ok(isText(model.segmentAt(2)!));
+        assert.equal((model.segmentAt(2) as TextSegment).text, "");
+      });
+
+      it("maintains text boundary after drag-to-end (regression)", () => {
+        // Simulate: "Hello [chiclet] world" → drag chiclet to end
+        const part = makePart();
+        const raw = `Hello{${JSON.stringify(part)}} world`;
+        const model = EditorModel.fromRawValue(raw);
+        // ["Hello", chiclet, " world"]
+        assert.equal(model.length, 3);
+
+        // Remove chiclet (drag start)
+        model.removeSegment(1);
+        // After merge: ["Hello world"]
+        assert.equal(model.length, 1);
+
+        // Re-insert at end offset (drag drop at end of visible text)
+        const endOffset = model.visibleTextLength; // 11
+        model.insertChicletAtOffset(endOffset, part);
+        // Should be: ["Hello world", chiclet, ""]
+        assert.equal(model.length, 3);
+        assert.ok(isText(model.segmentAt(0)!));
+        assert.ok(isChiclet(model.segmentAt(1)!));
+        assert.ok(isText(model.segmentAt(2)!));
+
+        // Now inserting text (Enter key) into the trailing segment must work.
+        // segmentHint=2 tells the model the cursor is in the trailing text.
+        const newOffset = model.insertTextAtOffset(endOffset, "\n", 2);
+        assert.equal(newOffset, endOffset + 1);
+        assert.ok(model.toRawValue().endsWith("\n"));
       });
     });
 

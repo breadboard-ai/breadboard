@@ -6,23 +6,25 @@
 
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
+import { keyed } from "lit/directives/keyed.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { scaContext } from "../../../../sca/context/context.js";
 import { type SCA } from "../../../../sca/sca.js";
-import { Template } from "@breadboard-ai/utils";
+import {
+  Template,
+  NOTEBOOKLM_MIMETYPE,
+  toNotebookLmUrl,
+} from "@breadboard-ai/utils";
 import type {
   GraphAsset,
   GraphAssetDescriptor,
 } from "../../../../sca/types.js";
 import * as Styles from "../../../styles/styles.js";
 import { extractPromptText } from "../../../../utils/prompt-utils.js";
-import { until } from "lit/directives/until.js";
-import { resolveImage } from "../../../media/image.js";
-import { NOTEBOOKLM_MIMETYPE } from "@breadboard-ai/utils";
-import { notebookLmIcon } from "../../../styles/svg-icons.js";
 import "../../input/add-asset/add-asset-button.js";
 import "../../input/add-asset/add-asset-modal.js";
+import "./asset-thumbnail.js";
 import {
   AddAssetEvent,
   AddAssetRequestEvent,
@@ -30,11 +32,6 @@ import {
   HideTooltipEvent,
 } from "../../../events/events.js";
 import type { AssetMetadata } from "@breadboard-ai/types";
-import {
-  videoIdFromWatchOrShortsOrEmbedUri,
-  isShareUri,
-  convertShareUriToEmbedUri,
-} from "../../../../utils/media/youtube.js";
 
 @customElement("bb-agent-asset-shelf")
 export class AgentAssetShelf extends SignalWatcher(LitElement) {
@@ -153,31 +150,6 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
         opacity: 1;
       }
 
-      .audio-toggle-button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-        border: none;
-        background: var(--light-dark-n-90);
-        color: var(--light-dark-n-10);
-        border-radius: var(--bb-grid-size-2);
-        cursor: pointer;
-        transition:
-          background-color 0.15s ease,
-          color 0.15s ease;
-
-        &:hover {
-          background: var(--sys-color--primary);
-          color: var(--sys-color--on-primary);
-        }
-
-        & .g-icon {
-          font-size: 20px;
-        }
-      }
-
       .asset-info-wrapper {
         display: flex;
         align-items: center;
@@ -205,6 +177,7 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
         margin-right: var(--bb-grid-size-5);
         flex-shrink: 0;
         outline: 1px solid var(--light-dark-n-90);
+        overflow: hidden;
 
         & .g-icon {
           font-size: 20px;
@@ -351,9 +324,7 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
     return "upload";
   }
 
-  #onToggleAudio(evt: Event, asset: GraphAsset) {
-    evt.stopPropagation();
-
+  #onToggleAudio(asset: GraphAsset) {
     if (this._playingAudioPath === asset.path) {
       if (this._activeAudio) {
         this._activeAudio.pause();
@@ -424,141 +395,6 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
     return undefined;
   }
 
-  #renderAssetIcon(asset: GraphAsset) {
-    const mimeType = this.#inferMimeType(asset) || "";
-    const firstPart = asset.data[0]?.parts[0];
-
-    if (mimeType === NOTEBOOKLM_MIMETYPE) {
-      return html`<div
-        style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 4px;"
-      >
-        ${notebookLmIcon}
-      </div>`;
-    }
-
-    if (mimeType.startsWith("image/") && firstPart) {
-      if ("inlineData" in firstPart && firstPart.inlineData) {
-        const dataUrl = `data:${firstPart.inlineData.mimeType};base64,${firstPart.inlineData.data}`;
-        return html`<img
-          src=${dataUrl}
-          style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;"
-        />`;
-      }
-      if ("fileData" in firstPart && firstPart.fileData) {
-        return html`<img
-          src=${firstPart.fileData.fileUri}
-          style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;"
-        />`;
-      }
-      if ("storedData" in firstPart && firstPart.storedData) {
-        const handle = firstPart.storedData.handle;
-        if (
-          handle.startsWith("drive:/") &&
-          this.sca.services.googleDriveClient
-        ) {
-          const resolvedSrc = resolveImage(
-            this.sca.services.googleDriveClient,
-            handle
-          );
-          return html`${until(
-            resolvedSrc.then(
-              (src) =>
-                html`<img
-                  src=${src || ""}
-                  style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;"
-                />`
-            ),
-            html`<div
-              style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"
-            >
-              <span
-                class="g-icon filled"
-                style="font-size: 16px; color: var(--light-dark-n-40);"
-                >progress_activity</span
-              >
-            </div>`
-          )}`;
-        }
-
-        return html`<img
-          src=${handle}
-          style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;"
-        />`;
-      }
-    }
-
-    if (mimeType.startsWith("audio/")) {
-      const isPlaying = this._playingAudioPath === asset.path;
-      const audioIcon = isPlaying ? "pause" : "play_arrow";
-      return html`<button
-        class="audio-toggle-button"
-        @click=${(evt: Event) => this.#onToggleAudio(evt, asset)}
-        @pointerover=${(evt: PointerEvent) => {
-          this.dispatchEvent(
-            new ShowTooltipEvent(
-              isPlaying ? "Pause audio" : "Play audio",
-              evt.clientX,
-              evt.clientY
-            )
-          );
-        }}
-        @pointerout=${() => {
-          this.dispatchEvent(new HideTooltipEvent());
-        }}
-      >
-        <span class="g-icon filled">${audioIcon}</span>
-      </button>`;
-    }
-
-    if (
-      mimeType.startsWith("video/") ||
-      mimeType === "video/mp4" ||
-      mimeType === "youtube"
-    ) {
-      let videoId: string | null = null;
-      if (firstPart && "fileData" in firstPart && firstPart.fileData) {
-        const uri = firstPart.fileData.fileUri;
-        if (isShareUri(uri)) {
-          const embedUri = convertShareUriToEmbedUri(uri);
-          if (embedUri) {
-            videoId = videoIdFromWatchOrShortsOrEmbedUri(embedUri);
-          }
-        } else {
-          videoId = videoIdFromWatchOrShortsOrEmbedUri(uri);
-        }
-      }
-
-      if (videoId) {
-        return html`<img
-          src="https://img.youtube.com/vi/${videoId}/default.jpg"
-          style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;"
-        />`;
-      }
-
-      if (
-        firstPart &&
-        "inlineData" in firstPart &&
-        firstPart.inlineData &&
-        firstPart.inlineData.mimeType.startsWith("video/")
-      ) {
-        return html`<span class="g-icon round filled">video_file</span>`;
-      }
-    }
-
-    const icon = this.#getAssetIcon(mimeType);
-    return html`<span class="g-icon round filled">${icon}</span>`;
-  }
-
-  #getAssetIcon(mimeType?: string): string {
-    if (!mimeType) return "draft";
-    if (mimeType.startsWith("image/")) return "image";
-    if (mimeType.startsWith("audio/")) return "audio_file";
-    if (mimeType.startsWith("video/")) return "video_file";
-    if (mimeType === "application/pdf") return "picture_as_pdf";
-    if (mimeType.startsWith("text/")) return "description";
-    return "attachment";
-  }
-
   #getAssetBadgeLabel(mimeType?: string): string {
     if (!mimeType) return "FILE";
     if (mimeType.startsWith("image/")) return "IMAGE";
@@ -566,6 +402,7 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
     if (mimeType.startsWith("video/")) return "VIDEO";
     if (mimeType === "application/pdf") return "PDF";
     if (mimeType.startsWith("text/")) return "TEXT";
+    if (mimeType === "application/x-notebooklm") return "NOTEBOOK";
     const parts = mimeType.split("/");
     return parts[parts.length - 1].toUpperCase();
   }
@@ -612,13 +449,8 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
 
     const allAssets = Array.from(allAssetsMap.values());
 
-    // Sort: In-use assets first, then alphabetically by title
+    // Sort: Alphabetically by title
     allAssets.sort((a, b) => {
-      const aInUse = referencedAssetPaths.has(a.path);
-      const bInUse = referencedAssetPaths.has(b.path);
-      if (aInUse && !bInUse) return -1;
-      if (!aInUse && bInUse) return 1;
-
       const aTitle = a.metadata?.title || a.path;
       const bTitle = b.metadata?.title || b.path;
       return aTitle.localeCompare(bTitle);
@@ -630,9 +462,39 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
           <h2>Assets</h2>
           <bb-add-asset-button
             .showGDrive=${true}
-            .showNotebookLm=${false}
+            .showNotebookLm=${!!this.sca.env.flags.get("enableNotebookLm")}
             .label=${"Add asset"}
             @bbaddassetrequest=${(evt: AddAssetRequestEvent) => {
+              if (evt.assetType === "notebooklm") {
+                this.sca.actions.notebookLmPicker.open(async (notebooks) => {
+                  for (const notebook of notebooks) {
+                    const descriptor: GraphAssetDescriptor = {
+                      metadata: {
+                        title: notebook.preview || notebook.name || "Notebook",
+                        type: "content",
+                        subType: "notebooklm",
+                      },
+                      path: `asset-${globalThis.crypto.randomUUID().slice(0, 8)}.webp`,
+                      data: [
+                        {
+                          role: "user",
+                          parts: [
+                            {
+                              storedData: {
+                                handle: toNotebookLmUrl(notebook.id),
+                                mimeType: NOTEBOOKLM_MIMETYPE,
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    };
+                    await this.sca.actions.asset.addGraphAsset(descriptor);
+                  }
+                  this.requestUpdate();
+                });
+                return;
+              }
               this._showAddAssetModal = true;
               this._addAssetType = evt.assetType;
               this._allowedMimeTypes = evt.allowedMimeTypes;
@@ -645,67 +507,76 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
             const mimeType = this.#inferMimeType(asset);
             const badgeLabel = this.#getAssetBadgeLabel(mimeType);
             const isInUse = referencedAssetPaths.has(asset.path);
+            const isPlaying = this._playingAudioPath === asset.path;
 
-            return html`
-              <div class="asset-row">
-                <span
-                  class="drag-handle g-icon"
-                  draggable="true"
-                  @dragstart=${(evt: DragEvent) =>
-                    this.#onDragStart(evt, asset)}
-                  @pointerover=${(evt: PointerEvent) => {
-                    this.dispatchEvent(
-                      new ShowTooltipEvent(
-                        "Drag to add to agent instructions",
-                        evt.clientX,
-                        evt.clientY
-                      )
-                    );
-                  }}
-                  @pointerout=${() => {
-                    this.dispatchEvent(new HideTooltipEvent());
-                  }}
-                  >drag_indicator</span
-                >
-                <div
-                  class="asset-info-wrapper"
-                  @click=${() => this.#onEditAsset(asset)}
-                >
-                  <div class="asset-icon-container">
-                    ${this.#renderAssetIcon(asset)}
-                  </div>
-                  <div class="asset-details">
-                    <div class="asset-title">
-                      ${asset.metadata?.title || asset.path}
+            return keyed(
+              asset.path,
+              html`
+                <div class="asset-row">
+                  <span
+                    class="drag-handle g-icon"
+                    draggable="true"
+                    @dragstart=${(evt: DragEvent) =>
+                      this.#onDragStart(evt, asset)}
+                    @pointerover=${(evt: PointerEvent) => {
+                      this.dispatchEvent(
+                        new ShowTooltipEvent(
+                          "Drag to add to agent instructions",
+                          evt.clientX,
+                          evt.clientY
+                        )
+                      );
+                    }}
+                    @pointerout=${() => {
+                      this.dispatchEvent(new HideTooltipEvent());
+                    }}
+                    >drag_indicator</span
+                  >
+                  <div
+                    class="asset-info-wrapper"
+                    @click=${() => this.#onEditAsset(asset)}
+                  >
+                    <div class="asset-icon-container">
+                      <bb-asset-thumbnail
+                        .asset=${asset}
+                        .mimeType=${mimeType || ""}
+                        .playing=${isPlaying}
+                        @bb-audio-toggle=${() => this.#onToggleAudio(asset)}
+                      ></bb-asset-thumbnail>
                     </div>
-                    <div class="asset-meta">
-                      <span class="asset-badge">${badgeLabel}</span>
-                      ${isInUse
-                        ? html`<span class="in-use-pill">In use</span>`
-                        : nothing}
+                    <div class="asset-details">
+                      <div class="asset-title">
+                        ${asset.metadata?.title || asset.path}
+                      </div>
+                      <div class="asset-meta">
+                        <span class="asset-badge">${badgeLabel}</span>
+                        ${isInUse
+                          ? html`<span class="in-use-pill">In use</span>`
+                          : nothing}
+                      </div>
                     </div>
                   </div>
+                  <button
+                    class="remove-button"
+                    @click=${() => this.#onRemoveAsset(asset.path)}
+                    @pointerover=${(evt: PointerEvent) => {
+                      this.dispatchEvent(
+                        new ShowTooltipEvent(
+                          "Remove asset",
+                          evt.clientX,
+                          evt.clientY
+                        )
+                      );
+                    }}
+                    @pointerout=${() => {
+                      this.dispatchEvent(new HideTooltipEvent());
+                    }}
+                  >
+                    <span class="g-icon">close</span>
+                  </button>
                 </div>
-                <button
-                  class="remove-button"
-                  @click=${() => this.#onRemoveAsset(asset.path)}
-                  @pointerover=${(evt: PointerEvent) => {
-                    this.dispatchEvent(
-                      new ShowTooltipEvent(
-                        "Remove asset",
-                        evt.clientX,
-                        evt.clientY
-                      )
-                    );
-                  }}
-                  @pointerout=${() => {
-                    this.dispatchEvent(new HideTooltipEvent());
-                  }}
-                >
-                  <span class="g-icon">close</span>
-                </button>
-              </div>
-            `;
+              `
+            );
           })}
         </div>
       </div>

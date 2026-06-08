@@ -423,7 +423,15 @@ class EditorModel {
     }
 
     // If we get here, offset is past the end — append.
+    // Maintain the text-boundary invariant: the last segment must always be
+    // text. If the current last segment isn't text, add an empty one before
+    // the chiclet (this can happen if the array is empty after construction).
+    const last = this.#segments[this.#segments.length - 1];
+    if (!last || last.kind !== "text") {
+      this.#segments.push({ kind: "text", text: "" });
+    }
     this.#segments.push({ kind: "chiclet", part });
+    this.#segments.push({ kind: "text", text: "" });
   }
 
   /** Remove a segment by index, then merge any resulting adjacent text. */

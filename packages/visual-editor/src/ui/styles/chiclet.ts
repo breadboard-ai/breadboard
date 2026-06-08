@@ -119,7 +119,7 @@ export const styles = [
       }
 
       &.asset {
-        background: var(--ui-asset-secondary) 5px center / 16px 16px no-repeat;
+        background: var(--ui-asset) 5px center / 16px 16px no-repeat;
         color: var(--n-10);
       }
 

@@ -592,7 +592,7 @@ export type FastAccessItem =
  * - `"browse"` — Full `@` menu (text-editor). Shows assets, tools, components, agent-mode.
  * - `"route"` — Chiclet re-targeting. Shows routes only.
  */
-export type FastAccessMode = "tools" | "browse" | "route";
+export type FastAccessMode = "tools" | "browse" | "route" | "browse-assets";
 
 /**
  * Extended item type that includes integration tools (managed by legacy

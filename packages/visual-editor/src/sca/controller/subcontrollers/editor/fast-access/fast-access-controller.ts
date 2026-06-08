@@ -64,11 +64,11 @@ class FastAccessController extends RootController {
     const mode = this.fastAccessMode;
     if (!mode) return [];
 
-    const showAssets = mode === "browse";
-    const showTools = mode !== "route";
-    const showComponents = mode !== "route";
+    const showAssets = mode === "browse" || mode === "browse-assets";
+    const showTools = mode !== "route" && mode !== "browse-assets";
+    const showComponents = mode !== "route" && mode !== "browse-assets";
     const showRoutes = mode === "route";
-    const showAgentModeTools = mode !== "route";
+    const showAgentModeTools = mode !== "route" && mode !== "browse-assets";
 
     const filterRe = this.filter ? new RegExp(this.filter, "gim") : null;
     const items: DisplayItem[] = [];
@@ -140,7 +140,7 @@ class FastAccessController extends RootController {
     }
 
     // Append integration tools from IntegrationsController
-    if (opts.integrationsController) {
+    if (opts.integrationsController && mode !== "browse-assets") {
       for (const [url, state] of opts.integrationsController.registered) {
         if (state.status !== "complete") continue;
         for (const [, tool] of state.tools) {

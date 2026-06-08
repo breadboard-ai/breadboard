@@ -12,7 +12,11 @@
 export function iconSubstitute(
   src: string | undefined | null
 ): string | undefined | null {
-  if (src && typeof src === "string" && src.startsWith("application/vnd.google-apps.")) {
+  if (
+    src &&
+    typeof src === "string" &&
+    src.startsWith("application/vnd.google-apps.")
+  ) {
     switch (src) {
       case "application/vnd.google-apps.spreadsheet":
         return "sheets";
@@ -47,6 +51,10 @@ export function iconSubstitute(
       return "drive";
     case "drawable":
       return "draw";
+    case "notebooklm":
+      return "notebooklm";
+    case "webcam-video":
+      return "videocam";
     case "youtube":
       return "video_youtube";
     case "display":

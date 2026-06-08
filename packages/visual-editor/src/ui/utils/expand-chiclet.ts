@@ -7,6 +7,7 @@
 import { ok, TemplatePart } from "@breadboard-ai/utils";
 import { getStepIcon } from "./get-step-icon.js";
 import { iconSubstitute } from "./icon-substitute.js";
+import { getAssetIcon, getMimeType } from "../../utils/media/mime-type.js";
 import type { SCA } from "../../sca/sca.js";
 
 export function expandChiclet(
@@ -68,13 +69,26 @@ export function expandChiclet(
       icon = "alternate_email";
 
       const assetInfo = graphController.graphAssets.get(path);
-      if (assetInfo?.metadata?.type) {
+      let mimeType = part.mimeType;
+      if (!mimeType && assetInfo) {
+        mimeType = getMimeType(assetInfo.data);
+      }
+
+      if (mimeType) {
+        icon = getAssetIcon(mimeType);
+      }
+
+      if (assetInfo?.metadata?.type && !mimeType) {
         icon = iconSubstitute(assetInfo.metadata.type);
       }
 
       if (assetInfo?.metadata?.subType) {
-        icon = iconSubstitute(assetInfo.metadata.subType);
+        const subTypeIcon = iconSubstitute(assetInfo.metadata.subType);
+        if (subTypeIcon && !subTypeIcon.includes("/")) {
+          icon = subTypeIcon;
+        }
       }
+      break;
     }
   }
 

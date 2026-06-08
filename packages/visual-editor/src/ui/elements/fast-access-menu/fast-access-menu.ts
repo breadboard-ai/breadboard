@@ -14,7 +14,7 @@ import {
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { getAssetType, getMimeType } from "../../../utils/media/mime-type.js";
+import { getAssetIcon, getMimeType } from "../../../utils/media/mime-type.js";
 import { consume } from "@lit/context";
 import { scaContext } from "../../../sca/context/context.js";
 import type { SCA } from "../../../sca/sca.js";
@@ -253,6 +253,15 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
       .integration menu button {
         --background: var(--n-90);
+      }
+
+      .g-icon[data-icon="notebooklm"]::after {
+        content: "";
+        display: block;
+        width: 16px;
+        height: 16px;
+        background: url(/third_party/icons/notebooklm.svg) center / contain
+          no-repeat;
       }
     `,
   ];
@@ -534,26 +543,14 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     asset: GraphAsset,
     globalIndex: number
   ): HTMLTemplateResult {
-    let icon = getAssetType(getMimeType(asset.data));
-    if (!icon) {
-      icon = "text_fields";
-      if (asset.metadata?.type === "file") {
-        icon = "upload";
-      }
-    }
+    const mimeType = getMimeType(asset.data);
+    let icon = getAssetIcon(mimeType);
 
-    // Override icon based on subType (e.g., youtube, drawable, gdrive)
+    // Override icon based on subType (e.g., youtube, drawable, gdrive, notebooklm, webcam-video)
     if (asset.metadata?.subType) {
-      switch (asset.metadata?.subType) {
-        case "youtube":
-          icon = "video_youtube";
-          break;
-        case "drawable":
-          icon = "draw";
-          break;
-        case "gdrive":
-          icon = "drive";
-          break;
+      const subTypeIcon = iconSubstitute(asset.metadata.subType);
+      if (subTypeIcon && !subTypeIcon.includes("/")) {
+        icon = subTypeIcon;
       }
     }
 
@@ -567,7 +564,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           this.#emitCurrentItem();
         }}
       >
-        <span class="g-icon filled round">${icon}</span>
+        <span class="g-icon filled round" data-icon=${icon}
+          >${icon === "notebooklm" ? "" : icon}</span
+        >
         <span class="title">${asset.metadata?.title ?? "Untitled asset"}</span>
       </button>
     </li>`;
@@ -655,9 +654,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   render() {
     const mode = this.sca?.controller.editor.fastAccess.fastAccessMode;
-    const showAssets = mode === "browse";
-    const showTools = mode !== "route";
-    const showComponents = mode !== "route";
+    const showAssets = mode === "browse" || mode === "browse-assets";
+    const showTools = mode !== "route" && mode !== "browse-assets";
+    const showComponents = mode !== "route" && mode !== "browse-assets";
     const showRoutes = mode === "route";
 
     const assets = this.#itemsOfKind("asset");
