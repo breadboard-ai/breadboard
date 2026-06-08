@@ -702,7 +702,7 @@ All 23 endpoints fall into 4 trigger categories for manual verification:
 | Work Item | Scope                                | Endpoints      | Depends On | Test Coverage                              | Status |
 | --------- | ------------------------------------ | -------------- | ---------- | ------------------------------------------ | ------ |
 | 1         | app-catalyst.ts simple POSTs         | 6              | —          | 🟡 Partial (3/7, 1 with flag tests)        | ✅     |
-| 2         | app-catalyst.ts SSE streams          | 3              | —          | 🔴 None                                    | ⬜     |
+| 2         | app-catalyst.ts SSE streams          | 3              | —          | ✅ Both flag paths + error + all 3 endpoints | ✅     |
 | 3.0       | A2ModuleArgs plumbing                | 0 (structural) | —          | N/A                                        | ⬜     |
 | 3a        | A2 simple POSTs                      | 3              | 3.0        | 🔴 None (step-executor helper-only)        | ⬜     |
 | 3b        | MCP proxy-backed-client              | 2              | —          | 🔴 None                                    | ⬜     |
