@@ -135,16 +135,29 @@ suite("FastAccessController", () => {
   });
 
   test("route mode shows routes only", () => {
-    controller.fastAccessMode = "route";
     const rawItems: FastAccessItem[] = [
       makeTool("MyTool"),
       makeAsset("photo.png", "Photo"),
       makeComponent("MyComponent"),
       makeRoute("MyRoute"),
     ];
+    controller.fastAccessMode = "route";
     const items = controller.getDisplayItems(rawItems, noAgentTools, noOpts);
     assert.strictEqual(items.length, 1);
     assert.strictEqual(items[0]!.kind, "route");
+  });
+
+  test("browse-assets mode shows assets only", () => {
+    const rawItems: FastAccessItem[] = [
+      makeTool("MyTool"),
+      makeAsset("photo.png", "Photo"),
+      makeComponent("MyComponent"),
+      makeRoute("MyRoute"),
+    ];
+    controller.fastAccessMode = "browse-assets";
+    const items = controller.getDisplayItems(rawItems, noAgentTools, noOpts);
+    assert.strictEqual(items.length, 1);
+    assert.strictEqual(items[0]!.kind, "asset");
   });
 
   // =========================================================================

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, noChange } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -414,8 +414,8 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
       });
       // Mirror the blur handler: release ownership before the graph
       // update so the re-render passes the real objectiveText (not
-      // `nothing`, which Lit resolves to `undefined` and wipes the
-      // editor model).
+      // `noChange`, which would leave the editor stale if the saved
+      // value diverged from the editor model).
       this.#focused = false;
       this.sca.actions.workbench.applyObjective(blocks);
     }
@@ -754,7 +754,7 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
     // While focused, don't pass .value — the text editor owns its
     // internal state and re-setting it would clobber the cursor and
     // any in-progress edits.
-    const editorValue = this.#focused ? nothing : objectiveText;
+    const editorValue = this.#focused ? noChange : objectiveText;
     const title = graphController.title ?? "Untitled agent";
 
     // Dynamically resolve theme colors from the graph's visual metadata
@@ -820,6 +820,7 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
             <bb-text-editor-remix
               .value=${editorValue}
               .supportsFastAccess=${true}
+              .fastAccessMode=${"browse-assets"}
               @focus=${this.#onFocus}
               @blur=${this.#onBlur}
               @keydown=${this.#onKeyDown}

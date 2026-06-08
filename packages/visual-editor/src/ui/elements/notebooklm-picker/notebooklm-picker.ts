@@ -155,6 +155,7 @@ export class NotebookLmPicker extends SignalWatcher(LitElement) {
         .showSaveCancel=${true}
         .saveButtonLabel=${"Add"}
         .saveButtonDisabled=${nlm.selectedNotebooks.size === 0}
+        .blurBackground=${true}
         @bbmodaldismissed=${(evt: ModalDismissedEvent) => {
           if (evt.withSave) {
             this.#handleConfirm();

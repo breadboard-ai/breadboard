@@ -33,3 +33,14 @@ export function getMimeType(data: LLMContent[]): string | undefined {
     }
   }
 }
+
+export function getAssetIcon(mimeType?: string): string {
+  if (!mimeType) return "draft";
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("audio/")) return "audio_file";
+  if (mimeType.startsWith("video/")) return "video_file";
+  if (mimeType === "application/pdf") return "picture_as_pdf";
+  if (mimeType.startsWith("text/")) return "description";
+  if (mimeType === "application/x-notebooklm") return "notebooklm";
+  return "attachment";
+}

@@ -368,8 +368,8 @@ export class AddAssetModal extends SignalWatcher(LitElement) {
           };
           const metadata: AssetMetadata = {
             title: updatedTitle,
-            type: "file",
-            subType: "video/mp4",
+            type: "content",
+            subType: "youtube",
           };
 
           this.dispatchEvent(new AddAssetEvent(item, metadata));
@@ -422,7 +422,7 @@ export class AddAssetModal extends SignalWatcher(LitElement) {
             const metadata: AssetMetadata = {
               title: updatedTitle,
               type: "file",
-              subType: input.type,
+              subType: "webcam-video",
             };
 
             this.dispatchEvent(new AddAssetEvent(item, metadata));
@@ -915,6 +915,10 @@ export class AddAssetModal extends SignalWatcher(LitElement) {
         }
         break;
       }
+
+      case "notebooklm":
+        assetCollector = html`<div id="field-container">${preview}</div>`;
+        break;
 
       default:
         assetCollector = html`Unknown asset type`;

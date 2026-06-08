@@ -85,6 +85,7 @@ import { NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
 import type { SCA } from "../../../../sca/sca.js";
 import { consume } from "@lit/context";
 import { scaContext } from "../../../../sca/context/context.js";
+import type { FastAccessMode } from "../../../../sca/types.js";
 
 import { EditorModel } from "./editor-model.js";
 import type { ChicletSegment, Segment } from "./editor-model.js";
@@ -131,6 +132,10 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   /** Whether the '@' key triggers the fast access menu. */
   @property({ reflect: true, type: Boolean })
   accessor supportsFastAccess = true;
+
+  /** The Fast Access mode to use when triggering the @ menu. */
+  @property()
+  accessor fastAccessMode: FastAccessMode = "browse";
 
   /** Sub-graph context for chiclet metadata resolution. */
   @property()
@@ -1575,7 +1580,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     if (this.sca) {
       this.sca.controller.editor.fastAccess.fastAccessMode = hasTarget
         ? "route"
-        : "browse";
+        : this.fastAccessMode;
     }
     this.#isUsingFastAccess = true;
   }
