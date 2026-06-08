@@ -212,6 +212,12 @@ class EditorModel {
     // our callbacks — we build segments from those calls.
     template.substitute(
       (part) => {
+        // If the previous segment was a chiclet, we must insert an empty
+        // text segment between them to maintain the alternating invariant.
+        const prev = segments[segments.length - 1];
+        if (prev && prev.kind === "chiclet") {
+          segments.push({ kind: "text", text: "" });
+        }
         segments.push({ kind: "chiclet", part });
         // Return a dummy string; we only care about the walk, not the
         // rendered output.
@@ -327,6 +333,16 @@ class EditorModel {
         result.push({ kind: "text", text });
       }
     }
+    // Contenteditable browsers swallow a trailing \n — it doesn't produce a
+    // visible new line. Append an extra \n so the cursor can land on the new
+    // blank line. This mirrors the standard <textarea> sentinel behaviour.
+    const lastResult = result[result.length - 1];
+    if (lastResult?.kind === "text" && lastResult.text.endsWith("\n")) {
+      result[result.length - 1] = {
+        kind: "text",
+        text: lastResult.text + "\n",
+      };
+    }
 
     return result;
   }
@@ -374,15 +390,57 @@ class EditorModel {
    * `afterChiclet=true`, the method skips past one chiclet at the boundary
    * to insert in the following text segment instead.
    *
+   * ### The `segmentHint` disambiguation
+   *
+   * `afterChiclet` only skips a single chiclet, which breaks for 2+ adjacent
+   * chiclets at the same offset. `segmentHint` (from
+   * `domPositionToSegmentIndex`) pins the insertion to a specific text
+   * segment, bypassing the left-to-right scan entirely.
+   *
    * @param charOffset Position in visible text (chiclets are zero-width).
    * @param part The TemplatePart for the new chiclet.
    * @param afterChiclet When true, skip past a chiclet at the boundary.
+   * @param segmentHint Model segment index the cursor is in. Pass -1 when
+   *   unknown (falls back to offset-based scan).
    */
   insertChicletAtOffset(
     charOffset: number,
     part: TemplatePart,
-    afterChiclet = false
+    afterChiclet = false,
+    segmentHint = -1
   ): void {
+    // Fast path: when a segment hint is provided, insert directly into the
+    // hinted segment. This avoids the left-to-right offset scan which can
+    // pick the wrong text segment when multiple chiclets share an offset.
+    if (segmentHint >= 0) {
+      const hintSeg = this.#segments[segmentHint];
+      if (hintSeg?.kind === "text") {
+        // Compute localOffset within this specific segment.
+        let runningOffset = 0;
+        for (let i = 0; i < segmentHint; i++) {
+          const s = this.#segments[i];
+          if (s.kind === "text") {
+            runningOffset += s.text.length;
+          }
+        }
+        const localOffset = Math.min(
+          charOffset - runningOffset,
+          hintSeg.text.length
+        );
+        const before = hintSeg.text.slice(0, localOffset);
+        const after = hintSeg.text.slice(localOffset);
+
+        const replacement: Segment[] = [
+          { kind: "text", text: before },
+          { kind: "chiclet", part },
+          { kind: "text", text: after },
+        ];
+        this.#segments.splice(segmentHint, 1, ...replacement);
+        return;
+      }
+    }
+
+    // Offset-based scan (original path).
     let runningOffset = 0;
 
     for (let i = 0; i < this.#segments.length; i++) {
@@ -466,6 +524,79 @@ class EditorModel {
     const clamped = Math.max(0, Math.min(adjustedTo, this.#segments.length));
     this.#segments.splice(clamped, 0, seg);
     this.#mergeAdjacentText();
+  }
+
+  /**
+   * Move a chiclet from `fromIndex` (which must be a chiclet) to a new position
+   * specified by a target text segment index and local character offset within
+   * that text segment.
+   *
+   * This handles all segment index shifting and text segment merging internally,
+   * preserving the model's structural invariants.
+   *
+   * @param fromIndex Source segment index (must be a chiclet).
+   * @param targetSegmentIndex Target text segment index (must be a text segment).
+   * @param localOffset Character offset within the target text segment.
+   */
+  moveChicletToSegmentOffset(
+    fromIndex: number,
+    targetSegmentIndex: number,
+    localOffset: number
+  ): { newOffset: number; afterChiclet: boolean } {
+    const seg = this.#segments[fromIndex];
+    if (!seg || seg.kind !== "chiclet") {
+      throw new Error("Source segment must be a chiclet segment");
+    }
+
+    // If the drop target is a chiclet (e.g. caretPositionFromPoint landed
+    // on another chiclet's DOM), redirect to the text segment after it.
+    // The alternating segment invariant guarantees a text segment follows
+    // every chiclet.
+    const targetSeg = this.#segments[targetSegmentIndex];
+    if (targetSeg?.kind === "chiclet") {
+      targetSegmentIndex = targetSegmentIndex + 1;
+      localOffset = 0;
+    }
+
+    const part = seg.part;
+
+    let adjustedTargetIndex = targetSegmentIndex;
+    let adjustedLocalOffset = localOffset;
+
+    if (targetSegmentIndex > fromIndex) {
+      adjustedTargetIndex = targetSegmentIndex - 2;
+      if (targetSegmentIndex === fromIndex + 1) {
+        const prevTextSeg = this.#segments[fromIndex - 1];
+        if (prevTextSeg && prevTextSeg.kind === "text") {
+          adjustedLocalOffset = prevTextSeg.text.length + localOffset;
+        }
+      }
+    }
+
+    this.#segments.splice(fromIndex, 1);
+    this.#mergeAdjacentText();
+
+    const adjustedTarget = this.#segments[adjustedTargetIndex];
+    if (!adjustedTarget || adjustedTarget.kind !== "text") {
+      throw new Error("Adjusted target segment must be a text segment");
+    }
+
+    const before = adjustedTarget.text.slice(0, adjustedLocalOffset);
+    const after = adjustedTarget.text.slice(adjustedLocalOffset);
+
+    const replacement: Segment[] = [
+      { kind: "text", text: before },
+      { kind: "chiclet", part },
+      { kind: "text", text: after },
+    ];
+
+    this.#segments.splice(adjustedTargetIndex, 1, ...replacement);
+    this.#mergeAdjacentText();
+
+    const newChicletIndex = adjustedTargetIndex + 1;
+    const newOffset = this.chicletCharOffset(newChicletIndex);
+
+    return { newOffset, afterChiclet: true };
   }
 
   /**
@@ -640,18 +771,74 @@ class EditorModel {
    * the range are removed using **inclusive** boundary semantics — if either
    * edge of the range touches a chiclet, it's included in the deletion.
    *
+   * ### The `segmentHint` disambiguation
+   *
+   * When adjacent chiclets share the same visible-text offset, the offset
+   * alone can't distinguish which chiclet the cursor is next to.
+   * `segmentHint` is the model segment index the DOM cursor actually sits
+   * in — derived from `domPositionToSegmentIndex`. For single-char
+   * backspace, the chiclet at `segmentHint - 1` is deleted; for forward
+   * delete, the chiclet at `segmentHint + 1`. This disambiguates
+   * correctly even when many chiclets stack at the same offset.
+   *
    * @param charOffset Cursor position in visible text.
    * @param count Number of characters to delete. Negative = backward
    *   (Backspace), positive = forward (Delete key).
+   * @param segmentHint Model segment index the cursor is in. Pass -1 when
+   *   unknown (falls back to `#findChicletAtBoundary`).
    * @returns New cursor offset after deletion.
    */
-  deleteAtOffset(charOffset: number, count: number): number {
+  deleteAtOffset(charOffset: number, count: number, segmentHint = -1): number {
     if (count === 0) return charOffset;
 
-    // Check if a chiclet sits at the cursor boundary. Since chiclets are
-    // zero-width, backspace/delete at a chiclet boundary should remove the
-    // chiclet rather than the adjacent text.
-    if (count === -1 || count === 1) {
+    // Single-char delete with a segment hint: use the hint to find the
+    // adjacent chiclet directly. This is critical when multiple chiclets
+    // share the same visible-text offset (adjacent chiclets with empty text
+    // between them).
+    //
+    // IMPORTANT: only delete the chiclet when the cursor is truly at the
+    // edge of the text segment that touches it. If there's text content
+    // (e.g. a newline) between the cursor and the chiclet boundary, the
+    // text should be deleted instead.
+    if ((count === -1 || count === 1) && segmentHint >= 0) {
+      const hintSeg = this.#segments[segmentHint];
+      if (hintSeg?.kind === "text") {
+        // Compute the cursor's local offset within the hinted segment.
+        let runningOffset = 0;
+        for (let i = 0; i < segmentHint; i++) {
+          const s = this.#segments[i];
+          if (s.kind === "text") runningOffset += s.text.length;
+        }
+        const localOffset = charOffset - runningOffset;
+
+        if (count === -1 && localOffset === 0) {
+          // Cursor at the leading edge → chiclet before is adjacent.
+          const neighbor = this.#segments[segmentHint - 1];
+          if (neighbor?.kind === "chiclet") {
+            this.#segments.splice(segmentHint - 1, 1);
+            this.#mergeAdjacentText();
+            return charOffset;
+          }
+        }
+
+        if (count === 1 && localOffset === hintSeg.text.length) {
+          // Cursor at the trailing edge → chiclet after is adjacent.
+          const neighbor = this.#segments[segmentHint + 1];
+          if (neighbor?.kind === "chiclet") {
+            this.#segments.splice(segmentHint + 1, 1);
+            this.#mergeAdjacentText();
+            return charOffset;
+          }
+        }
+      }
+    }
+
+    // Fallback: no hint was provided. Use the offset-based boundary search
+    // (works when there's at most one chiclet at the boundary). When a hint
+    // WAS provided but the edge check above declined, we know the cursor is
+    // mid-text — skip the fallback to avoid incorrectly deleting a chiclet
+    // that shares the same offset but isn't actually adjacent to the cursor.
+    if ((count === -1 || count === 1) && segmentHint < 0) {
       const chicletIndex = this.#findChicletAtBoundary(charOffset);
       if (chicletIndex !== -1) {
         this.#segments.splice(chicletIndex, 1);
@@ -714,6 +901,67 @@ class EditorModel {
    */
   hasChicletAtBoundary(charOffset: number): boolean {
     return this.#findChicletAtBoundary(charOffset) !== -1;
+  }
+
+  /**
+   * Determine if the cursor at `charOffset` (and optionally `segmentHint`)
+   * should be placed AFTER a chiclet.
+   *
+   * A character offset boundary is ambiguous when it touches a chiclet.
+   * We only want `afterChiclet = true` if the cursor lands in the text
+   * segment *following* the chiclet (i.e. at `localOffset = 0` of that
+   * segment). If it lands at the end of the text segment *preceding* the
+   * chiclet, we want `afterChiclet = false` so it stays before it.
+   */
+  shouldPlaceCursorAfterChiclet(charOffset: number, segmentHint = -1): boolean {
+    // 1. Try to use the segmentHint first if it's a valid text segment.
+    if (segmentHint >= 0 && segmentHint < this.#segments.length) {
+      const seg = this.#segments[segmentHint];
+      if (seg.kind === "text") {
+        let runningOffset = 0;
+        for (let i = 0; i < segmentHint; i++) {
+          const s = this.#segments[i];
+          if (s.kind === "text") {
+            runningOffset += s.text.length;
+          }
+        }
+        if (
+          charOffset >= runningOffset &&
+          charOffset <= runningOffset + seg.text.length
+        ) {
+          const localOffset = charOffset - runningOffset;
+          if (localOffset === 0) {
+            const prev = this.#segments[segmentHint - 1];
+            if (prev?.kind === "chiclet") {
+              return true;
+            }
+          }
+          return false;
+        }
+      }
+    }
+
+    // 2. Fallback to offset-based scanning if no segmentHint or it didn't match.
+    let runningOffset = 0;
+    for (let i = 0; i < this.#segments.length; i++) {
+      const seg = this.#segments[i];
+      if (seg.kind === "text") {
+        const len = seg.text.length;
+        if (runningOffset + len >= charOffset) {
+          const localOffset = charOffset - runningOffset;
+          if (localOffset === 0) {
+            const prev = this.#segments[i - 1];
+            if (prev?.kind === "chiclet") {
+              return true;
+            }
+          }
+          return false;
+        }
+        runningOffset += len;
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -895,52 +1143,50 @@ class EditorModel {
   #deleteRange(startOff: number, endOff: number, inclusive = false): number {
     if (startOff >= endOff) return startOff;
 
-    let runningOffset = 0;
-    let remaining = endOff - startOff;
+    let unshiftedRunningOffset = 0;
 
     for (let i = 0; i < this.#segments.length; i++) {
       const seg = this.#segments[i];
 
       if (seg.kind === "chiclet") {
-        // Determine if this chiclet falls within the deletion range.
         const inRange = inclusive
-          ? runningOffset >= startOff && runningOffset <= endOff
-          : runningOffset > startOff && runningOffset < endOff;
+          ? unshiftedRunningOffset >= startOff &&
+            unshiftedRunningOffset <= endOff
+          : unshiftedRunningOffset > startOff &&
+            unshiftedRunningOffset < endOff;
         if (inRange) {
           this.#segments.splice(i, 1);
-          i--; // Re-examine this index after removal.
+          i--;
         }
         continue;
       }
 
-      // Text processing — skip if all visible chars have been deleted.
-      if (remaining <= 0) continue;
-
       const segLen = seg.text.length;
-      const segEnd = runningOffset + segLen;
+      const segStart = unshiftedRunningOffset;
+      const segEnd = unshiftedRunningOffset + segLen;
 
       if (segEnd <= startOff) {
-        // This segment is entirely before the deletion range — skip it.
-        runningOffset = segEnd;
+        unshiftedRunningOffset = segEnd;
         continue;
       }
 
-      // Compute the overlap between this text segment and the deletion range.
-      const localStart = Math.max(0, startOff - runningOffset);
-      const localEnd = Math.min(segLen, endOff - runningOffset);
-      const deleteCount = localEnd - localStart;
+      const overlapStart = Math.max(startOff, segStart);
+      const overlapEnd = Math.min(endOff, segEnd);
+      const deleteCount = overlapEnd - overlapStart;
 
-      if (deleteCount >= segLen) {
-        // Entire segment is within the deletion range — remove it.
-        this.#segments.splice(i, 1);
-        i--; // Re-examine this index after removal.
-      } else {
-        // Partial deletion — splice out the deleted range from the text.
-        seg.text = seg.text.slice(0, localStart) + seg.text.slice(localEnd);
+      if (deleteCount > 0) {
+        const localStart = overlapStart - segStart;
+        const localEnd = overlapEnd - segStart;
+
+        if (deleteCount >= segLen) {
+          this.#segments.splice(i, 1);
+          i--;
+        } else {
+          seg.text = seg.text.slice(0, localStart) + seg.text.slice(localEnd);
+        }
       }
 
-      remaining -= deleteCount;
-      runningOffset = segEnd - deleteCount;
+      unshiftedRunningOffset = segEnd;
     }
 
     this.#mergeAdjacentText();
@@ -961,10 +1207,16 @@ class EditorModel {
     for (const seg of this.#segments) {
       const prev = merged[merged.length - 1];
       if (seg.kind === "text" && prev?.kind === "text") {
+        // Collapse adjacent text segments into one.
         merged[merged.length - 1] = {
           kind: "text",
           text: prev.text + seg.text,
         };
+      } else if (seg.kind === "chiclet" && prev?.kind === "chiclet") {
+        // Maintain the alternating invariant: chiclets must always have a
+        // text segment between them for cursor placement.
+        merged.push({ kind: "text", text: "" });
+        merged.push(seg);
       } else {
         merged.push(seg);
       }

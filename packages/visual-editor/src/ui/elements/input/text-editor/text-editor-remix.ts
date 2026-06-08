@@ -89,7 +89,13 @@ import type { FastAccessMode } from "../../../../sca/types.js";
 
 import { EditorModel } from "./editor-model.js";
 import type { ChicletSegment, Segment } from "./editor-model.js";
-import { EditorSelection, caretPositionFromPoint } from "./editor-selection.js";
+import {
+  EditorSelection,
+  caretPositionFromPoint,
+  isChicletNode,
+  nextSignificantSibling,
+  prevSignificantSibling,
+} from "./editor-selection.js";
 
 // ---------------------------------------------------------------------------
 // Component
@@ -505,6 +511,16 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     const range = this.#selection.getRange();
     let charOffset = this.#selection.rangeToCharOffset(range);
 
+    // Compute the segment hint from the range start. This disambiguates
+    // which text segment the cursor is in when multiple chiclets share the
+    // same visible-text offset.
+    const segmentHint = range
+      ? this.#selection.domPositionToSegmentIndex(
+          range.startContainer,
+          range.startOffset
+        )
+      : -1;
+
     // Delete any selected content (e.g. the @ trigger character) via model.
     // Use exclusive boundaries (false) so chiclets at the selection edges
     // are preserved — deleteAtOffset's single-char chiclet-boundary shortcut
@@ -514,13 +530,22 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       endRange.collapse(false);
       const endOffset = this.#selection.rangeToCharOffset(endRange);
       charOffset = this.#model.deleteSelection(charOffset, endOffset, false);
+
+      // After deleting text within a single segment, the segment hint is
+      // still valid (the segment is still there, just shorter). No
+      // adjustment needed — the hint points to the same text segment.
     }
 
     // When a chiclet already sits at this offset, the cursor was positioned
     // after it (in the following text node). Pass afterChiclet so the new
     // chiclet is inserted after the existing one, not before it.
     const insertAfterChiclet = this.#model.hasChicletAtBoundary(charOffset);
-    this.#model.insertChicletAtOffset(charOffset, part, insertAfterChiclet);
+    this.#model.insertChicletAtOffset(
+      charOffset,
+      part,
+      insertAfterChiclet,
+      segmentHint
+    );
 
     // Discard any pending debounced snapshot (e.g., the '@' trigger) so
     // undo jumps straight from pre-@ to post-chiclet.
@@ -897,11 +922,11 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
         break;
 
       case "deleteContentBackward":
-        newOffset = this.#model.deleteAtOffset(charOffset, -1);
+        newOffset = this.#model.deleteAtOffset(charOffset, -1, segmentHint);
         break;
 
       case "deleteContentForward":
-        newOffset = this.#model.deleteAtOffset(charOffset, 1);
+        newOffset = this.#model.deleteAtOffset(charOffset, 1, segmentHint);
         break;
 
       case "deleteWordBackward": {
@@ -965,7 +990,8 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     // the text was typed — never jump past a chiclet.
     const isDelete = evt.inputType.startsWith("delete");
     const afterChiclet =
-      isDelete && this.#model.hasChicletAtBoundary(newOffset);
+      isDelete &&
+      this.#model.shouldPlaceCursorAfterChiclet(newOffset, segmentHint);
     this.#syncFromModel(newOffset, afterChiclet);
     this.#captureEditorValue();
   }
@@ -1185,6 +1211,22 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
    * render segments contain synthetic ZWNBSP text nodes that don't exist
    * in the model, making index mapping unreliable.
    */
+  /**
+   * Walk up from a DOM node to find the closest ancestor chiclet element
+   * within the editor. Returns `null` if the node isn't inside a chiclet.
+   */
+  #findParentChiclet(node: Node): HTMLElement | null {
+    const editor = this.#editorRef.value;
+    let current: Node | null = node;
+    while (current && current !== editor) {
+      if (isChicletNode(current)) {
+        return current;
+      }
+      current = current.parentNode;
+    }
+    return null;
+  }
+
   #onChicletPointerDown(evt: PointerEvent, key: string): void {
     // Only primary button (left-click).
     if (evt.button !== 0) return;
@@ -1201,6 +1243,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     this.#dragSourceKey = key;
     chicletEl.classList.add("dragging");
     let didMove = false;
+    let lastDropNode: Node | null = null;
     let lastDropOffset = -1;
 
     const onPointerMove = (moveEvt: PointerEvent) => {
@@ -1219,13 +1262,36 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
         return;
       }
 
-      lastDropOffset = this.#selection.nodeToCharOffset(
-        caretPos.node,
-        caretPos.offset
-      );
+      let dropNode: Node = caretPos.node;
+      let dropOffset: number = caretPos.offset;
+
+      // If the caret landed inside another chiclet's DOM, redirect to the
+      // adjacent text node. Use the pointer's X relative to the chiclet's
+      // center to determine which side.
+      const hitChiclet = this.#findParentChiclet(caretPos.node);
+      if (hitChiclet) {
+        const rect = hitChiclet.getBoundingClientRect();
+        const isLeftHalf = moveEvt.clientX < rect.left + rect.width / 2;
+        if (isLeftHalf) {
+          const prev = prevSignificantSibling(hitChiclet);
+          if (prev?.nodeType === Node.TEXT_NODE) {
+            dropNode = prev;
+            dropOffset = prev.textContent?.length ?? 0;
+          }
+        } else {
+          const next = nextSignificantSibling(hitChiclet);
+          if (next?.nodeType === Node.TEXT_NODE) {
+            dropNode = next;
+            dropOffset = 0;
+          }
+        }
+      }
+
+      lastDropNode = dropNode;
+      lastDropOffset = dropOffset;
 
       // Move the visible caret to the drop position for visual feedback.
-      this.#selection.setCursorAtCharOffset(lastDropOffset);
+      this.#selection.setCursorAt(lastDropNode, lastDropOffset);
     };
 
     const onPointerUp = () => {
@@ -1234,7 +1300,12 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       chicletEl.classList.remove("dragging");
 
       // Bail if the chiclet wasn't actually moved.
-      if (!this.#dragSourceKey || !didMove || lastDropOffset === -1) {
+      if (
+        !this.#dragSourceKey ||
+        !didMove ||
+        !lastDropNode ||
+        lastDropOffset === -1
+      ) {
         this.#dragSourceKey = null;
         return;
       }
@@ -1255,18 +1326,28 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       const modelSourceIndex = this.#model.findSegmentByPart(sourceSeg.part);
       if (modelSourceIndex === -1) return;
 
+      // Map the DOM position to model coordinates.
+      const modelTarget = this.#selection.domPositionToModelPosition(
+        lastDropNode,
+        lastDropOffset
+      );
+      if (!modelTarget) return;
+
       // Capture pre-drag state so undo restores cursor after the chiclet
       // in its original position.
       this.#flushPendingSnapshot();
       const chicletOffset = this.#model.chicletCharOffset(modelSourceIndex);
       this.#model.pushSnapshot(chicletOffset, true);
 
-      // Remove from original position and re-insert at drop position.
-      this.#model.removeSegment(modelSourceIndex);
-      this.#model.insertChicletAtOffset(lastDropOffset, sourceSeg.part);
+      // Perform the move in the model.
+      const { newOffset, afterChiclet } =
+        this.#model.moveChicletToSegmentOffset(
+          modelSourceIndex,
+          modelTarget.segmentIndex,
+          modelTarget.localOffset
+        );
 
-      const afterChiclet = this.#model.hasChicletAtBoundary(lastDropOffset);
-      this.#syncFromModel(lastDropOffset, afterChiclet, /* immediate */ true);
+      this.#syncFromModel(newOffset, afterChiclet, /* immediate */ true);
       this.#captureEditorValue();
     };
 

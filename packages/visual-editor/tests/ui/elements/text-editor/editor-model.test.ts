@@ -93,6 +93,22 @@ describe("EditorModel", () => {
       // Empty string uses EditorModel.empty() → 1 segment.
       assert.equal(model.length, 1);
     });
+
+    it("inserts an empty text segment between adjacent chiclets during parsing", () => {
+      const p1: TemplatePart = { type: "in", path: "n1", title: "N1" };
+      const p2: TemplatePart = { type: "in", path: "n2", title: "N2" };
+      const raw = `{${JSON.stringify(p1)}}{${JSON.stringify(p2)}}`;
+      const model = EditorModel.fromRawValue(raw);
+
+      // Expected model structure: [text(""), chiclet1, text(""), chiclet2, text("")]
+      assert.equal(model.length, 5);
+      assert.ok(isText(model.segmentAt(0)!));
+      assert.ok(isChiclet(model.segmentAt(1)!));
+      assert.ok(isText(model.segmentAt(2)!));
+      assert.equal((model.segmentAt(2) as TextSegment).text, "");
+      assert.ok(isChiclet(model.segmentAt(3)!));
+      assert.ok(isText(model.segmentAt(4)!));
+    });
   });
 
   describe("toRawValue (round-trip)", () => {
@@ -224,6 +240,53 @@ describe("EditorModel", () => {
           );
         }
       }
+    });
+
+    describe("trailing newline rendering (sentinel)", () => {
+      it("appends an extra newline when the model ends with a newline in a text segment", () => {
+        const model = EditorModel.fromRawValue("Hello\n");
+        const segs = model.toRenderSegments();
+        assert.equal(segs.length, 1);
+        assert.ok(isText(segs[0]));
+        assert.equal(segs[0].text, "Hello\n\n");
+      });
+
+      it("appends an extra newline when the last segment is an empty text segment after a newline", () => {
+        // Model: ["Hello\n", c1, ""]
+        // The last segment is "" which is text, but it's not ending with a newline itself.
+        // Wait, does the last segment end with a newline in this case?
+        // Let's see: if model is "Hello\n{chiclet}", the last segment is "". It doesn't end with a newline.
+        // What if model is "Hello\n{chiclet}\n"?
+        // The raw string has a newline at the end. The parsed segments are:
+        // ["Hello\n", c1, "\n"]
+        // The last segment is "\n".
+        const part = makePart();
+        const raw = `Hello\n{${JSON.stringify(part)}}\n`;
+        const model = EditorModel.fromRawValue(raw);
+        const segs = model.toRenderSegments();
+
+        // Expected segments: ["Hello\n", c1, "\uFEFF\n\n"] (since the last segment is text "\n",
+        // it starts with ZWNBSP because of the preceding chiclet, and ends with an extra \n).
+        assert.equal(segs.length, 3);
+        assert.ok(isText(segs[2]));
+        assert.equal(segs[2].text, `${ZWNBSP}\n\n`);
+      });
+
+      it("appends an extra newline for a model that is only a newline", () => {
+        const model = EditorModel.fromRawValue("\n");
+        const segs = model.toRenderSegments();
+        assert.equal(segs.length, 1);
+        assert.ok(isText(segs[0]));
+        assert.equal(segs[0].text, "\n\n");
+      });
+
+      it("does not append an extra newline if there is text after the newline", () => {
+        const model = EditorModel.fromRawValue("Hello\nworld");
+        const segs = model.toRenderSegments();
+        assert.equal(segs.length, 1);
+        assert.ok(isText(segs[0]));
+        assert.equal(segs[0].text, "Hello\nworld");
+      });
     });
   });
 
@@ -585,6 +648,709 @@ describe("EditorModel", () => {
       });
     });
 
+    describe("deleteAtOffset with segmentHint (adjacent chiclets)", () => {
+      // Model: ["text ", c1, "", c2, "", c3, ""]
+      // All three chiclets share visible offset 5 (the text is 5 chars).
+      // Without segmentHint, backspace always deletes c1. With the hint,
+      // the correct chiclet is targeted.
+
+      function makeAdjacentModel(): {
+        model: EditorModel;
+      } {
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const p3 = makePart({ path: "p3" });
+        const raw = `text {${JSON.stringify(p1)}}{${JSON.stringify(p2)}}{${JSON.stringify(p3)}}`;
+        const model = EditorModel.fromRawValue(raw);
+        // Expected structure: ["text ", c1, "", c2, "", c3, ""]
+        assert.equal(model.length, 7, "sanity: 7 alternating segments");
+        return { model };
+      }
+
+      it("backspace from end (hint=6) deletes the last chiclet (c3)", () => {
+        const { model } = makeAdjacentModel();
+        // Cursor is in segment 6 (trailing ""), hint=6, backspace.
+        const newOffset = model.deleteAtOffset(5, -1, 6);
+        assert.equal(newOffset, 5);
+
+        // c3 should be gone; c1 and c2 remain.
+        const remaining: string[] = [];
+        for (let i = 0; i < model.length; i++) {
+          const seg = model.segmentAt(i)!;
+          if (isChiclet(seg)) remaining.push(seg.part.path);
+        }
+        assert.deepEqual(remaining, ["p1", "p2"]);
+      });
+
+      it("backspace from middle (hint=4) deletes c2", () => {
+        const { model } = makeAdjacentModel();
+        // Cursor is in segment 4 (empty text between c2 and c3), hint=4.
+        const newOffset = model.deleteAtOffset(5, -1, 4);
+        assert.equal(newOffset, 5);
+
+        const remaining: string[] = [];
+        for (let i = 0; i < model.length; i++) {
+          const seg = model.segmentAt(i)!;
+          if (isChiclet(seg)) remaining.push(seg.part.path);
+        }
+        assert.deepEqual(remaining, ["p1", "p3"]);
+      });
+
+      it("backspace right after text (hint=2) deletes c1", () => {
+        const { model } = makeAdjacentModel();
+        // Cursor is in segment 2 (empty text between c1 and c2), hint=2.
+        const newOffset = model.deleteAtOffset(5, -1, 2);
+        assert.equal(newOffset, 5);
+
+        const remaining: string[] = [];
+        for (let i = 0; i < model.length; i++) {
+          const seg = model.segmentAt(i)!;
+          if (isChiclet(seg)) remaining.push(seg.part.path);
+        }
+        assert.deepEqual(remaining, ["p2", "p3"]);
+      });
+
+      it("forward delete from text (hint=0) deletes c1", () => {
+        const { model } = makeAdjacentModel();
+        // Cursor is in segment 0 ("text "), forward delete.
+        const newOffset = model.deleteAtOffset(5, 1, 0);
+        assert.equal(newOffset, 5);
+
+        const remaining: string[] = [];
+        for (let i = 0; i < model.length; i++) {
+          const seg = model.segmentAt(i)!;
+          if (isChiclet(seg)) remaining.push(seg.part.path);
+        }
+        assert.deepEqual(remaining, ["p2", "p3"]);
+      });
+
+      it("forward delete between c1 and c2 (hint=2) deletes c2", () => {
+        const { model } = makeAdjacentModel();
+        // Cursor is in segment 2 (empty text between c1 and c2), forward.
+        const newOffset = model.deleteAtOffset(5, 1, 2);
+        assert.equal(newOffset, 5);
+
+        const remaining: string[] = [];
+        for (let i = 0; i < model.length; i++) {
+          const seg = model.segmentAt(i)!;
+          if (isChiclet(seg)) remaining.push(seg.part.path);
+        }
+        assert.deepEqual(remaining, ["p1", "p3"]);
+      });
+
+      it("falls back to findChicletAtBoundary when no hint", () => {
+        // Without hint, backspace at boundary still works for single chiclets.
+        const part = makePart();
+        const raw = `Hello{${JSON.stringify(part)}}world`;
+        const model = EditorModel.fromRawValue(raw);
+        const newOffset = model.deleteAtOffset(5, -1);
+        assert.equal(model.toRawValue(), "Helloworld");
+        assert.equal(newOffset, 5);
+      });
+    });
+
+    describe("multi-line with chiclets and newlines", () => {
+      // These tests cover the gnarly edge cases that surface in the live
+      // editor: newlines between chiclets, chiclets at end of lines,
+      // and mixed content with adjacent chiclets separated by newlines.
+
+      // Helper: build model from raw string and assert expected segment count.
+      function buildModel(raw: string, expectedLength: number): EditorModel {
+        const model = EditorModel.fromRawValue(raw);
+        assert.equal(
+          model.length,
+          expectedLength,
+          `expected ${expectedLength} segments for raw: ${raw.slice(0, 60)}...`
+        );
+        return model;
+      }
+
+      // Helper: collect chiclet paths from a model.
+      function chicletPaths(model: EditorModel): string[] {
+        const paths: string[] = [];
+        for (let i = 0; i < model.length; i++) {
+          const seg = model.segmentAt(i)!;
+          if (isChiclet(seg)) paths.push(seg.part.path);
+        }
+        return paths;
+      }
+
+      // Helper: collect text content (concatenated) from a model.
+      function allText(model: EditorModel): string {
+        let result = "";
+        for (let i = 0; i < model.length; i++) {
+          const seg = model.segmentAt(i)!;
+          if (isText(seg)) result += seg.text;
+        }
+        return result;
+      }
+
+      // --- Parsing ---
+
+      it("parses chiclet-newline-chiclet correctly", () => {
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const raw = `{${JSON.stringify(p1)}}\n{${JSON.stringify(p2)}}`;
+        // Expected: ["", c1, "\n", c2, ""]
+        const model = buildModel(raw, 5);
+        assert.ok(isText(model.segmentAt(0)!));
+        assert.ok(isChiclet(model.segmentAt(1)!));
+        const textSeg = model.segmentAt(2)!;
+        assert.ok(isText(textSeg));
+        assert.equal((textSeg as TextSegment).text, "\n");
+        assert.ok(isChiclet(model.segmentAt(3)!));
+        assert.ok(isText(model.segmentAt(4)!));
+      });
+
+      it("parses text-chiclet-newline-chiclet-chiclet", () => {
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const p3 = makePart({ path: "p3" });
+        const raw = `text {${JSON.stringify(p1)}}\n{${JSON.stringify(p2)}}{${JSON.stringify(p3)}}`;
+        // Expected: ["text ", c1, "\n", c2, "", c3, ""]
+        const model = buildModel(raw, 7);
+        assert.deepEqual(chicletPaths(model), ["p1", "p2", "p3"]);
+        assert.equal(allText(model), "text \n");
+      });
+
+      // --- Backspace (deleteAtOffset, count=-1) ---
+
+      it("backspace on empty line deletes newline, not chiclet (hint)", () => {
+        // Model: ["text ", c1, "\n", c2, "\n", c3, ""]
+        //                              ^^^ cursor here, end of seg 4
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const p3 = makePart({ path: "p3" });
+        const raw = `text {${JSON.stringify(p1)}}\n{${JSON.stringify(p2)}}\n{${JSON.stringify(p3)}}`;
+        const model = buildModel(raw, 7);
+
+        // charOffset: "text " (5) + "\n" (1) + "\n" (1) = 7
+        // segmentHint: 4 (the "\n" between c2 and c3)
+        // localOffset within seg 4: 7 - (5+1) = 1 (end of "\n")
+        // Since localOffset !== 0, should NOT delete c2 — should delete "\n"
+        const newOffset = model.deleteAtOffset(7, -1, 4);
+        assert.equal(newOffset, 6);
+        assert.deepEqual(chicletPaths(model), ["p1", "p2", "p3"]);
+        assert.equal(allText(model), "text \n");
+      });
+
+      it("backspace at start of newline segment (hint=4, localOffset=0) deletes chiclet", () => {
+        // Model: ["text ", c1, "\n", c2, "\n", c3, ""]
+        //                              ^^^ cursor at START of seg 4
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const p3 = makePart({ path: "p3" });
+        const raw = `text {${JSON.stringify(p1)}}\n{${JSON.stringify(p2)}}\n{${JSON.stringify(p3)}}`;
+        const model = buildModel(raw, 7);
+
+        // charOffset: "text " (5) + "\n" (1) = 6
+        // segmentHint: 4, localOffset = 6 - 6 = 0 → at leading edge
+        const newOffset = model.deleteAtOffset(6, -1, 4);
+        assert.equal(newOffset, 6);
+        assert.deepEqual(chicletPaths(model), ["p1", "p3"]);
+      });
+
+      it("backspace at very end after trailing chiclet deletes chiclet", () => {
+        // Model: ["text\n", c1, ""]
+        // Cursor at end (seg 2, ""), charOffset = 5, localOffset = 0
+        const p1 = makePart({ path: "p1" });
+        const raw = `text\n{${JSON.stringify(p1)}}`;
+        const model = buildModel(raw, 3);
+
+        const newOffset = model.deleteAtOffset(5, -1, 2);
+        assert.equal(newOffset, 5);
+        assert.deepEqual(chicletPaths(model), []);
+        assert.equal(allText(model), "text\n");
+      });
+
+      it("backspace mid-text does not touch adjacent chiclet", () => {
+        // Model: ["Hello\n", c1, "world"]
+        // Cursor in seg 0 at offset 3 ("Hel|lo\n"), hint=0, localOffset=3
+        const p1 = makePart({ path: "p1" });
+        const raw = `Hello\n{${JSON.stringify(p1)}}world`;
+        const model = buildModel(raw, 3);
+
+        const newOffset = model.deleteAtOffset(3, -1, 0);
+        assert.equal(newOffset, 2);
+        assert.deepEqual(chicletPaths(model), ["p1"]);
+        assert.equal(allText(model), "Helo\nworld");
+      });
+
+      // --- Forward delete (deleteAtOffset, count=1) ---
+
+      it("forward delete at end of text before chiclet on next line deletes newline first", () => {
+        // Model: ["text\n", c1, ""]
+        // Cursor at offset 4 in seg 0 ("text|\\n"), localOffset = 4, segLen = 5
+        // localOffset !== segLen → text delete, not chiclet
+        const p1 = makePart({ path: "p1" });
+        const raw = `text\n{${JSON.stringify(p1)}}`;
+        const model = buildModel(raw, 3);
+
+        const newOffset = model.deleteAtOffset(4, 1, 0);
+        assert.equal(newOffset, 4);
+        assert.deepEqual(chicletPaths(model), ["p1"]);
+        assert.equal(allText(model), "text");
+      });
+
+      it("forward delete at end of text (past newline) deletes chiclet", () => {
+        // Model: ["text\n", c1, ""]
+        // Cursor at offset 5 in seg 0 ("text\n|"), localOffset = 5 = segLen
+        // → at trailing edge → delete c1
+        const p1 = makePart({ path: "p1" });
+        const raw = `text\n{${JSON.stringify(p1)}}`;
+        const model = buildModel(raw, 3);
+
+        const newOffset = model.deleteAtOffset(5, 1, 0);
+        assert.equal(newOffset, 5);
+        assert.deepEqual(chicletPaths(model), []);
+      });
+
+      // --- Insertion (insertTextAtOffset) ---
+
+      it("inserts newline after trailing chiclet", () => {
+        // Model: ["text ", c1, ""]
+        // Insert "\n" at charOffset 5, segmentHint = 2 (trailing "")
+        const p1 = makePart({ path: "p1" });
+        const raw = `text {${JSON.stringify(p1)}}`;
+        const model = buildModel(raw, 3);
+
+        const newOffset = model.insertTextAtOffset(5, "\n", 2);
+        assert.equal(newOffset, 6);
+        assert.equal(allText(model), "text \n");
+        assert.deepEqual(chicletPaths(model), ["p1"]);
+      });
+
+      it("inserts newline between adjacent chiclets at correct position", () => {
+        // Model: ["", c1, "", c2, ""]
+        // Insert "\n" at charOffset 0, segmentHint = 2 (between c1 and c2)
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const raw = `{${JSON.stringify(p1)}}{${JSON.stringify(p2)}}`;
+        const model = buildModel(raw, 5);
+
+        const newOffset = model.insertTextAtOffset(0, "\n", 2);
+        assert.equal(newOffset, 1);
+        // Text between c1 and c2 should now be "\n"
+        const midSeg = model.segmentAt(2)!;
+        assert.ok(isText(midSeg));
+        assert.equal((midSeg as TextSegment).text, "\n");
+      });
+
+      // --- Chiclet insertion (insertChicletAtOffset) ---
+
+      it("inserts chiclet after newline-separated chiclets with correct hint", () => {
+        // Model: ["text\n", c1, "\n", c2, ""]
+        // Insert c3 at charOffset 6 (end), segmentHint = 4 (trailing "")
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const p3 = makePart({ path: "p3" });
+        const raw = `text\n{${JSON.stringify(p1)}}\n{${JSON.stringify(p2)}}`;
+        const model = buildModel(raw, 5);
+
+        model.insertChicletAtOffset(6, p3, true, 4);
+        assert.deepEqual(chicletPaths(model), ["p1", "p2", "p3"]);
+      });
+
+      // --- Round-trip ---
+
+      it("round-trips multi-line chiclet content through toRawValue", () => {
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const p3 = makePart({ path: "p3" });
+        const raw = `text {${JSON.stringify(p1)}}\n{${JSON.stringify(p2)}}{${JSON.stringify(p3)}}`;
+        const model = EditorModel.fromRawValue(raw);
+        assert.equal(model.toRawValue(), raw);
+      });
+
+      // --- Successive deletions ---
+
+      it("successive backspaces delete text before chiclets, not chiclets", () => {
+        // Model: ["ab", c1, "cd", c2, "ef"]
+        // Cursor in seg 2 ("cd"), offset 7 (2+2+1+2), hint=2, localOffset=2
+        // Backspace should delete 'd', then 'c', then chiclet c1
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const raw = `ab{${JSON.stringify(p1)}}cd{${JSON.stringify(p2)}}ef`;
+        const model = EditorModel.fromRawValue(raw);
+
+        // First backspace: delete 'd' (localOffset=2, not at edge)
+        let offset = model.deleteAtOffset(4, -1, 2);
+        assert.equal(offset, 3);
+        assert.equal(allText(model), "abcef");
+        assert.deepEqual(chicletPaths(model), ["p1", "p2"]);
+
+        // Second backspace: delete 'c' (localOffset=1, still not at edge)
+        offset = model.deleteAtOffset(3, -1, 2);
+        assert.equal(offset, 2);
+        assert.equal(allText(model), "abef");
+        assert.deepEqual(chicletPaths(model), ["p1", "p2"]);
+
+        // Third backspace: localOffset=0, now at edge → delete c1
+        offset = model.deleteAtOffset(2, -1, 2);
+        assert.equal(offset, 2);
+        assert.equal(allText(model), "abef");
+        assert.deepEqual(chicletPaths(model), ["p2"]);
+      });
+    });
+
+    describe("gnarly layout and insertion edge cases", () => {
+      // These tests exhaustively cover chiclets at the absolute boundaries (start/end),
+      // multiple stacked newlines, and complex chiclet movements (drag-and-drop simulation)
+      // across lines.
+
+      it("handles chiclet at absolute start (insert and stack)", () => {
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const model = EditorModel.empty();
+
+        // 1. Insert first chiclet at absolute start
+        model.insertChicletAtOffset(0, p1);
+        // Expected: ["", c1, ""]
+        assert.equal(model.length, 3);
+        assert.ok(isText(model.segmentAt(0)!));
+        assert.ok(isChiclet(model.segmentAt(1)!));
+        assert.ok(isText(model.segmentAt(2)!));
+
+        // 2. Insert second chiclet before first (afterChiclet = false, hint = 0)
+        model.insertChicletAtOffset(0, p2, false, 0);
+        // Expected: ["", c2, "", c1, ""]
+        assert.equal(model.length, 5);
+        assert.equal((model.segmentAt(1) as ChicletSegment).part.path, "p2");
+        assert.equal((model.segmentAt(3) as ChicletSegment).part.path, "p1");
+
+        // 3. Insert newline at the very start (offset 0, hint = 0)
+        model.insertTextAtOffset(0, "\n", 0);
+        // Expected: ["\n", c2, "", c1, ""]
+        assert.equal((model.segmentAt(0) as TextSegment).text, "\n");
+      });
+
+      it("handles chiclet at absolute end (insert and stack)", () => {
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const model = EditorModel.fromRawValue("Hello");
+
+        // 1. Insert first chiclet at absolute end (offset 5, hint = 0)
+        model.insertChicletAtOffset(5, p1, false, 0);
+        // Expected: ["Hello", c1, ""]
+        assert.equal(model.length, 3);
+        assert.equal((model.segmentAt(0) as TextSegment).text, "Hello");
+        assert.equal((model.segmentAt(1) as ChicletSegment).part.path, "p1");
+
+        // 2. Insert second chiclet after the first one at the end (offset 5, afterChiclet = true, hint = 2)
+        model.insertChicletAtOffset(5, p2, true, 2);
+        // Expected: ["Hello", c1, "", c2, ""]
+        assert.equal(model.length, 5);
+        assert.equal((model.segmentAt(1) as ChicletSegment).part.path, "p1");
+        assert.equal((model.segmentAt(3) as ChicletSegment).part.path, "p2");
+      });
+
+      it("handles chiclets surrounded by multiple newlines", () => {
+        // Model: \n\n{p1}\n\n
+        // Segments: ["\n\n", c1, "\n\n"]
+        const p1 = makePart({ path: "p1" });
+        const raw = `\n\n{${JSON.stringify(p1)}}\n\n`;
+        const model = EditorModel.fromRawValue(raw);
+        assert.equal(model.length, 3);
+
+        // 1. Insert text in the first double-newline segment at offset 1 (between the two newlines)
+        // charOffset = 1, hint = 0
+        model.insertTextAtOffset(1, "A", 0);
+        // Expected: ["\nA\n", c1, "\n\n"]
+        assert.equal((model.segmentAt(0) as TextSegment).text, "\nA\n");
+
+        // 2. Backspace from the second double-newline segment (hint = 2)
+        // charOffset: "\nA\n" (3) + "\n\n" (2) = 5.
+        // We backspace at offset 4 (which is inside "\n\n", between the two newlines).
+        // localOffset within segment 2: 4 - 3 = 1 (not 0, so should not delete the chiclet).
+        const newOffset = model.deleteAtOffset(4, -1, 2);
+        // Should delete one newline from the trailing "\n\n".
+        assert.equal(newOffset, 3);
+        assert.equal((model.segmentAt(2) as TextSegment).text, "\n");
+        // Chiclet should still be there.
+        assert.equal(model.length, 3);
+        assert.equal((model.segmentAt(1) as ChicletSegment).part.path, "p1");
+      });
+
+      it("moves a chiclet over newlines (drag and drop simulation)", () => {
+        // Setup: ["text\n", c1, "\nother"]
+        const p1 = makePart({ path: "p1" });
+        const raw = `text\n{${JSON.stringify(p1)}}\nother`;
+        const model = EditorModel.fromRawValue(raw);
+        assert.equal(model.length, 3);
+
+        // Scenario A: Drag c1 to the end of "text" (before the first newline)
+        // Target segment = 0, offset = 4.
+        const modelA = EditorModel.fromRawValue(raw);
+        // c1 is at index 1.
+        modelA.moveChicletToSegmentOffset(1, 0, 4);
+        // Expected segments after move:
+        // Before split: "text\n" -> split at 4 -> "text", "\n"
+        // Insert c1: "text", c1, "\n"
+        // The remaining segments: "\nother" (spliced out from index 1, which was c1)
+        // Combined: ["text", c1, "\n", "\nother"] -> merge: ["text", c1, "\n\nother"]
+        assert.equal(modelA.length, 3);
+        assert.ok(isText(modelA.segmentAt(0)!));
+        assert.equal((modelA.segmentAt(0) as TextSegment).text, "text");
+        assert.ok(isChiclet(modelA.segmentAt(1)!));
+        assert.equal((modelA.segmentAt(2) as TextSegment).text, "\n\nother");
+
+        // Scenario B: Drag c1 to the start of "other" (after the second newline)
+        // Target segment = 2, offset = 1 (after the "\n" in "\nother").
+        const modelB = EditorModel.fromRawValue(raw);
+        modelB.moveChicletToSegmentOffset(1, 2, 1);
+        // Target segment was index 2 ("\nother").
+        // Since T (2) > S (1), adjustedTargetIndex = 2 - 2 = 0.
+        // Wait, why did the adjustedTargetIndex become 0 in the model?
+        // Let's look at the model's index adjustment:
+        // If targetSegmentIndex > fromIndex:
+        //   adjustedTargetIndex = targetSegmentIndex - 2;
+        // Why -2? Because removing the chiclet at fromIndex (index 1) shifts all subsequent
+        // segments left by 1. Also, the chiclet was surrounded by text, so removing it
+        // merges the preceding and succeeding text segments (which reduces the length by another 1).
+        // So targetSegmentIndex 2 becomes 0 (which is the newly merged single text segment "text\n\nother").
+        // Let's verify:
+        // original segments: ["text\n", c1, "\nother"]
+        // splice out c1: ["text\n", "\nother"]
+        // merge adjacent: ["text\n\nother"] (length 1)
+        // Since target segment was index 2, and we shifted by 2, adjustedTargetIndex = 0.
+        // Local offset: T > S + 1 is false (T=2, S=1 -> T === S + 1 is true!).
+        // If T === S + 1:
+        //   adjustedLocalOffset = prevTextSeg.text.length + localOffset
+        //   where prevTextSeg was the segment at S-1 ("text\n", length 5).
+        //   So adjustedLocalOffset = 5 + 1 = 6.
+        // So we split the merged segment "text\n\nother" at offset 6 (which is right after the second newline: "text\n\n" | "other").
+        // Result: ["text\n\n", c1, "other"]
+        assert.equal(modelB.length, 3);
+        assert.equal((modelB.segmentAt(0) as TextSegment).text, "text\n\n");
+        assert.ok(isChiclet(modelB.segmentAt(1)!));
+        assert.equal((modelB.segmentAt(2) as TextSegment).text, "other");
+      });
+
+      it("moves a chiclet in a stacked layout on separate lines", () => {
+        // Setup:
+        // \n{c1}{c2}\n{c3}{c4}
+        // Segments: ["\n", c1, "", c2, "\n", c3, "", c4, ""] (length 9)
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const p3 = makePart({ path: "p3" });
+        const p4 = makePart({ path: "p4" });
+        const raw = `\n{${JSON.stringify(p1)}}{${JSON.stringify(p2)}}\n{${JSON.stringify(p3)}}{${JSON.stringify(p4)}}`;
+        const model = EditorModel.fromRawValue(raw);
+        assert.equal(model.length, 9);
+
+        // Move c3 (index 5) to target segment index 2 (the empty text segment between c1 and c2).
+        // localOffset = 0.
+        model.moveChicletToSegmentOffset(5, 2, 0);
+
+        // Result should have:
+        // c1 (p1), c3 (p3), c2 (p2) on first line.
+        // c4 (p4) on second line.
+        // Let's verify the paths in order.
+        const paths: string[] = [];
+        for (let i = 0; i < model.length; i++) {
+          const seg = model.segmentAt(i)!;
+          if (isChiclet(seg)) paths.push(seg.part.path);
+        }
+        assert.deepEqual(paths, ["p1", "p3", "p2", "p4"]);
+
+        // Let's verify that the alternating invariant holds (every second segment is text, starting and ending with text).
+        assert.equal(model.length, 9); // ["\n", c1, "", c3, "", c2, "\n", c4, ""]
+        assert.ok(isText(model.segmentAt(0)!));
+        assert.ok(isChiclet(model.segmentAt(1)!));
+        assert.ok(isText(model.segmentAt(2)!));
+        assert.ok(isChiclet(model.segmentAt(3)!));
+        assert.ok(isText(model.segmentAt(4)!));
+        assert.ok(isChiclet(model.segmentAt(5)!));
+        assert.ok(isText(model.segmentAt(6)!));
+        assert.ok(isChiclet(model.segmentAt(7)!));
+        assert.ok(isText(model.segmentAt(8)!));
+      });
+    });
+
+    describe("weird typing and deletion boundaries between chiclets", () => {
+      // These tests simulate actual keyboard inputs (typing text, spaces, hitting Enter)
+      // and deletion flows at the boundaries between multiple chiclets.
+
+      // --- typing / inserting newlines ---
+
+      it("inserts newline before the first chiclet (leading)", () => {
+        const p1 = makePart({ path: "p1" });
+        const model = EditorModel.empty();
+        model.insertChicletAtOffset(0, p1); // ["", c1, ""]
+
+        // Press Enter at the very start (charOffset = 0, segmentHint = 0)
+        model.insertTextAtOffset(0, "\n", 0);
+        // Expected segments: ["\n", c1, ""]
+        assert.equal(model.length, 3);
+        assert.equal((model.segmentAt(0) as TextSegment).text, "\n");
+
+        // Expected render segments: ["\n\uFEFF", c1, "\uFEFF\n\n"]
+        // Wait! The last segment is "" which does not end with \n. But the first segment ends with \n.
+        // Wait, does toRenderSegments append extra newline to the FIRST segment if it ends with \n?
+        // No, only to the LAST result segment if it ends with \n.
+        // So expected render segments: ["\n\uFEFF", c1, "\uFEFF"]
+        const renderSegs = model.toRenderSegments();
+        assert.equal((renderSegs[0] as TextSegment).text, `\n${ZWNBSP}`);
+        assert.equal((renderSegs[2] as TextSegment).text, ZWNBSP);
+      });
+
+      it("inserts newline between two chiclets", () => {
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const model = EditorModel.empty();
+        model.insertChicletAtOffset(0, p1);
+        model.insertChicletAtOffset(0, p2, true); // ["", c1, "", c2, ""]
+
+        // Press Enter between c1 and c2 (charOffset = 0, segmentHint = 2)
+        model.insertTextAtOffset(0, "\n", 2);
+        // Expected segments: ["", c1, "\n", c2, ""]
+        assert.equal(model.length, 5);
+        assert.equal((model.segmentAt(2) as TextSegment).text, "\n");
+
+        // Expected render segments: ["\uFEFF", c1, "\uFEFF\n\uFEFF", c2, "\uFEFF"]
+        const renderSegs = model.toRenderSegments();
+        assert.equal(
+          (renderSegs[2] as TextSegment).text,
+          `${ZWNBSP}\n${ZWNBSP}`
+        );
+      });
+
+      it("inserts newline after the last chiclet (trailing)", () => {
+        const p1 = makePart({ path: "p1" });
+        const model = EditorModel.empty();
+        model.insertChicletAtOffset(0, p1); // ["", c1, ""]
+
+        // Press Enter after c1 (charOffset = 0, segmentHint = 2)
+        model.insertTextAtOffset(0, "\n", 2);
+        // Expected segments: ["", c1, "\n"]
+        assert.equal(model.length, 3);
+        assert.equal((model.segmentAt(2) as TextSegment).text, "\n");
+
+        // Expected render segments: ["\uFEFF", c1, "\uFEFF\n\n"] (with sentinel newline!)
+        const renderSegs = model.toRenderSegments();
+        assert.equal((renderSegs[2] as TextSegment).text, `${ZWNBSP}\n\n`);
+      });
+
+      // --- typing spaces and text ---
+
+      it("types a space before the first chiclet", () => {
+        const p1 = makePart({ path: "p1" });
+        const model = EditorModel.empty();
+        model.insertChicletAtOffset(0, p1); // ["", c1, ""]
+
+        model.insertTextAtOffset(0, " ", 0);
+        // Expected segments: [" ", c1, ""]
+        assert.equal((model.segmentAt(0) as TextSegment).text, " ");
+      });
+
+      it("types a space between two chiclets", () => {
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const model = EditorModel.empty();
+        model.insertChicletAtOffset(0, p1);
+        model.insertChicletAtOffset(0, p2, true); // ["", c1, "", c2, ""]
+
+        model.insertTextAtOffset(0, " ", 2);
+        // Expected segments: ["", c1, " ", c2, ""]
+        assert.equal((model.segmentAt(2) as TextSegment).text, " ");
+      });
+
+      it("types a space after the last chiclet", () => {
+        const p1 = makePart({ path: "p1" });
+        const model = EditorModel.empty();
+        model.insertChicletAtOffset(0, p1); // ["", c1, ""]
+
+        model.insertTextAtOffset(0, " ", 2);
+        // Expected segments: ["", c1, " "]
+        assert.equal((model.segmentAt(2) as TextSegment).text, " ");
+      });
+
+      // --- deletions at boundaries ---
+
+      it("backspaces when cursor is between two chiclets containing a single character", () => {
+        // Model: ["", c1, "A", c2, ""]
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const raw = `{${JSON.stringify(p1)}}A{${JSON.stringify(p2)}}`;
+
+        // Scenario 1: Cursor is after "A". charOffset = 1, segmentHint = 2.
+        // We press backspace (count = -1).
+        // localOffset inside segment 2 is 1 (since runningOffset before index 2 is 0).
+        // Since localOffset (1) !== 0, it should delete the character "A", not the chiclet c1.
+        const model1 = EditorModel.fromRawValue(raw);
+        let newOffset = model1.deleteAtOffset(1, -1, 2);
+        assert.equal(newOffset, 0);
+        // Expected segments: ["", c1, "", c2, ""]
+        assert.equal(model1.length, 5);
+        assert.equal((model1.segmentAt(2) as TextSegment).text, "");
+        // Both chiclets are still there.
+        const paths1 = [];
+        for (let i = 0; i < model1.length; i++) {
+          const seg = model1.segmentAt(i)!;
+          if (isChiclet(seg)) paths1.push(seg.part.path);
+        }
+        assert.deepEqual(paths1, ["p1", "p2"]);
+
+        // Scenario 2: Cursor is before "A". charOffset = 0, segmentHint = 2.
+        // We press backspace (count = -1).
+        // localOffset inside segment 2 is 0.
+        // Since localOffset (0) === 0, it should delete the preceding chiclet c1.
+        const model2 = EditorModel.fromRawValue(raw);
+        newOffset = model2.deleteAtOffset(0, -1, 2);
+        assert.equal(newOffset, 0);
+        // Expected segments: ["A", c2, ""]
+        assert.equal(model2.length, 3);
+        assert.equal((model2.segmentAt(0) as TextSegment).text, "A");
+        const paths2 = [];
+        for (let i = 0; i < model2.length; i++) {
+          const seg = model2.segmentAt(i)!;
+          if (isChiclet(seg)) paths2.push(seg.part.path);
+        }
+        assert.deepEqual(paths2, ["p2"]);
+      });
+
+      it("forward deletes when cursor is between two chiclets containing a single character", () => {
+        // Model: ["", c1, "A", c2, ""]
+        const p1 = makePart({ path: "p1" });
+        const p2 = makePart({ path: "p2" });
+        const raw = `{${JSON.stringify(p1)}}A{${JSON.stringify(p2)}}`;
+
+        // Scenario 1: Cursor is before "A". charOffset = 0, segmentHint = 2.
+        // We press delete (count = 1).
+        // localOffset inside segment 2 is 0.
+        // Since localOffset (0) !== text.length (1), it should delete the character "A", not the chiclet c2.
+        const model1 = EditorModel.fromRawValue(raw);
+        let newOffset = model1.deleteAtOffset(0, 1, 2);
+        assert.equal(newOffset, 0);
+        // Expected segments: ["", c1, "", c2, ""]
+        assert.equal(model1.length, 5);
+        assert.equal((model1.segmentAt(2) as TextSegment).text, "");
+        const paths1 = [];
+        for (let i = 0; i < model1.length; i++) {
+          const seg = model1.segmentAt(i)!;
+          if (isChiclet(seg)) paths1.push(seg.part.path);
+        }
+        assert.deepEqual(paths1, ["p1", "p2"]);
+
+        // Scenario 2: Cursor is after "A". charOffset = 1, segmentHint = 2.
+        // We press delete (count = 1).
+        // localOffset inside segment 2 is 1.
+        // Since localOffset (1) === text.length (1), it should delete the succeeding chiclet c2.
+        const model2 = EditorModel.fromRawValue(raw);
+        newOffset = model2.deleteAtOffset(1, 1, 2);
+        assert.equal(newOffset, 1);
+        // Expected segments: ["", c1, "A"]
+        assert.equal(model2.length, 3);
+        assert.equal((model2.segmentAt(2) as TextSegment).text, "A");
+        const paths2 = [];
+        for (let i = 0; i < model2.length; i++) {
+          const seg = model2.segmentAt(i)!;
+          if (isChiclet(seg)) paths2.push(seg.part.path);
+        }
+        assert.deepEqual(paths2, ["p1"]);
+      });
+    });
+
     describe("visibleTextLength", () => {
       it("returns 0 for empty model", () => {
         assert.equal(EditorModel.empty().visibleTextLength, 0);
@@ -925,14 +1691,52 @@ describe("EditorModel", () => {
       assert.equal(newOffset, 5);
     });
 
-    it("deletes a range including a chiclet", () => {
+    it("deletes a range including a chiclet (trailing)", () => {
+      const part = makePart({ path: "p1" });
       const model = EditorModel.fromRawValue("Hello");
-      model.insertChicletAtOffset(5, makePart());
+      model.insertChicletAtOffset(5, part);
       model.insertTextAtOffset(5, " world");
 
+      // Verify setup: ["Hello", chiclet, " world"]
+      assert.equal(model.visibleTextLength, 11);
+
       // Delete from 5 to 11 — should remove " world" and the chiclet.
-      const newOffset = model.deleteSelection(0, 5);
-      assert.equal(newOffset, 0);
+      const newOffset = model.deleteSelection(5, 11);
+      assert.equal(newOffset, 5);
+      assert.equal(model.toRawValue(), "Hello");
+      assert.equal(model.length, 1);
+      assert.equal((model.segmentAt(0) as TextSegment).text, "Hello");
+    });
+
+    it("deletes a selection spanning multiple chiclets and merges text segments", () => {
+      const p1 = makePart({ path: "p1" });
+      const p2 = makePart({ path: "p2" });
+      const model = EditorModel.fromRawValue("Hello ");
+      model.insertChicletAtOffset(6, p1);
+      model.insertChicletAtOffset(6, p2, true); // ["Hello ", c1, "", c2, ""]
+      model.insertTextAtOffset(6, " world", 2); // ["Hello ", c1, " world", c2, ""]
+
+      // Visible structure: "Hello " (len 6) + " world" (len 6) = 12 visible chars.
+      // c1 is at offset 6. c2 is at offset 12.
+      // Let's verify setup:
+      assert.equal(model.visibleTextLength, 12);
+
+      // Delete selection from 4 to 8 (spans "o" in "Hello ", c1, and " w" in " world").
+      // Expected remaining: "Hell" + "orld" = "Hellorld".
+      // c1 should be deleted because it is strictly within the deleted range [4, 8].
+      // c2 is at offset 12 (outside), so it should stay.
+      const newOffset = model.deleteSelection(4, 8);
+      assert.equal(newOffset, 4);
+
+      // Expected raw value: "Hellorld" + c2
+      const paths: string[] = [];
+      for (let i = 0; i < model.length; i++) {
+        const seg = model.segmentAt(i)!;
+        if (isChiclet(seg)) paths.push(seg.part.path);
+      }
+      assert.deepEqual(paths, ["p2"]);
+      assert.equal(model.visibleTextLength, 8); // "Hellorld"
+      assert.equal((model.segmentAt(0) as TextSegment).text, "Hellorld");
     });
 
     it("preserves chiclet at boundary with exclusive deletion", () => {
@@ -1058,6 +1862,54 @@ describe("EditorModel", () => {
     });
   });
 
+  describe("insertChicletAtOffset with segmentHint (adjacent chiclets)", () => {
+    it("inserts third chiclet at the end when hint targets trailing segment", () => {
+      // Simulate: user typed text, then @ x3 to add three chiclets.
+      // After two insertions: ["text", c1, "", c2, ""] (5 segments).
+      const partA = makePart({ path: "A" });
+      const partB = makePart({ path: "B" });
+      const partC = makePart({ path: "C" });
+      const model = EditorModel.fromRawValue("text");
+      model.insertChicletAtOffset(4, partA);
+      model.insertChicletAtOffset(4, partB, true);
+
+      // Model: ["text", c_A, "", c_B, ""]
+      assert.equal(model.length, 5);
+
+      // Insert third chiclet at offset 4 with segmentHint=4 (trailing "").
+      // Without hint, this would insert between A and B (afterChiclet
+      // only skips one chiclet).
+      model.insertChicletAtOffset(4, partC, true, 4);
+
+      const paths: string[] = [];
+      for (let i = 0; i < model.length; i++) {
+        const seg = model.segmentAt(i)!;
+        if (isChiclet(seg)) paths.push(seg.part.path);
+      }
+      assert.deepEqual(paths, ["A", "B", "C"]);
+    });
+
+    it("inserts chiclet between two existing ones when hint targets middle segment", () => {
+      // After two insertions: ["text", c_A, "", c_B, ""] (5 segments).
+      const partA = makePart({ path: "A" });
+      const partB = makePart({ path: "B" });
+      const partC = makePart({ path: "C" });
+      const model = EditorModel.fromRawValue("text");
+      model.insertChicletAtOffset(4, partA);
+      model.insertChicletAtOffset(4, partB, true);
+
+      // Insert at offset 4 with segmentHint=2 (empty text between A and B).
+      model.insertChicletAtOffset(4, partC, false, 2);
+
+      const paths: string[] = [];
+      for (let i = 0; i < model.length; i++) {
+        const seg = model.segmentAt(i)!;
+        if (isChiclet(seg)) paths.push(seg.part.path);
+      }
+      assert.deepEqual(paths, ["A", "C", "B"]);
+    });
+  });
+
   // ---------------------------------------------------------------------------
   // visibleTextLength
   // ---------------------------------------------------------------------------
@@ -1100,6 +1952,90 @@ describe("EditorModel", () => {
     it("returns false for empty model", () => {
       const model = EditorModel.empty();
       assert.equal(model.hasChicletAtBoundary(0), false);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // shouldPlaceCursorAfterChiclet
+  // ---------------------------------------------------------------------------
+
+  describe("shouldPlaceCursorAfterChiclet", () => {
+    it("handles basic chiclet boundary with segmentHint", () => {
+      const p1 = makePart({ path: "p1" });
+      const raw = `Hello{${JSON.stringify(p1)}} world`;
+      const model = EditorModel.fromRawValue(raw);
+
+      // Segments: ["Hello", c1, " world"] (indices: 0, 1, 2)
+      // Offset 5 is at the boundary of c1.
+
+      // If cursor is in segment 0 ("Hello"), it is before c1.
+      assert.equal(model.shouldPlaceCursorAfterChiclet(5, 0), false);
+
+      // If cursor is in segment 2 (" world"), it is after c1.
+      assert.equal(model.shouldPlaceCursorAfterChiclet(5, 2), true);
+
+      // Fallback without hint scans left to right, matching the first segment at offset 5 (segment 0).
+      assert.equal(model.shouldPlaceCursorAfterChiclet(5), false);
+    });
+
+    it("handles adjacent chiclets with segmentHint", () => {
+      const p1 = makePart({ path: "p1" });
+      const p2 = makePart({ path: "p2" });
+      const raw = `{${JSON.stringify(p1)}}{${JSON.stringify(p2)}}`;
+      const model = EditorModel.fromRawValue(raw);
+
+      // Segments: ["", c1, "", c2, ""] (indices: 0, 1, 2, 3, 4)
+      // Both c1 and c2 share visible offset 0.
+
+      // If cursor is in segment 0 (before c1), return false.
+      assert.equal(model.shouldPlaceCursorAfterChiclet(0, 0), false);
+
+      // If cursor is in segment 2 (after c1, before c2), return true (after c1).
+      assert.equal(model.shouldPlaceCursorAfterChiclet(0, 2), true);
+
+      // If cursor is in segment 4 (after c2), return true (after c2).
+      assert.equal(model.shouldPlaceCursorAfterChiclet(0, 4), true);
+    });
+
+    it("matches Paul's exact regression case (multi-space backspace)", () => {
+      const p1 = makePart({ path: "p1" });
+      const p2 = makePart({ path: "p2" });
+      const p3 = makePart({ path: "p3" });
+
+      // Raw string: "I have these assets: {c1}{c2}  {c3}"
+      const raw = `I have these assets: {${JSON.stringify(p1)}}{${JSON.stringify(p2)}}  {${JSON.stringify(p3)}}`;
+      const model = EditorModel.fromRawValue(raw);
+
+      // Initial segments (length 7):
+      // 0: "I have these assets: " (len 21)
+      // 1: c1 (p1)
+      // 2: "" (len 0)
+      // 3: c2 (p2)
+      // 4: "  " (len 2)
+      // 5: c3 (p3)
+      // 6: "" (len 0)
+      assert.equal(model.length, 7);
+
+      // --- 1. Backspace once ---
+      // We simulate backspacing once at the end of the spaces (offset 23).
+      // Segment 4 becomes " " (len 1).
+      model.deleteAtOffset(23, -1, 4);
+      assert.equal((model.segmentAt(4) as TextSegment).text, " ");
+
+      // New cursor offset is 22, in segment 4.
+      // Since it is at localOffset = 1 (before c3), shouldPlaceCursorAfterChiclet must return FALSE.
+      assert.equal(model.shouldPlaceCursorAfterChiclet(22, 4), false);
+
+      // --- 2. Backspace second space ---
+      // We simulate backspacing again (offset 22).
+      // Segment 4 becomes "" (len 0).
+      model.deleteAtOffset(22, -1, 4);
+      assert.equal((model.segmentAt(4) as TextSegment).text, "");
+
+      // New cursor offset is 21, in segment 4.
+      // Since it is at localOffset = 0 of segment 4 (which is immediately after c2),
+      // shouldPlaceCursorAfterChiclet must return TRUE.
+      assert.equal(model.shouldPlaceCursorAfterChiclet(21, 4), true);
     });
   });
 
@@ -1241,6 +2177,100 @@ describe("EditorModel", () => {
       const chiclet = model.segmentAt(model.length - 2);
       assert.ok(chiclet && isChiclet(chiclet));
       assert.equal(chiclet.part.path, "A");
+    });
+  });
+
+  describe("moveChicletToSegmentOffset", () => {
+    it("moves the penultimate chiclet to the end (resolves the zero-width end drag bug)", () => {
+      const model = EditorModel.fromRawValue("");
+      const partA = makePart({ path: "A" });
+      const partB = makePart({ path: "B" });
+      model.insertChicletAtOffset(0, partA);
+      model.insertChicletAtOffset(0, partB, true);
+
+      // Setup: ["", chicletA, "", chicletB, ""]
+      // penult (A) is at index 1. B is at index 3.
+      // Target segment is 4 (the trailing empty text segment).
+      const { newOffset, afterChiclet } = model.moveChicletToSegmentOffset(
+        1,
+        4,
+        0
+      );
+
+      // Result should be: ["", chicletB, "", chicletA, ""]
+      assert.equal(model.length, 5);
+      const first = model.segmentAt(1)!;
+      const second = model.segmentAt(3)!;
+      assert.ok(isChiclet(first) && first.part.path === "B");
+      assert.ok(isChiclet(second) && second.part.path === "A");
+      assert.equal(newOffset, 0);
+      assert.equal(afterChiclet, true);
+    });
+
+    it("moves a chiclet to a preceding text segment", () => {
+      // Setup: ["Hello ", chicletA, " mid ", chicletB, " world"]
+      const partA = makePart({ path: "A" });
+      const partB = makePart({ path: "B" });
+      const model = EditorModel.fromRawValue("Hello  mid  world");
+      model.insertChicletAtOffset(6, partA);
+      model.insertChicletAtOffset(11, partB);
+
+      // Source is chiclet B (index 3).
+      // Target is the first text segment (index 0), offset 5 (after "Hello").
+      model.moveChicletToSegmentOffset(3, 0, 5);
+
+      // Result: ["Hello", chicletB, " ", chicletA, " mid  world"]
+      // After merging, index 0 is split: ["Hello", chicletB, "  mid  world"]
+      const paths: string[] = [];
+      for (let i = 0; i < model.length; i++) {
+        const seg = model.segmentAt(i)!;
+        if (isChiclet(seg)) paths.push(seg.part.path);
+      }
+      assert.deepEqual(paths, ["B", "A"]);
+    });
+
+    it("moves a chiclet to a succeeding text segment adjusting offset for merge", () => {
+      // Setup: ["Hello ", chicletA, " world"] (A at index 1)
+      const partA = makePart({ path: "A" });
+      const model = EditorModel.fromRawValue("Hello  world");
+      model.insertChicletAtOffset(6, partA);
+
+      // Target is index 2 (the text segment " world" after A), offset 1 (between space and "w").
+      // Since T (2) > S (1) and T is the immediate next segment (T === S + 1),
+      // the offset should be adjusted: "Hello " (6 chars) + offset (1) = 7.
+      model.moveChicletToSegmentOffset(1, 2, 1);
+
+      // Result: ["Hello  world" split at 7 -> "Hello  ", chicletA, "world"]
+      const seg0 = model.segmentAt(0)!;
+      assert.ok(isText(seg0));
+      assert.equal(seg0.text, "Hello  ");
+      const seg2 = model.segmentAt(2)!;
+      assert.ok(isText(seg2));
+      assert.equal(seg2.text, "world");
+    });
+
+    it("redirects chiclet target to adjacent text segment (drag onto chiclet)", () => {
+      // Setup: ["", c1, "", c2, "", c3, ""]
+      const p1 = makePart({ path: "p1" });
+      const p2 = makePart({ path: "p2" });
+      const p3 = makePart({ path: "p3" });
+      const raw = `{${JSON.stringify(p1)}}{${JSON.stringify(p2)}}{${JSON.stringify(p3)}}`;
+      const model = EditorModel.fromRawValue(raw);
+      assert.equal(model.length, 7, "sanity: 7 alternating segments");
+
+      // Try to move c1 (index 1) to target segment 3 (c2) — this is what
+      // happens when caretPositionFromPoint lands inside c2's DOM.
+      // Should redirect to segment 4 (text after c2), offset 0.
+      const { afterChiclet } = model.moveChicletToSegmentOffset(1, 3, 0);
+      assert.equal(afterChiclet, true);
+
+      // c1 should now be between c2 and c3.
+      const paths: string[] = [];
+      for (let i = 0; i < model.length; i++) {
+        const seg = model.segmentAt(i)!;
+        if (isChiclet(seg)) paths.push(seg.part.path);
+      }
+      assert.deepEqual(paths, ["p2", "p1", "p3"]);
     });
   });
 
