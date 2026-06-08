@@ -33,6 +33,7 @@ import {
   formatAgentError,
   classifyCaughtError,
 } from "../../utils/formatting/format-agent-error.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
 
 const BACKEND_ENDPOINT = new URL("v1beta1/executeStep", OPAL_BACKEND_API_PREFIX)
   .href;
@@ -243,14 +244,24 @@ async function executeStep(
     const url = BACKEND_ENDPOINT;
     let response: ExecuteStepResponse;
     try {
-      const fetchResponse = await fetchWithCreds(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal: context.signal,
-        body: JSON.stringify(body),
-      });
+      let fetchResponse: Response;
+      if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
+        const backendClient = await args.backendClient;
+        fetchResponse = await backendClient.sendHttpRequest("executeStep", {
+          method: "POST",
+          body,
+          signal: context.signal,
+        });
+      } else {
+        fetchResponse = await fetchWithCreds(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: context.signal,
+          body: JSON.stringify(body),
+        });
+      }
       if (!fetchResponse.ok) {
         const { $error, metadata } = decodeFetchError(
           await fetchResponse.text(),

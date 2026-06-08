@@ -9,6 +9,7 @@ import { err } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { GeminiBody } from "./gemini.js";
 import { formatAgentError } from "../../utils/formatting/format-agent-error.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
 
 export { createCachedContent };
 
@@ -59,11 +60,21 @@ async function createCachedContent(
   };
 
   try {
-    const response = await fetchWithCreds(url, {
-      method: "POST",
-      body: JSON.stringify(request),
-      signal: context.signal,
-    });
+    let response: Response;
+    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
+      const backendClient = await moduleArgs.backendClient;
+      response = await backendClient.sendHttpRequest("createCachedContent", {
+        method: "POST",
+        body: request,
+        signal: context.signal,
+      });
+    } else {
+      response = await fetchWithCreds(url, {
+        method: "POST",
+        body: JSON.stringify(request),
+        signal: context.signal,
+      });
+    }
     if (!response.ok) {
       const text = await response.text();
       return err(`CreateCachedContent failed (${response.status}): ${text}`);
