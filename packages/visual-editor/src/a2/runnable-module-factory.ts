@@ -5,6 +5,7 @@
  */
 
 import type { NodeHandlerContext } from "@breadboard-ai/types";
+import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
@@ -25,6 +26,7 @@ export type A2ModuleFactoryArgs = {
   agentService: AgentService;
   notebookLmApiClient: NotebookLmApiClient;
   googleDriveClient: GoogleDriveClient;
+  backendClient: Promise<OpalBackendClient>;
 };
 
 export type A2ModuleArgs = A2ModuleFactoryArgs & {

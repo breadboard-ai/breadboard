@@ -914,6 +914,7 @@ class GraphEditingEvalRun implements EvalLogger {
       notebookLmApiClient: {} as never,
       agentService: new AgentService(),
       googleDriveClient: {} as never,
+      backendClient: Promise.resolve(new HttpBackendClient(globalThis.fetch)),
       context: {
         currentGraph: this.graph,
         currentStep: {

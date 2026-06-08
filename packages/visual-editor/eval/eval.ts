@@ -249,6 +249,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
     notebookLmApiClient: {} as never,
     agentService: new AgentService(),
     googleDriveClient: {} as never,
+    backendClient: Promise.resolve(new HttpBackendClient(globalThis.fetch)),
 
     context: {
       currentGraph: {

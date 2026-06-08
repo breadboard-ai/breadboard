@@ -43,6 +43,7 @@ const stubModuleArgs: A2ModuleArgs = {
   },
   notebookLmApiClient: {} as never,
   googleDriveClient: {} as never,
+  backendClient: new Promise(() => {}),
 };
 
 const stubMemoryManager: MemoryManager = {
