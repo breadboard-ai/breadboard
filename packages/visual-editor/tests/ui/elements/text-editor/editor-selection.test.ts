@@ -755,6 +755,34 @@ describe("EditorSelection", () => {
 
       sel.setCursorAtCharOffset(2, true);
     });
+
+    it("places cursor before a trailing ZWNBSP (safe zone) when afterChiclet=false", (t) => {
+      const text = document.createTextNode(`Hi${ZWNBSP}`); // length 3
+      editor.appendChild(text);
+
+      const setCursorSpy = t.mock.method(sel, "setCursorAt");
+
+      sel.setCursorAtCharOffset(2, false);
+
+      assert.equal(setCursorSpy.mock.callCount(), 1);
+      const [node, offset] = setCursorSpy.mock.calls[0].arguments;
+      assert.equal(node, text);
+      assert.equal(offset, 2); // 2 (before ZWNBSP) instead of 3 (after ZWNBSP)
+    });
+
+    it("places cursor before a trailing ZWNBSP in last text node for large offset", (t) => {
+      const text = document.createTextNode(`Hi${ZWNBSP}`); // length 3
+      editor.appendChild(text);
+
+      const setCursorSpy = t.mock.method(sel, "setCursorAt");
+
+      sel.setCursorAtCharOffset(99, false);
+
+      assert.equal(setCursorSpy.mock.callCount(), 1);
+      const [node, offset] = setCursorSpy.mock.calls[0].arguments;
+      assert.equal(node, text);
+      assert.equal(offset, 2); // 2 (before ZWNBSP) instead of 3 (after ZWNBSP)
+    });
   });
 
   // -----------------------------------------------------------------------

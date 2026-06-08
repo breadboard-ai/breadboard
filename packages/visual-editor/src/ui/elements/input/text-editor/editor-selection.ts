@@ -321,7 +321,7 @@ class EditorSelection {
       if (isChicletNode(child) && children[i + 1]) {
         const afterNode = children[i + 1];
         if (afterNode.nodeType === Node.TEXT_NODE) {
-          this.#setCursorAt(
+          this.setCursorAt(
             afterNode,
             Math.min(1, afterNode.textContent?.length ?? 0)
           );
@@ -338,7 +338,7 @@ class EditorSelection {
    * methods eventually delegate here. It creates a collapsed Range at
    * the specified position and replaces the current selection with it.
    */
-  #setCursorAt(node: Node, offset: number): void {
+  setCursorAt(node: Node, offset: number): void {
     const selection = this.getSelection();
     if (!selection) return;
     const range = new Range();
@@ -535,7 +535,7 @@ class EditorSelection {
         if (text[i] === ZWNBSP) continue;
         if (visibleConsumed === remaining) {
           // Found the exact position — place cursor here.
-          this.#setCursorAt(child, i);
+          this.setCursorAt(child, i);
           return;
         }
         visibleConsumed++;
@@ -564,14 +564,15 @@ class EditorSelection {
             const nextNextSig = nextSignificantSibling(afterNode);
             if (visibleLen > 0 || !nextNextSig || !isChicletNode(nextNextSig)) {
               const pos = t.startsWith(ZWNBSP) ? 1 : 0;
-              this.#setCursorAt(afterNode, pos);
+              this.setCursorAt(afterNode, pos);
               return;
             }
             // More chiclets ahead — keep advancing.
             curNode = afterNode;
           }
         }
-        this.#setCursorAt(child, text.length);
+        const pos = text.endsWith(ZWNBSP) ? text.length - 1 : text.length;
+        this.setCursorAt(child, pos);
         return;
       }
 
@@ -582,7 +583,9 @@ class EditorSelection {
     for (let i = children.length - 1; i >= 0; i--) {
       const child = children[i];
       if (child.nodeType === Node.TEXT_NODE) {
-        this.#setCursorAt(child, child.textContent?.length ?? 0);
+        const t = child.textContent ?? "";
+        const pos = t.endsWith(ZWNBSP) ? t.length - 1 : t.length;
+        this.setCursorAt(child, pos);
         return;
       }
     }
@@ -616,6 +619,38 @@ class EditorSelection {
       segmentIndex++;
     }
     return segmentIndex;
+  }
+
+  /**
+   * Translate a DOM node and offset to a model segment index and character offset
+   * within that segment.
+   */
+  domPositionToModelPosition(
+    node: Node,
+    offset: number
+  ): { segmentIndex: number; localOffset: number } | null {
+    const editor = this.#editorEl();
+    if (!editor) return null;
+
+    const segmentIndex = this.domPositionToSegmentIndex(node, offset);
+
+    // If the node is the editor itself, the cursor is at a child boundary.
+    if (node === editor) {
+      return { segmentIndex, localOffset: 0 };
+    }
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent ?? "";
+      let localOffset = 0;
+      for (let i = 0; i < offset && i < text.length; i++) {
+        if (text[i] !== ZWNBSP) {
+          localOffset++;
+        }
+      }
+      return { segmentIndex, localOffset };
+    }
+
+    return { segmentIndex, localOffset: 0 };
   }
 
   // -------------------------------------------------------------------------
