@@ -15,6 +15,7 @@ import { classMap } from "lit/directives/class-map.js";
 
 import {
   CloseEvent,
+  HeaderActionEvent,
   HideTooltipEvent,
   OverflowMenuActionEvent,
   ShareRequestedEvent,
@@ -35,6 +36,7 @@ import {
   createAICreditsUrl,
   createMembershipUrl,
 } from "../../../sca/utils/google-one-urls.js";
+import { ItemSelect } from "../input/item-select/item-select.js";
 
 @customElement("bb-ve-header")
 export class VEHeader extends SignalWatcher(LitElement) {
@@ -677,6 +679,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
       .freezeValue=${0}
       .transparent=${true}
       .values=${options}
+      @change=${(evt: Event) => {
+        const select = evt.target as ItemSelect;
+        this.dispatchEvent(new HeaderActionEvent(select.value));
+      }}
     ></bb-item-select>`;
   }
 
@@ -721,6 +727,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
       .freezeValue=${0}
       .transparent=${true}
       .values=${this.#globalItemSelectOptions}
+      @change=${(evt: Event) => {
+        const select = evt.target as ItemSelect;
+        this.dispatchEvent(new HeaderActionEvent(select.value));
+      }}
     ></bb-item-select>`;
   }
 

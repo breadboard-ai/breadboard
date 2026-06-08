@@ -12,7 +12,7 @@ import { SharePanel } from "./ui/elements/share-panel/share-panel.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { MainBase, RenderValues } from "./main-base.js";
 import { IterateOnPromptMessage } from "./ui/embed/embed.js";
-import { IterateOnPromptEvent } from "./ui/events/events.js";
+import { IterateOnPromptEvent, HeaderActionEvent } from "./ui/events/events.js";
 import * as BreadboardUI from "./ui/index.js";
 import { makeUrl, parseUrl } from "./ui/navigation/urls.js";
 
@@ -242,6 +242,27 @@ class Main extends MainBase {
       })}
       @bbsharerequested=${() => {
         this.#sharePanelRef.value?.open();
+      }}
+      @bbheaderaction=${async (evt: HeaderActionEvent) => {
+        this.handleHeaderAction(evt.action);
+      }}
+      @bbsignout=${async () => {
+        // Enforce that we lose the current title.
+        this.sca.env.shellHost.setTitle(
+          `${Strings.from("APP_NAME")} [Experiment]`
+        );
+
+        await this.sca.actions.board.close();
+        await this.sca.services.signinAdapter.signOut();
+        this.sca.services.actionTracker.signOutSuccess();
+        this.sca.controller.router.navigateAway({
+          page: "landing",
+          redirect: {
+            page: "home",
+            guestPrefixed: true,
+          },
+          guestPrefixed: true,
+        });
       }}
       @bbevent=${async (
         evt: BreadboardUI.Events.StateEvent<
@@ -684,24 +705,6 @@ class Main extends MainBase {
       .saveStatus=${renderValues.saveStatus}
       .mode=${this.sca.controller.global.main.mode}
       .graphContentState=${gc.graphContentState}
-      @bbsignout=${async () => {
-        // Enforce that we lose the current title.
-        this.sca.env.shellHost.setTitle(
-          `${Strings.from("APP_NAME")} [Experiment]`
-        );
-
-        await this.sca.actions.board.close();
-        await this.sca.services.signinAdapter.signOut();
-        this.sca.services.actionTracker.signOutSuccess();
-        this.sca.controller.router.navigateAway({
-          page: "landing",
-          redirect: {
-            page: "home",
-            guestPrefixed: true,
-          },
-          guestPrefixed: true,
-        });
-      }}
       @bbclose=${this.#onCloseBoard}
       @bbsubscribercreditrefresh=${async () => {
         try {
@@ -714,128 +717,130 @@ class Main extends MainBase {
           console.warn(err);
         }
       }}
-      @change=${async (evt: Event) => {
-        const [select] = evt.composedPath();
-        if (!(select instanceof BreadboardUI.Elements.ItemSelect)) {
+    >
+    </bb-ve-header>`;
+  }
+
+  async handleHeaderAction(action: string) {
+    const gc = this.sca.controller.editor.graph;
+    switch (action) {
+      case "edit-title-and-description": {
+        if (!gc.graph) {
           return;
         }
 
-        switch (select.value) {
-          case "edit-title-and-description": {
-            if (!gc.graph) {
-              return;
-            }
+        this.sca.controller.global.main.show.add("BoardEditModal");
+        break;
+      }
 
-            this.sca.controller.global.main.show.add("BoardEditModal");
-            break;
-          }
-
-          case "delete": {
-            if (!gc.graph || !gc.url) {
-              return;
-            }
-
-            this.invokeDeleteEventRouteWith(gc.url);
-            break;
-          }
-
-          case "duplicate": {
-            if (!gc.graph || !gc.url) {
-              return;
-            }
-
-            this.sca.services.actionTracker.remixApp(gc.url, "editor");
-            this.invokeRemixEventRouteWith(gc.url, {
-              start: Strings.from("STATUS_GENERIC_WORKING"),
-              end: Strings.from("STATUS_PROJECT_CREATED"),
-              error: Strings.from("ERROR_GENERIC"),
-            });
-            break;
-          }
-
-          case "feedback": {
-            const agentEvents: Array<ReadonlyArray<AgentEvent>> = [
-              ...this.sca.services.agentContext.getAllRunsAsEvents(),
-            ];
-            const graphEditingHistory =
-              this.sca.controller.editor.graphEditingAgent.history;
-            if (graphEditingHistory.length > 0) {
-              agentEvents.push(graphEditingHistory);
-            }
-            this.sca.controller.global.feedback.open({ agentEvents });
-            break;
-          }
-
-          case "chat": {
-            window.open("https://discord.gg/googlelabs", "_blank");
-            break;
-          }
-
-          case "documentation": {
-            window.open("https://developers.google.com/opal", "_blank");
-            break;
-          }
-
-          case "demo-video": {
-            this.sca.controller.global.main.show.add("VideoModal");
-            break;
-          }
-
-          case "history": {
-            if (!this.canvasControllerRef.value) {
-              return;
-            }
-
-            this.canvasControllerRef.value.sideNavItem = "edit-history";
-            break;
-          }
-
-          case "show-global-settings": {
-            this.sca.controller.global.main.show.add("GlobalSettings");
-            break;
-          }
-
-          case "copy-board-contents": {
-            if (!gc.graph) {
-              return;
-            }
-
-            await navigator.clipboard.writeText(
-              JSON.stringify(gc.graph, null, 2)
-            );
-            this.sca.controller.global.toasts.toast(
-              Strings.from("STATUS_PROJECT_CONTENTS_COPIED"),
-              BreadboardUI.Events.ToastType.INFORMATION
-            );
-            break;
-          }
-
-          case "share": {
-            this.#sharePanelRef.value?.open();
-            break;
-          }
-
-          case "remix": {
-            if (!gc.url) {
-              return;
-            }
-            this.sca.services.actionTracker.remixApp(gc.url, "editor");
-            this.invokeRemixEventRouteWith(gc.url, {
-              start: Strings.from("STATUS_REMIXING_PROJECT"),
-              end: Strings.from("STATUS_PROJECT_CREATED"),
-              error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
-            });
-            break;
-          }
-
-          default: {
-            console.log("Action:", select.value);
-            break;
-          }
+      case "delete": {
+        if (!gc.graph || !gc.url) {
+          return;
         }
-      }}
-    >
-    </bb-ve-header>`;
+
+        this.invokeDeleteEventRouteWith(gc.url);
+        break;
+      }
+
+      case "duplicate": {
+        if (!gc.graph || !gc.url) {
+          return;
+        }
+
+        this.sca.services.actionTracker.remixApp(gc.url, "editor");
+        this.invokeRemixEventRouteWith(gc.url, {
+          start: Strings.from("STATUS_GENERIC_WORKING"),
+          end: Strings.from("STATUS_PROJECT_CREATED"),
+          error: Strings.from("ERROR_GENERIC"),
+        });
+        break;
+      }
+
+      case "feedback": {
+        const agentEvents: Array<ReadonlyArray<AgentEvent>> = [
+          ...this.sca.services.agentContext.getAllRunsAsEvents(),
+        ];
+        const graphEditingHistory =
+          this.sca.controller.editor.graphEditingAgent.history;
+        if (graphEditingHistory.length > 0) {
+          agentEvents.push(graphEditingHistory);
+        }
+        this.sca.controller.global.feedback.open({ agentEvents });
+        break;
+      }
+
+      case "chat": {
+        window.open("https://discord.gg/googlelabs", "_blank");
+        break;
+      }
+
+      case "documentation": {
+        window.open("https://developers.google.com/opal", "_blank");
+        break;
+      }
+
+      case "demo-video": {
+        this.sca.controller.global.main.show.add("VideoModal");
+        break;
+      }
+
+      case "history": {
+        const workbenchActive =
+          this.sca.controller.editor.workbench.eligible &&
+          this.sca.controller.editor.workbench.view === "workbench";
+        if (workbenchActive) {
+          this.sca.actions.workbench.setWorkbenchView("classic");
+          await this.updateComplete;
+        }
+        if (!this.canvasControllerRef.value) {
+          return;
+        }
+
+        this.canvasControllerRef.value.sideNavItem = "edit-history";
+        break;
+      }
+
+      case "show-global-settings": {
+        this.sca.controller.global.main.show.add("GlobalSettings");
+        break;
+      }
+
+      case "copy-board-contents": {
+        if (!gc.graph) {
+          return;
+        }
+
+        await navigator.clipboard.writeText(JSON.stringify(gc.graph, null, 2));
+        this.sca.controller.global.toasts.toast(
+          Strings.from("STATUS_PROJECT_CONTENTS_COPIED"),
+          BreadboardUI.Events.ToastType.INFORMATION
+        );
+        break;
+      }
+
+      case "share": {
+        this.#sharePanelRef.value?.open();
+        break;
+      }
+
+      case "remix": {
+        if (!gc.url) {
+          return;
+        }
+        this.sca.services.actionTracker.remixApp(gc.url, "editor");
+        this.invokeRemixEventRouteWith(gc.url, {
+          start: Strings.from("STATUS_REMIXING_PROJECT"),
+          end: Strings.from("STATUS_PROJECT_CREATED"),
+          error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+        });
+        break;
+      }
+
+      default: {
+        console.log("Action:", action);
+        break;
+      }
+    }
   }
 }
 

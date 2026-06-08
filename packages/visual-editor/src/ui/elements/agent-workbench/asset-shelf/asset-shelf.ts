@@ -257,6 +257,36 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
           font-size: 18px;
         }
       }
+
+      .empty-state {
+        display: flex;
+        align-items: center;
+        gap: var(--bb-grid-size-3);
+        padding: var(--bb-grid-size-4) var(--bb-grid-size-3);
+        background: light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.02));
+        border-radius: var(--bb-grid-size-2);
+        color: var(--light-dark-n-40);
+        font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+          var(--bb-font-family);
+        user-select: none;
+
+        & .g-icon {
+          font-size: 20px;
+          color: var(--light-dark-n-50);
+          flex-shrink: 0;
+        }
+
+        & p {
+          margin: 0;
+          font-size: 13px;
+          line-height: 1.4;
+
+          & span {
+            color: var(--light-dark-n-20);
+            font-weight: 500;
+          }
+        }
+      }
     `,
   ];
 
@@ -503,81 +533,91 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
           ></bb-add-asset-button>
         </div>
         <div class="assets-list">
-          ${allAssets.map((asset) => {
-            const mimeType = this.#inferMimeType(asset);
-            const badgeLabel = this.#getAssetBadgeLabel(mimeType);
-            const isInUse = referencedAssetPaths.has(asset.path);
-            const isPlaying = this._playingAudioPath === asset.path;
+          ${allAssets.length > 0
+            ? allAssets.map((asset) => {
+                const mimeType = this.#inferMimeType(asset);
+                const badgeLabel = this.#getAssetBadgeLabel(mimeType);
+                const isInUse = referencedAssetPaths.has(asset.path);
+                const isPlaying = this._playingAudioPath === asset.path;
 
-            return keyed(
-              asset.path,
-              html`
-                <div class="asset-row">
-                  <span
-                    class="drag-handle g-icon"
-                    draggable="true"
-                    @dragstart=${(evt: DragEvent) =>
-                      this.#onDragStart(evt, asset)}
-                    @pointerover=${(evt: PointerEvent) => {
-                      this.dispatchEvent(
-                        new ShowTooltipEvent(
-                          "Drag to add to agent instructions",
-                          evt.clientX,
-                          evt.clientY
-                        )
-                      );
-                    }}
-                    @pointerout=${() => {
-                      this.dispatchEvent(new HideTooltipEvent());
-                    }}
-                    >drag_indicator</span
-                  >
-                  <div
-                    class="asset-info-wrapper"
-                    @click=${() => this.#onEditAsset(asset)}
-                  >
-                    <div class="asset-icon-container">
-                      <bb-asset-thumbnail
-                        .asset=${asset}
-                        .mimeType=${mimeType || ""}
-                        .playing=${isPlaying}
-                        @bb-audio-toggle=${() => this.#onToggleAudio(asset)}
-                      ></bb-asset-thumbnail>
-                    </div>
-                    <div class="asset-details">
-                      <div class="asset-title">
-                        ${asset.metadata?.title || asset.path}
+                return keyed(
+                  asset.path,
+                  html`
+                    <div class="asset-row">
+                      <span
+                        class="drag-handle g-icon"
+                        draggable="true"
+                        @dragstart=${(evt: DragEvent) =>
+                          this.#onDragStart(evt, asset)}
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new ShowTooltipEvent(
+                              "Drag to add to agent instructions",
+                              evt.clientX,
+                              evt.clientY
+                            )
+                          );
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(new HideTooltipEvent());
+                        }}
+                        >drag_indicator</span
+                      >
+                      <div
+                        class="asset-info-wrapper"
+                        @click=${() => this.#onEditAsset(asset)}
+                      >
+                        <div class="asset-icon-container">
+                          <bb-asset-thumbnail
+                            .asset=${asset}
+                            .mimeType=${mimeType || ""}
+                            .playing=${isPlaying}
+                            @bb-audio-toggle=${() => this.#onToggleAudio(asset)}
+                          ></bb-asset-thumbnail>
+                        </div>
+                        <div class="asset-details">
+                          <div class="asset-title">
+                            ${asset.metadata?.title || asset.path}
+                          </div>
+                          <div class="asset-meta">
+                            <span class="asset-badge">${badgeLabel}</span>
+                            ${isInUse
+                              ? html`<span class="in-use-pill">In use</span>`
+                              : nothing}
+                          </div>
+                        </div>
                       </div>
-                      <div class="asset-meta">
-                        <span class="asset-badge">${badgeLabel}</span>
-                        ${isInUse
-                          ? html`<span class="in-use-pill">In use</span>`
-                          : nothing}
-                      </div>
+                      <button
+                        class="remove-button"
+                        @click=${() => this.#onRemoveAsset(asset.path)}
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new ShowTooltipEvent(
+                              "Remove asset",
+                              evt.clientX,
+                              evt.clientY
+                            )
+                          );
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(new HideTooltipEvent());
+                        }}
+                      >
+                        <span class="g-icon">close</span>
+                      </button>
                     </div>
-                  </div>
-                  <button
-                    class="remove-button"
-                    @click=${() => this.#onRemoveAsset(asset.path)}
-                    @pointerover=${(evt: PointerEvent) => {
-                      this.dispatchEvent(
-                        new ShowTooltipEvent(
-                          "Remove asset",
-                          evt.clientX,
-                          evt.clientY
-                        )
-                      );
-                    }}
-                    @pointerout=${() => {
-                      this.dispatchEvent(new HideTooltipEvent());
-                    }}
-                  >
-                    <span class="g-icon">close</span>
-                  </button>
+                  `
+                );
+              })
+            : html`
+                <div class="empty-state">
+                  <span class="g-icon filled heavy">attach_file_off</span>
+                  <p>
+                    <span>No assets yet.</span> Click "Add asset" to upload
+                    images, audio, or PDFs.
+                  </p>
                 </div>
-              `
-            );
-          })}
+              `}
         </div>
       </div>
 

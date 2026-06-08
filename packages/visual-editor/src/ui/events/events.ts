@@ -1114,8 +1114,17 @@ export class ResizeEvent extends Event {
   }
 }
 
+export class HeaderActionEvent extends Event {
+  static eventName = "bbheaderaction";
+
+  constructor(public readonly action: string) {
+    super(HeaderActionEvent.eventName, { ...eventInit });
+  }
+}
+
 declare global {
   interface HTMLElementEventMap {
     bbtoast: ToastEvent;
+    bbheaderaction: HeaderActionEvent;
   }
 }
