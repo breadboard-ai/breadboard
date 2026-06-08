@@ -38,7 +38,8 @@
   intent.
 - **Call Location:**
   [app-catalyst.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/ui/flow-gen/app-catalyst.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 #### `POST /v1beta1/editOpalStream?alt=sse`
 
@@ -46,14 +47,16 @@
   based on user feedback.
 - **Call Location:**
   [app-catalyst.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/ui/flow-gen/app-catalyst.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 #### `POST /v1beta1/rewriteOpalPromptStream?alt=sse`
 
 - **Description:** Re-evaluates/rewrites an Opal prompt intent.
 - **Call Location:**
   [app-catalyst.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/ui/flow-gen/app-catalyst.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 #### `POST /v1beta1/checkAppAccess`
 

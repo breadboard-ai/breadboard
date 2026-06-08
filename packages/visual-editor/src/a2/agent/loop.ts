@@ -212,7 +212,7 @@ class Loop {
         }
       }
 
-      while (!this.controller.terminated) {
+      while (!this.controller.terminated && !moduleArgs.context.signal?.aborted) {
         // Build the request body. When a cache exists, reference it
         // and only send content accumulated after what's cached.
         const body: GeminiBody = cachedContentName
@@ -359,8 +359,14 @@ class Loop {
           }
         }
       }
+      if (moduleArgs.context.signal?.aborted) {
+        return err("Run was stopped");
+      }
       return this.controller.result;
     } catch (e) {
+      if (moduleArgs.context.signal?.aborted) {
+        return err("Run was stopped");
+      }
       return err(formatAgentError(e), { origin: "client", kind: "bug" });
     } finally {
       hooks.onFinish?.();

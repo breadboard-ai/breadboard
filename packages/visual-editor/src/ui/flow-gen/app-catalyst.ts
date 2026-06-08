@@ -243,15 +243,25 @@ export class AppCatalystApiClient {
       | "editOpalStream"
       | "rewriteOpalPromptStream" = "generateOpalStream"
   ): AsyncGenerator<LLMContent> {
-    const url = new URL(`v1beta1/${endpoint}`, this.#apiBaseUrl);
-    url.searchParams.set("alt", "sse");
-    const response = await this.#fetchWithCreds(url, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(request),
-    });
+    let response: Response;
+    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
+      const backendClient = await this.#backendClientPromise;
+      response = await backendClient.sendHttpRequest(endpoint, {
+        method: "POST",
+        body: request,
+        query: { alt: "sse" },
+      });
+    } else {
+      const url = new URL(`v1beta1/${endpoint}`, this.#apiBaseUrl);
+      url.searchParams.set("alt", "sse");
+      response = await this.#fetchWithCreds(url, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(request),
+      });
+    }
 
     if (!response.ok || !response.body) {
       throw new Error(`Failed to start stream: ${response.statusText}`);
