@@ -21,7 +21,7 @@ import { Utils } from "../sca/utils.js";
 
 declare global {
   interface Window {
-    glueCookieNotificationBarLoaded?: (event: CustomEvent) => void;
+    glueCookieNotificationBarLoaded?: () => void;
     glue?: {
       CookieNotificationBar?: {
         instance?: {
@@ -48,8 +48,8 @@ declare global {
 //
 // Returns two promises:
 //   consentGranted — resolves when the user accepts cookies (or no bar).
-//   required       — resolves with whether cookie management is needed for
-//                    this user's region (from the loaded event's `required`).
+//   required       — resolves with whether the "Manage cookies" control
+//                    should be shown for the user's region.
 // ---------------------------------------------------------------------------
 
 type CookieBar = NonNullable<typeof window.glue>["CookieNotificationBar"];

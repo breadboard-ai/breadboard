@@ -82,7 +82,8 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
     this.emailPrefsManager?.refreshPrefs();
     this.sca.env.shellHost
       .isCookieSettingsAvailable()
-      .then((available) => (this.cookieSettingsAvailable = available));
+      .then((available) => (this.cookieSettingsAvailable = available))
+      .catch(() => {}); // Default to hidden on failure.
   }
 
   static styles = [
@@ -182,10 +183,10 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
         text-decoration: underline;
         font: inherit;
         text-align: left;
-      }
 
-      .manage-cookies-link:hover {
-        color: light-dark(var(--p-40), var(--p-80));
+        &:hover {
+          color: light-dark(var(--p-40), var(--p-80));
+        }
       }
     `,
   ];
@@ -231,7 +232,7 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
                 </label>
                 ${this.cookieSettingsAvailable
                   ? html`<button
-                      class="glue-cookie-notification-bar-control manage-cookies-link"
+                      class="manage-cookies-link"
                       @click=${() => {
                         this.sca.env.shellHost.showCookieSettings();
                         this.dispatchEvent(
