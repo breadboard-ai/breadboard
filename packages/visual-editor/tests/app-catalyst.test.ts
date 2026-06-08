@@ -338,6 +338,278 @@ describe("AppCatalystApiClient", () => {
     });
   });
 
+  // ---- chatStream (generateOpalStream, editOpalStream, rewriteOpalPromptStream) ----
+
+  describe("chatStream", () => {
+    const streamRequest = {
+      intent: "make a calculator",
+      appOptions: {
+        format: "FORMAT_GEMINI_FLOWS" as const,
+        featureFlags: { enable_agent_mode_planner: true },
+      },
+    };
+
+    /** Creates a ReadableStream that emits SSE-formatted data lines. */
+    function createSseStream(
+      chunks: object[]
+    ): ReadableStream<Uint8Array<ArrayBuffer>> {
+      const encoder = new TextEncoder();
+      return new ReadableStream({
+        start(controller) {
+          for (const chunk of chunks) {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`)
+            );
+          }
+          controller.close();
+        },
+      });
+    }
+
+    it("uses fetchWithCreds when ENABLE_BACKEND_CLIENT is off", async () => {
+      const { client, fetchMock, backendClientMock } = setup(false);
+
+      const sseChunks = [{ parts: [{ text: "hello" }] }];
+      fetchMock.mock.mockImplementation(
+        async () =>
+          new Response(createSseStream(sseChunks), {
+            status: 200,
+            headers: { "content-type": "text/event-stream" },
+          })
+      );
+
+      const results = [];
+      for await (const chunk of client.chatStream(
+        streamRequest,
+        "generateOpalStream"
+      )) {
+        results.push(chunk);
+      }
+
+      assert.strictEqual(fetchMock.mock.calls.length, 1);
+      assert.strictEqual(
+        backendClientMock.sendHttpRequest.mock.calls.length,
+        0
+      );
+
+      const [url, init] = fetchMock.mock.calls[0].arguments;
+      assert.strictEqual(
+        url.toString(),
+        "https://api.example.com/v1beta1/generateOpalStream?alt=sse"
+      );
+      assert.strictEqual(init?.method, "POST");
+      assert.deepStrictEqual(init?.headers, {
+        "content-type": "application/json",
+      });
+      assert.strictEqual(init?.body, JSON.stringify(streamRequest));
+
+      assert.deepStrictEqual(results, sseChunks);
+    });
+
+    it("uses sendHttpRequest when ENABLE_BACKEND_CLIENT is on", async () => {
+      const { client, fetchMock, backendClientMock } = setup(true);
+
+      const sseChunks = [
+        { parts: [{ text: "streaming " }] },
+        { parts: [{ text: "response" }] },
+      ];
+      backendClientMock.sendHttpRequest.mock.mockImplementation(
+        async () =>
+          new Response(createSseStream(sseChunks), {
+            status: 200,
+            headers: { "content-type": "text/event-stream" },
+          })
+      );
+
+      const results = [];
+      for await (const chunk of client.chatStream(
+        streamRequest,
+        "generateOpalStream"
+      )) {
+        results.push(chunk);
+      }
+
+      assert.strictEqual(
+        backendClientMock.sendHttpRequest.mock.calls.length,
+        1
+      );
+      assert.strictEqual(fetchMock.mock.calls.length, 0);
+
+      const [methodName, options] = backendClientMock.sendHttpRequest.mock
+        .calls[0].arguments as unknown as [string, Record<string, unknown>];
+      assert.strictEqual(methodName, "generateOpalStream");
+      assert.strictEqual(options.method, "POST");
+      assert.deepStrictEqual(options.body, streamRequest);
+      assert.deepStrictEqual(options.query, { alt: "sse" });
+
+      assert.deepStrictEqual(results, sseChunks);
+    });
+
+    it("passes editOpalStream endpoint name (flag off)", async () => {
+      const { client, fetchMock } = setup(false);
+
+      fetchMock.mock.mockImplementation(
+        async () =>
+          new Response(createSseStream([{ parts: [{ text: "edit" }] }]), {
+            status: 200,
+          })
+      );
+
+      const results = [];
+      for await (const chunk of client.chatStream(
+        streamRequest,
+        "editOpalStream"
+      )) {
+        results.push(chunk);
+      }
+
+      const [url] = fetchMock.mock.calls[0].arguments;
+      assert.strictEqual(
+        url.toString(),
+        "https://api.example.com/v1beta1/editOpalStream?alt=sse"
+      );
+    });
+
+    it("passes editOpalStream endpoint name (flag on)", async () => {
+      const { client, backendClientMock } = setup(true);
+
+      backendClientMock.sendHttpRequest.mock.mockImplementation(
+        async () =>
+          new Response(createSseStream([{ parts: [{ text: "edit" }] }]), {
+            status: 200,
+          })
+      );
+
+      const results = [];
+      for await (const chunk of client.chatStream(
+        streamRequest,
+        "editOpalStream"
+      )) {
+        results.push(chunk);
+      }
+
+      const [methodName] = backendClientMock.sendHttpRequest.mock.calls[0]
+        .arguments as unknown as [string, unknown];
+      assert.strictEqual(methodName, "editOpalStream");
+    });
+
+    it("passes rewriteOpalPromptStream endpoint name (flag on)", async () => {
+      const { client, backendClientMock } = setup(true);
+
+      backendClientMock.sendHttpRequest.mock.mockImplementation(
+        async () =>
+          new Response(createSseStream([{ parts: [{ text: "rewrite" }] }]), {
+            status: 200,
+          })
+      );
+
+      const results = [];
+      for await (const chunk of client.chatStream(
+        streamRequest,
+        "rewriteOpalPromptStream"
+      )) {
+        results.push(chunk);
+      }
+
+      const [methodName] = backendClientMock.sendHttpRequest.mock.calls[0]
+        .arguments as unknown as [string, unknown];
+      assert.strictEqual(methodName, "rewriteOpalPromptStream");
+    });
+
+    it("defaults to generateOpalStream when no endpoint specified", async () => {
+      const { client, backendClientMock } = setup(true);
+
+      backendClientMock.sendHttpRequest.mock.mockImplementation(
+        async () =>
+          new Response(createSseStream([{ parts: [{ text: "default" }] }]), {
+            status: 200,
+          })
+      );
+
+      const results = [];
+      for await (const chunk of client.chatStream(streamRequest)) {
+        results.push(chunk);
+      }
+
+      const [methodName] = backendClientMock.sendHttpRequest.mock.calls[0]
+        .arguments as unknown as [string, unknown];
+      assert.strictEqual(methodName, "generateOpalStream");
+    });
+
+    it("throws on non-ok response (flag off)", async () => {
+      const { client, fetchMock } = setup(false);
+
+      fetchMock.mock.mockImplementation(
+        async () =>
+          new Response("", { status: 500, statusText: "Internal Server Error" })
+      );
+
+      await assert.rejects(
+        async () => {
+          // Must consume the generator to trigger the error.
+          for await (const _ of client.chatStream(
+            streamRequest,
+            "generateOpalStream"
+          )) {
+            /* drain */
+          }
+        },
+        (err: Error) => {
+          assert.match(err.message, /Failed to start stream/);
+          return true;
+        }
+      );
+    });
+
+    it("throws on non-ok response (flag on)", async () => {
+      const { client, backendClientMock } = setup(true);
+
+      backendClientMock.sendHttpRequest.mock.mockImplementation(
+        async () =>
+          new Response("", { status: 500, statusText: "Internal Server Error" })
+      );
+
+      await assert.rejects(
+        async () => {
+          for await (const _ of client.chatStream(
+            streamRequest,
+            "generateOpalStream"
+          )) {
+            /* drain */
+          }
+        },
+        (err: Error) => {
+          assert.match(err.message, /Failed to start stream/);
+          return true;
+        }
+      );
+    });
+
+    it("throws when response has no body (flag off)", async () => {
+      const { client, fetchMock } = setup(false);
+
+      // Response with ok status but null body
+      fetchMock.mock.mockImplementation(
+        async () => new Response(null, { status: 200 })
+      );
+
+      await assert.rejects(
+        async () => {
+          for await (const _ of client.chatStream(
+            streamRequest,
+            "generateOpalStream"
+          )) {
+            /* drain */
+          }
+        },
+        (err: Error) => {
+          assert.match(err.message, /Failed to start stream/);
+          return true;
+        }
+      );
+    });
+  });
+
   // ---- acceptTos ----
 
   describe("acceptTos", () => {
