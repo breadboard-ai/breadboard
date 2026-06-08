@@ -1721,12 +1721,12 @@ describe("EditorModel", () => {
       // Let's verify setup:
       assert.equal(model.visibleTextLength, 12);
 
-      // Delete selection from 5 to 7 (spans "o" in "Hello ", c1, and " w" in " world").
+      // Delete selection from 4 to 8 (spans "o" in "Hello ", c1, and " w" in " world").
       // Expected remaining: "Hell" + "orld" = "Hellorld".
-      // c1 should be deleted because it is strictly within the deleted range [5, 7].
+      // c1 should be deleted because it is strictly within the deleted range [4, 8].
       // c2 is at offset 12 (outside), so it should stay.
-      const newOffset = model.deleteSelection(5, 7);
-      assert.equal(newOffset, 5);
+      const newOffset = model.deleteSelection(4, 8);
+      assert.equal(newOffset, 4);
 
       // Expected raw value: "Hellorld" + c2
       const paths: string[] = [];

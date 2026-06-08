@@ -1143,52 +1143,50 @@ class EditorModel {
   #deleteRange(startOff: number, endOff: number, inclusive = false): number {
     if (startOff >= endOff) return startOff;
 
-    let runningOffset = 0;
-    let remaining = endOff - startOff;
+    let unshiftedRunningOffset = 0;
 
     for (let i = 0; i < this.#segments.length; i++) {
       const seg = this.#segments[i];
 
       if (seg.kind === "chiclet") {
-        // Determine if this chiclet falls within the deletion range.
         const inRange = inclusive
-          ? runningOffset >= startOff && runningOffset <= endOff
-          : runningOffset > startOff && runningOffset < endOff;
+          ? unshiftedRunningOffset >= startOff &&
+            unshiftedRunningOffset <= endOff
+          : unshiftedRunningOffset > startOff &&
+            unshiftedRunningOffset < endOff;
         if (inRange) {
           this.#segments.splice(i, 1);
-          i--; // Re-examine this index after removal.
+          i--;
         }
         continue;
       }
 
-      // Text processing — skip if all visible chars have been deleted.
-      if (remaining <= 0) continue;
-
       const segLen = seg.text.length;
-      const segEnd = runningOffset + segLen;
+      const segStart = unshiftedRunningOffset;
+      const segEnd = unshiftedRunningOffset + segLen;
 
       if (segEnd <= startOff) {
-        // This segment is entirely before the deletion range — skip it.
-        runningOffset = segEnd;
+        unshiftedRunningOffset = segEnd;
         continue;
       }
 
-      // Compute the overlap between this text segment and the deletion range.
-      const localStart = Math.max(0, startOff - runningOffset);
-      const localEnd = Math.min(segLen, endOff - runningOffset);
-      const deleteCount = localEnd - localStart;
+      const overlapStart = Math.max(startOff, segStart);
+      const overlapEnd = Math.min(endOff, segEnd);
+      const deleteCount = overlapEnd - overlapStart;
 
-      if (deleteCount >= segLen) {
-        // Entire segment is within the deletion range — remove it.
-        this.#segments.splice(i, 1);
-        i--; // Re-examine this index after removal.
-      } else {
-        // Partial deletion — splice out the deleted range from the text.
-        seg.text = seg.text.slice(0, localStart) + seg.text.slice(localEnd);
+      if (deleteCount > 0) {
+        const localStart = overlapStart - segStart;
+        const localEnd = overlapEnd - segStart;
+
+        if (deleteCount >= segLen) {
+          this.#segments.splice(i, 1);
+          i--;
+        } else {
+          seg.text = seg.text.slice(0, localStart) + seg.text.slice(localEnd);
+        }
       }
 
-      remaining -= deleteCount;
-      runningOffset = segEnd - deleteCount;
+      unshiftedRunningOffset = segEnd;
     }
 
     this.#mergeAdjacentText();
