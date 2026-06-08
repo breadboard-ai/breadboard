@@ -969,4 +969,11 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       (document.activeElement as HTMLElement | null)?.blur();
     });
   };
+
+  isCookieSettingsAvailable = async (): Promise<boolean> => {
+    const control = document.querySelector(
+      ".glue-cookie-notification-bar-control"
+    );
+    return control !== null && control.getAttribute("aria-hidden") !== "true";
+  };
 }

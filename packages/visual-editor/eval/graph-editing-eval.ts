@@ -995,6 +995,9 @@ class GraphEditingEvalRun implements EvalLogger {
         showCookieSettings: async function (): Promise<void> {
           // No-op in eval harness.
         },
+        isCookieSettingsAvailable: async function (): Promise<boolean> {
+          return false;
+        },
       } satisfies OpalShellHostProtocol,
     };
 

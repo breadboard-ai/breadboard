@@ -171,4 +171,8 @@ class FakeModeOpalShell implements OpalShellHostProtocol {
   showCookieSettings = async (): Promise<void> => {
     // No-op in fake mode — there is no cookie bar.
   };
+
+  isCookieSettingsAvailable = async (): Promise<boolean> => {
+    return false;
+  };
 }
