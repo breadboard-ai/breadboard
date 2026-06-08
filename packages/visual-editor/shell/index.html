@@ -26,10 +26,11 @@
     sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals allow-storage-access-by-user-activation allow-downloads allow-top-navigation"
     allow="clipboard-read; clipboard-write; microphone; camera"
   ></iframe>
-  <!-- Hidden control for the cookie notification bar. The bar script binds
-       click handlers to this class. Triggered programmatically via
-       showCookieSettings() when the guest iframe's "Manage cookies" link
-       is clicked. -->
+  <!-- Control for the cookie notification bar. The bar script binds click
+       handlers to elements with this class and manages aria-hidden based on
+       the user's region. Kept off-screen so the library can process it while
+       remaining invisible. Triggered programmatically via showCookieSettings()
+       when the guest iframe's "Manage cookies" link is clicked. -->
   <button
     hidden
     aria-hidden="true"

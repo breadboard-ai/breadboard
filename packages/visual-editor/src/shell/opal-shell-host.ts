@@ -42,31 +42,45 @@ declare global {
 }
 
 // ---------------------------------------------------------------------------
-// Cookie consent detection — must happen at module scope (synchronously) so
-// we don't miss the glueCookieNotificationBarLoaded callback fired by the
-// cookie bar script that loads before this module.
+// Cookie bar setup — must happen at module scope (synchronously) so we don't
+// miss the glueCookieNotificationBarLoaded callback fired by the cookie bar
+// script that loads before this module.
+//
+// Returns two promises:
+//   consentGranted — resolves when the user accepts cookies (or no bar).
+//   required       — resolves with whether cookie management is needed for
+//                    this user's region (from the loaded event's `required`).
 // ---------------------------------------------------------------------------
 
-/** Resolves when cookie consent is granted (or when no cookie bar is present). */
-const cookieConsentGranted = createCookieConsentPromise();
+type CookieBar = NonNullable<typeof window.glue>["CookieNotificationBar"];
 
-function createCookieConsentPromise(): Promise<void> {
+const { consentGranted: cookieConsentGranted, required: cookieBarRequired } =
+  setupCookieBar();
+
+function setupCookieBar(): {
+  consentGranted: Promise<void>;
+  required: Promise<boolean>;
+} {
   const cookieBar = window.glue?.CookieNotificationBar;
 
-  // Helper: watch a cookie bar for ACCEPTED status.
-  const watchForConsent = (
-    cnb: NonNullable<typeof window.glue>["CookieNotificationBar"]
-  ): Promise<void> => {
+  // Helper: watch a cookie bar instance for ACCEPTED status.
+  const watchForConsent = (cnb: CookieBar): Promise<void> => {
     if (!cnb?.instance) return Promise.resolve();
     const ACCEPTED = cnb.status.ACCEPTED;
 
-    // Already accepted — resolve immediately.
+    // Already accepted (loaded event already fired for a returning user).
     if (cnb.instance.status === ACCEPTED) {
       return Promise.resolve();
     }
 
-    // Wait for a status change to ACCEPTED.
     return new Promise<void>((resolve) => {
+      // Returning user: the loaded event carries the stored consent status.
+      cnb.instance!.listen("loaded", (event: CustomEvent) => {
+        if (event.detail.status === ACCEPTED) {
+          resolve();
+        }
+      });
+      // New consent: the statuschange event fires when the user interacts.
       cnb.instance!.listen("statuschange", (event: CustomEvent) => {
         if (event.detail.status === ACCEPTED) {
           resolve();
@@ -75,28 +89,86 @@ function createCookieConsentPromise(): Promise<void> {
     });
   };
 
-  // Case 1: Cookie bar already has an instance.
+  // Helper: determine whether the "Manage cookies" control should be shown.
+  // Two mechanisms run in parallel to handle a timing race: the cookie bar
+  // script (regular <script>) executes before our module (deferred), so the
+  // loaded event may have already fired by the time we listen.
+  const shouldShowControl = (cnb: CookieBar): Promise<boolean> => {
+    if (!cnb?.instance) return Promise.resolve(false);
+
+    return new Promise<boolean>((resolve) => {
+      let settled = false;
+      const settle = (v: boolean) => {
+        if (!settled) {
+          settled = true;
+          resolve(v);
+        }
+      };
+
+      // Primary: catch the loaded event if it hasn't fired yet.
+      cnb.instance!.listen("loaded", (event: CustomEvent) => {
+        settle(event.detail.required === true && event.detail.eea !== true);
+      });
+
+      // Fallback: if loaded already fired, the library will have already
+      // processed the control button. Check after a frame to see if
+      // aria-hidden was removed (the library's signal that the control
+      // should be visible).
+      requestAnimationFrame(() => {
+        if (settled) return;
+        const control = document.querySelector(
+          ".glue-cookie-notification-bar-control"
+        );
+        if (control && !control.hasAttribute("aria-hidden")) {
+          settle(true);
+        }
+        // If aria-hidden is still present, don't settle — the loaded event
+        // will fire and settle via the listener, or the bar isn't required
+        // and not showing the button is the correct default.
+      });
+    });
+  };
+
+  // Case 1: Cookie bar already has an instance (script loaded before us).
   if (cookieBar?.instance) {
-    return watchForConsent(cookieBar);
+    return {
+      consentGranted: watchForConsent(cookieBar),
+      required: shouldShowControl(cookieBar),
+    };
   }
 
   // Case 2: Cookie bar script is on the page but hasn't initialized yet.
-  // Register the global loaded callback synchronously so we catch it.
+  // Register the global callback synchronously so we catch it.
   if (document.querySelector('script[src*="cookienotificationbar"]')) {
-    return new Promise<void>((resolve) => {
-      window.glueCookieNotificationBarLoaded = () => {
-        const cnb = window.glue?.CookieNotificationBar;
-        if (cnb) {
-          watchForConsent(cnb).then(resolve);
-        } else {
-          resolve();
-        }
-      };
+    let resolveConsent!: () => void;
+    let resolveRequired!: (value: boolean) => void;
+
+    const consentGranted = new Promise<void>((r) => {
+      resolveConsent = r;
     });
+    const required = new Promise<boolean>((r) => {
+      resolveRequired = r;
+    });
+
+    window.glueCookieNotificationBarLoaded = () => {
+      const cnb = window.glue?.CookieNotificationBar;
+      if (cnb) {
+        watchForConsent(cnb).then(resolveConsent);
+        shouldShowControl(cnb).then(resolveRequired);
+      } else {
+        resolveConsent();
+        resolveRequired(false);
+      }
+    };
+
+    return { consentGranted, required };
   }
 
   // Case 3: No cookie bar present (e.g. local dev) — consent not required.
-  return Promise.resolve();
+  return {
+    consentGranted: Promise.resolve(),
+    required: Promise.resolve(false),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -145,6 +217,9 @@ async function initializeOpalShellGuest() {
     // Enable analytics once cookie consent is granted. The consent promise
     // was set up at module scope so it's already listening.
     cookieConsentGranted.then(() => oauthShell.enableAnalytics());
+
+    // Tell the shell whether cookie management is needed for this region.
+    oauthShell.cookieBarRequired = cookieBarRequired;
   }
 
   const boxedState: {

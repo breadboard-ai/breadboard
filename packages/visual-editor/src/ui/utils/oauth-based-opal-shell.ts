@@ -970,10 +970,13 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     });
   };
 
+  /**
+   * Set by the shell host after the cookie bar's `loaded` event resolves.
+   * Indicates whether cookie management is needed for this user's region.
+   */
+  cookieBarRequired: Promise<boolean> = Promise.resolve(false);
+
   isCookieSettingsAvailable = async (): Promise<boolean> => {
-    const control = document.querySelector(
-      ".glue-cookie-notification-bar-control"
-    );
-    return control !== null && control.getAttribute("aria-hidden") !== "true";
+    return this.cookieBarRequired;
   };
 }
