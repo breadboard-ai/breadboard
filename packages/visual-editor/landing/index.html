@@ -25,6 +25,7 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Google+Symbols:opsz,wght,FILL,GRAD,ROND@20..48,100..700,0..1,-50..200,0..100&display=swap&icon_names=chevron_left,chevron_right,close,code_off,polyline,rocket_launch"
     />
+
   </head>
   <body>
     <nav>
@@ -186,6 +187,15 @@
           <li><a href="https://policies.google.com/privacy" target="_blank">Privacy</a></li>
           <li><a href="https://policies.google.com/terms" target="_blank">Terms</a></li>
           <li><a href="https://developers.google.com/opal/faq" target="_blank">FAQ</a></li>
+          <li hidden aria-hidden="true" class="glue-footer__global-links-list-item">
+            <button
+              hidden
+              aria-hidden="true"
+              class="glue-cookie-notification-bar-control"
+            >
+              Manage cookies
+            </button>
+          </li>
           <li><a href="https://support.google.com/" target="_blank">Help</a></li>
         </ul>
       </section>
@@ -249,6 +259,7 @@
         {{config}}
       </script></template
     >
+
     <script src="/src/landing/main.ts" type="module"></script>
   </body>
 </html>

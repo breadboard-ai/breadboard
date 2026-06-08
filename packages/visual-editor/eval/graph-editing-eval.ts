@@ -993,6 +993,12 @@ class GraphEditingEvalRun implements EvalLogger {
         setOneGoogleBarVisible: function (_visible: boolean): void {
           // No-op in eval harness.
         },
+        showCookieSettings: async function (): Promise<void> {
+          // No-op in eval harness.
+        },
+        isCookieSettingsAvailable: async function (): Promise<boolean> {
+          return false;
+        },
       } satisfies OpalShellHostProtocol,
     };
 

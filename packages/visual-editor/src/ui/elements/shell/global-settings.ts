@@ -68,6 +68,9 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
   @state()
   accessor activeTabId: TabId = TabId.GENERAL;
 
+  @state()
+  accessor cookieSettingsAvailable = false;
+
   connectedCallback() {
     super.connectedCallback();
     if (
@@ -77,6 +80,10 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
       this.activeTabId = this.initialTab as TabId;
     }
     this.emailPrefsManager?.refreshPrefs();
+    this.sca.env.shellHost
+      .isCookieSettingsAvailable()
+      .then((available) => (this.cookieSettingsAvailable = available))
+      .catch(() => {}); // Default to hidden on failure.
   }
 
   static styles = [
@@ -166,6 +173,21 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
         margin-right: var(--bb-grid-size);
         flex-shrink: 0;
       }
+
+      .manage-cookies-link {
+        background: none;
+        border: none;
+        padding: var(--bb-grid-size-2) 0;
+        color: light-dark(var(--p-50), var(--p-70));
+        cursor: pointer;
+        text-decoration: underline;
+        font: inherit;
+        text-align: left;
+
+        &:hover {
+          color: light-dark(var(--p-40), var(--p-80));
+        }
+      }
     `,
   ];
 
@@ -207,7 +229,20 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
                       ])}
                   ></md-checkbox>
                   ${Strings.from("LABEL_EMAIL_RESEARCH")}
-                </label>`,
+                </label>
+                ${this.cookieSettingsAvailable
+                  ? html`<button
+                      class="manage-cookies-link"
+                      @click=${() => {
+                        this.sca.env.shellHost.showCookieSettings();
+                        this.dispatchEvent(
+                          new BreadboardUI.Events.ModalDismissedEvent()
+                        );
+                      }}
+                    >
+                      Manage cookies
+                    </button>`
+                  : nothing}`,
       },
       [TabId.INTEGRATIONS]: {
         name: Strings.from("LABEL_SETTINGS_INTEGRATIONS"),

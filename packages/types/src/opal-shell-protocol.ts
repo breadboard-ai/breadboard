@@ -73,6 +73,20 @@ export declare interface OpalShellHostProtocol {
    * cannot paint above host-page elements.
    */
   setOneGoogleBarVisible(visible: boolean): void;
+
+  /**
+   * Re-show the cookie notification bar so the user can change their cookie
+   * preferences. Called from the guest iframe's "Manage cookies" link.
+   */
+  showCookieSettings(): Promise<void>;
+
+  /**
+   * Whether cookie consent management is available for the user's region.
+   * The cookie bar library only manages elements in the shell host document,
+   * so the guest must query the host to decide whether to show its own
+   * "Manage cookies" controls.
+   */
+  isCookieSettingsAvailable(): Promise<boolean>;
 }
 
 export declare interface OpalShellGuestProtocol {

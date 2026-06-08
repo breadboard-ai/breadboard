@@ -95,6 +95,30 @@ async function init() {
 
   const actionTracker = createActionTracker(shellHost);
 
+  // The cookie notification bar lives in the shell host (parent frame).
+  // Wire the landing page's "Manage cookies" button to call through comlink,
+  // and only show it when the user's region requires cookie consent.
+  const manageCookiesButton = document.querySelector<HTMLElement>(
+    ".glue-cookie-notification-bar-control"
+  );
+  if (manageCookiesButton) {
+    shellHost.isCookieSettingsAvailable().then((available) => {
+      if (available) {
+        manageCookiesButton.removeAttribute("aria-hidden");
+        manageCookiesButton.hidden = false;
+        const parentLi = manageCookiesButton.closest("li");
+        if (parentLi) {
+          parentLi.removeAttribute("aria-hidden");
+          parentLi.hidden = false;
+        }
+      }
+    });
+    manageCookiesButton.addEventListener("click", () => {
+      shellHost.showCookieSettings();
+    });
+  }
+
+
   embedHandler?.sendToEmbedder({
     type: "home_loaded",
     isSignedIn: false,

@@ -935,14 +935,48 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     });
   };
 
-  private readonly actionEventSender = new GTagEventSender(
-    CLIENT_DEPLOYMENT_CONFIG.MEASUREMENT_ID
-  );
+  private actionEventSender: GTagEventSender | undefined;
+
+  /**
+   * Enable analytics tracking. Called by the shell host after cookie consent
+   * has been granted.
+   */
+  enableAnalytics(): void {
+    if (this.actionEventSender) return;
+    this.actionEventSender = new GTagEventSender(
+      CLIENT_DEPLOYMENT_CONFIG.MEASUREMENT_ID
+    );
+  }
+
   trackAction = async (action: string, payload: Record<string, string>) => {
-    this.actionEventSender.sendEvent(action, payload);
+    this.actionEventSender?.sendEvent(action, payload);
   };
 
   trackProperties = async (payload: Record<string, string | undefined>) => {
-    this.actionEventSender.setProperties(payload);
+    this.actionEventSender?.setProperties(payload);
+  };
+
+  showCookieSettings = async (): Promise<void> => {
+    // Trigger the cookie notification bar's built-in control. The bar script
+    // binds click handlers to elements with this class in the host document.
+    const control = document.querySelector<HTMLElement>(
+      ".glue-cookie-notification-bar-control"
+    );
+    control?.click();
+    // The cookie bar applies focus asynchronously after rendering. Defer the
+    // blur so it runs after the bar has finished setting up its UI.
+    requestAnimationFrame(() => {
+      (document.activeElement as HTMLElement | null)?.blur();
+    });
+  };
+
+  /**
+   * Set by the shell host after the cookie bar's `loaded` event resolves.
+   * Indicates whether cookie management is needed for this user's region.
+   */
+  cookieBarRequired: Promise<boolean> = Promise.resolve(false);
+
+  isCookieSettingsAvailable = async (): Promise<boolean> => {
+    return this.cookieBarRequired;
   };
 }

@@ -869,6 +869,17 @@ footer {
       color: var(--n-0);
     }
 
+    & .glue-cookie-notification-bar-control {
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      font: inherit;
+      color: var(--n-0);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
     &:last-of-type {
       border-bottom: none;
     }
@@ -1104,3 +1115,4 @@ footer {
     opacity: 1;
   }
 }
+

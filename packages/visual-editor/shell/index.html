@@ -15,6 +15,10 @@
     content="{{origin}}/images/share-card-{{bucket}}.png"
   />
   <link rel="stylesheet" href="/styles/shell.css" />
+  <link
+    rel="stylesheet"
+    href="https://www.gstatic.com/glue/cookienotificationbar/cookienotificationbar.min.css"
+  />
 </head>
 <body>
   <iframe
@@ -22,10 +26,25 @@
     sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals allow-storage-access-by-user-activation allow-downloads allow-top-navigation"
     allow="clipboard-read; clipboard-write; microphone; camera"
   ></iframe>
+  <!-- Control for the cookie notification bar. The bar script binds click
+       handlers to elements with this class and manages aria-hidden based on
+       the user's region. Kept off-screen so the library can process it while
+       remaining invisible. Triggered programmatically via showCookieSettings()
+       when the guest iframe's "Manage cookies" link is clicked. -->
+  <button
+    hidden
+    aria-hidden="true"
+    class="glue-cookie-notification-bar-control"
+  ></button>
   <template>
     <script type="application/json">
       {{config}}
     </script>
   </template>
+  <script
+    src="https://www.gstatic.com/glue/cookienotificationbar/cookienotificationbar.min.js"
+    data-glue-cookie-notification-bar-category="2A"
+    data-glue-cookie-notification-bar-site-id="Opal"
+  ></script>
   <script src="/src/shell/opal-shell-host.ts" type="module"></script>
 </body>
