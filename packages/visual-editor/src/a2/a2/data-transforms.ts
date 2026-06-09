@@ -17,6 +17,7 @@ import { err, ok, isNotebookLmUrl } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { isFileDataCapabilityPart } from "../../data/common.js";
 import { formatAgentError } from "../../utils/formatting/format-agent-error.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
 
 export { createDataPartTansformer, driveFileToBlob, toGcsAwareChunk };
 
@@ -195,18 +196,30 @@ function decodeError(s: string) {
 }
 
 async function callBackend<Req, Res>(
-  { fetchWithCreds, context }: A2ModuleArgs,
+  moduleArgs: A2ModuleArgs,
   request: Req,
   endpoint: string
 ): Promise<Outcome<Res>> {
-  const url = new URL(endpoint, OPAL_BACKEND_API_PREFIX);
+  const { fetchWithCreds, context } = moduleArgs;
+  const methodName = endpoint.replace(/^\/v1beta1\//, "");
 
   try {
-    const fetching = await fetchWithCreds(url, {
-      method: "POST",
-      body: JSON.stringify(request),
-      signal: context.signal,
-    });
+    let fetching: Response;
+    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
+      const backendClient = await moduleArgs.backendClient;
+      fetching = await backendClient.sendHttpRequest(methodName, {
+        method: "POST",
+        body: request,
+        signal: context.signal,
+      });
+    } else {
+      const url = new URL(endpoint, OPAL_BACKEND_API_PREFIX);
+      fetching = await fetchWithCreds(url, {
+        method: "POST",
+        body: JSON.stringify(request),
+        signal: context.signal,
+      });
+    }
     if (!fetching.ok) return err(decodeError(await fetching.text()));
     const response = (await fetching.json()) as Outcome<Res>;
     return response;
