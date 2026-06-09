@@ -30,6 +30,7 @@ import {
   classifyCaughtError,
 } from "../../utils/formatting/format-agent-error.js";
 import { parseStreamError } from "../../utils/formatting/parse-stream-error.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
 
 const STREAM_BACKEND_ENDPOINT = new URL(
   "v1beta1/generateWebpageStream",
@@ -216,12 +217,23 @@ async function executeWebpageStream(
       content
     );
 
-    const response = await moduleArgs.fetchWithCreds(url.toString(), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-      signal: moduleArgs.context.signal,
-    });
+    let response: Response;
+    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
+      const backendClient = await moduleArgs.backendClient;
+      response = await backendClient.sendHttpRequest("generateWebpageStream", {
+        method: "POST",
+        body: requestBody,
+        query: { alt: "sse" },
+        signal: moduleArgs.context.signal,
+      });
+    } else {
+      response = await moduleArgs.fetchWithCreds(url.toString(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+        signal: moduleArgs.context.signal,
+      });
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

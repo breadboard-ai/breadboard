@@ -202,7 +202,8 @@
   the UI as it is generated.
 - **Call Location:**
   [generate-webpage-stream.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/a2/a2/generate-webpage-stream.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 #### `POST /v1beta1/executeAgentNodeStream?alt=sse`
 
@@ -211,7 +212,8 @@
   to the visual editor as Server-Sent Events.
 - **Call Location:**
   [opal-adk-stream.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/a2/a2/opal-adk-stream.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 ---
 
