@@ -29,6 +29,7 @@ import { consume } from "@lit/context";
 import { scaContext } from "../../../../sca/context/context.js";
 import { type SCA } from "../../../../sca/sca.js";
 import { NOTEBOOKLM_MIMETYPE } from "@breadboard-ai/utils";
+import { notebookLmIcon } from "../../../styles/svg-icons.js";
 import {
   videoIdFromWatchOrShortsOrEmbedUri,
   isShareUri,
@@ -238,6 +239,21 @@ export class AddAssetModal extends SignalWatcher(LitElement) {
             font-size: 36px;
           }
 
+          & .notebooklm-icon-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            color: #8f39fd;
+            flex-shrink: 0;
+
+            & svg {
+              width: 36px;
+              height: 36px;
+            }
+          }
+
           & .card-title {
             font-weight: 500;
             color: var(--light-dark-n-10);
@@ -337,6 +353,21 @@ export class AddAssetModal extends SignalWatcher(LitElement) {
     }
     const updatedTitle =
       titleInput?.value || this.editingAsset?.metadata?.title || defaultTitle;
+
+    if (
+      this.editingAsset &&
+      (this.assetType === "gdrive" || this.assetType === "notebooklm")
+    ) {
+      const metadata: AssetMetadata = {
+        title: updatedTitle,
+        type: this.editingAsset.metadata?.type || "file",
+        subType: this.editingAsset.metadata?.subType,
+      };
+      this.dispatchEvent(
+        new AddAssetEvent(this.editingAsset.data[0], metadata)
+      );
+      return;
+    }
 
     for (const input of inputs) {
       if (input === titleInput) {
@@ -619,13 +650,9 @@ export class AddAssetModal extends SignalWatcher(LitElement) {
       else if (source.endsWith(".json")) mimeType = "application/json";
     }
 
-    if (mimeType === NOTEBOOKLM_MIMETYPE) {
+    if (mimeType === NOTEBOOKLM_MIMETYPE || mimeType === "notebooklm") {
       return html`<div class="preview-card">
-        <span
-          class="g-icon filled"
-          style="font-family: 'Google Symbols'; color: #8f39fd;"
-          >book</span
-        >
+        <div class="notebooklm-icon-wrapper">${notebookLmIcon}</div>
         <div>
           <div class="card-title">
             ${this.editingAsset.metadata?.title ||
@@ -880,24 +907,7 @@ export class AddAssetModal extends SignalWatcher(LitElement) {
 
       case "gdrive": {
         if (this.editingAsset) {
-          assetCollector = html`<div id="field-container">
-            ${preview}
-            <div
-              style="margin-top: var(--bb-grid-size-4); display: flex; flex-direction: column; gap: var(--bb-grid-size-2);"
-            >
-              <label
-                class="md-label-medium"
-                style="display: block; color: var(--light-dark-n-40);"
-                >Replace Google Drive File</label
-              >
-              <bb-google-drive-file-id
-                id="add-drive-proxy"
-                ${ref(this.#addDriveInputRef)}
-                .autoTrigger=${false}
-                .allowCreate=${false}
-              ></bb-google-drive-file-id>
-            </div>
-          </div>`;
+          assetCollector = html`<div id="field-container">${preview}</div>`;
         } else {
           assetCollector = html`
             <bb-google-drive-file-id

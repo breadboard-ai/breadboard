@@ -323,6 +323,10 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
   }
 
   #getAssetType(asset: GraphAsset): string | null {
+    if (asset.metadata?.subType === "notebooklm") {
+      return "notebooklm";
+    }
+
     const firstPart = asset.data[0]?.parts[0];
     if (!firstPart) return "upload";
 
@@ -335,6 +339,9 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
     }
 
     if ("storedData" in firstPart && firstPart.storedData) {
+      if (firstPart.storedData.mimeType === NOTEBOOKLM_MIMETYPE) {
+        return "notebooklm";
+      }
       if (firstPart.storedData.handle.startsWith("drive:/")) {
         return "gdrive";
       }

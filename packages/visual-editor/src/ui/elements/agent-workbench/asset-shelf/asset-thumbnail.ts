@@ -127,7 +127,7 @@ class AssetThumbnail extends SignalWatcher(LitElement) {
     const firstPart = this.asset.data[0]?.parts[0];
 
     // NotebookLM
-    if (mimeType === NOTEBOOKLM_MIMETYPE) {
+    if (mimeType === NOTEBOOKLM_MIMETYPE || mimeType === "notebooklm") {
       return html`<div class="notebooklm-wrapper">${notebookLmIcon}</div>`;
     }
 
