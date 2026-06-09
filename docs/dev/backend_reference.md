@@ -157,7 +157,7 @@
   call via the Opal Backend proxy layer.
 - **Call Location:**
   [proxy-backed-client.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/mcp/proxy-backed-client.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` (exclusive path; no fallback)
 
 #### `POST /v1beta1/listMcpTools`
 
@@ -165,7 +165,7 @@
   all remote MCP tools available.
 - **Call Location:**
   [proxy-backed-client.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/mcp/proxy-backed-client.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` (exclusive path; no fallback)
 
 ---
 

@@ -12,6 +12,7 @@ import type {
 import { McpCallToolResult, McpClient, McpListToolResult } from "./types.js";
 import { err, ok } from "@breadboard-ai/utils";
 import { FunctionResponseCapabilityPart, Outcome } from "@breadboard-ai/types";
+import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
 
 export { ProxyBackedClient };
 
@@ -29,11 +30,7 @@ type ProxyBackedClientArgs = {
    */
   readonly token?: string;
 
-  /**
-   * Proxy base URL
-   */
-  readonly proxyUrl: string;
-  readonly fetchWithCreds: typeof globalThis.fetch;
+  readonly backendClient: Promise<OpalBackendClient>;
 };
 
 type ProxyListToolResponse = {
@@ -64,27 +61,28 @@ class ProxyBackedClient implements McpClient {
 
   async #call<T = unknown>(path: string, payload = {}): Promise<Outcome<T>> {
     try {
-      const url = new URL(path, this.args.proxyUrl);
-      let headers = {};
-      const token = this.args.token;
-      if (token) {
-        headers = {
-          headers: {
-            Authorization: `Bearer ${token}`,
+      const methodName = path.replace(/^\/?(v1beta1\/)?/, "");
+
+      const bodyObj = {
+        mcpServerConfig: {
+          streamableHttp: {
+            url: this.args.url,
+            ...(this.args.token
+              ? {
+                  headers: {
+                    Authorization: `Bearer ${this.args.token}`,
+                  },
+                }
+              : {}),
           },
-        };
-      }
-      const response = await this.args.fetchWithCreds(url, {
+        },
+        ...payload,
+      };
+
+      const backendClient = await this.args.backendClient;
+      const response = await backendClient.sendHttpRequest(methodName, {
         method: "POST",
-        body: JSON.stringify({
-          mcpServerConfig: {
-            streamableHttp: {
-              url: this.args.url,
-              ...headers,
-            },
-          },
-          ...payload,
-        }),
+        body: bodyObj,
       });
       return response.json();
     } catch (e) {

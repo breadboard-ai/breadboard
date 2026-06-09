@@ -5,6 +5,7 @@
  */
 
 import { FunctionResponseCapabilityPart, Outcome } from "@breadboard-ai/types";
+import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
 import { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type {
@@ -148,6 +149,7 @@ export interface McpBuiltInClient extends McpClient {
 
 export type McpBuiltInClientFactoryContext = {
   fetchWithCreds: typeof fetch;
+  backendClient: Promise<OpalBackendClient>;
 };
 
 export type McpBuiltInClientFactory = (

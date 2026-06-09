@@ -62,9 +62,8 @@ class McpClientManager {
           new ProxyBackedClient({
             name: serverInfo?.title || info.name,
             url,
-            fetchWithCreds: this.context.fetchWithCreds,
-            proxyUrl: this.proxyUrl,
             token: serverInfo?.authToken,
+            backendClient: this.context.backendClient,
           }),
           this.#serverStore
         );
