@@ -149,7 +149,7 @@ export interface McpBuiltInClient extends McpClient {
 
 export type McpBuiltInClientFactoryContext = {
   fetchWithCreds: typeof fetch;
-  backendClient?: Promise<OpalBackendClient>;
+  backendClient: Promise<OpalBackendClient>;
 };
 
 export type McpBuiltInClientFactory = (
