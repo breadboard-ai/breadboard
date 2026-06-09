@@ -14,6 +14,7 @@ import {
   classifyCaughtError,
 } from "../../utils/formatting/format-agent-error.js";
 import { setScreenDuration } from "../../sca/utils/app-screen.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
 import {
   LLMContent,
   Outcome,
@@ -589,14 +590,27 @@ async function callAPI(
 
     while (!moduleArgs.context.signal?.aborted) {
       retry.nextAttempt();
-      const result = await moduleArgs.fetchWithCreds(
-        endpointURL(prefix, model),
-        {
-          method: "POST",
-          body: JSON.stringify(conformedBody),
-          signal: moduleArgs.context.signal,
-        }
-      );
+      let result: Response;
+      if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
+        const backendClient = await moduleArgs.backendClient;
+        result = await backendClient.sendHttpRequest(
+          `models/${model}:generateContent`,
+          {
+            method: "POST",
+            body: conformedBody,
+            signal: moduleArgs.context.signal,
+          }
+        );
+      } else {
+        result = await moduleArgs.fetchWithCreds(
+          endpointURL(prefix, model),
+          {
+            method: "POST",
+            body: JSON.stringify(conformedBody),
+            signal: moduleArgs.context.signal,
+          }
+        );
+      }
       const json = await result.json();
       const status = result.status;
       const errObject = json;
@@ -850,12 +864,25 @@ async function generateContent(
 ): Promise<Outcome<GeminiAPIOutputs>> {
   const { fetchWithCreds, context } = moduleArgs;
   try {
-    const prefix = await resolvePrefix();
-    const result = await fetchWithCreds(endpointURL(prefix, model), {
-      method: "POST",
-      body: JSON.stringify(body),
-      signal: context.signal,
-    });
+    let result: Response;
+    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
+      const backendClient = await moduleArgs.backendClient;
+      result = await backendClient.sendHttpRequest(
+        `models/${model}:generateContent`,
+        {
+          method: "POST",
+          body,
+          signal: context.signal,
+        }
+      );
+    } else {
+      const prefix = await resolvePrefix();
+      result = await fetchWithCreds(endpointURL(prefix, model), {
+        method: "POST",
+        body: JSON.stringify(body),
+        signal: context.signal,
+      });
+    }
     if (!result.ok) {
       const errObject = await result.text();
       return err(maybeExtractError(errObject), { origin: "server", model });
@@ -903,7 +930,6 @@ async function streamGenerateContent(
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AsyncIterable<GeminiAPIOutputs>>> {
   const { fetchWithCreds, context } = moduleArgs;
-  const prefix = await resolvePrefix();
 
   const retry = new RetrySession({
     maxAttempts: STREAM_MAX_RETRIES,
@@ -913,11 +939,26 @@ async function streamGenerateContent(
   while (!context.signal?.aborted) {
     retry.nextAttempt();
     try {
-      const result = await fetchWithCreds(streamEndpointURL(prefix, model), {
-        method: "POST",
-        body: JSON.stringify(body),
-        signal: context.signal,
-      });
+      let result: Response;
+      if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
+        const backendClient = await moduleArgs.backendClient;
+        result = await backendClient.sendHttpRequest(
+          `models/${model}:streamGenerateContent`,
+          {
+            method: "POST",
+            body,
+            query: { alt: "sse" },
+            signal: context.signal,
+          }
+        );
+      } else {
+        const prefix = await resolvePrefix();
+        result = await fetchWithCreds(streamEndpointURL(prefix, model), {
+          method: "POST",
+          body: JSON.stringify(body),
+          signal: context.signal,
+        });
+      }
 
       if (!result.ok) {
         const errObject = await result.text();

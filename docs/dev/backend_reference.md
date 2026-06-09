@@ -277,7 +277,8 @@
   completions with retry logic and model fallback chains.
 - **Call Location:**
   [gemini.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/a2/a2/gemini.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 #### `POST /v1beta1/models/{model}:streamGenerateContent?alt=sse`
 
@@ -286,7 +287,8 @@
   automatic retry on empty responses.
 - **Call Location:**
   [gemini.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/a2/a2/gemini.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 ---
 

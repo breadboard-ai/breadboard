@@ -711,5 +711,5 @@ All 23 endpoints fall into 4 trigger categories for manual verification:
 | 5a        | A2 streaming                         | 2              | 3.0        | ✅ Both flag paths + error + all 2 endpoints  | ✅     |
 | 5b        | Non-A2 streaming + plumbing          | 2              | —          | ✅ Both flag paths + error + all 2 endpoints  | ✅     |
 | 6a        | sse-agent-event-source dynamic paths | 3              | 5b         | ✅ Both flag paths (covered by existing tests) | ✅     |
-| 6b        | gemini.ts dynamic paths              | 2              | 3.0        | 🔴 None                                      | ⬜     |
+| 6b        | gemini.ts dynamic paths              | 2              | 3.0        | ✅ Both flag paths + error + all 2 endpoints  | ✅     |
 | **Total** |                                      | **23**         |            |                                              |        |
