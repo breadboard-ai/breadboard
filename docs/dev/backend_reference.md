@@ -177,7 +177,7 @@
   notebook using semantic search queries, proxied through the Opal Backend.
 - **Call Location:**
   [notebooklm-api-client.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/sca/services/notebooklm-api-client.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` (exclusive path; no fallback)
 - **Note:** This is distinct from the NotebookLM Partner API
   (`labsnotebooklm.pa.googleapis.com`). This endpoint routes through the Opal
   backend.

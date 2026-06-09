@@ -133,7 +133,7 @@ export function services(
     const notebookLmApiClient = new NotebookLmApiClient(
       fetchWithCreds,
       NOTEBOOKLM_API_PREFIX,
-      OPAL_BACKEND_API_PREFIX
+      config.shellHost.getOpalBackendClient()
     );
 
     const agentService = new AgentService();
