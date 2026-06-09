@@ -222,6 +222,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderControls() {
+    const { replay, menu, fullscreen } = this.headerConfig;
+    if (!replay && !menu && !fullscreen) {
+      return nothing;
+    }
+
     return html`<bb-app-header
       .isEmpty=${this.isEmpty}
       .progress=${this.sca.controller.run.main.progress}

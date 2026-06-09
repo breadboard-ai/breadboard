@@ -20,6 +20,9 @@ export class WorkbenchController extends RootController {
   @field({ persist: "session" })
   accessor runsOpen = false;
 
+  @field({ persist: "session" })
+  accessor showPreview = false;
+
   readonly splitter: WorkbenchSplitterController;
 
   constructor(id: string, name: string) {
