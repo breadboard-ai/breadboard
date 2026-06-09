@@ -109,7 +109,8 @@
   returning a unique session ID.
 - **Call Location:**
   [sse-agent-event-source.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/a2/agent/sse-agent-event-source.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 #### `GET /v1beta1/sessions/{id}?alt=sse`
 
@@ -117,7 +118,8 @@
   execution events via SSE.
 - **Call Location:**
   [sse-agent-event-source.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/a2/agent/sse-agent-event-source.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 #### `POST /v1beta1/sessions/{id}:resume`
 
@@ -125,14 +127,16 @@
   AI agent session so it can resume processing.
 - **Call Location:**
   [sse-agent-event-source.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/a2/agent/sse-agent-event-source.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 #### `POST /v1beta1/sessions/{id}:cancel`
 
 - **Description:** Aborts a running AI agent background task on the backend.
 - **Call Location:**
   [sse-agent-event-source.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/a2/agent/sse-agent-event-source.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 ---
 
@@ -145,7 +149,8 @@
   resume.
 - **Call Location:**
   [stream-run-agent-event-source.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/a2/agent/stream-run-agent-event-source.ts)
-- **Backend Client:** ❌ uses `fetchWithCreds`
+- **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
+  is on; falls back to `fetchWithCreds` otherwise.
 
 ---
 

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
 import { AgentEventConsumer } from "./agent-event-consumer.js";
 import type { RemoteAgentRunConfig, AgentRunHandle } from "./agent-service.js";
 import type { Segment } from "./resolve-to-segments.js";
@@ -65,7 +66,8 @@ class SSEAgentRun implements AgentRunHandle {
     baseUrl: string,
     config: RemoteAgentRunConfig,
     fetchWithCreds: typeof fetch,
-    useSessions: boolean
+    useSessions: boolean,
+    backendClient: Promise<OpalBackendClient>
   ) {
     this.events = new AgentEventConsumer();
     const wireConfig = {
@@ -81,14 +83,16 @@ class SSEAgentRun implements AgentRunHandle {
           wireConfig,
           this.events,
           fetchWithCreds,
-          this.#abortController.signal
+          this.#abortController.signal,
+          backendClient
         )
       : new StreamRunAgentEventSource(
           baseUrl,
           wireConfig,
           this.events,
           fetchWithCreds,
-          this.#abortController.signal
+          this.#abortController.signal,
+          backendClient
         );
   }
 

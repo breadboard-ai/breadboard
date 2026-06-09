@@ -5,6 +5,7 @@
  */
 
 import type { LLMContent } from "@breadboard-ai/types";
+import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
 import type { AgentEventConsumer } from "./agent-event-consumer.js";
 import type { Segment, SegmentResolution } from "./resolve-to-segments.js";
 
@@ -113,6 +114,7 @@ class AgentService {
    */
   #remoteBaseUrl: string | null = null;
   #remoteFetchWithCreds: typeof fetch = fetch;
+  #remoteBackendClient: Promise<OpalBackendClient> = new Promise(() => {});
   #remoteIsEnabled: () => boolean = () => true;
   #useSessionsProtocol: () => boolean = () => false;
 
@@ -136,10 +138,12 @@ class AgentService {
     baseUrl: string | null,
     fetchWithCreds: typeof fetch = fetch,
     isEnabled: () => boolean = () => true,
-    useSessionsProtocol: () => boolean = () => false
+    useSessionsProtocol: () => boolean = () => false,
+    backendClient: Promise<OpalBackendClient> = new Promise(() => {})
   ): void {
     this.#remoteBaseUrl = baseUrl;
     this.#remoteFetchWithCreds = fetchWithCreds;
+    this.#remoteBackendClient = backendClient;
     this.#remoteIsEnabled = isEnabled;
     this.#useSessionsProtocol = useSessionsProtocol;
   }
@@ -172,7 +176,8 @@ class AgentService {
         this.#remoteBaseUrl,
         config,
         this.#remoteFetchWithCreds,
-        this.#useSessionsProtocol()
+        this.#useSessionsProtocol(),
+        this.#remoteBackendClient
       );
     } else {
       run = new LocalAgentRun(runId, config.kind);

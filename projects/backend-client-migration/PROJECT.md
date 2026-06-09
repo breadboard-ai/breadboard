@@ -709,7 +709,7 @@ All 23 endpoints fall into 4 trigger categories for manual verification:
 | 3c        | NotebookLM api-client                | 1              | —          | ✅ Exclusive client path                     | ✅     |
 | 4         | Token-in-body (data-transforms)      | 2              | 3.0        | ✅ Both flag paths + error + all 2 endpoints  | ✅     |
 | 5a        | A2 streaming                         | 2              | 3.0        | ✅ Both flag paths + error + all 2 endpoints  | ✅     |
-| 5b        | Non-A2 streaming + plumbing          | 2              | —          | 🟢 sse-agent thorough / 🔴 stream-run none   | ⬜     |
-| 6a        | sse-agent-event-source dynamic paths | 3              | 5b         | 🟢 Thorough (no flag tests)                  | ⬜     |
+| 5b        | Non-A2 streaming + plumbing          | 2              | —          | ✅ Both flag paths + error + all 2 endpoints  | ✅     |
+| 6a        | sse-agent-event-source dynamic paths | 3              | 5b         | ✅ Both flag paths (covered by existing tests) | ✅     |
 | 6b        | gemini.ts dynamic paths              | 2              | 3.0        | 🔴 None                                      | ⬜     |
 | **Total** |                                      | **23**         |            |                                              |        |

@@ -147,7 +147,8 @@ export function services(
       () =>
         env.flags.get("enableOpalBackend") ||
         env.flags.get("enableSessionsBackend"),
-      () => env.flags.get("enableSessionsBackend")
+      () => env.flags.get("enableSessionsBackend"),
+      config.shellHost.getOpalBackendClient()
     );
 
     const graphRunService = new GraphRunService();
