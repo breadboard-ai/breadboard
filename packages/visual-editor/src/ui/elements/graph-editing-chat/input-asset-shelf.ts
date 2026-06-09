@@ -28,6 +28,7 @@ import {
   videoIdFromWatchOrShortsOrEmbedUri,
 } from "../../../utils/media/youtube.js";
 import { NOTEBOOKLM_MIMETYPE } from "@breadboard-ai/utils";
+import { notebookLmIcon } from "../../styles/svg-icons.js";
 
 export { InputAssetShelf };
 
@@ -198,7 +199,7 @@ class InputAssetShelf extends SignalWatcher(LitElement) {
           isStoredData(part) &&
           part.storedData.mimeType === NOTEBOOKLM_MIMETYPE
         ) {
-          icon = "auto_stories";
+          icon = "notebooklm";
           break;
         }
       }
@@ -213,7 +214,13 @@ class InputAssetShelf extends SignalWatcher(LitElement) {
           ${preview !== nothing
             ? preview
             : html`<div class="icon">
-                <span class="g-icon">${icon}</span>
+                ${icon === "notebooklm"
+                  ? html`<div
+                      style="color: #8f39fd; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"
+                    >
+                      ${notebookLmIcon}
+                    </div>`
+                  : html`<span class="g-icon">${icon}</span>`}
               </div>`}
         </div>
         <button
