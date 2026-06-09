@@ -706,7 +706,7 @@ All 23 endpoints fall into 4 trigger categories for manual verification:
 | 3.0       | A2ModuleArgs plumbing                | 0 (structural) | —          | N/A                                          | ✅     |
 | 3a        | A2 simple POSTs                      | 3              | 3.0        | ✅ Both flag paths + all 3 endpoints          | ✅     |
 | 3b        | MCP proxy-backed-client              | 2              | —          | ✅ Exclusive client path + all 2 endpoints    | ✅     |
-| 3c        | NotebookLM api-client                | 1              | —          | 🔴 None (fake only)                          | ⬜     |
+| 3c        | NotebookLM api-client                | 1              | —          | ✅ Exclusive client path                     | ✅     |
 | 4         | Token-in-body (data-transforms)      | 2              | 3.0        | 🔴 None                                      | ⬜     |
 | 5a        | A2 streaming                         | 2              | 3.0        | 🔴 None                                      | ⬜     |
 | 5b        | Non-A2 streaming + plumbing          | 2              | —          | 🟢 sse-agent thorough / 🔴 stream-run none   | ⬜     |

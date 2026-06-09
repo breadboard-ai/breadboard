@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
+
 // =============================================================================
 // Enums
 // =============================================================================
@@ -335,16 +337,16 @@ export interface GenerateAnswerResponse {
 export class NotebookLmApiClient {
   readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #apiBaseUrl: string;
-  readonly #backendApiBaseUrl: string | undefined;
+  readonly #backendClientPromise: Promise<OpalBackendClient>;
 
   constructor(
     fetchWithCreds: typeof globalThis.fetch,
     apiBaseUrl: string,
-    backendApiBaseUrl?: string
+    backendClientPromise: Promise<OpalBackendClient>
   ) {
     this.#fetchWithCreds = fetchWithCreds;
     this.#apiBaseUrl = apiBaseUrl;
-    this.#backendApiBaseUrl = backendApiBaseUrl;
+    this.#backendClientPromise = backendClientPromise;
   }
 
   /**
@@ -433,31 +435,23 @@ export class NotebookLmApiClient {
   async retrieveRelevantChunks(
     request: RetrieveRelevantChunksRequest
   ): Promise<RetrieveRelevantChunksResponse> {
-    // name format: "notebooks/{notebook_id}"
-    const url = this.#backendApiBaseUrl
-      ? new URL(`v1beta1/nlmRetrieveRelevantChunks`, this.#backendApiBaseUrl)
-      : new URL(`v1/${request.name}:retrieveRelevantChunks`, this.#apiBaseUrl);
-
     const body: Record<string, unknown> = {
       query: request.query,
+      notebook: request.name,
     };
-    if (this.#backendApiBaseUrl) {
-      body["notebook"] = request.name;
-    } else {
-      body["provenance"] = request.provenance ?? DEFAULT_PROVENANCE;
-    }
 
     if (request.contextTokenBudget !== undefined) {
       body["contextTokenBudget"] = request.contextTokenBudget;
     }
 
-    const response = await this.#fetchWithCreds(url, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    const backendClient = await this.#backendClientPromise;
+    const response = await backendClient.sendHttpRequest(
+      "nlmRetrieveRelevantChunks",
+      {
+        method: "POST",
+        body,
+      }
+    );
 
     if (!response.ok) {
       throw new Error(
