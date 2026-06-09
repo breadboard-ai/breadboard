@@ -175,4 +175,8 @@ class FakeModeOpalShell implements OpalShellHostProtocol {
   isCookieSettingsAvailable = async (): Promise<boolean> => {
     return false;
   };
+
+  defaultMarketingOptinStatus = async (): Promise<boolean> => {
+    return true;
+  };
 }

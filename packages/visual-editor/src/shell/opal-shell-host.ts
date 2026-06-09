@@ -46,20 +46,27 @@ declare global {
 // miss the glueCookieNotificationBarLoaded callback fired by the cookie bar
 // script that loads before this module.
 //
-// Returns two promises:
-//   consentGranted — resolves when the user accepts cookies (or no bar).
-//   required       — resolves with whether the "Manage cookies" control
-//                    should be shown for the user's region.
+// Returns three promises:
+//   consentGranted  — resolves when the user accepts cookies (or no bar).
+//   required        — resolves with whether the "Manage cookies" control
+//                     should be shown for the user's region.
+//   isConsentRegion — resolves with whether the cookie bar is required at
+//                     all (EEA, UK, etc.), including regions where the
+//                     "Manage cookies" control is hidden.
 // ---------------------------------------------------------------------------
 
 type CookieBar = NonNullable<typeof window.glue>["CookieNotificationBar"];
 
-const { consentGranted: cookieConsentGranted, required: cookieBarRequired } =
-  setupCookieBar();
+const {
+  consentGranted: cookieConsentGranted,
+  required: cookieBarRequired,
+  isConsentRegion: cookieConsentRegion,
+} = setupCookieBar();
 
 function setupCookieBar(): {
   consentGranted: Promise<void>;
   required: Promise<boolean>;
+  isConsentRegion: Promise<boolean>;
 } {
   const cookieBar = window.glue?.CookieNotificationBar;
 
@@ -129,11 +136,43 @@ function setupCookieBar(): {
     });
   };
 
+  // Helper: determine whether cookie consent is required for this region
+  // (EEA, UK, etc.). Unlike shouldShowControl, this includes EEA countries
+  // where the cookie bar is shown but the "Manage cookies" button is hidden.
+  const checkConsentRegion = (cnb: CookieBar): Promise<boolean> => {
+    if (!cnb?.instance) return Promise.resolve(false);
+
+    return new Promise<boolean>((resolve) => {
+      let settled = false;
+      const settle = (v: boolean) => {
+        if (!settled) {
+          settled = true;
+          resolve(v);
+        }
+      };
+
+      cnb.instance!.listen("loaded", (event: CustomEvent) => {
+        settle(event.detail.required === true);
+      });
+
+      // Fallback: if loaded already fired, check whether the bar element
+      // exists and is visible (the library renders it for consent regions).
+      requestAnimationFrame(() => {
+        if (settled) return;
+        const bar = document.querySelector(".glue-cookie-notification-bar");
+        if (bar && !bar.hasAttribute("aria-hidden")) {
+          settle(true);
+        }
+      });
+    });
+  };
+
   // Case 1: Cookie bar already has an instance (script loaded before us).
   if (cookieBar?.instance) {
     return {
       consentGranted: watchForConsent(cookieBar),
       required: shouldShowControl(cookieBar),
+      isConsentRegion: checkConsentRegion(cookieBar),
     };
   }
 
@@ -142,6 +181,7 @@ function setupCookieBar(): {
   if (document.querySelector('script[src*="cookienotificationbar"]')) {
     let resolveConsent!: () => void;
     let resolveRequired!: (value: boolean) => void;
+    let resolveConsentRegion!: (value: boolean) => void;
 
     const consentGranted = new Promise<void>((r) => {
       resolveConsent = r;
@@ -149,25 +189,31 @@ function setupCookieBar(): {
     const required = new Promise<boolean>((r) => {
       resolveRequired = r;
     });
+    const isConsentRegion = new Promise<boolean>((r) => {
+      resolveConsentRegion = r;
+    });
 
     window.glueCookieNotificationBarLoaded = () => {
       const cnb = window.glue?.CookieNotificationBar;
       if (cnb) {
         watchForConsent(cnb).then(resolveConsent);
         shouldShowControl(cnb).then(resolveRequired);
+        checkConsentRegion(cnb).then(resolveConsentRegion);
       } else {
         resolveConsent();
         resolveRequired(false);
+        resolveConsentRegion(false);
       }
     };
 
-    return { consentGranted, required };
+    return { consentGranted, required, isConsentRegion };
   }
 
   // Case 3: No cookie bar present (e.g. local dev) — consent not required.
   return {
     consentGranted: Promise.resolve(),
     required: Promise.resolve(false),
+    isConsentRegion: Promise.resolve(false),
   };
 }
 
@@ -218,8 +264,9 @@ async function initializeOpalShellGuest() {
     // was set up at module scope so it's already listening.
     cookieConsentGranted.then(() => oauthShell.enableAnalytics());
 
-    // Tell the shell whether cookie management is needed for this region.
-    oauthShell.cookieBarRequired = cookieBarRequired;
+    // Tell the shell whether cookie settings management is needed for this region.
+    oauthShell.cookieSettingsRequired = cookieBarRequired;
+    oauthShell.cookieConsentRequired = cookieConsentRegion;
   }
 
   const boxedState: {

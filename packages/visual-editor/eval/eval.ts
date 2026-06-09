@@ -378,6 +378,9 @@ class EvalRun implements EvalHarnessRuntimeArgs {
       isCookieSettingsAvailable: async function (): Promise<boolean> {
         return false;
       },
+      defaultMarketingOptinStatus: async function (): Promise<boolean> {
+        return true;
+      },
     } satisfies OpalShellHostProtocol,
   };
 }

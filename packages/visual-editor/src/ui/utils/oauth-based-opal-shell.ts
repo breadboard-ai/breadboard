@@ -972,11 +972,23 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
 
   /**
    * Set by the shell host after the cookie bar's `loaded` event resolves.
-   * Indicates whether cookie management is needed for this user's region.
+   * Indicates whether the "Manage cookies" control is needed for this
+   * user's region.
    */
-  cookieBarRequired: Promise<boolean> = Promise.resolve(false);
+  cookieSettingsRequired: Promise<boolean> = Promise.resolve(false);
 
   isCookieSettingsAvailable = async (): Promise<boolean> => {
-    return this.cookieBarRequired;
+    return this.cookieSettingsRequired;
+  };
+
+  /**
+   * Set by the shell host after the cookie bar's `loaded` event resolves.
+   * True when the user is in any cookie consent region (EEA, UK, etc.),
+   * including those where the "Manage cookies" control is hidden.
+   */
+  cookieConsentRequired: Promise<boolean> = Promise.resolve(false);
+
+  defaultMarketingOptinStatus = async (): Promise<boolean> => {
+    return !(await this.cookieConsentRequired);
   };
 }

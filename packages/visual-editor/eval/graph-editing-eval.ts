@@ -999,6 +999,9 @@ class GraphEditingEvalRun implements EvalLogger {
         isCookieSettingsAvailable: async function (): Promise<boolean> {
           return false;
         },
+        defaultMarketingOptinStatus: async function (): Promise<boolean> {
+          return true;
+        },
       } satisfies OpalShellHostProtocol,
     };
 
