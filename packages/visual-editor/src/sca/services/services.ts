@@ -120,6 +120,7 @@ export function services(
       builtInMcpClients,
       {
         fetchWithCreds: fetchWithCreds,
+        backendClient: config.shellHost.getOpalBackendClient(),
       },
       OPAL_BACKEND_API_PREFIX
     );

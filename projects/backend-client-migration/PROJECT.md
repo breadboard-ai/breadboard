@@ -705,7 +705,7 @@ All 23 endpoints fall into 4 trigger categories for manual verification:
 | 2         | app-catalyst.ts SSE streams          | 3              | —          | ✅ Both flag paths + error + all 3 endpoints | ✅     |
 | 3.0       | A2ModuleArgs plumbing                | 0 (structural) | —          | N/A                                          | ✅     |
 | 3a        | A2 simple POSTs                      | 3              | 3.0        | ✅ Both flag paths + all 3 endpoints          | ✅     |
-| 3b        | MCP proxy-backed-client              | 2              | —          | 🔴 None                                      | ⬜     |
+| 3b        | MCP proxy-backed-client              | 2              | —          | ✅ Both flag paths + all 2 endpoints          | ✅     |
 | 3c        | NotebookLM api-client                | 1              | —          | 🔴 None (fake only)                          | ⬜     |
 | 4         | Token-in-body (data-transforms)      | 2              | 3.0        | 🔴 None                                      | ⬜     |
 | 5a        | A2 streaming                         | 2              | 3.0        | 🔴 None                                      | ⬜     |

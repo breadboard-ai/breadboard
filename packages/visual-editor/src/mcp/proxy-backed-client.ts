@@ -12,6 +12,8 @@ import type {
 import { McpCallToolResult, McpClient, McpListToolResult } from "./types.js";
 import { err, ok } from "@breadboard-ai/utils";
 import { FunctionResponseCapabilityPart, Outcome } from "@breadboard-ai/types";
+import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
 
 export { ProxyBackedClient };
 
@@ -34,6 +36,7 @@ type ProxyBackedClientArgs = {
    */
   readonly proxyUrl: string;
   readonly fetchWithCreds: typeof globalThis.fetch;
+  readonly backendClient?: Promise<OpalBackendClient>;
 };
 
 type ProxyListToolResponse = {
@@ -64,28 +67,41 @@ class ProxyBackedClient implements McpClient {
 
   async #call<T = unknown>(path: string, payload = {}): Promise<Outcome<T>> {
     try {
-      const url = new URL(path, this.args.proxyUrl);
-      let headers = {};
-      const token = this.args.token;
-      if (token) {
-        headers = {
-          headers: {
-            Authorization: `Bearer ${token}`,
+      let response: Response;
+      const methodName = path.replace(/^\/?(v1beta1\/)?/, "");
+
+      const bodyObj = {
+        mcpServerConfig: {
+          streamableHttp: {
+            url: this.args.url,
+            ...(this.args.token
+              ? {
+                  headers: {
+                    Authorization: `Bearer ${this.args.token}`,
+                  },
+                }
+              : {}),
           },
-        };
+        },
+        ...payload,
+      };
+
+      if (
+        CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT &&
+        this.args.backendClient
+      ) {
+        const backendClient = await this.args.backendClient;
+        response = await backendClient.sendHttpRequest(methodName, {
+          method: "POST",
+          body: bodyObj,
+        });
+      } else {
+        const url = new URL(path, this.args.proxyUrl);
+        response = await this.args.fetchWithCreds(url, {
+          method: "POST",
+          body: JSON.stringify(bodyObj),
+        });
       }
-      const response = await this.args.fetchWithCreds(url, {
-        method: "POST",
-        body: JSON.stringify({
-          mcpServerConfig: {
-            streamableHttp: {
-              url: this.args.url,
-              ...headers,
-            },
-          },
-          ...payload,
-        }),
-      });
       return response.json();
     } catch (e) {
       return err(`Calling MCP proxy failed: ${(e as Error).message}`);
