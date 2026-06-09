@@ -133,6 +133,16 @@ export const toggleRunsPanel = asAction(
   }
 );
 
+export const togglePreview = asAction(
+  "Workbench.togglePreview",
+  { mode: ActionMode.Immediate },
+  async (show?: boolean): Promise<void> => {
+    const { controller } = bind;
+    controller.editor.workbench.showPreview =
+      show ?? !controller.editor.workbench.showPreview;
+  }
+);
+
 /**
  * Applies updated objective text to the agent node.
  *

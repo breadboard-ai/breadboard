@@ -44,6 +44,7 @@ import "../shared/agent-avatar.js";
 import "../input/text-editor/text-editor-remix.js";
 import "./asset-shelf/asset-shelf.js";
 import "./tool-shelf/tool-shelf.js";
+import "../app-controller/app-controller.js";
 
 @customElement("bb-agent-config-column")
 export class AgentConfigColumn extends SignalWatcher(LitElement) {
@@ -73,6 +74,14 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
         position: relative;
       }
 
+      #container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        width: 100%;
+        position: relative;
+      }
+
       /* ── Column Header ── */
       #column-header {
         position: relative;
@@ -84,6 +93,10 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
         flex: 0 0 auto;
         padding: 0 var(--bb-grid-size-5);
         background: var(--light-dark-n-100);
+      }
+
+      #column-header.preview-active {
+        background: light-dark(var(--s-90), var(--p-30));
       }
 
       #header-scrim {
@@ -99,10 +112,14 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
         z-index: 3;
       }
 
+      #header-scrim.preview-active {
+        display: none;
+      }
+
       #header-left {
         display: flex;
         align-items: center;
-        gap: var(--bb-grid-size-6);
+        gap: var(--bb-grid-size-2);
       }
 
       #save-status-container {
@@ -178,6 +195,92 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
           --selected-item-hover-color: light-dark(var(--n-95), var(--n-30));
           --selected-item-border-radius: 50%;
         }
+      }
+
+      #preview-button {
+        display: flex;
+        align-items: center;
+        background: var(--light-dark-n-100);
+        border: 1px solid var(--light-dark-n-95);
+        border-radius: 100px;
+        color: var(--light-dark-n-0);
+        height: var(--bb-grid-size-8);
+        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-2);
+        font-size: 14px;
+        cursor: pointer;
+        transition:
+          background 0.2s cubic-bezier(0, 0, 0.2, 1),
+          border 0.2s cubic-bezier(0, 0, 0.2, 1);
+
+        & .g-icon {
+          margin-right: var(--bb-grid-size-2);
+        }
+
+        &:hover {
+          border: 1px solid var(--light-dark-n-80);
+        }
+      }
+
+      #close-preview-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--bb-grid-size-8);
+        height: var(--bb-grid-size-8);
+        border-radius: 50%;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        background: var(--light-dark-n-0);
+        color: var(--light-dark-n-100);
+        transition: opacity 0.2s cubic-bezier(0, 0, 0.2, 1);
+
+        & .g-icon {
+          font-size: 20px;
+        }
+
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+
+      #restart-button {
+        display: flex;
+        align-items: center;
+        height: var(--bb-grid-size-8);
+        border-radius: 100px;
+        border: none;
+        padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-2);
+        cursor: pointer;
+        background: transparent;
+        color: var(--light-dark-n-0);
+        gap: var(--bb-grid-size);
+        font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
+          var(--bb-font-family);
+        transition: background 0.2s cubic-bezier(0, 0, 0.2, 1);
+
+        & .g-icon {
+          font-size: 20px;
+        }
+
+        &:hover {
+          background: var(--s-95, light-dark(var(--n-95), var(--n-30)));
+        }
+      }
+
+      .preview-container {
+        flex: 1 1 0;
+        min-height: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .preview-container bb-app-controller {
+        width: 100%;
+        height: 100%;
       }
 
       #share-button {
@@ -566,7 +669,7 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
     </button>`;
   }
 
-  #renderThreeDotMenu() {
+  #renderThreeDotMenu(hoverStyle?: string) {
     const options: EnumValue[] = [
       {
         id: "more",
@@ -605,6 +708,7 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
       .freezeValue=${0}
       .transparent=${true}
       .values=${options}
+      style=${hoverStyle ?? nothing}
       @change=${(evt: Event) => {
         const select = evt.target as ItemSelect;
         this.dispatchEvent(new HeaderActionEvent(select.value));
@@ -612,7 +716,7 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
     ></bb-item-select>`;
   }
 
-  #renderSettingsCog() {
+  #renderSettingsCog(hoverStyle?: string) {
     const settingsOptions: EnumValue[] = [
       {
         id: "settings",
@@ -653,6 +757,7 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
       .freezeValue=${0}
       .transparent=${true}
       .values=${settingsOptions}
+      style=${hoverStyle ?? nothing}
       @change=${(evt: Event) => {
         const select = evt.target as ItemSelect;
         this.dispatchEvent(new HeaderActionEvent(select.value));
@@ -761,6 +866,7 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
     // any in-progress edits.
     const editorValue = this.#focused ? noChange : objectiveText;
     const title = graphController.title ?? "Untitled agent";
+    const showPreview = this.sca.controller.editor.workbench.showPreview;
 
     // Dynamically resolve theme colors from the graph's visual metadata
     let themeStyles: Record<string, string> = {};
@@ -783,63 +889,143 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
     }
 
     return html`
-      <div id="column-header">
-        <div id="header-left">
-          ${this.#renderExperimentalLabel()}
-          <div id="save-status-container">
-            ${this.#renderSaveStatusLabel()}
-            <span class="dot">•</span>
-            <span id="draft-status">${this.status}</span>
+      <div id="container" style=${styleMap(themeStyles)}>
+        <div
+          id="column-header"
+          class=${classMap({ "preview-active": showPreview })}
+        >
+          <div id="header-left">
+            ${showPreview
+              ? html`
+                  <button
+                    id="close-preview-button"
+                    @click=${() => {
+                      this.sca.actions.workbench.togglePreview(false);
+                    }}
+                  >
+                    <span class="g-icon">close</span>
+                  </button>
+                  <button
+                    id="restart-button"
+                    @click=${() => {
+                      this.dispatchEvent(
+                        new StateEvent({ eventType: "board.stop" })
+                      );
+                    }}
+                  >
+                    <span class="g-icon">replay</span>Restart app
+                  </button>
+                `
+              : html`
+                  ${this.#renderExperimentalLabel()}
+                  <div id="save-status-container">
+                    ${this.#renderSaveStatusLabel()}
+                    <span class="dot">•</span>
+                    <span id="draft-status">${this.status}</span>
+                  </div>
+                `}
+          </div>
+
+          <div id="header-right">
+            ${showPreview
+              ? nothing
+              : html`
+                  <button
+                    id="preview-button"
+                    class="sans-flex round w-500"
+                    @click=${() => {
+                      this.sca.actions.workbench.togglePreview(true);
+                    }}
+                  >
+                    <span class="g-icon">play_arrow</span>Preview
+                  </button>
+                `}
+            ${this.#renderPublishButton()} ${this.#renderShareButton()}
+            ${(() => {
+              const hoverColor = showPreview
+                ? themeStyles["--s-95"]
+                : undefined;
+              const hoverStyle = hoverColor
+                ? `--selected-item-hover-color: ${hoverColor}`
+                : undefined;
+              return html`
+                ${this.#renderThreeDotMenu(hoverStyle)}
+                ${this.#renderSettingsCog(hoverStyle)}
+              `;
+            })()}
+            ${this.#renderUser()}
           </div>
         </div>
 
-        <div id="header-right">
-          ${this.#renderPublishButton()} ${this.#renderShareButton()}
-          ${this.#renderThreeDotMenu()} ${this.#renderSettingsCog()}
-          ${this.#renderUser()}
-        </div>
-      </div>
+        <div
+          id="header-scrim"
+          class=${classMap({ "preview-active": showPreview })}
+        ></div>
 
-      <div id="header-scrim"></div>
+        ${showPreview
+          ? html`
+              <div class="preview-container">
+                <bb-app-controller
+                  .graph=${graph}
+                  .graphContentState=${graphController.graphContentState}
+                  .graphTopologyUpdateId=${graphController.topologyVersion}
+                  .isMine=${!graphController.readOnly}
+                  .readOnly=${graphController.readOnly}
+                  .runtimeFlags=${this.sca.env.flags}
+                  .showGDrive=${this.sca.services.signinAdapter.stateSignal
+                    ?.status === "signedin"}
+                  .status=${this.sca.controller.run.main.status}
+                  .themeHash=${this.sca.controller.editor.theme.themeHash}
+                  .headerConfig=${{
+                    replay: false,
+                    menu: false,
+                    fullscreen: null,
+                    small: false,
+                  }}
+                ></bb-app-controller>
+              </div>
+            `
+          : html`
+              <div class="config-scroll">
+                <div class="config-container">
+                  <div class="avatar-section">
+                    <bb-agent-avatar
+                      mode="large"
+                      .supportsHover=${false}
+                    ></bb-agent-avatar>
+                  </div>
 
-      <div class="config-scroll">
-        <div class="config-container" style=${styleMap(themeStyles)}>
-          <div class="avatar-section">
-            <bb-agent-avatar
-              mode="large"
-              .supportsHover=${false}
-            ></bb-agent-avatar>
-          </div>
+                  <div class="heading-section">
+                    <h1
+                      contenteditable="true"
+                      @blur=${this.#onHeadingBlur}
+                      @keydown=${this.#onHeadingKeyDown}
+                      .innerText=${title}
+                    ></h1>
+                  </div>
 
-          <div class="heading-section">
-            <h1
-              contenteditable="true"
-              @blur=${this.#onHeadingBlur}
-              @keydown=${this.#onHeadingKeyDown}
-              .innerText=${title}
-            ></h1>
-          </div>
+                  <div class="instructions-section">
+                    <h3>Instructions</h3>
+                    <bb-text-editor-remix
+                      .value=${editorValue}
+                      .supportsFastAccess=${true}
+                      .fastAccessMode=${"browse-assets"}
+                      @focus=${this.#onFocus}
+                      @blur=${this.#onBlur}
+                      @keydown=${this.#onKeyDown}
+                    ></bb-text-editor-remix>
+                  </div>
 
-          <div class="instructions-section">
-            <h3>Instructions</h3>
-            <bb-text-editor-remix
-              .value=${editorValue}
-              .supportsFastAccess=${true}
-              .fastAccessMode=${"browse-assets"}
-              @focus=${this.#onFocus}
-              @blur=${this.#onBlur}
-              @keydown=${this.#onKeyDown}
-            ></bb-text-editor-remix>
-          </div>
+                  <div class="divider"></div>
 
-          <div class="divider"></div>
+                  <bb-agent-asset-shelf></bb-agent-asset-shelf>
 
-          <bb-agent-asset-shelf></bb-agent-asset-shelf>
+                  <div class="divider"></div>
 
-          <div class="divider"></div>
-
-          <bb-tool-shelf></bb-tool-shelf>
-        </div>
+                  <bb-tool-shelf></bb-tool-shelf>
+                </div>
+              </div>
+            `}
       </div>
     `;
   }

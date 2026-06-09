@@ -261,6 +261,64 @@ suite("Workbench Actions", () => {
     });
   });
 
+  suite("togglePreview", () => {
+    test("toggles showPreview from false to true", async () => {
+      let showPreviewVal = false;
+
+      const env = createMockEnvironment(defaultRuntimeFlags);
+      await env.isHydrated;
+
+      workbenchActions.bind({
+        services: {} as never,
+        controller: {
+          editor: {
+            workbench: {
+              get showPreview() {
+                return showPreviewVal;
+              },
+              set showPreview(val: boolean) {
+                showPreviewVal = val;
+              },
+            },
+          },
+        } as never,
+        env,
+      });
+
+      await workbenchActions.togglePreview();
+
+      assert.strictEqual(showPreviewVal, true);
+    });
+
+    test("sets showPreview to explicit value", async () => {
+      let showPreviewVal = true;
+
+      const env = createMockEnvironment(defaultRuntimeFlags);
+      await env.isHydrated;
+
+      workbenchActions.bind({
+        services: {} as never,
+        controller: {
+          editor: {
+            workbench: {
+              get showPreview() {
+                return showPreviewVal;
+              },
+              set showPreview(val: boolean) {
+                showPreviewVal = val;
+              },
+            },
+          },
+        } as never,
+        env,
+      });
+
+      await workbenchActions.togglePreview(false);
+
+      assert.strictEqual(showPreviewVal, false);
+    });
+  });
+
   suite("applyObjective", () => {
     test("updates agent node config$prompt with new objective text while preserving existing tools", async () => {
       const singleAgentGraph: GraphDescriptor = {
