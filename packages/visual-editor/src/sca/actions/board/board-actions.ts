@@ -733,6 +733,7 @@ export const onRename = asAction(
   },
   async (evt?: StateEvent<"board.rename">): Promise<void> => {
     const { controller } = bind;
+    if (controller.editor.graph.readOnly) return;
     const detail = evt!.detail;
     const { editor } = controller.editor.graph;
     if (!editor) return;

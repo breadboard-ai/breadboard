@@ -214,6 +214,11 @@ export class ToolShelf extends SignalWatcher(LitElement) {
         transform: translateX(20px) scale(1.5);
         background-color: white;
       }
+
+      .switch.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
     `,
   ];
 
@@ -316,10 +321,13 @@ export class ToolShelf extends SignalWatcher(LitElement) {
                     <div class="tool-description">${tool.description}</div>
                   </div>
                 </div>
-                <label class="switch">
+                <label
+                  class="switch ${graphController.readOnly ? "disabled" : ""}"
+                >
                   <input
                     type="checkbox"
                     ?checked=${isEnabled}
+                    ?disabled=${graphController.readOnly}
                     @change=${(evt: Event & { target: HTMLInputElement }) => {
                       this.#onToggle(tool, evt.target.checked);
                     }}
