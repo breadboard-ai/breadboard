@@ -276,7 +276,8 @@
   backend. Used by `callAPI` and `generateContent` for single-request
   completions with retry logic and model fallback chains.
 - **Call Location:**
-  [gemini.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/a2/a2/gemini.ts)
+  [gemini.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/a2/a2/gemini.ts),
+  [theme-utils.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/sca/actions/theme/theme-utils.ts)
 - **Backend Client:** ✅ uses `OpalBackendClient` when `ENABLE_BACKEND_CLIENT`
   is on; falls back to `fetchWithCreds` otherwise.
 

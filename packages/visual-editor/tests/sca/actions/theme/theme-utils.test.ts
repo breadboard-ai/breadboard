@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { describe, it, mock } from "node:test";
+import { describe, it, mock, afterEach, beforeEach } from "node:test";
 import assert from "node:assert";
 import { ok } from "@breadboard-ai/utils";
 import {
@@ -18,6 +18,7 @@ import {
   geminiApiPrefix,
   OPAL_BACKEND_API_PREFIX,
 } from "@breadboard-ai/types";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../../../src/ui/config/client-deployment-configuration.js";
 import type { AppTheme } from "../../../../src/ui/types/types.js";
 
 // ---------------------------------------------------------------------------
@@ -79,14 +80,24 @@ function makeServices(fetchResponse?: { ok?: boolean; json?: unknown }) {
     json: async () => fetchResponse?.json ?? defaultJson,
   }));
 
+  const sendHttpRequest = mock.fn(
+    async (_methodName: string, _options?: unknown) => ({
+      ok: fetchResponse?.ok ?? true,
+      json: async () => fetchResponse?.json ?? defaultJson,
+    })
+  );
+  const backendClientMock = { sendHttpRequest };
+
   return {
     services: {
       fetchWithCreds,
+      backendClient: Promise.resolve(backendClientMock),
       googleDriveBoardServer: {
         dataPartTransformer: () => ({}),
       },
     } as unknown as AppServices,
     fetchWithCreds,
+    sendHttpRequest,
   };
 }
 
@@ -114,6 +125,16 @@ describe("geminiApiPrefix", () => {
 // ---------------------------------------------------------------------------
 
 describe("generateImage", () => {
+  let savedFlag: boolean;
+
+  beforeEach(() => {
+    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
+  });
+
+  afterEach(() => {
+    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = savedFlag;
+    mock.restoreAll();
+  });
   it("returns error when there is no editor", async () => {
     const { controller } = makeController({ hasEditor: false });
     const { services } = makeServices();
@@ -331,6 +352,7 @@ describe("generateImage", () => {
   });
 
   it("passes abort signal through to fetchWithCreds", async () => {
+    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = false;
     const { controller } = makeController();
     const { services, fetchWithCreds } = makeServices();
     const abortController = new AbortController();
@@ -346,6 +368,69 @@ describe("generateImage", () => {
     const fetchOptions = fetchWithCreds.mock.calls[0]
       .arguments[1] as unknown as RequestInit;
     assert.strictEqual(fetchOptions.signal, abortController.signal);
+  });
+
+  // --- ENABLE_BACKEND_CLIENT = true tests ---
+
+  it("uses sendHttpRequest when ENABLE_BACKEND_CLIENT is on", async () => {
+    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
+    const { controller } = makeController();
+    const { services, fetchWithCreds, sendHttpRequest } = makeServices();
+
+    await generateImage(makeContents(), undefined, controller, services);
+
+    assert.strictEqual(sendHttpRequest.mock.calls.length, 1);
+    assert.strictEqual(fetchWithCreds.mock.calls.length, 0);
+
+    const [methodName, options] = sendHttpRequest.mock.calls[0]
+      .arguments as unknown as [string, Record<string, unknown>];
+    assert.ok(
+      methodName.includes(":generateContent"),
+      `Expected method name to include ':generateContent', got '${methodName}'`
+    );
+    assert.strictEqual(options.method, "POST");
+    // Body should be an object, not pre-stringified
+    assert.strictEqual(typeof options.body, "object");
+  });
+
+  it("passes abort signal through to sendHttpRequest when flag is on", async () => {
+    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
+    const { controller } = makeController();
+    const { services, sendHttpRequest } = makeServices();
+    const abortController = new AbortController();
+
+    await generateImage(
+      makeContents(),
+      abortController.signal,
+      controller,
+      services
+    );
+
+    assert.strictEqual(sendHttpRequest.mock.calls.length, 1);
+    const options = sendHttpRequest.mock.calls[0].arguments[1] as unknown as {
+      signal?: AbortSignal;
+    };
+    assert.strictEqual(options.signal, abortController.signal);
+  });
+
+  it("returns error when response is not ok (flag on)", async () => {
+    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
+    const { controller } = makeController();
+    const { services } = makeServices({ ok: false, json: { error: "bad" } });
+
+    const result = await generateImage(
+      makeContents(),
+      undefined,
+      controller,
+      services
+    );
+
+    assert.ok(!ok(result));
+    assert.ok(
+      (result as Outcome<AppTheme> & { $error: string }).$error.includes(
+        "Unable to generate theme"
+      )
+    );
   });
 });
 

@@ -11,8 +11,7 @@ Gate every `fetchWithCreds` call to the Opal Backend behind
 `ENABLE_BACKEND_CLIENT`, using `OpalBackendClient.sendHttpRequest` when the flag
 is on and falling back to `fetchWithCreds` when off.
 
-**23 of 24 endpoints** migrated. One remaining work item: `theme-utils.ts`
-(Phase 7 in the plan).
+**All 24 endpoints** migrated across **12 files**.
 
 📄 [PHASE-1-flag-gating.md](./PHASE-1-flag-gating.md)
 
