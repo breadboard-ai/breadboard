@@ -26,9 +26,9 @@ Make `ENABLE_BACKEND_CLIENT` permanent: collapse every flag-gated `if/else` to
 the `OpalBackendClient` path only, remove the `fetchWithCreds` fallback branches
 for backend calls, and delete the flag itself.
 
-**End state:** No `fetchWithCreds` calls targeting `BACKEND_API_ENDPOINT` remain.
-Third-party `fetchWithCreds` usages (Google Drive, Docs, Sheets, etc.) are
-unaffected.
+**End state:** No `fetchWithCreds` calls targeting `BACKEND_API_ENDPOINT`
+remain. Third-party `fetchWithCreds` usages (Google Drive, Docs, Sheets, etc.)
+are unaffected.
 
 📄 [PHASE-2a-dead-code-removal.md](./PHASE-2a-dead-code-removal.md)
 

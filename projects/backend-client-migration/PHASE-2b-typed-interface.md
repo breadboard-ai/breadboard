@@ -78,8 +78,8 @@ it, call site migration (2b.1–2b.9) can proceed.
    parameter called `request`, typed with a named `<MethodName>Request` type
    (e.g., `CheckAppAccessRequest`, `GenerateContentRequest`). These types are
    defined in the same module as `OpalBackendClient`
-   (`packages/types/src/opal-backend-client.ts`), forming part of the shared type
-   system.
+   (`packages/types/src/opal-backend-client.ts`), forming part of the shared
+   type system.
 
    The request types are **placeholders** (`unknown`) in the initial
    implementation. Work item 2b.R researches the actual body shapes at each call
@@ -263,7 +263,8 @@ export declare interface OpalBackendClient {
 ### `HttpBackendClient` Implementation Pattern
 
 Each typed method delegates to the private `#sendHttpRequest`. The request type
-is destructured inside the method to extract the fields needed for the HTTP call.
+is destructured inside the method to extract the fields needed for the HTTP
+call.
 
 Until 2b.R refines the request types, use `unknown` and cast/destructure as
 needed.
@@ -355,7 +356,7 @@ placeholder `unknown` types. Example:
 ```ts
 export declare interface GenerateContentRequest {
   model: string;
-  body: GeminiBody;  // from gemini.ts
+  body: GeminiBody; // from gemini.ts
   signal?: AbortSignal;
 }
 
@@ -460,8 +461,8 @@ response = await client.generateContent({ model, body: conformedBody, signal });
 
 **8 call sites → 8 typed method calls:**
 
-| `sendHttpRequest` call                            | Typed method                    |
-| ------------------------------------------------- | ------------------------------- |
+| `sendHttpRequest` call                            | Typed method                       |
+| ------------------------------------------------- | ---------------------------------- |
 | `sendHttpRequest("getG1SubscriptionStatus", ...)` | `getG1SubscriptionStatus(request)` |
 | `sendHttpRequest("getG1Credits", ...)`            | `getG1Credits(request)`            |
 | `sendHttpRequest("chatGenerateApp", ...)`         | `chatGenerateApp(request)`         |
@@ -511,8 +512,8 @@ Option B is cleaner and removes the string-dispatch pattern entirely.
 
 **3 call sites → 2 typed methods:**
 
-| `sendHttpRequest` call                                                                 | Typed method                                 |
-| -------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `sendHttpRequest` call                                                                 | Typed method                     |
+| -------------------------------------------------------------------------------------- | -------------------------------- |
 | `sendHttpRequest(\`models/${model}:generateContent\`, ...)`(in`callAPI` ~L596)         | `generateContent(request)`       |
 | `sendHttpRequest(\`models/${model}:generateContent\`, ...)`(in`generateContent` ~L870) | `generateContent(request)`       |
 | `sendHttpRequest(\`models/${model}:streamGenerateContent\`, ...)` (~L945)              | `streamGenerateContent(request)` |
@@ -529,12 +530,12 @@ on the request object.
 
 **4 call sites → 4 typed methods:**
 
-| `sendHttpRequest` call                                    | Typed method                              |
-| --------------------------------------------------------- | ----------------------------------------- |
-| `sendHttpRequest(\`sessions/${id}:cancel\`, ...)` (~L90)  | `cancelSession(request)`   |
-| `sendHttpRequest("sessions/new", ...)` (~L122)            | `createSession(request)`   |
+| `sendHttpRequest` call                                    | Typed method                |
+| --------------------------------------------------------- | --------------------------- |
+| `sendHttpRequest(\`sessions/${id}:cancel\`, ...)` (~L90)  | `cancelSession(request)`    |
+| `sendHttpRequest("sessions/new", ...)` (~L122)            | `createSession(request)`    |
 | `sendHttpRequest(\`sessions/${id}\`, ...)` (~L164)        | `getSessionStream(request)` |
-| `sendHttpRequest(\`sessions/${id}:resume\`, ...)` (~L232) | `resumeSession(request)`   |
+| `sendHttpRequest(\`sessions/${id}:resume\`, ...)` (~L232) | `resumeSession(request)`    |
 
 The session ID is already a local variable (`this.#sessionId`). It becomes a
 field on the request object. The `after` cursor for `getSessionStream` is
@@ -576,8 +577,8 @@ that takes a `Promise<Response>` rather than an endpoint string.
 
 **1 call site:**
 
-| `sendHttpRequest` call                               | Typed method                        |
-| ---------------------------------------------------- | ----------------------------------- |
+| `sendHttpRequest` call                               | Typed method                   |
+| ---------------------------------------------------- | ------------------------------ |
 | `sendHttpRequest("createCachedContent", ...)` (~L66) | `createCachedContent(request)` |
 
 ---
@@ -611,8 +612,8 @@ that takes a `Promise<Response>` rather than an endpoint string.
 
 **1 call site:**
 
-| `sendHttpRequest` call                          | Typed method                   |
-| ----------------------------------------------- | ------------------------------ |
+| `sendHttpRequest` call                          | Typed method              |
+| ----------------------------------------------- | ------------------------- |
 | `sendHttpRequest("streamRunAgent", ...)` (~L94) | `streamRunAgent(request)` |
 
 ---
@@ -727,7 +728,7 @@ HTTP method, query params, and body.
 | Work Item | Scope                                                                                                        | Status |
 | --------- | ------------------------------------------------------------------------------------------------------------ | ------ |
 | 2b.R      | Research request types (define `<MethodName>Request` for all 28 methods)                                     |        |
-| 2b.0      | Add typed methods to interface + implementation (interface first)                                             |        |
+| 2b.0      | Add typed methods to interface + implementation (interface first)                                            |        |
 | 2b.1      | Migrate `app-catalyst.ts` (8 call sites)                                                                     |        |
 | 2b.2      | Migrate `gemini.ts` (3 call sites)                                                                           |        |
 | 2b.3      | Migrate `sse-agent-event-source.ts` (4 call sites)                                                           |        |
