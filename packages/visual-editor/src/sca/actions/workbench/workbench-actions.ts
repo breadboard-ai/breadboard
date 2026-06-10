@@ -49,6 +49,7 @@ async function applyPromptToGraph(
   newPrompt: string
 ): Promise<void> {
   const { controller } = bind;
+  if (controller.editor.graph.readOnly) return;
   const editor = controller.editor.graph.editor;
   if (!editor) return;
 
@@ -154,6 +155,8 @@ export const applyObjective = asAction(
   "Workbench.applyObjective",
   { mode: ActionMode.Immediate },
   async (blocks: LLMContent[]): Promise<void> => {
+    const { controller } = bind;
+    if (controller.editor.graph.readOnly) return;
     const agentNode = getAgentNode();
     if (!agentNode) return;
 
@@ -183,6 +186,8 @@ export const toggleTool = asAction(
     toolTitle: string,
     enabled: boolean
   ): Promise<void> => {
+    const { controller } = bind;
+    if (controller.editor.graph.readOnly) return;
     const agentNode = getAgentNode();
     if (!agentNode) return;
 

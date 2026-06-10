@@ -398,6 +398,37 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
           &:focus {
             border-color: var(--light-dark-n-90);
           }
+
+          &[contenteditable="false"] {
+            cursor: default;
+
+            &:hover,
+            &:focus {
+              border-color: transparent;
+            }
+          }
+        }
+      }
+
+      #remix-button {
+        display: flex;
+        align-items: center;
+        background: var(--light-dark-n-0);
+        border: none;
+        border-radius: 100px;
+        color: var(--light-dark-n-100);
+        height: var(--bb-grid-size-8);
+        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-2);
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.2s cubic-bezier(0, 0, 0.2, 1);
+
+        & .g-icon {
+          margin-right: var(--bb-grid-size-2);
+        }
+
+        &:hover {
+          background: light-dark(var(--n-25), var(--n-90));
         }
       }
 
@@ -527,6 +558,7 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
   }
 
   #onHeadingBlur(evt: FocusEvent & { target: HTMLHeadingElement }) {
+    if (this.sca.controller.editor.graph.readOnly) return;
     const newTitle = evt.target.textContent?.trim() || "";
     const currentTitle = this.sca.controller.editor.graph.title;
     if (newTitle === "" || newTitle === currentTitle) {
@@ -550,11 +582,41 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
 
   // ── Header render helpers ──
 
-  #renderPublishButton() {
+  #renderPublishOrRemixButton() {
+    const gc = this.sca.controller.editor.graph;
+    if (gc.readOnly) {
+      return this.#renderRemixButton();
+    }
     if (!this.isMine) {
       return nothing;
     }
     return html`<bb-publish-button id="publish-button"></bb-publish-button>`;
+  }
+
+  #renderRemixButton() {
+    const url = this.sca.controller.editor.graph.url;
+    if (!url) return nothing;
+
+    return html`<button
+      id="remix-button"
+      class="sans-flex round w-500"
+      @click=${() => {
+        this.sca?.services.actionTracker?.remixApp(url, "editor");
+        this.dispatchEvent(
+          new StateEvent({
+            eventType: "board.remix",
+            url,
+            messages: {
+              start: Strings.from("STATUS_REMIXING_PROJECT"),
+              end: Strings.from("STATUS_PROJECT_CREATED"),
+              error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+            },
+          })
+        );
+      }}
+    >
+      <span class="g-icon">gesture</span>Remix
+    </button>`;
   }
 
   #renderSaveStatusLabel() {
@@ -657,7 +719,7 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
         "sans-flex": true,
         round: true,
         "w-500": true,
-        owner: !!this.isMine,
+        owner: true,
         "sharing-v2": true,
       })}
       @mouseenter=${() => this.sca.actions.share.flushSave()}
@@ -940,7 +1002,7 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
                     <span class="g-icon">play_arrow</span>Preview
                   </button>
                 `}
-            ${this.#renderPublishButton()} ${this.#renderShareButton()}
+            ${this.#renderPublishOrRemixButton()} ${this.#renderShareButton()}
             ${(() => {
               const hoverColor = showPreview
                 ? themeStyles["--s-95"]
@@ -997,7 +1059,9 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
 
                   <div class="heading-section">
                     <h1
-                      contenteditable="true"
+                      contenteditable=${graphController.readOnly
+                        ? "false"
+                        : "true"}
                       @blur=${this.#onHeadingBlur}
                       @keydown=${this.#onHeadingKeyDown}
                       .innerText=${title}
@@ -1008,7 +1072,8 @@ export class AgentConfigColumn extends SignalWatcher(LitElement) {
                     <h3>Instructions</h3>
                     <bb-text-editor-remix
                       .value=${editorValue}
-                      .supportsFastAccess=${true}
+                      .readOnly=${graphController.readOnly}
+                      .supportsFastAccess=${!graphController.readOnly}
                       .fastAccessMode=${"browse-assets"}
                       @focus=${this.#onFocus}
                       @blur=${this.#onBlur}

@@ -53,6 +53,13 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
   @state()
   private accessor _playingAudioPath: string | null = null;
 
+  @state()
+  private accessor _pendingAssets: Array<{
+    id: string;
+    title: string;
+    badgeLabel: string;
+  }> = [];
+
   private _activeAudio: HTMLAudioElement | null = null;
 
   static styles = [
@@ -118,6 +125,25 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
         justify-content: space-between;
         padding: var(--bb-grid-size-2) 0;
         position: relative;
+      }
+
+      .asset-row.pending {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .spinning {
+        animation: spin 1s linear infinite;
+        display: inline-block;
       }
 
       .drag-handle {
@@ -497,131 +523,182 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
       <div class="asset-shelf-wrapper">
         <div class="section-header">
           <h2>Assets</h2>
-          <bb-add-asset-button
-            .showGDrive=${true}
-            .showNotebookLm=${!!this.sca.env.flags.get("enableNotebookLm")}
-            .label=${"Add asset"}
-            @bbaddassetrequest=${(evt: AddAssetRequestEvent) => {
-              if (evt.assetType === "notebooklm") {
-                this.sca.actions.notebookLmPicker.open(async (notebooks) => {
-                  for (const notebook of notebooks) {
-                    const descriptor: GraphAssetDescriptor = {
-                      metadata: {
-                        title: notebook.preview || notebook.name || "Notebook",
-                        type: "content",
-                        subType: "notebooklm",
-                      },
-                      path: `asset-${globalThis.crypto.randomUUID().slice(0, 8)}.webp`,
-                      data: [
-                        {
-                          role: "user",
-                          parts: [
-                            {
-                              storedData: {
-                                handle: toNotebookLmUrl(notebook.id),
-                                mimeType: NOTEBOOKLM_MIMETYPE,
-                              },
+          ${graphController.readOnly
+            ? nothing
+            : html`<bb-add-asset-button
+                .showGDrive=${true}
+                .showNotebookLm=${!!this.sca.env.flags.get("enableNotebookLm")}
+                .label=${"Add asset"}
+                @bbaddassetrequest=${(evt: AddAssetRequestEvent) => {
+                  if (evt.assetType === "notebooklm") {
+                    this.sca.actions.notebookLmPicker.open(
+                      async (notebooks) => {
+                        const newPending = notebooks.map((notebook) => ({
+                          id: globalThis.crypto.randomUUID(),
+                          title:
+                            notebook.preview || notebook.name || "Notebook",
+                          badgeLabel: "NOTEBOOK",
+                        }));
+                        this._pendingAssets = [
+                          ...this._pendingAssets,
+                          ...newPending,
+                        ];
+                        this.requestUpdate();
+
+                        for (let i = 0; i < notebooks.length; i++) {
+                          const notebook = notebooks[i];
+                          const pendingItem = newPending[i];
+                          const descriptor: GraphAssetDescriptor = {
+                            metadata: {
+                              title: pendingItem.title,
+                              type: "content",
+                              subType: "notebooklm",
                             },
-                          ],
-                        },
-                      ],
-                    };
-                    await this.sca.actions.asset.addGraphAsset(descriptor);
+                            path: `asset-${globalThis.crypto.randomUUID().slice(0, 8)}.webp`,
+                            data: [
+                              {
+                                role: "user",
+                                parts: [
+                                  {
+                                    storedData: {
+                                      handle: toNotebookLmUrl(notebook.id),
+                                      mimeType: NOTEBOOKLM_MIMETYPE,
+                                    },
+                                  },
+                                ],
+                              },
+                            ],
+                          };
+                          await this.sca.actions.asset.addGraphAsset(
+                            descriptor
+                          );
+                          this._pendingAssets = this._pendingAssets.filter(
+                            (a) => a.id !== pendingItem.id
+                          );
+                          this.requestUpdate();
+                        }
+                      }
+                    );
+                    return;
                   }
+                  this._showAddAssetModal = true;
+                  this._addAssetType = evt.assetType;
+                  this._allowedMimeTypes = evt.allowedMimeTypes;
                   this.requestUpdate();
-                });
-                return;
-              }
-              this._showAddAssetModal = true;
-              this._addAssetType = evt.assetType;
-              this._allowedMimeTypes = evt.allowedMimeTypes;
-              this.requestUpdate();
-            }}
-          ></bb-add-asset-button>
+                }}
+              ></bb-add-asset-button>`}
         </div>
         <div class="assets-list">
-          ${allAssets.length > 0
-            ? allAssets.map((asset) => {
-                const mimeType = this.#inferMimeType(asset);
-                const badgeLabel = this.#getAssetBadgeLabel(mimeType);
-                const isInUse = referencedAssetPaths.has(asset.path);
-                const isPlaying = this._playingAudioPath === asset.path;
-
-                return keyed(
-                  asset.path,
-                  html`
-                    <div class="asset-row">
-                      <span
-                        class="drag-handle g-icon"
-                        draggable="true"
-                        @dragstart=${(evt: DragEvent) =>
-                          this.#onDragStart(evt, asset)}
-                        @pointerover=${(evt: PointerEvent) => {
-                          this.dispatchEvent(
-                            new ShowTooltipEvent(
-                              "Drag to add to agent instructions",
-                              evt.clientX,
-                              evt.clientY
-                            )
-                          );
-                        }}
-                        @pointerout=${() => {
-                          this.dispatchEvent(new HideTooltipEvent());
-                        }}
-                        >drag_indicator</span
-                      >
-                      <div
-                        class="asset-info-wrapper"
-                        @click=${() => this.#onEditAsset(asset)}
-                      >
+          ${allAssets.length > 0 || this._pendingAssets.length > 0
+            ? html`
+                ${this._pendingAssets.map(
+                  (pending) => html`
+                    <div class="asset-row pending" .key=${pending.id}>
+                      <div class="asset-info-wrapper">
                         <div class="asset-icon-container">
-                          <bb-asset-thumbnail
-                            .asset=${asset}
-                            .mimeType=${mimeType || ""}
-                            .playing=${isPlaying}
-                            @bb-audio-toggle=${() => this.#onToggleAudio(asset)}
-                          ></bb-asset-thumbnail>
+                          <span class="g-icon spinning">sync</span>
                         </div>
                         <div class="asset-details">
-                          <div class="asset-title">
-                            ${asset.metadata?.title || asset.path}
-                          </div>
+                          <div class="asset-title">${pending.title}</div>
                           <div class="asset-meta">
-                            <span class="asset-badge">${badgeLabel}</span>
-                            ${isInUse
-                              ? html`<span class="in-use-pill">In use</span>`
-                              : nothing}
+                            <span class="asset-badge"
+                              >${pending.badgeLabel}</span
+                            >
                           </div>
                         </div>
                       </div>
-                      <button
-                        class="remove-button"
-                        @click=${() => this.#onRemoveAsset(asset.path)}
-                        @pointerover=${(evt: PointerEvent) => {
-                          this.dispatchEvent(
-                            new ShowTooltipEvent(
-                              "Remove asset",
-                              evt.clientX,
-                              evt.clientY
-                            )
-                          );
-                        }}
-                        @pointerout=${() => {
-                          this.dispatchEvent(new HideTooltipEvent());
-                        }}
-                      >
-                        <span class="g-icon">close</span>
-                      </button>
                     </div>
                   `
-                );
-              })
+                )}
+                ${allAssets.map((asset) => {
+                  const mimeType = this.#inferMimeType(asset);
+                  const badgeLabel = this.#getAssetBadgeLabel(mimeType);
+                  const isInUse = referencedAssetPaths.has(asset.path);
+                  const isPlaying = this._playingAudioPath === asset.path;
+
+                  return keyed(
+                    asset.path,
+                    html`
+                      <div class="asset-row">
+                        ${graphController.readOnly
+                          ? nothing
+                          : html`<span
+                              class="drag-handle g-icon"
+                              draggable="true"
+                              @dragstart=${(evt: DragEvent) =>
+                                this.#onDragStart(evt, asset)}
+                              @pointerover=${(evt: PointerEvent) => {
+                                this.dispatchEvent(
+                                  new ShowTooltipEvent(
+                                    "Drag to add to agent instructions",
+                                    evt.clientX,
+                                    evt.clientY
+                                  )
+                                );
+                              }}
+                              @pointerout=${() => {
+                                this.dispatchEvent(new HideTooltipEvent());
+                              }}
+                              >drag_indicator</span
+                            >`}
+                        <div
+                          class="asset-info-wrapper"
+                          @click=${() => this.#onEditAsset(asset)}
+                        >
+                          <div class="asset-icon-container">
+                            <bb-asset-thumbnail
+                              .asset=${asset}
+                              .mimeType=${mimeType || ""}
+                              .playing=${isPlaying}
+                              @bb-audio-toggle=${() =>
+                                this.#onToggleAudio(asset)}
+                            ></bb-asset-thumbnail>
+                          </div>
+                          <div class="asset-details">
+                            <div class="asset-title">
+                              ${asset.metadata?.title || asset.path}
+                            </div>
+                            <div class="asset-meta">
+                              <span class="asset-badge">${badgeLabel}</span>
+                              ${isInUse
+                                ? html`<span class="in-use-pill">In use</span>`
+                                : nothing}
+                            </div>
+                          </div>
+                        </div>
+                        ${graphController.readOnly
+                          ? nothing
+                          : html`<button
+                              class="remove-button"
+                              @click=${() => this.#onRemoveAsset(asset.path)}
+                              @pointerover=${(evt: PointerEvent) => {
+                                this.dispatchEvent(
+                                  new ShowTooltipEvent(
+                                    "Remove asset",
+                                    evt.clientX,
+                                    evt.clientY
+                                  )
+                                );
+                              }}
+                              @pointerout=${() => {
+                                this.dispatchEvent(new HideTooltipEvent());
+                              }}
+                            >
+                              <span class="g-icon">close</span>
+                            </button>`}
+                      </div>
+                    `
+                  );
+                })}
+              `
             : html`
                 <div class="empty-state">
                   <span class="g-icon filled heavy">attach_file_off</span>
                   <p>
-                    <span>No assets yet.</span> Click "Add asset" to upload
-                    images, audio, or PDFs.
+                    ${graphController.readOnly
+                      ? html`This agent has no assets.`
+                      : html`<span>No assets yet.</span> Click "Add asset" to
+                          upload images, audio, or PDFs.`}
                   </p>
                 </div>
               `}
@@ -686,7 +763,26 @@ export class AgentAssetShelf extends SignalWatcher(LitElement) {
                 data: [content],
               };
 
+              const tempId = globalThis.crypto.randomUUID();
+              const title = metadata?.title || "Asset";
+              const mimeType = this.#inferMimeType({
+                path,
+                data: [content],
+                metadata,
+              });
+              const badgeLabel = this.#getAssetBadgeLabel(mimeType);
+
+              this._pendingAssets = [
+                ...this._pendingAssets,
+                { id: tempId, title, badgeLabel },
+              ];
+              this.requestUpdate();
+
               await this.sca.actions.asset.addGraphAsset(assetDescriptor);
+
+              this._pendingAssets = this._pendingAssets.filter(
+                (a) => a.id !== tempId
+              );
               this.requestUpdate();
             }}
           ></bb-add-asset-modal>`

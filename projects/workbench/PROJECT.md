@@ -579,7 +579,43 @@ gallery.
 
 ---
 
-## Phase 5 — Polish & Responsive Layout
+## Phase 5 — Read-Only Graphs
+
+### 🎯 Objective
+
+When a user opens a read-only graph in the Agent Workbench:
+1. Opie is left as-is, allowing users to still chat.
+2. Users are prevented from editing the prompt/instructions (text editor is read-only).
+3. Users are prevented from adding or removing assets (no "Add asset" button, no remove buttons, no dragging from shelf).
+4. Users are prevented from toggling tools & skills (toggles are disabled).
+5. The publish button in the header is replaced with a prominent "Remix" button. The share button remains but is unified to always use the owner (black bg, white text) style regardless of ownership.
+6. A robust action-level guard prevents any accidental edits.
+
+**Observable proof:** Open a shared/read-only Opal in the workbench. The left column allows normal conversation with Opie. In the right column:
+- The agent name is static text, not editable.
+- The instructions editor is read-only and doesn't allow typing or dropping assets.
+- The asset shelf has no "Add asset" button next to "Assets", and individual assets have no "close/remove" button, nor can they be dragged.
+- The tool toggles are disabled and show a reduced-opacity/disabled visual style.
+- The header shows a "Remix" button where "Publish" would be, with the share button, settings cog, three-dot menu, and user avatar remaining.
+- Click "Remix" — a remix flow is triggered, creating an editable copy.
+
+### Changes
+
+#### packages/visual-editor — SCA Actions
+
+- [x] `applyPromptToGraph`, `applyObjective`, `toggleTool` (in `workbench-actions.ts`) — early exit if the graph is read-only.
+- [x] `onRename` (in `board-actions.ts`) — early exit if the graph is read-only.
+
+#### packages/visual-editor — UI
+
+- [x] `bb-agent-config-column` — heading `<h1>` is non-editable, and `bb-text-editor-remix` is readOnly when `graphController.readOnly` is true.
+- [x] `bb-agent-config-column` — publish button is replaced with a "Remix" button when the graph is read-only. Share button is unified to always use the owner (black) style.
+- [x] `bb-agent-asset-shelf` — hide drag handle, add asset button, and remove button when the graph is read-only.
+- [x] `bb-tool-shelf` — disable toggle switches and add disabled styling when the graph is read-only.
+
+---
+
+## Phase 6 — Polish & Responsive Layout
 
 ### 🎯 Objective
 
@@ -608,7 +644,7 @@ new, empty agent — each section shows an appropriate empty state.
 
 ---
 
-## Phase 6 — Contextualized History (Future)
+## Phase 7 — Contextualized History (Future)
 
 ### 🎯 Objective
 
@@ -641,7 +677,7 @@ current tip.
 
 ---
 
-## Phase 7 — Annotation System (Future)
+## Phase 8 — Annotation System (Future)
 
 ### 🎯 Objective
 
