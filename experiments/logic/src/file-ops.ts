@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { join } from "path";
+import { basename, join } from "path";
 import { Case } from "./types";
 import {
   access,
@@ -23,32 +23,36 @@ const OUT_DIR = join(import.meta.dirname, "../out");
 
 type FileType = "draft" | "test" | "errors" | "final";
 
+function getSafeName(name: string): string {
+  return basename(name).replace(/[\\/]/g, "_");
+}
+
 async function write(c: Case, type: FileType, contents: string) {
-  const filename = join(OUT_DIR, `${c.name}${getSuffix(type)}`);
+  const filename = join(OUT_DIR, `${getSafeName(c.name)}${getSuffix(type)}`);
   await mkdir(OUT_DIR, { recursive: true });
   return writeFile(filename, contents, "utf-8");
 }
 
 async function read(c: Case, type: FileType) {
-  const filename = join(OUT_DIR, `${c.name}${getSuffix(type)}`);
+  const filename = join(OUT_DIR, `${getSafeName(c.name)}${getSuffix(type)}`);
   return readFile(filename, "utf-8");
 }
 
 async function copy(c: Case, from: FileType, to: FileType) {
-  const fromFile = join(OUT_DIR, `${c.name}${getSuffix(from)}`);
-  const toFile = join(OUT_DIR, `${c.name}${getSuffix(to)}`);
+  const fromFile = join(OUT_DIR, `${getSafeName(c.name)}${getSuffix(from)}`);
+  const toFile = join(OUT_DIR, `${getSafeName(c.name)}${getSuffix(to)}`);
   return copyFile(fromFile, toFile);
 }
 
 async function move(c: Case, from: FileType, to: FileType) {
-  const fromFile = join(OUT_DIR, `${c.name}${getSuffix(from)}`);
-  const toFile = join(OUT_DIR, `${c.name}${getSuffix(to)}`);
+  const fromFile = join(OUT_DIR, `${getSafeName(c.name)}${getSuffix(from)}`);
+  const toFile = join(OUT_DIR, `${getSafeName(c.name)}${getSuffix(to)}`);
   return rename(fromFile, toFile);
 }
 
 async function exists(c: Case, type: FileType) {
   try {
-    const filename = join(OUT_DIR, `${c.name}${getSuffix(type)}`);
+    const filename = join(OUT_DIR, `${getSafeName(c.name)}${getSuffix(type)}`);
     await access(filename, constants.F_OK);
     return true;
   } catch {
@@ -57,7 +61,7 @@ async function exists(c: Case, type: FileType) {
 }
 
 async function remove(c: Case, type: FileType) {
-  const filename = join(OUT_DIR, `${c.name}${getSuffix(type)}`);
+  const filename = join(OUT_DIR, `${getSafeName(c.name)}${getSuffix(type)}`);
   try {
     return await rm(filename);
   } catch {
