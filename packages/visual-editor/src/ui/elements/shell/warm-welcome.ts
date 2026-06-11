@@ -60,11 +60,24 @@ export class VEWarmWelcomeModal extends LitElement {
   @property()
   accessor emailPrefsManager: EmailPrefsManager | null = null;
 
+  /**
+   * Default opt-in state for the email checkboxes. Set to `false` in regions
+   * that require cookie consent (EEA, UK, etc.) so checkboxes start unchecked.
+   */
+  @property({ type: Boolean })
+  accessor defaultOptIn = true;
+
   @state()
   accessor emailUpdates = true;
 
   @state()
   accessor userResearch = true;
+
+  override connectedCallback() {
+    super.connectedCallback();
+    this.emailUpdates = this.defaultOptIn;
+    this.userResearch = this.defaultOptIn;
+  }
 
   #handleModalDismissed({ withSave }: ModalDismissedEvent) {
     // After first dismissal, we always save the prefs, but we only respect the
