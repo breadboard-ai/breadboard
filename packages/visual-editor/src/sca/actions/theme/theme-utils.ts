@@ -10,6 +10,7 @@ import {
   Outcome,
   geminiApiPrefix,
 } from "@breadboard-ai/types";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
 import { err, ok, isStoredData } from "@breadboard-ai/utils";
 import {
   generatePaletteFromColor,
@@ -53,14 +54,23 @@ async function generateImage(
   }
   controller.editor.theme.status = "generating";
   try {
-    const response = await services.fetchWithCreds(
-      endpointURL(IMAGE_GENERATOR),
-      {
-        method: "POST",
-        body: JSON.stringify({ contents }),
-        signal: abortSignal,
-      }
-    );
+    let response: Response;
+    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
+      const client = await services.backendClient;
+      response = await client.sendHttpRequest(
+        `models/${encodeURIComponent(IMAGE_GENERATOR)}:generateContent`,
+        { method: "POST", body: { contents }, signal: abortSignal }
+      );
+    } else {
+      response = await services.fetchWithCreds(
+        endpointURL(IMAGE_GENERATOR),
+        {
+          method: "POST",
+          body: JSON.stringify({ contents }),
+          signal: abortSignal,
+        }
+      );
+    }
     const result = (await response.json()) as {
       candidates: {
         content: LLMContent;

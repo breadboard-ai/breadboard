@@ -15,6 +15,7 @@ import {
   NOTEBOOKLM_API_PREFIX,
   OPAL_BACKEND_API_PREFIX,
 } from "@breadboard-ai/types";
+import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
 
 import { McpClientManager } from "../../mcp/client-manager.js";
 import { builtInMcpClients } from "../../mcp-clients.js";
@@ -60,6 +61,12 @@ export interface AppServices {
 
   emailPrefsManager: EmailPrefsManager;
   fetchWithCreds: typeof fetch;
+  /**
+   * Typed client for Opal backend API calls. Use this for all new backend
+   * calls instead of `fetchWithCreds`. Access via `services.backendClient`
+   * in SCA actions.
+   */
+  backendClient: Promise<OpalBackendClient>;
   setTitle: (title: string | null) => void;
 
   flowGenerator: FlowGenerator;
@@ -93,6 +100,7 @@ export function services(
   if (!instance) {
     const signinAdapter = new SigninAdapter(config.shellHost);
     const fetchWithCreds = signinAdapter.fetchWithCreds;
+    const backendClient = config.shellHost.getOpalBackendClient();
 
     const actionTracker = createActionTracker(config.shellHost);
 
@@ -199,6 +207,7 @@ export function services(
 
       emailPrefsManager,
       fetchWithCreds,
+      backendClient,
       setTitle: (title: string | null) => config.shellHost.setTitle(title),
 
       flowGenerator,
