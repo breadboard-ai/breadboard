@@ -50,32 +50,7 @@ that remains. The removed code was already unreachable.
 
 ## Work Items
 
-### 2a.0 — Migrate the `theme-utils.ts` straggler
-
-**File:**
-[`packages/visual-editor/src/sca/actions/theme/theme-utils.ts`](../../packages/visual-editor/src/sca/actions/theme/theme-utils.ts)
-
-This file calls `fetchWithCreds(endpointURL(IMAGE_GENERATOR), ...)` where
-`endpointURL` constructs `${geminiApiPrefix()}/${model}:generateContent`. This
-is an Opal Backend call that was missed during Phase 1 — it has no
-`ENABLE_BACKEND_CLIENT` flag gate.
-
-**What to do:**
-
-- Plumb `backendClient` to where `theme-utils.ts` can access it. This is an SCA
-  action, so it accesses dependencies via the module-level `bind` object. The
-  action's service or controller binding needs to provide `backendClient`.
-- Replace the `fetchWithCreds` call with
-  `backendClient.sendHttpRequest(\`models/${model}:generateContent\`, { method:
-  "POST", body, signal })`.
-- Since the flag is being removed in this phase, do **not** add a flag gate —
-  migrate directly to `sendHttpRequest`.
-- Add tests for the new code path.
-- Update `backend_reference.md` if this endpoint is not already listed.
-
----
-
-### 2a.1 — Collapse flag gates (10 files)
+### 2a.1 — Collapse flag gates (12 files)
 
 For each file below, apply the same mechanical transformation:
 
@@ -127,6 +102,7 @@ const response = await client.sendHttpRequest("methodName", {
 | 9   | [`opal-adk-stream.ts`](../../packages/visual-editor/src/a2/a2/opal-adk-stream.ts)                                | 1          | ~L288                                                                                  |
 | 10  | [`stream-run-agent-event-source.ts`](../../packages/visual-editor/src/a2/agent/stream-run-agent-event-source.ts) | 1          | ~L92                                                                                   |
 | 11  | [`gallery-graph-collection.ts`](../../packages/visual-editor/src/board-server/gallery-graph-collection.ts)       | 1          | ~L123                                                                                  |
+| 12  | [`theme-utils.ts`](../../packages/visual-editor/src/sca/actions/theme/theme-utils.ts)                            | 1          | Flag gate added in Phase 1 (Phase 7).                                                  |
 
 **Already migrated (no flag gate, no changes needed):**
 
@@ -356,8 +332,7 @@ construction.
 
 | Work Item | Scope                                             | Status |
 | --------- | ------------------------------------------------- | ------ |
-| 2a.0      | Migrate `theme-utils.ts` straggler                |        |
-| 2a.1      | Collapse flag gates (11 files, 23 gates)          |        |
+| 2a.1      | Collapse flag gates (12 files, 24 gates)          |        |
 | 2a.2      | Remove `fetchWithCreds` backend plumbing          |        |
 | 2a.3      | Remove `ENABLE_BACKEND_CLIENT` flag (3 locations) |        |
 | 2a.4      | Update tests (9 files)                            |        |
