@@ -9,7 +9,6 @@ import { SUSPEND_TYPES, eventType, eventPayload } from "./agent-event.js";
 import type { AgentEventConsumer } from "./agent-event-consumer.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
 import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
 
 export { StreamRunAgentEventSource };
 
@@ -30,14 +29,14 @@ export { StreamRunAgentEventSource };
  */
 class StreamRunAgentEventSource {
   constructor(
-    private readonly baseUrl: string,
+    _baseUrl: unknown,
     private readonly config: Record<string, unknown>,
     private readonly consumer: AgentEventConsumer,
-    private readonly fetchWithCreds: typeof fetch,
+    _fetchWithCreds: unknown,
     private readonly signal?: AbortSignal,
     private readonly backendClient?: Promise<OpalBackendClient>
   ) {
-    console.log("[SSE] Created StreamRunAgentEventSource", { baseUrl, config });
+    console.log("[SSE] Created StreamRunAgentEventSource", { config });
   }
 
   /**
@@ -85,26 +84,18 @@ class StreamRunAgentEventSource {
   ): Promise<
     { done: true } | { done: false; interactionId: string; response: unknown }
   > {
-    const url = `${this.baseUrl}/v1beta1/streamRunAgent?alt=sse`;
-    console.log("[SSE] Connecting:", url, body);
+    console.log("[SSE] Connecting: streamRunAgent", body);
 
-    let response: Response;
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT && this.backendClient) {
-      const backendClient = await this.backendClient;
-      response = await backendClient.sendHttpRequest("streamRunAgent", {
-        method: "POST",
-        body,
-        query: { alt: "sse" },
-        signal: this.signal,
-      });
-    } else {
-      response = await this.fetchWithCreds(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        signal: this.signal,
-      });
+    if (!this.backendClient) {
+      throw new Error("backendClient required");
     }
+    const backendClient = await this.backendClient;
+    const response = await backendClient.sendHttpRequest("streamRunAgent", {
+      method: "POST",
+      body,
+      query: { alt: "sse" },
+      signal: this.signal,
+    });
     console.log("[SSE] Response:", response.status, response.statusText);
 
     if (!response.ok) {

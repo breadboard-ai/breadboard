@@ -2,7 +2,6 @@ export type { StreamingRequestBody, StreamChunk };
 
 import {
   LLMContent,
-  OPAL_BACKEND_API_PREFIX,
   Outcome,
 } from "@breadboard-ai/types";
 import { err, toLLMContent } from "./utils.js";
@@ -17,12 +16,6 @@ import {
   classifyCaughtError,
 } from "../../utils/formatting/format-agent-error.js";
 import { parseStreamError } from "../../utils/formatting/parse-stream-error.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
-
-const OPAL_ADK_ENDPOINT = new URL(
-  "v1beta1/executeAgentNodeStream",
-  OPAL_BACKEND_API_PREFIX
-).href;
 
 const NODE_AGENT_KEY = "node_agent";
 const DEEP_RESEARCH_KEY = "deep_research";
@@ -266,9 +259,6 @@ class OpalAdkStream {
     }
     ui.progress.startAgent(toLLMContent("Starting Opal ADK Agent."));
     try {
-      const baseUrl = OPAL_ADK_ENDPOINT;
-      const url = new URL(baseUrl);
-      url.searchParams.set("alt", "sse");
       const requestBodyOrError = this.buildStreamingRequestBody({
         completedPrompt: objective,
         executionInputs: params,
@@ -284,26 +274,16 @@ class OpalAdkStream {
       }
       const requestBody = requestBodyOrError;
       ui.progress.sendOpalAdkRequest("", requestBody);
-      let response: Response;
-      if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
-        const backendClient = await this.moduleArgs.backendClient;
-        response = await backendClient.sendHttpRequest(
-          "executeAgentNodeStream",
-          {
-            method: "POST",
-            body: requestBody,
-            query: { alt: "sse" },
-            signal: this.moduleArgs.context.signal,
-          }
-        );
-      } else {
-        response = await this.moduleArgs.fetchWithCreds(url.toString(), {
+      const backendClient = await this.moduleArgs.backendClient;
+      const response = await backendClient.sendHttpRequest(
+        "executeAgentNodeStream",
+        {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody),
+          body: requestBody,
+          query: { alt: "sse" },
           signal: this.moduleArgs.context.signal,
-        });
-      }
+        }
+      );
 
       console.log("response: ", response);
       if (!response.ok) {

@@ -9,7 +9,6 @@ import {
   InlineDataCapabilityPart,
   JsonSerializable,
   LLMContent,
-  OPAL_BACKEND_API_PREFIX,
   Outcome,
 } from "@breadboard-ai/types";
 import {
@@ -33,10 +32,6 @@ import {
   formatAgentError,
   classifyCaughtError,
 } from "../../utils/formatting/format-agent-error.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
-
-const BACKEND_ENDPOINT = new URL("v1beta1/executeStep", OPAL_BACKEND_API_PREFIX)
-  .href;
 
 type Chunk = {
   mimetype: string;
@@ -218,7 +213,7 @@ async function executeStep(
   body: ExecuteStepRequest,
   progressUpdateOptions?: ProgressUpdateOptions
 ): Promise<Outcome<ExecutionOutput>> {
-  const { fetchWithCreds, context, reporter } = args;
+  const { context, reporter } = args;
   const model = body.planStep.options?.modelName || body.planStep.stepName;
   const { appScreen, title } = getCurrentStepState(args);
   try {
@@ -241,27 +236,14 @@ async function executeStep(
       body.enableG1Quota = true;
     }
     // Call the API.
-    const url = BACKEND_ENDPOINT;
     let response: ExecuteStepResponse;
     try {
-      let fetchResponse: Response;
-      if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
-        const backendClient = await args.backendClient;
-        fetchResponse = await backendClient.sendHttpRequest("executeStep", {
-          method: "POST",
-          body,
-          signal: context.signal,
-        });
-      } else {
-        fetchResponse = await fetchWithCreds(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          signal: context.signal,
-          body: JSON.stringify(body),
-        });
-      }
+      const backendClient = await args.backendClient;
+      const fetchResponse = await backendClient.sendHttpRequest("executeStep", {
+        method: "POST",
+        body,
+        signal: context.signal,
+      });
       if (!fetchResponse.ok) {
         const { $error, metadata } = decodeFetchError(
           await fetchResponse.text(),
