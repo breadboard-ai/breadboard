@@ -151,15 +151,15 @@ construction site.
 
 #### Event source constructors
 
-Both event source classes take `fetchWithCreds` as a constructor parameter:
+Both event source classes take `baseUrl` and `fetchWithCreds` as constructor
+parameters:
 
 - [`sse-agent-event-source.ts`](../../packages/visual-editor/src/a2/agent/sse-agent-event-source.ts)
-  — constructor param `fetchWithCreds: typeof fetch` (L40)
 - [`stream-run-agent-event-source.ts`](../../packages/visual-editor/src/a2/agent/stream-run-agent-event-source.ts)
-  — constructor param `fetchWithCreds: typeof fetch` (L38)
 
-After 2a.1 collapses the flag gates, `fetchWithCreds` is no longer used in
-either class. Remove the constructor param. Also make `backendClient` required
+After 2a.1 collapses the flag gates, `fetchWithCreds` and `baseUrl` are no
+longer used in either class (as `backendClient` encapsulates target URL
+resolution). Remove both constructor params. Also make `backendClient` required
 (currently optional `?`).
 
 #### `sse-agent-run.ts` pass-through
@@ -167,9 +167,11 @@ either class. Remove the constructor param. Also make `backendClient` required
 **File:**
 [`packages/visual-editor/src/a2/agent/sse-agent-run.ts`](../../packages/visual-editor/src/a2/agent/sse-agent-run.ts)
 
-This file passes `fetchWithCreds` positionally to both event source constructors
-(~L68, L85, L93). After removing the param from the constructors, update these
-call sites.
+This file passes `baseUrl` and `fetchWithCreds` positionally to both event
+source constructors. After removing the params from the constructors, update
+these call sites and remove `baseUrl` and `fetchWithCreds` from `SSEAgentRun`'s
+constructor. Also remove obsolete `#remoteFetchWithCreds` wiring in
+`AgentService`.
 
 #### `gallery-graph-collection.ts` constructor
 
@@ -330,11 +332,11 @@ construction.
 
 ## Progress Tracker
 
-| Work Item | Scope                                             | Status |
-| --------- | ------------------------------------------------- | ------ |
-| 2a.1      | Collapse flag gates (12 files, 24 gates)          |        |
-| 2a.2      | Remove `fetchWithCreds` backend plumbing          |        |
-| 2a.3      | Remove `ENABLE_BACKEND_CLIENT` flag (3 locations) |        |
-| 2a.4      | Update tests (9 files)                            |        |
-| 2a.5      | Update documentation                              |        |
-| 2a.6      | Remove `OPAL_BACKEND_API_PREFIX`                  |        |
+| Work Item | Scope                                             | Status                                                                                    |
+| --------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 2a.1      | Collapse flag gates (12 files, 24 gates)          | ✅ Complete                                                                               |
+| 2a.2      | Remove `fetchWithCreds` backend plumbing          | ✅ Complete (unused pass-through `fetchWithCreds` & `baseUrl` parameters cleanly deleted) |
+| 2a.3      | Remove `ENABLE_BACKEND_CLIENT` flag (3 locations) | ⏳ Pending (deferred per scope instructions)                                              |
+| 2a.4      | Update tests (9 files)                            | ✅ Complete                                                                               |
+| 2a.5      | Update documentation                              | ⏳ Pending                                                                                |
+| 2a.6      | Remove `OPAL_BACKEND_API_PREFIX`                  | ⏳ Pending (deferred per scope instructions)                                              |

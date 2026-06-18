@@ -9,7 +9,6 @@ import { SUSPEND_TYPES, eventType } from "./agent-event.js";
 import type { AgentEventConsumer } from "./agent-event-consumer.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
 import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
 
 export { SSEAgentEventSource };
 
@@ -34,14 +33,12 @@ class SSEAgentEventSource {
   #eventCursor = -1;
 
   constructor(
-    private readonly baseUrl: string,
     private readonly config: Record<string, unknown>,
     private readonly consumer: AgentEventConsumer,
-    private readonly fetchWithCreds: typeof fetch,
-    private readonly signal?: AbortSignal,
-    private readonly backendClient?: Promise<OpalBackendClient>
+    private readonly signal: AbortSignal | undefined,
+    private readonly backendClient: Promise<OpalBackendClient>
   ) {
-    console.log("[SSE] Created SSEAgentEventSource", { baseUrl, config });
+    console.log("[SSE] Created SSEAgentEventSource", { config });
   }
 
   /** The session ID, available after `connect()` starts. */
@@ -85,19 +82,12 @@ class SSEAgentEventSource {
   async cancel(): Promise<void> {
     if (!this.#sessionId) return;
     try {
-      if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT && this.backendClient) {
-        const backendClient = await this.backendClient;
-        await backendClient.sendHttpRequest(
-          `sessions/${this.#sessionId}:cancel`,
-          { method: "POST" }
-        );
-      } else {
-        const url = `${this.baseUrl}/v1beta1/sessions/${this.#sessionId}:cancel`;
-        await this.fetchWithCreds(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
-      }
+      if (!this.backendClient) throw new Error("backendClient required");
+      const backendClient = await this.backendClient;
+      await backendClient.sendHttpRequest(
+        `sessions/${this.#sessionId}:cancel`,
+        { method: "POST" }
+      );
     } catch {
       // Best-effort — the abort signal may have already killed the fetch.
     }
@@ -116,23 +106,13 @@ class SSEAgentEventSource {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { kind: _, ...wireBody } = this.config as { kind?: string };
 
-    let response: Response;
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT && this.backendClient) {
-      const backendClient = await this.backendClient;
-      response = await backendClient.sendHttpRequest("sessions/new", {
-        method: "POST",
-        body: wireBody,
-        signal: this.signal,
-      });
-    } else {
-      const url = `${this.baseUrl}/v1beta1/sessions/new`;
-      response = await this.fetchWithCreds(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(wireBody),
-        signal: this.signal,
-      });
-    }
+    if (!this.backendClient) throw new Error("backendClient required");
+    const backendClient = await this.backendClient;
+    const response = await backendClient.sendHttpRequest("sessions/new", {
+      method: "POST",
+      body: wireBody,
+      signal: this.signal,
+    });
 
     if (!response.ok) {
       throw new Error(
@@ -156,29 +136,18 @@ class SSEAgentEventSource {
   > {
     const after = this.#eventCursor;
 
-    let response: Response;
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT && this.backendClient) {
-      const backendClient = await this.backendClient;
-      const query: Record<string, string> = { alt: "sse" };
-      if (after >= 0) query.after = String(after);
-      response = await backendClient.sendHttpRequest(
-        `sessions/${this.#sessionId}`,
-        {
-          method: "GET",
-          query,
-          signal: this.signal,
-        }
-      );
-    } else {
-      const url =
-        after >= 0
-          ? `${this.baseUrl}/v1beta1/sessions/${this.#sessionId}?alt=sse&after=${after}`
-          : `${this.baseUrl}/v1beta1/sessions/${this.#sessionId}?alt=sse`;
-      console.log("[SSE] Streaming:", url);
-      response = await this.fetchWithCreds(url, {
+    if (!this.backendClient) throw new Error("backendClient required");
+    const backendClient = await this.backendClient;
+    const query: Record<string, string> = { alt: "sse" };
+    if (after >= 0) query.after = String(after);
+    const response = await backendClient.sendHttpRequest(
+      `sessions/${this.#sessionId}`,
+      {
+        method: "GET",
+        query,
         signal: this.signal,
-      });
-    }
+      }
+    );
 
     if (!response.ok) {
       throw new Error(
@@ -226,27 +195,16 @@ class SSEAgentEventSource {
   async #resume(response: unknown): Promise<void> {
     console.log("[SSE] Resuming");
 
-    let res: Response;
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT && this.backendClient) {
-      const backendClient = await this.backendClient;
-      res = await backendClient.sendHttpRequest(
-        `sessions/${this.#sessionId}:resume`,
-        {
-          method: "POST",
-          body: response as Record<string, unknown>,
-          signal: this.signal,
-        }
-      );
-    } else {
-      const url = `${this.baseUrl}/v1beta1/sessions/${this.#sessionId}:resume`;
-      console.log("[SSE] Resuming:", url);
-      res = await this.fetchWithCreds(url, {
+    if (!this.backendClient) throw new Error("backendClient required");
+    const backendClient = await this.backendClient;
+    const res = await backendClient.sendHttpRequest(
+      `sessions/${this.#sessionId}:resume`,
+      {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(response as Record<string, unknown>),
+        body: response as Record<string, unknown>,
         signal: this.signal,
-      });
-    }
+      }
+    );
 
     if (!res.ok) {
       throw new Error(`Resume failed: ${res.status} ${res.statusText}`);

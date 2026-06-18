@@ -8,7 +8,6 @@ export type { StreamingRequestBody, StreamChunk };
 
 import {
   LLMContent,
-  OPAL_BACKEND_API_PREFIX,
   Outcome,
 } from "@breadboard-ai/types";
 import { iteratorFromStream } from "@breadboard-ai/utils";
@@ -30,12 +29,6 @@ import {
   classifyCaughtError,
 } from "../../utils/formatting/format-agent-error.js";
 import { parseStreamError } from "../../utils/formatting/parse-stream-error.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
-
-const STREAM_BACKEND_ENDPOINT = new URL(
-  "v1beta1/generateWebpageStream",
-  OPAL_BACKEND_API_PREFIX
-).href;
 
 type StreamChunk = {
   parts?: Array<{
@@ -208,32 +201,18 @@ async function executeWebpageStream(
 
     if (appScreen) appScreen.progress = "Generating HTML";
 
-    const baseUrl = STREAM_BACKEND_ENDPOINT;
-    const url = new URL(baseUrl);
-    url.searchParams.set("alt", "sse");
-
     const requestBody = buildStreamingRequestBody(
       instruction,
       content
     );
 
-    let response: Response;
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
-      const backendClient = await moduleArgs.backendClient;
-      response = await backendClient.sendHttpRequest("generateWebpageStream", {
-        method: "POST",
-        body: requestBody,
-        query: { alt: "sse" },
-        signal: moduleArgs.context.signal,
-      });
-    } else {
-      response = await moduleArgs.fetchWithCreds(url.toString(), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-        signal: moduleArgs.context.signal,
-      });
-    }
+    const backendClient = await moduleArgs.backendClient;
+    const response = await backendClient.sendHttpRequest("generateWebpageStream", {
+      method: "POST",
+      body: requestBody,
+      query: { alt: "sse" },
+      signal: moduleArgs.context.signal,
+    });
 
     if (!response.ok) {
       const errorText = await response.text();

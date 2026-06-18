@@ -6,10 +6,27 @@
 
 import assert from "node:assert";
 import { mock, suite, test, beforeEach, afterEach } from "node:test";
-import { SSEAgentEventSource } from "../../src/a2/agent/sse-agent-event-source.js";
+import { SSEAgentEventSource as RealSSEAgentEventSource } from "../../src/a2/agent/sse-agent-event-source.js";
+import { HttpBackendClient } from "../../src/ui/utils/http-backend-client.js";
 import { AgentEventConsumer } from "../../src/a2/agent/agent-event-consumer.js";
 import type { AgentEvent } from "../../src/a2/agent/agent-event.js";
 import { setDOM, unsetDOM } from "../fake-dom.js";
+
+class MockSSEAgentEventSource extends RealSSEAgentEventSource {
+  constructor(
+    config: Record<string, unknown>,
+    consumer: AgentEventConsumer
+  ) {
+    super(
+      config,
+      consumer,
+      undefined,
+      Promise.resolve(new HttpBackendClient(globalThis.fetch))
+    );
+  }
+}
+const SSEAgentEventSource = MockSSEAgentEventSource;
+type SSEAgentEventSource = RealSSEAgentEventSource;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -137,10 +154,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
     });
 
     const source = new SSEAgentEventSource(
-      "http://test",
       TEST_CONFIG,
-      consumer,
-      fetch
+      consumer
     );
     await source.connect();
 
@@ -162,7 +177,7 @@ suite("SSEAgentEventSource (session protocol)", () => {
 
     // Second call: GET /sessions/{id}.
     assert.ok(fetchCalls[1].url.includes(`/sessions/${SESSION_ID}`));
-    assert.strictEqual(fetchCalls[1].init?.method, undefined); // GET
+    assert.ok(!fetchCalls[1].init?.method || fetchCalls[1].init.method === "GET"); // GET
   });
 
   test("suspend event triggers resume + reconnect", async () => {
@@ -237,10 +252,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
     });
 
     const source = new SSEAgentEventSource(
-      "http://test",
       TEST_CONFIG,
-      consumer,
-      fetch
+      consumer
     );
     await source.connect();
 
@@ -303,10 +316,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
     });
 
     const source = new SSEAgentEventSource(
-      "http://test",
       TEST_CONFIG,
-      consumer,
-      fetch
+      consumer
     );
     await source.connect();
 
@@ -344,10 +355,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
     });
 
     const source = new SSEAgentEventSource(
-      "http://test",
       TEST_CONFIG,
-      consumer,
-      fetch
+      consumer
     );
     await source.connect();
 
@@ -374,10 +383,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
     });
 
     const source = new SSEAgentEventSource(
-      "http://test",
       TEST_CONFIG,
-      consumer,
-      fetch
+      consumer
     );
     await source.connect();
 
@@ -457,10 +464,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
       });
 
     const source = new SSEAgentEventSource(
-      "http://test",
       TEST_CONFIG,
-      consumer,
-      fetch
+      consumer
     );
     await source.connect();
 
@@ -500,10 +505,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
     });
 
     const source = new SSEAgentEventSource(
-      "http://test",
       TEST_CONFIG,
-      consumer,
-      fetch
+      consumer
     );
     await source.connect();
 
@@ -522,10 +525,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
 
     const consumer = new AgentEventConsumer();
     const source = new SSEAgentEventSource(
-      "http://test",
       TEST_CONFIG,
-      consumer,
-      fetch
+      consumer
     );
 
     await assert.rejects(
@@ -550,10 +551,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
 
     const consumer = new AgentEventConsumer();
     const source = new SSEAgentEventSource(
-      "http://test",
       TEST_CONFIG,
-      consumer,
-      fetch
+      consumer
     );
 
     await assert.rejects(
@@ -578,10 +577,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
 
     const consumer = new AgentEventConsumer();
     const source = new SSEAgentEventSource(
-      "http://test",
       TEST_CONFIG,
-      consumer,
-      fetch
+      consumer
     );
 
     await assert.rejects(
@@ -599,10 +596,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
 
     const consumer = new AgentEventConsumer();
     const source = new SSEAgentEventSource(
-      "http://test",
       TEST_CONFIG,
-      consumer,
-      fetch
+      consumer
     );
     await source.connect();
 
@@ -623,10 +618,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
   test("cancel() does nothing when no session exists", async () => {
     const consumer = new AgentEventConsumer();
     const source = new SSEAgentEventSource(
-      "http://test",
       TEST_CONFIG,
-      consumer,
-      fetch
+      consumer
     );
 
     // No connect() called — sessionId is null.
@@ -722,10 +715,8 @@ suite("SSEAgentEventSource (session protocol)", () => {
     });
 
     const source = new SSEAgentEventSource(
-      "http://test",
       TEST_CONFIG,
-      consumer,
-      fetch
+      consumer
     );
     await source.connect();
 

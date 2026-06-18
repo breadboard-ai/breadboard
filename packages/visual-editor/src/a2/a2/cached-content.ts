@@ -4,16 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { OPAL_BACKEND_API_PREFIX, Outcome } from "@breadboard-ai/types";
+import { Outcome } from "@breadboard-ai/types";
 import { err } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { GeminiBody } from "./gemini.js";
 import { formatAgentError } from "../../utils/formatting/format-agent-error.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
 
 export { createCachedContent };
-
-const ENDPOINT = "/v1beta1/createCachedContent";
 
 type CachedContent = {
   contents: GeminiBody["contents"];
@@ -46,8 +43,7 @@ async function createCachedContent(
   model: string,
   body: GeminiBody
 ): Promise<Outcome<string>> {
-  const { fetchWithCreds, context } = moduleArgs;
-  const url = new URL(ENDPOINT, OPAL_BACKEND_API_PREFIX);
+  const { context } = moduleArgs;
 
   const request: CreateCachedContentRequest = {
     cachedContent: {
@@ -60,21 +56,12 @@ async function createCachedContent(
   };
 
   try {
-    let response: Response;
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
-      const backendClient = await moduleArgs.backendClient;
-      response = await backendClient.sendHttpRequest("createCachedContent", {
-        method: "POST",
-        body: request,
-        signal: context.signal,
-      });
-    } else {
-      response = await fetchWithCreds(url, {
-        method: "POST",
-        body: JSON.stringify(request),
-        signal: context.signal,
-      });
-    }
+    const backendClient = await moduleArgs.backendClient;
+    const response = await backendClient.sendHttpRequest("createCachedContent", {
+      method: "POST",
+      body: request,
+      signal: context.signal,
+    });
     if (!response.ok) {
       const text = await response.text();
       return err(`CreateCachedContent failed (${response.status}): ${text}`);

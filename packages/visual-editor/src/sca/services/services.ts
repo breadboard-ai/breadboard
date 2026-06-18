@@ -146,12 +146,11 @@ export function services(
 
     const agentService = new AgentService();
 
-    // Always wire up the remote URL + fetch. The predicates read flags
+    // Always wire up the remote URL. The predicates read flags
     // at startRun() time, so toggling flags in Settings takes effect
     // without a page reload.
     agentService.configureRemote(
       OPAL_BACKEND_API_PREFIX,
-      fetchWithCreds,
       () =>
         env.flags.get("enableOpalBackend") ||
         env.flags.get("enableSessionsBackend"),
@@ -188,8 +187,6 @@ export function services(
 
     const autonamer = new Autonamer(sandbox);
     const apiClient = new AppCatalystApiClient(
-      fetchWithCreds,
-      OPAL_BACKEND_API_PREFIX,
       config.shellHost.getOpalBackendClient()
     );
     const emailPrefsManager = new EmailPrefsManager(apiClient);

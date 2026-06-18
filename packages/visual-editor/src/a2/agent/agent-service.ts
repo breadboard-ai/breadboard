@@ -113,7 +113,6 @@ class AgentService {
    * Set via `configureRemote()` — intended for tests and dev mode.
    */
   #remoteBaseUrl: string | null = null;
-  #remoteFetchWithCreds: typeof fetch = fetch;
   #remoteBackendClient: Promise<OpalBackendClient> = new Promise(() => {});
   #remoteIsEnabled: () => boolean = () => true;
   #useSessionsProtocol: () => boolean = () => false;
@@ -136,13 +135,11 @@ class AgentService {
    */
   configureRemote(
     baseUrl: string | null,
-    fetchWithCreds: typeof fetch = fetch,
     isEnabled: () => boolean = () => true,
     useSessionsProtocol: () => boolean = () => false,
     backendClient: Promise<OpalBackendClient> = new Promise(() => {})
   ): void {
     this.#remoteBaseUrl = baseUrl;
-    this.#remoteFetchWithCreds = fetchWithCreds;
     this.#remoteBackendClient = backendClient;
     this.#remoteIsEnabled = isEnabled;
     this.#useSessionsProtocol = useSessionsProtocol;
@@ -173,9 +170,7 @@ class AgentService {
       run = new SSEAgentRun(
         runId,
         config.kind,
-        this.#remoteBaseUrl,
         config,
-        this.#remoteFetchWithCreds,
         this.#useSessionsProtocol(),
         this.#remoteBackendClient
       );

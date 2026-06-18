@@ -14,7 +14,6 @@ import {
 } from "../../src/a2/a2/gemini.js";
 import type { A2ModuleArgs } from "../../src/a2/runnable-module-factory.js";
 import type { GeminiAPIOutputs } from "../../src/a2/a2/gemini.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../src/ui/config/client-deployment-configuration.js";
 
 // Helper to create chunk encoder for SSE streams
 function sseChunk(data: unknown): Uint8Array {
@@ -54,6 +53,11 @@ function makeMockModuleArgs(
 
   return {
     fetchWithCreds: mockFetch as unknown as typeof globalThis.fetch,
+    backendClient: Promise.resolve({
+      sendHttpRequest: async (_endpoint: string, opts: unknown) => {
+        return mockFetch("https://mock", opts);
+      },
+    } as any),
     context: {
       signal: new AbortController().signal,
     } as unknown as NodeHandlerContext,
@@ -290,50 +294,12 @@ describe("Gemini streamGenerateContent retry logic", () => {
 });
 
 describe("generateContent ENABLE_BACKEND_CLIENT migration", () => {
-  let savedFlag: boolean;
 
   afterEach(() => {
-    if (savedFlag !== undefined) {
-      CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = savedFlag;
-    }
     mock.restoreAll();
   });
 
-  it("uses fetchWithCreds when ENABLE_BACKEND_CLIENT is off", async () => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = false;
-
-    const fetchMock = mock.fn(
-      async (_url: URL | RequestInfo, _init?: RequestInit) => {
-        return new Response(JSON.stringify(successResponse("flag-off result")), {
-          status: 200,
-        });
-      }
-    );
-
-    const args = {
-      ...makeMockModuleArgs([]),
-      fetchWithCreds: fetchMock as unknown as typeof globalThis.fetch,
-    };
-
-    const result = await generateContent(
-      "alias-text-flash",
-      { contents: [{ parts: [{ text: "Hello" }], role: "user" }] },
-      args
-    );
-
-    assert.ok(ok(result));
-    assert.equal(fetchMock.mock.calls.length, 1);
-    const [url, init] = fetchMock.mock.calls[0].arguments;
-    assert.ok(url.toString().includes("models/alias-text-flash:generateContent"));
-    assert.equal(init?.method, "POST");
-    // fetchWithCreds path receives a JSON string body
-    assert.equal(typeof init?.body, "string");
-  });
-
-  it("uses sendHttpRequest when ENABLE_BACKEND_CLIENT is on", async () => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
+  it("sends HTTP request via backend client", async () => {
 
     const backendClientMock = {
       sendHttpRequest: mock.fn(async () => {
@@ -369,35 +335,7 @@ describe("generateContent ENABLE_BACKEND_CLIENT migration", () => {
     assert.equal(typeof options.body, "object");
   });
 
-  it("returns error on non-OK response when flag is off", async () => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = false;
-
-    const fetchMock = mock.fn(async () => {
-      return new Response(
-        JSON.stringify({ error: { message: "Model not found" } }),
-        { status: 404 }
-      );
-    });
-
-    const args = {
-      ...makeMockModuleArgs([]),
-      fetchWithCreds: fetchMock as unknown as typeof globalThis.fetch,
-    };
-
-    const result = await generateContent(
-      "nonexistent-model",
-      { contents: [{ parts: [{ text: "Hello" }], role: "user" }] },
-      args
-    );
-
-    assert.ok(!ok(result));
-    assert.ok(result.$error.includes("Model not found"));
-  });
-
-  it("returns error on non-OK response when flag is on", async () => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
+  it("returns error on non-OK response", async () => {
 
     const backendClientMock = {
       sendHttpRequest: mock.fn(async () => {
@@ -426,64 +364,12 @@ describe("generateContent ENABLE_BACKEND_CLIENT migration", () => {
 });
 
 describe("streamGenerateContent ENABLE_BACKEND_CLIENT migration", () => {
-  let savedFlag: boolean;
 
   afterEach(() => {
-    if (savedFlag !== undefined) {
-      CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = savedFlag;
-    }
     mock.restoreAll();
   });
 
-  it("uses fetchWithCreds when ENABLE_BACKEND_CLIENT is off", async () => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = false;
-
-    const fetchMock = mock.fn(
-      async (_url: URL | RequestInfo, _init?: RequestInit) => {
-        const stream = new ReadableStream({
-          start(controller) {
-            controller.enqueue(sseChunk(successResponse("stream flag-off")));
-            controller.close();
-          },
-        });
-        return new Response(stream, { status: 200 });
-      }
-    );
-
-    const args = {
-      ...makeMockModuleArgs([]),
-      fetchWithCreds: fetchMock as unknown as typeof globalThis.fetch,
-    };
-
-    const result = await streamGenerateContent(
-      "alias-text-flash",
-      { contents: [] },
-      args
-    );
-
-    assert.ok(ok(result));
-    assert.equal(fetchMock.mock.calls.length, 1);
-    const [url, init] = fetchMock.mock.calls[0].arguments;
-    assert.ok(
-      url.toString().includes("models/alias-text-flash:streamGenerateContent")
-    );
-    assert.ok(url.toString().includes("alt=sse"));
-    assert.equal(init?.method, "POST");
-
-    const chunks: GeminiAPIOutputs[] = [];
-    for await (const chunk of result) {
-      chunks.push(chunk);
-    }
-    assert.equal(chunks.length, 1);
-    const part = chunks[0]?.candidates?.[0]?.content?.parts?.[0];
-    assert.ok(part && "text" in part);
-    assert.equal(part.text, "stream flag-off");
-  });
-
-  it("uses sendHttpRequest when ENABLE_BACKEND_CLIENT is on", async () => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
+  it("sends HTTP request via backend client", async () => {
 
     const backendClientMock = {
       sendHttpRequest: mock.fn(async () => {
@@ -533,35 +419,7 @@ describe("streamGenerateContent ENABLE_BACKEND_CLIENT migration", () => {
     assert.equal(part.text, "stream flag-on");
   });
 
-  it("returns error on non-OK response when flag is off", async () => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = false;
-
-    const fetchMock = mock.fn(async () => {
-      return new Response(
-        JSON.stringify({ error: { message: "Rate limited" } }),
-        { status: 429 }
-      );
-    });
-
-    const args = {
-      ...makeMockModuleArgs([]),
-      fetchWithCreds: fetchMock as unknown as typeof globalThis.fetch,
-    };
-
-    const result = await streamGenerateContent(
-      "alias-text-flash",
-      { contents: [] },
-      args
-    );
-
-    assert.ok(!ok(result));
-    assert.ok(result.$error.includes("Rate limited"));
-  });
-
-  it("returns error on non-OK response when flag is on", async () => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
+  it("returns error on non-OK response", async () => {
 
     const backendClientMock = {
       sendHttpRequest: mock.fn(async () => {

@@ -7,7 +7,6 @@
 import { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
 import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 import { FlowGenLLMContentPart } from "./flow-generator.js";
 
 export interface AppCatalystChatRequest {
@@ -99,45 +98,23 @@ export interface SetEmailPreferencesRequest {
 }
 
 export class AppCatalystApiClient {
-  readonly #fetchWithCreds: typeof globalThis.fetch;
-  readonly #apiBaseUrl: string;
   readonly #backendClientPromise: Promise<OpalBackendClient>;
 
-  constructor(
-    fetchWithCreds: typeof globalThis.fetch,
-    apiBaseUrl: string,
-    backendClientPromise: Promise<OpalBackendClient>
-  ) {
-    this.#fetchWithCreds = fetchWithCreds;
-    this.#apiBaseUrl = apiBaseUrl;
+  constructor(backendClientPromise: Promise<OpalBackendClient>) {
     this.#backendClientPromise = backendClientPromise;
   }
 
   async getG1SubscriptionStatus(
     request: AppCatalystG1SubscriptionStatusRequest
   ): Promise<AppCatalystG1SubscriptionStatusResponse> {
-    let response: Response;
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
-      const backendClient = await this.#backendClientPromise;
-      response = await backendClient.sendHttpRequest(
-        "getG1SubscriptionStatus",
-        {
-          method: "POST",
-          body: request,
-        }
-      );
-    } else {
-      response = await this.#fetchWithCreds(
-        new URL("v1beta1/getG1SubscriptionStatus", this.#apiBaseUrl),
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify(request),
-        }
-      );
-    }
+    const backendClient = await this.#backendClientPromise;
+    const response = await backendClient.sendHttpRequest(
+      "getG1SubscriptionStatus",
+      {
+        method: "POST",
+        body: request,
+      }
+    );
     if (!response.ok) {
       throw new Error(
         `Failed to get G1 subscription status: ${response.statusText}`
@@ -149,25 +126,11 @@ export class AppCatalystApiClient {
   }
 
   async getG1Credits(): Promise<AppCatalystG1CreditsResponse> {
-    let response: Response;
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
-      const backendClient = await this.#backendClientPromise;
-      response = await backendClient.sendHttpRequest("getG1Credits", {
-        method: "POST",
-        body: {},
-      });
-    } else {
-      response = await this.#fetchWithCreds(
-        new URL("v1beta1/getG1Credits", this.#apiBaseUrl),
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: "{}",
-        }
-      );
-    }
+    const backendClient = await this.#backendClientPromise;
+    const response = await backendClient.sendHttpRequest("getG1Credits", {
+      method: "POST",
+      body: {},
+    });
     if (!response.ok) {
       throw new Error(`Failed to get G1 credits: ${response.statusText}`);
     }
@@ -178,25 +141,11 @@ export class AppCatalystApiClient {
   async chat(
     request: AppCatalystChatRequest
   ): Promise<AppCatalystChatResponse> {
-    let response: Response;
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
-      const backendClient = await this.#backendClientPromise;
-      response = await backendClient.sendHttpRequest("chatGenerateApp", {
-        method: "POST",
-        body: request,
-      });
-    } else {
-      response = await this.#fetchWithCreds(
-        new URL("v1beta1/chatGenerateApp", this.#apiBaseUrl),
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify(request),
-        }
-      );
-    }
+    const backendClient = await this.#backendClientPromise;
+    const response = await backendClient.sendHttpRequest("chatGenerateApp", {
+      method: "POST",
+      body: request,
+    });
     const result = (await response.json()) as AppCatalystChatResponse;
     return result;
   }
@@ -243,25 +192,12 @@ export class AppCatalystApiClient {
       | "editOpalStream"
       | "rewriteOpalPromptStream" = "generateOpalStream"
   ): AsyncGenerator<LLMContent> {
-    let response: Response;
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
-      const backendClient = await this.#backendClientPromise;
-      response = await backendClient.sendHttpRequest(endpoint, {
-        method: "POST",
-        body: request,
-        query: { alt: "sse" },
-      });
-    } else {
-      const url = new URL(`v1beta1/${endpoint}`, this.#apiBaseUrl);
-      url.searchParams.set("alt", "sse");
-      response = await this.#fetchWithCreds(url, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(request),
-      });
-    }
+    const backendClient = await this.#backendClientPromise;
+    const response = await backendClient.sendHttpRequest(endpoint, {
+      method: "POST",
+      body: request,
+      query: { alt: "sse" },
+    });
 
     if (!response.ok || !response.body) {
       throw new Error(`Failed to start stream: ${response.statusText}`);
@@ -272,17 +208,10 @@ export class AppCatalystApiClient {
 
   async checkTos(): Promise<CheckAppAccessResponse> {
     try {
-      let response: Response;
-      if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
-        const backendClient = await this.#backendClientPromise;
-        response = await backendClient.sendHttpRequest("checkAppAccess", {
-          method: "GET",
-        });
-      } else {
-        response = await this.#fetchWithCreds(
-          new URL(`v1beta1/checkAppAccess`, this.#apiBaseUrl)
-        );
-      }
+      const backendClient = await this.#backendClientPromise;
+      const response = await backendClient.sendHttpRequest("checkAppAccess", {
+        method: "GET",
+      });
 
       const result = (await response.json()) as CheckAppAccessResponse;
 
@@ -297,31 +226,14 @@ export class AppCatalystApiClient {
   }
 
   async acceptTos(tosVersion: number = 1, acceptTos = false): Promise<void> {
-    let response: Response;
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
-      const backendClient = await this.#backendClientPromise;
-      response = await backendClient.sendHttpRequest("acceptToS", {
-        method: "POST",
-        body: {
-          termsOfServiceVersion: tosVersion,
-          acceptTos,
-        },
-      });
-    } else {
-      response = await this.#fetchWithCreds(
-        new URL("v1beta1/acceptToS", this.#apiBaseUrl),
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            termsOfServiceVersion: tosVersion,
-            acceptTos,
-          }),
-        }
-      );
-    }
+    const backendClient = await this.#backendClientPromise;
+    const response = await backendClient.sendHttpRequest("acceptToS", {
+      method: "POST",
+      body: {
+        termsOfServiceVersion: tosVersion,
+        acceptTos,
+      },
+    });
 
     if (!response.ok) {
       throw new Error(`Failed to accept TOS: ${response.statusText}`);
@@ -337,25 +249,11 @@ export class AppCatalystApiClient {
     const request: GetEmailPreferencesRequest = {
       preferenceKeys,
     };
-    let response: Response;
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
-      const backendClient = await this.#backendClientPromise;
-      response = await backendClient.sendHttpRequest("getEmailPreferences", {
-        method: "POST",
-        body: request,
-      });
-    } else {
-      response = await this.#fetchWithCreds(
-        new URL("v1beta1/getEmailPreferences", this.#apiBaseUrl),
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify(request),
-        }
-      );
-    }
+    const backendClient = await this.#backendClientPromise;
+    const response = await backendClient.sendHttpRequest("getEmailPreferences", {
+      method: "POST",
+      body: request,
+    });
     if (!response.ok) {
       throw new Error(
         `Failed to fetch email preferences: ${response.statusText}`
@@ -385,25 +283,11 @@ export class AppCatalystApiClient {
           : NotifyPreference.DROP,
       })),
     };
-    let response: Response;
-    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT) {
-      const backendClient = await this.#backendClientPromise;
-      response = await backendClient.sendHttpRequest("setEmailPreferences", {
-        method: "POST",
-        body: request,
-      });
-    } else {
-      response = await this.#fetchWithCreds(
-        new URL("v1beta1/setEmailPreferences", this.#apiBaseUrl),
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify(request),
-        }
-      );
-    }
+    const backendClient = await this.#backendClientPromise;
+    const response = await backendClient.sendHttpRequest("setEmailPreferences", {
+      method: "POST",
+      body: request,
+    });
     if (!response.ok) {
       throw new Error(
         `Failed to set email preferences: ${response.statusText}`

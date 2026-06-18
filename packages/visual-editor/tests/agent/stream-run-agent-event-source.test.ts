@@ -8,7 +8,6 @@ import assert from "node:assert";
 import { mock, suite, test, beforeEach, afterEach } from "node:test";
 import { StreamRunAgentEventSource } from "../../src/a2/agent/stream-run-agent-event-source.js";
 import { AgentEventConsumer } from "../../src/a2/agent/agent-event-consumer.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../src/ui/config/client-deployment-configuration.js";
 import { setDOM, unsetDOM } from "../fake-dom.js";
 
 // ---------------------------------------------------------------------------
@@ -20,9 +19,8 @@ function sseStream(events: object[]): ReadableStream<Uint8Array> {
   return new ReadableStream({
     start(controller) {
       for (const event of events) {
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify(event)}\n\n`)
-        );
+        const data = `data: ${JSON.stringify(event)}\n\n`;
+        controller.enqueue(encoder.encode(data));
       }
       controller.close();
     },
@@ -45,79 +43,33 @@ const TEST_CONFIG = { kind: "test", objective: { parts: [{ text: "hi" }] } };
 // Tests
 // ---------------------------------------------------------------------------
 
-suite("StreamRunAgentEventSource: ENABLE_BACKEND_CLIENT migration", () => {
-  let savedFlag: boolean;
-
+suite("StreamRunAgentEventSource", () => {
   beforeEach(() => {
     setDOM();
   });
 
   afterEach(() => {
-    if (savedFlag !== undefined) {
-      CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = savedFlag;
-    }
     mock.restoreAll();
     unsetDOM();
   });
 
-  test("uses fetchWithCreds when ENABLE_BACKEND_CLIENT is off", async () => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = false;
-
-    const events = [{ finish: {} }];
-    const fetchMock = mock.fn(
-      async (_url: URL | RequestInfo, _init?: RequestInit) =>
-        sseResponse(events)
-    );
-
-    const consumer = new AgentEventConsumer();
-    consumer.on("finish", () => {});
-
-    const source = new StreamRunAgentEventSource(
-      "http://test",
-      TEST_CONFIG,
-      consumer,
-      fetchMock as unknown as typeof fetch,
-      undefined, // signal
-      Promise.resolve({} as any) // backendClient (should not be used)
-    );
-    await source.connect();
-
-    assert.strictEqual(fetchMock.mock.calls.length, 1);
-    const [url, init] = fetchMock.mock.calls[0].arguments;
-    assert.ok(
-      url.toString().includes("/v1beta1/streamRunAgent?alt=sse"),
-      `Expected URL to include streamRunAgent?alt=sse, got: ${url}`
-    );
-    assert.strictEqual(init?.method, "POST");
-    const body = JSON.parse(init?.body as string);
-    assert.deepStrictEqual(body, { start: TEST_CONFIG });
-  });
-
-  test("uses sendHttpRequest when ENABLE_BACKEND_CLIENT is on", async () => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
-
+  test("sends HTTP request to backend client", async () => {
     const events = [{ finish: {} }];
     const backendClientMock = {
       sendHttpRequest: mock.fn(async () => sseResponse(events)),
     };
-    const fetchMock = mock.fn();
 
     const consumer = new AgentEventConsumer();
     consumer.on("finish", () => {});
 
     const source = new StreamRunAgentEventSource(
-      "http://test",
       TEST_CONFIG,
       consumer,
-      fetchMock as unknown as typeof fetch,
       undefined,
       Promise.resolve(backendClientMock as any)
     );
     await source.connect();
 
-    assert.strictEqual(fetchMock.mock.calls.length, 0);
     assert.strictEqual(backendClientMock.sendHttpRequest.mock.calls.length, 1);
 
     const [methodName, options] = backendClientMock.sendHttpRequest.mock
@@ -128,34 +80,7 @@ suite("StreamRunAgentEventSource: ENABLE_BACKEND_CLIENT migration", () => {
     assert.deepStrictEqual(options.query, { alt: "sse" });
   });
 
-  test("returns error on non-ok response (flag off)", async () => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = false;
-
-    const fetchMock = mock.fn(async () => ({
-      ok: false,
-      status: 500,
-      statusText: "Internal Server Error",
-    }));
-
-    const consumer = new AgentEventConsumer();
-    const source = new StreamRunAgentEventSource(
-      "http://test",
-      TEST_CONFIG,
-      consumer,
-      fetchMock as unknown as typeof fetch
-    );
-
-    await assert.rejects(
-      () => source.connect(),
-      /SSE connection failed: 500/
-    );
-  });
-
-  test("returns error on non-ok response (flag on)", async () => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
-
+  test("returns error on non-ok response", async () => {
     const backendClientMock = {
       sendHttpRequest: mock.fn(async () => ({
         ok: false,
@@ -166,10 +91,8 @@ suite("StreamRunAgentEventSource: ENABLE_BACKEND_CLIENT migration", () => {
 
     const consumer = new AgentEventConsumer();
     const source = new StreamRunAgentEventSource(
-      "http://test",
       TEST_CONFIG,
       consumer,
-      mock.fn() as unknown as typeof fetch,
       undefined,
       Promise.resolve(backendClientMock as any)
     );

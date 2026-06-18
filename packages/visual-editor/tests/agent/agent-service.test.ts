@@ -257,7 +257,7 @@ suite("AgentService — Remote Mode", () => {
 
   test("startRun in remote mode rejects LocalAgentRunConfig", () => {
     const service = new AgentService();
-    service.configureRemote("http://localhost:8080", fakeFetch);
+    service.configureRemote("http://localhost:8080");
 
     assert.throws(
       () => service.startRun({ kind: "test", objective: OBJECTIVE }),
@@ -267,7 +267,7 @@ suite("AgentService — Remote Mode", () => {
 
   test("startRun in remote mode accepts RemoteAgentRunConfig", () => {
     const service = new AgentService();
-    service.configureRemote("http://localhost:8080", fakeFetch);
+    service.configureRemote("http://localhost:8080");
 
     const handle = service.startRun({
       kind: "test",
@@ -280,12 +280,3 @@ suite("AgentService — Remote Mode", () => {
     service.endRun(handle.runId);
   });
 });
-
-/**
- * Minimal fetch stub for remote mode tests.
- * SSEAgentRun constructs the source but we don't call connect(),
- * so this is never actually invoked.
- */
-function fakeFetch(): Promise<Response> {
-  return Promise.resolve(new Response());
-}
