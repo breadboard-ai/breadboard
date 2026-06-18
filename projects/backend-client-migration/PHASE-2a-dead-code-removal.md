@@ -332,9 +332,9 @@ construction.
 
 | Work Item | Scope                                             | Status |
 | --------- | ------------------------------------------------- | ------ |
-| 2a.1      | Collapse flag gates (12 files, 24 gates)          |        |
-| 2a.2      | Remove `fetchWithCreds` backend plumbing          |        |
-| 2a.3      | Remove `ENABLE_BACKEND_CLIENT` flag (3 locations) |        |
-| 2a.4      | Update tests (9 files)                            |        |
-| 2a.5      | Update documentation                              |        |
-| 2a.6      | Remove `OPAL_BACKEND_API_PREFIX`                  |        |
+| 2a.1      | Collapse flag gates (12 files, 24 gates)          | ✅ Complete |
+| 2a.2      | Remove `fetchWithCreds` backend plumbing          | ✅ Complete |
+| 2a.3      | Remove `ENABLE_BACKEND_CLIENT` flag (3 locations) | ⏳ Pending (deferred per scope instructions) |
+| 2a.4      | Update tests (9 files)                            | ✅ Complete |
+| 2a.5      | Update documentation                              | ⏳ Pending |
+| 2a.6      | Remove `OPAL_BACKEND_API_PREFIX`                  | ⏳ Pending (deferred per scope instructions) |
