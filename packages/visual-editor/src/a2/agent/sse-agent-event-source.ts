@@ -33,7 +33,6 @@ class SSEAgentEventSource {
   #eventCursor = -1;
 
   constructor(
-    _baseUrl: unknown,
     private readonly config: Record<string, unknown>,
     private readonly consumer: AgentEventConsumer,
     private readonly signal: AbortSignal | undefined,

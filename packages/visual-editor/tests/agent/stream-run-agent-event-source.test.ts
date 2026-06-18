@@ -63,7 +63,6 @@ suite("StreamRunAgentEventSource", () => {
     consumer.on("finish", () => {});
 
     const source = new StreamRunAgentEventSource(
-      "http://test",
       TEST_CONFIG,
       consumer,
       undefined,
@@ -92,7 +91,6 @@ suite("StreamRunAgentEventSource", () => {
 
     const consumer = new AgentEventConsumer();
     const source = new StreamRunAgentEventSource(
-      "http://test",
       TEST_CONFIG,
       consumer,
       undefined,
