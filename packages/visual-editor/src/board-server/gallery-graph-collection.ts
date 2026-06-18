@@ -48,7 +48,6 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
 
   constructor(
     private readonly signInInfo: SignInInfo,
-    _fetchWithCreds: unknown,
     private readonly backendClientPromise: Promise<OpalBackendClient>
   ) {
     void this.#initialize();

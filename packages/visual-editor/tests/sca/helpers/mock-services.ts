@@ -8,6 +8,7 @@ import { mock } from "node:test";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { AppServices } from "../../../src/sca/services/services.js";
+import { HttpBackendClient } from "../../../src/ui/utils/http-backend-client.js";
 import type { GlobalConfig } from "../../../src/ui/contexts/global-config.js";
 import type { FlowGenerator } from "../../../src/ui/flow-gen/flow-generator.js";
 import {
@@ -194,6 +195,9 @@ export function makeTestServices(options: TestServicesOptions = {}) {
       dataPartTransformer: () => ({}),
     },
     fetchWithCreds: mock.fn(async () => new Response("{}", { status: 200 })),
+    get backendClient() {
+      return Promise.resolve(new HttpBackendClient((this as any).fetchWithCreds));
+    },
     googleDriveClient: googleDriveClient ?? {},
     askUserToSignInIfNeeded: async () => "success",
     globalConfig,

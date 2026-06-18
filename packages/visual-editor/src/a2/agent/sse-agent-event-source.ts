@@ -36,9 +36,8 @@ class SSEAgentEventSource {
     _baseUrl: unknown,
     private readonly config: Record<string, unknown>,
     private readonly consumer: AgentEventConsumer,
-    _fetchWithCreds: unknown,
-    private readonly signal?: AbortSignal,
-    private readonly backendClient?: Promise<OpalBackendClient>
+    private readonly signal: AbortSignal | undefined,
+    private readonly backendClient: Promise<OpalBackendClient>
   ) {
     console.log("[SSE] Created SSEAgentEventSource", { config });
   }

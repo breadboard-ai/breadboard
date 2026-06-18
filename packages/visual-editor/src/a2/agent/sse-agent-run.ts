@@ -65,7 +65,7 @@ class SSEAgentRun implements AgentRunHandle {
     readonly kind: string,
     baseUrl: string,
     config: RemoteAgentRunConfig,
-    fetchWithCreds: typeof fetch,
+    _fetchWithCreds: typeof fetch,
     useSessions: boolean,
     backendClient: Promise<OpalBackendClient>
   ) {
@@ -82,7 +82,6 @@ class SSEAgentRun implements AgentRunHandle {
           baseUrl,
           wireConfig,
           this.events,
-          fetchWithCreds,
           this.#abortController.signal,
           backendClient
         )
@@ -90,7 +89,6 @@ class SSEAgentRun implements AgentRunHandle {
           baseUrl,
           wireConfig,
           this.events,
-          fetchWithCreds,
           this.#abortController.signal,
           backendClient
         );

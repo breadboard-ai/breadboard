@@ -11,7 +11,6 @@ import { parseExecutionOutput, executeStep } from "../../src/a2/a2/step-executor
 import { encodeBase64, decodeBase64 } from "../../src/a2/a2/utils.js";
 import { InlineDataCapabilityPart } from "@breadboard-ai/types";
 import { stubModuleArgs } from "../useful-stubs.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../src/ui/config/client-deployment-configuration.js";
 
 describe("parseExecutionOutput", () => {
   it("preserves base64-encoded text/html data in inlineData", () => {
@@ -163,79 +162,11 @@ describe("decodeBase64", () => {
 });
 
 describe("executeStep", () => {
-  let savedFlag: boolean;
-
   afterEach(() => {
-    if (savedFlag !== undefined) {
-      CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = savedFlag;
-    }
     mock.restoreAll();
   });
 
-  it("uses fetchWithCreds when ENABLE_BACKEND_CLIENT is off", async () => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = false;
-
-    const fetchMock = mock.fn(
-      async (_url: URL | RequestInfo, _init?: RequestInit) => {
-        return new Response(
-          JSON.stringify({
-            executionOutputs: {
-              data: {
-                chunks: [
-                  {
-                    mimetype: "text/plain",
-                    data: encodeBase64("Step execution output"),
-                  },
-                ],
-              },
-            },
-          }),
-          { status: 200 }
-        );
-      }
-    );
-
-    const mockReporter = {
-      addJson: mock.fn(),
-      addError: mock.fn((e: any) => e),
-      finish: mock.fn(),
-    };
-
-    const args = {
-      ...stubModuleArgs,
-      fetchWithCreds: fetchMock as unknown as typeof globalThis.fetch,
-      reporter: mockReporter as any,
-    };
-
-    const result = await executeStep(args, {
-      planStep: {
-        stepName: "generateText",
-        modelApi: "generateText",
-        inputParameters: [],
-        output: "data",
-      },
-      execution_inputs: {},
-    });
-
-    assertOk(ok(result));
-    strictEqual(result.chunks.length, 1);
-    const part = result.chunks[0].parts[0] as InlineDataCapabilityPart;
-    strictEqual(decodeBase64(part.inlineData.data), "Step execution output");
-    strictEqual(fetchMock.mock.calls.length, 1);
-
-    const [url, init] = fetchMock.mock.calls[0].arguments;
-    strictEqual(
-      url.toString(),
-      "https://appcatalyst.pa.googleapis.com/v1beta1/executeStep"
-    );
-    strictEqual(init?.method, "POST");
-  });
-
-  it("uses sendHttpRequest when ENABLE_BACKEND_CLIENT is on", async () => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
-
+  it("executes step via backend client", async () => {
     const backendClientMock = {
       sendHttpRequest: mock.fn(async () => {
         return new Response(
@@ -256,8 +187,6 @@ describe("executeStep", () => {
       }),
     };
 
-    const fetchMock = mock.fn();
-
     const mockReporter = {
       addJson: mock.fn(),
       addError: mock.fn((e: any) => e),
@@ -266,7 +195,6 @@ describe("executeStep", () => {
 
     const args = {
       ...stubModuleArgs,
-      fetchWithCreds: fetchMock as unknown as typeof globalThis.fetch,
       backendClient: Promise.resolve(backendClientMock as any),
       reporter: mockReporter as any,
     };
@@ -286,7 +214,6 @@ describe("executeStep", () => {
     const part = result.chunks[0].parts[0] as InlineDataCapabilityPart;
     strictEqual(decodeBase64(part.inlineData.data), "Backend step execution output");
     strictEqual(backendClientMock.sendHttpRequest.mock.calls.length, 1);
-    strictEqual(fetchMock.mock.calls.length, 0);
 
     const [methodName, options] = backendClientMock.sendHttpRequest.mock
       .calls[0].arguments as unknown as [string, any];

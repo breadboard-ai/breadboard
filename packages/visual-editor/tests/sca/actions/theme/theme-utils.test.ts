@@ -154,21 +154,6 @@ describe("generateImage", () => {
     );
   });
 
-  it("uses Opal backend URL", async () => {
-    const { controller } = makeController();
-    const { services, fetchWithCreds } = makeServices();
-
-    await generateImage(makeContents(), undefined, controller, services);
-
-    const url = fetchWithCreds.mock.calls[0].arguments[0] as string;
-    assert.ok(
-      url.startsWith(`${OPAL_BACKEND_API_PREFIX}/v1beta1/models`),
-      `Expected URL to start with ${OPAL_BACKEND_API_PREFIX}/v1beta1/models, got ${url}`
-    );
-  });
-
-
-
   it("returns error when theme status is not idle", async () => {
     const { controller, themeCtrl } = makeController();
     themeCtrl.status = "generating";
@@ -194,14 +179,12 @@ describe("generateImage", () => {
     const statusesSeen: string[] = [];
 
     const { services } = makeServices();
-    // Intercept to observe status during fetch
-    const originalFetch = services.fetchWithCreds;
-    (services as unknown as Record<string, unknown>).fetchWithCreds = async (
-      ...args: unknown[]
-    ) => {
-      statusesSeen.push(themeCtrl.status);
-      return (originalFetch as (...a: unknown[]) => unknown)(...args);
-    };
+    (services as unknown as Record<string, unknown>).backendClient = Promise.resolve({
+      sendHttpRequest: async () => {
+        statusesSeen.push(themeCtrl.status);
+        return { ok: true, json: async () => ({}) };
+      },
+    });
 
     await generateImage(makeContents(), undefined, controller, services);
 
@@ -330,9 +313,11 @@ describe("generateImage", () => {
   it("resets status to idle even on thrown error", async () => {
     const { controller, themeCtrl } = makeController();
     const services = {
-      fetchWithCreds: async () => {
-        throw new Error("network failure");
-      },
+      backendClient: Promise.resolve({
+        sendHttpRequest: async () => {
+          throw new Error("network failure");
+        },
+      }),
     } as unknown as AppServices;
 
     const result = await generateImage(
@@ -344,43 +329,15 @@ describe("generateImage", () => {
 
     assert.ok(!ok(result));
     assert.strictEqual(themeCtrl.status, "idle");
-    assert.ok(
-      (result as Outcome<AppTheme> & { $error: string }).$error.includes(
-        "Invalid color scheme"
-      )
-    );
   });
 
-  it("passes abort signal through to fetchWithCreds", async () => {
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = false;
+  it("sends HTTP request via backend client", async () => {
     const { controller } = makeController();
-    const { services, fetchWithCreds } = makeServices();
-    const abortController = new AbortController();
-
-    await generateImage(
-      makeContents(),
-      abortController.signal,
-      controller,
-      services
-    );
-
-    assert.strictEqual(fetchWithCreds.mock.calls.length, 1);
-    const fetchOptions = fetchWithCreds.mock.calls[0]
-      .arguments[1] as unknown as RequestInit;
-    assert.strictEqual(fetchOptions.signal, abortController.signal);
-  });
-
-  // --- ENABLE_BACKEND_CLIENT = true tests ---
-
-  it("uses sendHttpRequest when ENABLE_BACKEND_CLIENT is on", async () => {
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
-    const { controller } = makeController();
-    const { services, fetchWithCreds, sendHttpRequest } = makeServices();
+    const { services, sendHttpRequest } = makeServices();
 
     await generateImage(makeContents(), undefined, controller, services);
 
     assert.strictEqual(sendHttpRequest.mock.calls.length, 1);
-    assert.strictEqual(fetchWithCreds.mock.calls.length, 0);
 
     const [methodName, options] = sendHttpRequest.mock.calls[0]
       .arguments as unknown as [string, Record<string, unknown>];

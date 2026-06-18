@@ -5,6 +5,7 @@
  */
 
 import { mock } from "node:test";
+import { HttpBackendClient } from "../../../src/ui/utils/http-backend-client.js";
 import type { Outcome, LLMContent, DataPart } from "@breadboard-ai/types";
 import type {
   Generators,
@@ -327,9 +328,20 @@ function createMockSink(
 function createTestArgs(
   overrides: Partial<GenerateFunctionArgs> = {}
 ): GenerateFunctionArgs {
+  const baseModuleArgs = overrides.moduleArgs ?? stubModuleArgs;
+  const proxiedModuleArgs = new Proxy(baseModuleArgs, {
+    get(target, prop, receiver) {
+      if (prop === "backendClient") {
+        const fetcher = Reflect.get(target, "fetchWithCreds", receiver) || stubModuleArgs.fetchWithCreds;
+        return Promise.resolve(new HttpBackendClient(fetcher));
+      }
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+
   return {
     fileSystem: overrides.fileSystem ?? createMockFileSystem(),
-    moduleArgs: overrides.moduleArgs ?? stubModuleArgs,
+    moduleArgs: proxiedModuleArgs,
     translator: overrides.translator ?? createMockTranslator(),
     taskTreeManager: overrides.taskTreeManager ?? createMockTaskTreeManager(),
     generators: overrides.generators ?? createMockGenerators(),

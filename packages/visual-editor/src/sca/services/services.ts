@@ -188,8 +188,6 @@ export function services(
 
     const autonamer = new Autonamer(sandbox);
     const apiClient = new AppCatalystApiClient(
-      fetchWithCreds,
-      OPAL_BACKEND_API_PREFIX,
       config.shellHost.getOpalBackendClient()
     );
     const emailPrefsManager = new EmailPrefsManager(apiClient);

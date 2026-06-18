@@ -100,11 +100,7 @@ export interface SetEmailPreferencesRequest {
 export class AppCatalystApiClient {
   readonly #backendClientPromise: Promise<OpalBackendClient>;
 
-  constructor(
-    _fetchWithCreds: unknown,
-    _apiBaseUrl: unknown,
-    backendClientPromise: Promise<OpalBackendClient>
-  ) {
+  constructor(backendClientPromise: Promise<OpalBackendClient>) {
     this.#backendClientPromise = backendClientPromise;
   }
 

@@ -136,11 +136,7 @@ class GoogleDriveBoardServer
     this.#googleDriveClient = googleDriveClient;
     this.galleryGraphs =
       galleryGraphs ??
-      new DriveGalleryGraphCollection(
-        signInInfo,
-        googleDriveClient.fetchWithCreds,
-        backendClientPromise
-      );
+      new DriveGalleryGraphCollection(signInInfo, backendClientPromise);
     this.userGraphs = userGraphs ?? new DriveUserGraphCollection(listUserOpals);
   }
 
