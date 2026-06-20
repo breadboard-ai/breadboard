@@ -21,8 +21,26 @@ from .graph_types import GraphPlan
 
 __all__ = [
     "GraphSessionStore",
+    "SessionSummary",
     "SuspendedNodeState",
 ]
+
+
+@dataclass
+class SessionSummary:
+    """Lightweight summary of a graph session.
+
+    Attributes:
+        session_id: Unique identifier for the session.
+        graph_id: The graph this session belongs to.
+        status: Current session status (running, suspended, completed, etc.).
+        created_at: Unix timestamp of session creation.
+    """
+
+    session_id: str
+    graph_id: str
+    status: str
+    created_at: float
 
 
 @dataclass
@@ -52,13 +70,14 @@ class GraphSessionStore(Protocol):
     # ── Plan Storage ──
 
     async def create(
-        self, session_id: str, plan: GraphPlan,
+        self, session_id: str, plan: GraphPlan, graph_id: str,
         *,
         headless_inputs: dict[str, Any] | None = None,
     ) -> None:
         """Store plan with initial dependency counts.
 
         Args:
+            graph_id: Graph identifier for session indexing.
             headless_inputs: Optional mapping of node_id → LLMContent
                 for headless mode. When set, input nodes auto-resolve
                 using pre-supplied values instead of suspending.
@@ -147,6 +166,12 @@ class GraphSessionStore(Protocol):
         """True when all nodes are completed (or skipped)."""
         ...
 
+    async def get_failed_errors(
+        self, session_id: str,
+    ) -> list[str]:
+        """Return error messages from all failed nodes (empty if none)."""
+        ...
+
     async def get_graph_outputs(
         self, session_id: str,
     ) -> dict[str, Any]:
@@ -176,6 +201,20 @@ class GraphSessionStore(Protocol):
         self, session_id: str, *, after: int = -1,
     ) -> list[dict[str, Any]]:
         """Return events with index > after."""
+        ...
+
+    # ── Session Management ──
+
+    async def list_sessions(
+        self, graph_id: str,
+    ) -> list[SessionSummary]:
+        """Return all sessions for a graph, sorted by creation time descending."""
+        ...
+
+    async def delete_session(
+        self, session_id: str,
+    ) -> bool:
+        """Delete a session and its stored state. Returns True if found."""
         ...
 
     # ── Status ──

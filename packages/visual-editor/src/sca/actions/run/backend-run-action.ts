@@ -29,9 +29,18 @@ import type {
   OutputValues,
   Schema,
 } from "@breadboard-ai/types";
-import type { GraphRunEvent } from "../../services/graph-run-service.js";
+import type {
+  GraphRunEvent,
+  GraphRunSession,
+} from "../../services/graph-run-service.js";
 import { AgentEventConsumer } from "../../../a2/agent/agent-event-consumer.js";
+import type {
+  WaitForInputPayload,
+  WaitForChoicePayload,
+} from "../../../a2/agent/agent-event.js";
 import { addChatOutput } from "../../../a2/agent/chat-output.js";
+import { ChoicePresenter } from "../../../a2/agent/choice-presenter.js";
+import { A2UIInteraction } from "../../../a2/agent/a2ui-interaction.js";
 import { ConsoleProgressManager } from "../../../a2/agent/console-progress-manager.js";
 import { registerProgressHandlers } from "../../../a2/agent/register-progress-handlers.js";
 import { RunController } from "../../controller/subcontrollers/run/run-controller.js";
@@ -51,8 +60,8 @@ import {
 
 const LABEL = "Backend Run";
 
-export { startBackendRun, processEvent };
-export type { ProcessResult, NodeEventBridge };
+export { startBackendRun, connectToSession, processEvent, handleSuspend };
+export type { ProcessResult, NodeEventBridge, EventMode };
 
 export const bind = makeAction();
 
@@ -81,6 +90,151 @@ function raceAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
 }
 
 // ---------------------------------------------------------------------------
+// Input-node suspend helper
+// ---------------------------------------------------------------------------
+
+/** The inputRequired event narrowed to its specific shape. */
+type InputRequiredEvent = Extract<GraphRunEvent, { type: "inputRequired" }>;
+
+/**
+ * Default schema used when the backend's input node has no schema.
+ */
+const DEFAULT_INPUT_SCHEMA: Schema = {
+  type: "object",
+  properties: {
+    request: {
+      type: "object",
+      title: "Please provide input",
+      behavior: ["transient", "llm-content"] as BehaviorSchema[],
+      format: "asterisk",
+    },
+  },
+};
+
+/**
+ * Handles the suspend flow for any `inputRequired` event.
+ *
+ * Examines `suspendEvent` to determine what kind of input is needed:
+ * - `inputNode`: form-based input from an input node
+ * - `waitForInput`: text/edit input from an agent
+ * - `waitForChoice`: multiple-choice selection from an agent
+ *
+ * Shows the appropriate UI in the side-nav, waits for the user's
+ * response, and resumes the session.
+ *
+ * @returns `true` if input was collected and the session resumed,
+ *          `false` if the suspend type is unrecognized.
+ */
+async function handleSuspend(
+  inputEvent: InputRequiredEvent,
+  controller: AppController,
+  session: GraphRunSession,
+  abortController: AbortController
+): Promise<boolean> {
+  const { suspendEvent } = inputEvent;
+  if (!suspendEvent) return false;
+
+  const entry = controller.run.main.console.get(inputEvent.nodeId);
+  if (!entry) {
+    Utils.Logging.getLogger(controller).log(
+      Utils.Logging.Formatter.warning(
+        `inputRequired for ${inputEvent.nodeId} but no console entry`
+      ),
+      LABEL
+    );
+    return false;
+  }
+
+  const appScreen = controller.run.screen.screens.get(inputEvent.nodeId);
+
+  // Determine what to show and create the input Promise.
+  let inputPromise: Promise<unknown> | undefined;
+
+  if ("inputNode" in suspendEvent) {
+    // Input node — form-based input.
+    const inputNode = suspendEvent.inputNode as { schema?: Schema } | undefined;
+    const schema: Schema =
+      inputNode?.schema && (inputNode.schema as Schema).properties
+        ? (inputNode.schema as Schema)
+        : DEFAULT_INPUT_SCHEMA;
+
+    // If the schema's request title is empty, use the node's metadata title.
+    const requestProp = schema.properties?.request;
+    if (requestProp && !requestProp.title) {
+      const inspectable = controller.editor.graph.get()?.graphs.get("");
+      const node = inspectable?.nodeById(inputEvent.nodeId);
+      requestProp.title = node?.title() ?? "Please provide input";
+    }
+
+    const promptTitle =
+      schema.properties?.request?.title || "Please provide input";
+    addChatOutput(
+      { role: "model", parts: [{ text: promptTitle }] },
+      entry,
+      appScreen
+    );
+
+    inputPromise = entry.requestInput(schema);
+  } else if ("waitForInput" in suspendEvent) {
+    // Agent text/edit input.
+    const event = suspendEvent.waitForInput as WaitForInputPayload;
+    addChatOutput(event.prompt, entry, appScreen);
+
+    const behaviors: BehaviorSchema[] = ["transient", "llm-content"];
+    if (!event.skipLabel) {
+      behaviors.push("hint-required");
+    }
+    const schema: Schema = {
+      properties: {
+        input: {
+          type: "object",
+          behavior: behaviors,
+          format: event.inputType,
+        },
+      },
+    };
+
+    inputPromise = entry.requestInput(schema, event.skipLabel);
+  } else if ("waitForChoice" in suspendEvent) {
+    // Agent multiple-choice selection — use the same ChoicePresenter
+    // that the A2 agent uses to render proper choice buttons.
+    const event = suspendEvent.waitForChoice as WaitForChoicePayload;
+    addChatOutput(event.prompt, entry, appScreen);
+
+    const interaction = new A2UIInteraction(entry, appScreen);
+    const choicePresenter = new ChoicePresenter(
+      null as never, // translator unused — presentTranslatedChoices skips it
+      interaction
+    );
+
+    inputPromise = choicePresenter.presentTranslatedChoices(
+      event.prompt,
+      event.choices,
+      undefined, // surfaceId default
+      event.selectionMode,
+      event.noneOfTheAboveLabel
+    );
+  }
+
+  if (!inputPromise) return false;
+
+  controller.run.main.setStatus(STATUS.PAUSED);
+  const userInput = await raceAbort(inputPromise, abortController.signal);
+
+  controller.run.main.setStatus(STATUS.RUNNING);
+  await session.resume(inputEvent.interactionId, userInput);
+
+  Utils.Logging.getLogger(controller).log(
+    Utils.Logging.Formatter.verbose(
+      `Resumed session after suspend on ${inputEvent.nodeId}`
+    ),
+    LABEL
+  );
+
+  return true;
+}
+
+// ---------------------------------------------------------------------------
 // Per-node event bridge
 // ---------------------------------------------------------------------------
 
@@ -104,6 +258,152 @@ interface NodeEventBridge {
   outcomes?: LLMContent;
   /** Resolves with user input when `waitForInput` UI is completed. */
   pendingInput?: Promise<OutputValues>;
+}
+
+// ---------------------------------------------------------------------------
+// Shared run-state setup and event-loop helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Common run-state initialization shared by `startBackendRun` and
+ * `connectToSession`. Resets controllers, wires input lifecycle,
+ * and starts the screen progress ticker.
+ *
+ * @returns A handle to clear the progress ticker in `finally`.
+ */
+function initRunState(controller: AppController): ReturnType<typeof setInterval> {
+  controller.run.main.reset();
+  controller.run.renderer.reset();
+  controller.run.screen.reset();
+  controller.run.main.setStatus(STATUS.RUNNING);
+
+  controller.run.main.onInputRequested = (id, schema, skipLabel) =>
+    handleInputRequested(id, schema, controller.run, skipLabel);
+
+  return setInterval(() => {
+    for (const screen of controller.run.screen.screens.values()) {
+      tickScreenProgress(screen);
+    }
+  }, 250);
+}
+
+/** Options that differ between a fresh run and a session reconnect. */
+interface ConsumeOptions {
+  /** Start in replay mode — events before `replayComplete` are non-interactive. */
+  replay?: boolean;
+}
+
+/**
+ * Consumes events from a `GraphRunSession`, dispatching each through
+ * `processEvent` and handling suspend/resume. This is the shared core
+ * of both `startBackendRun` and `connectToSession`.
+ *
+ * The loop reconnects the SSE stream after every suspend/resume cycle
+ * and runs until the session completes, errors, or is aborted.
+ */
+async function consumeSessionEvents(
+  session: GraphRunSession,
+  controller: AppController,
+  abortController: AbortController,
+  options: ConsumeOptions = {}
+): Promise<void> {
+  const bridges = new Map<string, NodeEventBridge>();
+  let mode: EventMode = options.replay ? "replay" : "live";
+  const modeGetter = () => mode;
+
+  // Track the last inputRequired seen during replay — if the session
+  // is still suspended, we need to show the input UI after replay.
+  let pendingReplayInput: InputRequiredEvent | null = null;
+
+  let running = true;
+  while (running) {
+    const events = session.openStream(abortController.signal);
+
+    for await (const event of events) {
+      if (abortController.signal.aborted) {
+        running = false;
+        break;
+      }
+
+      // ── Replay bookkeeping ──
+      if (mode === "replay" && event.type === "inputRequired") {
+        pendingReplayInput = event as InputRequiredEvent;
+      }
+      if (
+        mode === "replay" &&
+        pendingReplayInput &&
+        (event.type === "nodeEnd" || event.type === "nodeError") &&
+        event.nodeId === pendingReplayInput.nodeId
+      ) {
+        pendingReplayInput = null;
+      }
+
+      const result = processEvent(event, controller, bridges, mode, modeGetter);
+
+      // ── Replay → live transition ──
+      if (result === "replayComplete") {
+        mode = "live";
+        Utils.Logging.getLogger(controller).log(
+          Utils.Logging.Formatter.verbose(
+            `Replay complete — switching to live mode`
+          ),
+          LABEL
+        );
+
+        if (pendingReplayInput) {
+          processEvent(pendingReplayInput, controller, bridges, "live", modeGetter);
+          const handled = await handleSuspend(
+            pendingReplayInput, controller, session, abortController
+          );
+          if (!handled) running = false;
+          pendingReplayInput = null;
+          break;
+        }
+        continue;
+      }
+
+      if (result === "done") {
+        running = false;
+        break;
+      }
+
+      if (result === "suspend") {
+        const inputEvent = event as InputRequiredEvent;
+        const bridge = bridges.get(inputEvent.nodeId);
+
+        if (bridge?.pendingInput) {
+          // Agent node path — the `waitForInput` handler already
+          // showed the input UI and created a Promise on the bridge.
+          Utils.Logging.getLogger(controller).log(
+            Utils.Logging.Formatter.verbose(
+              `Waiting for user input on node ${inputEvent.nodeId}`
+            ),
+            LABEL
+          );
+
+          const userInput = await raceAbort(
+            bridge.pendingInput, abortController.signal
+          );
+          bridge.pendingInput = undefined;
+
+          controller.run.main.setStatus(STATUS.RUNNING);
+          await session.resume(inputEvent.interactionId, userInput);
+        } else {
+          // Input node or agent suspend without a bridge — the unified
+          // handler reads suspendEvent to determine what UI to show.
+          const handled = await handleSuspend(
+            inputEvent, controller, session, abortController
+          );
+          if (!handled) running = false;
+        }
+
+        // Break inner loop to reconnect stream.
+        break;
+      }
+    }
+  }
+
+  bridges.clear();
 }
 
 // ---------------------------------------------------------------------------
@@ -139,33 +439,25 @@ async function startBackendRun(): Promise<void> {
     return;
   }
 
-  // Reset state before starting.
-  controller.run.main.reset();
-  controller.run.renderer.reset();
-  controller.run.screen.reset();
-  controller.run.main.setStatus(STATUS.RUNNING);
-
-  // Wire input lifecycle: when a console entry calls requestInputForNode,
-  // notify the input queue to show the UI — same wiring as run-actions.ts.
-  controller.run.main.onInputRequested = (id, schema, skipLabel) =>
-    handleInputRequested(id, schema, controller.run, skipLabel);
-
-  // Start ticking progress every 250ms — same as onRunnerStart.
-  const progressTickerHandle = setInterval(() => {
-    for (const screen of controller.run.screen.screens.values()) {
-      tickScreenProgress(screen);
-    }
-  }, 250);
-
+  const progressTickerHandle = initRunState(controller);
   const abortController = new AbortController();
   controller.run.main.abortController = abortController;
 
-  // Per-node event bridges for dispatching agent and thought events.
-  const bridges = new Map<string, NodeEventBridge>();
-
   try {
+    // Extract the Drive file ID from the graph URL for session scoping.
+    const graphUrl = controller.editor.graph.url;
+    const graphId = graphUrl?.startsWith("drive:/")
+      ? graphUrl.replace("drive:/", "")
+      : "";
+    if (!graphId) {
+      throw new Error(
+        "Backend graph runner requires a Drive-backed Opal (no graphId)"
+      );
+    }
+
     const session = await graphRunService.createSession(
       graph,
+      graphId,
       abortController.signal
     );
     Utils.Logging.getLogger(controller).log(
@@ -175,164 +467,11 @@ async function startBackendRun(): Promise<void> {
       LABEL
     );
 
-    // Main stream-consume loop — reconnects on suspend.
-    let running = true;
-    while (running) {
-      const events = session.openStream(abortController.signal);
+    // Track as the active session in the devtools sessions panel.
+    controller.editor.devtools.sessionHistory.activeSessionId =
+      session.sessionId;
 
-      for await (const event of events) {
-        if (abortController.signal.aborted) {
-          running = false;
-          break;
-        }
-
-        const result = processEvent(event, controller, bridges);
-
-        if (result === "done") {
-          running = false;
-          break;
-        }
-
-        if (result === "suspend") {
-          // The `waitForInput` agent event (which arrived before this
-          // `inputRequired` graph event) has already shown the input UI
-          // and created a Promise on the bridge. We now:
-          // 1. Wait for the user's response
-          // 2. POST :resume with the response
-          // 3. Break the inner loop so the outer loop reconnects
-
-          const inputEvent = event as Extract<
-            GraphRunEvent,
-            { type: "inputRequired" }
-          >;
-          const bridge = bridges.get(inputEvent.nodeId);
-
-          if (bridge?.pendingInput) {
-            // Agent node path — the `waitForInput` handler already
-            // showed the input UI and created a Promise on the bridge.
-            Utils.Logging.getLogger(controller).log(
-              Utils.Logging.Formatter.verbose(
-                `Waiting for user input on node ${inputEvent.nodeId}`
-              ),
-              LABEL
-            );
-
-            const userInput = await raceAbort(
-              bridge.pendingInput, abortController.signal
-            );
-            bridge.pendingInput = undefined;
-
-            controller.run.main.setStatus(STATUS.RUNNING);
-            await session.resume(inputEvent.interactionId, userInput);
-
-            Utils.Logging.getLogger(controller).log(
-              Utils.Logging.Formatter.verbose(
-                `Resumed session after input on node ${inputEvent.nodeId}`
-              ),
-              LABEL
-            );
-          } else if (inputEvent.suspendEvent?.inputNode) {
-            // Input node path — no agent involved. The backend built
-            // the schema from the node's config (description, modality,
-            // required). Use it directly.
-            const inputNode = inputEvent.suspendEvent.inputNode as {
-              schema?: Schema;
-            };
-            const schema: Schema = inputNode.schema &&
-              (inputNode.schema as Schema).properties
-              ? (inputNode.schema as Schema)
-              : {
-                  type: "object",
-                  properties: {
-                    request: {
-                      type: "object",
-                      title: "Please provide input",
-                      behavior: [
-                        "transient",
-                        "llm-content",
-                      ] as BehaviorSchema[],
-                      format: "asterisk",
-                    },
-                  },
-                };
-
-            // If the schema's request title is empty or the generic
-            // fallback, use the node's metadata title instead
-            // (e.g. "Topic").
-            const requestProp = schema.properties?.request;
-            if (requestProp && !requestProp.title) {
-              const inspectable = controller.editor.graph
-                .get()
-                ?.graphs.get("");
-              const node = inspectable?.nodeById(inputEvent.nodeId);
-              requestProp.title = node?.title() ?? "Please provide input";
-            }
-
-            const entry = controller.run.main.console.get(
-              inputEvent.nodeId
-            );
-            if (entry) {
-              // Show the prompt text as a chat bubble above the input
-              // form — mirrors the `report()` call in the TS ask-user
-              // module. The floating-input component doesn't render
-              // the schema title itself.
-              const promptTitle =
-                schema.properties?.request?.title || "Please provide input";
-              const appScreen = controller.run.screen.screens.get(
-                inputEvent.nodeId
-              );
-              addChatOutput(
-                { role: "model", parts: [{ text: promptTitle }] },
-                entry,
-                appScreen
-              );
-
-              Utils.Logging.getLogger(controller).log(
-                Utils.Logging.Formatter.verbose(
-                  `Input node ${inputEvent.nodeId} requesting input`
-                ),
-                LABEL
-              );
-
-              controller.run.main.setStatus(STATUS.PAUSED);
-              const userInput = await raceAbort(
-                entry.requestInput(schema), abortController.signal
-              );
-
-              controller.run.main.setStatus(STATUS.RUNNING);
-              await session.resume(inputEvent.interactionId, userInput);
-
-              Utils.Logging.getLogger(controller).log(
-                Utils.Logging.Formatter.verbose(
-                  `Resumed session after input node ${inputEvent.nodeId}`
-                ),
-                LABEL
-              );
-            } else {
-              Utils.Logging.getLogger(controller).log(
-                Utils.Logging.Formatter.warning(
-                  `inputRequired for input node ${inputEvent.nodeId} but no console entry`
-                ),
-                LABEL
-              );
-              running = false;
-            }
-          } else {
-            // Unknown suspend type — log and stop gracefully.
-            Utils.Logging.getLogger(controller).log(
-              Utils.Logging.Formatter.warning(
-                `inputRequired but no handler for node ${inputEvent.nodeId}`
-              ),
-              LABEL
-            );
-            running = false;
-          }
-
-          // Break inner loop to reconnect stream.
-          break;
-        }
-      }
-    }
+    await consumeSessionEvents(session, controller, abortController);
   } catch (error) {
     if (abortController.signal.aborted) {
       Utils.Logging.getLogger(controller).log(
@@ -349,19 +488,88 @@ async function startBackendRun(): Promise<void> {
       });
     }
   } finally {
-    // Cleanup — mirrors onRunnerEnd.
     clearInterval(progressTickerHandle);
-    bridges.clear();
     controller.run.main.clearInput();
     controller.run.main.setStatus(STATUS.STOPPED);
   }
 }
 
 // ---------------------------------------------------------------------------
+// Session reconnection
+// ---------------------------------------------------------------------------
+
+/**
+ * Connects the graph UI to an existing backend session.
+ *
+ * The event stream is processed in two phases:
+ * 1. **Replay** (events before `replayComplete`): builds up console
+ *    entries, node states, and agent outputs without blocking on input.
+ * 2. **Live** (events after `replayComplete`): normal interactive mode
+ *    where `inputRequired` suspends and waits for user input.
+ *
+ * If the session has already completed, only the replay phase runs
+ * and no `replayComplete` marker is emitted — the stream ends with
+ * `graphComplete` / `graphError`.
+ */
+async function connectToSession(sessionId: string): Promise<void> {
+  const { controller, services } = bind;
+  const graphRunService = services.graphRunService;
+  const sessionHistory = controller.editor.devtools.sessionHistory;
+
+  // Cancel any existing connection.
+  sessionHistory.connectionAbortController?.abort();
+
+  const progressTickerHandle = initRunState(controller);
+  const abortController = new AbortController();
+  sessionHistory.connectionAbortController = abortController;
+  sessionHistory.activeSessionId = sessionId;
+
+  try {
+    const session = graphRunService.connectSession(sessionId);
+
+    Utils.Logging.getLogger(controller).log(
+      Utils.Logging.Formatter.verbose(
+        `Connecting to session ${sessionId} (replay mode)`
+      ),
+      LABEL
+    );
+
+    await consumeSessionEvents(session, controller, abortController, {
+      replay: true,
+    });
+  } catch (error) {
+    if (!abortController.signal.aborted) {
+      Utils.Logging.getLogger(controller).log(
+        Utils.Logging.Formatter.warning(
+          `Session connection failed: ${String(error)}`
+        ),
+        LABEL
+      );
+      controller.run.main.setError({
+        message: String(error),
+      });
+    }
+  } finally {
+    clearInterval(progressTickerHandle);
+    controller.run.main.clearInput();
+    controller.run.main.setStatus(STATUS.STOPPED);
+    sessionHistory.connectionAbortController = null;
+  }
+}
+
+
+// ---------------------------------------------------------------------------
 // Event processing
 // ---------------------------------------------------------------------------
 
-type ProcessResult = "continue" | "done" | "suspend";
+type ProcessResult = "continue" | "done" | "suspend" | "replayComplete";
+
+/**
+ * Controls how events are processed.
+ * - `"live"`: normal interactive mode (suspend on inputRequired)
+ * - `"replay"`: skip inputRequired, no interactive input
+ */
+type EventMode = "live" | "replay";
 
 /**
  * Maps a single Heartstone SSE event to controller state updates.
@@ -370,7 +578,9 @@ type ProcessResult = "continue" | "done" | "suspend";
 function processEvent(
   event: GraphRunEvent,
   controller: AppController,
-  bridges: Map<string, NodeEventBridge>
+  bridges: Map<string, NodeEventBridge>,
+  mode: EventMode = "live",
+  modeGetter?: () => EventMode
 ): ProcessResult {
   switch (event.type) {
     case "nodeStart": {
@@ -398,7 +608,7 @@ function processEvent(
       // Create per-node agent bridge.
       const consoleEntry = controller.run.main.console.get(nodeId);
       const appScreen = controller.run.screen.screens.get(nodeId);
-      createBridge(nodeId, consoleEntry, appScreen, controller, bridges);
+      createBridge(nodeId, consoleEntry, appScreen, controller, bridges, modeGetter ?? (() => mode));
 
       return "continue";
     }
@@ -516,6 +726,16 @@ function processEvent(
     }
 
     case "inputRequired": {
+      // In replay mode, don't suspend — input was already provided
+      // (or the session is still suspended). But do update visual state
+      // so the node shows as paused rather than spinning.
+      if (mode === "replay") {
+        controller.run.main.setStatus(STATUS.PAUSED);
+        controller.run.renderer.setNodeState(event.nodeId, {
+          status: "waiting",
+        });
+        return "continue";
+      }
       // Signal the main loop to suspend and handle input.
       return "suspend";
     }
@@ -539,6 +759,20 @@ function processEvent(
         message: event.error,
       });
       return "done";
+    }
+
+    case "graphCancelled": {
+      Utils.Logging.getLogger(controller).log(
+        Utils.Logging.Formatter.verbose(
+          `Graph cancelled: ${event.sessionId}`
+        ),
+        LABEL
+      );
+      return "done";
+    }
+
+    case "replayComplete": {
+      return "replayComplete";
     }
 
     default:
@@ -566,7 +800,8 @@ function createBridge(
   consoleEntry: ConsoleEntry | undefined,
   appScreen: AppScreen | undefined,
   controller: AppController,
-  bridges: Map<string, NodeEventBridge>
+  bridges: Map<string, NodeEventBridge>,
+  getMode: () => EventMode = () => "live"
 ): void {
   const consumer = new AgentEventConsumer();
   const progress = new ConsoleProgressManager(consoleEntry, appScreen);
@@ -591,6 +826,13 @@ function createBridge(
   // Register the waitForInput handler — this bridges the UI input
   // flow to the backend suspend/resume protocol.
   consumer.on("waitForInput", (event) => {
+    // Show the agent's prompt text in the console and app screen
+    // (both replay and live — so conversation history is visible).
+    addChatOutput(event.prompt, consoleEntry, appScreen);
+
+    // In replay mode, don't show the input UI — input was already provided.
+    if (getMode() === "replay") return undefined;
+
     const behaviors: BehaviorSchema[] = ["transient", "llm-content"];
     if (!event.skipLabel) {
       behaviors.push("hint-required");
@@ -604,9 +846,6 @@ function createBridge(
         },
       },
     };
-
-    // Show the agent's prompt text in the console and app screen.
-    addChatOutput(event.prompt, consoleEntry, appScreen);
 
     // requestInput shows the input UI and returns a Promise that
     // resolves when the user submits. Store it on the bridge for
@@ -622,3 +861,4 @@ function createBridge(
 
   bridges.set(nodeId, bridge);
 }
+

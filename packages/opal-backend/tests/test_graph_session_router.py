@@ -324,6 +324,123 @@ class TestResumeEndpoint:
         assert resp.status_code == 404
 
 
+class TestReplayCompleteMarker:
+    def test_replay_complete_in_stream(self):
+        app, *_ = _create_app()
+        client = TestClient(app)
+
+        resp = client.post(
+            "/v1beta1/graphSessions/new",
+            json={"graph": _simple_graph()},
+        )
+        session_id = resp.json()["sessionId"]
+
+        with client.stream(
+            "GET", f"/v1beta1/graphSessions/{session_id}",
+        ) as sse_resp:
+            raw = sse_resp.read().decode()
+
+        events = _parse_sse_events(raw)
+        types = [e.get("type") for e in events if "type" in e]
+        assert "replayComplete" in types
+
+        # replayComplete should come after all graph events and before done.
+        rc_idx = types.index("replayComplete")
+        gc_idx = types.index("graphComplete")
+        assert rc_idx > gc_idx
+
+    def test_replay_complete_in_replay_with_after(self):
+        app, *_ = _create_app()
+        client = TestClient(app)
+
+        resp = client.post(
+            "/v1beta1/graphSessions/new",
+            json={"graph": _simple_graph()},
+        )
+        session_id = resp.json()["sessionId"]
+
+        with client.stream(
+            "GET", f"/v1beta1/graphSessions/{session_id}?after=2",
+        ) as sse_resp:
+            raw = sse_resp.read().decode()
+
+        events = _parse_sse_events(raw)
+        types = [e.get("type") for e in events if "type" in e]
+        assert "replayComplete" in types
+
+
+class TestGraphIdPassthrough:
+    def test_graph_id_accepted_on_creation(self):
+        """Verify POST /new accepts graphId and creates a valid session."""
+        app, *_ = _create_app()
+        client = TestClient(app)
+
+        resp = client.post(
+            "/v1beta1/graphSessions/new",
+            json={"graph": _simple_graph(), "graphId": "my-graph-123"},
+        )
+        assert resp.status_code == 200
+        session_id = resp.json()["sessionId"]
+
+        # Session exists and completed (proves graph_id didn't break anything).
+        status_resp = client.get(
+            f"/v1beta1/graphSessions/{session_id}/status",
+        )
+        assert status_resp.status_code == 200
+        assert status_resp.json()["status"] == "completed"
+
+    def test_default_graph_id_works(self):
+        """Verify POST /new without graphId defaults cleanly."""
+        app, *_ = _create_app()
+        client = TestClient(app)
+
+        resp = client.post(
+            "/v1beta1/graphSessions/new",
+            json={"graph": _simple_graph()},
+        )
+        assert resp.status_code == 200
+
+
+class TestDeleteEndpoint:
+    def test_delete_completed_session(self):
+        app, store, bus = _create_app()
+        client = TestClient(app)
+
+        resp = client.post(
+            "/v1beta1/graphSessions/new",
+            json={"graph": _simple_graph()},
+        )
+        session_id = resp.json()["sessionId"]
+
+        # Session should exist.
+        status_resp = client.get(
+            f"/v1beta1/graphSessions/{session_id}/status",
+        )
+        assert status_resp.status_code == 200
+
+        # Delete it.
+        del_resp = client.delete(
+            f"/v1beta1/graphSessions/{session_id}",
+        )
+        assert del_resp.status_code == 200
+        assert del_resp.json() == {"ok": True}
+
+        # Should be gone.
+        status_resp = client.get(
+            f"/v1beta1/graphSessions/{session_id}/status",
+        )
+        assert status_resp.status_code == 404
+
+    def test_delete_not_found(self):
+        app, *_ = _create_app()
+        client = TestClient(app)
+
+        resp = client.delete("/v1beta1/graphSessions/nonexistent")
+        assert resp.status_code == 404
+
+
+
+
 # ── helpers ──
 
 
@@ -340,4 +457,5 @@ def _parse_sse_events(raw: str) -> list[dict]:
                 except json.JSONDecodeError:
                     pass
     return events
+
 

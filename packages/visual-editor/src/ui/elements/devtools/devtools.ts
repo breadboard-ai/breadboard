@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
@@ -14,6 +14,7 @@ import { icons } from "../../styles/icons.js";
 import "../json-tree/json-tree.js";
 import "./opie/opie-panel.js";
 import "./feedback/feedback-panel.js";
+import "./sessions/sessions-panel.js";
 
 @customElement("bb-devtools")
 export class DevTools extends SignalWatcher(LitElement) {
@@ -139,6 +140,8 @@ export class DevTools extends SignalWatcher(LitElement) {
     const functions = opie.functionDeclarations;
     const entries = opie.entries;
     const feedbackEntries = this.sca.controller.global.feedback.entries;
+    const showSessions =
+      this.sca.services.graphRunService.enabled;
 
     return html`
       <div id="devtools-header">
@@ -163,6 +166,19 @@ export class DevTools extends SignalWatcher(LitElement) {
             >
               Feedback
             </button>
+            ${showSessions
+              ? html`
+                  <button
+                    class="sans-flex w-500 round"
+                    ?disabled=${devtools.activeTab === "sessions"}
+                    @click=${() => {
+                      devtools.activeTab = "sessions";
+                    }}
+                  >
+                    Sessions
+                  </button>
+                `
+              : nothing}
           </div>
         </div>
         <button
@@ -190,6 +206,9 @@ export class DevTools extends SignalWatcher(LitElement) {
                 .entries=${feedbackEntries}
               ></bb-devtools-feedback-panel>
             `
+          : ""}
+        ${devtools.activeTab === "sessions"
+          ? html`<bb-devtools-sessions-panel></bb-devtools-sessions-panel>`
           : ""}
       </div>
     `;
