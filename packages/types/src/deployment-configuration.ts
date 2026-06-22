@@ -9,8 +9,7 @@ import { type RuntimeFlags } from "./flags.js";
 export type ClientDeploymentConfiguration = {
   ALLOWED_REDIRECT_ORIGINS?: string[];
   MEASUREMENT_ID?: string;
-  BACKEND_API_ENDPOINT?: string;
-  ENABLE_BACKEND_CLIENT: boolean;
+  BACKEND_API_ENDPOINT: string;
   ENVIRONMENT_NAME?: string;
   GOOGLE_OAUTH_TOKEN_ENDPOINT?: string;
   GOOGLE_OAUTH_AUTH_ENDPOINT?: string;

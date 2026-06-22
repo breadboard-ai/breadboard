@@ -449,9 +449,9 @@ async def create_cached_content(request: Request) -> Response:
 
 # ---------------------------------------------------------------------------
 # Gemini model proxy — intercepts /{model}:{method} when enableGeminiBackend
-# is false and calls route through OPAL_BACKEND_API_PREFIX instead of the
-# public Gemini API. The dev server proxies these to the real Gemini API
-# using GEMINI_KEY (same auth pattern as createCachedContent above).
+# is false and calls route through the Opal backend instead of the public
+# Gemini API. The dev server proxies these to the real Gemini API using
+# GEMINI_KEY (same auth pattern as createCachedContent above).
 # ---------------------------------------------------------------------------
 
 

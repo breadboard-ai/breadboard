@@ -53,8 +53,7 @@ credentials attached and returns the result to the guest.
 | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`oauth-based-opal-shell.ts`](../../../packages/visual-editor/src/ui/utils/oauth-based-opal-shell.ts) | Host-side `fetchWithCreds` implementation. Also contains a direct `checkAppAccess` call used during sign-in for geo restriction checking.                                                |
 | [`fetch-allowlist.ts`](../../../packages/visual-editor/src/ui/utils/fetch-allowlist.ts)               | Allowlist of permitted endpoint prefixes. Remaps canonical origins to environment-specific endpoints. Determines OAuth scopes and whether to inject the access token into the JSON body. |
-| [`canonical-endpoints.ts`](../../../packages/types/src/canonical-endpoints.ts)                        | Canonical URL prefixes (e.g., `OPAL_BACKEND_API_PREFIX`). Guest code uses these; the allowlist remaps them at runtime.                                                                   |
-| [`gemini-endpoint.ts`](../../../packages/types/src/gemini-endpoint.ts)                                | `geminiApiPrefix()` → `${OPAL_BACKEND_API_PREFIX}/v1beta1/models`. Used by `gemini.ts` for Gemini proxy calls.                                                                           |
+| [`canonical-endpoints.ts`](../../../packages/types/src/canonical-endpoints.ts)                        | Canonical URL prefixes for third-party Google APIs (Drive, Docs, Sheets, etc.). Used by the fetch allowlist.                                                                             |
 
 ## `fetchWithCreds`
 
@@ -82,19 +81,18 @@ directly.** The whole point of the migration is to stop accumulating new
 1. Call `backendClient.sendHttpRequest("yourMethodName", { method, body })`. The
    client handles origin resolution and API versioning — you supply only the RPC
    method name.
-2. Gate behind `ENABLE_BACKEND_CLIENT` with a `fetchWithCreds` fallback only if
-   the endpoint must ship before the flag is globally enabled. Even then, write
-   the `OpalBackendClient` path first and treat the fallback as temporary
-   scaffolding.
+2. No flag gating is needed — `OpalBackendClient` is the standard path for all
+   backend calls.
 3. If the endpoint needs the access token in the JSON body (not just the
    `Authorization` header), add a condition to `shouldAddAccessTokenToJsonBody`
    in `fetch-allowlist.ts`.
 4. Add the endpoint to `docs/dev/backend_reference.md`.
 
-## `OpalBackendClient` Migration
+## `OpalBackendClient`
 
-There is an ongoing effort (gated by `ENABLE_BACKEND_CLIENT`) to replace direct
-`fetchWithCreds` calls with a dedicated backend client.
+All backend API calls go through `OpalBackendClient`. The migration from direct
+`fetchWithCreds` call sites is complete — there is no feature flag or fallback
+path.
 
 | File                                                                                            | Role                                                                                                                              |
 | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -105,24 +103,8 @@ There is an ongoing effort (gated by `ENABLE_BACKEND_CLIENT`) to replace direct
 
 - The host instantiates `HttpBackendClient` and exposes it to the guest via
   `getOpalBackendClient()` (Comlink).
-- Guest code checks `CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT`. When on,
-  it calls `backendClient.sendHttpRequest("methodName", { method, body })`. When
-  off, it falls back to `fetchWithCreds` with a manually constructed URL.
-- The flag is defined in three places (keep all in sync):
-  - `packages/types/src/deployment-configuration.ts`
-  - `packages/unified-server/src/flags.ts`
-  - `packages/unified-server/src/config.ts`
-
-### Migration status
-
-See `docs/dev/backend_reference.md` for the full per-endpoint status (✅/❌).
-
-### Migrating an endpoint
-
-1. Accept `Promise<OpalBackendClient>` alongside the existing `fetchWithCreds`
-   parameter (see `AppCatalystApiClient` constructor for the pattern).
-2. Gate the new path: `if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT)`.
-3. Call `backendClient.sendHttpRequest("rpcMethodName", { method, body })`.
-4. Keep the `fetchWithCreds` fallback in the `else` branch.
-5. Update `docs/dev/backend_reference.md` — flip ❌ to ✅.
-6. Add tests for both paths (see `tests/app-catalyst.test.ts` for examples).
+- Guest code calls
+  `backendClient.sendHttpRequest("methodName", { method, body })`. The client
+  handles origin resolution and API versioning internally.
+- `HttpBackendClient` wraps `fetchWithCreds` under the hood, so the host/guest
+  credential plumbing (allowlist, token attachment) still applies transparently.

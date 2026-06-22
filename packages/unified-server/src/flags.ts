@@ -40,8 +40,6 @@ export const DOMAIN_CONFIG = getDomainConfig("DOMAIN_CONFIG");
 
 export const ENABLE_AGENT_WORKBENCH = getBoolean("ENABLE_AGENT_WORKBENCH");
 
-export const ENABLE_BACKEND_CLIENT = getBoolean("ENABLE_BACKEND_CLIENT");
-
 export const ENABLE_CONSISTENT_UI = getBoolean("ENABLE_CONSISTENT_UI");
 
 export const ENABLE_DEV_TOOLS = getBoolean("ENABLE_DEV_TOOLS");

@@ -7,6 +7,7 @@
 import assert from "node:assert";
 import { suite, test, beforeEach, afterEach } from "node:test";
 import { checkFetchAllowlist } from "../../src/ui/utils/fetch-allowlist.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../src/ui/config/client-deployment-configuration.js";
 import { setDOM, unsetDOM } from "../fake-dom.js";
 
 suite("checkFetchAllowlist", () => {
@@ -18,7 +19,7 @@ suite("checkFetchAllowlist", () => {
     unsetDOM();
   });
 
-  const BASE = "https://appcatalyst.pa.googleapis.com";
+  const BASE = CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT!;
 
   test("streamRunAgent requires accessToken in body", () => {
     const info = checkFetchAllowlist(`${BASE}/v1beta1/streamRunAgent`);

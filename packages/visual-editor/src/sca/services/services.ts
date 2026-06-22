@@ -13,7 +13,6 @@ import { SigninAdapter } from "../../ui/utils/signin-adapter.js";
 import {
   GraphLoader,
   NOTEBOOKLM_API_PREFIX,
-  OPAL_BACKEND_API_PREFIX,
 } from "@breadboard-ai/types";
 import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
 
@@ -124,14 +123,10 @@ export function services(
       },
     });
 
-    const mcpClientManager = new McpClientManager(
-      builtInMcpClients,
-      {
-        fetchWithCreds: fetchWithCreds,
-        backendClient: config.shellHost.getOpalBackendClient(),
-      },
-      OPAL_BACKEND_API_PREFIX
-    );
+    const mcpClientManager = new McpClientManager(builtInMcpClients, {
+      fetchWithCreds: fetchWithCreds,
+      backendClient: config.shellHost.getOpalBackendClient(),
+    });
 
     const agentContext = new AgentContext({
       shell: config.shellHost,
@@ -150,7 +145,6 @@ export function services(
     // at startRun() time, so toggling flags in Settings takes effect
     // without a page reload.
     agentService.configureRemote(
-      OPAL_BACKEND_API_PREFIX,
       () =>
         env.flags.get("enableOpalBackend") ||
         env.flags.get("enableSessionsBackend"),
@@ -160,7 +154,7 @@ export function services(
 
     const graphRunService = new GraphRunService();
     graphRunService.configureRemote(
-      OPAL_BACKEND_API_PREFIX,
+      CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT,
       fetchWithCreds,
       () => env.flags.get("enableBackendGraphRunner")
     );

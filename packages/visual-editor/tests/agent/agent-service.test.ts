@@ -234,16 +234,16 @@ suite("AgentService — Remote Mode", () => {
 
   test("isRemote is true after configureRemote", () => {
     const service = new AgentService();
-    service.configureRemote("http://localhost:8080");
+    service.configureRemote(() => true);
     assert.strictEqual(service.isRemote, true);
   });
 
-  test("isRemote reverts to false when set to null", () => {
+  test("isRemote reverts to false when predicate returns false", () => {
     const service = new AgentService();
-    service.configureRemote("http://localhost:8080");
+    service.configureRemote(() => true);
     assert.strictEqual(service.isRemote, true);
 
-    service.configureRemote(null);
+    service.configureRemote(() => false);
     assert.strictEqual(service.isRemote, false);
   });
 
@@ -257,7 +257,7 @@ suite("AgentService — Remote Mode", () => {
 
   test("startRun in remote mode rejects LocalAgentRunConfig", () => {
     const service = new AgentService();
-    service.configureRemote("http://localhost:8080");
+    service.configureRemote(() => true);
 
     assert.throws(
       () => service.startRun({ kind: "test", objective: OBJECTIVE }),
@@ -267,7 +267,7 @@ suite("AgentService — Remote Mode", () => {
 
   test("startRun in remote mode accepts RemoteAgentRunConfig", () => {
     const service = new AgentService();
-    service.configureRemote("http://localhost:8080");
+    service.configureRemote(() => true);
 
     const handle = service.startRun({
       kind: "test",

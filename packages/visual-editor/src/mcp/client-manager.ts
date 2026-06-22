@@ -28,8 +28,7 @@ class McpClientManager {
 
   constructor(
     builtInClients: [string, McpBuiltInClientFactory][],
-    private readonly context: McpBuiltInClientFactoryContext,
-    private readonly proxyUrl: string
+    private readonly context: McpBuiltInClientFactoryContext
   ) {
     this.#builtIn = new McpBuiltInServerStore(context, builtInClients);
     this.#serverStore = createMcpServerStore();
@@ -53,7 +52,7 @@ class McpClientManager {
     try {
       if (isBuiltIn) {
         return this.#builtIn.get(url);
-      } else if (this.proxyUrl) {
+      } else {
         const serverInfo = await this.#serverStore.get(url);
 
         return new CachingMcpClient(
@@ -67,8 +66,6 @@ class McpClientManager {
           }),
           this.#serverStore
         );
-      } else {
-        return err(`Unable to configure MCP Server: no MCP proxy specified`);
       }
     } catch (e) {
       return err((e as Error).message);

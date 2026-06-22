@@ -293,7 +293,7 @@ describe("Gemini streamGenerateContent retry logic", () => {
   });
 });
 
-describe("generateContent ENABLE_BACKEND_CLIENT migration", () => {
+describe("generateContent via backend client", () => {
 
   afterEach(() => {
     mock.restoreAll();
@@ -363,7 +363,7 @@ describe("generateContent ENABLE_BACKEND_CLIENT migration", () => {
   });
 });
 
-describe("streamGenerateContent ENABLE_BACKEND_CLIENT migration", () => {
+describe("streamGenerateContent via backend client", () => {
 
   afterEach(() => {
     mock.restoreAll();

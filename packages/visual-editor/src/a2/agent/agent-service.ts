@@ -112,16 +112,12 @@ class AgentService {
    *
    * Set via `configureRemote()` — intended for tests and dev mode.
    */
-  #remoteBaseUrl: string | null = null;
   #remoteBackendClient: Promise<OpalBackendClient> = new Promise(() => {});
-  #remoteIsEnabled: () => boolean = () => true;
+  #remoteIsEnabled: () => boolean = () => false;
   #useSessionsProtocol: () => boolean = () => false;
 
   /**
    * Configure the service for remote (SSE) mode.
-   *
-   * When `baseUrl` is set, `startRun()` will POST to the server and
-   * return an `SSEAgentRun` that streams events via SSE.
    *
    * The `isEnabled` predicate controls whether remote mode is active.
    * The `useSessionsProtocol` predicate controls which wire protocol
@@ -130,16 +126,12 @@ class AgentService {
    *
    * Both predicates are checked at `startRun()` time — toggling the
    * underlying flags takes effect without a page reload.
-   *
-   * Pass `null` for baseUrl to revert to local mode.
    */
   configureRemote(
-    baseUrl: string | null,
     isEnabled: () => boolean = () => true,
     useSessionsProtocol: () => boolean = () => false,
     backendClient: Promise<OpalBackendClient> = new Promise(() => {})
   ): void {
-    this.#remoteBaseUrl = baseUrl;
     this.#remoteBackendClient = backendClient;
     this.#remoteIsEnabled = isEnabled;
     this.#useSessionsProtocol = useSessionsProtocol;
@@ -147,7 +139,7 @@ class AgentService {
 
   /** Whether the service is configured for remote (SSE) mode AND a remote flag is currently enabled. */
   get isRemote(): boolean {
-    return this.#remoteBaseUrl !== null && this.#remoteIsEnabled();
+    return this.#remoteIsEnabled();
   }
 
   /**
@@ -163,7 +155,7 @@ class AgentService {
     const runId = crypto.randomUUID();
 
     let run: AgentRunHandle;
-    if (this.#remoteBaseUrl && this.#remoteIsEnabled()) {
+    if (this.#remoteIsEnabled()) {
       if (!("segments" in config)) {
         throw new Error("Remote mode requires RemoteAgentRunConfig (segments)");
       }

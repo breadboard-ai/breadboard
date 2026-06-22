@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { describe, it, mock, afterEach, beforeEach } from "node:test";
+import { describe, it, mock, afterEach } from "node:test";
 import assert from "node:assert";
 import { ok } from "@breadboard-ai/utils";
 import {
@@ -14,11 +14,6 @@ import {
 import type { AppController } from "../../../../src/sca/controller/controller.js";
 import type { AppServices } from "../../../../src/sca/services/services.js";
 import type { LLMContent, Outcome } from "@breadboard-ai/types";
-import {
-  geminiApiPrefix,
-  OPAL_BACKEND_API_PREFIX,
-} from "@breadboard-ai/types";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../../../../src/ui/config/client-deployment-configuration.js";
 import type { AppTheme } from "../../../../src/ui/types/types.js";
 
 // ---------------------------------------------------------------------------
@@ -107,32 +102,14 @@ function makeContents(): LLMContent {
   };
 }
 
-// ---------------------------------------------------------------------------
-// geminiApiPrefix
-// ---------------------------------------------------------------------------
 
-describe("geminiApiPrefix", () => {
-  it("returns Opal backend prefix", () => {
-    assert.strictEqual(
-      geminiApiPrefix(),
-      `${OPAL_BACKEND_API_PREFIX}/v1beta1/models`
-    );
-  });
-});
 
 // ---------------------------------------------------------------------------
 // generateImage
 // ---------------------------------------------------------------------------
 
 describe("generateImage", () => {
-  let savedFlag: boolean;
-
-  beforeEach(() => {
-    savedFlag = CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT;
-  });
-
   afterEach(() => {
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = savedFlag;
     mock.restoreAll();
   });
   it("returns error when there is no editor", async () => {
@@ -351,7 +328,6 @@ describe("generateImage", () => {
   });
 
   it("passes abort signal through to sendHttpRequest when flag is on", async () => {
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
     const { controller } = makeController();
     const { services, sendHttpRequest } = makeServices();
     const abortController = new AbortController();
@@ -371,7 +347,6 @@ describe("generateImage", () => {
   });
 
   it("returns error when response is not ok (flag on)", async () => {
-    CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_CLIENT = true;
     const { controller } = makeController();
     const { services } = makeServices({ ok: false, json: { error: "bad" } });
 

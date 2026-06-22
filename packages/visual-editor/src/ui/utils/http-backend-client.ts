@@ -8,7 +8,7 @@ import type {
   OpalBackendClient,
   OpalBackendRequestOptions,
 } from "@breadboard-ai/types/opal-backend-client.js";
-import { OPAL_BACKEND_API_PREFIX } from "@breadboard-ai/types";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 
 export { HttpBackendClient };
 
@@ -28,7 +28,7 @@ class HttpBackendClient implements OpalBackendClient {
     options: OpalBackendRequestOptions
   ): Promise<Response> => {
     const { method, body, query, signal } = options;
-    let url = `${OPAL_BACKEND_API_PREFIX}/v1beta1/${methodName}`;
+    let url = `${CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT}/v1beta1/${methodName}`;
     console.log(`[backend-client] fetching ${url}`);
     if (query) {
       const params = new URLSearchParams(query);
