@@ -154,9 +154,8 @@ export function services(
 
     const graphRunService = new GraphRunService();
     graphRunService.configureRemote(
-      CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT,
-      fetchWithCreds,
-      () => env.flags.get("enableBackendGraphRunner")
+      () => env.flags.get("enableBackendGraphRunner"),
+      config.shellHost.getOpalBackendClient()
     );
 
     const sandbox = createA2ModuleFactory({

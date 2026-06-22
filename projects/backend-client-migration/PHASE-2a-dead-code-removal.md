@@ -316,6 +316,21 @@ construction.
 
 ---
 
+### 2a.7 — `HttpBackendClient` presence assertion
+
+Update `HttpBackendClient.sendHttpRequest` to explicitly assert that
+`BACKEND_API_ENDPOINT` is present. If unset (`""`), treat this as an internal
+client error and throw explicitly (callers should not detect this condition
+beforehand).
+
+### 2a.8 — `GraphRunService` migration
+
+Migrate legacy direct `fetchWithCreds` graph session calls
+(`/v1beta1/graphSessions/new`, `:resume`, `:cancel`, etc.) in `GraphRunService`
+to transit through `OpalBackendClient`.
+
+---
+
 ## Verification
 
 1. `npm run build` — must compile cleanly.
@@ -340,19 +355,5 @@ construction.
 | 2a.4      | Update tests (9 files)                            | ✅ Complete                                                                               |
 | 2a.5      | Update documentation                              | ✅ Complete                                                                               |
 | 2a.6      | Remove `OPAL_BACKEND_API_PREFIX`                  | ✅ Complete                                                                               |
-
----
-
-## Followup Tech Debt (Deferred to Phase 3)
-
-During Phase 2a execution, additional tech debt and unmigrated consumers were
-identified and scheduled for followup:
-
-1. **`HttpBackendClient` presence assertion:** Callers (`McpClientManager`,
-   `AgentService`) no longer detect missing `BACKEND_API_ENDPOINT` beforehand.
-   In Phase 3, `HttpBackendClient.sendHttpRequest` should explicitly assert that
-   `BACKEND_API_ENDPOINT` is present, throwing an internal error if unset
-   (`""`).
-2. **`GraphRunService` migration (Case #3):** Direct `fetchWithCreds` graph
-   session calls (`/v1beta1/graphSessions/...`) in `GraphRunService` should be
-   migrated to transit through `OpalBackendClient`.
+| 2a.7      | `HttpBackendClient` presence assertion            | ⏳ Pending                                                                                |
+| 2a.8      | `GraphRunService` migration                       | ✅ Complete                                                                               |

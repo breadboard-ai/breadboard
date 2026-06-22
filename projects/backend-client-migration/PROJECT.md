@@ -17,13 +17,24 @@ is on and falling back to `fetchWithCreds` when off.
 
 ---
 
-### Phase 2a — Dead Code Removal
+### Phase 2a — Dead Code Removal & Followup Cleanup
 
 **Depends on:** Phase 1 (complete), flag enabled and verified.
 
 Make `ENABLE_BACKEND_CLIENT` permanent: collapse every flag-gated `if/else` to
 the `OpalBackendClient` path only, remove the `fetchWithCreds` fallback branches
-for backend calls, and delete the flag itself.
+for backend calls, delete the flag itself, harden `HttpBackendClient`, and
+migrate `GraphRunService`:
+
+1. **Dead code removal:** Collapse flag gates and delete
+   `ENABLE_BACKEND_CLIENT` and `OPAL_BACKEND_API_PREFIX`.
+2. **`HttpBackendClient` presence assertion:** Update
+   `HttpBackendClient.sendHttpRequest` to unconditionally assume
+   `BACKEND_API_ENDPOINT` is present. If unset (`""`), treat this as an internal
+   client error and throw explicitly.
+3. **`GraphRunService` migration:** Migrate legacy direct `fetchWithCreds` graph
+   session plumbing (`/v1beta1/graphSessions/new`, `:resume`, `:cancel`, etc.)
+   in `GraphRunService` to transit through `OpalBackendClient`.
 
 **End state:** No `fetchWithCreds` calls targeting `BACKEND_API_ENDPOINT`
 remain. Third-party `fetchWithCreds` usages (Google Drive, Docs, Sheets, etc.)
@@ -47,25 +58,6 @@ open-ended HTTP interface. Low-level HTTP details (method, URL construction,
 query params, body serialization) are fully encapsulated.
 
 📄 [PHASE-2b-typed-interface.md](./PHASE-2b-typed-interface.md)
-
----
-
-### Phase 3 — Followup Tech Debt & Unmigrated Services
-
-**Depends on:** Phase 2a / Phase 2b.
-
-Address remaining cleanup and migrate unmigrated services discovered during
-Phase 2a:
-
-1. **`HttpBackendClient` presence assertion:** Update
-   `HttpBackendClient.sendHttpRequest` to unconditionally assume
-   `BACKEND_API_ENDPOINT` is present. If unset (`""`), treat this as an internal
-   client error and throw explicitly (callers should not detect this condition
-   beforehand).
-2. **`GraphRunService` migration (Case #3):** Migrate legacy direct
-   `fetchWithCreds` graph session plumbing (`/v1beta1/graphSessions/new`,
-   `:resume`, `:cancel`, etc.) in `GraphRunService` to transit through
-   `OpalBackendClient`.
 
 ---
 
