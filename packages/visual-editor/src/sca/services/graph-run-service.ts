@@ -8,7 +8,7 @@
  * Service for running graphs on the Heartstone backend via SSE.
  *
  * Follows the same service pattern as {@link AgentService}: eagerly
- * configured with URL + fetch + flag predicate; the flag is read at
+ * configured with flag predicate + backendClient; the flag is read at
  * `startRun()` time so toggling it in Settings takes effect immediately.
  *
  * Protocol:
@@ -24,6 +24,7 @@
  */
 
 import { iteratorFromStream } from "@breadboard-ai/utils";
+import type { OpalBackendClient } from "@breadboard-ai/types/opal-backend-client.js";
 
 export { GraphRunService };
 export type { GraphRunEvent, GraphRunSession };
@@ -102,25 +103,21 @@ interface GraphRunSession {
 // ---------------------------------------------------------------------------
 
 class GraphRunService {
-  #baseUrl = "";
-  #fetchFn: typeof fetch = fetch;
+  #backendClient: Promise<OpalBackendClient> = new Promise(() => {});
   #isEnabled: () => boolean = () => false;
 
   /**
    * Configure the backend connection. Called once at app startup.
    *
-   * @param baseUrl  — e.g. `"http://localhost:8080"` or production URL.
-   * @param fetchFn  — authenticated fetch (usually `fetchWithCreds`).
    * @param isEnabled — predicate reading the flag at call time.
+   * @param backendClient — promise resolving to OpalBackendClient.
    */
   configureRemote(
-    baseUrl: string,
-    fetchFn: typeof fetch,
-    isEnabled: () => boolean
+    isEnabled: () => boolean,
+    backendClient: Promise<OpalBackendClient>
   ): void {
-    this.#baseUrl = baseUrl;
-    this.#fetchFn = fetchFn;
     this.#isEnabled = isEnabled;
+    this.#backendClient = backendClient;
   }
 
   /** Whether the backend graph runner is enabled right now. */
@@ -139,11 +136,10 @@ class GraphRunService {
     graph: Record<string, unknown>,
     signal?: AbortSignal
   ): Promise<GraphRunSession> {
-    const createUrl = `${this.#baseUrl}/v1beta1/graphSessions/new`;
-    const createResp = await this.#fetchFn(createUrl, {
+    const client = await this.#backendClient;
+    const createResp = await client.sendHttpRequest("graphSessions/new", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ graph }),
+      body: { graph },
       signal,
     });
 
@@ -154,8 +150,7 @@ class GraphRunService {
     }
 
     const { sessionId } = (await createResp.json()) as { sessionId: string };
-    const fetchFn = this.#fetchFn;
-    const baseUrl = this.#baseUrl;
+    const clientPromise = this.#backendClient;
 
     // Cursor: the highest event index we've seen. Used to avoid
     // replaying old events on reconnect.
@@ -165,9 +160,6 @@ class GraphRunService {
       sessionId,
 
       openStream(signal?: AbortSignal): AsyncIterable<GraphRunEvent> {
-        // Include ?after=N to skip events we've already processed.
-        const streamUrl =
-          `${baseUrl}/v1beta1/graphSessions/${sessionId}?after=${cursor}`;
         // Return an async iterable that lazily opens the stream.
         return {
           [Symbol.asyncIterator]() {
@@ -178,7 +170,13 @@ class GraphRunService {
               async next(): Promise<IteratorResult<GraphRunEvent>> {
                 if (!started) {
                   started = true;
-                  const resp = await fetchFn(streamUrl, { signal });
+                  const client = await clientPromise;
+                  const query: Record<string, string> | undefined =
+                    cursor >= 0 ? { after: String(cursor) } : undefined;
+                  const resp = await client.sendHttpRequest(
+                    `graphSessions/${sessionId}`,
+                    { method: "GET", query, signal }
+                  );
                   if (!resp.ok) {
                     throw new Error(
                       `Graph SSE stream failed: ${resp.status} ${resp.statusText}`
@@ -207,12 +205,14 @@ class GraphRunService {
         interactionId: string,
         response: unknown
       ): Promise<void> {
-        const url = `${baseUrl}/v1beta1/graphSessions/${sessionId}:resume`;
-        const resp = await fetchFn(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ interactionId, response }),
-        });
+        const client = await clientPromise;
+        const resp = await client.sendHttpRequest(
+          `graphSessions/${sessionId}:resume`,
+          {
+            method: "POST",
+            body: { interactionId, response },
+          }
+        );
         if (!resp.ok) {
           throw new Error(
             `Resume failed: ${resp.status} ${resp.statusText}`
@@ -221,11 +221,10 @@ class GraphRunService {
       },
 
       async cancel(): Promise<void> {
-        const url = `${baseUrl}/v1beta1/graphSessions/${sessionId}:cancel`;
         try {
-          await fetchFn(url, {
+          const client = await clientPromise;
+          await client.sendHttpRequest(`graphSessions/${sessionId}:cancel`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
           });
         } catch {
           // Best-effort — signal may have already killed the fetch.

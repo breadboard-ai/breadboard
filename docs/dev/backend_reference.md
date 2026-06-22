@@ -126,6 +126,38 @@
 
 ---
 
+### Graph Sessions
+
+#### `POST /v1beta1/graphSessions/new`
+
+- **Description:** Creates a new graph execution session on the backend, returning a unique session ID.
+- **Call Location:**
+  [graph-run-service.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/sca/services/graph-run-service.ts)
+- **Backend Client:** ✅ uses `OpalBackendClient`.
+
+#### `GET /v1beta1/graphSessions/{id}`
+
+- **Description:** Connects to an ongoing graph session to stream graph execution events via SSE (supports reconnecting with `?after=N`).
+- **Call Location:**
+  [graph-run-service.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/sca/services/graph-run-service.ts)
+- **Backend Client:** ✅ uses `OpalBackendClient`.
+
+#### `POST /v1beta1/graphSessions/{id}:resume`
+
+- **Description:** Re-injects user interaction responses back into a suspended graph execution session so it can resume processing.
+- **Call Location:**
+  [graph-run-service.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/sca/services/graph-run-service.ts)
+- **Backend Client:** ✅ uses `OpalBackendClient`.
+
+#### `POST /v1beta1/graphSessions/{id}:cancel`
+
+- **Description:** Aborts a running graph background task on the backend.
+- **Call Location:**
+  [graph-run-service.ts](https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor/src/sca/services/graph-run-service.ts)
+- **Backend Client:** ✅ uses `OpalBackendClient`.
+
+---
+
 ### Legacy Agent Streaming
 
 #### `POST /v1beta1/streamRunAgent?alt=sse`
