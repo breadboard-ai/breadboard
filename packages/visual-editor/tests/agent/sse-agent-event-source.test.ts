@@ -754,7 +754,7 @@ suite("AgentService remote mode", () => {
     const { AgentService } =
       await import("../../src/a2/agent/agent-service.js");
     const service = new AgentService();
-    service.configureRemote("http://localhost:8000");
+    service.configureRemote(() => true);
 
     const handle = service.startRun({
       kind: "test",
@@ -773,13 +773,13 @@ suite("AgentService remote mode", () => {
     service.endRun(handle.runId);
   });
 
-  test("configureRemote(null) reverts to local mode", async () => {
+  test("configureRemote(() => false) reverts to local mode", async () => {
     const { AgentService } =
       await import("../../src/a2/agent/agent-service.js");
     const service = new AgentService();
 
-    service.configureRemote("http://localhost:8000");
-    service.configureRemote(null);
+    service.configureRemote(() => true);
+    service.configureRemote(() => false);
 
     const handle = service.startRun({
       kind: "test",

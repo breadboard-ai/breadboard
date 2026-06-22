@@ -50,6 +50,25 @@ query params, body serialization) are fully encapsulated.
 
 ---
 
+### Phase 3 — Followup Tech Debt & Unmigrated Services
+
+**Depends on:** Phase 2a / Phase 2b.
+
+Address remaining cleanup and migrate unmigrated services discovered during
+Phase 2a:
+
+1. **`HttpBackendClient` presence assertion:** Update
+   `HttpBackendClient.sendHttpRequest` to unconditionally assume
+   `BACKEND_API_ENDPOINT` is present. If unset (`""`), treat this as an internal
+   client error and throw explicitly (callers should not detect this condition
+   beforehand).
+2. **`GraphRunService` migration (Case #3):** Migrate legacy direct
+   `fetchWithCreds` graph session plumbing (`/v1beta1/graphSessions/new`,
+   `:resume`, `:cancel`, etc.) in `GraphRunService` to transit through
+   `OpalBackendClient`.
+
+---
+
 ## Key References
 
 - **Skill reference:**

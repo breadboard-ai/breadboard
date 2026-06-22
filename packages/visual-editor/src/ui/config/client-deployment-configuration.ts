@@ -38,8 +38,9 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(
   config: T
-): T & Pick<ClientDeploymentConfiguration, "flags"> {
+): T & Pick<ClientDeploymentConfiguration, "flags" | "BACKEND_API_ENDPOINT"> {
   return {
+    BACKEND_API_ENDPOINT: "http://localhost:3000",
     ...config,
     flags: { ...DEFAULT_FLAG_VALUES, ...config?.flags },
   };

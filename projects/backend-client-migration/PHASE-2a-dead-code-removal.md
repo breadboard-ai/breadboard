@@ -336,7 +336,23 @@ construction.
 | --------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | 2a.1      | Collapse flag gates (12 files, 24 gates)          | ✅ Complete                                                                               |
 | 2a.2      | Remove `fetchWithCreds` backend plumbing          | ✅ Complete (unused pass-through `fetchWithCreds` & `baseUrl` parameters cleanly deleted) |
-| 2a.3      | Remove `ENABLE_BACKEND_CLIENT` flag (3 locations) | ⏳ Pending (deferred per scope instructions)                                              |
+| 2a.3      | Remove `ENABLE_BACKEND_CLIENT` flag (3 locations) | ✅ Complete                                                                               |
 | 2a.4      | Update tests (9 files)                            | ✅ Complete                                                                               |
-| 2a.5      | Update documentation                              | ⏳ Pending                                                                                |
-| 2a.6      | Remove `OPAL_BACKEND_API_PREFIX`                  | ⏳ Pending (deferred per scope instructions)                                              |
+| 2a.5      | Update documentation                              | ✅ Complete                                                                               |
+| 2a.6      | Remove `OPAL_BACKEND_API_PREFIX`                  | ✅ Complete                                                                               |
+
+---
+
+## Followup Tech Debt (Deferred to Phase 3)
+
+During Phase 2a execution, additional tech debt and unmigrated consumers were
+identified and scheduled for followup:
+
+1. **`HttpBackendClient` presence assertion:** Callers (`McpClientManager`,
+   `AgentService`) no longer detect missing `BACKEND_API_ENDPOINT` beforehand.
+   In Phase 3, `HttpBackendClient.sendHttpRequest` should explicitly assert that
+   `BACKEND_API_ENDPOINT` is present, throwing an internal error if unset
+   (`""`).
+2. **`GraphRunService` migration (Case #3):** Direct `fetchWithCreds` graph
+   session calls (`/v1beta1/graphSessions/...`) in `GraphRunService` should be
+   migrated to transit through `OpalBackendClient`.

@@ -38,20 +38,25 @@ function urlOrUndefined(url: string | undefined): URL | undefined {
 }
 
 const FETCH_ALLOWLIST: AllowListParams[] = [
-  {
-    canonicalPrefix: new URL(CANONICAL.OPAL_BACKEND_API_PREFIX),
-    scopes: GENAI_SCOPES,
-    remapOrigin: urlOrUndefined(CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT),
-    shouldAddAccessTokenToJsonBody: (url: string) =>
-      url.endsWith("/uploadGeminiFile") ||
-      url.endsWith("/uploadBlobFile") ||
-      url.includes("/generateWebpageStream") ||
-      url.includes("/streamRunAgent") ||
-      url.includes("/sessions/new") ||
-      (url.includes("/sessions/") && url.includes(":resume")) ||
-      url.includes("/graphSessions/new") ||
-      (url.includes("/graphSessions/") && url.includes(":resume")),
-  },
+  ...(CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT
+    ? [
+        {
+          canonicalPrefix: new URL(
+            CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT
+          ),
+          scopes: GENAI_SCOPES,
+          shouldAddAccessTokenToJsonBody: (url: string) =>
+            url.endsWith("/uploadGeminiFile") ||
+            url.endsWith("/uploadBlobFile") ||
+            url.includes("/generateWebpageStream") ||
+            url.includes("/streamRunAgent") ||
+            url.includes("/sessions/new") ||
+            (url.includes("/sessions/") && url.includes(":resume")) ||
+            url.includes("/graphSessions/new") ||
+            (url.includes("/graphSessions/") && url.includes(":resume")),
+        },
+      ]
+    : []),
   {
     canonicalPrefix: new URL(CANONICAL.GOOGLE_DRIVE_FILES_API_PREFIX),
     scopes: DRIVE_SCOPES,
