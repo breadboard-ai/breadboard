@@ -44,6 +44,13 @@ function setColorScheme(colorScheme?: "light" | "dark") {
 }
 
 async function bootstrap(bootstrapArgs: BootstrapArguments) {
+  logger.log(
+    Utils.Logging.Formatter.warning(
+      "This is the development branch of Breadboard; not suitable for production"
+    ),
+    "Bootstrap"
+  );
+
   const { shellHost, embedHandler, hostOrigin } =
     await connectToOpalShellHost();
 
