@@ -44,6 +44,11 @@ function setColorScheme(colorScheme?: "light" | "dark") {
 }
 
 async function bootstrap(bootstrapArgs: BootstrapArguments) {
+  logger.log(
+    Utils.Logging.Formatter.info("Running opal-eol branch"),
+    "Bootstrap"
+  );
+
   const { shellHost, embedHandler, hostOrigin } =
     await connectToOpalShellHost();
 
