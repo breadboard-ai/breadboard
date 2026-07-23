@@ -11,6 +11,7 @@ import * as Comlink from "comlink";
 import type { BreadboardMessage } from "@breadboard-ai/types/embedder.js";
 import {
   OAUTH_POPUP_MESSAGE_TYPE,
+  type GrantResponse,
   type MissingScopesTokenResult,
   type OAuthPopupMessage,
   type SignedOutTokenResult,
@@ -461,14 +462,56 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         error: { code: "other", userMessage: "Verification failed" },
       };
     }
-    const { grantResponse } = popupMessage;
-    const issueTime = Date.now();
-    console.info(`[shell host] Received grant response`);
-    if (grantResponse.error !== undefined) {
-      if (grantResponse.error === "access_denied") {
+    if (popupMessage.error !== undefined) {
+      if (popupMessage.error === "access_denied") {
         console.info(`[shell host] User cancelled sign-in`);
         return { ok: false, error: { code: "user-cancelled" } };
       }
+      console.error(`[shell host] Unknown grant error`, popupMessage.error);
+      return {
+        ok: false,
+        error: {
+          code: "other",
+          userMessage: `Unknown grant error ${JSON.stringify(popupMessage.error)}`,
+        },
+      };
+    }
+    if (!popupMessage.code) {
+      console.error(`[shell host] Missing authorization code`, popupMessage);
+      return {
+        ok: false,
+        error: { code: "other", userMessage: "Missing authorization code" },
+      };
+    }
+
+    // Now that the nonce is verified, call the token grant API.
+    const grantUrl = new URL("/connection/grant/", window.location.origin);
+    const response = await fetch(grantUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        code: popupMessage.code,
+        redirect_path: popupMessage.redirectPath ?? "/oauth/",
+      }),
+    });
+    let grantResponse: GrantResponse;
+    try {
+      grantResponse = await response.json();
+    } catch {
+      grantResponse = {
+        error: "Invalid response from connection server",
+      };
+    }
+
+    if (grantResponse.error === undefined) {
+      grantResponse.scopes = popupMessage.scopes ?? [];
+      grantResponse.authuser = popupMessage.authuser;
+    }
+
+    const issueTime = Date.now();
+    console.info(`[shell host] Received grant response`);
+    if (grantResponse.error !== undefined) {
       console.error(`[shell host] Unknown grant error`, grantResponse.error);
       return {
         ok: false,
