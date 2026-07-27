@@ -48,17 +48,18 @@ async function findUserOpalFolder(
   const query = `name=${quote(userFolderName)}
   and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"
   and 'me' in owners
+  and visibility = 'limited'
   and trashed=false`;
 
   try {
     const response = await googleDriveClient.listFiles(query, {
-      fields: ["id", "mimeType"],
+      fields: ["id", "mimeType", "shared"],
       orderBy: [{ field: "createdTime", dir: "desc" }],
     });
     // This shouldn't be required based on the query above, but for some reason
     // the TestGaia drive endpoint doesn't seem to respect the mimeType query
     const files = response.files.filter(
-      (f) => f.mimeType === GOOGLE_DRIVE_FOLDER_MIME_TYPE
+      (f) => f.mimeType === GOOGLE_DRIVE_FOLDER_MIME_TYPE && f.shared !== true
     );
     if (files.length > 0) {
       if (files.length > 1) {
