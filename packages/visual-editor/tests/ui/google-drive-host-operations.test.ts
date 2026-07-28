@@ -25,8 +25,8 @@ suite("findUserOpalFolder", () => {
     fakeApi.reset();
   });
 
-  test("queries for root folder owned by user and filters out shared folders", async () => {
-    const fetchWithCreds: typeof globalThis.fetch = (input, init) => {
+  function createFetchWithCreds(): typeof globalThis.fetch {
+    return (input, init) => {
       const url =
         typeof input === "string"
           ? input
@@ -37,7 +37,32 @@ suite("findUserOpalFolder", () => {
       const relative = url.replace(/^https:\/\/www\.googleapis\.com/, "");
       return globalThis.fetch(`${fakeApi.apiBaseUrl}${relative}`, init);
     };
+  }
 
+  test("returns error when only a shared folder exists", async () => {
+    const fetchWithCreds = createFetchWithCreds();
+    const client = new GoogleDriveClient({ fetchWithCreds });
+
+    const sharedFolder = await client.createFileMetadata({
+      name: "Breadboard",
+      mimeType: "application/vnd.google-apps.folder",
+    });
+    fakeApi.forceSetFileMetadata(sharedFolder.id, { shared: true });
+    fakeApi.setMatchingFilesForNextListRequest([sharedFolder.id]);
+
+    const result = await findUserOpalFolder({
+      userFolderName: "Breadboard",
+      fetchWithCreds,
+    });
+
+    assert.deepStrictEqual(result, {
+      ok: false,
+      error: "No root folder found",
+    });
+  });
+
+  test("queries for root folder owned by user and filters out shared folders", async () => {
+    const fetchWithCreds = createFetchWithCreds();
     const client = new GoogleDriveClient({ fetchWithCreds });
 
     // Create a shared folder (should be filtered out)
@@ -54,6 +79,7 @@ suite("findUserOpalFolder", () => {
     });
     fakeApi.forceSetFileMetadata(unsharedFolder.id, { shared: false });
 
+    // Place shared folder first to ensure it isn't picked just by position
     fakeApi.setMatchingFilesForNextListRequest([
       sharedFolder.id,
       unsharedFolder.id,
