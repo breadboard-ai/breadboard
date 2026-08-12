@@ -119,6 +119,9 @@ export const asBlob = async (
   let url: string;
   if (isStoredData(part)) {
     url = part.storedData.handle;
+    if (!url.startsWith("blob:") && !url.startsWith("data:")) {
+      throw new Error("Invalid stored data URL");
+    }
   } else if (isChunk(part)) {
     const { mimetype } = part;
     let { data } = part;
