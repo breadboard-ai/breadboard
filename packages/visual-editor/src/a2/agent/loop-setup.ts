@@ -195,7 +195,7 @@ async function buildAgentRun(args: {
     const result = await getSingletonPrefixCache(moduleArgs, {
       useMemory: objectivePidgin.useMemory,
       useNotebookLM: objectivePidgin.useNotebookLM,
-      useGoogleDrive: runtimeFlags?.enableGoogleDriveTools ?? false,
+      useGoogleDrive: false,
     });
     if (ok(result)) {
       singletonCachedContentName = result;

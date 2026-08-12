@@ -7,7 +7,6 @@
 import { ok } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import type { FunctionGroupConfigurator } from "./types.js";
-import { getGoogleDriveFunctionGroup } from "./functions/google-drive.js";
 import { getGenerateFunctionGroup } from "./functions/generate.js";
 import { getSystemFunctionGroup } from "./functions/system.js";
 import { getMemoryFunctionGroup } from "./functions/memory.js";
@@ -119,15 +118,6 @@ function createAgentConfigurator(
       );
     } else {
       groups.push(getNoUiFunctionGroup());
-    }
-
-    if (runtimeFlags?.enableGoogleDriveTools) {
-      groups.push(
-        getGoogleDriveFunctionGroup({
-          fileSystem: deps.fileSystem,
-          moduleArgs,
-        })
-      );
     }
 
     return groups;

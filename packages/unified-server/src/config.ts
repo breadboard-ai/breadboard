@@ -69,7 +69,6 @@ export async function createClientConfig(opts: {
       opalAdk: flags.ENABLE_OPAL_ADK,
       outputTemplates: flags.ENABLE_OUTPUT_TEMPLATES,
       googleOne: flags.ENABLE_GOOGLE_ONE,
-      enableGoogleDriveTools: flags.ENABLE_GOOGLE_DRIVE_TOOLS,
       enableNotebookLm: flags.ENABLE_NOTEBOOK_LM,
       enableResumeAgentRun: flags.ENABLE_RESUME_AGENT_RUN,
       enableGraphEditorAgent: flags.ENABLE_GRAPH_EDITOR_AGENT,

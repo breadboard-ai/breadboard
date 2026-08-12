@@ -46,10 +46,6 @@ export const ENABLE_DEV_TOOLS = getBoolean("ENABLE_DEV_TOOLS");
 
 export const ENABLE_FORCE_2D_GRAPH = getBoolean("ENABLE_FORCE_2D_GRAPH");
 
-export const ENABLE_GOOGLE_DRIVE_TOOLS = getBoolean(
-  "ENABLE_GOOGLE_DRIVE_TOOLS"
-);
-
 export const ENABLE_GOOGLE_ONE = getBoolean("ENABLE_GOOGLE_ONE");
 
 export const ENABLE_GRAPH_EDITOR_AGENT = getBoolean(
