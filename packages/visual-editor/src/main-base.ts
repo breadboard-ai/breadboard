@@ -89,6 +89,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   @state()
   protected accessor overflowMenuY = 0;
 
+  /**
+   * Default opt-in status for marketing email checkboxes. `true` means
+   * checked (non-consent regions), `false` means unchecked (EEA, UK, etc.).
+   */
+  @state()
+  protected accessor defaultMarketingOptIn = true;
+
   protected overflowMenuOnAction:
     | ((action: string, value: string | null) => void)
     | null = null;
@@ -174,7 +181,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
     });
 
-    this.sca.services.emailPrefsManager.refreshPrefs().then(() => {
+    Promise.all([
+      this.sca.services.emailPrefsManager.refreshPrefs(),
+      this.sca.env.shellHost
+        .defaultMarketingOptinStatus()
+        .catch(() => true),
+    ]).then(([, optInDefault]) => {
+      this.defaultMarketingOptIn = optInDefault;
       if (
         this.sca.services.emailPrefsManager.prefsValid &&
         !this.sca.services.emailPrefsManager.hasStoredPreferences

@@ -554,6 +554,7 @@ class Main extends MainBase {
   #renderWarmWelcomeModal() {
     return html`<bb-warm-welcome-modal
       .emailPrefsManager=${this.sca.services.emailPrefsManager}
+      .defaultOptIn=${this.defaultMarketingOptIn}
       @bbmodaldismissed=${() => {
         this.sca.controller.global.main.show.delete("WarmWelcome");
       }}
