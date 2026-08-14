@@ -13,7 +13,6 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   mcp: false,
   opalAdk: false,
   outputTemplates: false,
-  enableGoogleDriveTools: false,
   enableNotebookLm: false,
   enableResumeAgentRun: false,
   enableGraphEditorAgent: false,

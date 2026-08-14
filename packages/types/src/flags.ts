@@ -44,10 +44,6 @@ export type RuntimeFlags = {
   outputTemplates: boolean;
 
   /**
-   * Enables "export to Drive" capability for the agent
-   */
-  enableGoogleDriveTools: boolean;
-  /**
    * Enables auto-resumption of failed agent runs
    */
   enableResumeAgentRun: boolean;
@@ -192,12 +188,6 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
     title: "Output Templates",
     description: "Enable output templates for consistent output",
     visibility: "experimental",
-  },
-
-  enableGoogleDriveTools: {
-    title: "Google Drive Tools",
-    description: "Enable 'export to Drive' capability",
-    visibility: "public",
   },
   enableResumeAgentRun: {
     title: "Resume Agent Run",

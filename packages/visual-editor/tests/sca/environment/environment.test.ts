@@ -42,7 +42,6 @@ function makeRuntimeConfig(
         outputTemplates: false,
         googleOne: false,
 
-        enableGoogleDriveTools: false,
         enableResumeAgentRun: false,
         enableNotebookLm: false,
         enableGraphEditorAgent: false,
@@ -77,7 +76,6 @@ const testFlags: RuntimeFlags = {
   outputTemplates: false,
   googleOne: false,
 
-  enableGoogleDriveTools: false,
   enableResumeAgentRun: false,
   enableNotebookLm: false,
   enableGraphEditorAgent: false,
