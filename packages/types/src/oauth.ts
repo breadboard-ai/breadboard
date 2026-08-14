@@ -6,11 +6,23 @@
 
 export const OAUTH_POPUP_MESSAGE_TYPE = "oauth-popup-message";
 
+export type OAuthPopupPayload =
+  | {
+      nonce: string;
+      code: string;
+      redirectPath: string;
+      scopes?: string[];
+      authuser?: string;
+      error?: undefined;
+    }
+  | {
+      nonce: string;
+      error: string;
+    };
+
 export type OAuthPopupMessage = {
   type: typeof OAUTH_POPUP_MESSAGE_TYPE;
-  nonce: string;
-  grantResponse: GrantResponse;
-};
+} & OAuthPopupPayload;
 
 export type GrantResponse =
   | { error: string }

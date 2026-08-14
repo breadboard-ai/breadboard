@@ -31,13 +31,17 @@ interface GrantRequest {
  * API which performs first-time authorization for a connection.
  */
 export async function grant(
-  req: IncomingMessage,
+  req: IncomingMessage & { body?: unknown },
   res: ServerResponse,
   config: ServerConfig
 ): Promise<void> {
-  const params = Object.fromEntries(
+  const queryParams = Object.fromEntries(
     new URL(req.url ?? "", "http://example.com").searchParams.entries()
-  ) as object as GrantRequest;
+  );
+  const params = {
+    ...queryParams,
+    ...(typeof req.body === "object" && req.body !== null ? req.body : {}),
+  } as unknown as GrantRequest;
   if (!params.code) {
     return badRequestJson(res, { error: "missing code" });
   }

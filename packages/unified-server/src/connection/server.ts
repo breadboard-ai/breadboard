@@ -40,11 +40,12 @@ export function createServer(config: ServerConfig): Express {
     })
   );
 
+  server.use(express.json());
   server.use(cookieParser());
 
   // TODO: #3172 - Common error handling
 
-  server.get("/grant", async (req: Request, res: Response) =>
+  server.post("/grant", async (req: Request, res: Response) =>
     grant(req, res, config)
   );
 

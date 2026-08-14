@@ -6,7 +6,7 @@
 
 import {
   OAUTH_POPUP_MESSAGE_TYPE,
-  type GrantResponse,
+  type OAuthPopupPayload,
 } from "@breadboard-ai/types/oauth.js";
 import { sendToAllowedEmbedderIfPresent } from "../../utils/embedder.js";
 import { type OAuthStateParameter } from "./connection-common.js";
@@ -62,9 +62,9 @@ export class ConnectionBroker extends HTMLElement {
       return;
     }
 
-    function sendToOpener(grantResponse: GrantResponse): void {
+    function sendToOpener(msg: OAuthPopupPayload): void {
       window.opener.postMessage(
-        { type: OAUTH_POPUP_MESSAGE_TYPE, nonce, grantResponse },
+        { type: OAUTH_POPUP_MESSAGE_TYPE, ...msg },
         window.location.origin
       );
     }
@@ -73,7 +73,7 @@ export class ConnectionBroker extends HTMLElement {
     // user clicks "Cancel" during the OAuth flow.
     const error = thisUrl.searchParams.get("error");
     if (error) {
-      sendToOpener({ error });
+      sendToOpener({ nonce, error });
       window.close();
       return;
     }
@@ -85,35 +85,13 @@ export class ConnectionBroker extends HTMLElement {
       return;
     }
 
-    // TODO(aomarks) Would it be better to send the code directly back to the
-    // opener, so that it can check the nonce, and only then do this grant RPC
-    // itself?
-    const grantUrl = new URL("/connection/grant/", window.location.origin);
-    grantUrl.searchParams.set("code", code);
-    grantUrl.searchParams.set(
-      "redirect_path",
-      new URL(window.location.href).pathname
-    );
-    const response = await fetch(grantUrl, { credentials: "include" });
-    let grantResponse: GrantResponse;
-    try {
-      grantResponse = await response.json();
-    } catch {
-      grantResponse = {
-        error: "Invalid response from connection server",
-      };
-    }
+    // Send the authorization code and nonce back to the originating tab so it can
+    // verify the nonce before making the grant request.
+    const scopes = thisUrl.searchParams.get("scope")?.trim().split(/ +/) ?? [];
+    const authuser = thisUrl.searchParams.get("authuser") ?? undefined;
+    const redirectPath = new URL(window.location.href).pathname;
 
-    // Add the actual scopes the user selected.
-    if (grantResponse.error === undefined) {
-      grantResponse.scopes =
-        thisUrl.searchParams.get("scope")?.trim().split(/ +/) ?? [];
-      grantResponse.authuser =
-        thisUrl.searchParams.get("authuser") ?? undefined;
-    }
-
-    // Send the grant response back to the originating tab and close up shop.
-    sendToOpener(grantResponse);
+    sendToOpener({ nonce, code, redirectPath, scopes, authuser });
     sendToAllowedEmbedderIfPresent({
       type: "oauth_redirect",
       success: true,
