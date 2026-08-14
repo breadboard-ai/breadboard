@@ -124,5 +124,80 @@
       ],
       "additionalProperties": false
     }
+  },
+  {
+    "name": "notebooklm_get_source",
+    "description": "Gets details and content of a specific source document within a NotebookLM notebook.",
+    "parametersJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "notebook_id": {
+          "type": "string",
+          "description": "The NotebookLM notebook ID. Extract this from the NotebookLM URL by taking the ID after \"https://notebooklm.google.com/notebook/\". For example, if the URL is \"https://notebooklm.google.com/notebook/abc123\", pass \"abc123\" as the notebook_id."
+        },
+        "source_id": {
+          "type": "string",
+          "description": "The ID of the source within the notebook."
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "status_update": {
+          "type": "string",
+          "description": "A status update to show in the UI that provides more detail on the reason why this function was called.\n  \n  For example, \"Retrieving source document\", \"Reading file contents\", etc."
+        }
+      },
+      "required": [
+        "notebook_id",
+        "source_id",
+        "status_update"
+      ],
+      "additionalProperties": false
+    },
+    "responseJsonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "description": "The resource name of the source" },
+            "display_name": { "type": "string", "description": "The display name of the source" },
+            "state": { "type": "string", "description": "State of the source processing" },
+            "original_mime_type": { "type": "string", "description": "The original mime type of the source document" },
+            "user_drive_source_status": { "type": "string", "description": "The status of user drive source document" },
+            "user_raw_source": {
+              "type": "object",
+              "description": "Details and contents of the raw source document.",
+              "properties": {
+                "blobstore_content": {
+                  "type": "object",
+                  "description": "GCS blob details for the source document.",
+                  "properties": {
+                    "blob_id": { "type": "string", "description": "The unique ID of the source document stored in GCS." }
+                  },
+                  "required": [
+                    "blob_id"
+                  ],
+                  "additionalProperties": false
+                },
+                "serving_url": { "type": "string", "description": "The temporary serving URL of the source document." },
+                "download_url": { "type": "string", "description": "The download URL of the source document." }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "additionalProperties": false
+    }
   }
 ]
