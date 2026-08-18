@@ -1,0 +1,26 @@
+{
+  "navigation": [
+    {
+      "title": "Getting Started",
+      "items": [
+        { "title": "Introduction", "path": "/" },
+        { "title": "Installation", "path": "/installation" },
+        { "title": "Quick Start", "path": "/quick-start" }
+      ]
+    },
+    {
+      "title": "Guides",
+      "items": [
+        { "title": "Happy Path", "path": "/guides/happy-path" },
+        { "title": "Using Boards in Apps", "path": "/guides/using-boards-in-apps" }
+      ]
+    },
+    {
+      "title": "Reference",
+      "items": [
+        { "title": "API", "path": "/reference/api" },
+        { "title": "CLI", "path": "/reference/cli" }
+      ]
+    }
+  ]
+}

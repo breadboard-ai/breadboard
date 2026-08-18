@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Breadboard Vanilla JS Example</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 20px;
+      line-height: 1.5;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #0066cc;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    button:hover {
+      background: #0055aa;
+    }
+    button:active {
+      background: #004488;
+    }
+    #output {
+      background: #f5f5f5;
+      padding: 16px;
+      border-radius: 4px;
+      min-height: 60px;
+      white-space: pre-wrap;
+      font-family: "Monaco", "Menlo", monospace;
+      font-size: 14px;
+    }
+    .error {
+      color: #d32f2f;
+      background: #ffebee;
+    }
+    .loading {
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🍞 Breadboard Vanilla JS Example</h1>
+    <p>This example loads a Breadboard from JSON and runs it in the browser using the CDN-hosted runtime.</p>
+    
+    <label for="nameInput">Enter your name:</label>
+    <input type="text" id="nameInput" placeholder="World" value="Breadboard">
+    
+    <button id="runButton">Run Board</button>
+    
+    <div id="output">Click "Run Board" to see the result...</div>
+  </div>
+
+  <script type="module">
+    import { BoardRunner } from 'https://unpkg.com/@breadboard-ai/core@latest/dist/index.js';
+    
+    // A simple board that takes a name and returns a greeting
+    const boardData = {
+      "title": "Hello World",
+      "description": "A simple greeting board",
+      "version": "1.0.0",
+      "nodes": [
+        {
+          "id": "input",
+          "type": "input",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": { 
+                  "type": "string",
+                  "description": "Name to greet"
+                }
+              },
+              "required": ["name"]
+            }
+          }
+        },
+        {
+          "id": "greet",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function greet({ name }) { return { greeting: `Hello, ${name}!` }; }",
+            "name": "greet",
+            "raw": true
+          }
+        },
+        {
+          "id": "output",
+          "type": "output"
+        }
+      ],
+      "edges": [
+        { 
+          "from": "input", 
+          "out": "name", 
+          "to": "greet", 
+          "in": "name" 
+        },
+        { 
+          "from": "greet", 
+          "out": "greeting", 
+          "to": "output", 
+          "in": "greeting" 
+        }
+      ]
+    };
+
+    const runButton = document.getElementById('runButton');
+    const nameInput = document.getElementById('nameInput');
+    const outputDiv = document.getElementById('output');
+
+    runButton.addEventListener('click', async () => {
+      try {
+        outputDiv.textContent = 'Running...';
+        outputDiv.className = 'loading';
+        
+        const board = await BoardRunner.fromGraphDescriptor(boardData);
+        const result = await board.runOnce({ 
+          name: nameInput.value || 'World' 
+        });
+        
+        outputDiv.textContent = JSON.stringify(result, null, 2);
+        outputDiv.className = '';
+      } catch (error) {
+        outputDiv.textContent = `Error: ${error.message}`;
+        outputDiv.className = 'error';
+        console.error('Board execution failed:', error);
+      }
+    });
+
+    // Allow running with Enter key
+    nameInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        runButton.click();
+      }
+    });
+  </script>
+</body>
+</html>
