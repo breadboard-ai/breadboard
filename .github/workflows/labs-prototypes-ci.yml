@@ -65,7 +65,7 @@ jobs:
 
       - name: Upload coverage artifact
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: packages/visual-editor/coverage/coverage-summary.json
