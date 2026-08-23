@@ -345,6 +345,11 @@ export const onAddAssets = asAction(
       })
     );
 
+    // Select the newly added assets and switch to the steps panel.
+    const assetIds = detail.assets.map((asset) => asset.path);
+    controller.editor.selection.selectAssets(assetIds);
+    controller.editor.sidebar.section = "editor";
+
     window.clearTimeout(longRunningTaskTimeout);
     if (snackbarId) {
       controller.global.snackbars.snackbar(
