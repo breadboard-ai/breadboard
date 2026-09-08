@@ -45,9 +45,13 @@ export function makeDriveProxyMiddleware({
 
   async function makeProxyRequestOptions(
     clientReq: ExpressRequest,
-    headers?: Record<string, string | string[] | number>
+    headers?: Record<string, string | string[] | number>,
+    overrideSearch?: string
   ): Promise<https.RequestOptions> {
     const url = new URL(clientReq.url, PRODUCTION_DRIVE_BASE_URL);
+    if (overrideSearch !== undefined) {
+      url.search = overrideSearch;
+    }
     headers = headers ? structuredClone(headers) : {};
 
     // The incoming request "host" header will be the hostname of this proxy
@@ -116,6 +120,9 @@ export function makeDriveProxyMiddleware({
       cache.set(cacheKey, entry);
     }
     const { status, headers, body } = await entry.responsePromise;
+    if (status !== 200) {
+      cache.delete(cacheKey);
+    }
     // TODO(aomarks) Should we filter out some headers here?
     clientRes.writeHead(status, headers);
     clientRes.end(body);
@@ -124,13 +131,17 @@ export function makeDriveProxyMiddleware({
   async function sendProxyWithCachingRequest(
     clientReq: ExpressRequest
   ): CacheEntry["responsePromise"] {
-    const options = await makeProxyRequestOptions(clientReq, {
-      // It doesn't matter what the initiating client request's accept-encoding
-      // header was, because we want to store the response uncompressed, so that
-      // we can re-compress it for future client requests, which each might have
-      // a different accept-encoding header.
-      "accept-encoding": "gzip",
-    });
+    const options = await makeProxyRequestOptions(
+      clientReq,
+      {
+        // It doesn't matter what the initiating client request's accept-encoding
+        // header was, because we want to store the response uncompressed, so that
+        // we can re-compress it for future client requests, which each might have
+        // a different accept-encoding header.
+        "accept-encoding": "gzip",
+      },
+      "?alt=media"
+    );
     return await new Promise((resolve) => {
       const proxyReq = https.request(options, (rawProxyRes) => {
         const uncompressedProxyRes =
@@ -176,6 +187,13 @@ export function makeDriveProxyMiddleware({
   router.get(
     "/drive/v3/files/:id",
     async (req: ExpressRequest, res: ExpressResponse) => {
+      if (hasDisallowedFileIdQueryParam(req)) {
+        const code = 400;
+        const message = "Illegal query parameter";
+        res.writeHead(code, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: { code, message } }));
+        return;
+      }
       const fileId = req.params["id"];
       if (isMediaRequest(req) && shouldCacheMedia(fileId)) {
         proxyWithCaching(req, res, `media:${fileId}`);
@@ -216,6 +234,20 @@ export function makeDriveProxyMiddleware({
 
 const isMediaRequest = (req: ExpressRequest) =>
   new URL(req.url, "http://example.com").searchParams.get("alt") === "media";
+
+function hasDisallowedFileIdQueryParam(req: ExpressRequest): boolean {
+  const url = new URL(req.url, "http://example.com");
+  for (const key of url.searchParams.keys()) {
+    const lower = key.toLowerCase();
+    // Google's OnePlatform HTTP-to-RPC transcoding for drive.files.get binds
+    // both the JSON camelCase name ("fileId") and the proto snake_case name
+    // ("file_id"), allowing either query parameter to override the path param.
+    if (lower === "fileid" || lower === "file_id") {
+      return true;
+    }
+  }
+  return false;
+}
 
 const allowlistHeaders = (
   source: IncomingHttpHeaders | OutgoingHttpHeaders,
