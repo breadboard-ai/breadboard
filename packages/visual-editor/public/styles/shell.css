@@ -9,14 +9,127 @@
   --sys-color--body-background-dark: #131314;
 }
 
-iframe#opal-app {
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
   width: 100vw;
-  height: 100vh; /* fallback */
-  height: 100dvh; /* account for iOS URL bar dynamic height */
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  font-family: "Google Sans", Roboto, Arial, sans-serif;
+}
+
+.turndown-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background-color: #f0f4f9;
+  color: #1f1f1f;
+  border-bottom: 1px solid #e0e2ec;
+  font-size: 14px;
+  line-height: 20px;
+  z-index: 100;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.turndown-banner[hidden] {
+  display: none !important;
+}
+
+.banner-leading-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #0b57d0;
+}
+
+.banner-leading-icon .info-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.banner-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  flex: 1 1 auto;
+}
+
+.banner-title {
+  font-weight: 600;
+  color: #1f1f1f;
+}
+
+.banner-description {
+  font-weight: 400;
+  color: #444746;
+}
+
+.banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.banner-action-link {
+  color: #0b57d0;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  transition: background-color 0.2s ease;
+}
+
+.banner-action-link:hover {
+  background-color: rgba(11, 87, 208, 0.08);
+  text-decoration: underline;
+}
+
+.banner-action-link:focus-visible {
+  outline: 2px solid #0b57d0;
+  outline-offset: 2px;
+}
+
+.banner-dismiss-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
   border: none;
-  position: fixed;
-  top: 0;
-  left: 0;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  color: #444746;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.banner-dismiss-button:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: #1f1f1f;
+}
+
+.banner-dismiss-button:focus-visible {
+  outline: 2px solid #0b57d0;
+  outline-offset: 2px;
+}
+
+.banner-dismiss-button .close-icon {
+  width: 18px;
+  height: 18px;
+}
+
+iframe#opal-app {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  border: none;
   background: var(--sys-color--body-background-light);
 }
 
@@ -67,6 +180,49 @@ iframe[src^="https://drive"]
 }
 
 @media (prefers-color-scheme: dark) {
+  .turndown-banner {
+    background-color: #1e1f20;
+    color: #e3e3e3;
+    border-bottom-color: #444746;
+  }
+
+  .banner-leading-icon {
+    color: #a8c7fa;
+  }
+
+  .banner-title {
+    color: #e3e3e3;
+  }
+
+  .banner-description {
+    color: #c4c7c5;
+  }
+
+  .banner-action-link {
+    color: #a8c7fa;
+  }
+
+  .banner-action-link:hover {
+    background-color: rgba(168, 199, 250, 0.08);
+  }
+
+  .banner-action-link:focus-visible {
+    outline-color: #a8c7fa;
+  }
+
+  .banner-dismiss-button {
+    color: #c4c7c5;
+  }
+
+  .banner-dismiss-button:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #e3e3e3;
+  }
+
+  .banner-dismiss-button:focus-visible {
+    outline-color: #a8c7fa;
+  }
+
   iframe#opal-app {
     background: var(--sys-color--body-background-dark);
   }

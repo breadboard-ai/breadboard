@@ -175,7 +175,32 @@ function setupCookieBar(): {
 // Shell initialization
 // ---------------------------------------------------------------------------
 
+initializeTurndownBanner();
 initializeOpalShellGuest();
+
+function initializeTurndownBanner() {
+  const banner = document.getElementById("turndown-banner");
+  const dismissBtn = document.getElementById("banner-dismiss-button");
+  if (!banner) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const isEmbeddedInGemini =
+    CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX === "/_gemini" ||
+    params.get("share_surface") === "gemini";
+
+  if (
+    isEmbeddedInGemini ||
+    params.get("turndown_banner") === "false" ||
+    params.get("opal_turndown_banner") === "false"
+  ) {
+    banner.hidden = true;
+    return;
+  }
+
+  dismissBtn?.addEventListener("click", () => {
+    banner.hidden = true;
+  });
+}
 
 async function initializeOpalShellGuest() {
   const guestOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_GUEST_ORIGIN;

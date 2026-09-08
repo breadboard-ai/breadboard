@@ -21,6 +21,37 @@
   />
 </head>
 <body>
+  <div class="turndown-banner" id="turndown-banner" role="region" aria-label="Product graduation notice">
+    <div class="banner-leading-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" class="info-icon">
+        <path fill="currentColor" d="M11 17h2v-6h-2v6zm1-8q.425 0 .713-.288T13 8q0-.425-.288-.713T12 7q-.425 0-.713.288T11 8q0 .425.288.713T12 9zm0 13q-2.075 0-3.9-.788t-3.175-2.137q-1.35-1.35-2.137-3.175T2 12q0-2.075.788-3.9t2.137-3.175q1.35-1.35 3.175-2.137T12 2q2.075 0 3.9.788t3.175 2.137q1.35 1.35 2.138 3.175T22 12q0 2.075-.788 3.9t-2.137 3.175q-1.35 1.35-3.175 2.138T12 22zm0-2q3.35 0 5.675-2.325T20 12q0-3.35-2.325-5.675T12 4Q8.65 4 6.325 6.325T4 12q0 3.35 2.325 5.675T12 20zm0-8z"/>
+      </svg>
+    </div>
+    <div class="banner-content">
+      <span class="banner-title">Opal is graduating out of Labs on November 17, 2026.</span>
+      <span class="banner-description">Workflow data is still in your Drive under My Drive &gt; Opal.</span>
+    </div>
+    <div class="banner-actions">
+      <a
+        class="banner-action-link"
+        href="https://developers.google.com/opal/faq"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Learn more
+      </a>
+      <button
+        type="button"
+        class="banner-dismiss-button"
+        id="banner-dismiss-button"
+        aria-label="Dismiss banner"
+      >
+        <svg viewBox="0 0 24 24" class="close-icon" aria-hidden="true">
+          <path fill="currentColor" d="m12 13.4-4.9 4.9q-.275.275-.7.275t-.7-.275q-.275-.275-.275-.7t.275-.7l4.9-4.9-4.9-4.9q-.275-.275-.275-.7t.275-.7q.275-.275.7-.275t.7.275l4.9 4.9 4.9-4.9q.275-.275.7-.275t.7.275q.275.275.275.7t-.275.7L13.4 12l4.9 4.9q.275.275.275.7t-.275.7q-.275.275-.7.275t-.7-.275L12 13.4Z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
   <iframe
     id="opal-app"
     sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals allow-storage-access-by-user-activation allow-downloads allow-top-navigation"
