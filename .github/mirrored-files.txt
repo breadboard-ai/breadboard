@@ -1,0 +1,54 @@
+# Downstream mirror manifest
+#
+# A small subset of this repo is synced internally. Changing any file listed
+# below requires a downstream sync.
+#
+# The mirror tracks the `opal-eol` branch, not `main`. A change only becomes
+# eligible for sync once it has landed on that branch.
+#
+# Consumed by scripts/check-mirrored-files.js, which runs from the pre-push
+# hook and from the Downstream Mirror Check GitHub workflow. Check a change
+# locally with:
+#
+#   npm run check:mirror
+#
+#
+# WHAT TO DO WHEN YOU CHANGE A MIRRORED FILE
+#
+#   1. Land the change on the `opal-eol` branch.
+#   2. Put the literal token ACK_SYNC_REQUIRED somewhere in the PR
+#      description. A PR touching a mirrored file fails CI until the token is
+#      present — it acknowledges that the sync is needed, and it makes such
+#      PRs easy to find later.
+#   3. Flag the PR to a maintainer with downstream access so they can run the
+#      import.
+#   4. If you added or removed files, or changed imports or dependencies, say
+#      so explicitly — those need hand edits downstream in the same change.
+#
+#
+# This is an explicit file list, NOT a directory glob. Adding a new file next
+# to a mirrored file does not mirror it.
+#
+# Format: one repo-relative path per line. Blank lines and `#` comments are
+# ignored.
+
+LICENSE
+README.md
+
+packages/types/README.md
+packages/types/package.json
+packages/types/src/canonical-endpoints.ts
+packages/types/src/opal-backend-client.ts
+packages/types/src/opal-shell-protocol.ts
+packages/types/src/oauth.ts
+packages/types/src/embedder.ts
+
+packages/visual-editor/README.md
+packages/visual-editor/package.json
+packages/visual-editor/src/ui/utils/google-drive-host-operations.ts
+packages/visual-editor/src/ui/utils/install-opal-shell-comlink-transfer-handlers.ts
+
+packages/utils/README.md
+packages/utils/package.json
+packages/utils/src/fetch-with-retry.ts
+packages/utils/src/google-drive/google-drive-client.ts
