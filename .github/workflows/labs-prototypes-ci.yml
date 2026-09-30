@@ -2,9 +2,9 @@ name: Labs Prototypes CI
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "opal-eol"]
   pull_request:
-    branches: ["main"]
+    branches: ["main", "opal-eol"]
 
 jobs:
   build:
@@ -63,8 +63,12 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
 
+      # The artifact is what triggers the downstream Coverage Report. We do not
+      # track coverage on `opal-eol`, so withholding it there keeps that report
+      # from posting a comment and a neutral check on every PR. Tests still run
+      # above — `npm run coverage` is this workflow's test step.
       - name: Upload coverage artifact
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.base_ref != 'opal-eol'
         uses: actions/upload-artifact@v6
         with:
           name: coverage-report

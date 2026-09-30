@@ -67,6 +67,9 @@ jobs:
             echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
             BASE_SHA=$(gh api "$API_URL" --jq '.[0].base.sha // empty')
             HEAD_SHA=$(gh api "$API_URL" --jq '.[0].head.sha // empty')
+            BASE_REF=$(gh api "$API_URL" --jq '.[0].base.ref // empty')
+
+            echo "base_ref=$BASE_REF" >> $GITHUB_OUTPUT
 
             if [[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
               echo "sha=$BASE_SHA" >> $GITHUB_OUTPUT
@@ -86,22 +89,31 @@ jobs:
             echo "number=" >> $GITHUB_OUTPUT
             echo "sha=" >> $GITHUB_OUTPUT
             echo "head_sha=" >> $GITHUB_OUTPUT
+            echo "base_ref=" >> $GITHUB_OUTPUT
           fi
 
       # If we have a base SHA, checkout that commit for the baseline.
       # This avoids the automerge race where main already contains the PR
       # changes by the time this workflow runs.
+      #
+      # Skipped for `opal-eol`, which we do not track coverage on. Its commits
+      # are unreachable from the `main` history checked out above, so this
+      # checkout could not resolve them anyway. Skipping the baseline entirely
+      # keeps the job green and quick instead of running a full build for a
+      # report nobody reads.
       - name: Checkout baseline commit
-        if: steps.pr-info.outputs.sha != ''
+        if: steps.pr-info.outputs.sha != '' && steps.pr-info.outputs.base_ref != 'opal-eol'
         run: git checkout ${STEPS_PR_INFO_OUTPUTS_SHA}
         env:
           STEPS_PR_INFO_OUTPUTS_SHA: ${{ steps.pr-info.outputs.sha }}
 
       - name: Install dependencies
+        if: steps.pr-info.outputs.base_ref != 'opal-eol'
         run: npm ci --ignore-scripts
 
       - name: Build and generate baseline coverage
         id: baseline
+        if: steps.pr-info.outputs.base_ref != 'opal-eol'
         run: |
           npm run build
           npm run coverage
