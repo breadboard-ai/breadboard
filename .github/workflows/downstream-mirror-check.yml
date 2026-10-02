@@ -1,0 +1,37 @@
+name: Downstream Mirror Check
+
+# A small subset of this repo is synced internally
+# (see .github/mirrored-files.txt). This job makes the need for a
+# sync impossible to miss at PR time: it annotates the changed mirrored files
+# and fails until the PR author acknowledges the sync.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  mirrored-files:
+    name: Mirrored files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes to mirrored files
+        id: detect
+        run: node scripts/check-mirrored-files.js --github
+
+      - name: Require sync acknowledgement
+        if: steps.detect.outputs.mirrored == 'true'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if printf '%s' "$PR_BODY" | grep -q 'ACK_SYNC_REQUIRED'; then
+            echo "Acknowledged: ACK_SYNC_REQUIRED found in the PR description."
+            exit 0
+          fi
+          echo "::error title=Downstream sync required::This PR changes files that are mirrored into a downstream internal repository. Add ACK_SYNC_REQUIRED to the PR description to acknowledge, and flag the PR to a maintainer who can run the import. See .github/mirrored-files.txt for the full rules."
+          exit 1

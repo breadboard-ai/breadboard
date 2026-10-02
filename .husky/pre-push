@@ -1,0 +1,4 @@
+#!/bin/sh
+# Loudly warn — but never block — when a push contains changes to files that
+# are mirrored downstream. See .github/mirrored-files.txt.
+node scripts/check-mirrored-files.js || true
