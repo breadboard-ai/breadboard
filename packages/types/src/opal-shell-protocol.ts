@@ -87,6 +87,13 @@ export declare interface OpalShellHostProtocol {
    * "Manage cookies" controls.
    */
   isCookieSettingsAvailable(): Promise<boolean>;
+
+  /**
+   * Returns the default opt-in status for marketing email preferences. In
+   * regions that require cookie consent (EEA, UK, etc.) this returns `false`
+   * so checkboxes default to unchecked. Elsewhere it returns `true`.
+   */
+  defaultMarketingOptinStatus(): Promise<boolean>;
 }
 
 export declare interface OpalShellGuestProtocol {
