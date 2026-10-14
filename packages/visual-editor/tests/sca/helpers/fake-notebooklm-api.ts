@@ -10,6 +10,8 @@ import type {
   ListNotebooksRequest,
   ListNotebooksResponse,
   GetNotebookRequest,
+  GetSourceRequest,
+  Source,
   RetrieveRelevantChunksRequest,
   RetrieveRelevantChunksResponse,
   ListNotebookPermissionsRequest,
@@ -117,6 +119,21 @@ export class FakeNotebookLmApiClient implements PublicInterface<NotebookLmApiCli
       throw new Error(`Notebook not found: ${request.name}`);
     }
     return notebook;
+  }
+
+  async getSource(request: GetSourceRequest): Promise<Source> {
+    this.#recordAndMaybeThrow("getSource", [request]);
+    // Search inside the in-memory notebooks for the source
+    for (const notebook of this.notebooks.values()) {
+      if (notebook.sources) {
+        for (const src of notebook.sources) {
+          if (src.name === request.name) {
+            return src;
+          }
+        }
+      }
+    }
+    throw new Error(`Source not found: ${request.name}`);
   }
 
   async retrieveRelevantChunks(

@@ -4,5 +4,8 @@
   },
   {
     "name": "notebooklm_generate_answer"
+  },
+  {
+    "name": "notebooklm_get_source"
   }
 ]
